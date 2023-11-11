@@ -1,7 +1,7 @@
 # *perf-cpp*: Performance Counter Wrapper for C++
 
-*perf-cpp*  is a wrapper to access CPU performance counters directly from C++ using a very lightweight interface.
-The library defines a set of hard- and software counters, allows you to add your own counters manually or using a list (in `csv` format).
+*perf-cpp* is a lightweight wrapper for accessing CPU *performance counters* straight from C++.
+The library defines a set of hard- and software counters and allows you to manually or via a list (in CSV format) add your own counters.
 
 ## How to use
 (see more detailed examples below)
@@ -11,7 +11,7 @@ The library defines a set of hard- and software counters, allows you to add your
     auto counter_definitions = perf::CounterDefinition{};
     auto perf = perf::Perf{counter_definitions};
 
-### 2) Add your counters
+### 2) Define your counters
 
     perf.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
 
@@ -52,3 +52,7 @@ The library defines a set of hard- and software counters, allows you to add your
 ```
 * Add `path/to/your/libs/perf-cpp/src/perf-cpp-external/include` to your `include_directories()`
 * Add `perf-cpp` to your linked libraries
+
+## TODOs
+* Add sampling
+* Automatically read performance counters provided by the machine

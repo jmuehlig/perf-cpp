@@ -60,6 +60,7 @@ void perf::CounterDefinition::initialized_default_counters()
     this->_counter_configs.insert(std::make_pair("migrations", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS}));
 }
 
+#include <iostream>
 void perf::CounterDefinition::read_counter_configs(const std::string &config_file)
 {
     auto input_file = std::ifstream{config_file};
@@ -70,26 +71,30 @@ void perf::CounterDefinition::read_counter_configs(const std::string &config_fil
         {
             auto line_stream = std::istringstream {line};
 
-            std::string counter_name;
-            std::string counter_raw_value;
-            std::uint64_t counter_event_id;
-
-            line_stream >> counter_name;
-            line_stream >> counter_raw_value;
-
-            if (counter_raw_value.substr(0U, 2U) == "0x")
+            std::string value;
+            if (std::getline(line_stream, value, ','))
             {
-                auto hex_stream = std::istringstream {counter_raw_value.substr(2U)};
-                hex_stream >> std::hex >> counter_event_id;
-            }
-            else
-            {
-                counter_event_id = std::stoull(counter_raw_value);
-            }
+                auto counter_name = std::move(value);
+                if (std::getline(line_stream, value, ','))
+                {
+                    auto counter_raw_value = std::move(value);
+                    std::uint64_t counter_event_id;
 
-            if (!counter_name.empty() && counter_event_id > 0U)
-            {
-                this->_counter_configs.insert(std::make_pair(std::move(counter_name), CounterConfig{PERF_TYPE_RAW, counter_event_id}));
+                    if (counter_raw_value.substr(0U, 2U) == "0x")
+                    {
+                        auto hex_stream = std::istringstream {counter_raw_value.substr(2U)};
+                        hex_stream >> std::hex >> counter_event_id;
+                    }
+                    else
+                    {
+                        counter_event_id = std::stoull(counter_raw_value);
+                    }
+
+                    if (!counter_name.empty() && counter_event_id > 0U)
+                    {
+                        this->_counter_configs.insert(std::make_pair(std::move(counter_name), CounterConfig{PERF_TYPE_RAW, counter_event_id}));
+                    }
+                }
             }
         }
     }

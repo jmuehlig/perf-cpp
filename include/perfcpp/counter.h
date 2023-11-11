@@ -37,7 +37,14 @@ public:
 
     ~CounterResult() = default;
 
+    /**
+     * @return Name of the counter.
+     */
     [[nodiscard]] std::string_view name() const noexcept { return _name; }
+
+    /**
+     * @return Value of the counter.
+     */
     [[nodiscard]] double value() const noexcept { return _value; }
 private:
     std::string_view _name;
@@ -67,8 +74,8 @@ public:
 private:
     std::string_view _name;
     CounterConfig _config;
-    perf_event_attr _event_attribute;
-    std::uint64_t _id;
+    perf_event_attr _event_attribute{};
+    std::uint64_t _id{0U};
     std::int32_t _file_descriptor{-1};
 };
 

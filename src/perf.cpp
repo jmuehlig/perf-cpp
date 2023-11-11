@@ -74,11 +74,11 @@ bool perf::Perf::stop()
     return is_all_stopped;
 }
 
-std::optional<double> perf::Perf::get(const std::string &name) const
+std::optional<double> perf::Perf::get(const std::string &counter_name) const
 {
     for (const auto& group : this->_groups)
     {
-        const auto result = group.get(name);
+        const auto result = group.get(counter_name);
         if (result.has_value())
         {
             return result;

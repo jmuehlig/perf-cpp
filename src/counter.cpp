@@ -35,7 +35,7 @@ bool perf::Group::open()
         }
 
         /// Open the counter.
-        const auto file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, leader_file_descriptor, 0);
+        const std::int32_t file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, leader_file_descriptor, 0);
         counter.file_descriptor(file_descriptor);
         if (counter.is_open())
         {
