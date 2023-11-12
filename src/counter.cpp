@@ -1,9 +1,53 @@
 #include <perfcpp/counter.h>
 #include <cstring>
 #include <string>
+#include <algorithm>
 #include <unistd.h>
 #include <asm/unistd.h>
 #include <sys/ioctl.h>
+
+perf::CounterResult perf::CounterResult::concat(std::vector<CounterResult> &&results)
+{
+    if (results.empty())
+    {
+        return CounterResult{};
+    }
+
+    auto result = std::move(results.front());
+    for (auto i = 1U; i < results.size(); ++i)
+    {
+        result += std::move(results[i]);
+    }
+
+    return result;
+}
+
+std::optional<double> perf::CounterResult::get(const std::string &name) const noexcept
+{
+    if (auto iterator = std::find_if(this->_results.begin(), this->_results.end(), [&name](const auto res) { return name == res.first; }); iterator != this->_results.end())
+    {
+        return iterator->second;
+    }
+
+    return std::nullopt;
+}
+
+perf::CounterResult &perf::CounterResult::operator+=(perf::CounterResult &&other)
+{
+    for (auto&& result : other._results)
+    {
+        if (auto iterator = std::find_if(this->_results.begin(), this->_results.end(), [name = result.first](const auto res) { return name == res.first; }); iterator != this->_results.end())
+        {
+            iterator->second += result.second;
+        }
+        else
+        {
+            this->_results.emplace_back(std::move(result));
+        }
+    }
+
+    return *this;
+}
 
 bool perf::Group::open()
 {
@@ -108,33 +152,9 @@ bool perf::Group::add(perf::Counter &&counter)
     return true;
 }
 
-std::optional<double> perf::Group::get(const std::string &name) const
+perf::CounterResult perf::Group::result() const
 {
-    const auto multiplexing_correction = double(this->_end_value.time_enabled - this->_start_value.time_enabled) /
-                                         double(this->_end_value.time_running - this->_start_value.time_running);
-
-    for (const auto& counter : this->_members)
-    {
-        if (counter.name() == name)
-        {
-            const auto start_value = Group::value_for_id(this->_start_value, counter.id());
-            const auto end_value = Group::value_for_id(this->_end_value, counter.id());
-
-            if (start_value.has_value() && end_value.has_value())
-            {
-                return double(end_value.value() - start_value.value()) * multiplexing_correction;
-            }
-
-            return std::nullopt;
-        }
-    }
-
-    return std::nullopt;
-}
-
-std::vector<perf::CounterResult> perf::Group::get() const
-{
-    auto results = std::vector<perf::CounterResult>{};
+    auto results = std::vector<std::pair<std::string_view, double>>{};
     results.reserve(this->_members.size());
 
     const auto multiplexing_correction = double(this->_end_value.time_enabled - this->_start_value.time_enabled) /
@@ -147,10 +167,11 @@ std::vector<perf::CounterResult> perf::Group::get() const
 
         if (start_value.has_value() && end_value.has_value())
         {
-            const auto result = double(end_value.value() - start_value.value()) * multiplexing_correction;
-            results.emplace_back(counter.name(), result);
+            const auto result = double(end_value.value() - start_value.value());
+            const auto corrected_result = result > .0 ? result * multiplexing_correction : .0;
+            results.emplace_back(counter.name(), corrected_result);
         }
     }
 
-    return results;
+    return CounterResult{std::move(results)};
 }

@@ -14,6 +14,8 @@ private:
     constexpr static inline auto MAX_GROUPS = 5U;
 public:
     explicit Perf(const CounterDefinition& counter_list) : _counter_definitions(counter_list) { }
+    Perf(Perf&&) noexcept = default;
+    Perf(const Perf&) = default;
 
     /**
      * Add the specified counter to the list of monitored performance counters.
@@ -52,54 +54,31 @@ public:
     bool add(const std::vector<std::string>& counter_names);
 
     /**
-     * Opens all the performance counters.
-     * However, they will not start counting.
-     *
-     * @return True, if the counters could be opened.
-     */
-    bool open();
-
-    /**
-     * Closes all performance counters.
-     * The values can be read afterwards.
-     */
-    void close();
-
-    /**
-     * Starts recording performance counters.
+     * Opens and starts recording performance counters.
      *
      * @return True, of the performance counters could be started.
      */
     bool start();
 
     /**
-     * Stops recording performance counters.
-     *
-     * @return True, of the performance counters could be stopped.
+     * Stops and closes recording performance counters.
      */
-    bool stop();
+    void stop();
 
     /**
-     * Reads the value of a given counter. The counter must be added before recording.
-     *
-     * @param counter_name Name of the counter.
-     * @return Value of the counter, if the counter was found. std::nullopt otherwise.
+     * @return The result of all counters.
      */
-    [[nodiscard]] std::optional<double> get(const std::string& counter_name) const;
+    [[nodiscard]] CounterResult result() const;
 
     /**
-     * Reads the value of a given counter. The counter must be added before recording.
+     * Concatenates the results of multiple perf instances,
+     * aiming to aggregate the results for measurements of
+     * multiple threads.
      *
-     * @param counter_name Name of the counter.
-     * @return Value of the counter, if the counter was found. std::nullopt otherwise.
+     * @param instances List of perf instances.
+     * @return An aggregated result of all instances.
      */
-    [[nodiscard]] std::optional<double> get(std::string&& counter_name) const { return get(counter_name); }
-
-    /**
-     * @return Returns a list with all counters and their values.
-     */
-    [[nodiscard]] std::vector<CounterResult> get() const;
-
+    [[nodiscard]] static CounterResult aggregate(const std::vector<Perf>& instances);
 private:
     const CounterDefinition& _counter_definitions;
 
@@ -111,16 +90,12 @@ class MonitoredSection
 public:
     explicit MonitoredSection(Perf& perf) : _perf(perf)
     {
-        if (_perf.open())
-        {
-            _perf.start();
-        }
+        _perf.start();
     }
 
     ~MonitoredSection()
     {
         _perf.stop();
-        _perf.close();
     }
 private:
     Perf& _perf;

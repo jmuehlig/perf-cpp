@@ -31,24 +31,30 @@ private:
 class CounterResult
 {
 public:
-    CounterResult(std::string_view name, const double value) : _name(name), _value(value)
+    using iterator = std::vector<std::pair<std::string_view, double>>::iterator;
+    using const_iterator = std::vector<std::pair<std::string_view, double>>::const_iterator;
+
+    [[nodiscard]] static CounterResult concat(std::vector<CounterResult>&& results);
+
+    CounterResult() = default;
+    explicit CounterResult(std::vector<std::pair<std::string_view, double>>&& results) noexcept : _results(std::move(results))
     {
     }
 
     ~CounterResult() = default;
 
-    /**
-     * @return Name of the counter.
-     */
-    [[nodiscard]] std::string_view name() const noexcept { return _name; }
+   [[nodiscard]] std::optional<double> get(const std::string& name) const noexcept;
+   [[nodiscard]] std::optional<double> get(std::string&& name) const noexcept { return get(name); }
 
-    /**
-     * @return Value of the counter.
-     */
-    [[nodiscard]] double value() const noexcept { return _value; }
+   CounterResult& operator+=(CounterResult&& other);
+
+   [[nodiscard]] iterator begin() { return _results.begin(); }
+   [[nodiscard]] iterator end() { return _results.end(); }
+   [[nodiscard]] const_iterator begin() const { return _results.begin(); }
+   [[nodiscard]] const_iterator end() const { return _results.end(); }
+
 private:
-    std::string_view _name;
-    double _value;
+    std::vector<std::pair<std::string_view, double>> _results;
 };
 
 class Counter
@@ -56,6 +62,7 @@ class Counter
 public:
     explicit Counter(std::string_view name, CounterConfig config) noexcept : _name(name), _config(config) { }
     Counter(Counter&&) noexcept = default;
+    Counter(const Counter&) = default;
 
     ~Counter() noexcept = default;
 
@@ -86,11 +93,12 @@ public:
     ~Group() = default;
 
     Group(Group&&) noexcept = default;
+    Group(const Group&) = default;
 
     constexpr static inline auto MAX_MEMBERS = 4U;
     bool add(Counter&& counter);
 
-     bool open();
+    bool open();
     void close();
 
     bool start();
@@ -103,9 +111,7 @@ public:
         return !_members.empty() ? _members.front().file_descriptor() : -1;
     }
 
-    [[nodiscard]] std::optional<double> get(const std::string& name) const;
-    [[nodiscard]] std::optional<double> get(std::string&& name) const { return get(name); }
-    [[nodiscard]] std::vector<CounterResult> get() const;
+    [[nodiscard]] CounterResult result() const;
 private:
     struct read_format
     {

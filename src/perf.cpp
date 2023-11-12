@@ -1,4 +1,5 @@
 #include <perfcpp/perf.h>
+#include <algorithm>
 
 bool perf::Perf::add(const std::string &counter_name)
 {
@@ -33,71 +34,64 @@ bool perf::Perf::add(const std::vector<std::string> &counter_names)
     return is_all_added;
 }
 
-bool perf::Perf::open()
+bool perf::Perf::start()
 {
-    auto is_all_open = true;
+    auto is_every_counter_started = true;
+
+    /// Open the counters.
     for (auto& group : this->_groups)
     {
-        is_all_open &= group.open();
+        is_every_counter_started &= group.open();
     }
 
-    return is_all_open;
+    /// Start the counters.
+    if (is_every_counter_started)
+    {
+        for (auto& group : this->_groups)
+        {
+            is_every_counter_started &= group.start();
+        }
+    }
+
+    return is_every_counter_started;
 }
 
-void perf::Perf::close()
+void perf::Perf::stop()
 {
+    /// Stop the counters.
+    for (auto& group : this->_groups)
+    {
+        std::ignore = group.stop();
+    }
+
+
+    /// Close the counters.
     for (auto& group : this->_groups)
     {
         group.close();
     }
 }
 
-bool perf::Perf::start()
+perf::CounterResult perf::Perf::result() const
 {
-    auto is_all_started = true;
-    for (auto& group : this->_groups)
-    {
-        is_all_started &= group.start();
-    }
-
-    return is_all_started;
-}
-
-bool perf::Perf::stop()
-{
-    auto is_all_stopped = true;
-    for (auto& group : this->_groups)
-    {
-        is_all_stopped &= group.stop();
-    }
-
-    return is_all_stopped;
-}
-
-std::optional<double> perf::Perf::get(const std::string &counter_name) const
-{
-    for (const auto& group : this->_groups)
-    {
-        const auto result = group.get(counter_name);
-        if (result.has_value())
-        {
-            return result;
-        }
-    }
-
-    return std::nullopt;
-}
-
-std::vector<perf::CounterResult> perf::Perf::get() const
-{
-    auto results = std::vector<perf::CounterResult>{};
-    results.reserve(MAX_GROUPS * perf::Group::MAX_MEMBERS);
+    auto result = CounterResult{};
 
     for(const auto& group : this->_groups)
     {
-        auto group_results = group.get();
-        std::move(group_results.begin(), group_results.end(), std::back_inserter(results));
+        result += group.result();
     }
 
-    return results;
+    return result;
+}
+
+perf::CounterResult perf::Perf::aggregate(const std::vector<Perf> &instances)
+{
+    auto result = CounterResult{};
+
+    for(const auto& perf : instances)
+    {
+        result += perf.result();
+    }
+
+    return result;
 }
