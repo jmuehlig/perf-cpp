@@ -1,5 +1,4 @@
 #include <perfcpp/perf.h>
-#include <algorithm>
 
 bool perf::Perf::add(const std::string &counter_name)
 {
@@ -19,7 +18,7 @@ bool perf::Perf::add(const std::string &counter_name)
         this->_groups.emplace_back();
     }
 
-    return this->_groups.back().add(std::move(counter.value()));
+    return this->_groups.back().add(counter.value());
 }
 
 bool perf::Perf::add(const std::vector<std::string> &counter_names)

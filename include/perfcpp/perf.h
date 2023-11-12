@@ -84,20 +84,4 @@ private:
 
     std::vector<Group> _groups;
 };
-
-class MonitoredSection
-{
-public:
-    explicit MonitoredSection(Perf& perf) : _perf(perf)
-    {
-        _perf.start();
-    }
-
-    ~MonitoredSection()
-    {
-        _perf.stop();
-    }
-private:
-    Perf& _perf;
-};
 }

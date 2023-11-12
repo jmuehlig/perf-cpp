@@ -161,14 +161,14 @@ bool perf::Group::stop()
     return read_size > 0U;
 }
 
-bool perf::Group::add(perf::Counter &&counter)
+bool perf::Group::add(perf::Counter counter)
 {
     if (this->is_full())
     {
         return false;
     }
 
-    this->_members.emplace_back(std::move(counter));
+    this->_members.push_back(counter);
     return true;
 }
 

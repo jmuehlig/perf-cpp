@@ -63,8 +63,6 @@ class Counter
 {
 public:
     explicit Counter(std::string_view name, CounterConfig config) noexcept : _name(name), _config(config) { }
-    Counter(Counter&&) noexcept = default;
-    Counter(const Counter&) = default;
 
     ~Counter() noexcept = default;
 
@@ -98,7 +96,7 @@ public:
     Group(const Group&) = default;
 
     constexpr static inline auto MAX_MEMBERS = 4U;
-    bool add(Counter&& counter);
+    bool add(Counter counter);
 
     bool open();
     void close();
