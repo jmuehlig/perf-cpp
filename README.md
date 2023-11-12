@@ -198,7 +198,7 @@ Basically, there are two options to add more counters:
 #### 1) In-code
 The `perf::CounterDefinition` interface offers an `add()` function that takes 
 * the name of the counter,
-* the type of that counter (e.g., `PERF_TYPE_RAW` or `PERF_TYPE_HW_CACHE),
+* the type of that counter (e.g., `PERF_TYPE_RAW` or `PERF_TYPE_HW_CACHE`),
 * and the config id
 
 Example:
@@ -231,7 +231,7 @@ In both scenarios, the counters can be added to the `Perf` instance:
     const auto llc_misses = result.get("llc-load-misses");
 
 ## Pre-defined counters
-The following counters are defined (see `src/counter_definition.cpp` for details):
+The following counters are already defined (see `src/counter_definition.cpp` for details) and available for usage:
 
     branches
     branch-instructions
@@ -256,5 +256,5 @@ The following counters are defined (see `src/counter_definition.cpp` for details
     migrations
 
 ## TODOs
-* [ ] Add sampling-based monitoring
+* [ ] Add sample-based monitoring
 * [ ] Automatically read performance counters provided by the machine
