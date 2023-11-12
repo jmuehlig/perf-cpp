@@ -49,6 +49,26 @@ perf::CounterResult &perf::CounterResult::operator+=(perf::CounterResult &&other
     return *this;
 }
 
+perf::CounterResult &perf::CounterResult::operator/=(const std::uint64_t divisor) noexcept
+{
+    for (auto& result : _results)
+    {
+        result.second /= divisor;
+    }
+
+    return *this;
+}
+
+perf::CounterResult perf::CounterResult::operator/(const std::uint64_t divisor)
+{
+    auto results = std::vector<std::pair<std::string_view, double>>{};
+    std::transform(this->_results.begin(), this->_results.end(), std::back_inserter(results), [divisor](const auto& result) {
+        return std::make_pair(result.first, result.second / divisor);
+    });
+
+    return CounterResult{std::move(results)};
+}
+
 bool perf::Group::open()
 {
     /// File descriptor of the group leader.

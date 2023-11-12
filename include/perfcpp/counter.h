@@ -47,6 +47,8 @@ public:
    [[nodiscard]] std::optional<double> get(std::string&& name) const noexcept { return get(name); }
 
    CounterResult& operator+=(CounterResult&& other);
+   CounterResult& operator/=(std::uint64_t divisor) noexcept;
+   CounterResult operator/(std::uint64_t divisor);
 
    [[nodiscard]] iterator begin() { return _results.begin(); }
    [[nodiscard]] iterator end() { return _results.end(); }
