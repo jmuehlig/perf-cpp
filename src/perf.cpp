@@ -1,36 +1,88 @@
 #include <perfcpp/perf.h>
+#include <algorithm>
+#include <numeric>
 
-bool perf::Perf::add(const std::string &counter_name)
+bool perf::Perf::add(std::string &&counter_name)
 {
-    auto counter = this->_counter_definitions.get(counter_name);
-    if (!counter.has_value())
+    /// Try to add the counter, if the name is a counter.
+    auto counter_config = this->_counter_definitions.counter(counter_name);
+    if (counter_config.has_value())
     {
-        return false;
+        return this->add(std::move(counter_name), counter_config.value(), false);
     }
 
+    /// Try to add the metric, if the name is a metric.
+    if (this->_counter_definitions.is_metric(counter_name))
+    {
+        /// Add all required counters.
+        for (auto&& dependent_counter_name : this->_counter_definitions.metric(counter_name)->required_counter_names())
+        {
+            auto dependent_counter_config = this->_counter_definitions.counter(dependent_counter_name);
+            if (dependent_counter_config.has_value())
+            {
+                const auto is_added = this->add(std::move(dependent_counter_name), dependent_counter_config.value(), true);
+                if (!is_added)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        this->_counters.emplace_back(std::move(counter_name));
+        return true;
+    }
+
+    return false;
+}
+
+bool perf::Perf::add(std::string&& counter_name, perf::CounterConfig counter, const bool is_hidden)
+{
+    /// If the counter is already added,
+    if (auto iterator = std::find_if(this->_counters.begin(), this->_counters.end(), [&counter_name](const auto& counter) { return counter.name() == counter_name; }); iterator != this->_counters.end())
+    {
+        iterator->is_hidden(iterator->is_hidden() && is_hidden);
+        return true;
+    }
+
+    /// Check if space for more counters left.
     if (this->_groups.size() == Perf::MAX_GROUPS && this->_groups.back().is_full())
     {
         return false;
     }
 
+    /// Add a new group, if needed (no one available or last is full).
     if (this->_groups.empty() || this->_groups.back().is_full())
     {
         this->_groups.emplace_back();
     }
 
-    return this->_groups.back().add(counter.value());
+    const auto group_id = std::uint8_t(this->_groups.size()) - 1U;
+    const auto in_group_id = std::uint8_t(this->_groups.back().size());
+    this->_counters.emplace_back(std::move(counter_name), is_hidden, group_id, in_group_id);
+    this->_groups.back().add(counter);
+
+    return true;
+}
+
+bool perf::Perf::add(std::vector<std::string> &&counter_names)
+{
+    auto is_all_added = true;
+
+    for (auto& name : counter_names)
+    {
+        is_all_added &= this->add(std::move(name));
+    }
+
+    return is_all_added;
 }
 
 bool perf::Perf::add(const std::vector<std::string> &counter_names)
 {
-    auto is_all_added = true;
-
-    for (const auto& name : counter_names)
-    {
-        is_all_added &= this->add(name);
-    }
-
-    return is_all_added;
+    return this->add(std::vector<std::string>(counter_names));
 }
 
 bool perf::Perf::start()
@@ -71,26 +123,134 @@ void perf::Perf::stop()
     }
 }
 
-perf::CounterResult perf::Perf::result() const
+perf::CounterResult perf::Perf::result(std::uint64_t normalization) const
 {
-    auto result = CounterResult{};
+    /// Build result with all counters, including hidden ones.
+    auto temporary_result = std::vector<std::pair<std::string, double>>{};
+    temporary_result.reserve(this->_counters.size());
 
-    for(const auto& group : this->_groups)
+    for (const auto& event : this->_counters)
     {
-        result += group.result();
+        if (event.is_counter())
+        {
+            const auto value = this->_groups[event.group_id()].get(event.in_group_id()) / double(normalization);
+            temporary_result.emplace_back(event.name(), value);
+        }
     }
 
-    return result;
+    /// Calculate metrics and copy not-hidden counters.
+    auto counter_result = CounterResult{std::move(temporary_result)};
+    auto result = std::vector<std::pair<std::string, double>>{};
+    result.reserve(this->_counters.size());
+
+    for (const auto& event : this->_counters)
+    {
+        /// Add all not hidden counters...
+        if (event.is_counter())
+        {
+            if (!event.is_hidden())
+            {
+                const auto value = counter_result.get(event.name());
+                if (value.has_value())
+                {
+                    result.emplace_back(event.name(), value.value());
+                }
+            }
+        }
+
+        /// ... and all metrics.
+        else
+        {
+            auto *metric = this->_counter_definitions.metric(event.name());
+            if (metric != nullptr)
+            {
+                auto value = metric->calculate(counter_result);
+                if (value.has_value())
+                {
+                    result.emplace_back(event.name(), value.value());
+                }
+            }
+        }
+    }
+
+    return CounterResult{std::move(result)};
 }
 
-perf::CounterResult perf::Perf::aggregate(const std::vector<Perf> &instances)
+perf::PerfMT::PerfMT(perf::Perf &&perf, const std::uint16_t num_threads)
 {
-    auto result = CounterResult{};
-
-    for(const auto& perf : instances)
+    this->_thread_local_counter.reserve(num_threads);
+    for (auto i = 0U; i < num_threads - 1U; ++i)
     {
-        result += perf.result();
+        this->_thread_local_counter.push_back(perf);
+    }
+    this->_thread_local_counter.emplace_back(std::move(perf));
+}
+
+bool perf::PerfMT::start(const std::uint16_t thread_id)
+{
+    return this->_thread_local_counter[thread_id].start();
+}
+
+void perf::PerfMT::stop(const std::uint16_t thread_id)
+{
+    this->_thread_local_counter[thread_id].stop();
+}
+
+perf::CounterResult perf::PerfMT::result(const std::uint64_t normalization) const
+{
+    /// Build result with all counters, including hidden ones.
+    const auto& main_perf = this->_thread_local_counter.front();
+    auto temporary_result = std::vector<std::pair<std::string, double>>{};
+    temporary_result.reserve(main_perf._counters.size());
+
+    for (const auto& event : main_perf._counters)
+    {
+        if (event.is_counter())
+        {
+            auto value = .0;
+            for (const auto& thread_local_counter : this->_thread_local_counter)
+            {
+                value += thread_local_counter._groups[event.group_id()].get(event.in_group_id());
+            }
+            const auto normalized_value = value / double(normalization);
+            temporary_result.emplace_back(event.name(), normalized_value);
+        }
     }
 
-    return result;
+    /// Calculate metrics and copy not-hidden counters.
+    auto counter_result = CounterResult{std::move(temporary_result)};
+    auto result = std::vector<std::pair<std::string, double>>{};
+    result.reserve(main_perf._counters.size());
+
+    for (const auto& event : main_perf._counters)
+    {
+        /// Add all not hidden counters...
+        if (event.is_counter())
+        {
+            if (!event.is_hidden())
+            {
+                const auto value = counter_result.get(event.name());
+                if (value.has_value())
+                {
+                    result.emplace_back(event.name(), value.value());
+                }
+            }
+        }
+
+            /// ... and all metrics.
+        else
+        {
+            auto *metric = main_perf._counter_definitions.metric(event.name());
+            if (metric != nullptr)
+            {
+                auto value = metric->calculate(counter_result);
+                if (value.has_value())
+                {
+                    result.emplace_back(event.name(), value.value());
+                }
+            }
+        }
+    }
+
+    return CounterResult{std::move(result)};
 }

@@ -14,11 +14,11 @@ perf::CounterDefinition::CounterDefinition()
     this->initialized_default_counters();
 }
 
-std::optional<perf::Counter> perf::CounterDefinition::get(const std::string &name) const noexcept
+std::optional<perf::CounterConfig> perf::CounterDefinition::counter(const std::string &name) const noexcept
 {
     if (auto iterator = this->_counter_configs.find(name); iterator != this->_counter_configs.end())
     {
-        return std::make_optional(Counter{iterator->first, iterator->second});
+        return std::make_optional( iterator->second);
     }
 
     return std::nullopt;
@@ -27,40 +27,58 @@ std::optional<perf::Counter> perf::CounterDefinition::get(const std::string &nam
 void perf::CounterDefinition::initialized_default_counters()
 {
     this->_counter_configs.reserve(128U);
+    this->_metrics.reserve(64U);
 
-    this->_counter_configs.insert(std::make_pair("instructions", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS}));
-    this->_counter_configs.insert(std::make_pair("cycles", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES}));
-    this->_counter_configs.insert(std::make_pair("cpu-cycles", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES}));
-    this->_counter_configs.insert(std::make_pair("bus-cycles", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_BUS_CYCLES}));
+    /// Pre-defined counters.
+    this->add("instructions", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS});
 
-    this->_counter_configs.insert(std::make_pair("cache-misses", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_CACHE_MISSES}));
-    this->_counter_configs.insert(std::make_pair("cache-references", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_CACHE_REFERENCES}));
+    this->add("cycles", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES});
+    this->add("cpu-cycles", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES});
+    this->add("bus-cycles", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_BUS_CYCLES});
 
-    this->_counter_configs.insert(std::make_pair("branches", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_INSTRUCTIONS}));
-    this->_counter_configs.insert(std::make_pair("branch-instructions", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_INSTRUCTIONS}));
-    this->_counter_configs.insert(std::make_pair("branch-misses", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_MISSES}));
+    this->add("cache-misses", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_CACHE_MISSES});
+    this->add("cache-references", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_CACHE_REFERENCES});
 
-    this->_counter_configs.insert(std::make_pair("stalled-cycles-backend", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_BACKEND}));
-    this->_counter_configs.insert(std::make_pair("idle-cycles-backend", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_BACKEND}));
-    this->_counter_configs.insert(std::make_pair("stalled-cycles-frontend", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_FRONTEND}));
-    this->_counter_configs.insert(std::make_pair("idle-cycles-frontend", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_FRONTEND}));
+    this->add("branches", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_INSTRUCTIONS});
+    this->add("branch-instructions", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_INSTRUCTIONS});
+    this->add("branch-misses", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_MISSES});
 
-    this->_counter_configs.insert(std::make_pair("cpu-clock", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_CLOCK}));
-    this->_counter_configs.insert(std::make_pair("task-clock", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_TASK_CLOCK}));
-    this->_counter_configs.insert(std::make_pair("page-faults", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS}));
-    this->_counter_configs.insert(std::make_pair("faults", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS}));
-    this->_counter_configs.insert(std::make_pair("major-faults", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MAJ}));
-    this->_counter_configs.insert(std::make_pair("minor-faults", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MIN}));
-    this->_counter_configs.insert(std::make_pair("alignment-faults", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_ALIGNMENT_FAULTS}));
-    this->_counter_configs.insert(std::make_pair("emulation-faults", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_EMULATION_FAULTS}));
-    this->_counter_configs.insert(std::make_pair("context-switches", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CONTEXT_SWITCHES}));
-    this->_counter_configs.insert(std::make_pair("bpf-output", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_BPF_OUTPUT}));
-    this->_counter_configs.insert(std::make_pair("cgroup-switches", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CGROUP_SWITCHES}));
-    this->_counter_configs.insert(std::make_pair("cpu-migrations", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS}));
-    this->_counter_configs.insert(std::make_pair("migrations", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS}));
+    this->add("stalled-cycles-backend", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_BACKEND});
+    this->add("idle-cycles-backend", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_BACKEND});
+    this->add("stalled-cycles-frontend", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_FRONTEND});
+    this->add("idle-cycles-frontend", CounterConfig{PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_FRONTEND});
+
+    this->add("cpu-clock", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_CLOCK});
+    this->add("task-clock", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_TASK_CLOCK});
+    this->add("page-faults", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS});
+    this->add("faults", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS});
+    this->add("major-faults", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MAJ});
+    this->add("minor-faults", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MIN});
+    this->add("alignment-faults", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_ALIGNMENT_FAULTS});
+    this->add("emulation-faults", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_EMULATION_FAULTS});
+    this->add("context-switches", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CONTEXT_SWITCHES});
+    this->add("bpf-output", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_BPF_OUTPUT});
+    this->add("cgroup-switches", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CGROUP_SWITCHES});
+    this->add("cpu-migrations", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS});
+    this->add("migrations", CounterConfig{PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS});
+
+    this->add("L1-dcache-loads", PERF_TYPE_HW_CACHE, PERF_COUNT_HW_CACHE_L1D | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_ACCESS << 16));
+    this->add("L1-dcache-load-misses", PERF_TYPE_HW_CACHE, PERF_COUNT_HW_CACHE_L1D | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_MISS << 16));
+    this->add("L1-icache-loads", PERF_TYPE_HW_CACHE, PERF_COUNT_HW_CACHE_L1I | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_ACCESS << 16));
+    this->add("L1-icache-load-misses", PERF_TYPE_HW_CACHE, PERF_COUNT_HW_CACHE_L1I | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_MISS << 16));
+    this->add("dTLB-loads", PERF_TYPE_HW_CACHE, PERF_COUNT_HW_CACHE_DTLB | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_ACCESS << 16));
+    this->add("dTLB-load-misses", PERF_TYPE_HW_CACHE, PERF_COUNT_HW_CACHE_DTLB | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_MISS << 16));
+    this->add("iTLB-loads", PERF_TYPE_HW_CACHE, PERF_COUNT_HW_CACHE_ITLB | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_ACCESS << 16));
+    this->add("iTLB-load-misses", PERF_TYPE_HW_CACHE, PERF_COUNT_HW_CACHE_ITLB | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_MISS << 16));
+
+    /// Pre-defined metrics.
+    this->add(std::make_unique<CyclesPerInstruction>());
+    this->add(std::make_unique<CacheHitRatio>());
+    this->add(std::make_unique<DTLBMissRatio>());
+    this->add(std::make_unique<ITLBMissRatio>());
+    this->add(std::make_unique<L1DataMissRatio>());
 }
 
-#include <iostream>
 void perf::CounterDefinition::read_counter_configs(const std::string &config_file)
 {
     auto input_file = std::ifstream{config_file};

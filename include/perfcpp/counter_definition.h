@@ -4,7 +4,9 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <memory>
 #include "counter.h"
+#include "metric.h"
 
 namespace perf
 {
@@ -27,11 +29,35 @@ public:
         _counter_configs.insert(std::make_pair(std::move(name), config));
     }
 
-    std::optional<Counter> get(std::string&& name) const noexcept { return get(name); }
-    std::optional<Counter> get(const std::string& name) const noexcept;
+    void add(std::string&& name, std::unique_ptr<Metric>&& metric)
+    {
+        _metrics.insert(std::make_pair(std::move(name), std::move(metric)));
+    }
+
+    void add(std::unique_ptr<Metric>&& metric)
+    {
+        _metrics.insert(std::make_pair(metric->name(), std::move(metric)));
+    }
+
+    [[nodiscard]] std::optional<CounterConfig> counter(std::string&& name) const noexcept { return counter(name); }
+    [[nodiscard]] std::optional<CounterConfig> counter(const std::string& name) const noexcept;
+    [[nodiscard]] bool is_metric(const std::string& name) const noexcept
+    {
+        return _metrics.find(name) != _metrics.end();
+    }
+    [[nodiscard]] Metric* metric(const std::string& name) const noexcept
+    {
+        if (auto iterator = _metrics.find(name); iterator != _metrics.end())
+        {
+            return iterator->second.get();
+        }
+
+        return nullptr;
+    }
 
 private:
     std::unordered_map<std::string, CounterConfig> _counter_configs;
+    std::unordered_map<std::string, std::unique_ptr<Metric>> _metrics;
 
     void initialized_default_counters();
     void read_counter_configs(const std::string& config_file);

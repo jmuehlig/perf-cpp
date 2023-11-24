@@ -1,12 +1,13 @@
 # *perf-cpp*: Performance Counter Wrapper for C++
 
-*perf-cpp* is a lightweight wrapper for accessing CPU *performance counters* straight from C++.
+*perf-cpp* is a lightweight wrapper for accessing CPU *performance counters* directly from C++.
 The library defines a set of hard- and software counters and allows you to add your own counters manually or via a list (in CSV format).
 
 Author: Jan Mühlig (`mail@janmuehlig.de`)
 
 ## How to use
-(See more detailed examples below)
+See more detailed examples below and in the `examples/` directory.
+
 ### 1) Define the counters you want to record
 ```cpp
 #include <perfcpp/perf.h>
@@ -34,11 +35,15 @@ const auto result = perf.result();
 const auto cycles = result.get("cycles");
 std::cout << "Took " << cycles.value() << " cycles" << std::endl;
 
-/// Or print all counters.
+/// Or print all counters on your own.
 for (const auto [name, value] : result)
 {
     std::cout << "Counter " << name << " = " << value << std::endl;
 }
+
+/// Or print in CSV and JSON
+std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << std::endl;
+std::cout << result.to_json() << std::endl;
 ```
 
 ## How to include *perf-cpp* in your project?
@@ -55,7 +60,7 @@ for (const auto [name, value] : result)
 ExternalProject_Add(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "main"
+  GIT_TAG "v0.1"
   PREFIX "path/to/your/libs/perf-cpp"
   INSTALL_COMMAND cmake -E echo ""
 )
@@ -97,7 +102,7 @@ int main()
     /// Initialize performance counters.
     auto counter_definitions = perf::CounterDefinition{};
     auto perf = perf::Perf{counter_definitions};
-    perf.add({"instructions", "cycles", "branches", "cache-misses"});
+    perf.add({"instructions", "cycles", "branches", "cache-misses", "cycles-per-instruction"});
 
     /// Start recording.
     if (!perf.start())
@@ -115,20 +120,12 @@ int main()
 
     /// Stop recording counters.
     perf.stop();
-    const auto result = perf.result();
+    const auto result = perf.result(cache_lines.size());
 
     /// Print the performance counters.
     for (const auto [name, value] : result)
     {
-        std::cout << (value / cache_lines.size()) << " " << name << " / cache line"  << std::endl;
-    }
-
-    /// Calculate cycles per instruction (CPI).
-    auto instructions = result.get("instructions");
-    auto cycles = result.get("cycles");
-    if (instructions.has_value() && cycles.has_value())
-    {
-        std::cout << (cycles.value() / instructions.value())<< " cycles / instruction"  << std::endl;
+        std::cout << value << " " << name << std::endl;
     }
 
     return 0;
@@ -137,45 +134,46 @@ int main()
 
 The output will be something like that, indicating that we have one cache miss per cache line (as expected):
 
-    6.02599 instructions / cache line
-    49.8446 cycles / cache line
-    1.00502 branches / cache line
-    1.34752 cache-misses / cache line
-    8.27161 cycles / instruction
+    6.02599 instructions
+    49.8446 cycles
+    1.00502 branches
+    1.34752 cache-misses
+    8.27161 cycles-per-instruction
 
 If you are curious how the result would look like if we do **not** shuffle the `access_pattern_indices` and, consequently, create a predictable access pattern:
 
-    6.00469 instructions / cache line
-    10.5781 cycles / cache line
-    1.00092 branches / cache line
-    0.00600791 cache-misses / cache line
-    1.76164 cycles / instruction
+    6.00469 instructions 
+    10.5781 cycles
+    1.00092 branches
+    0.00600791 cache-misses
+    1.76164 cycles-per-instruction
 
 ### Using multiple threads
-Performance counters are measured per thread/process. 
-If you want to measure multiple threads, you need to `start()` and `stop()` a dedicated `Perf` instance within every thread.
-To do so, create a global `Perf` instance and copy it into every thread:
+Performance counters are measured per thread/process.
+If you wish to measure multiple threads, you must measure each thread individually.
+To do so, use the early created `perf::Perf` instance to build a global `perf::PerfMT` instance:
 ```cpp
 /// Initialize performance counters.
 auto counter_definitions = perf::CounterDefinition{};
 auto perf = perf::Perf{counter_definitions};
 perf.add({"instructions", "cycles"});
 
-/// Copy the perf instance for every thread.
-auto thread_local_monitors = std::vector<perf::Perf>{perf, perf};
+/// Create a perf::PerfMT instance that can be used by multiple threads.
+const auto count_threads = 8U;
+auto perf_multithread = perf::PerfMT{std::move(perf), count_threads};
 auto threads = std::vector<std::thread>{};
 
-/// Create threads and access the thread-local perfs.
-for (auto i = 0U; i < 2U; ++i)
+/// Create threads and access the PerfMT instance to start/stop counters for every thread.
+for (auto thread_id = 0U; thread_id < count_threads; ++thread_id)
 {
-    threads.emplace_back([i, &thread_local_monitors](){
+    threads.emplace_back([thread_id, &perf_multithread](){
         /// Start recording counters.
-        thread_local_monitors[i].start();
+        perf_multithread.start(thread_id);
 
         /// ... do your data processing here ...
 
         /// Stop recording counters.
-        thread_local_monitors[i].stop();
+        perf_multithread.stop(thread_id);
     });
 }
 
@@ -184,14 +182,21 @@ for (auto& thread : threads)
 {
     thread.join();
 }
-```
-Now, you have the performance counters for every thread.
-Aggregate them into a single result:
-```cpp
-const auto result = perf::Perf::aggregate(thread_local_monitors);
-```
 
-The `result` can be used like in the first example; in fact, it is the sum of all thread-local performance counters.
+/// Access the entire result.
+auto result = multithread_perf.result();
+for (const auto& [name, value] : result)
+{
+    std::cout << value  << " " << name  << std::endl;
+}
+
+/// Or ask for a specific thread-local result.
+auto thread_0_result = multithread_perf.result_of_thread(0U);
+for (const auto& [name, value] : thread_0_result)
+{
+    std::cout << value  << " " << name  << std::endl;
+}
+```
 
 ### Adding more performance counters
 Almost every CPU generation has its own performance counters.
@@ -206,6 +211,12 @@ The `perf::CounterDefinition` interface offers an `add()` function that takes
 * and the config id
 
 Example:
+```cpp
+counter_definitions.add("cycle_activity.stalls_l3_miss", PERF_TYPE_RAW, 0x65306a3);
+```
+
+or
+
 ```cpp
 counter_definitions.add("llc-load-misses", PERF_TYPE_HW_CACHE, PERF_COUNT_HW_CACHE_LL | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_MISS << 16));
 ```
@@ -227,25 +238,48 @@ In both scenarios, the counters can be added to the `Perf` instance:
 ```cpp
 auto counter_definitions = perf::CounterDefinition{"my_file.csv"};
 counter_definitions.add("llc-load-misses", PERF_TYPE_HW_CACHE, ...);
+
+/// Note, that the (now defined) counter "llc-load-misses" must be also added to the perf instance.
 auto perf = perf::Perf{counter_definitions};
 perf.add({"instructions", "cycles", "llc-load-misses"});
 
-/// ....
+/// start, compute, and stop...
 
 const auto result = perf.result();
 const auto llc_misses = result.get("llc-load-misses");
 ```
 
+#### How to get _raw_ counter codes?
+The easiest way is to use the [libpfm4 (see on GitHub)](https://github.com/wcohen/libpfm4):
+* Download library 
+* Build executables in `examples/` folder
+* Choose a specific counter (from `perf list` on your machine) and get the code using the compiled `check_events` executable:
+```
+./check_events cycle_activity.stalls_l3_miss
+```
+
+The output will guide you the id that can be used as a _raw_  value for the counter.
+
 ## Pre-defined counters
 The following counters are already defined (see `src/counter_definition.cpp` for details) and available for usage:
 
-    branches
-    branch-instructions
+    branches OR branch-instructions
     branch-misses
-    stalled-cycles-backend
-    idle-cycles-backend
-    stalled-cycles-frontend
-    idle-cycles-frontend
+    cache-misses
+    cache-references
+    cycles OR cpu-cycles
+    instructions
+    stalled-cycles-backend OR idle-cycles-backend
+    stalled-cycles-frontend OR idle-cycles-frontend
+
+    L1-dcache-loads
+    L1-dcache-load-misses
+    L1-icache-loads
+    L1-icache-load-misses
+    dTLB-loads
+    dTLB-load-misses
+    iTLB-loads
+    iTLB-load-misses
 
     cpu-clock
     task-clock
@@ -260,6 +294,76 @@ The following counters are already defined (see `src/counter_definition.cpp` for
     cgroup-switches
     cpu-migrations
     migrations
+
+## Metrics
+Metrics are described as performance counter calculations.
+The most common example is the "Cycles per Instruction" (or CPI) metric: the fewer CPU cycles your code requires per instruction, the better. 
+Obviously, the "instructions" and "cycles" counters are required to calculate this measure.
+
+The library pre-defines some metrics that can be used just as counters by adding the names to the `perf::Perf` instance:
+```
+cycles-per-instruction
+cache-hit-ratio
+dTLB-miss-ratio
+iTLB-miss-ratio
+L1-data-miss-ratio
+```
+
+When added to the `perf::Perf` instance, each metric will add all required counters to calculate (although the counters will not appear in the result unless you explicitly add them).
+
+### Defining specific Metrics
+However, the fascinating metrics will depend on the counters available on certain hardware.
+You may use the `perf::Metric` interface to implement your own metrics, based on specific performance counters:
+```cpp
+#include <perfcpp/metric.h>
+class StallsPerCacheMiss final : public perf::Metric
+{
+public:
+    /// Set up a name, can be overriden by the counter definition when adding.
+    [[nodiscard]] std::string name() const override 
+    {
+        return "stalls-per-cache-miss"; 
+    }
+    
+    /// List of counters that need to be measured to calculate this metric.
+    [[nodiscard]] std::vector<std::string> required_counter_names() const 
+    { 
+        return {"stalls", "cache-misses"}; 
+    }
+    
+    /// Calculate the metric.
+    [[nodiscard]] std::optional<double> calculate(const CounterResult& result) const
+    {
+        const auto stalls = result.get("stalls");
+        const auto cache_misses = result.get("cache-misses");
+
+        if (stalls.has_value() && cache_misses.has_value())
+        {
+            return stalls.value() / cache_misses.value();
+        }
+
+        return std::nullopt;
+    }
+};
+```
+
+### Measure the specific Metric
+Upon implementation, the metric must be added to the counter definition instance:
+```cpp
+auto counter_definitions = perf::CounterDefinition{};
+counter_definitions.add(std::make_unique<StallsPerCacheMiss>());
+
+/// You can also override the name of the metric
+counter_definitions.add("SPCM", std::make_unique<StallsPerCacheMiss>());
+```
+
+Then, it can be added to the `perf::Perf`-instance:
+```cpp
+perf.add("stalls-per-cache-miss");
+
+/// Or, in case you have overriden the name:
+perf.add("SPCM");
+```
 
 ## TODOs
 * [ ] Add sample-based monitoring
