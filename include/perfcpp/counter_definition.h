@@ -17,6 +17,8 @@ public:
     explicit CounterDefinition(std::string&& config_file) : CounterDefinition(config_file) { }
     CounterDefinition();
 
+    CounterDefinition& operator=(CounterDefinition&&) noexcept = default;
+
     ~CounterDefinition() = default;
 
     void add(std::string&& name, const std::uint32_t type, const std::uint64_t event_id)
