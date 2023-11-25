@@ -60,7 +60,7 @@ std::cout << result.to_json() << std::endl;
 ExternalProject_Add(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v0.1"
+  GIT_TAG "v0.2.1"
   PREFIX "path/to/your/libs/perf-cpp"
   INSTALL_COMMAND cmake -E echo ""
 )
