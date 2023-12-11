@@ -17,7 +17,7 @@ namespace perf
         constexpr static inline auto MAX_MEMBERS = 4U;
         bool add(CounterConfig counter);
 
-        bool open(std::int32_t process_id, Config config);
+        bool open(Config config);
         void close();
 
         bool start();

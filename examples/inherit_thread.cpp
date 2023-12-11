@@ -46,15 +46,11 @@ int main()
         threads.emplace_back([i, &cache_lines, &indices, &value](){
             auto local_value = 0U;
 
-            /// Start recording counters.
-
             /// Process the data.
             for (const auto index : indices)
             {
                 local_value += cache_lines[index].value;
             }
-
-            /// Stop recording counters.
 
             value += local_value;
         });

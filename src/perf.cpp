@@ -1,7 +1,6 @@
 #include <perfcpp/perf.h>
 #include <algorithm>
 #include <numeric>
-#include <unistd.h>
 
 bool perf::Perf::add(std::string &&counter_name)
 {
@@ -90,12 +89,11 @@ bool perf::Perf::start()
 {
     auto is_every_counter_started = true;
 
-    auto process_id = this->_config.is_include_child_threads() ? getpid() : 0;
 
     /// Open the counters.
     for (auto& group : this->_groups)
     {
-        is_every_counter_started &= group.open(process_id, this->_config);
+        is_every_counter_started &= group.open(this->_config);
     }
 
     /// Start the counters.

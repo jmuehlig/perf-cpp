@@ -7,7 +7,7 @@
 using namespace perf;
 
 
-bool perf::Group::open(const std::int32_t process_id, const perf::Config config)
+bool perf::Group::open(const perf::Config config)
 {
     /// File descriptor of the group leader.
     auto leader_file_descriptor = std::int32_t{-1};
@@ -42,7 +42,7 @@ bool perf::Group::open(const std::int32_t process_id, const perf::Config config)
         }
 
         /// Open the counter.
-        const std::int32_t file_descriptor = syscall(__NR_perf_event_open, &perf_event, process_id, -1, leader_file_descriptor, 0);
+        const std::int32_t file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, leader_file_descriptor, 0);
         counter.file_descriptor(file_descriptor);
         if (counter.is_open())
         {
