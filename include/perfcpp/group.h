@@ -1,6 +1,7 @@
 #pragma once
 
 #include "counter.h"
+#include "config.h"
 
 namespace perf
 {
@@ -16,7 +17,7 @@ namespace perf
         constexpr static inline auto MAX_MEMBERS = 4U;
         bool add(CounterConfig counter);
 
-        bool open();
+        bool open(std::int32_t process_id, Config config);
         void close();
 
         bool start();

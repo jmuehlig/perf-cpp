@@ -7,7 +7,7 @@
 using namespace perf;
 
 
-bool perf::Group::open()
+bool perf::Group::open(const std::int32_t process_id, const perf::Config config)
 {
     /// File descriptor of the group leader.
     auto leader_file_descriptor = std::int32_t{-1};
@@ -26,6 +26,11 @@ bool perf::Group::open()
         perf_event.size = sizeof(perf_event_attr);
         perf_event.config = counter.event_id();
         perf_event.disabled = is_leader;
+        perf_event.inherit = static_cast<std::int32_t>(config.is_include_child_threads());
+        perf_event.exclude_kernel = static_cast<std::int32_t>(!config.is_include_kernel());
+        perf_event.exclude_user = static_cast<std::int32_t>(!config.is_include_user());
+        perf_event.exclude_hv = static_cast<std::int32_t>(!config.is_include_hypervisor());
+        perf_event.exclude_idle = static_cast<std::int32_t>(!config.is_include_idle());
 
         if (is_leader)
         {
@@ -37,7 +42,7 @@ bool perf::Group::open()
         }
 
         /// Open the counter.
-        const std::int32_t file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, leader_file_descriptor, 0);
+        const std::int32_t file_descriptor = syscall(__NR_perf_event_open, &perf_event, process_id, -1, leader_file_descriptor, 0);
         counter.file_descriptor(file_descriptor);
         if (counter.is_open())
         {

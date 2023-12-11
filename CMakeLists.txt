@@ -15,5 +15,7 @@ add_library(perf-cpp src/counter.cpp src/group.cpp src/counter_definition.cpp sr
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples/bin)
 add_executable(multi-thread examples/multi_thread.cpp)
 target_link_libraries(multi-thread perf-cpp)
+add_executable(inherit-thread examples/inherit_thread.cpp)
+target_link_libraries(inherit-thread perf-cpp)
 add_executable(single-thread examples/single_thread.cpp)
 target_link_libraries(single-thread perf-cpp)

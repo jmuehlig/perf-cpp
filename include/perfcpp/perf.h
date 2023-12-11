@@ -4,6 +4,7 @@
 #include <vector>
 #include <optional>
 #include <chrono>
+#include "config.h"
 #include "counter.h"
 #include "group.h"
 #include "counter_definition.h"
@@ -46,8 +47,8 @@ private:
         std::uint8_t _in_group_id {0U};
     };
 public:
-    explicit Perf(const CounterDefinition& counter_list)
-        : _counter_definitions(counter_list)
+    explicit Perf(const CounterDefinition& counter_list, Config config = {})
+        : _counter_definitions(counter_list), _config(config)
     {
 
     }
@@ -113,6 +114,8 @@ public:
     [[nodiscard]] CounterResult result(std::uint64_t normalization = 1U) const;
 private:
     const CounterDefinition& _counter_definitions;
+
+    Config _config;
 
     /// List of requested counters and metrics.
     std::vector<Event> _counters;
