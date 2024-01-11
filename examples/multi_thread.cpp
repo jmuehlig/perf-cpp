@@ -1,4 +1,4 @@
-#include <perfcpp/perf.h>
+#include <perfcpp/event_counter.h>
 #include <random>
 #include <iostream>
 #include <cstdint>
@@ -29,12 +29,12 @@ int main()
     /// Initialize performance counters.
     auto counter_definitions = perf::CounterDefinition{};
 
-    auto perf = perf::Perf{counter_definitions};
+    auto perf = perf::EventCounter{counter_definitions};
     perf.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references", "cycles-per-instruction"});
 
     /// One perf instance for every thread.
     const auto count_threads = 2U;
-    auto multithread_perf = perf::PerfMT{std::move(perf), count_threads};
+    auto multithread_perf = perf::EventCounterMT{std::move(perf), count_threads};
     auto threads = std::vector<std::thread>{};
 
     for (auto i = 0U; i < count_threads; ++i)

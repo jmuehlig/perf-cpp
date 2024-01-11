@@ -1,4 +1,4 @@
-#include "perfcpp/perf.h"
+#include "perfcpp/event_counter.h"
 #include <random>
 #include <iostream>
 #include <cstdint>
@@ -33,7 +33,7 @@ int main()
     auto config = perf::Config{};
     config.include_child_threads(true);
 
-    auto perf = perf::Perf{counter_definitions, config};
+    auto perf = perf::EventCounter{counter_definitions, config};
     perf.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references", "cycles-per-instruction"});
 
     /// One perf instance for every thread.

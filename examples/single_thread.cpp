@@ -1,4 +1,4 @@
-#include <perfcpp/perf.h>
+#include <perfcpp/event_counter.h>
 #include <random>
 #include <iostream>
 #include <cstdint>
@@ -27,7 +27,7 @@ int main()
     /// Initialize performance counters.
     auto counter_definitions = perf::CounterDefinition{};
 
-    auto perf = perf::Perf{counter_definitions};
+    auto perf = perf::EventCounter{counter_definitions};
     if (!perf.add({"instructions", "cycles", "branches", "cache-misses", "dTLB-miss-ratio", "L1-data-miss-ratio", "cycles-per-instruction"}))
     {
         std::cerr << "Could not add performance counters." << std::endl;
