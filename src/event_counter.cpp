@@ -2,10 +2,10 @@
 #include <algorithm>
 #include <numeric>
 
-bool perf::Perf::add(std::string &&counter_name)
+bool perf::EventCounter::add(std::string &&counter_name)
 {
     /// "Close" the current group and add new counters to the next group (if possible).
-    if (counter_name == "")
+    if (counter_name.empty())
     {
         if (this->_groups.empty() || this->_groups.back().size() == 0U)
         {
@@ -56,7 +56,7 @@ bool perf::Perf::add(std::string &&counter_name)
     return false;
 }
 
-bool perf::Perf::add(std::string&& counter_name, perf::CounterConfig counter, const bool is_hidden)
+bool perf::EventCounter::add(std::string&& counter_name, perf::CounterConfig counter, const bool is_hidden)
 {
     /// If the counter is already added,
     if (auto iterator = std::find_if(this->_counters.begin(), this->_counters.end(), [&counter_name](const auto& counter) { return counter.name() == counter_name; }); iterator != this->_counters.end())
@@ -85,7 +85,7 @@ bool perf::Perf::add(std::string&& counter_name, perf::CounterConfig counter, co
     return true;
 }
 
-bool perf::Perf::add(std::vector<std::string> &&counter_names)
+bool perf::EventCounter::add(std::vector<std::string> &&counter_names)
 {
     auto is_all_added = true;
 
@@ -97,12 +97,12 @@ bool perf::Perf::add(std::vector<std::string> &&counter_names)
     return is_all_added;
 }
 
-bool perf::Perf::add(const std::vector<std::string> &counter_names)
+bool perf::EventCounter::add(const std::vector<std::string> &counter_names)
 {
     return this->add(std::vector<std::string>(counter_names));
 }
 
-bool perf::Perf::start()
+bool perf::EventCounter::start()
 {
     auto is_every_counter_started = true;
 
@@ -141,7 +141,7 @@ void perf::Perf::stop()
     }
 }
 
-perf::CounterResult perf::Perf::result(std::uint64_t normalization) const
+perf::CounterResult perf::EventCounter::result(std::uint64_t normalization) const
 {
     /// Build result with all counters, including hidden ones.
     auto temporary_result = std::vector<std::pair<std::string, double>>{};
@@ -194,27 +194,27 @@ perf::CounterResult perf::Perf::result(std::uint64_t normalization) const
     return CounterResult{std::move(result)};
 }
 
-perf::PerfMT::PerfMT(perf::Perf &&perf, const std::uint16_t num_threads)
+perf::EventCounterMT::EventCounterMT(perf::EventCounter &&event_counter, const std::uint16_t num_threads)
 {
     this->_thread_local_counter.reserve(num_threads);
     for (auto i = 0U; i < num_threads - 1U; ++i)
     {
-        this->_thread_local_counter.push_back(perf);
+        this->_thread_local_counter.push_back(event_counter);
     }
-    this->_thread_local_counter.emplace_back(std::move(perf));
+    this->_thread_local_counter.emplace_back(std::move(event_counter));
 }
 
-bool perf::PerfMT::start(const std::uint16_t thread_id)
+bool perf::EventCounterMT::start(const std::uint16_t thread_id)
 {
     return this->_thread_local_counter[thread_id].start();
 }
 
-void perf::PerfMT::stop(const std::uint16_t thread_id)
+void perf::EventCounterMT::stop(const std::uint16_t thread_id)
 {
     this->_thread_local_counter[thread_id].stop();
 }
 
-perf::CounterResult perf::PerfMT::result(const std::uint64_t normalization) const
+perf::CounterResult perf::EventCounterMT::result(const std::uint64_t normalization) const
 {
     /// Build result with all counters, including hidden ones.
     const auto& main_perf = this->_thread_local_counter.front();

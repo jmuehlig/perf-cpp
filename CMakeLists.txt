@@ -9,7 +9,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -DNDEBUG")
 include_directories(include/)
 
 ### Library
-add_library(perf-cpp src/counter.cpp src/group.cpp src/counter_definition.cpp src/perf.cpp)
+add_library(perf-cpp src/counter.cpp src/group.cpp src/counter_definition.cpp src/event_counter.cpp)
 
 ### Examples
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples/bin)
