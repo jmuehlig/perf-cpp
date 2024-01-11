@@ -4,6 +4,23 @@
 
 bool perf::Perf::add(std::string &&counter_name)
 {
+    /// "Close" the current group and add new counters to the next group (if possible).
+    if (counter_name == "")
+    {
+        if (this->_groups.empty() || this->_groups.back().size() == 0U)
+        {
+            return true;
+        }
+
+        if (this->_groups.size() < this->_config.max_groups())
+        {
+            this->_groups.emplace_back();
+            return true;
+        }
+
+        return false;
+    }
+
     /// Try to add the counter, if the name is a counter.
     auto counter_config = this->_counter_definitions.counter(counter_name);
     if (counter_config.has_value())
@@ -49,13 +66,13 @@ bool perf::Perf::add(std::string&& counter_name, perf::CounterConfig counter, co
     }
 
     /// Check if space for more counters left.
-    if (this->_groups.size() == Perf::MAX_GROUPS && this->_groups.back().is_full())
+    if (this->_groups.size() == this->_config.max_groups() && this->_groups.back().size() >= this->_config.max_counters_per_group())
     {
         return false;
     }
 
     /// Add a new group, if needed (no one available or last is full).
-    if (this->_groups.empty() || this->_groups.back().is_full())
+    if (this->_groups.empty() || this->_groups.back().size() >= this->_config.max_counters_per_group())
     {
         this->_groups.emplace_back();
     }

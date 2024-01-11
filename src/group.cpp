@@ -106,11 +106,6 @@ bool perf::Group::stop()
 
 bool perf::Group::add(perf::CounterConfig counter)
 {
-    if (this->is_full())
-    {
-        return false;
-    }
-
     this->_members.emplace_back(counter);
     return true;
 }

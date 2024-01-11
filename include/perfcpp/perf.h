@@ -15,8 +15,6 @@ class Perf
 {
     friend class PerfMT;
 private:
-    constexpr static inline auto MAX_GROUPS = 5U;
-
     class Event
     {
     public:

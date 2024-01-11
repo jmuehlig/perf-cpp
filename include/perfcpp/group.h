@@ -14,7 +14,7 @@ namespace perf
         Group(Group&&) noexcept = default;
         Group(const Group&) = default;
 
-        constexpr static inline auto MAX_MEMBERS = 4U;
+        constexpr static inline auto MAX_MEMBERS = 8U;
         bool add(CounterConfig counter);
 
         bool open(Config config);
@@ -24,7 +24,6 @@ namespace perf
         bool stop();
 
         [[nodiscard]] std::size_t size() const noexcept { return _members.size(); }
-        [[nodiscard]] bool is_full() const noexcept { return _members.size() >= MAX_MEMBERS; }
 
         [[nodiscard]] std::int32_t leader_file_descriptor() const noexcept
         {
