@@ -125,7 +125,7 @@ bool perf::EventCounter::start()
     return is_every_counter_started;
 }
 
-void perf::Perf::stop()
+void perf::EventCounter::stop()
 {
     /// Stop the counters.
     for (auto& group : this->_groups)

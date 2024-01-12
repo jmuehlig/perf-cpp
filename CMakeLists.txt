@@ -9,7 +9,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -DNDEBUG")
 include_directories(include/)
 
 ### Library
-add_library(perf-cpp src/counter.cpp src/group.cpp src/counter_definition.cpp src/event_counter.cpp)
+add_library(perf-cpp src/counter.cpp src/group.cpp src/counter_definition.cpp src/event_counter.cpp src/sampler.cpp)
 
 ### Examples
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples/bin)
@@ -19,3 +19,5 @@ add_executable(inherit-thread examples/inherit_thread.cpp)
 target_link_libraries(inherit-thread perf-cpp)
 add_executable(single-thread examples/single_thread.cpp)
 target_link_libraries(single-thread perf-cpp)
+add_executable(sampling examples/sampling.cpp)
+target_link_libraries(sampling perf-cpp)
