@@ -14,8 +14,8 @@ namespace perf
 class CounterConfig
 {
 public:
-    CounterConfig(const std::uint32_t type, const std::uint64_t event_id) noexcept
-        : _type(type), _event_id(event_id)
+    CounterConfig(const std::uint32_t type, const std::uint64_t event_id, const std::uint64_t event_id_extension_1 = 0U, const std::uint64_t event_id_extension_2 = 0U) noexcept
+        : _type(type), _event_id(event_id), _event_id_extension({event_id_extension_1, event_id_extension_2})
     {
     }
 
@@ -23,9 +23,11 @@ public:
 
     [[nodiscard]] std::uint32_t type() const noexcept { return _type; }
     [[nodiscard]] std::uint64_t event_id() const noexcept { return _event_id; }
+    [[nodiscard]] std::array<std::uint64_t, 2U> event_id_extension() const noexcept { return _event_id_extension; }
 private:
     std::uint32_t _type;
     std::uint64_t _event_id;
+    std::array<std::uint64_t, 2U> _event_id_extension;
 };
 
 class CounterResult
@@ -90,6 +92,7 @@ public:
 
     [[nodiscard]] std::uint32_t type() const noexcept { return _config.type(); }
     [[nodiscard]] std::uint64_t event_id() const noexcept { return _config.event_id(); }
+    [[nodiscard]] std::array<std::uint64_t, 2U> event_id_extension() const noexcept { return _config.event_id_extension(); }
 
     [[nodiscard]] perf_event_attr &event_attribute() noexcept { return _event_attribute; }
     [[nodiscard]] std::uint64_t& id() noexcept { return _id; }

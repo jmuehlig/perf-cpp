@@ -25,6 +25,8 @@ bool perf::Group::open(const perf::Config config)
         perf_event.type = counter.type();
         perf_event.size = sizeof(perf_event_attr);
         perf_event.config = counter.event_id();
+        perf_event.config1 = counter.event_id_extension()[0U];
+        perf_event.config2 = counter.event_id_extension()[1U];
         perf_event.disabled = is_leader;
         perf_event.inherit = static_cast<std::int32_t>(config.is_include_child_threads());
         perf_event.exclude_kernel = static_cast<std::int32_t>(!config.is_include_kernel());
