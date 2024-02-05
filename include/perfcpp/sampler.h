@@ -6,7 +6,7 @@
 #include <chrono>
 #include <functional>
 #include "config.h"
-#include "counter.h"
+#include "group.h"
 #include "counter_definition.h"
 
 namespace perf
@@ -16,12 +16,13 @@ class Sampler
 public:
     enum Type : std::uint64_t
     {
-        Identifier = PERF_SAMPLE_IDENTIFIER,
         InstructionPointer = PERF_SAMPLE_IP,
         ThreadId = PERF_SAMPLE_TID,
-        CPU = PERF_SAMPLE_CPU,
         Timestamp = PERF_SAMPLE_TIME,
         LogicalMemAddress = PERF_SAMPLE_ADDR,
+        Group = PERF_SAMPLE_READ,
+        CPU = PERF_SAMPLE_CPU,
+        Identifier = PERF_SAMPLE_IDENTIFIER,
         PhysicalMemAddress = PERF_SAMPLE_PHYS_ADDR,
     };
 
@@ -31,6 +32,8 @@ public:
     }
 
     Sampler(const CounterDefinition& counter_list, std::string&& counter_name, std::uint64_t type, std::uint64_t frequency, Config config = {});
+
+    Sampler(const CounterDefinition& counter_list, std::vector<std::string>&& counter_names, std::uint64_t frequency, Config config = {});
 
     Sampler(Sampler&&) noexcept = default;
     Sampler(const Sampler&) = default;
@@ -68,7 +71,7 @@ private:
     std::pair<std::uint64_t, std::uint64_t> _sample_config;
 
     /// Real counter to measure.
-    std::optional<Counter> _counter { std::nullopt };
+    class Group _group;
 
     /// Buffer for the samples.
     void *_buffer {nullptr};

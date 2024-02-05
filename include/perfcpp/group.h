@@ -24,6 +24,7 @@ namespace perf
         bool stop();
 
         [[nodiscard]] std::size_t size() const noexcept { return _members.size(); }
+        [[nodiscard]] bool empty() const noexcept { return _members.empty(); }
 
         [[nodiscard]] std::int32_t leader_file_descriptor() const noexcept
         {
@@ -31,6 +32,10 @@ namespace perf
         }
 
         [[nodiscard]] double get(std::size_t index) const;
+
+        [[nodiscard]] Counter& member(const std::size_t index) { return _members[index]; }
+
+        [[nodiscard]] std::vector<Counter>& members() { return _members; }
     private:
         struct read_format
         {

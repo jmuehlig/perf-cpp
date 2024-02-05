@@ -15,49 +15,85 @@ perf::Sampler::Sampler(const perf::CounterDefinition &counter_list, std::string 
         /// Try to set the counter, if the name refers to a counter.
         if (auto counter_config = this->_counter_definitions.counter(counter_name); counter_config.has_value())
         {
-            this->_counter = Counter{counter_config.value()};
+            this->_group.add(counter_config.value());
         }
     }
 }
 
+perf::Sampler::Sampler(const perf::CounterDefinition &counter_list, std::vector<std::string> &&counter_names, std::uint64_t frequency, perf::Config config)
+       : _counter_definitions(counter_list), _config(config), _sample_config(Type::Group, frequency)
+{
+    for (const auto& counter_name : counter_names)
+    {
+        if (!this->_counter_definitions.is_metric(counter_name))    /// Metrics are not (yet) supported.
+        {
+            /// Try to set the counter, if the name refers to a counter.
+            if (auto counter_config = this->_counter_definitions.counter(counter_name); counter_config.has_value())
+            {
+                this->_group.add(counter_config.value());
+            }
+        }
+    }
+}
+
+
 bool perf::Sampler::open()
 {
-    if (!this->_counter.has_value())
+    if (this->_group.empty())
     {
         return false;
     }
 
-    auto& perf_event = this->_counter->event_attribute();
-    std::memset(&perf_event, 0, sizeof(perf_event_attr));
-    perf_event.type = this->_counter->type();
-    perf_event.size = sizeof(perf_event_attr);
-    perf_event.config = this->_counter->event_id();
-    perf_event.disabled = true;
-    perf_event.inherit = static_cast<std::int32_t>(this->_config.is_include_child_threads());
-    perf_event.exclude_kernel = static_cast<std::int32_t>(!this->_config.is_include_kernel());
-    perf_event.exclude_user = static_cast<std::int32_t>(!this->_config.is_include_user());
-    perf_event.exclude_hv = static_cast<std::int32_t>(!this->_config.is_include_hypervisor());
-    perf_event.exclude_idle = static_cast<std::int32_t>(!this->_config.is_include_idle());
-
-    perf_event.sample_type = this->_sample_config.first;
-    perf_event.sample_freq = this->_sample_config.second;
-    perf_event.freq = 1U;
-
-    perf_event.mmap = 1U;
-
-    perf_event.precise_ip = this->_config.precise_ip();
-
-    /// Open the counter.
-    const std::int32_t file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, -1, 0);
-    if (file_descriptor < 0)
+    auto leader_file_descriptor = -1;
+    for (auto counter_index = 0U; counter_index < this->_group.size(); ++counter_index)
     {
-        this->_last_error = errno;
-        return false;
+        auto &counter = this->_group.member(counter_index);
+        const auto is_leader = counter_index == 0U;
+
+        auto& perf_event = counter.event_attribute();
+        std::memset(&perf_event, 0, sizeof(perf_event_attr));
+        perf_event.type = counter.type();
+        perf_event.size = sizeof(perf_event_attr);
+        perf_event.config = counter.event_id();
+        perf_event.disabled = is_leader;
+
+        perf_event.inherit = static_cast<std::int32_t>(this->_config.is_include_child_threads());
+        perf_event.exclude_kernel = static_cast<std::int32_t>(!this->_config.is_include_kernel());
+        perf_event.exclude_user = static_cast<std::int32_t>(!this->_config.is_include_user());
+        perf_event.exclude_hv = static_cast<std::int32_t>(!this->_config.is_include_hypervisor());
+        perf_event.exclude_idle = static_cast<std::int32_t>(!this->_config.is_include_idle());
+
+        if (is_leader)
+        {
+            perf_event.sample_type = this->_sample_config.first;
+            perf_event.sample_freq = this->_sample_config.second;
+            perf_event.freq = 1U;
+            perf_event.mmap = 1U;
+            perf_event.precise_ip = this->_config.precise_ip();
+        }
+
+        if (this->_sample_config.first & static_cast<std::int64_t>(Type::Group))
+        {
+            perf_event.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
+        }
+
+        /// Open the counter.
+        const std::int32_t file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, leader_file_descriptor, 0);
+        if (file_descriptor < 0)
+        {
+            this->_last_error = errno;
+            return false;
+        }
+        counter.file_descriptor(file_descriptor);
+
+        if (is_leader)
+        {
+            leader_file_descriptor = file_descriptor;
+        }
     }
-    this->_counter->file_descriptor(file_descriptor);
 
     /// Open the mapped buffer.
-    this->_buffer = ::mmap(NULL, this->_config.buffer_pages() * 4096U, PROT_READ | PROT_WRITE, MAP_SHARED, file_descriptor, 0);
+    this->_buffer = ::mmap(NULL, this->_config.buffer_pages() * 4096U, PROT_READ | PROT_WRITE, MAP_SHARED, leader_file_descriptor, 0);
     if (this->_buffer == MAP_FAILED)
     {
         this->_last_error = errno;
@@ -72,8 +108,8 @@ bool perf::Sampler::start()
     /// Start the counters.
     if (this->open())
     {
-        ::ioctl(this->_counter->file_descriptor(), PERF_EVENT_IOC_RESET, 0);
-        ::ioctl(this->_counter->file_descriptor(), PERF_EVENT_IOC_ENABLE, 0);
+        ::ioctl(this->_group.leader_file_descriptor(), PERF_EVENT_IOC_RESET, 0);
+        ::ioctl(this->_group.leader_file_descriptor(), PERF_EVENT_IOC_ENABLE, 0);
         return true;
     }
 
@@ -82,16 +118,15 @@ bool perf::Sampler::start()
 
 void perf::Sampler::stop()
 {
-    ::ioctl(this->_counter->file_descriptor(), PERF_EVENT_IOC_DISABLE, 0);
+    ::ioctl(this->_group.leader_file_descriptor(), PERF_EVENT_IOC_DISABLE, 0);
 }
 
 void perf::Sampler::close()
 {
     ::munmap(this->_buffer, this->_config.buffer_pages() * 4096U);
-    ::close(this->_counter->file_descriptor());
+    ::close(this->_group.leader_file_descriptor());
 }
 
-#include <iostream>
 void perf::Sampler::for_each_sample(std::function<void(void*)> &&callback)
 {
     auto *mmap_page = reinterpret_cast<perf_event_mmap_page *>(this->_buffer);
