@@ -26,9 +26,10 @@ int main()
 
     /// Initialize performance counters.
     auto counter_definitions = perf::CounterDefinition{};
-    auto perf_config = perf::Config{};
+    auto perf_config = perf::SampleConfig{};
     perf_config.precise_ip(1U); /// See https://man7.org/linux/man-pages/man2/perf_event_open.2.html ; may depend on hardware.
-    auto sampler = perf::Sampler{counter_definitions, "cycles", perf::Sampler::Type::LogicalMemAddress, 10000U, perf_config};
+    perf_config.frequency(10000U);
+    auto sampler = perf::Sampler{counter_definitions, "cycles", perf::Sampler::Type::LogicalMemAddress, perf_config};
 
     /// Start recording.
     if (!sampler.start())
@@ -49,7 +50,7 @@ int main()
     sampler.stop();
 
     /// Print the performance counters.
-    sampler.for_each_sample([](auto* event_addr) {
+    sampler.for_each_sample([](auto* event_addr, perf::Sampler::SampleMode /*type*/) {
 
         /// See PERF_RECORD_SAMPLE from https://man7.org/linux/man-pages/man2/perf_event_open.2.html
         struct Event

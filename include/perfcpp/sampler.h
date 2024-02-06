@@ -14,26 +14,46 @@ namespace perf
 class Sampler
 {
 public:
+    /**
+     * What to sample.
+     */
     enum Type : std::uint64_t
     {
         InstructionPointer = PERF_SAMPLE_IP,
         ThreadId = PERF_SAMPLE_TID,
         Timestamp = PERF_SAMPLE_TIME,
         LogicalMemAddress = PERF_SAMPLE_ADDR,
-        Group = PERF_SAMPLE_READ,
+        CounterValues = PERF_SAMPLE_READ,
         CPU = PERF_SAMPLE_CPU,
+        DataSource = PERF_SAMPLE_DATA_SRC,
         Identifier = PERF_SAMPLE_IDENTIFIER,
         PhysicalMemAddress = PERF_SAMPLE_PHYS_ADDR,
     };
 
-    Sampler(const CounterDefinition& counter_list, const std::string& counter_name, const std::uint64_t type, const std::uint64_t frequency, Config config = {})
-        : Sampler(counter_list, std::string{counter_name}, type, frequency, config)
+    /**
+     * Mode a sample was collected.
+     */
+    enum SampleMode
+    {
+        Unknown,
+        Kernel,
+        User,
+        Hypervisor,
+        GuestKernel,
+        GuestUser
+    };
+
+    Sampler(const CounterDefinition& counter_list, const std::string& counter_name, const std::uint64_t type, SampleConfig config = {})
+        : Sampler(counter_list, std::string{counter_name}, type, config)
     {
     }
 
-    Sampler(const CounterDefinition& counter_list, std::string&& counter_name, std::uint64_t type, std::uint64_t frequency, Config config = {});
+    Sampler(const CounterDefinition& counter_list, std::string&& counter_name, const std::uint64_t type, SampleConfig config = {})
+        : Sampler(counter_list, std::vector<std::string>{std::move(counter_name)}, type, config)
+    {
+    }
 
-    Sampler(const CounterDefinition& counter_list, std::vector<std::string>&& counter_names, std::uint64_t frequency, Config config = {});
+    Sampler(const CounterDefinition& counter_list, std::vector<std::string>&& counter_names, std::uint64_t type, SampleConfig config = {});
 
     Sampler(Sampler&&) noexcept = default;
     Sampler(const Sampler&) = default;
@@ -57,7 +77,7 @@ public:
      */
     void close();
 
-    void for_each_sample(std::function<void(void*)> &&callback);
+    void for_each_sample(std::function<void(void*, SampleMode)> &&callback);
 
     [[nodiscard]] std::int64_t last_error() const noexcept { return _last_error; }
 
@@ -65,10 +85,9 @@ private:
     const CounterDefinition& _counter_definitions;
 
     /// Perf config.
-    Config _config;
+    SampleConfig _config;
 
-    /// Additional config for sampling.
-    std::pair<std::uint64_t, std::uint64_t> _sample_config;
+    std::uint64_t _sample_type;
 
     /// Real counter to measure.
     class Group _group;

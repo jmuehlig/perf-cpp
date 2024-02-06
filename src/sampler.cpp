@@ -7,21 +7,8 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 
-perf::Sampler::Sampler(const perf::CounterDefinition &counter_list, std::string &&counter_name, const std::uint64_t type, const std::uint64_t frequency, perf::Config config)
-    : _counter_definitions(counter_list), _config(config), _sample_config(type, frequency)
-{
-    if (!this->_counter_definitions.is_metric(counter_name))    /// Metrics are not (yet) supported.
-    {
-        /// Try to set the counter, if the name refers to a counter.
-        if (auto counter_config = this->_counter_definitions.counter(counter_name); counter_config.has_value())
-        {
-            this->_group.add(counter_config.value());
-        }
-    }
-}
-
-perf::Sampler::Sampler(const perf::CounterDefinition &counter_list, std::vector<std::string> &&counter_names, std::uint64_t frequency, perf::Config config)
-       : _counter_definitions(counter_list), _config(config), _sample_config(Type::Group, frequency)
+perf::Sampler::Sampler(const perf::CounterDefinition &counter_list, std::vector<std::string> &&counter_names, const std::uint64_t type, perf::SampleConfig config)
+       : _counter_definitions(counter_list), _config(config), _sample_type(type)
 {
     for (const auto& counter_name : counter_names)
     {
@@ -65,14 +52,23 @@ bool perf::Sampler::open()
 
         if (is_leader)
         {
-            perf_event.sample_type = this->_sample_config.first;
-            perf_event.sample_freq = this->_sample_config.second;
-            perf_event.freq = 1U;
+            perf_event.sample_type = this->_sample_type;
+
+            if (this->_config.is_frequency())
+            {
+                perf_event.freq = 1U;
+                perf_event.sample_freq = this->_config.frequency_or_period();
+            }
+            else
+            {
+                perf_event.sample_period = this->_config.frequency_or_period();
+            }
+
             perf_event.mmap = 1U;
             perf_event.precise_ip = this->_config.precise_ip();
         }
 
-        if (this->_sample_config.first & static_cast<std::int64_t>(Type::Group))
+        if (this->_sample_type & static_cast<std::uint64_t>(Type::CounterValues))
         {
             perf_event.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
         }
@@ -127,7 +123,7 @@ void perf::Sampler::close()
     ::close(this->_group.leader_file_descriptor());
 }
 
-void perf::Sampler::for_each_sample(std::function<void(void*)> &&callback)
+void perf::Sampler::for_each_sample(std::function<void(void*, SampleMode)> &&callback)
 {
     auto *mmap_page = reinterpret_cast<perf_event_mmap_page *>(this->_buffer);
 
@@ -147,9 +143,31 @@ void perf::Sampler::for_each_sample(std::function<void(void*)> &&callback)
     {
         auto *event_header = reinterpret_cast<perf_event_header *>(iterator);
 
-        if (event_header->type == PERF_RECORD_SAMPLE && static_cast<bool>(event_header->misc & PERF_RECORD_MISC_USER))
+        if (event_header->type == PERF_RECORD_SAMPLE)
         {
-            callback(reinterpret_cast<void*>(event_header + 1U));
+            auto sample_type = SampleMode::Unknown;
+            if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_KERNEL))
+            {
+                sample_type = SampleMode::Kernel;
+            }
+            else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_USER))
+            {
+                sample_type = SampleMode::User;
+            }
+            else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_HYPERVISOR))
+            {
+                sample_type = SampleMode::Hypervisor;
+            }
+            else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_GUEST_KERNEL))
+            {
+                sample_type = SampleMode::GuestKernel;
+            }
+            else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_GUEST_USER))
+            {
+                sample_type = SampleMode::GuestUser;
+            }
+
+            callback(reinterpret_cast<void*>(event_header + 1U), sample_type);
         }
 
         /// Go to the next sample.
