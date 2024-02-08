@@ -25,6 +25,7 @@ public:
         LogicalMemAddress = PERF_SAMPLE_ADDR,
         CounterValues = PERF_SAMPLE_READ,
         CPU = PERF_SAMPLE_CPU,
+        Weight = PERF_SAMPLE_WEIGHT,
         DataSource = PERF_SAMPLE_DATA_SRC,
         Identifier = PERF_SAMPLE_IDENTIFIER,
         PhysicalMemAddress = PERF_SAMPLE_PHYS_ADDR,
