@@ -81,6 +81,10 @@ void perf::CounterDefinition::initialized_default_counters()
 
 void perf::CounterDefinition::read_counter_configs(const std::string &config_file)
 {
+    /// Read all counter values from the config file in the format
+    ///     name,<config>[,<extended config>]
+    /// where <config> and <extended config> are either integer or hex values.
+
     auto input_file = std::ifstream{config_file};
     if (input_file.is_open())
     {
@@ -89,28 +93,25 @@ void perf::CounterDefinition::read_counter_configs(const std::string &config_fil
         {
             auto line_stream = std::istringstream {line};
 
-            std::string value;
-            if (std::getline(line_stream, value, ','))
+            std::string name;
+            std::uint64_t config;
+            auto extended_config = 0ULL;
+            if (std::getline(line_stream, name, ','))
             {
-                auto counter_name = std::move(value);
-                if (std::getline(line_stream, value, ','))
+                std::string config_str;
+                if (std::getline(line_stream, config_str, ','))
                 {
-                    auto counter_raw_value = std::move(value);
-                    std::uint64_t counter_event_id;
+                    config = std::stoull(config_str, nullptr, 0);
 
-                    if (counter_raw_value.substr(0U, 2U) == "0x")
+                    std::string extended_config_str;
+                    if (std::getline(line_stream, extended_config_str, ','))
                     {
-                        auto hex_stream = std::istringstream {counter_raw_value.substr(2U)};
-                        hex_stream >> std::hex >> counter_event_id;
-                    }
-                    else
-                    {
-                        counter_event_id = std::stoull(counter_raw_value);
+                        extended_config = std::stoull(extended_config_str, nullptr, 0);
                     }
 
-                    if (!counter_name.empty() && counter_event_id > 0U)
+                    if (!name.empty() && config > 0ULL)
                     {
-                        this->_counter_configs.insert(std::make_pair(std::move(counter_name), CounterConfig{PERF_TYPE_RAW, counter_event_id}));
+                        this->_counter_configs.insert(std::make_pair(std::move(name), CounterConfig{PERF_TYPE_RAW, config, extended_config}));
                     }
                 }
             }
