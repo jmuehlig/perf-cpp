@@ -82,7 +82,7 @@ void perf::CounterDefinition::initialized_default_counters()
 void perf::CounterDefinition::read_counter_configuration(const std::string &config_file)
 {
     /// Read all counter values from the config file in the format
-    ///     name,<config>[,<extended config>]
+    ///     name,<config>[,<extended config>,<type>]
     /// where <config> and <extended config> are either integer or hex values.
 
     auto input_file = std::ifstream{config_file};
@@ -96,6 +96,7 @@ void perf::CounterDefinition::read_counter_configuration(const std::string &conf
             std::string name;
             std::uint64_t config;
             auto extended_config = 0ULL;
+            auto type = std::uint32_t{PERF_TYPE_RAW};
             if (std::getline(line_stream, name, ','))
             {
                 std::string config_str;
@@ -107,11 +108,17 @@ void perf::CounterDefinition::read_counter_configuration(const std::string &conf
                     if (std::getline(line_stream, extended_config_str, ','))
                     {
                         extended_config = std::stoull(extended_config_str, nullptr, 0);
+
+                        std::string type_str;
+                        if (std::getline(line_stream, type_str, ','))
+                        {
+                            type = std::stoul(type_str, nullptr, 0);
+                        }
                     }
 
                     if (!name.empty() && config > 0ULL)
                     {
-                        this->_counter_configs.insert(std::make_pair(std::move(name), CounterConfig{PERF_TYPE_RAW, config, extended_config}));
+                        this->_counter_configs.insert(std::make_pair(std::move(name), CounterConfig{type, config, extended_config}));
                     }
                 }
             }
