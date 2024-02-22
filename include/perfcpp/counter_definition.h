@@ -57,11 +57,12 @@ public:
         return nullptr;
     }
 
+    void read_counter_configuration(const std::string& config_file);
+
 private:
     std::unordered_map<std::string, CounterConfig> _counter_configs;
     std::unordered_map<std::string, std::unique_ptr<Metric>> _metrics;
 
     void initialized_default_counters();
-    void read_counter_configs(const std::string& config_file);
 };
 }

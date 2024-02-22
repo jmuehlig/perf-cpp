@@ -6,7 +6,7 @@
 perf::CounterDefinition::CounterDefinition(const std::string &config_file)
 {
     this->initialized_default_counters();
-    this->read_counter_configs(config_file);
+    this->read_counter_configuration(config_file);
 }
 
 perf::CounterDefinition::CounterDefinition()
@@ -79,7 +79,7 @@ void perf::CounterDefinition::initialized_default_counters()
     this->add(std::make_unique<L1DataMissRatio>());
 }
 
-void perf::CounterDefinition::read_counter_configs(const std::string &config_file)
+void perf::CounterDefinition::read_counter_configuration(const std::string &config_file)
 {
     /// Read all counter values from the config file in the format
     ///     name,<config>[,<extended config>]
