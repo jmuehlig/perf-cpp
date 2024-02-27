@@ -29,6 +29,7 @@ public:
         DataSource = PERF_SAMPLE_DATA_SRC,
         Identifier = PERF_SAMPLE_IDENTIFIER,
         PhysicalMemAddress = PERF_SAMPLE_PHYS_ADDR,
+        WeightStruct = PERF_SAMPLE_WEIGHT_STRUCT,
     };
 
     /**
