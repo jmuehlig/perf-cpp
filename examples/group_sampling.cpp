@@ -28,7 +28,7 @@ int main()
     auto counter_definitions = perf::CounterDefinition{};
     counter_definitions.add("retired_ops", perf::CounterConfig{11, (1ULL<<19)});
     auto perf_config = perf::SampleConfig{};
-    perf_config.precise_ip(1U); /// See https://man7.org/linux/man-pages/man2/perf_event_open.2.html ; may depend on hardware.
+    perf_config.precise_ip(0U); /// See https://man7.org/linux/man-pages/man2/perf_event_open.2.html ; may depend on hardware.
     perf_config.period(1000U);
 
     auto sampler = perf::Sampler{
@@ -61,6 +61,7 @@ int main()
         {
             std::uint64_t value;
             std::uint64_t id;
+            std::uint64_t lost;
         };
 
         std::uint64_t timestamp;

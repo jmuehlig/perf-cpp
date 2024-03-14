@@ -51,6 +51,7 @@ bool perf::Sampler::open()
         perf_event.exclude_user = static_cast<std::int32_t>(!this->_config.is_include_user());
         perf_event.exclude_hv = static_cast<std::int32_t>(!this->_config.is_include_hypervisor());
         perf_event.exclude_idle = static_cast<std::int32_t>(!this->_config.is_include_idle());
+        perf_event.exclude_guest = static_cast<std::int32_t>(!this->_config.is_include_guest());
 
         if (is_leader)
         {
@@ -72,7 +73,7 @@ bool perf::Sampler::open()
 
         if (this->_sample_type & static_cast<std::uint64_t>(Type::CounterValues))
         {
-            perf_event.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
+            perf_event.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID | PERF_FORMAT_LOST;
         }
 
         /// Open the counter.

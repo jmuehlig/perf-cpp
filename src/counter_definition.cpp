@@ -116,7 +116,7 @@ void perf::CounterDefinition::read_counter_configuration(const std::string &conf
                         }
                     }
 
-                    if (!name.empty() && config > 0ULL)
+                    if (!name.empty())
                     {
                         this->_counter_configs.insert(std::make_pair(std::move(name), CounterConfig{type, config, extended_config}));
                     }

@@ -18,6 +18,7 @@ public:
     [[nodiscard]] bool is_include_user() const noexcept { return _is_include_user; }
     [[nodiscard]] bool is_include_hypervisor() const noexcept { return _is_include_hypervisor; }
     [[nodiscard]] bool is_include_idle() const noexcept { return _is_include_idle; }
+    [[nodiscard]] bool is_include_guest() const noexcept { return _is_include_guest; }
 
     void max_groups(const std::uint8_t max_groups) noexcept { _max_groups = max_groups; }
     void max_counters_per_group(const std::uint8_t max_counters_per_group) noexcept { _max_counters_per_group = max_counters_per_group; }
@@ -27,6 +28,7 @@ public:
     void include_user(const bool is_include_user) noexcept { _is_include_user = is_include_user; }
     void include_hypervisor(const bool is_include_hypervisor) noexcept { _is_include_hypervisor = is_include_hypervisor; }
     void include_idle(const bool is_include_idle) noexcept { _is_include_idle = is_include_idle; }
+    void include_guest(const bool is_include_guest) noexcept { _is_include_guest = is_include_guest; }
 private:
     std::uint8_t _max_groups { 5U };
     std::uint8_t _max_counters_per_group { 4U };
@@ -36,6 +38,7 @@ private:
     bool _is_include_user {true};
     bool _is_include_hypervisor {true};
     bool _is_include_idle {true};
+    bool _is_include_guest {true};
 };
 
 class SampleConfig : public Config

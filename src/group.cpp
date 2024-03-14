@@ -33,6 +33,7 @@ bool perf::Group::open(const perf::Config config)
         perf_event.exclude_user = static_cast<std::int32_t>(!config.is_include_user());
         perf_event.exclude_hv = static_cast<std::int32_t>(!config.is_include_hypervisor());
         perf_event.exclude_idle = static_cast<std::int32_t>(!config.is_include_idle());
+        perf_event.exclude_guest = static_cast<std::int32_t>(!config.is_include_guest());
 
         if (is_leader)
         {
