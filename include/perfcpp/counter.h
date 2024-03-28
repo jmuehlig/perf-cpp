@@ -43,6 +43,9 @@ public:
 
     ~CounterResult() = default;
 
+    CounterResult& operator=(CounterResult&&) noexcept = default;
+    CounterResult& operator=(const CounterResult&) = default;
+
     /**
      * Access the result of the counter or metric with the given name.
      *
