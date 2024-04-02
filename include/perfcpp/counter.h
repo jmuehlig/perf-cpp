@@ -37,6 +37,8 @@ public:
     using const_iterator = std::vector<std::pair<std::string, double>>::const_iterator;
 
     CounterResult() = default;
+    CounterResult(CounterResult&&) noexcept = default;
+    CounterResult(const CounterResult&) = default;
     explicit CounterResult(std::vector<std::pair<std::string, double>>&& results) noexcept : _results(std::move(results))
     {
     }
