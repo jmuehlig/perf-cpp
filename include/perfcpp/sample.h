@@ -82,6 +82,43 @@ private:
     std::uint64_t _data_source;
 };
 
+class Branch
+{
+public:
+    Branch(const std::uintptr_t instruction_pointer_from, const std::uintptr_t instruction_pointer_to,
+           const bool is_mispredicted, const bool is_predicted, const bool is_in_transaction,
+           const bool is_transaction_abort, const std::uint16_t cycles)
+            : _instruction_pointer_from(instruction_pointer_from),
+              _instruction_pointer_to(instruction_pointer_to),
+              _is_mispredicted(is_mispredicted),
+              _is_predicted(is_predicted),
+              _is_in_transaction(is_in_transaction),
+              _is_transaction_abort(is_transaction_abort),
+              _cycles(cycles)
+    {
+        // Constructor body (if needed for further initialization)
+    }
+
+    [[nodiscard]] std::uintptr_t instruction_pointer_from() const noexcept { return _instruction_pointer_from; }
+    [[nodiscard]] std::uintptr_t instruction_pointer_to() const noexcept { return _instruction_pointer_to; }
+    [[nodiscard]] bool is_mispredicted() const noexcept { return _is_mispredicted; }
+    [[nodiscard]] bool is_predicted() const noexcept { return _is_predicted; }
+    [[nodiscard]] bool is_in_transaction() const noexcept { return _is_in_transaction; }
+    [[nodiscard]] bool is_transaction_abort() const noexcept { return _is_transaction_abort; }
+    [[nodiscard]] std::uint16_t cycles() const noexcept { return _cycles; }
+private:
+    std::uintptr_t _instruction_pointer_from;
+    std::uintptr_t _instruction_pointer_to;
+    bool _is_mispredicted;
+    bool _is_predicted;
+    bool _is_in_transaction;
+    bool _is_transaction_abort;
+    std::uint16_t _cycles;
+
+
+
+};
+
 class Sample
 {
 public:
@@ -110,6 +147,7 @@ public:
     void period(const std::uint64_t period) noexcept { _period = period; }
     void data_src(const DataSource data_src) noexcept { _data_src = data_src; }
     void weight(const std::uint64_t weight) noexcept { _weight = weight; }
+    void branches(std::vector<Branch>&& branches) noexcept { _branches = std::move(branches); }
 
     [[nodiscard]] Mode mode() const noexcept { return _mode; }
     [[nodiscard]] std::optional<std::uint64_t> sample_id() const noexcept { return _sample_id; }
@@ -124,6 +162,8 @@ public:
     [[nodiscard]] std::optional<std::uint64_t> period() const noexcept { return _period; }
     [[nodiscard]] std::optional<DataSource> data_src() const noexcept { return _data_src; }
     [[nodiscard]] std::optional<std::uint64_t> weight() const noexcept { return _weight; }
+    [[nodiscard]] const std::optional<std::vector<Branch>>& branches() const noexcept { return _branches; }
+    [[nodiscard]] std::optional<std::vector<Branch>>& branches() noexcept { return _branches; }
 private:
     Mode _mode;
     std::optional<std::uint64_t> _sample_id {std::nullopt};
@@ -138,5 +178,6 @@ private:
     std::optional<std::uint64_t> _period {std::nullopt};
     std::optional<DataSource> _data_src {std::nullopt};
     std::optional<std::uint64_t> _weight {std::nullopt};
+    std::optional<std::vector<Branch>> _branches {std::nullopt};
 };
 }

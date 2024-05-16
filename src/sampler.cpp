@@ -53,6 +53,7 @@ bool perf::Sampler::open()
         perf_event.exclude_idle = static_cast<std::int32_t>(!this->_config.is_include_idle());
         perf_event.exclude_guest = static_cast<std::int32_t>(!this->_config.is_include_guest());
 
+
         if (is_leader)
         {
             perf_event.sample_type = this->_sample_type;
@@ -65,6 +66,14 @@ bool perf::Sampler::open()
             else
             {
                 perf_event.sample_period = this->_config.frequency_or_period();
+            }
+
+            if (this->_sample_type & Sampler::Type::BranchStack)
+            {
+                perf_event.branch_sample_type = PERF_SAMPLE_BRANCH_PLM_ALL | PERF_SAMPLE_BRANCH_ANY;
+//                perf_event.mmap2 = 1U;
+//                perf_event.comm_exec = 1U;
+//                perf_event.ksymbol = 1U;
             }
 
             perf_event.mmap = 1U;
@@ -214,6 +223,27 @@ std::vector<perf::Sample> perf::Sampler::result() const
             {
                 sample.cpu_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
                 sample_ptr += sizeof(std::uint64_t);
+            }
+
+            if (this->_sample_type & perf::Sampler::BranchStack)
+            {
+                const auto count_branches = *reinterpret_cast<std::uint64_t*>(sample_ptr);
+                sample_ptr += sizeof(std::uint64_t);
+
+                if (count_branches > 0U)
+                {
+                    auto branches = std::vector<Branch>{};
+                    branches.reserve(count_branches);
+
+                    auto *sampled_branches = reinterpret_cast<perf_branch_entry*>(sample_ptr);
+                    for (auto i = 0U; i < count_branches; ++i)
+                    {
+                        const auto& branch = sampled_branches[i];
+                        branches.emplace_back(branch.from, branch.to, branch.mispred, branch.predicted, branch.in_tx, branch.abort, branch.cycles);
+                    }
+                }
+
+                sample_ptr += sizeof(perf_branch_entry) * count_branches;
             }
 
             if (this->_sample_type & perf::Sampler::Type::Weight)
