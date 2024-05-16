@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <algorithm>
 #include <unordered_map>
 #include <memory>
 #include "counter.h"
@@ -17,6 +18,7 @@ public:
     explicit CounterDefinition(std::string&& config_file) : CounterDefinition(config_file) { }
     CounterDefinition();
 
+    CounterDefinition(CounterDefinition&&) noexcept = default;
     CounterDefinition& operator=(CounterDefinition&&) noexcept = default;
 
     ~CounterDefinition() = default;
@@ -55,6 +57,13 @@ public:
         }
 
         return nullptr;
+    }
+
+    [[nodiscard]] std::vector<std::string> names() const
+    {
+        auto names = std::vector<std::string>{};
+        std::transform(_counter_configs.begin(), _counter_configs.end(), std::back_inserter(names), [](const auto& config) { return config.first; });
+        return names;
     }
 
     void read_counter_configuration(const std::string& config_file);
