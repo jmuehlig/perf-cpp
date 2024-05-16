@@ -1,0 +1,142 @@
+#pragma once
+
+#include <cstdint>
+#include <optional>
+#include <linux/perf_event.h>
+
+namespace perf
+{
+class DataSource
+{
+public:
+    DataSource(const std::uint64_t data_source) noexcept : _data_source(data_source) { }
+    ~DataSource() noexcept = default;
+
+    [[nodiscard]] bool is_load() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_op & PERF_MEM_OP_LOAD);
+    }
+    [[nodiscard]] bool is_store() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_op & PERF_MEM_OP_STORE);
+    }
+    [[nodiscard]] bool is_prefetch() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_op & PERF_MEM_OP_PFETCH);
+    }
+    [[nodiscard]] bool is_exec() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_op & PERF_MEM_OP_EXEC);
+    }
+    [[nodiscard]] bool is_na() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_op & PERF_MEM_OP_NA);
+    }
+
+    [[nodiscard]] bool is_mem_hit() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_lvl & PERF_MEM_LVL_HIT);
+    }
+    [[nodiscard]] bool is_mem_miss() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_lvl & PERF_MEM_LVL_MISS);
+    }
+    [[nodiscard]] bool is_mem_l1() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_lvl & PERF_MEM_LVL_L1);
+    }
+    [[nodiscard]] bool is_mem_lfb() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_lvl & PERF_MEM_LVL_LFB);
+    }
+    [[nodiscard]] bool is_mem_l2() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_lvl & PERF_MEM_LVL_L2);
+    }
+    [[nodiscard]] bool is_mem_l3() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_lvl & PERF_MEM_LVL_L3);
+    }
+    [[nodiscard]] bool is_mem_local_ram() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_lvl & PERF_MEM_LVL_LOC_RAM);
+    }
+    [[nodiscard]] bool is_mem_remote_ram1() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_lvl & PERF_MEM_LVL_REM_RAM1);
+    }
+    [[nodiscard]] bool is_mem_remote_ram2() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_lvl & PERF_MEM_LVL_REM_RAM2);
+    }
+    [[nodiscard]] bool is_mem_remote_cce1() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_lvl & PERF_MEM_LVL_REM_CCE1);
+    }
+    [[nodiscard]] bool is_mem_remote_cce2() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_lvl & PERF_MEM_LVL_REM_CCE2);
+    }
+
+    [[nodiscard]] bool is_tlb_hit() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_dtlb & PERF_MEM_TLB_HIT);
+    }
+    [[nodiscard]] bool is_tlb_miss() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_dtlb & PERF_MEM_TLB_MISS);
+    }
+    [[nodiscard]] bool is_tlb_l1() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_dtlb & PERF_MEM_TLB_L1);
+    }
+    [[nodiscard]] bool is_tlb_l2() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_dtlb & PERF_MEM_TLB_L2);
+    }
+    [[nodiscard]] bool is_tlb_walk() const noexcept {
+        return static_cast<bool>(reinterpret_cast<const perf_mem_data_src *>(&_data_source)->mem_dtlb & PERF_MEM_TLB_WK);
+    }
+
+private:
+    std::uint64_t _data_source;
+};
+
+class Sample
+{
+public:
+    enum Mode
+    {
+        Unknown,
+        Kernel,
+        User,
+        Hypervisor,
+        GuestKernel,
+        GuestUser
+    };
+
+    Sample(Mode mode) noexcept : _mode(mode) { }
+    ~Sample() noexcept = default;
+
+    void sample_id(const std::uint64_t sample_id) noexcept { _sample_id = sample_id; }
+    void instruction_pointer(const std::uintptr_t instruction_pointer) noexcept { _instruction_pointer = instruction_pointer; }
+    void process_id(const std::uint32_t process_id) noexcept { _process_id = process_id; }
+    void thread_id(const std::uint32_t thread_id) noexcept { _thread_id = thread_id; }
+    void timestamp(const std::uint64_t timestamp) noexcept { _timestamp = timestamp; }
+    void logical_memory_address(const std::uintptr_t logical_memory_address) noexcept { _logical_memory_address = logical_memory_address; }
+    void physical_memory_address(const std::uintptr_t physical_memory_address) noexcept { _physical_memory_address = physical_memory_address; }
+    void id(const std::uint64_t id) noexcept { _id = id; }
+    void cpu_id(const std::uint32_t cpu_id) noexcept { _cpu_id = cpu_id; }
+    void period(const std::uint64_t period) noexcept { _period = period; }
+    void data_src(const DataSource data_src) noexcept { _data_src = data_src; }
+    void weight(const std::uint64_t weight) noexcept { _weight = weight; }
+
+    [[nodiscard]] Mode mode() const noexcept { return _mode; }
+    [[nodiscard]] std::optional<std::uint64_t> sample_id() const noexcept { return _sample_id; }
+    [[nodiscard]] std::optional<std::uintptr_t> instruction_pointer() const noexcept { return _instruction_pointer; }
+    [[nodiscard]] std::optional<std::uint32_t> process_id() const noexcept { return _process_id; }
+    [[nodiscard]] std::optional<std::uint32_t> thread_id() const noexcept { return _thread_id; }
+    [[nodiscard]] std::optional<std::uint64_t> timestamp() const noexcept { return _timestamp; }
+    [[nodiscard]] std::optional<std::uintptr_t> logical_memory_address() const noexcept { return _logical_memory_address; }
+    [[nodiscard]] std::optional<std::uintptr_t> physical_memory_address() const noexcept { return _physical_memory_address; }
+    [[nodiscard]] std::optional<std::uint64_t> id() const noexcept { return _id; }
+    [[nodiscard]] std::optional<std::uint32_t> cpu_id() const noexcept { return _cpu_id; }
+    [[nodiscard]] std::optional<std::uint64_t> period() const noexcept { return _period; }
+    [[nodiscard]] std::optional<DataSource> data_src() const noexcept { return _data_src; }
+    [[nodiscard]] std::optional<std::uint64_t> weight() const noexcept { return _weight; }
+private:
+    Mode _mode;
+    std::optional<std::uint64_t> _sample_id {std::nullopt};
+    std::optional<std::uintptr_t> _instruction_pointer {std::nullopt};
+    std::optional<std::uint32_t> _process_id {std::nullopt};
+    std::optional<std::uint32_t> _thread_id {std::nullopt};
+    std::optional<std::uint64_t> _timestamp {std::nullopt};
+    std::optional<std::uintptr_t> _logical_memory_address {std::nullopt};
+    std::optional<std::uintptr_t> _physical_memory_address {std::nullopt};
+    std::optional<std::uint64_t> _id {std::nullopt};
+    std::optional<std::uint32_t> _cpu_id {std::nullopt};
+    std::optional<std::uint64_t> _period {std::nullopt};
+    std::optional<DataSource> _data_src {std::nullopt};
+    std::optional<std::uint64_t> _weight {std::nullopt};
+};
+}

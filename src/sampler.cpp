@@ -126,15 +126,18 @@ void perf::Sampler::close()
     ::close(this->_group.leader_file_descriptor());
 }
 
-void perf::Sampler::for_each_sample(std::function<void(void*, SampleMode)> &&callback)
+std::vector<perf::Sample> perf::Sampler::result() const
 {
+    auto result = std::vector<Sample>{};
     auto *mmap_page = reinterpret_cast<perf_event_mmap_page *>(this->_buffer);
 
     /// When the ringbuffer is empty or already read, there is nothing to do.
     if (mmap_page->data_tail >= mmap_page->data_head)
     {
-        return;
+        return result;
     }
+
+    result.reserve(2048U);
 
     /// The buffer starts at page 1 (from 0).
     auto iterator = std::uintptr_t(this->_buffer) + 4096U;
@@ -148,32 +151,100 @@ void perf::Sampler::for_each_sample(std::function<void(void*, SampleMode)> &&cal
 
         if (event_header->type == PERF_RECORD_SAMPLE)
         {
-            auto sample_type = SampleMode::Unknown;
+            auto mode = Sample::Mode::Unknown;
             if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_KERNEL))
             {
-                sample_type = SampleMode::Kernel;
+                mode = Sample::Mode::Kernel;
             }
             else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_USER))
             {
-                sample_type = SampleMode::User;
+                mode = Sample::Mode::User;
             }
             else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_HYPERVISOR))
             {
-                sample_type = SampleMode::Hypervisor;
+                mode = Sample::Mode::Hypervisor;
             }
             else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_GUEST_KERNEL))
             {
-                sample_type = SampleMode::GuestKernel;
+                mode = Sample::Mode::GuestKernel;
             }
             else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_GUEST_USER))
             {
-                sample_type = SampleMode::GuestUser;
+                mode = Sample::Mode::GuestUser;
             }
 
-            callback(reinterpret_cast<void*>(event_header + 1U), sample_type);
+            auto sample = Sample{mode};
+
+            auto sample_ptr = std::uintptr_t(reinterpret_cast<void*>(event_header + 1U));
+
+            if (this->_sample_type & perf::Sampler::Type::Identifier)
+            {
+                sample.sample_id(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+                sample_ptr += sizeof(std::uint64_t);
+            }
+
+            if (this->_sample_type & perf::Sampler::Type::InstructionPointer)
+            {
+                sample.instruction_pointer(*reinterpret_cast<std::uintptr_t*>(sample_ptr));
+                sample_ptr += sizeof(std::uintptr_t);
+            }
+
+            if (this->_sample_type & perf::Sampler::Type::ThreadId)
+            {
+                sample.process_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
+                sample_ptr += sizeof(std::uint32_t);
+
+                sample.thread_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
+                sample_ptr += sizeof(std::uint32_t);
+            }
+
+            if (this->_sample_type & perf::Sampler::Type::Timestamp)
+            {
+                sample.timestamp(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+                sample_ptr += sizeof(std::uint64_t);
+            }
+
+            if (this->_sample_type & perf::Sampler::Type::LogicalMemAddress)
+            {
+                sample.logical_memory_address(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+                sample_ptr += sizeof(std::uint64_t);
+            }
+
+            if (this->_sample_type & perf::Sampler::Type::CPU)
+            {
+                sample.cpu_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
+                sample_ptr += sizeof(std::uint64_t);
+            }
+
+            if (this->_sample_type & perf::Sampler::Type::Weight)
+            {
+                sample.weight(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+                sample_ptr += sizeof(std::uint64_t);
+            }
+
+            if (this->_sample_type & perf::Sampler::Type::WeightStruct)
+            {
+                sample.weight(reinterpret_cast<perf_sample_weight*>(sample_ptr)->full);
+                sample_ptr += sizeof(std::uint64_t);
+            }
+
+            if (this->_sample_type & perf::Sampler::Type::DataSource)
+            {
+                sample.data_src(perf::DataSource{*reinterpret_cast<std::uint64_t*>(sample_ptr)});
+                sample_ptr += sizeof(std::uint64_t);
+            }
+
+            if (this->_sample_type & perf::Sampler::Type::PhysicalMemAddress)
+            {
+                sample.physical_memory_address(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+            }
+
+            result.push_back(sample);
         }
 
         /// Go to the next sample.
         iterator += event_header->size;
     }
+
+    return result;
 }

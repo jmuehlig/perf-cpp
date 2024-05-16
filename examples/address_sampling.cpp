@@ -50,20 +50,13 @@ int main()
     sampler.stop();
 
     /// Print the performance counters.
-    sampler.for_each_sample([](auto* event_addr, perf::Sampler::SampleMode /*type*/) {
-
-        /// See PERF_RECORD_SAMPLE from https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-        struct Event
+    for (auto& sample : sampler.result())
+    {
+        if (sample.logical_memory_address().value_or(0U) > 0U)
         {
-            std::uint64_t addr;
-        };
-
-        auto *event = reinterpret_cast<Event*>(event_addr);
-        if (event->addr > 0U)
-        {
-            std::cout << event->addr <<  std::endl;
+            std::cout << sample.logical_memory_address().value() <<  std::endl;
         }
-    });
+    }
 
     sampler.close();
 

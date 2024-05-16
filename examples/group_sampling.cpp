@@ -12,7 +12,7 @@ int main()
 {
     /// Create data to process: Allocate enough cache lines for 256 MB.
     auto cache_lines = std::vector<cache_line>{};
-    cache_lines.resize((1024U * 1024U * 256U) / sizeof(cache_line));
+    cache_lines.resize((1024U * 1024U * 1024U) / sizeof(cache_line));
     for (auto i = 0U; i < cache_lines.size(); ++i)
     {
         cache_lines[i].value = i;
@@ -55,105 +55,68 @@ int main()
     /// Stop recording counters.
     sampler.stop();
 
-    struct Event
-    {
-        struct value
-        {
-            std::uint64_t value;
-            std::uint64_t id;
-            std::uint64_t lost;
-        };
-
-        std::uint64_t timestamp;
-
-        std::uint32_t cpu_id;
-        std::uint32_t res;
-/*
-        std::uint64_t count_members;
-        value l1_dcache_loads;
-        value cycles;
-        value l1_dcache_load_misses;
-*/
-        std::uint64_t data_source;
-    };
-
     /// Print the performance counters.
-    auto last_loads = 0UL;
-    auto last_misses = 0UL;
     auto first_time = 0UL;
-    sampler.for_each_sample([&last_loads, &last_misses, &first_time](auto* event_addr, perf::Sampler::SampleMode type) {
-        /// See PERF_RECORD_SAMPLE from https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-        auto *event = reinterpret_cast<Event*>(event_addr);
 
-        if (first_time == 0UL)
+    for (auto& sample : sampler.result())
+    {
+        if (first_time == 0UL && sample.timestamp().has_value())
         {
-            first_time = event->timestamp;
+            first_time = sample.timestamp().value();
         }
 
         auto data_source = "unknown";
-        if (event->data_source & PERF_MEM_OP_LOAD)
-        {
-            data_source = "load";
-        }
-        else if (event->data_source & PERF_MEM_OP_STORE)
-        {
-            data_source = "store";
-        }
-        else if (event->data_source & PERF_MEM_OP_EXEC)
-        {
-            data_source = "exec";
-        }
-        else if (event->data_source & PERF_MEM_OP_PFETCH)
-        {
-            data_source = "pref";
-        }
-
         auto mem_level = "unknown";
-        if (event->data_source & (PERF_MEM_LVL_L1 << PERF_MEM_LVL_SHIFT))
+        if (sample.data_src().has_value())
         {
-            mem_level = "L1";
-        }
-        else if (event->data_source & (PERF_MEM_LVL_L2 << PERF_MEM_LVL_SHIFT))
-        {
-            mem_level = "L2";
-        }
-        else if (event->data_source & (PERF_MEM_LVL_L3 << PERF_MEM_LVL_SHIFT))
-        {
-            mem_level = "L3";
-        }
-        else if (event->data_source & (PERF_MEM_LVL_LFB << PERF_MEM_LVL_SHIFT))
-        {
-            mem_level = "LFB";
-        }
-        else if (event->data_source & (PERF_MEM_LVL_LOC_RAM << PERF_MEM_LVL_SHIFT))
-        {
-            mem_level = "RAM";
+            if (sample.data_src()->is_load())
+            {
+                data_source = "load";
+            }
+            else if (sample.data_src()->is_store())
+            {
+                data_source = "store";
+            }
+            else if (sample.data_src()->is_exec())
+            {
+                data_source = "exec";
+            }
+            else if (sample.data_src()->is_prefetch())
+            {
+                data_source = "pref";
+            }
+
+            if (sample.data_src()->is_mem_l1())
+            {
+                mem_level = "L1";
+            }
+            else if (sample.data_src()->is_mem_l2())
+            {
+                mem_level = "L2";
+            }
+            else if (sample.data_src()->is_mem_l3())
+            {
+                mem_level = "L3";
+            }
+            else if (sample.data_src()->is_mem_lfb())
+            {
+                mem_level = "LFB";
+            }
+            else if (sample.data_src()->is_mem_local_ram())
+            {
+                mem_level = "RAM";
+            }
         }
 
-        /*
-        if (type == perf::Sampler::SampleMode::User)
+        if (sample.mode() == perf::Sample::Mode::User)
         {
-            std::cout << "[User]   CPU: " << event->cpu_id << " / " << "Time: " << event->timestamp - first_time << " / " << event->cycles.value << " / "  << event->l1_dcache_loads.value - last_loads << " / " << event->l1_dcache_load_misses.value - last_misses << " / " << data_source << std::endl;
+            std::cout << "[User]   CPU: " << sample.cpu_id().value_or(0U) << " / " << "Time: " << sample.timestamp().value_or(0U) - first_time << " / "  << data_source << " / " << mem_level << std::endl;
         }
-        else if (type == perf::Sampler::SampleMode::Kernel)
+        else if (sample.mode() == perf::Sample::Mode::Kernel)
         {
-            std::cout << "[Kernel] CPU: " << event->cpu_id << " / " << "Time: " << event->timestamp - first_time << " / " << event->cycles.value << " / "  << event->l1_dcache_loads.value - last_loads << " / " << event->l1_dcache_load_misses.value - last_misses  << " / " << data_source << std::endl;
+            std::cout << "[Kernel]   CPU: " << sample.cpu_id().value_or(0U) << " / " << "Time: " << sample.timestamp().value_or(0U) - first_time << " / "  << data_source << " / " << mem_level << std::endl;
         }
-         */
-
-        if (type == perf::Sampler::SampleMode::User)
-        {
-            std::cout << "[User]   CPU: " << event->cpu_id << " / " << "Time: " << event->timestamp - first_time << " / " << event->data_source << " / "  << data_source << " / " << mem_level << std::endl;
-        }
-        else if (type == perf::Sampler::SampleMode::Kernel)
-        {
-            std::cout << "[Kernel] CPU: " << event->cpu_id << " / " << "Time: " << event->timestamp - first_time << " / " << event->data_source << " / "  << data_source << " / " << mem_level << std::endl;
-        }
-
-
-        //last_loads = event->l1_dcache_loads.value;
-        //last_misses = event->l1_dcache_load_misses.value;
-    });
+    }
 
     sampler.close();
 

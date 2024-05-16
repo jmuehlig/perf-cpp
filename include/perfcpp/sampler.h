@@ -8,6 +8,7 @@
 #include "config.h"
 #include "group.h"
 #include "counter_definition.h"
+#include "sample.h"
 
 namespace perf
 {
@@ -30,19 +31,6 @@ public:
         Identifier = PERF_SAMPLE_IDENTIFIER,
         PhysicalMemAddress = PERF_SAMPLE_PHYS_ADDR,
         WeightStruct = PERF_SAMPLE_WEIGHT_STRUCT,
-    };
-
-    /**
-     * Mode a sample was collected.
-     */
-    enum SampleMode
-    {
-        Unknown,
-        Kernel,
-        User,
-        Hypervisor,
-        GuestKernel,
-        GuestUser
     };
 
     Sampler(const CounterDefinition& counter_list, const std::string& counter_name, const std::uint64_t type, SampleConfig config = {})
@@ -79,7 +67,7 @@ public:
      */
     void close();
 
-    void for_each_sample(std::function<void(void*, SampleMode)> &&callback);
+    std::vector<Sample> result() const;
 
     [[nodiscard]] std::int64_t last_error() const noexcept { return _last_error; }
 
