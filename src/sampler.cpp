@@ -138,6 +138,11 @@ void perf::Sampler::close()
 std::vector<perf::Sample> perf::Sampler::result() const
 {
     auto result = std::vector<Sample>{};
+    if (this->_buffer == nullptr)
+    {
+        return result;
+    }
+
     auto *mmap_page = reinterpret_cast<perf_event_mmap_page *>(this->_buffer);
 
     /// When the ringbuffer is empty or already read, there is nothing to do.
