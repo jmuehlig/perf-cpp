@@ -15,7 +15,7 @@ int main()
 {
     /// Create data to process: Allocate enough cache lines for 256 MB.
     auto cache_lines = std::vector<cache_line>{};
-    cache_lines.resize((1024U * 1024U * 1024U) / sizeof(cache_line));
+    cache_lines.resize((1024U * 1024U * 256U) / sizeof(cache_line));
     for (auto i = 0U; i < cache_lines.size(); ++i)
     {
         for (auto& value : cache_lines[i]._values)
@@ -56,14 +56,71 @@ int main()
     {
         for (const auto value : cache_lines[index]._values)
         {
-            if (value % 3U == 0U)
-            {
-                values += value;
+            if (value == 1337) {
+                values += 12U * value;
             }
-
-            if (value % 5U == 0U)
-            {
-                values += 2U * value;
+            else if (value == 5654) {
+                values += value * value;
+            }
+            else if (value % 2 == 0) {
+                values += value + 10;
+            }
+            else if (value % 3 == 0) {
+                values += value / 3;
+            }
+            else if (value % 4 == 0) {
+                values += value * 4;
+            }
+            else if (value % 5 == 0) {
+                values += value - 5;
+            }
+            else if (value % 6 == 0) {
+                values += value * 6;
+            }
+            else if (value % 7 == 0) {
+                values += value / 7;
+            }
+            else if (value % 8 == 0) {
+                values += value + 8;
+            }
+            else if (value % 9 == 0) {
+                values += value * 9;
+            }
+            else if (value % 10 == 0) {
+                values += value - 10;
+            }
+            else if (value % 11 == 0) {
+                values += value / 11;
+            }
+            else if (value % 12 == 0) {
+                values += value * 12;
+            }
+            else if (value % 13 == 0) {
+                values += value - 13;
+            }
+            else if (value % 14 == 0) {
+                values += value * 14;
+            }
+            else if (value % 15 == 0) {
+                values += value / 15;
+            }
+            else if (value % 16 == 0) {
+                values += value + 16;
+            }
+            else if (value % 17 == 0) {
+                values += value * 17;
+            }
+            else if (value % 18 == 0) {
+                values += value - 18;
+            }
+            else if (value % 19 == 0) {
+                values += value / 19;
+            }
+            else if (value % 20 == 0) {
+                values += value * 20;
+            }
+            else {
+                values += value;  // Default case
             }
         }
     }

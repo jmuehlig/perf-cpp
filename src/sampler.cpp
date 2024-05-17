@@ -70,7 +70,7 @@ bool perf::Sampler::open()
 
             if (this->_sample_type & Sampler::Type::BranchStack)
             {
-                perf_event.branch_sample_type = PERF_SAMPLE_BRANCH_PLM_ALL | PERF_SAMPLE_BRANCH_ANY;
+                perf_event.branch_sample_type = PERF_SAMPLE_BRANCH_ANY;
 //                perf_event.mmap2 = 1U;
 //                perf_event.comm_exec = 1U;
 //                perf_event.ksymbol = 1U;
@@ -241,6 +241,8 @@ std::vector<perf::Sample> perf::Sampler::result() const
                         const auto& branch = sampled_branches[i];
                         branches.emplace_back(branch.from, branch.to, branch.mispred, branch.predicted, branch.in_tx, branch.abort, branch.cycles);
                     }
+
+                    sample.branches(std::move(branches));
                 }
 
                 sample_ptr += sizeof(perf_branch_entry) * count_branches;
