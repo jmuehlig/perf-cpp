@@ -13,15 +13,31 @@ add_library(perf-cpp src/counter.cpp src/group.cpp src/counter_definition.cpp sr
 
 ### Examples
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples/bin)
-add_executable(multi-thread examples/multi_thread.cpp)
-target_link_libraries(multi-thread perf-cpp)
-add_executable(inherit-thread examples/inherit_thread.cpp)
-target_link_libraries(inherit-thread perf-cpp)
-add_executable(single-thread examples/single_thread.cpp)
+
+#### Single-threaded
+add_executable(single-thread examples/single_thread.cpp examples/access_benchmark.cpp)
 target_link_libraries(single-thread perf-cpp)
-add_executable(address-sampling examples/address_sampling.cpp)
-target_link_libraries(address-sampling perf-cpp)
-add_executable(group-sampling examples/group_sampling.cpp)
-target_link_libraries(group-sampling perf-cpp)
-add_executable(branch-sampling examples/branch_sampling.cpp)
+
+#### Multi-threaded; but inherit counter from main-thread
+add_executable(inherit-thread examples/inherit_thread.cpp examples/access_benchmark.cpp)
+target_link_libraries(inherit-thread perf-cpp)
+
+#### Multi-threaded with thread-local counter
+add_executable(multi-thread examples/multi_thread.cpp examples/access_benchmark.cpp)
+target_link_libraries(multi-thread perf-cpp)
+
+#### Sampling instruction pointers
+add_executable(instruction-pointer-sampling examples/instruction_pointer_sampling.cpp examples/access_benchmark.cpp)
+target_link_libraries(instruction-pointer-sampling perf-cpp)
+
+#### Sampling instruction pointers
+add_executable(counter-sampling examples/counter_sampling.cpp examples/access_benchmark.cpp)
+target_link_libraries(counter-sampling perf-cpp)
+
+#### Branch sampling
+add_executable(branch-sampling examples/branch_sampling.cpp examples/access_benchmark.cpp)
 target_link_libraries(branch-sampling perf-cpp)
+
+#### Memory address sampling
+add_executable(address-sampling examples/address_sampling.cpp examples/access_benchmark.cpp)
+target_link_libraries(address-sampling perf-cpp)

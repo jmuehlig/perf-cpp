@@ -13,6 +13,8 @@ public:
     [[nodiscard]] std::uint8_t max_groups() const noexcept { return _max_groups; }
     [[nodiscard]] std::uint8_t max_counters_per_group() const noexcept { return _max_counters_per_group; }
 
+    [[nodiscard]] std::uint16_t max_stack() const noexcept { return _max_stack; }
+
     [[nodiscard]] bool is_include_child_threads() const noexcept { return _is_include_child_threads; }
     [[nodiscard]] bool is_include_kernel() const noexcept { return _is_include_kernel; }
     [[nodiscard]] bool is_include_user() const noexcept { return _is_include_user; }
@@ -23,6 +25,8 @@ public:
     void max_groups(const std::uint8_t max_groups) noexcept { _max_groups = max_groups; }
     void max_counters_per_group(const std::uint8_t max_counters_per_group) noexcept { _max_counters_per_group = max_counters_per_group; }
 
+    void max_stack(const std::uint16_t max_stack) noexcept { _max_stack = max_stack; }
+
     void include_child_threads(const bool is_include_child_threads) noexcept { _is_include_child_threads = is_include_child_threads; }
     void include_kernel(const bool is_include_kernel) noexcept { _is_include_kernel = is_include_kernel; }
     void include_user(const bool is_include_user) noexcept { _is_include_user = is_include_user; }
@@ -32,6 +36,8 @@ public:
 private:
     std::uint8_t _max_groups { 5U };
     std::uint8_t _max_counters_per_group { 4U };
+
+    std::uint16_t _max_stack {16U};
 
     bool _is_include_child_threads {false};
     bool _is_include_kernel {true};

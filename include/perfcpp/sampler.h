@@ -22,10 +22,12 @@ public:
     {
         InstructionPointer = PERF_SAMPLE_IP,
         ThreadId = PERF_SAMPLE_TID,
-        Timestamp = PERF_SAMPLE_TIME,
+        Time = PERF_SAMPLE_TIME,
         LogicalMemAddress = PERF_SAMPLE_ADDR,
         CounterValues = PERF_SAMPLE_READ,
+        Callchain = PERF_SAMPLE_CALLCHAIN,
         CPU = PERF_SAMPLE_CPU,
+        Period = PERF_SAMPLE_PERIOD,
         BranchStack = PERF_SAMPLE_BRANCH_STACK,
         Weight = PERF_SAMPLE_WEIGHT,
         DataSource = PERF_SAMPLE_DATA_SRC,
@@ -80,8 +82,11 @@ private:
 
     std::uint64_t _sample_type;
 
-    /// Real counter to measure.
+    /// Real counters to measure.
     class Group _group;
+
+    /// Name of the counters to measure.
+    std::vector<std::string> _counter_names;
 
     /// Buffer for the samples.
     void *_buffer {nullptr};
@@ -90,5 +95,22 @@ private:
     std::int64_t _last_error {0};
 
     [[nodiscard]] bool open();
+
+    /**
+     * Read format for sampled counter values.
+     */
+    struct read_format
+    {
+        /// Value and ID delivered by perf.
+        struct value
+        {
+            std::uint64_t value;
+            std::uint64_t id;
+        };
+
+        /// Number of counters in the following array.
+        std::uint64_t count_members;
+        std::array<value, Group::MAX_MEMBERS> values;
+    };
 };
 }

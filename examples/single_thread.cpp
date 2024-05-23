@@ -1,60 +1,51 @@
 #include <perfcpp/event_counter.h>
-#include <random>
 #include <iostream>
-#include <cstdint>
-#include <vector>
-#include <algorithm>
-#include <thread>
 
-struct alignas(64U) cache_line { std::int64_t value; };
+#include "access_benchmark.h"
 
 int main()
 {
-    /// Create data to process: Allocate enough cache lines for 256 MB.
-    auto cache_lines = std::vector<cache_line>{};
-    cache_lines.resize((1024U * 1024U * 256U) / sizeof(cache_line));
-    for (auto i = 0U; i < cache_lines.size(); ++i)
-    {
-        cache_lines[i].value = i;
-    }
-
-    /// Create a random access pattern (otherwise the hardware prefetcher will take action).
-    auto access_pattern_indices = std::vector<std::uint64_t>{};
-    access_pattern_indices.resize(cache_lines.size());
-    std::iota(access_pattern_indices.begin(), access_pattern_indices.end(), 0U);
-    std::shuffle(access_pattern_indices.begin(), access_pattern_indices.end(), std::mt19937 {std::random_device{}()});
+    std::cout << "libperf-cpp example: Record performance counter for single-threaded random access to an in-memory array." << std::endl;
 
     /// Initialize performance counters.
+    /// Note that the perf::CounterDefinition holds all counter names and must be alive until the benchmark finishes.
     auto counter_definitions = perf::CounterDefinition{};
+    auto event_counter = perf::EventCounter{counter_definitions};
 
-    auto perf = perf::EventCounter{counter_definitions};
-    if (!perf.add({"instructions", "cycles", "branches", "cache-misses", "dTLB-miss-ratio", "L1-data-miss-ratio", "cycles-per-instruction"}))
+    /// Add all the performance counters we want to record.
+    if (!event_counter.add({"instructions", "cycles", "branches", "cache-misses", "dTLB-miss-ratio", "L1-data-miss-ratio", "cycles-per-instruction"}))
     {
         std::cerr << "Could not add performance counters." << std::endl;
     }
 
+    /// Create random access benchmark.
+    auto benchmark = perf::example::AccessBenchmark{/*randomize the accesses*/ true, /* create benchmark of 512 MB */ 512U};
+
     /// Start recording.
-    if (!perf.start())
+    if (!event_counter.start())
     {
         std::cerr << "Could not start performance counters." << std::endl;
     }
 
-    /// Process the data and force the value to be not optimized away by the compiler.
-    auto value = 0U;
-    for (const auto index : access_pattern_indices)
+    /// Execute the benchmark (accessing cache lines in a random order).
+    auto value = 0ULL;
+    for (auto index = 0U; index < benchmark.size(); ++index)
     {
-        value += cache_lines[index].value;
+        value += benchmark[index].value;
     }
-    asm volatile("" : "+r,m"(value) : : "memory");
+    asm volatile("" : "+r,m"(value) : : "memory"); /// We do not want the compiler to optimize away this unused value.
 
     /// Stop recording counters.
-    perf.stop();
-    const auto result = perf.result(cache_lines.size());
+    event_counter.stop();
+
+    /// Get the result (normalized per cache line).
+    const auto result = event_counter.result(benchmark.size());
 
     /// Print the performance counters.
+    std::cout << "\nHere are the results:\n" << std::endl;
     for (const auto& [name, value] : result)
     {
-        std::cout << value  << " " << name  << std::endl;
+        std::cout << value  << " " << name << " per cache line"  << std::endl;
     }
 
     return 0;

@@ -35,6 +35,8 @@ namespace perf
 
         [[nodiscard]] Counter& member(const std::size_t index) { return _members[index]; }
 
+        [[nodiscard]] const Counter& member(const std::size_t index) const { return _members[index]; }
+
         [[nodiscard]] std::vector<Counter>& members() { return _members; }
     private:
         struct read_format

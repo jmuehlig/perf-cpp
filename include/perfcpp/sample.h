@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <optional>
+#include "counter.h"
 #include <linux/perf_event.h>
 
 namespace perf
@@ -139,45 +140,53 @@ public:
     void instruction_pointer(const std::uintptr_t instruction_pointer) noexcept { _instruction_pointer = instruction_pointer; }
     void process_id(const std::uint32_t process_id) noexcept { _process_id = process_id; }
     void thread_id(const std::uint32_t thread_id) noexcept { _thread_id = thread_id; }
-    void timestamp(const std::uint64_t timestamp) noexcept { _timestamp = timestamp; }
+    void timestamp(const std::uint64_t timestamp) noexcept { _time = timestamp; }
     void logical_memory_address(const std::uintptr_t logical_memory_address) noexcept { _logical_memory_address = logical_memory_address; }
     void physical_memory_address(const std::uintptr_t physical_memory_address) noexcept { _physical_memory_address = physical_memory_address; }
     void id(const std::uint64_t id) noexcept { _id = id; }
     void cpu_id(const std::uint32_t cpu_id) noexcept { _cpu_id = cpu_id; }
     void period(const std::uint64_t period) noexcept { _period = period; }
+    void counter_result(CounterResult&& counter_result) noexcept { _counter_result = std::move(counter_result); }
     void data_src(const DataSource data_src) noexcept { _data_src = data_src; }
     void weight(const std::uint64_t weight) noexcept { _weight = weight; }
     void branches(std::vector<Branch>&& branches) noexcept { _branches = std::move(branches); }
+    void callchain(std::vector<std::uintptr_t>&& callchain) noexcept { _callchain = std::move(callchain); }
 
     [[nodiscard]] Mode mode() const noexcept { return _mode; }
     [[nodiscard]] std::optional<std::uint64_t> sample_id() const noexcept { return _sample_id; }
     [[nodiscard]] std::optional<std::uintptr_t> instruction_pointer() const noexcept { return _instruction_pointer; }
     [[nodiscard]] std::optional<std::uint32_t> process_id() const noexcept { return _process_id; }
     [[nodiscard]] std::optional<std::uint32_t> thread_id() const noexcept { return _thread_id; }
-    [[nodiscard]] std::optional<std::uint64_t> timestamp() const noexcept { return _timestamp; }
+    [[nodiscard]] std::optional<std::uint64_t> time() const noexcept { return _time; }
     [[nodiscard]] std::optional<std::uintptr_t> logical_memory_address() const noexcept { return _logical_memory_address; }
     [[nodiscard]] std::optional<std::uintptr_t> physical_memory_address() const noexcept { return _physical_memory_address; }
     [[nodiscard]] std::optional<std::uint64_t> id() const noexcept { return _id; }
     [[nodiscard]] std::optional<std::uint32_t> cpu_id() const noexcept { return _cpu_id; }
     [[nodiscard]] std::optional<std::uint64_t> period() const noexcept { return _period; }
+    [[nodiscard]] const std::optional<CounterResult>& counter_result() const noexcept { return _counter_result; }
     [[nodiscard]] std::optional<DataSource> data_src() const noexcept { return _data_src; }
     [[nodiscard]] std::optional<std::uint64_t> weight() const noexcept { return _weight; }
     [[nodiscard]] const std::optional<std::vector<Branch>>& branches() const noexcept { return _branches; }
     [[nodiscard]] std::optional<std::vector<Branch>>& branches() noexcept { return _branches; }
+    [[nodiscard]] const std::optional<std::vector<std::uintptr_t>>& callchain() const noexcept { return _callchain; }
+    [[nodiscard]] std::optional<std::vector<std::uintptr_t>>& callchain() noexcept { return _callchain; }
+
 private:
     Mode _mode;
     std::optional<std::uint64_t> _sample_id {std::nullopt};
     std::optional<std::uintptr_t> _instruction_pointer {std::nullopt};
     std::optional<std::uint32_t> _process_id {std::nullopt};
     std::optional<std::uint32_t> _thread_id {std::nullopt};
-    std::optional<std::uint64_t> _timestamp {std::nullopt};
+    std::optional<std::uint64_t> _time {std::nullopt};
     std::optional<std::uintptr_t> _logical_memory_address {std::nullopt};
     std::optional<std::uintptr_t> _physical_memory_address {std::nullopt};
     std::optional<std::uint64_t> _id {std::nullopt};
     std::optional<std::uint32_t> _cpu_id {std::nullopt};
     std::optional<std::uint64_t> _period {std::nullopt};
+    std::optional<CounterResult> _counter_result {std::nullopt};
     std::optional<DataSource> _data_src {std::nullopt};
     std::optional<std::uint64_t> _weight {std::nullopt};
     std::optional<std::vector<Branch>> _branches {std::nullopt};
+    std::optional<std::vector<std::uintptr_t>> _callchain {std::nullopt};
 };
 }
