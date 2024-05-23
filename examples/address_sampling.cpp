@@ -17,11 +17,11 @@ int main()
     /// Initialize sampler.
     auto perf_config = perf::SampleConfig{};
     perf_config.precise_ip(3U); /// precise_ip controls the amount of skid, see https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-    perf_config.period(1000000U); /// Record every 10000th event.
+    perf_config.period(1000U); /// Record every 1000th event.
 
     auto sampler = perf::Sampler{
             counter_definitions,
-            "mem_trans_retired.load_latency_gt_3", /// Event that generates an overflow which is samples (here we sample every 1,000,000th cycle)
+            "mem_trans_retired.load_latency_gt_3", /// Event that generates an overflow which is samples (here we sample every 1,000 mem load)
             perf::Sampler::Type::Time | perf::Sampler::Type::LogicalMemAddress | perf::Sampler::Type::DataSource | perf::Sampler::Type::Weight, /// Controls what to include into the sample, see https://man7.org/linux/man-pages/man2/perf_event_open.2.html
             perf_config
     };
@@ -62,9 +62,9 @@ int main()
         if (sample.time().has_value() && sample.logical_memory_address().has_value() && sample.data_src().has_value())
         {
             auto data_source = "N/A";
-            if (sample.data_src()->is_mem_hit())
+            if (sample.data_src()->is_mem_local_ram())
             {
-                data_source = "Mem";
+                data_source = "local RAM";
             }
             else if (sample.data_src()->is_mem_l1())
             {
