@@ -143,31 +143,23 @@ From our experience, this only works on Intel hardware (ARM might work, too) and
 The data source can be accessed via `sample.data_source()`, which provides a specific `perf::DataSource` object.
 The `perf::DataSource` object can be queried if ...
 * ... the data was loaded (`sample.data_source().value().is_load()`)
-* or stored (`sample.data_source().value().is_store()`)
-* or prefetched (`sample.data_source().value().is_prefetch()`)
-
-
+  * or stored (`sample.data_source().value().is_store()`)
+  * or prefetched (`sample.data_source().value().is_prefetch()`)
 * ... the data was a (memory subsystem related) hit (`sample.data_source().value().is_mem_hit()`)
-* or miss (`sample.data_source().value().is_mem_miss()`)
-
-
-* ... the data was found (or missed) in the L1 data cache (`sample.data_source().value().is_mem_l1()`) 
-* or Line Fill Buffer / Miss Address Buffer (`sample.data_source().value().is_mem_lfb()`)
-* or L2 cache (`sample.data_source().value().is_mem_l2()`)
-* or L3 cache (`sample.data_source().value().is_mem_l3()`)
-* or local memory (`sample.data_source().value().is_mem_local_ram()`)
-* or remote memory with one hop distance (`sample.data_source().value().is_mem_remote_ram1()`)
-* or remote memory with two hops distance (`sample.data_source().value().is_mem_remote_ram2()`)
-* or remote cache with one hop distance (`sample.data_source().value().is_mem_remote_cce1()`)
-* or remote cache with two hops distance (`sample.data_source().value().is_mem_remote_cce2()`)
-
-
+  * or miss (`sample.data_source().value().is_mem_miss()`)
+* ... the data was found (or missed) in the L1 data cache (`sample.data_source().value().is_mem_l1()`)
+  * or Line Fill Buffer / Miss Address Buffer (`sample.data_source().value().is_mem_lfb()`)
+  * or L2 cache (`sample.data_source().value().is_mem_l2()`)
+  * or L3 cache (`sample.data_source().value().is_mem_l3()`)
+  * or local memory (`sample.data_source().value().is_mem_local_ram()`)
+  * or remote memory with one hop distance (`sample.data_source().value().is_mem_remote_ram1()`)
+  * or remote memory with two hops distance (`sample.data_source().value().is_mem_remote_ram2()`)
+  * or remote cache with one hop distance (`sample.data_source().value().is_mem_remote_cce1()`)
+  * or remote cache with two hops distance (`sample.data_source().value().is_mem_remote_cce2()`)
 * ... the data was a TLB hit (`sample.data_source().value().is_tlb_hit()`)
-* or miss (`sample.data_source().value().is_tlb_miss()`)
-
-
+  * or miss (`sample.data_source().value().is_tlb_miss()`)
 * ... the dTLB was accessed (`sample.data_source().value().is_tlb_l1()`)
-* or the STLB was accessed (`sample.data_source().value().is_tlb_l2()`)
+  * or the STLB was accessed (`sample.data_source().value().is_tlb_l2()`)
 
 &rarr; [See example](../examples/address_sampling.cpp)
 
