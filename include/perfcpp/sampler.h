@@ -70,7 +70,7 @@ public:
      */
     void close();
 
-    std::vector<Sample> result() const;
+    [[nodiscard]] std::vector<Sample> result() const;
 
     [[nodiscard]] std::int64_t last_error() const noexcept { return _last_error; }
 
