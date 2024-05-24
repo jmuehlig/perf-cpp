@@ -15,11 +15,18 @@ Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
 * **Customizable Counter Management**: Easily extend the built-in counters with those specific to your underlying hardware substrate.
 
 ## Documentation
-See our full [documentation](docs/README.md) including examples located in the `docs/` folder.
-
+* [Building and including this library](docs/build.md)
+* **Recording performance counters**
+    * [Overview (single threaded)](docs/recording-performance-counters.md)
+    * [Multithreaded](docs/recording-performance-counters-multithreaded.md)
+    * [Defining and using metrics](docs/metrics.md)
+* [Event sampling](docs/sampling.md)
+* [Built-in and hardware-specific performance counters](docs/counters.md)
 ---
 
 ## Building this library
+
+&rarr; [More details are here](docs/build.md).
 
 1. Clone this repository
 
@@ -108,15 +115,13 @@ We provide a variety of examples detailed below.
 Build them effortlessly by running `make`. 
 All compiled example binaries are located in examples/bin and can be executed directly without additional arguments.
 
-* [Example for a single thread: `single_thread.cpp`](examples/single_thread.cpp)
-* [Example for multiple threads: `multi_thread.cpp`](examples/multi_thread.cpp)
-* [Example for multiple threads through inheritance: `inherit_thread.cpp`](examples/inherit_thread.cpp)
-
-
-* [Example for sampling counter values: `counter_sampling.cpp`](examples/counter_sampling.cpp)
-* [Example for sampling instruction pointers: `instruction_pointer_sampling.cpp`](examples/instruction_pointer_sampling.cpp)
-* [Example for sampling memory addresses: `address_sampling.cpp`](examples/address_sampling.cpp)
-* [Example for sampling branches: `branches.cpp`](examples/branch_sampling.cpp)
+* Example for recording counters on a [single thread: `examples/single_thread.cpp`](examples/single_thread.cpp)
+* Example for recording counters on [multiple threads: `examples/multi_thread.cpp`](examples/multi_thread.cpp)
+* Example for recording counters on  [multiple threads through inheritance: `examples/inherit_thread.cpp`](examples/inherit_thread.cpp)
+* Example for sampling [counter values: `counter_sampling.cpp`](examples/counter_sampling.cpp)
+* Example for sampling [instruction pointers: `instruction_pointer_sampling.cpp`](examples/instruction_pointer_sampling.cpp)
+* Example for sampling [memory addresses: `address_sampling.cpp`](examples/address_sampling.cpp)
+* Example for sampling [branches: `branches.cpp`](examples/branch_sampling.cpp)
 
 ## Feedback
 Feedback, feature requests, and contributions are always appreciated. 
