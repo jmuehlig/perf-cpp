@@ -1,337 +1,301 @@
-#include <perfcpp/sampler.h>
 #include <algorithm>
-#include <numeric>
-#include <cstring>
-#include <unistd.h>
 #include <asm/unistd.h>
+#include <cstring>
+#include <numeric>
+#include <perfcpp/sampler.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
-perf::Sampler::Sampler(const perf::CounterDefinition &counter_list, std::vector<std::string> &&counter_names, const std::uint64_t type, perf::SampleConfig config)
-       : _counter_definitions(counter_list), _config(config), _sample_type(type)
+perf::Sampler::Sampler(const perf::CounterDefinition& counter_list,
+                       std::vector<std::string>&& counter_names,
+                       const std::uint64_t type,
+                       perf::SampleConfig config)
+  : _counter_definitions(counter_list)
+  , _config(config)
+  , _sample_type(type)
 {
-    for (const auto& counter_name : counter_names)
+  for (const auto& counter_name : counter_names) {
+    if (!this->_counter_definitions.is_metric(counter_name)) /// Metrics are not (yet) supported.
     {
-        if (!this->_counter_definitions.is_metric(counter_name))    /// Metrics are not (yet) supported.
-        {
-            /// Try to set the counter, if the name refers to a counter.
-            if (auto counter_config = this->_counter_definitions.counter(counter_name); counter_config.has_value())
-            {
-                this->_group.add(counter_config.value());
-                this->_counter_names.push_back(counter_name);
-            }
-        }
+      /// Try to set the counter, if the name refers to a counter.
+      if (auto counter_config = this->_counter_definitions.counter(counter_name); counter_config.has_value()) {
+        this->_group.add(counter_config.value());
+        this->_counter_names.push_back(counter_name);
+      }
     }
+  }
 }
 
-
-bool perf::Sampler::open()
+bool
+perf::Sampler::open()
 {
-    if (this->_group.empty())
-    {
-        return false;
-    }
-
-    auto leader_file_descriptor = -1;
-    for (auto counter_index = 0U; counter_index < this->_group.size(); ++counter_index)
-    {
-        auto &counter = this->_group.member(counter_index);
-        const auto is_leader = counter_index == 0U;
-
-        auto& perf_event = counter.event_attribute();
-        std::memset(&perf_event, 0, sizeof(perf_event_attr));
-        perf_event.type = counter.type();
-        perf_event.size = sizeof(perf_event_attr);
-        perf_event.config = counter.event_id();
-        perf_event.config1 = counter.event_id_extension()[0U];
-        perf_event.config2 = counter.event_id_extension()[1U];
-        perf_event.disabled = is_leader;
-
-        perf_event.inherit = static_cast<std::int32_t>(this->_config.is_include_child_threads());
-        perf_event.exclude_kernel = static_cast<std::int32_t>(!this->_config.is_include_kernel());
-        perf_event.exclude_user = static_cast<std::int32_t>(!this->_config.is_include_user());
-        perf_event.exclude_hv = static_cast<std::int32_t>(!this->_config.is_include_hypervisor());
-        perf_event.exclude_idle = static_cast<std::int32_t>(!this->_config.is_include_idle());
-        perf_event.exclude_guest = static_cast<std::int32_t>(!this->_config.is_include_guest());
-
-
-        if (is_leader)
-        {
-            perf_event.sample_type = this->_sample_type;
-
-            if (this->_config.is_frequency())
-            {
-                perf_event.freq = 1U;
-                perf_event.sample_freq = this->_config.frequency_or_period();
-            }
-            else
-            {
-                perf_event.sample_period = this->_config.frequency_or_period();
-            }
-
-            if (this->_sample_type & Sampler::Type::BranchStack)
-            {
-                perf_event.branch_sample_type = PERF_SAMPLE_BRANCH_ANY;
-            }
-
-            perf_event.mmap = 1U;
-            perf_event.precise_ip = this->_config.precise_ip();
-
-            if (this->_sample_type & static_cast<std::uint64_t>(Type::Callchain))
-            {
-                perf_event.sample_max_stack = this->_config.max_stack();
-            }
-        }
-
-        if (this->_sample_type & static_cast<std::uint64_t>(Type::CounterValues))
-        {
-            perf_event.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
-        }
-
-        /// Open the counter.
-        const auto file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, leader_file_descriptor, 0);
-        if (file_descriptor < 0)
-        {
-            this->_last_error = errno;
-            return false;
-        }
-        counter.file_descriptor(file_descriptor);
-
-        if (is_leader)
-        {
-            leader_file_descriptor = file_descriptor;
-        }
-    }
-
-    /// Open the mapped buffer.
-    this->_buffer = ::mmap(nullptr, this->_config.buffer_pages() * 4096U, PROT_READ | PROT_WRITE, MAP_SHARED, leader_file_descriptor, 0);
-    if (this->_buffer == MAP_FAILED)
-    {
-        this->_last_error = errno;
-        return false;
-    }
-
-    return this->_buffer != nullptr;
-}
-
-bool perf::Sampler::start()
-{
-    /// Start the counters.
-    if (this->open())
-    {
-        ::ioctl(this->_group.leader_file_descriptor(), PERF_EVENT_IOC_RESET, 0);
-        ::ioctl(this->_group.leader_file_descriptor(), PERF_EVENT_IOC_ENABLE, 0);
-        return true;
-    }
-
+  if (this->_group.empty()) {
     return false;
-}
+  }
 
-void perf::Sampler::stop()
-{
-    ::ioctl(this->_group.leader_file_descriptor(), PERF_EVENT_IOC_DISABLE, 0);
-}
+  auto leader_file_descriptor = -1;
+  for (auto counter_index = 0U; counter_index < this->_group.size(); ++counter_index) {
+    auto& counter = this->_group.member(counter_index);
+    const auto is_leader = counter_index == 0U;
 
-void perf::Sampler::close()
-{
-    ::munmap(this->_buffer, this->_config.buffer_pages() * 4096U);
-    ::close(this->_group.leader_file_descriptor());
-}
+    auto& perf_event = counter.event_attribute();
+    std::memset(&perf_event, 0, sizeof(perf_event_attr));
+    perf_event.type = counter.type();
+    perf_event.size = sizeof(perf_event_attr);
+    perf_event.config = counter.event_id();
+    perf_event.config1 = counter.event_id_extension()[0U];
+    perf_event.config2 = counter.event_id_extension()[1U];
+    perf_event.disabled = is_leader;
 
-std::vector<perf::Sample> perf::Sampler::result() const
-{
-    auto result = std::vector<Sample>{};
-    if (this->_buffer == nullptr)
-    {
-        return result;
+    perf_event.inherit = static_cast<std::int32_t>(this->_config.is_include_child_threads());
+    perf_event.exclude_kernel = static_cast<std::int32_t>(!this->_config.is_include_kernel());
+    perf_event.exclude_user = static_cast<std::int32_t>(!this->_config.is_include_user());
+    perf_event.exclude_hv = static_cast<std::int32_t>(!this->_config.is_include_hypervisor());
+    perf_event.exclude_idle = static_cast<std::int32_t>(!this->_config.is_include_idle());
+    perf_event.exclude_guest = static_cast<std::int32_t>(!this->_config.is_include_guest());
+
+    if (is_leader) {
+      perf_event.sample_type = this->_sample_type;
+
+      if (this->_config.is_frequency()) {
+        perf_event.freq = 1U;
+        perf_event.sample_freq = this->_config.frequency_or_period();
+      } else {
+        perf_event.sample_period = this->_config.frequency_or_period();
+      }
+
+      if (this->_sample_type & Sampler::Type::BranchStack) {
+        perf_event.branch_sample_type = PERF_SAMPLE_BRANCH_ANY;
+      }
+
+      perf_event.mmap = 1U;
+      perf_event.precise_ip = this->_config.precise_ip();
+
+      if (this->_sample_type & static_cast<std::uint64_t>(Type::Callchain)) {
+        perf_event.sample_max_stack = this->_config.max_stack();
+      }
     }
 
-    auto *mmap_page = reinterpret_cast<perf_event_mmap_page *>(this->_buffer);
-
-    /// When the ringbuffer is empty or already read, there is nothing to do.
-    if (mmap_page->data_tail >= mmap_page->data_head)
-    {
-        return result;
+    if (this->_sample_type & static_cast<std::uint64_t>(Type::CounterValues)) {
+      perf_event.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
     }
 
-    result.reserve(2048U);
+    /// Open the counter.
+    const auto file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, leader_file_descriptor, 0);
+    if (file_descriptor < 0) {
+      this->_last_error = errno;
+      return false;
+    }
+    counter.file_descriptor(file_descriptor);
 
-    /// The buffer starts at page 1 (from 0).
-    auto iterator = std::uintptr_t(this->_buffer) + 4096U;
+    if (is_leader) {
+      leader_file_descriptor = file_descriptor;
+    }
+  }
 
-    /// data_head is the size (in bytes) of the samples.
-    const auto end = iterator + mmap_page->data_head;
+  /// Open the mapped buffer.
+  this->_buffer = ::mmap(
+    nullptr, this->_config.buffer_pages() * 4096U, PROT_READ | PROT_WRITE, MAP_SHARED, leader_file_descriptor, 0);
+  if (this->_buffer == MAP_FAILED) {
+    this->_last_error = errno;
+    return false;
+  }
 
-    while (iterator < end)
-    {
-        auto *event_header = reinterpret_cast<perf_event_header *>(iterator);
+  return this->_buffer != nullptr;
+}
 
-        if (event_header->type == PERF_RECORD_SAMPLE)
-        {
-            auto mode = Sample::Mode::Unknown;
-            if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_KERNEL))
-            {
-                mode = Sample::Mode::Kernel;
-            }
-            else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_USER))
-            {
-                mode = Sample::Mode::User;
-            }
-            else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_HYPERVISOR))
-            {
-                mode = Sample::Mode::Hypervisor;
-            }
-            else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_GUEST_KERNEL))
-            {
-                mode = Sample::Mode::GuestKernel;
-            }
-            else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_GUEST_USER))
-            {
-                mode = Sample::Mode::GuestUser;
-            }
+bool
+perf::Sampler::start()
+{
+  /// Start the counters.
+  if (this->open()) {
+    ::ioctl(this->_group.leader_file_descriptor(), PERF_EVENT_IOC_RESET, 0);
+    ::ioctl(this->_group.leader_file_descriptor(), PERF_EVENT_IOC_ENABLE, 0);
+    return true;
+  }
 
-            auto sample = Sample{mode};
+  return false;
+}
 
-            auto sample_ptr = std::uintptr_t(reinterpret_cast<void*>(event_header + 1U));
+void
+perf::Sampler::stop()
+{
+  ::ioctl(this->_group.leader_file_descriptor(), PERF_EVENT_IOC_DISABLE, 0);
+}
 
-            if (this->_sample_type & perf::Sampler::Type::Identifier)
-            {
-                sample.sample_id(*reinterpret_cast<std::uint64_t*>(sample_ptr));
-                sample_ptr += sizeof(std::uint64_t);
-            }
+void
+perf::Sampler::close()
+{
+  ::munmap(this->_buffer, this->_config.buffer_pages() * 4096U);
+  ::close(this->_group.leader_file_descriptor());
+}
 
-            if (this->_sample_type & perf::Sampler::Type::InstructionPointer)
-            {
-                sample.instruction_pointer(*reinterpret_cast<std::uintptr_t*>(sample_ptr));
-                sample_ptr += sizeof(std::uintptr_t);
-            }
+std::vector<perf::Sample>
+perf::Sampler::result() const
+{
+  auto result = std::vector<Sample>{};
+  if (this->_buffer == nullptr) {
+    return result;
+  }
 
-            if (this->_sample_type & perf::Sampler::Type::ThreadId)
-            {
-                sample.process_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
-                sample_ptr += sizeof(std::uint32_t);
+  auto* mmap_page = reinterpret_cast<perf_event_mmap_page*>(this->_buffer);
 
-                sample.thread_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
-                sample_ptr += sizeof(std::uint32_t);
-            }
+  /// When the ringbuffer is empty or already read, there is nothing to do.
+  if (mmap_page->data_tail >= mmap_page->data_head) {
+    return result;
+  }
 
-            if (this->_sample_type & perf::Sampler::Type::Time)
-            {
-                sample.timestamp(*reinterpret_cast<std::uint64_t*>(sample_ptr));
-                sample_ptr += sizeof(std::uint64_t);
-            }
+  result.reserve(2048U);
 
-            if (this->_sample_type & perf::Sampler::Type::LogicalMemAddress)
-            {
-                sample.logical_memory_address(*reinterpret_cast<std::uint64_t*>(sample_ptr));
-                sample_ptr += sizeof(std::uint64_t);
-            }
+  /// The buffer starts at page 1 (from 0).
+  auto iterator = std::uintptr_t(this->_buffer) + 4096U;
 
-            if (this->_sample_type & perf::Sampler::Type::CPU)
-            {
-                sample.cpu_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
-                sample_ptr += sizeof(std::uint64_t);
-            }
+  /// data_head is the size (in bytes) of the samples.
+  const auto end = iterator + mmap_page->data_head;
 
-            if (this->_sample_type & perf::Sampler::Type::Period)
-            {
-                sample.period(*reinterpret_cast<std::uint64_t*>(sample_ptr));
-                sample_ptr += sizeof(std::uint64_t);
-            }
+  while (iterator < end) {
+    auto* event_header = reinterpret_cast<perf_event_header*>(iterator);
 
-            if (this->_sample_type & perf::Sampler::Type::CounterValues)
-            {
-                auto *read_format = reinterpret_cast<Sampler::read_format*>(sample_ptr);
-                const auto count_counter_values = read_format->count_members;
+    if (event_header->type == PERF_RECORD_SAMPLE) {
+      auto mode = Sample::Mode::Unknown;
+      if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_KERNEL)) {
+        mode = Sample::Mode::Kernel;
+      } else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_USER)) {
+        mode = Sample::Mode::User;
+      } else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_HYPERVISOR)) {
+        mode = Sample::Mode::Hypervisor;
+      } else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_GUEST_KERNEL)) {
+        mode = Sample::Mode::GuestKernel;
+      } else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_GUEST_USER)) {
+        mode = Sample::Mode::GuestUser;
+      }
 
-                if (count_counter_values == this->_group.size())
-                {
-                    auto counter_values = std::vector<std::pair<std::string, double>>{};
-                    for (auto counter_id = 0U; counter_id < this->_group.size(); ++counter_id)
-                    {
-                        counter_values.emplace_back(std::make_pair(this->_counter_names[counter_id], double(read_format->values[counter_id].value)));
-                    }
+      auto sample = Sample{ mode };
 
-                    sample.counter_result(CounterResult{std::move(counter_values)});
-                }
+      auto sample_ptr = std::uintptr_t(reinterpret_cast<void*>(event_header + 1U));
 
-                sample_ptr += sizeof(Sampler::read_format::count_members) + count_counter_values * sizeof(Sampler::read_format::value);
-            }
+      if (this->_sample_type & perf::Sampler::Type::Identifier) {
+        sample.sample_id(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint64_t);
+      }
 
-            if (this->_sample_type & perf::Sampler::Type::Callchain)
-            {
-                const auto callchain_size = (*reinterpret_cast<std::uint64_t*>(sample_ptr));
-                sample_ptr += sizeof(std::uint64_t);
+      if (this->_sample_type & perf::Sampler::Type::InstructionPointer) {
+        sample.instruction_pointer(*reinterpret_cast<std::uintptr_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uintptr_t);
+      }
 
-                if (callchain_size > 0U)
-                {
-                    auto callchain = std::vector<std::uintptr_t>{};
-                    callchain.reserve(callchain_size);
+      if (this->_sample_type & perf::Sampler::Type::ThreadId) {
+        sample.process_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint32_t);
 
-                    auto *instruction_pointers = reinterpret_cast<std::uint64_t*>(sample_ptr);
-                    for (auto index = 0U; index < callchain_size; ++index)
-                    {
-                        callchain.push_back(std::uintptr_t{instruction_pointers[index]});
-                    }
+        sample.thread_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint32_t);
+      }
 
-                    sample.callchain(std::move(callchain));
+      if (this->_sample_type & perf::Sampler::Type::Time) {
+        sample.timestamp(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint64_t);
+      }
 
-                    sample_ptr += callchain_size * sizeof(std::uint64_t);
-                }
-            }
+      if (this->_sample_type & perf::Sampler::Type::LogicalMemAddress) {
+        sample.logical_memory_address(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint64_t);
+      }
 
-            if (this->_sample_type & perf::Sampler::BranchStack)
-            {
-                const auto count_branches = *reinterpret_cast<std::uint64_t*>(sample_ptr);
-                sample_ptr += sizeof(std::uint64_t);
+      if (this->_sample_type & perf::Sampler::Type::CPU) {
+        sample.cpu_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint64_t);
+      }
 
-                if (count_branches > 0U)
-                {
-                    auto branches = std::vector<Branch>{};
-                    branches.reserve(count_branches);
+      if (this->_sample_type & perf::Sampler::Type::Period) {
+        sample.period(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint64_t);
+      }
 
-                    auto *sampled_branches = reinterpret_cast<perf_branch_entry*>(sample_ptr);
-                    for (auto i = 0U; i < count_branches; ++i)
-                    {
-                        const auto& branch = sampled_branches[i];
-                        branches.emplace_back(branch.from, branch.to, branch.mispred, branch.predicted, branch.in_tx, branch.abort, branch.cycles);
-                    }
+      if (this->_sample_type & perf::Sampler::Type::CounterValues) {
+        auto* read_format = reinterpret_cast<Sampler::read_format*>(sample_ptr);
+        const auto count_counter_values = read_format->count_members;
 
-                    sample.branches(std::move(branches));
-                }
+        if (count_counter_values == this->_group.size()) {
+          auto counter_values = std::vector<std::pair<std::string, double>>{};
+          for (auto counter_id = 0U; counter_id < this->_group.size(); ++counter_id) {
+            counter_values.emplace_back(
+              std::make_pair(this->_counter_names[counter_id], double(read_format->values[counter_id].value)));
+          }
 
-                sample_ptr += sizeof(perf_branch_entry) * count_branches;
-            }
-
-            if (this->_sample_type & perf::Sampler::Type::Weight)
-            {
-                sample.weight(*reinterpret_cast<std::uint64_t*>(sample_ptr));
-                sample_ptr += sizeof(std::uint64_t);
-            }
-
-            if (this->_sample_type & perf::Sampler::Type::WeightStruct)
-            {
-                sample.weight(reinterpret_cast<perf_sample_weight*>(sample_ptr)->full);
-                sample_ptr += sizeof(std::uint64_t);
-            }
-
-            if (this->_sample_type & perf::Sampler::Type::DataSource)
-            {
-                sample.data_src(perf::DataSource{*reinterpret_cast<std::uint64_t*>(sample_ptr)});
-                sample_ptr += sizeof(std::uint64_t);
-            }
-
-            if (this->_sample_type & perf::Sampler::Type::PhysicalMemAddress)
-            {
-                sample.physical_memory_address(*reinterpret_cast<std::uint64_t*>(sample_ptr));
-            }
-
-            result.push_back(sample);
+          sample.counter_result(CounterResult{ std::move(counter_values) });
         }
 
-        /// Go to the next sample.
-        iterator += event_header->size;
+        sample_ptr +=
+          sizeof(Sampler::read_format::count_members) + count_counter_values * sizeof(Sampler::read_format::value);
+      }
+
+      if (this->_sample_type & perf::Sampler::Type::Callchain) {
+        const auto callchain_size = (*reinterpret_cast<std::uint64_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint64_t);
+
+        if (callchain_size > 0U) {
+          auto callchain = std::vector<std::uintptr_t>{};
+          callchain.reserve(callchain_size);
+
+          auto* instruction_pointers = reinterpret_cast<std::uint64_t*>(sample_ptr);
+          for (auto index = 0U; index < callchain_size; ++index) {
+            callchain.push_back(std::uintptr_t{ instruction_pointers[index] });
+          }
+
+          sample.callchain(std::move(callchain));
+
+          sample_ptr += callchain_size * sizeof(std::uint64_t);
+        }
+      }
+
+      if (this->_sample_type & perf::Sampler::BranchStack) {
+        const auto count_branches = *reinterpret_cast<std::uint64_t*>(sample_ptr);
+        sample_ptr += sizeof(std::uint64_t);
+
+        if (count_branches > 0U) {
+          auto branches = std::vector<Branch>{};
+          branches.reserve(count_branches);
+
+          auto* sampled_branches = reinterpret_cast<perf_branch_entry*>(sample_ptr);
+          for (auto i = 0U; i < count_branches; ++i) {
+            const auto& branch = sampled_branches[i];
+            branches.emplace_back(
+              branch.from, branch.to, branch.mispred, branch.predicted, branch.in_tx, branch.abort, branch.cycles);
+          }
+
+          sample.branches(std::move(branches));
+        }
+
+        sample_ptr += sizeof(perf_branch_entry) * count_branches;
+      }
+
+      if (this->_sample_type & perf::Sampler::Type::Weight) {
+        sample.weight(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint64_t);
+      }
+
+      if (this->_sample_type & perf::Sampler::Type::WeightStruct) {
+        sample.weight(reinterpret_cast<perf_sample_weight*>(sample_ptr)->full);
+        sample_ptr += sizeof(std::uint64_t);
+      }
+
+      if (this->_sample_type & perf::Sampler::Type::DataSource) {
+        sample.data_src(perf::DataSource{ *reinterpret_cast<std::uint64_t*>(sample_ptr) });
+        sample_ptr += sizeof(std::uint64_t);
+      }
+
+      if (this->_sample_type & perf::Sampler::Type::PhysicalMemAddress) {
+        sample.physical_memory_address(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+      }
+
+      result.push_back(sample);
     }
 
-    return result;
+    /// Go to the next sample.
+    iterator += event_header->size;
+  }
+
+  return result;
 }
