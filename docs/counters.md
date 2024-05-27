@@ -4,6 +4,8 @@ Each CPU generation comes equipped with its own set of performance counters.
 If you're looking to measure your code's performance across various machines, you might need to incorporate different counters. 
 The `perf::CounterDefinition` class facilitates the addition and access of diverse counters to accommodate this need.
 
+&rarr; This library also ships a script to read all hardware-specific counters, see "**How to get _raw_ counter codes?**" below.
+
 ## Built-in counters
 Several performance counters, common across most CPUs, are pre-defined by the library and ready for immediate use out-of-the-box (see `src/counter_definition.cpp` for details):
 
