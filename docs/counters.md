@@ -47,6 +47,8 @@ Several performance counters, common across most CPUs, are pre-defined by the li
 ## Adding hardware-specific performance counters
 Basically, there are two options to add more counters:
 
+&rarr; See the Section "**How to get _raw_ counter codes**" below for instructions to get all hardware-counters.
+
 ### 1) In-code
 The `perf::CounterDefinition` interface offers an `add()` function that takes
 * the name of the counter,
@@ -97,6 +99,22 @@ const auto llc_misses = result.get("llc-load-misses");
 ```
 
 ## How to get _raw_ counter codes?
+### Automatically
+This library provides a Python script (`script/create_perf_list.py`) that downloads [libpfm4](https://github.com/wcohen/libpfm4) and extracts all counters that are reported for the underlying hardware.
+You can run the script with
+
+    
+    make perf-list
+
+which will create a file `perf-list.csv` containing all counter names and raw counter values.
+This list can be passed to the `perf::CounterDefinition` class
+
+
+    auto counter_definitions = perf::CounterDefinition{"perf-list.csv"};
+
+to get access to all counters specified in that file.
+
+### Manually
 The easiest way is to use the [libpfm4 (see on GitHub)](https://github.com/wcohen/libpfm4):
 * Download library
 * Build executables in `examples/` folder

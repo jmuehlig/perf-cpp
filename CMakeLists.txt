@@ -45,3 +45,6 @@ target_link_libraries(address-sampling perf-cpp)
 #### Sampling user_registers
 add_executable(register-sampling examples/register_sampling.cpp examples/access_benchmark.cpp)
 target_link_libraries(register-sampling perf-cpp)
+
+### Target to create the perf list CSV
+add_custom_target(perf-list python3 ${CMAKE_SOURCE_DIR}/script/create_perf_list.py)
