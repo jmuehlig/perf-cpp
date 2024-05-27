@@ -34,6 +34,8 @@ public:
     Identifier = PERF_SAMPLE_IDENTIFIER,
     KernelRegisters = PERF_SAMPLE_REGS_INTR,
     PhysicalMemAddress = PERF_SAMPLE_PHYS_ADDR,
+    DataPageSize = PERF_SAMPLE_DATA_PAGE_SIZE,
+    CodePageSize = PERF_SAMPLE_CODE_PAGE_SIZE,
     WeightStruct = PERF_SAMPLE_WEIGHT_STRUCT,
   };
 

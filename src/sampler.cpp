@@ -280,7 +280,8 @@ perf::Sampler::result() const
       }
 
       if (this->_sample_type & perf::Sampler::UserRegisters) {
-        // const auto abi = *reinterpret_cast<std::uint64_t*>(sample_ptr);
+        const auto abi = *reinterpret_cast<std::uint64_t*>(sample_ptr);
+        sample.user_registers_abi(abi);
         sample_ptr += sizeof(std::uint64_t);
 
         const auto count_user_registers = this->_config.user_registers().size();
@@ -315,7 +316,8 @@ perf::Sampler::result() const
       }
 
       if (this->_sample_type & perf::Sampler::KernelRegisters) {
-        // const auto abi = *reinterpret_cast<std::uint64_t*>(sample_ptr);
+        const auto abi = *reinterpret_cast<std::uint64_t*>(sample_ptr);
+        sample.kernel_registers_abi(abi);
         sample_ptr += sizeof(std::uint64_t);
 
         const auto count_kernel_registers = this->_config.kernel_registers().size();
@@ -336,6 +338,17 @@ perf::Sampler::result() const
 
       if (this->_sample_type & perf::Sampler::Type::PhysicalMemAddress) {
         sample.physical_memory_address(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint64_t);
+      }
+
+      if (this->_sample_type & perf::Sampler::Type::DataPageSize) {
+        sample.data_page_size(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint64_t);
+      }
+
+      if (this->_sample_type & perf::Sampler::Type::CodePageSize) {
+        sample.code_page_size(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint64_t);
       }
 
       result.push_back(sample);

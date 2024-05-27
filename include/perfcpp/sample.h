@@ -191,15 +191,19 @@ public:
   void data_src(const DataSource data_src) noexcept { _data_src = data_src; }
   void weight(const std::uint64_t weight) noexcept { _weight = weight; }
   void branches(std::vector<Branch>&& branches) noexcept { _branches = std::move(branches); }
+  void user_registers_abi(const std::uint64_t abi) noexcept { _user_registers_abi = abi; }
   void user_registers(std::vector<std::uint64_t>&& user_registers) noexcept
   {
     _user_registers = std::move(user_registers);
   }
+  void kernel_registers_abi(const std::uint64_t abi) noexcept { _kernel_registers_abi = abi; }
   void kernel_registers(std::vector<std::uint64_t>&& kernel_registers) noexcept
   {
     _kernel_registers = std::move(kernel_registers);
   }
   void callchain(std::vector<std::uintptr_t>&& callchain) noexcept { _callchain = std::move(callchain); }
+  void data_page_size(const std::uint64_t size) noexcept { _data_page_size = size; }
+  void code_page_size(const std::uint64_t size) noexcept { _code_page_size = size; }
 
   [[nodiscard]] Mode mode() const noexcept { return _mode; }
   [[nodiscard]] std::optional<std::uint64_t> sample_id() const noexcept { return _sample_id; }
@@ -223,11 +227,13 @@ public:
   [[nodiscard]] std::optional<std::uint64_t> weight() const noexcept { return _weight; }
   [[nodiscard]] const std::optional<std::vector<Branch>>& branches() const noexcept { return _branches; }
   [[nodiscard]] std::optional<std::vector<Branch>>& branches() noexcept { return _branches; }
+  [[nodiscard]] std::optional<std::uint64_t> user_registers_abi() const noexcept { return _user_registers_abi; }
   [[nodiscard]] const std::optional<std::vector<std::uint64_t>>& user_registers() const noexcept
   {
     return _user_registers;
   }
   [[nodiscard]] std::optional<std::vector<std::uint64_t>>& user_registers() noexcept { return _user_registers; }
+  [[nodiscard]] std::optional<std::uint64_t> kernel_registers_abi() const noexcept { return _kernel_registers_abi; }
   [[nodiscard]] const std::optional<std::vector<std::uint64_t>>& kernel_registers() const noexcept
   {
     return _kernel_registers;
@@ -235,6 +241,8 @@ public:
   [[nodiscard]] std::optional<std::vector<std::uint64_t>>& kernel_registers() noexcept { return _kernel_registers; }
   [[nodiscard]] const std::optional<std::vector<std::uintptr_t>>& callchain() const noexcept { return _callchain; }
   [[nodiscard]] std::optional<std::vector<std::uintptr_t>>& callchain() noexcept { return _callchain; }
+  [[nodiscard]] std::optional<std::uint64_t> data_page_size() const noexcept { return _data_page_size; }
+  [[nodiscard]] std::optional<std::uint64_t> code_page_size() const noexcept { return _code_page_size; }
 
 private:
   Mode _mode;
@@ -252,8 +260,12 @@ private:
   std::optional<DataSource> _data_src{ std::nullopt };
   std::optional<std::uint64_t> _weight{ std::nullopt };
   std::optional<std::vector<Branch>> _branches{ std::nullopt };
+  std::optional<std::uint64_t> _user_registers_abi{ std::nullopt };
   std::optional<std::vector<std::uint64_t>> _user_registers{ std::nullopt };
   std::optional<std::vector<std::uint64_t>> _kernel_registers{ std::nullopt };
+  std::optional<std::uint64_t> _kernel_registers_abi{ std::nullopt };
   std::optional<std::vector<std::uintptr_t>> _callchain{ std::nullopt };
+  std::optional<std::uint64_t> _data_page_size{ std::nullopt };
+  std::optional<std::uint64_t> _code_page_size{ std::nullopt };
 };
 }

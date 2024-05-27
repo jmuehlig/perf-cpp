@@ -14,6 +14,7 @@ The following data can be recorded:
 * Last branch stack (including jump addresses and prediction)
 * User- and kernel-level registers
 * Weight of the access (which is mostly the latency)
+* Data and code page sizes (when sampling for data addresses or instruction pointers)
 
 &rarr; [See details below](#what-can-be-recorded-and-how-to-access-the-data).
 
@@ -171,6 +172,7 @@ Each `perf::Branch` instance has the following values:
 Values of user registers (the values in the process before the kernel was called).
 The values that should be sampled must be set before sampling (see `SampleConfig::user_registers`, e.g., `perf_config.user_registers(perf::Registers{{ perf::Registers::x86::AX, perf::Registers::x86::DI, perf::Registers::x86::R10 }});`).
 The result can be accessed through `sample.user_registers()`, which returns a vector of `std::uint64_t` values.
+The ABI can be queried using `sample.user_registers_abi()`.
 
 &rarr; [See example](../examples/register_sampling.cpp)
 
@@ -178,6 +180,7 @@ The result can be accessed through `sample.user_registers()`, which returns a ve
 Values of user registers (the values in the process when the kernel was called).
 The values that should be sampled must be set before sampling (see `SampleConfig::kernel_registers`, e.g., `perf_config.kernel_registers(perf::Registers{{ perf::Registers::x86::AX, perf::Registers::x86::DI, perf::Registers::x86::R10 }});`).
 The result can be accessed through `sample.kernel_registers()`, which returns a vector of `std::uint64_t` values.
+The ABI can be queried using `sample.kernel_registers_abi()`.
 
 &rarr; [See example](../examples/register_sampling.cpp)
 
@@ -223,3 +226,11 @@ The physical memory address.
 Can be accessed via `sample.physical_memory_address()`.
 From our experience, this only works on Intel hardware (ARM might work, too) and only with specific triggers.
 You may need to adjust the `sample_config.precise_ip(X)` setting on different hardware (ranging from `0` to `3`).
+
+### `perf::Sampler::Type::DataPageSize`
+Size of pages of sampled data addresses (e.g., when sampling for `perf::Sample::Type::LogicalMemoryAddress`).
+Can be accessed via `sample.data_page_size()`.
+
+### `perf::Sampler::Type::CodePageSize`
+Size of pages of sampled instruction pointers (e.g., when sampling for `perf::Sample::Type::InstructionPointer`).
+Can be accessed via `sample.code_page_size()`.
