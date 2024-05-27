@@ -4,7 +4,7 @@ Each CPU generation comes equipped with its own set of performance counters.
 If you're looking to measure your code's performance across various machines, you might need to incorporate different counters. 
 The `perf::CounterDefinition` class facilitates the addition and access of diverse counters to accommodate this need.
 
-&rarr; This library also ships a script to read all hardware-specific counters, see "**How to get _raw_ counter codes?**" below.
+&rarr; This library also ships a script to read all hardware-specific counters, see [**How to get _raw_ counter codes?**](#how-to-get-raw-counter-codes) below.
 
 ## Built-in counters
 Several performance counters, common across most CPUs, are pre-defined by the library and ready for immediate use out-of-the-box (see `src/counter_definition.cpp` for details):
@@ -49,7 +49,7 @@ Several performance counters, common across most CPUs, are pre-defined by the li
 ## Adding hardware-specific performance counters
 Basically, there are two options to add more counters:
 
-&rarr; See the Section "**How to get _raw_ counter codes**" below for instructions to get all hardware-counters.
+&rarr; See paragraph [**How to get raw counter codes?**](#how-to-get-raw-counter-codes) below for instructions to get all hardware-counters.
 
 ### 1) In-code
 The `perf::CounterDefinition` interface offers an `add()` function that takes
@@ -100,29 +100,39 @@ const auto result = event_counter.result();
 const auto llc_misses = result.get("llc-load-misses");
 ```
 
-## How to get _raw_ counter codes?
+## How to get raw counter codes?
 ### Automatically
-This library provides a Python script (`script/create_perf_list.py`) that downloads [libpfm4](https://github.com/wcohen/libpfm4) and extracts all counters that are reported for the underlying hardware.
-You can run the script with
+This library includes a Python script (`script/create_perf_list.py`) designed to streamline the extraction of hardware counter values, producing an output similar to the `perf list` command.
 
-    
+#### Executing
+To execute the script, use the following Make command:
+
+
     make perf-list
 
-which will create a file `perf-list.csv` containing all counter names and raw counter values.
-This list can be passed to the `perf::CounterDefinition` class
+This command generates a CSV file named `perf-list.csv`.
+This file includes the names of all performance counters along with their raw values, which are extracted from the system's underlying hardware.
+
+#### Using the counter list `perf-list.csv`
+You can use the resulting CSV file with the `perf::CounterDefinition` class as follows:
 
 
     auto counter_definitions = perf::CounterDefinition{"perf-list.csv"};
 
-to get access to all counters specified in that file.
+This allows your application to access all the counters listed in the CSV file.
 
-### Manually
-The easiest way is to use the [libpfm4 (see on GitHub)](https://github.com/wcohen/libpfm4):
-* Download library
-* Build executables in `examples/` folder
-* Choose a specific counter (from `perf list` on your machine) and get the code using the compiled `check_events` executable:
-```
-./check_events cycle_activity.stalls_l3_miss
-```
+#### Script details
+The script operates by downloading the [libpfm4 library](https://github.com/wcohen/libpfm4) and extracting all reported counters specific to the hardware it is run on.
 
-The output will guide you the id that can be used as a _raw_ value for the counter.
+
+### Manual Configuration with libpfm4
+For manual setup using libpfm4 (available on [GitHub](https://github.com/wcohen/libpfm4)), follow these steps:
+
+1. Clone or download the libpfm4 repository from GitHub.
+2. Call `make` to build all binaries.
+3. Navigate to the `examples/` directory within the downloaded
+4. Select and Check a Specific Counter:
+    * Identify a performance counter of interest on your machine by using the perf list command.
+    * Retrieve the specific code for this counter by running the check_events executable with the counter's name as an argument. For example: `./check_events cycle_activity.stalls_l3_miss`
+    * The output from this command will provide the identifier (ID) that can be used as a raw value to reference the counter.
+
