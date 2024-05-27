@@ -183,7 +183,7 @@ public:
   [[nodiscard]] CounterResult result(std::uint64_t normalization = 1U) const;
 
   /**
-   * Returns the result of the performance measurement for a given therad.
+   * Returns the result of the performance measurement for a given thread.
    *
    * @param thread_id Id of the thread.
    * @param normalization Normalization value, default = 1.

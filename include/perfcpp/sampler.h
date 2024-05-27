@@ -78,6 +78,9 @@ public:
    */
   void close();
 
+  /**
+   * @return List of sampled events after closing the sampler.
+   */
   [[nodiscard]] std::vector<Sample> result() const;
 
   [[nodiscard]] std::int64_t last_error() const noexcept { return _last_error; }
@@ -88,6 +91,7 @@ private:
   /// Perf config.
   SampleConfig _config;
 
+  /// Combination of one ore more Sample::Type values.
   std::uint64_t _sample_type;
 
   /// Real counters to measure.
@@ -102,6 +106,11 @@ private:
   /// Will be assigned to errorno.
   std::int64_t _last_error{ 0 };
 
+  /**
+   * Opens the sampler.
+   *
+   * @return True, if the sampler could be opened.
+   */
   [[nodiscard]] bool open();
 
   /**

@@ -7,7 +7,7 @@ perf::EventCounter::add(std::string&& counter_name)
 {
   /// "Close" the current group and add new counters to the next group (if possible).
   if (counter_name.empty()) {
-    if (this->_groups.empty() || this->_groups.back().size() == 0U) {
+    if (this->_groups.empty() || this->_groups.back().empty()) {
       return true;
     }
 

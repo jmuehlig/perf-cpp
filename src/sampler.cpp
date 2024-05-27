@@ -82,7 +82,7 @@ perf::Sampler::open()
     }
 
     /// Open the counter.
-    const auto file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, leader_file_descriptor, 0);
+    const std::int32_t file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, leader_file_descriptor, 0);
     if (file_descriptor < 0) {
       this->_last_error = errno;
       return false;
@@ -220,8 +220,7 @@ perf::Sampler::result() const
         if (count_counter_values == this->_group.size()) {
           auto counter_values = std::vector<std::pair<std::string, double>>{};
           for (auto counter_id = 0U; counter_id < this->_group.size(); ++counter_id) {
-            counter_values.emplace_back(
-              std::make_pair(this->_counter_names[counter_id], double(read_format->values[counter_id].value)));
+            counter_values.emplace_back(this->_counter_names[counter_id], double(read_format->values[counter_id].value));
           }
 
           sample.counter_result(CounterResult{ std::move(counter_values) });
