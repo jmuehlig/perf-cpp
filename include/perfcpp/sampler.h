@@ -28,6 +28,7 @@ public:
     CPU = PERF_SAMPLE_CPU,
     Period = PERF_SAMPLE_PERIOD,
     BranchStack = PERF_SAMPLE_BRANCH_STACK,
+    UserRegisters = PERF_SAMPLE_REGS_USER,
     Weight = PERF_SAMPLE_WEIGHT,
     DataSource = PERF_SAMPLE_DATA_SRC,
     Identifier = PERF_SAMPLE_IDENTIFIER,

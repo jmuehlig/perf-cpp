@@ -1,5 +1,6 @@
 #pragma once
 
+#include "registers.h"
 #include <cstdint>
 
 namespace perf {
@@ -62,6 +63,7 @@ public:
   [[nodiscard]] std::uint64_t buffer_pages() const noexcept { return _buffer_pages; }
   [[nodiscard]] std::uint64_t frequency_or_period() const noexcept { return _frequency_or_period; }
   [[nodiscard]] bool is_frequency() const noexcept { return _is_frequency; }
+  [[nodiscard]] Registers registers() const noexcept { return _registers; }
 
   void frequency(const std::uint64_t frequency) noexcept
   {
@@ -75,6 +77,7 @@ public:
   }
   void precise_ip(const std::uint8_t precise_ip) noexcept { _precise_ip = precise_ip; }
   void buffer_pages(const std::uint64_t buffer_pages) noexcept { _buffer_pages = buffer_pages; }
+  void registers(const Registers registers) noexcept { _registers = registers; }
 
 private:
   std::uint64_t _buffer_pages{ 8192U + 1U };
@@ -83,5 +86,7 @@ private:
   std::uint64_t _frequency_or_period;
 
   std::uint8_t _precise_ip{ 0 };
+
+  Registers _registers;
 };
 }

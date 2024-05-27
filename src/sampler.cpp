@@ -81,6 +81,10 @@ perf::Sampler::open()
       perf_event.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
     }
 
+    if (this->_sample_type & static_cast<std::uint64_t>(Type::UserRegisters)) {
+      perf_event.sample_regs_user = this->_config.registers().mask();
+    }
+
     /// Open the counter.
     const std::int32_t file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, leader_file_descriptor, 0);
     if (file_descriptor < 0) {
@@ -220,7 +224,8 @@ perf::Sampler::result() const
         if (count_counter_values == this->_group.size()) {
           auto counter_values = std::vector<std::pair<std::string, double>>{};
           for (auto counter_id = 0U; counter_id < this->_group.size(); ++counter_id) {
-            counter_values.emplace_back(this->_counter_names[counter_id], double(read_format->values[counter_id].value));
+            counter_values.emplace_back(this->_counter_names[counter_id],
+                                        double(read_format->values[counter_id].value));
           }
 
           sample.counter_result(CounterResult{ std::move(counter_values) });
@@ -268,6 +273,26 @@ perf::Sampler::result() const
         }
 
         sample_ptr += sizeof(perf_branch_entry) * count_branches;
+      }
+
+      if (this->_sample_type & perf::Sampler::UserRegisters) {
+        // const auto abi = *reinterpret_cast<std::uint64_t*>(sample_ptr);
+        sample_ptr += sizeof(std::uint64_t);
+
+        const auto count_registers = this->_config.registers().size();
+        if (count_registers > 0U) {
+          auto registers = std::vector<std::uint64_t>{};
+          registers.reserve(count_registers);
+
+          const auto* user_registers = reinterpret_cast<std::uint64_t*>(sample_ptr);
+          for (auto register_id = 0U; register_id < count_registers; ++register_id) {
+            registers.push_back(user_registers[register_id]);
+          }
+
+          sample.user_registers(std::move(registers));
+
+          sample_ptr += sizeof(std::uint64_t) * count_registers;
+        }
       }
 
       if (this->_sample_type & perf::Sampler::Type::Weight) {

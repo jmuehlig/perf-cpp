@@ -191,6 +191,10 @@ public:
   void data_src(const DataSource data_src) noexcept { _data_src = data_src; }
   void weight(const std::uint64_t weight) noexcept { _weight = weight; }
   void branches(std::vector<Branch>&& branches) noexcept { _branches = std::move(branches); }
+  void user_registers(std::vector<std::uint64_t>&& user_registers) noexcept
+  {
+    _user_registers = std::move(user_registers);
+  }
   void callchain(std::vector<std::uintptr_t>&& callchain) noexcept { _callchain = std::move(callchain); }
 
   [[nodiscard]] Mode mode() const noexcept { return _mode; }
@@ -215,6 +219,8 @@ public:
   [[nodiscard]] std::optional<std::uint64_t> weight() const noexcept { return _weight; }
   [[nodiscard]] const std::optional<std::vector<Branch>>& branches() const noexcept { return _branches; }
   [[nodiscard]] std::optional<std::vector<Branch>>& branches() noexcept { return _branches; }
+  [[nodiscard]] const std::optional<std::vector<std::uint64_t>>& registers() const noexcept { return _user_registers; }
+  [[nodiscard]] std::optional<std::vector<std::uint64_t>>& user_registers() noexcept { return _user_registers; }
   [[nodiscard]] const std::optional<std::vector<std::uintptr_t>>& callchain() const noexcept { return _callchain; }
   [[nodiscard]] std::optional<std::vector<std::uintptr_t>>& callchain() noexcept { return _callchain; }
 
@@ -234,6 +240,7 @@ private:
   std::optional<DataSource> _data_src{ std::nullopt };
   std::optional<std::uint64_t> _weight{ std::nullopt };
   std::optional<std::vector<Branch>> _branches{ std::nullopt };
+  std::optional<std::vector<std::uint64_t>> _user_registers{ std::nullopt };
   std::optional<std::vector<std::uintptr_t>> _callchain{ std::nullopt };
 };
 }

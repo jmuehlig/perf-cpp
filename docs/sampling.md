@@ -129,6 +129,13 @@ Each `perf::Branch` instance has the following values:
 
 &rarr; [See example](../examples/branch_sampling.cpp)
 
+### `perf::Sampler::Type::UserRegisters`
+Values of user registers (the values in the process before the kernel was called).
+The values that should be sampled must be set before sampling (see `SampleConfig::user_registers`, e.g., `perf_config.user_registers(perf::Registers{{ perf::Registers::x86::AX, perf::Registers::x86::DI, perf::Registers::x86::R10 }});`).
+The result can be accessed through `sample.user_registers()`, which returns a vector of `std::uint64_t` values.
+
+&rarr; [See example](../examples/register_sampling.cpp)
+
 ### `perf::Sampler::Type::Weight`
 The weight indicates how costly the event was.
 From our experience, the access latency and can only be accessed on Intel hardware (ARM may work, too).

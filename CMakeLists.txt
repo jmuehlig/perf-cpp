@@ -41,3 +41,7 @@ target_link_libraries(branch-sampling perf-cpp)
 #### Memory address sampling
 add_executable(address-sampling examples/address_sampling.cpp examples/access_benchmark.cpp)
 target_link_libraries(address-sampling perf-cpp)
+
+#### Sampling user_registers
+add_executable(register-sampling examples/register_sampling.cpp examples/access_benchmark.cpp)
+target_link_libraries(register-sampling perf-cpp)

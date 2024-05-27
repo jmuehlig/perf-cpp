@@ -11,7 +11,7 @@ Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
 ## Key Features:
 * **Simplified Performance Measurement**: Directly integrate with CPU performance counters into your C++ application, using a more accessible interface.
 * **Fine-granular Metrics**: Focus your performance analysis on specific code segments.
-* **Event Sampling**: Leverage sampling to gather performance data periodically, enabling efficient analysis of resource usage over time and/or execution.
+* **Event Sampling**: Leverage sampling to gather performance data periodically, enabling efficient analysis of resource usage (including instruction pointers, data, branches, registers, and more) over time and/or execution.
 * **Customizable Counter Management**: Easily extend the built-in counters with those specific to your underlying hardware substrate.
 
 ## Documentation
@@ -81,6 +81,9 @@ for (const auto [name, value] : result)
 ### Sampling
 The `perf::Sampler` class delivers an interface to specify sampling criteria and control the start/stop of recordings. 
 You can sample various aspects such as instructions, time, memory addresses, access latency, call chains, branches, and more.
+
+&rarr; See the documentation for [sampling](docs/sampling.md).
+
 ```cpp
 #include <perfcpp/sampler.h>
 auto counter_definitions = perf::CounterDefinition{};
@@ -121,7 +124,8 @@ All compiled example binaries are located in examples/bin and can be executed di
 * Example for sampling [counter values: `counter_sampling.cpp`](examples/counter_sampling.cpp)
 * Example for sampling [instruction pointers: `instruction_pointer_sampling.cpp`](examples/instruction_pointer_sampling.cpp)
 * Example for sampling [memory addresses: `address_sampling.cpp`](examples/address_sampling.cpp)
-* Example for sampling [branches: `branches.cpp`](examples/branch_sampling.cpp)
+* Example for sampling [branches: `branch_sampling.cpp`](examples/branch_sampling.cpp)
+* Example for sampling [register values: `register_sampling.cpp`](examples/register_sampling.cpp)
 
 ## Feedback
 Feedback, feature requests, and contributions are always appreciated. 
