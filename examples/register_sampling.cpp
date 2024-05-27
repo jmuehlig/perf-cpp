@@ -21,15 +21,20 @@ main()
                                 /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
   perf_config.period(1000000U); /// Record every 10000th event.
 
-  perf_config.registers(perf::Registers{ { perf::Registers::x86::AX,
-                                           perf::Registers::x86::DI,
-                                           perf::Registers::x86::R10 } }); /// List of user_registers to sample.
+  perf_config.user_registers(
+    perf::Registers{ { perf::Registers::x86::AX,
+                       perf::Registers::x86::DI,
+                       perf::Registers::x86::R10 } }); /// List of user-level registers to sample.
+
+  perf_config.kernel_registers(
+    perf::Registers{ { perf::Registers::x86::BP, perf::Registers::x86::DI } }); /// List of kernel registers to sample.
 
   auto sampler =
     perf::Sampler{ counter_definitions,
                    "cycles", /// Event that generates an overflow which is samples (here we
                              /// sample every 1,000,000th cycle)
                    perf::Sampler::Type::Time | perf::Sampler::Type::UserRegisters |
+                     perf::Sampler::Type::KernelRegisters |
                      perf::Sampler::Type::CPU, /// Controls what to include into the sample, see
                                                /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
                    perf_config };
@@ -70,11 +75,23 @@ main()
 
     /// Since we recorded the time, period, the instruction pointer, and the CPU
     /// id, we can only read these values.
-    if (sample.time().has_value() && sample.registers().has_value() && sample.cpu_id().has_value()) {
-      const auto& registers = sample.registers().value();
-      std::cout << "Time = " << sample.time().value() << " | CPU ID = " << sample.cpu_id().value()
-                << " | Registers = AX(" << registers[0U] << "), DI(" << registers[1U] << "), R10(" << registers[2U]
-                << ")" << "\n";
+    if (sample.time().has_value() && (sample.user_registers().has_value() || sample.kernel_registers().has_value()) &&
+        sample.cpu_id().has_value()) {
+
+      std::cout << "Time = " << sample.time().value() << " | CPU ID = " << sample.cpu_id().value();
+
+      if (sample.user_registers().has_value()) {
+        const auto& user_registers = sample.user_registers().value();
+        std::cout << " | User Registers = AX(" << user_registers[0U] << "), DI(" << user_registers[1U] << "), R10("
+                  << user_registers[2U] << ")";
+      }
+
+      if (sample.kernel_registers().has_value()) {
+        const auto& kernel_registers = sample.kernel_registers().value();
+        std::cout << " | Kernel Registers = BP(" << kernel_registers[0U] << "), DI(" << kernel_registers[1U] << ")";
+      }
+
+      std::cout << "\n";
     }
   }
   std::cout << std::flush;

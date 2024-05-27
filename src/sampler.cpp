@@ -82,7 +82,11 @@ perf::Sampler::open()
     }
 
     if (this->_sample_type & static_cast<std::uint64_t>(Type::UserRegisters)) {
-      perf_event.sample_regs_user = this->_config.registers().mask();
+      perf_event.sample_regs_user = this->_config.user_registers().mask();
+    }
+
+    if (this->_sample_type & static_cast<std::uint64_t>(Type::KernelRegisters)) {
+      perf_event.sample_regs_intr = this->_config.kernel_registers().mask();
     }
 
     /// Open the counter.
@@ -279,19 +283,19 @@ perf::Sampler::result() const
         // const auto abi = *reinterpret_cast<std::uint64_t*>(sample_ptr);
         sample_ptr += sizeof(std::uint64_t);
 
-        const auto count_registers = this->_config.registers().size();
-        if (count_registers > 0U) {
-          auto registers = std::vector<std::uint64_t>{};
-          registers.reserve(count_registers);
+        const auto count_user_registers = this->_config.user_registers().size();
+        if (count_user_registers > 0U) {
+          auto user_registers = std::vector<std::uint64_t>{};
+          user_registers.reserve(count_user_registers);
 
-          const auto* user_registers = reinterpret_cast<std::uint64_t*>(sample_ptr);
-          for (auto register_id = 0U; register_id < count_registers; ++register_id) {
-            registers.push_back(user_registers[register_id]);
+          const auto* perf_user_registers = reinterpret_cast<std::uint64_t*>(sample_ptr);
+          for (auto register_id = 0U; register_id < count_user_registers; ++register_id) {
+            user_registers.push_back(perf_user_registers[register_id]);
           }
 
-          sample.user_registers(std::move(registers));
+          sample.user_registers(std::move(user_registers));
 
-          sample_ptr += sizeof(std::uint64_t) * count_registers;
+          sample_ptr += sizeof(std::uint64_t) * count_user_registers;
         }
       }
 
@@ -308,6 +312,26 @@ perf::Sampler::result() const
       if (this->_sample_type & perf::Sampler::Type::DataSource) {
         sample.data_src(perf::DataSource{ *reinterpret_cast<std::uint64_t*>(sample_ptr) });
         sample_ptr += sizeof(std::uint64_t);
+      }
+
+      if (this->_sample_type & perf::Sampler::KernelRegisters) {
+        // const auto abi = *reinterpret_cast<std::uint64_t*>(sample_ptr);
+        sample_ptr += sizeof(std::uint64_t);
+
+        const auto count_kernel_registers = this->_config.kernel_registers().size();
+        if (count_kernel_registers > 0U) {
+          auto kernel_registers = std::vector<std::uint64_t>{};
+          kernel_registers.reserve(count_kernel_registers);
+
+          const auto* perf_kernel_registers = reinterpret_cast<std::uint64_t*>(sample_ptr);
+          for (auto register_id = 0U; register_id < count_kernel_registers; ++register_id) {
+            kernel_registers.push_back(perf_kernel_registers[register_id]);
+          }
+
+          sample.user_registers(std::move(kernel_registers));
+
+          sample_ptr += sizeof(std::uint64_t) * count_kernel_registers;
+        }
       }
 
       if (this->_sample_type & perf::Sampler::Type::PhysicalMemAddress) {

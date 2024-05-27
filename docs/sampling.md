@@ -4,6 +4,19 @@
 Essentially, you define a sampling period or frequency at which data is captured. 
 At its core, this functionality is akin to traditional profiling tools, like `perf record`, but uniquely tailored to record specific blocks of code rather than the entire application.
 
+The following data can be recorded:
+* Instruction pointers (current and callchain)
+* ID of thread, CPU, and sample
+* Timestamp
+* Logical and physical address
+* Data source (e.g., cache level, memory, etc.)
+* Group of counter values
+* Last branch stack (including jump addresses and prediction)
+* User- and kernel-level registers
+* Weight of the access (which is mostly the latency)
+
+&rarr; [See details below](#what-can-be-recorded-and-how-to-access-the-data).
+
 ## Interface
 ### 1) Define what is recorded and when
 ```cpp
@@ -60,6 +73,31 @@ The output may be something like this:
     Time = 124853764861377 | IP = 0x5794c991990c
     Time = 124853765058918 | IP = 0x5794c991990c
     Time = 124853765256328 | IP = 0x5794c991990c
+
+
+## Sample mode
+Each sample is recoreded in one of the following modes:
+* Unknown
+* Kernel
+* User
+* Hypervisor
+* GuestKernel
+* GuestUser
+
+You can check the mode via `Sample::mode`, for example:
+```cpp
+for (const auto& sample : result)
+{
+  if (sample.mode() == perf::Sample::Mode::Kernel)
+  {
+    std::cout << "Sample in Kernel" << std::endl;      
+  }
+  else if (sample.mode() == perf::Sample::Mode::User)
+  {
+    std::cout << "Sample in User" << std::endl;      
+  }
+}
+```
 
 ## What can be recorded and how to access the data?
 The most of the following options can be combined using the or operator, e.g., `perf::Sampler::Type::Time |  perf::Sampler::Type::InstructionPointer`.
@@ -133,6 +171,13 @@ Each `perf::Branch` instance has the following values:
 Values of user registers (the values in the process before the kernel was called).
 The values that should be sampled must be set before sampling (see `SampleConfig::user_registers`, e.g., `perf_config.user_registers(perf::Registers{{ perf::Registers::x86::AX, perf::Registers::x86::DI, perf::Registers::x86::R10 }});`).
 The result can be accessed through `sample.user_registers()`, which returns a vector of `std::uint64_t` values.
+
+&rarr; [See example](../examples/register_sampling.cpp)
+
+### `perf::Sampler::Type::KernelRegisters`
+Values of user registers (the values in the process when the kernel was called).
+The values that should be sampled must be set before sampling (see `SampleConfig::kernel_registers`, e.g., `perf_config.kernel_registers(perf::Registers{{ perf::Registers::x86::AX, perf::Registers::x86::DI, perf::Registers::x86::R10 }});`).
+The result can be accessed through `sample.kernel_registers()`, which returns a vector of `std::uint64_t` values.
 
 &rarr; [See example](../examples/register_sampling.cpp)
 
