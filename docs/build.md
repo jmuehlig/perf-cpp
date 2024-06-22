@@ -20,3 +20,17 @@ ExternalProject_Add(
 ```
 * Add `path/to/your/libs/perf-cpp/src/perf-cpp-external/include` to your `include_directories()`
 * Add `perf-cpp` to your linked libraries
+
+## Notes for Linux Kernel version `< 5.13`
+The counter `cgroup-switches` is only provided since Kernel `5.13`.
+If you have an older Kernel, the counter cannot be used and will be deactivated.
+
+Sampling *data page size* and *code page size*  (see [sampling documentation](docs/sampling.md)) is only provided since Kernel `5.11`.
+If you have an older Kernel you need to define
+
+
+    -DNO_PERF_SAMPLE_DATA_PAGE_SIZE -DNO_PERF_SAMPLE_CODE_PAGE_SIZE
+
+
+when compiling the binary that is linked against `libperf-cpp`.
+
