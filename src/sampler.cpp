@@ -2,6 +2,7 @@
 #include <asm/unistd.h>
 #include <cstring>
 #include <exception>
+#include <iostream>
 #include <numeric>
 #include <perfcpp/sampler.h>
 #include <stdexcept>
@@ -18,9 +19,9 @@ perf::Sampler::Sampler(const perf::CounterDefinition& counter_list,
   , _sample_type(type)
 {
   /// Check if any unsupported types are used.
-  if (type & (std::uint64_t(1U) << 63U))
-  {
-    throw std::runtime_error{"The used sample types are not (all) supported by the Linux Kernel version (e.g., DataPageSize and CodePageSize are implemented since 5.11)."};
+  if (type & (std::uint64_t(1U) << 63U)) {
+    throw std::runtime_error{ "The used sample types are not (all) supported by the Linux Kernel version (e.g., "
+                              "DataPageSize and CodePageSize are implemented since 5.11)." };
   }
 
   for (const auto& counter_name : counter_names) {
@@ -42,10 +43,18 @@ perf::Sampler::open()
     return false;
   }
 
-  auto leader_file_descriptor = -1;
+  /// Detect, if the leader is an auxiliary (specifically for Sapphire Rapids).
+  const auto is_leader_auxiliary_counter = this->_group.member(0U).is_auxiliary();
+
   for (auto counter_index = 0U; counter_index < this->_group.size(); ++counter_index) {
     auto& counter = this->_group.member(counter_index);
+
+    /// The first counter in the group has a "special" role, others will use its file descriptor.
     const auto is_leader = counter_index == 0U;
+
+    /// For Intel's Sapphire Rapids architecture, sampling for memory requires a dummy as first counter.
+    /// Only the second counter is the "real" sampling counter.
+    const auto is_secret_leader = is_leader_auxiliary_counter && counter_index > 0U;
 
     auto& perf_event = counter.event_attribute();
     std::memset(&perf_event, 0, sizeof(perf_event_attr));
@@ -63,7 +72,7 @@ perf::Sampler::open()
     perf_event.exclude_idle = static_cast<std::int32_t>(!this->_config.is_include_idle());
     perf_event.exclude_guest = static_cast<std::int32_t>(!this->_config.is_include_guest());
 
-    if (is_leader) {
+    if (is_leader || is_secret_leader) {
       perf_event.sample_type = this->_sample_type;
 
       if (this->_config.is_frequency()) {
@@ -77,8 +86,9 @@ perf::Sampler::open()
         perf_event.branch_sample_type = PERF_SAMPLE_BRANCH_ANY;
       }
 
-      perf_event.mmap = 1U;
-      perf_event.precise_ip = this->_config.precise_ip();
+      if (is_leader) {
+        perf_event.mmap = 1U;
+      }
 
       if (this->_sample_type & static_cast<std::uint64_t>(Type::Callchain)) {
         perf_event.sample_max_stack = this->_config.max_stack();
@@ -97,22 +107,38 @@ perf::Sampler::open()
       perf_event.sample_regs_intr = this->_config.kernel_registers().mask();
     }
 
-    /// Open the counter.
-    const std::int32_t file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, leader_file_descriptor, 0);
+    /// Open the counter. Try to decrease the precise_ip if the file syscall was not successful, reporting an invalid
+    /// argument.
+    std::int32_t file_descriptor;
+    for (auto precise_ip = std::int32_t{ this->_config.precise_ip() }; precise_ip > -1; --precise_ip) {
+      perf_event.precise_ip = std::uint64_t(precise_ip);
+      file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, this->_group.leader_file_descriptor(), 0);
+      if (file_descriptor > -1 || errno != EINVAL) {
+        break;
+      }
+    }
+    counter.file_descriptor(file_descriptor);
+
+    /// Print debug output, if requested.
+    if (this->_config.is_debug()) {
+      std::cout << counter.to_string() << std::flush;
+    }
+
+    /// Check if the counter could be opened successfully.
     if (file_descriptor < 0) {
       this->_last_error = errno;
       return false;
     }
-    counter.file_descriptor(file_descriptor);
-
-    if (is_leader) {
-      leader_file_descriptor = file_descriptor;
-    }
   }
 
   /// Open the mapped buffer.
-  this->_buffer = ::mmap(
-    nullptr, this->_config.buffer_pages() * 4096U, PROT_READ | PROT_WRITE, MAP_SHARED, leader_file_descriptor, 0);
+  /// If the leader is an "auxiliary" counter (like on Sapphire Rapid), use the second counter instead.
+  const auto file_descriptor = is_leader_auxiliary_counter && this->_group.size() > 1U
+                                 ? this->_group.member(1U).file_descriptor()
+                                 : this->_group.leader_file_descriptor();
+
+  this->_buffer =
+    ::mmap(nullptr, this->_config.buffer_pages() * 4096U, PROT_READ | PROT_WRITE, MAP_SHARED, file_descriptor, 0);
   if (this->_buffer == MAP_FAILED) {
     this->_last_error = errno;
     return false;
@@ -309,13 +335,13 @@ perf::Sampler::result() const
       }
 
       if (this->_sample_type & perf::Sampler::Type::Weight) {
-        sample.weight(perf::Weight{std::uint32_t(*reinterpret_cast<std::uint64_t*>(sample_ptr))});
+        sample.weight(perf::Weight{ std::uint32_t(*reinterpret_cast<std::uint64_t*>(sample_ptr)) });
         sample_ptr += sizeof(std::uint64_t);
       }
 #ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT
       else if (this->_sample_type & perf::Sampler::Type::WeightStruct) {
         const auto weight_struct = *reinterpret_cast<perf_sample_weight*>(sample_ptr);
-        sample.weight(perf::Weight{weight_struct.var1_dw, weight_struct.var2_w, weight_struct.var3_w});
+        sample.weight(perf::Weight{ weight_struct.var1_dw, weight_struct.var2_w, weight_struct.var3_w });
 
         sample_ptr += sizeof(perf_sample_weight);
       }

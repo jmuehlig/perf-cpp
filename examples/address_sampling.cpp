@@ -2,11 +2,6 @@
 #include <iostream>
 #include <perfcpp/sampler.h>
 
-struct alignas(64U) cache_line
-{
-  std::int64_t value;
-};
-
 int
 main()
 {
@@ -35,16 +30,15 @@ main()
   weight_type = perf::Sampler::Type::WeightStruct;
 #endif
 
-  auto sampler =
-    perf::Sampler{ counter_definitions,
-                   "mem_trans_retired.load_latency_gt_3", /// Event that generates an overflow
-                                                          /// which is samples (here we sample
-                                                          /// every 1,000 mem load)
-                   perf::Sampler::Type::Time | perf::Sampler::Type::LogicalMemAddress |
-                     perf::Sampler::Type::DataSource |
-                     weight_type, /// Controls what to include into the sample, see
-                                                  /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-                   perf_config };
+  auto sampler = perf::Sampler{ counter_definitions,
+                                "mem_trans_retired.load_latency_gt_3", /// Event that generates an overflow
+                                                                       /// which is samples (here we sample
+                                                                       /// every 1,000 mem load)
+                                perf::Sampler::Type::Time | perf::Sampler::Type::LogicalMemAddress |
+                                  perf::Sampler::Type::DataSource |
+                                  weight_type, /// Controls what to include into the sample, see
+                                               /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
+                                perf_config };
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
@@ -84,9 +78,7 @@ main()
     /// id, we can only read these values.
     if (sample.time().has_value() && sample.logical_memory_address().has_value() && sample.data_src().has_value()) {
       auto data_source = "N/A";
-      if (sample.data_src()->is_mem_local_ram()) {
-        data_source = "local RAM";
-      } else if (sample.data_src()->is_mem_l1()) {
+      if (sample.data_src()->is_mem_l1()) {
         data_source = "L1d";
       } else if (sample.data_src()->is_mem_lfb()) {
         data_source = "LFB";
@@ -94,14 +86,15 @@ main()
         data_source = "L2";
       } else if (sample.data_src()->is_mem_l3()) {
         data_source = "L3";
+      } else if (sample.data_src()->is_mem_local_ram()) {
+        data_source = "local RAM";
       }
 
-      const auto weight = sample.weight().value_or(perf::Weight{0U, 0U, 0U});
+      const auto weight = sample.weight().value_or(perf::Weight{ 0U, 0U, 0U });
 
       std::cout << "Time = " << sample.time().value() << " | Logical Mem Address = 0x" << std::hex
-                << sample.logical_memory_address().value() << std::dec
-                << " | Load Latency = " << weight.latency() << ", " << weight.var2() << ", " << weight.var3()
-                << " | Is Load = " << sample.data_src()->is_load()
+                << sample.logical_memory_address().value() << std::dec << " | Load Latency = " << weight.latency()
+                << ", " << weight.var2() << ", " << weight.var3() << " | Is Load = " << sample.data_src()->is_load()
                 << " | Data Source = " << data_source << "\n";
     }
   }

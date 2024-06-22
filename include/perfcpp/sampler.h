@@ -38,7 +38,7 @@ public:
 #ifndef NO_PERF_SAMPLE_DATA_PAGE_SIZE /// PERF_SAMPLE_DATA_PAGE_SIZE is provided since Linux Kernel 5.11
     DataPageSize = PERF_SAMPLE_DATA_PAGE_SIZE,
 #else
-  DataPageSize = std::uint64_t(1U) << 63,
+    DataPageSize = std::uint64_t(1U) << 63,
 #endif
 
 #ifndef NO_PERF_SAMPLE_CODE_PAGE_SIZE /// PERF_SAMPLE_CODE_PAGE_SIZE is provided since Linux Kernel 5.11

@@ -66,6 +66,8 @@ public:
   [[nodiscard]] Registers user_registers() const noexcept { return _user_registers; }
   [[nodiscard]] Registers kernel_registers() const noexcept { return _kernel_registers; }
 
+  [[nodiscard]] bool is_debug() const noexcept { return _is_debug; }
+
   void frequency(const std::uint64_t frequency) noexcept
   {
     _is_frequency = true;
@@ -81,6 +83,8 @@ public:
   void user_registers(const Registers registers) noexcept { _user_registers = registers; }
   void kernel_registers(const Registers registers) noexcept { _kernel_registers = registers; }
 
+  void is_debug(const bool is_debug) noexcept { _is_debug = is_debug; }
+
 private:
   std::uint64_t _buffer_pages{ 8192U + 1U };
 
@@ -91,5 +95,7 @@ private:
 
   Registers _user_registers;
   Registers _kernel_registers;
+
+  bool _is_debug;
 };
 }

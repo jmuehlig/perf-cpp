@@ -28,6 +28,8 @@ public:
   [[nodiscard]] std::uint64_t event_id() const noexcept { return _event_id; }
   [[nodiscard]] std::array<std::uint64_t, 2U> event_id_extension() const noexcept { return _event_id_extension; }
 
+  [[nodiscard]] bool is_auxiliary() const noexcept { return _event_id == 0x8203; }
+
 private:
   std::uint32_t _type;
   std::uint64_t _event_id;
@@ -117,6 +119,10 @@ public:
   void file_descriptor(const std::int32_t file_descriptor) noexcept { _file_descriptor = file_descriptor; }
   [[nodiscard]] std::int32_t file_descriptor() const noexcept { return _file_descriptor; }
   [[nodiscard]] bool is_open() const noexcept { return _file_descriptor > -1; }
+
+  [[nodiscard]] bool is_auxiliary() const noexcept { return _config.is_auxiliary(); }
+
+  [[nodiscard]] std::string to_string() const;
 
 private:
   CounterConfig _config;

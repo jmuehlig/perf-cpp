@@ -75,9 +75,31 @@ The output may be something like this:
     Time = 124853765058918 | IP = 0x5794c991990c
     Time = 124853765256328 | IP = 0x5794c991990c
 
+---
+
+## Debugging Counter Settings
+In certain scenarios, configuring counters for sampling can be challenging, as settings (e.g., `precise_ip`) may need to be adjusted for different machines. 
+To facilitate this process, perf provides a debug output option:
+
+
+    perf --debug perf-event-open [mem] record ...
+
+
+This command helps visualize configurations for various counters, which is also beneficial for retrieving event codes (for more details, see the [counters documentation](counters.md)).
+
+Similarly, *perfcpp* includes a debug feature for sampled counters. 
+To examine the configuration settings—particularly useful if encountering errors during `sampler.start();`—enable debugging in your code as follows:
+
+```cpp
+sample_config.is_debug(true);
+```
+
+When `is_debug` is set to `true`, *perfcpp* will display the configuration of all counters upon initiating sampling.
+
+---
 
 ## Sample mode
-Each sample is recoreded in one of the following modes:
+Each sample is recorded in one of the following modes:
 * Unknown
 * Kernel
 * User
@@ -195,8 +217,25 @@ Can be accessed via `sample.weight()`, which returns a `perf::Weight` class, whi
 
 &rarr; [See example](../examples/address_sampling.cpp)
 
+#### Specific Notice for Intel's Sapphire Rapids architecture
+To use weight-sampling on Intel's Sapphire Rapids architecture, perf needs an auxiliary counter to be added to the group, before the "real" counter is added (see [this commit](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).
+*perfcpp*  defines this counter, you only need to add it accordingly:
+
+```cpp
+ auto sampler = perf::Sampler{ counter_definitions,
+                   std::vector<std::string>{/* helper: */"mem-loads-aux", 
+                                            /* real counter: */ "your-memory-counter"},
+                   perf::Sampler::Type::Time 
+                    | perf::Sampler::Type::LogicalMemAddress 
+                    | perf::Sampler::Type::DataSource 
+                    | perf::Sampler::Type::WeightStruct,
+                   perf_config };
+```
+
+The sampler will detect that auxiliary counter automatically.
+
 ### `perf::Sampler::Type::DataSource`
-Data source where the data was sampled (e.g., local mem, remote mem, L1d, L2, ..).
+Data source where the data was sampled (e.g., local mem, remote mem, L1d, L2, ...).
 From our experience, this only works on Intel hardware (ARM might work, too) and only with specific triggers.
 
 The data source can be accessed via `sample.data_source()`, which provides a specific `perf::DataSource` object.
@@ -238,3 +277,4 @@ Can be accessed via `sample.data_page_size()`.
 ### `perf::Sampler::Type::CodePageSize`
 Size of pages of sampled instruction pointers (e.g., when sampling for `perf::Sample::Type::InstructionPointer`).
 Can be accessed via `sample.code_page_size()`.
+

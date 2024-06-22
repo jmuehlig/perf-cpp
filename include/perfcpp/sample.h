@@ -153,21 +153,27 @@ class Weight
 {
 public:
   Weight(const std::uint32_t latency, const std::uint16_t var2_w, const std::uint16_t var3_w) noexcept
-    : _latency(latency), _var2(var2_w), _var3(var3_w)
+    : _latency(latency)
+    , _var2(var2_w)
+    , _var3(var3_w)
   {
   }
 
-  explicit Weight(const std::uint32_t latency) noexcept : _latency(latency) { }
+  explicit Weight(const std::uint32_t latency) noexcept
+    : _latency(latency)
+  {
+  }
 
   ~Weight() noexcept = default;
 
   [[nodiscard]] std::uint32_t latency() const noexcept { return _latency; }
   [[nodiscard]] std::uint32_t var2() const noexcept { return _var2; }
   [[nodiscard]] std::uint32_t var3() const noexcept { return _var3; }
+
 private:
   std::uint32_t _latency;
-  std::uint16_t _var2 {0U};
-  std::uint16_t _var3 {0U};
+  std::uint16_t _var2{ 0U };
+  std::uint16_t _var3{ 0U };
 };
 
 class Sample
