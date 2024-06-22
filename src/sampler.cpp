@@ -309,9 +309,17 @@ perf::Sampler::result() const
       }
 
       if (this->_sample_type & perf::Sampler::Type::Weight) {
-        sample.weight(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+        sample.weight(perf::Weight{std::uint32_t(*reinterpret_cast<std::uint64_t*>(sample_ptr))});
         sample_ptr += sizeof(std::uint64_t);
       }
+#ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT
+      else if (this->_sample_type & perf::Sampler::Type::WeightStruct) {
+        const auto weight_struct = *reinterpret_cast<perf_sample_weight*>(sample_ptr);
+        sample.weight(perf::Weight{weight_struct.var1_dw, weight_struct.var2_w, weight_struct.var3_w});
+
+        sample_ptr += sizeof(perf_sample_weight);
+      }
+#endif
 
       if (this->_sample_type & perf::Sampler::Type::DataSource) {
         sample.data_src(perf::DataSource{ *reinterpret_cast<std::uint64_t*>(sample_ptr) });

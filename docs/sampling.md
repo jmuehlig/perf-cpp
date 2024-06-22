@@ -184,10 +184,14 @@ The ABI can be queried using `sample.kernel_registers_abi()`.
 
 &rarr; [See example](../examples/register_sampling.cpp)
 
-### `perf::Sampler::Type::Weight`
+### `perf::Sampler::Type::Weight` (Linux Kernel `< 5.12`) / `perf::Sampler::Type::WeightStruct` (since Kernel `5.12`)
 The weight indicates how costly the event was.
 From our experience, the access latency and can only be accessed on Intel hardware (ARM may work, too).
-Can be accessed via `sample.weight()`.
+Since Linux Kernel version `5.12`, the Kernel might generate more information than only the "weight".
+Can be accessed via `sample.weight()`, which returns a `perf::Weight` class, which has the following attributes:
+* `sample.weight().value().latency()` returns the latency (for both `perf::Sampler::Type::Weight` and `perf::Sampler::Type::WeightStruct`).
+* `sample.weight().value().var2()` returns "other information" (not specified by perf) **but** only for `perf::Sampler::Type::WeightStruct`.
+* `sample.weight().value().var3()` returns "other information" (not specified by perf) **but** only for `perf::Sampler::Type::WeightStruct`.
 
 &rarr; [See example](../examples/address_sampling.cpp)
 

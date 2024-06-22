@@ -30,6 +30,11 @@ main()
                               /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
   perf_config.period(1000U);  /// Record every 1000th event.
 
+  auto weight_type = perf::Sampler::Type::Weight;
+#ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT
+  weight_type = perf::Sampler::Type::WeightStruct;
+#endif
+
   auto sampler =
     perf::Sampler{ counter_definitions,
                    "mem_trans_retired.load_latency_gt_3", /// Event that generates an overflow
@@ -37,7 +42,7 @@ main()
                                                           /// every 1,000 mem load)
                    perf::Sampler::Type::Time | perf::Sampler::Type::LogicalMemAddress |
                      perf::Sampler::Type::DataSource |
-                     perf::Sampler::Type::Weight, /// Controls what to include into the sample, see
+                     weight_type, /// Controls what to include into the sample, see
                                                   /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
                    perf_config };
 
@@ -91,9 +96,12 @@ main()
         data_source = "L3";
       }
 
+      const auto weight = sample.weight().value_or(perf::Weight{0U, 0U, 0U});
+
       std::cout << "Time = " << sample.time().value() << " | Logical Mem Address = 0x" << std::hex
                 << sample.logical_memory_address().value() << std::dec
-                << " | Load Latency = " << sample.weight().value() << " | Is Load = " << sample.data_src()->is_load()
+                << " | Load Latency = " << weight.latency() << ", " << weight.var2() << ", " << weight.var3()
+                << " | Is Load = " << sample.data_src()->is_load()
                 << " | Data Source = " << data_source << "\n";
     }
   }

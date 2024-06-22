@@ -149,6 +149,27 @@ private:
   std::uint16_t _cycles;
 };
 
+class Weight
+{
+public:
+  Weight(const std::uint32_t latency, const std::uint16_t var2_w, const std::uint16_t var3_w) noexcept
+    : _latency(latency), _var2(var2_w), _var3(var3_w)
+  {
+  }
+
+  explicit Weight(const std::uint32_t latency) noexcept : _latency(latency) { }
+
+  ~Weight() noexcept = default;
+
+  [[nodiscard]] std::uint32_t latency() const noexcept { return _latency; }
+  [[nodiscard]] std::uint32_t var2() const noexcept { return _var2; }
+  [[nodiscard]] std::uint32_t var3() const noexcept { return _var3; }
+private:
+  std::uint32_t _latency;
+  std::uint16_t _var2 {0U};
+  std::uint16_t _var3 {0U};
+};
+
 class Sample
 {
 public:
@@ -189,7 +210,7 @@ public:
   void period(const std::uint64_t period) noexcept { _period = period; }
   void counter_result(CounterResult&& counter_result) noexcept { _counter_result = std::move(counter_result); }
   void data_src(const DataSource data_src) noexcept { _data_src = data_src; }
-  void weight(const std::uint64_t weight) noexcept { _weight = weight; }
+  void weight(const Weight weight) noexcept { _weight = weight; }
   void branches(std::vector<Branch>&& branches) noexcept { _branches = std::move(branches); }
   void user_registers_abi(const std::uint64_t abi) noexcept { _user_registers_abi = abi; }
   void user_registers(std::vector<std::uint64_t>&& user_registers) noexcept
@@ -224,7 +245,7 @@ public:
   [[nodiscard]] std::optional<std::uint64_t> period() const noexcept { return _period; }
   [[nodiscard]] const std::optional<CounterResult>& counter_result() const noexcept { return _counter_result; }
   [[nodiscard]] std::optional<DataSource> data_src() const noexcept { return _data_src; }
-  [[nodiscard]] std::optional<std::uint64_t> weight() const noexcept { return _weight; }
+  [[nodiscard]] std::optional<Weight> weight() const noexcept { return _weight; }
   [[nodiscard]] const std::optional<std::vector<Branch>>& branches() const noexcept { return _branches; }
   [[nodiscard]] std::optional<std::vector<Branch>>& branches() noexcept { return _branches; }
   [[nodiscard]] std::optional<std::uint64_t> user_registers_abi() const noexcept { return _user_registers_abi; }
@@ -258,7 +279,7 @@ private:
   std::optional<std::uint64_t> _period{ std::nullopt };
   std::optional<CounterResult> _counter_result{ std::nullopt };
   std::optional<DataSource> _data_src{ std::nullopt };
-  std::optional<std::uint64_t> _weight{ std::nullopt };
+  std::optional<Weight> _weight{ std::nullopt };
   std::optional<std::vector<Branch>> _branches{ std::nullopt };
   std::optional<std::uint64_t> _user_registers_abi{ std::nullopt };
   std::optional<std::vector<std::uint64_t>> _user_registers{ std::nullopt };

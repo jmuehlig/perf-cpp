@@ -15,9 +15,14 @@ if (LINUX_KERNEL_VERSION VERSION_LESS 5.13)
     add_definitions(-DNO_PERF_COUNT_SW_CGROUP_SWITCHES)
 endif()
 
+if (LINUX_KERNEL_VERSION VERSION_LESS 5.12)
+    add_definitions(-DNO_PERF_SAMPLE_WEIGHT_STRUCT)
+endif()
+
 if (LINUX_KERNEL_VERSION VERSION_LESS 5.11)
     add_definitions(-DNO_PERF_SAMPLE_DATA_PAGE_SIZE -DNO_PERF_SAMPLE_CODE_PAGE_SIZE)
 endif()
+
 
 ### Add include directory.
 include_directories(include/)

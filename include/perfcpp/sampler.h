@@ -46,6 +46,12 @@ public:
 #else
     CodePageSize = std::uint64_t(1U) << 63,
 #endif
+
+#ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT /// PERF_SAMPLE_WEIGHT_STRUCT is provided since Linux Kernel 5.12
+    WeightStruct = PERF_SAMPLE_WEIGHT_STRUCT
+#else
+    WeightStruct = std::uint64_t(1U) << 63,
+#endif
   };
 
   Sampler(const CounterDefinition& counter_list,
