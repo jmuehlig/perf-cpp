@@ -34,9 +34,18 @@ public:
     Identifier = PERF_SAMPLE_IDENTIFIER,
     KernelRegisters = PERF_SAMPLE_REGS_INTR,
     PhysicalMemAddress = PERF_SAMPLE_PHYS_ADDR,
+
+#ifndef NO_PERF_SAMPLE_DATA_PAGE_SIZE /// PERF_SAMPLE_DATA_PAGE_SIZE is provided since Linux Kernel 5.11
     DataPageSize = PERF_SAMPLE_DATA_PAGE_SIZE,
+#else
+  DataPageSize = std::uint64_t(1U) << 63,
+#endif
+
+#ifndef NO_PERF_SAMPLE_CODE_PAGE_SIZE /// PERF_SAMPLE_CODE_PAGE_SIZE is provided since Linux Kernel 5.11
     CodePageSize = PERF_SAMPLE_CODE_PAGE_SIZE,
-    WeightStruct = PERF_SAMPLE_WEIGHT_STRUCT,
+#else
+    CodePageSize = std::uint64_t(1U) << 63,
+#endif
   };
 
   Sampler(const CounterDefinition& counter_list,

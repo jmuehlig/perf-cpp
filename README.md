@@ -28,25 +28,39 @@ Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
 
 &rarr; [More details are here](docs/build.md).
 
-1. Clone this repository
+```
+/// 1) Clone the repository
+git clone https://github.com/jmuehlig/perf-cpp.git
+
+/// 2) Switch to the cloned folder
+cd perf-cpp
+
+/// 3) Generate the Makefile
+cmake .
+
+/// 4) Build the library and examples
+make
+```
+
+## System Requirements
+* Minimum *Linux Kernel version*: `5.8`
+* Envisioned *Linux Kernel version*: `>= 5.13` (for older Kernel versions see below)
+* Installed `perf` (check if `perf stat ls` provides any output, otherwise follow the instructions)
+
+### Notes for Linux Kernel < 5.13
+#### Linux Kernel < 5.13
+The counter `cgroup-switches` is only provided since Kernel `5.13`. 
+If you have an older Kernel, the counter cannot be used.
+
+#### Linux Kernel < 5.11
+Sampling *data page size* and *code page size*  (see [sampling documentation](docs/sampling.md)) is only provided since Kernel `5.11`.
+If you have an older Kernel **and** you want to link the library, you need to define 
 
 
-    git clone https://github.com/jmuehlig/perf-cpp.git
-
-2. Switch to the cloned folder
+    -DNO_PERF_SAMPLE_DATA_PAGE_SIZE -DNO_PERF_SAMPLE_CODE_PAGE_SIZE
 
 
-    cd perf-cpp
-
-3. Build the `Makefile`
-
-
-    cmake .
-
-4. Build the library and examples
-
-
-    make
+when compiling the binary that links `perf-cpp`. This is not true for the examples (will be done automatically).
 
 ---
 

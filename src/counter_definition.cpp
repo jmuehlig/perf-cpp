@@ -59,7 +59,9 @@ perf::CounterDefinition::initialized_default_counters()
   this->add("emulation-faults", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_EMULATION_FAULTS });
   this->add("context-switches", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CONTEXT_SWITCHES });
   this->add("bpf-output", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_BPF_OUTPUT });
+#ifndef NO_PERF_COUNT_SW_CGROUP_SWITCHES /// PERF_COUNT_SW_CGROUP_SWITCHES is provided since Linux Kernel 5.13
   this->add("cgroup-switches", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CGROUP_SWITCHES });
+#endif
   this->add("cpu-migrations", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS });
   this->add("migrations", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS });
 

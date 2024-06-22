@@ -1,8 +1,10 @@
 #include <algorithm>
 #include <asm/unistd.h>
 #include <cstring>
+#include <exception>
 #include <numeric>
 #include <perfcpp/sampler.h>
+#include <stdexcept>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <unistd.h>
@@ -15,6 +17,12 @@ perf::Sampler::Sampler(const perf::CounterDefinition& counter_list,
   , _config(config)
   , _sample_type(type)
 {
+  /// Check if any unsupported types are used.
+  if (type & (std::uint64_t(1U) << 63U))
+  {
+    throw std::runtime_error{"The used sample types are not (all) supported by the Linux Kernel version (e.g., DataPageSize and CodePageSize are implemented since 5.11)."};
+  }
+
   for (const auto& counter_name : counter_names) {
     if (!this->_counter_definitions.is_metric(counter_name)) /// Metrics are not (yet) supported.
     {
@@ -302,11 +310,6 @@ perf::Sampler::result() const
 
       if (this->_sample_type & perf::Sampler::Type::Weight) {
         sample.weight(*reinterpret_cast<std::uint64_t*>(sample_ptr));
-        sample_ptr += sizeof(std::uint64_t);
-      }
-
-      if (this->_sample_type & perf::Sampler::Type::WeightStruct) {
-        sample.weight(reinterpret_cast<perf_sample_weight*>(sample_ptr)->full);
         sample_ptr += sizeof(std::uint64_t);
       }
 
