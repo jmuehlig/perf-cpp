@@ -144,6 +144,5 @@ config.is_debug(true);
 auto event_counter = perf::EventCounter{ counter_definitions, config };
 ```
 
-When `is_debug` is set to `true`, *perfcpp* will display the configuration of all counters upon starting the counters.
-Hence, `is_debug` should be **turned off when profiling**.
+When `is_debug` is set to `true`, *perfcpp* will display the configuration of all counters upon opening the counters.
 

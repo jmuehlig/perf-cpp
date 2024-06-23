@@ -48,7 +48,7 @@ perf::Group::open(const perf::Config config)
 
     if (config.is_debug())
     {
-      std::cout << counter.to_string() << std::endl;
+      std::cout << counter.to_string() << std::flush;
     }
 
     if (counter.is_open()) {
