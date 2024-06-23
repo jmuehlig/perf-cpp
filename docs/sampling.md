@@ -212,7 +212,7 @@ From our experience, the access latency and can only be accessed on Intel hardwa
 Since Linux Kernel version `5.12`, the Kernel might generate more information than only the "weight".
 Can be accessed via `sample.weight()`, which returns a `perf::Weight` class, which has the following attributes:
 * `sample.weight().value().latency()` returns the latency (for both `perf::Sampler::Type::Weight` and `perf::Sampler::Type::WeightStruct`).
-* `sample.weight().value().var2()` returns "other information" (not specified by perf) **but** only for `perf::Sampler::Type::WeightStruct`.
+* `sample.weight().value().var2()` returns "other information" (not specified by perf) **but** only for `perf::Sampler::Type::WeightStruct`. On Intel's Sapphire Rapids architecture, it seems to record the instruction latency (which is higher than the load latency and includes the latter).
 * `sample.weight().value().var3()` returns "other information" (not specified by perf) **but** only for `perf::Sampler::Type::WeightStruct`.
 
 &rarr; [See example](../examples/address_sampling.cpp)
