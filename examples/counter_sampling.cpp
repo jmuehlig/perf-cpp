@@ -74,15 +74,18 @@ main()
     /// Since we recorded the time, period, the instruction pointer, and the CPU
     /// id, we can only read these values.
     if (sample.time().has_value() && sample.counter_result().has_value()) {
-      std::cout << "Time = " << sample.time().value() << " | cycles (diff) = "
-                << sample.counter_result()->get("cycles").value_or(.0) - last_counter_result->get("cycles").value_or(.0)
-                << " | L1-dcache-loads (diff) = "
-                << sample.counter_result()->get("L1-dcache-loads").value_or(.0) -
-                     last_counter_result->get("L1-dcache-loads").value_or(.0)
-                << " | L1-dcache-load-misses (diff) = "
-                << sample.counter_result()->get("L1-dcache-load-misses").value_or(.0) -
-                     last_counter_result->get("L1-dcache-load-misses").value_or(.0)
-                << "\n";
+      if (last_counter_result.has_value())
+      {
+        std::cout << "Time = " << sample.time().value() << " | cycles (diff) = "
+                  << sample.counter_result()->get("cycles").value_or(.0) - last_counter_result->get("cycles").value_or(.0)
+                  << " | L1-dcache-loads (diff) = "
+                  << sample.counter_result()->get("L1-dcache-loads").value_or(.0) -
+                       last_counter_result->get("L1-dcache-loads").value_or(.0)
+                  << " | L1-dcache-load-misses (diff) = "
+                  << sample.counter_result()->get("L1-dcache-load-misses").value_or(.0) -
+                       last_counter_result->get("L1-dcache-load-misses").value_or(.0)
+                  << "\n";
+      }
 
       last_counter_result = sample.counter_result();
     }
