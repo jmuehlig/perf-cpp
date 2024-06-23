@@ -1,7 +1,9 @@
 #pragma once
 
 #include "registers.h"
+#include "branch.h"
 #include <cstdint>
+#include <optional>
 
 namespace perf {
 class Config
@@ -62,15 +64,19 @@ private:
   bool _is_debug{ false };
 };
 
-class SampleConfig : public Config
+class SampleConfig final : public Config
 {
 public:
+  SampleConfig() noexcept = default;
+  ~SampleConfig() noexcept = default;
+
   [[nodiscard]] std::uint8_t precise_ip() const noexcept { return _precise_ip; }
   [[nodiscard]] std::uint64_t buffer_pages() const noexcept { return _buffer_pages; }
   [[nodiscard]] std::uint64_t frequency_or_period() const noexcept { return _frequency_or_period; }
   [[nodiscard]] bool is_frequency() const noexcept { return _is_frequency; }
   [[nodiscard]] Registers user_registers() const noexcept { return _user_registers; }
   [[nodiscard]] Registers kernel_registers() const noexcept { return _kernel_registers; }
+  [[nodiscard]] std::uint64_t branch_type() const noexcept { return _branch_type; }
 
   void frequency(const std::uint64_t frequency) noexcept
   {
@@ -86,6 +92,8 @@ public:
   void buffer_pages(const std::uint64_t buffer_pages) noexcept { _buffer_pages = buffer_pages; }
   void user_registers(const Registers registers) noexcept { _user_registers = registers; }
   void kernel_registers(const Registers registers) noexcept { _kernel_registers = registers; }
+  void branch_type(const std::uint64_t branch_type) noexcept { _branch_type = branch_type; }
+  void branch_type(const BranchType branch_type) noexcept { _branch_type = static_cast<std::uint64_t>(branch_type); }
 
 private:
   std::uint64_t _buffer_pages{ 8192U + 1U };
@@ -97,5 +105,7 @@ private:
 
   Registers _user_registers;
   Registers _kernel_registers;
+
+  std::uint64_t _branch_type{ static_cast<std::uint64_t>(BranchType::Any) };
 };
 }

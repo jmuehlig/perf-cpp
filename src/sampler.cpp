@@ -83,7 +83,7 @@ perf::Sampler::open()
       }
 
       if (this->_sample_type & Sampler::Type::BranchStack) {
-        perf_event.branch_sample_type = PERF_SAMPLE_BRANCH_ANY;
+        perf_event.branch_sample_type = this->_config.branch_type();
       }
 
       if (is_leader) {

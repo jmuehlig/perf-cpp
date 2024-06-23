@@ -188,6 +188,29 @@ Each `perf::Branch` instance has the following values:
 * A flag that indicates if the branch was a transaction abort (`branch.is_transaction_abort()`).
 * Cycles since the last branch (`branch.cycles()`) (`0` if not supported by the hardware).
 
+In addition, the type of sampled branches can be restricted by passing the type of wanted branches into `SampleConfig::branch_type`, for example:
+
+```cpp
+/// Sample only conditional branches in user mode.
+auto sample_config = perf::SampleConfig{};
+sample_config.branch_type(perf::BranchType::User | perf::BranchType::Conditional);
+```
+
+The possible branch type values are:
+* `perf::BranchType::User`: Sample branches in user mode.
+* `perf::BranchType::Kernel`: Sample kernel branches.
+* `perf::BranchType::HyperVisor`: Sample branches in HV mode.
+* `perf::BranchType::Any` (the default): Sample all branches.
+* `perf::BranchType::Call`: Sample any call (direct, indirect, far jumps).
+* `perf::BranchType::DirectCall`: Sample direct call.
+* `perf::BranchType::IndirectCall`: Sample indirect call.
+* `perf::BranchType::Return`: Sample return branches.
+* `perf::BranchType::IndirectJump`: Sample indirect jumps.
+* `perf::BranchType::Conditional`: Sample conditional branches.
+* `perf::BranchType::TransactionalMemoryAbort`: Sample branches that abort transactional memory.
+* `perf::BranchType::InTransaction`: Sample branches in transactions of transactional memory.
+* `perf::BranchType::NotInTransaction`: Sample branches not in transactions of transactional memory.
+
 &rarr; [See example](../examples/branch_sampling.cpp)
 
 ### `perf::Sampler::Type::UserRegisters`
