@@ -58,7 +58,7 @@ Utilize predefined counters or customize counters specific to your hardware.
 #include <perfcpp/event_counter.h>
 auto counter_definitions = perf::CounterDefinition{};
 auto event_counter = perf::EventCounter{counter_definitions};
-event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
+event_counter.add({"instructions", "cycles", "cache-misses"});
 
 event_counter.start();
 /// your code that will be measured is here...
@@ -67,8 +67,13 @@ event_counter.stop();
 const auto result = event_counter.result();
 for (const auto [name, value] : result)
 {
-    std::cout << "Counter " << name << " = " << value << std::endl;
+    std::cout << name << ": " << value << std::endl;
 }
+
+/// Possible output:
+// instructions: 5.97298e+07
+// cycles: 5.02462e+08
+// cache-misses: 1.36517e+07
 ```
 
 #### Sampling
@@ -100,10 +105,17 @@ for (const auto& sample : samples)
 {
     std::cout 
         << "Time = " << sample.time().value() 
+        << " | Instruction = 0x" << std::hex << sample.instruction_pointer().value() << std::dec
         << " | CPU = " << sample.cpu().value()
-        << " | Instruction = " << sample.instruction_pointer().value()
         << std::endl;
 }
+
+/// Possible output:
+// Time = 365449130714033 | Instruction = 0x5a6e84b2075c | CPU = 8
+// Time = 365449130913157 | Instruction = 0x64af7417c75c | CPU = 8
+// Time = 365449131112591 | Instruction = 0x5a6e84b2075c | CPU = 8
+// Time = 365449131312005 | Instruction = 0x64af7417c75c | CPU = 8
+// ...
 ```
 
 ---
