@@ -114,9 +114,9 @@ perf::Counter::to_string() const
     stream << "\n";
   }
 
-  if (this->_event_attribute.freq > 0U) {
+  if (this->_event_attribute.freq > 0U && this->_event_attribute.sample_freq > 0U) {
     stream << "        sample_freq: " << this->_event_attribute.sample_freq << "\n";
-  } else {
+  } else if (this->_event_attribute.sample_period > 0U) {
     stream << "        sample_period: " << this->_event_attribute.sample_period << "\n";
   }
 

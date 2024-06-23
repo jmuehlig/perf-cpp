@@ -3,6 +3,7 @@
 #include <perfcpp/group.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <iostream>
 
 using namespace perf;
 
@@ -44,6 +45,12 @@ perf::Group::open(const perf::Config config)
     /// Open the counter.
     const std::int32_t file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, leader_file_descriptor, 0);
     counter.file_descriptor(file_descriptor);
+
+    if (config.is_debug())
+    {
+      std::cout << counter.to_string() << std::endl;
+    }
+
     if (counter.is_open()) {
       ::ioctl(file_descriptor, PERF_EVENT_IOC_ID, &counter.id());
     }

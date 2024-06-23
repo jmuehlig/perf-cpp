@@ -24,6 +24,8 @@ public:
   [[nodiscard]] bool is_include_idle() const noexcept { return _is_include_idle; }
   [[nodiscard]] bool is_include_guest() const noexcept { return _is_include_guest; }
 
+  [[nodiscard]] bool is_debug() const noexcept { return _is_debug; }
+
   void max_groups(const std::uint8_t max_groups) noexcept { _max_groups = max_groups; }
   void max_counters_per_group(const std::uint8_t max_counters_per_group) noexcept
   {
@@ -42,6 +44,8 @@ public:
   void include_idle(const bool is_include_idle) noexcept { _is_include_idle = is_include_idle; }
   void include_guest(const bool is_include_guest) noexcept { _is_include_guest = is_include_guest; }
 
+  void is_debug(const bool is_debug) noexcept { _is_debug = is_debug; }
+
 private:
   std::uint8_t _max_groups{ 5U };
   std::uint8_t _max_counters_per_group{ 4U };
@@ -54,6 +58,8 @@ private:
   bool _is_include_hypervisor{ true };
   bool _is_include_idle{ true };
   bool _is_include_guest{ true };
+
+  bool _is_debug{ false };
 };
 
 class SampleConfig : public Config
@@ -65,8 +71,6 @@ public:
   [[nodiscard]] bool is_frequency() const noexcept { return _is_frequency; }
   [[nodiscard]] Registers user_registers() const noexcept { return _user_registers; }
   [[nodiscard]] Registers kernel_registers() const noexcept { return _kernel_registers; }
-
-  [[nodiscard]] bool is_debug() const noexcept { return _is_debug; }
 
   void frequency(const std::uint64_t frequency) noexcept
   {
@@ -83,8 +87,6 @@ public:
   void user_registers(const Registers registers) noexcept { _user_registers = registers; }
   void kernel_registers(const Registers registers) noexcept { _kernel_registers = registers; }
 
-  void is_debug(const bool is_debug) noexcept { _is_debug = is_debug; }
-
 private:
   std::uint64_t _buffer_pages{ 8192U + 1U };
 
@@ -95,7 +97,5 @@ private:
 
   Registers _user_registers;
   Registers _kernel_registers;
-
-  bool _is_debug;
 };
 }

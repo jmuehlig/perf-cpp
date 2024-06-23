@@ -52,7 +52,7 @@ Let's delve into precisely how costly this can be.
 #include <cstdint>
 #include <vector>
 #include <algorithm>
-#include <perfcpp/perf.h>
+#include <perfcpp/event_counter.h>
 
 /// We want access one cache line per iteration.
 struct alignas(64U) cache_line { std::int64_t value; };
@@ -61,7 +61,7 @@ int main()
 {
     /// Initialize performance counters.
     auto counter_definitions = perf::CounterDefinition{};
-    auto event_counter = perf::Perf{counter_definitions};
+    auto event_counter = perf::EventCounter{counter_definitions};
     event_counter.add({"instructions", "cycles", "branches", "cache-misses", "cycles-per-instruction"});
     
     /// Setup random access benchmark.
@@ -122,3 +122,28 @@ If you're interested in seeing the outcome with unshuffled `access_pattern_indic
     0.97978 branches per cache line
     0.00748136 cache-misses per cache line
     1.30514 cycles-per-instruction per cache line
+
+---
+
+## Debugging Counter Settings
+In certain scenarios, configuring counters can be challenging.
+To enable insides into counter configurations, perf provides a debug output option:
+
+
+    perf --debug perf-event-open [mem] record ...
+
+
+This command helps visualize configurations for various counters, which is also beneficial for retrieving event codes (for more details, see the [counters documentation](counters.md)).
+
+Similarly, *perfcpp* includes a debug feature for sampled counters.
+To examine the configuration settings—particularly useful if encountering errors during `sampler.start();`—enable debugging in your code as follows:
+
+```cpp
+auto config = perf::Config{};
+config.is_debug(true);
+auto event_counter = perf::EventCounter{ counter_definitions, config };
+```
+
+When `is_debug` is set to `true`, *perfcpp* will display the configuration of all counters upon starting the counters.
+Hence, `is_debug` should be **turned off when profiling**.
+
