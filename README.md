@@ -8,7 +8,7 @@ Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
 
 ----
 
-## Key Features:
+## Key Features
 * **Simplified Performance Measurement**: Directly integrate with CPU performance counters into your C++ application, using a more accessible interface.
 * **Fine-granular Metrics**: Focus your performance analysis on specific code segments.
 * **Event Sampling**: Leverage sampling to gather performance data periodically, enabling efficient analysis of resource usage (including instruction pointers, data, branches, registers, and more) over time and/or execution.
@@ -22,10 +22,11 @@ Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
     * [Defining and using metrics](docs/metrics.md)
 * [Event sampling](docs/sampling.md)
 * [Built-in and hardware-specific performance counters](docs/counters.md)
+
 ---
 
-## Building this library
-
+## Getting Started
+### Building this library
 &rarr; [More details are here](docs/build.md).
 
 ```
@@ -42,44 +43,12 @@ cmake .
 make
 ```
 
-## System Requirements
-* Minimum *Linux Kernel version*: `>= 5.4`
-* Recommended *Linux Kernel version*: `>= 5.13` (for older Kernel versions see below)
-* Installed `perf` (check if `perf stat ls` provides any output, otherwise follow the instructions)
-
-### Notes for Linux Kernel < 5.13
-#### Linux Kernel < 5.13
-The counter `cgroup-switches` is only provided since Kernel `5.13`. 
-If you have an older Kernel, the counter cannot be used and will be deactivated.
-
-#### Linux Kernel < 5.12
-Sampling *weight as struct* (`Type::WeightStruct`, see [sampling documentation](docs/sampling.md)) is only provided since Kernel `5.12`.
-However, you can sample for weight using `Type::Weight`. To avoid compilation errors, you have to define
-
-
-    -DNO_PERF_SAMPLE_WEIGHT_STRUCT
-
-
-when compiling the binary that links `perf-cpp`. This is not true for the examples (will be done automatically).
-
-#### Linux Kernel < 5.11
-Sampling *data page size* and *code page size*  (see [sampling documentation](docs/sampling.md)) is only provided since Kernel `5.11`.
-If you have an older Kernel **and** you want to link the library, you need to define 
-
-
-    -DNO_PERF_SAMPLE_DATA_PAGE_SIZE -DNO_PERF_SAMPLE_CODE_PAGE_SIZE
-
-
-when compiling the binary that links `perf-cpp`. This is not true for the examples (will be done automatically).
-
----
-
-## Quick Examples
+### Quick Examples
 Capture performance counters and samples directly within your C++ application, focusing exclusively on the code crucial to your analysis.
 
 &rarr; Further details are available in the [documentation](docs/README.md).
 
-### Record Counters
+#### Record Counters
 The perf::EventCounter class offers an interface to add and manage counters, as well as to start and stop recordings. 
 Utilize predefined counters or customize counters specific to your hardware.
 
@@ -102,7 +71,7 @@ for (const auto [name, value] : result)
 }
 ```
 
-### Sampling
+#### Sampling
 The `perf::Sampler` class delivers an interface to specify sampling criteria and control the start/stop of recordings. 
 You can sample various aspects such as instructions, time, memory addresses, access latency, call chains, branches, and more.
 
@@ -137,6 +106,8 @@ for (const auto& sample : samples)
 }
 ```
 
+---
+
 ## Further Examples
 We provide a variety of examples detailed below. 
 Build them effortlessly by running `make`. 
@@ -150,6 +121,49 @@ All compiled example binaries are located in examples/bin and can be executed di
 * Example for sampling [memory addresses: `address_sampling.cpp`](examples/address_sampling.cpp)
 * Example for sampling [branches: `branch_sampling.cpp`](examples/branch_sampling.cpp)
 * Example for sampling [register values: `register_sampling.cpp`](examples/register_sampling.cpp)
+
+## System Requirements
+* Minimum *Linux Kernel version*: `>= 5.4`
+* Recommended *Linux Kernel version*: `>= 5.13` (for older Kernel versions see below)
+* Installed `perf` (check if `perf stat ls` provides any output, otherwise follow the instructions)
+
+### Notes for Linux Kernel < 5.13
+#### Linux Kernel < 5.13
+The counter `cgroup-switches` is only provided since Kernel `5.13`.
+If you have an older Kernel, the counter cannot be used and will be deactivated.
+
+#### Linux Kernel < 5.12
+Sampling *weight as struct* (`Type::WeightStruct`, see [sampling documentation](docs/sampling.md)) is only provided since Kernel `5.12`.
+However, you can sample for weight using `Type::Weight`. To avoid compilation errors, you have to define
+
+
+    -DNO_PERF_SAMPLE_WEIGHT_STRUCT
+
+
+when compiling the binary that links `perf-cpp`. This is not true for the examples (will be done automatically).
+
+#### Linux Kernel < 5.11
+Sampling *data page size* and *code page size*  (see [sampling documentation](docs/sampling.md)) is only provided since Kernel `5.11`.
+If you have an older Kernel **and** you want to link the library, you need to define
+
+
+    -DNO_PERF_SAMPLE_DATA_PAGE_SIZE -DNO_PERF_SAMPLE_CODE_PAGE_SIZE
+
+
+when compiling the binary that links `perf-cpp`. This is not true for the examples (will be done automatically).
+
+---
+
+## Other Noteworthy Profiling Projects
+While *perf-cpp* is dedicated to providing developers with clear insights into application performance, it is part of a broader ecosystem of tools that facilitate performance analysis. 
+Below is a non-exhaustive list of some other valuable profiling projects:
+
+* [PAPI](https://github.com/icl-utk-edu/papi) offers access not only to CPU performance counters but also to a variety of other hardware components including GPUs, I/O systems, and more.
+* Intel's [Instrumentation and Tracing Technology](https://github.com/intel/ittapi) allows applications to manage the collection of trace data effectively when used in conjunction with [Intel VTune Profiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html).
+* [PerfEvent](https://github.com/viktorleis/perfevent) provides lightweight access to performance counters, facilitating streamlined performance monitoring.
+* For those who prefer a more hands-on approach, the [perf_event_open](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) system call can be utilized directly without any wrappers.
+
+---
 
 ## Feedback
 Feedback, feature requests, and contributions are always appreciated. 

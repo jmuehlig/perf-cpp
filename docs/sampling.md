@@ -1,6 +1,6 @@
 # Event Sampling
 
-*perfcpp* enables the recording of event samples, capturing details like instruction pointers, multiple counters, branches, memory addresses, data sources, latency, and more. 
+*perf-cpp* enables the recording of event samples, capturing details like instruction pointers, multiple counters, branches, memory addresses, data sources, latency, and more. 
 Essentially, you define a sampling period or frequency at which data is captured. 
 At its core, this functionality is akin to traditional profiling tools, like `perf record`, but uniquely tailored to record specific blocks of code rather than the entire application.
 
@@ -87,14 +87,14 @@ To facilitate this process, perf provides a debug output option:
 
 This command helps visualize configurations for various counters, which is also beneficial for retrieving event codes (for more details, see the [counters documentation](counters.md)).
 
-Similarly, *perfcpp* includes a debug feature for sampled counters. 
+Similarly, *perf-cpp* includes a debug feature for sampled counters. 
 To examine the configuration settings—particularly useful if encountering errors during `sampler.start();`—enable debugging in your code as follows:
 
 ```cpp
 sample_config.is_debug(true);
 ```
 
-When `is_debug` is set to `true`, *perfcpp* will display the configuration of all counters upon initiating sampling.
+When `is_debug` is set to `true`, *perf-cpp* will display the configuration of all counters upon initiating sampling.
 
 ---
 
@@ -242,7 +242,7 @@ Can be accessed via `sample.weight()`, which returns a `perf::Weight` class, whi
 
 #### Specific Notice for Intel's Sapphire Rapids architecture
 To use weight-sampling on Intel's Sapphire Rapids architecture, perf needs an auxiliary counter to be added to the group, before the "real" counter is added (see [this commit](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).
-*perfcpp*  defines this counter, you only need to add it accordingly:
+*perf-cpp*  defines this counter, you only need to add it accordingly:
 
 ```cpp
  auto sampler = perf::Sampler{ counter_definitions,

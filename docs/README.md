@@ -1,5 +1,5 @@
 # Documentation
-Welcome to the detailed documentation for *perfcpp*. 
+Welcome to the detailed documentation for *perf-cpp*. 
 Below, you'll find the Table of Contents which guides you through various topics, from setup to advanced usage.
 
 * [Building and including this library](build.md)

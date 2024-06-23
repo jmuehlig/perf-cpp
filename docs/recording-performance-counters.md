@@ -135,7 +135,7 @@ To enable insides into counter configurations, perf provides a debug output opti
 
 This command helps visualize configurations for various counters, which is also beneficial for retrieving event codes (for more details, see the [counters documentation](counters.md)).
 
-Similarly, *perfcpp* includes a debug feature for sampled counters.
+Similarly, *perf-cpp* includes a debug feature for sampled counters.
 To examine the configuration settings—particularly useful if encountering errors during `sampler.start();`—enable debugging in your code as follows:
 
 ```cpp
@@ -144,5 +144,5 @@ config.is_debug(true);
 auto event_counter = perf::EventCounter{ counter_definitions, config };
 ```
 
-When `is_debug` is set to `true`, *perfcpp* will display the configuration of all counters upon opening the counters.
+When `is_debug` is set to `true`, *perf-cpp* will display the configuration of all counters upon opening the counters.
 
