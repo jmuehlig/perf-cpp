@@ -30,7 +30,8 @@ main()
   perf_config.precise_ip(0U);   /// precise_ip controls the amount of skid, see
                                 /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
   perf_config.period(1000000U); /// Record every 10000th event.
-  perf_config.branch_type(perf::BranchType::User | perf::BranchType::Conditional); /// Only sample conditional branches in user-mode.
+  perf_config.branch_type(perf::BranchType::User |
+                          perf::BranchType::Conditional); /// Only sample conditional branches in user-mode.
 
   auto sampler =
     perf::Sampler{ counter_definitions,

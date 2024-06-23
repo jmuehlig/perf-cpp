@@ -148,13 +148,13 @@ perf::Counter::to_string() const
 
     auto is_first = true;
     type_to_str(stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_USER, "BRANCH_USER", is_first);
-    type_to_str(stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_KERNEL, "BRANCH_KERNEL", is_first);
+    type_to_str(
+      stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_KERNEL, "BRANCH_KERNEL", is_first);
     type_to_str(stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_HV, "BRANCH_HV", is_first);
     type_to_str(stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_ANY, "BRANCH_ANY", is_first);
     type_to_str(
       stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_ANY_CALL, "BRANCH_ANY_CALL", is_first);
-    type_to_str(
-      stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_CALL, "BRANCH_CALL", is_first);
+    type_to_str(stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_CALL, "BRANCH_CALL", is_first);
     type_to_str(
       stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_IND_CALL, "BRANCH_IND_CALL", is_first);
     type_to_str(

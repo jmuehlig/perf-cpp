@@ -1,7 +1,7 @@
 #pragma once
 
-#include "registers.h"
 #include "branch.h"
+#include "registers.h"
 #include <cstdint>
 #include <optional>
 
