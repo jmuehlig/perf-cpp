@@ -1,9 +1,9 @@
 #include <asm/unistd.h>
 #include <cstring>
+#include <iostream>
 #include <perfcpp/group.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <iostream>
 
 using namespace perf;
 
@@ -46,8 +46,8 @@ perf::Group::open(const perf::Config config)
     const std::int32_t file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, leader_file_descriptor, 0);
     counter.file_descriptor(file_descriptor);
 
-    if (config.is_debug())
-    {
+    /// Print debug output, if requested.
+    if (config.is_debug()) {
       std::cout << counter.to_string() << std::flush;
     }
 

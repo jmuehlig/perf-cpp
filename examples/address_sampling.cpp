@@ -30,10 +30,14 @@ main()
   weight_type = perf::Sampler::Type::WeightStruct;
 #endif
 
+  auto sampling_counters = std::vector<std::string>{ "mem_trans_retired.load_latency_gt_3" };
+  /// Note: For sampling on Sapphire Rapids, you have to prepend and auxiliary counter:
+  /// std::vector<std::string>{"mem-loads-aux", "mem_trans_retired.load_latency_gt_3"};
+
   auto sampler = perf::Sampler{ counter_definitions,
-                                "mem_trans_retired.load_latency_gt_3", /// Event that generates an overflow
-                                                                       /// which is samples (here we sample
-                                                                       /// every 1,000 mem load)
+                                std::move(sampling_counters), /// Event that generates an overflow
+                                                              /// which is samples (here we sample
+                                                              /// every 1,000 mem load)
                                 perf::Sampler::Type::Time | perf::Sampler::Type::LogicalMemAddress |
                                   perf::Sampler::Type::DataSource |
                                   weight_type, /// Controls what to include into the sample, see
