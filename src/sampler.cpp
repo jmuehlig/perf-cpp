@@ -54,7 +54,7 @@ perf::Sampler::open()
 
     /// For Intel's Sapphire Rapids architecture, sampling for memory requires a dummy as first counter.
     /// Only the second counter is the "real" sampling counter.
-    const auto is_secret_leader = is_leader_auxiliary_counter && counter_index > 0U;
+    const auto is_secret_leader = is_leader_auxiliary_counter && counter_index == 1U;
 
     auto& perf_event = counter.event_attribute();
     std::memset(&perf_event, 0, sizeof(perf_event_attr));
