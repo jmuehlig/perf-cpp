@@ -42,9 +42,10 @@ public:
 
   void add(std::unique_ptr<Metric>&& metric) { _metrics.insert(std::make_pair(metric->name(), std::move(metric))); }
 
-  [[nodiscard]] std::optional<CounterConfig> counter(std::string&& name) const noexcept { return counter(name); }
-  [[nodiscard]] std::optional<CounterConfig> counter(const std::string& name) const noexcept;
+  [[nodiscard]] std::optional<std::pair<std::string_view, CounterConfig>> counter(std::string&& name) const noexcept { return counter(name); }
+  [[nodiscard]] std::optional<std::pair<std::string_view, CounterConfig>> counter(const std::string& name) const noexcept;
   [[nodiscard]] bool is_metric(const std::string& name) const noexcept { return _metrics.find(name) != _metrics.end(); }
+  [[nodiscard]] bool is_metric(std::string_view name) const noexcept { return is_metric(std::string{name}); }
   [[nodiscard]] Metric* metric(const std::string& name) const noexcept
   {
     if (auto iterator = _metrics.find(name); iterator != _metrics.end()) {
@@ -53,6 +54,7 @@ public:
 
     return nullptr;
   }
+  [[nodiscard]] Metric* metric(std::string_view name) const noexcept { return metric(std::string{name}); }
 
   [[nodiscard]] std::vector<std::string> names() const
   {

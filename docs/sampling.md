@@ -22,7 +22,9 @@ The following data can be recorded:
 ### 1) Define what is recorded and when
 ```cpp
 #include <perfcpp/sampler.h>
+/// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
 auto counter_definitions = perf::CounterDefinition{};
+
 auto event_counter = perf::EventCounter{counter_definitions};
 
 /// Define when the data is recorded.

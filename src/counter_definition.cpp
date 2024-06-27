@@ -2,6 +2,8 @@
 
 #include <fstream>
 #include <sstream>
+#include <utility>
+#include <string_view>
 
 perf::CounterDefinition::CounterDefinition(const std::string& config_file)
 {
@@ -14,11 +16,11 @@ perf::CounterDefinition::CounterDefinition()
   this->initialized_default_counters();
 }
 
-std::optional<perf::CounterConfig>
+std::optional<std::pair<std::string_view, perf::CounterConfig>>
 perf::CounterDefinition::counter(const std::string& name) const noexcept
 {
   if (auto iterator = this->_counter_configs.find(name); iterator != this->_counter_configs.end()) {
-    return std::make_optional(iterator->second);
+    return std::make_optional(std::make_pair(std::string_view(iterator->first), iterator->second));
   }
 
   return std::nullopt;

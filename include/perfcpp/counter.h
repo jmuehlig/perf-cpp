@@ -39,13 +39,13 @@ private:
 class CounterResult
 {
 public:
-  using iterator = std::vector<std::pair<std::string, double>>::iterator;
-  using const_iterator = std::vector<std::pair<std::string, double>>::const_iterator;
+  using iterator = std::vector<std::pair<std::string_view, double>>::iterator;
+  using const_iterator = std::vector<std::pair<std::string_view, double>>::const_iterator;
 
   CounterResult() = default;
   CounterResult(CounterResult&&) noexcept = default;
   CounterResult(const CounterResult&) = default;
-  explicit CounterResult(std::vector<std::pair<std::string, double>>&& results) noexcept
+  explicit CounterResult(std::vector<std::pair<std::string_view, double>>&& results) noexcept
     : _results(std::move(results))
   {
   }
@@ -61,7 +61,7 @@ public:
    * @param name Name of the counter or metric to access.
    * @return The value, or std::nullopt of the result has no counter or value with the requested name.
    */
-  [[nodiscard]] std::optional<double> get(const std::string& name) const noexcept;
+  [[nodiscard]] std::optional<double> get(std::string_view name) const noexcept;
 
   /**
    * Access the result of the counter or metric with the given name.
@@ -69,7 +69,15 @@ public:
    * @param name Name of the counter or metric to access.
    * @return The value, or std::nullopt of the result has no counter or value with the requested name.
    */
-  [[nodiscard]] std::optional<double> get(std::string&& name) const noexcept { return get(name); }
+  //[[nodiscard]] std::optional<double> get(const std::string& name) const noexcept { return get(std::string_view{name}); }
+
+  /**
+   * Access the result of the counter or metric with the given name.
+   *
+   * @param name Name of the counter or metric to access.
+   * @return The value, or std::nullopt of the result has no counter or value with the requested name.
+   */
+  //[[nodiscard]] std::optional<double> get(std::string&& name) const noexcept { return get(name); }
 
   [[nodiscard]] iterator begin() { return _results.begin(); }
   [[nodiscard]] iterator end() { return _results.end(); }
@@ -92,7 +100,7 @@ public:
   [[nodiscard]] std::string to_csv(char delimiter = ',', bool print_header = true) const;
 
 private:
-  std::vector<std::pair<std::string, double>> _results;
+  std::vector<std::pair<std::string_view, double>> _results;
 };
 
 class Counter

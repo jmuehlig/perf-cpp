@@ -29,8 +29,8 @@ perf::Sampler::Sampler(const perf::CounterDefinition& counter_list,
     {
       /// Try to set the counter, if the name refers to a counter.
       if (auto counter_config = this->_counter_definitions.counter(counter_name); counter_config.has_value()) {
-        this->_group.add(counter_config.value());
-        this->_counter_names.push_back(counter_name);
+        this->_group.add(std::get<1>(counter_config.value()));
+        this->_counter_names.push_back(std::get<0>(counter_config.value()));
       }
     }
   }
@@ -260,7 +260,7 @@ perf::Sampler::result() const
         const auto count_counter_values = read_format->count_members;
 
         if (count_counter_values == this->_group.size()) {
-          auto counter_values = std::vector<std::pair<std::string, double>>{};
+          auto counter_values = std::vector<std::pair<std::string_view, double>>{};
           for (auto counter_id = 0U; counter_id < this->_group.size(); ++counter_id) {
             counter_values.emplace_back(this->_counter_names[counter_id],
                                         double(read_format->values[counter_id].value));
@@ -385,7 +385,6 @@ perf::Sampler::result() const
 
       if (this->_sample_type & perf::Sampler::Type::CodePageSize) {
         sample.code_page_size(*reinterpret_cast<std::uint64_t*>(sample_ptr));
-        sample_ptr += sizeof(std::uint64_t);
       }
 
       result.push_back(sample);

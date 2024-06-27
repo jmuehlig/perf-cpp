@@ -117,7 +117,7 @@ private:
   class Group _group;
 
   /// Name of the counters to measure.
-  std::vector<std::string> _counter_names;
+  std::vector<std::string_view> _counter_names;
 
   /// Buffer for the samples.
   void* _buffer{ nullptr };

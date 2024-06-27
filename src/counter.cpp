@@ -3,7 +3,7 @@
 #include <sstream>
 
 std::optional<double>
-perf::CounterResult::get(const std::string& name) const noexcept
+perf::CounterResult::get(std::string_view name) const noexcept
 {
   if (auto iterator = std::find_if(
         this->_results.begin(), this->_results.end(), [&name](const auto res) { return name == res.first; });

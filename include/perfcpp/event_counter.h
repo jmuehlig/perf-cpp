@@ -7,6 +7,7 @@
 #include <chrono>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace perf {
@@ -18,7 +19,7 @@ private:
   class Event
   {
   public:
-    explicit Event(std::string&& name) noexcept
+    explicit Event(std::string_view name) noexcept
       : _name(std::move(name))
       , _is_hidden(false)
       , _is_counter(false)
@@ -27,7 +28,7 @@ private:
     {
     }
 
-    Event(std::string&& name,
+    Event(std::string_view name,
           const bool is_hidden,
           const std::uint8_t group_id,
           const std::uint8_t in_group_id) noexcept
@@ -41,7 +42,7 @@ private:
 
     ~Event() = default;
 
-    [[nodiscard]] const std::string& name() const noexcept { return _name; }
+    [[nodiscard]] std::string_view name() const noexcept { return _name; }
     [[nodiscard]] bool is_counter() const noexcept { return _is_counter; }
     [[nodiscard]] bool is_hidden() const noexcept { return _is_hidden; }
     [[nodiscard]] std::uint8_t group_id() const noexcept { return _group_id; }
@@ -50,7 +51,7 @@ private:
     void is_hidden(const bool is_hidden) noexcept { _is_hidden = is_hidden; }
 
   private:
-    std::string _name;
+    std::string_view _name;
     bool _is_counter;
     bool _is_hidden;
     std::uint8_t _group_id{ 0U };
@@ -144,7 +145,7 @@ private:
    * @param is_hidden Indicates if the counter should be exposed in the results.
    * @return True, if the counter was added.
    */
-  bool add(std::string&& counter_name, CounterConfig counter, bool is_hidden);
+  bool add(std::string_view counter_name, CounterConfig counter, bool is_hidden);
 };
 
 class EventCounterMT

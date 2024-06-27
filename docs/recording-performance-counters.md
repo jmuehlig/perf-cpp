@@ -7,9 +7,11 @@ Here, we introduce the interface designed to facilitate the recording of perform
 ## 1) Define the counters you want to record
 ```cpp
 #include <perfcpp/event_counter.h>
-auto counter_definitions = perf::CounterDefinition{};
-auto event_counter = perf::EventCounter{counter_definitions};
 
+/// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
+auto counter_definitions = perf::CounterDefinition{}; 
+
+auto event_counter = perf::EventCounter{counter_definitions};
 event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
 ```
 

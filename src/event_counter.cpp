@@ -22,7 +22,7 @@ perf::EventCounter::add(std::string&& counter_name)
   /// Try to add the counter, if the name is a counter.
   auto counter_config = this->_counter_definitions.counter(counter_name);
   if (counter_config.has_value()) {
-    return this->add(std::move(counter_name), counter_config.value(), false);
+    return this->add(std::get<0>(counter_config.value()), std::get<1>(counter_config.value()), false);
   }
 
   /// Try to add the metric, if the name is a metric.
@@ -31,7 +31,7 @@ perf::EventCounter::add(std::string&& counter_name)
     for (auto&& dependent_counter_name : this->_counter_definitions.metric(counter_name)->required_counter_names()) {
       auto dependent_counter_config = this->_counter_definitions.counter(dependent_counter_name);
       if (dependent_counter_config.has_value()) {
-        const auto is_added = this->add(std::move(dependent_counter_name), dependent_counter_config.value(), true);
+        const auto is_added = this->add(std::get<0>(dependent_counter_config.value()), std::get<1>(dependent_counter_config.value()), true);
         if (!is_added) {
           return false;
         }
@@ -48,7 +48,7 @@ perf::EventCounter::add(std::string&& counter_name)
 }
 
 bool
-perf::EventCounter::add(std::string&& counter_name, perf::CounterConfig counter, const bool is_hidden)
+perf::EventCounter::add(std::string_view counter_name, perf::CounterConfig counter, const bool is_hidden)
 {
   /// If the counter is already added,
   if (auto iterator = std::find_if(this->_counters.begin(),
@@ -72,7 +72,7 @@ perf::EventCounter::add(std::string&& counter_name, perf::CounterConfig counter,
 
   const auto group_id = std::uint8_t(this->_groups.size()) - 1U;
   const auto in_group_id = std::uint8_t(this->_groups.back().size());
-  this->_counters.emplace_back(std::move(counter_name), is_hidden, group_id, in_group_id);
+  this->_counters.emplace_back(counter_name, is_hidden, group_id, in_group_id);
   this->_groups.back().add(counter);
 
   return true;
@@ -134,7 +134,7 @@ perf::CounterResult
 perf::EventCounter::result(std::uint64_t normalization) const
 {
   /// Build result with all counters, including hidden ones.
-  auto temporary_result = std::vector<std::pair<std::string, double>>{};
+  auto temporary_result = std::vector<std::pair<std::string_view, double>>{};
   temporary_result.reserve(this->_counters.size());
 
   for (const auto& event : this->_counters) {
@@ -146,7 +146,7 @@ perf::EventCounter::result(std::uint64_t normalization) const
 
   /// Calculate metrics and copy not-hidden counters.
   auto counter_result = CounterResult{ std::move(temporary_result) };
-  auto result = std::vector<std::pair<std::string, double>>{};
+  auto result = std::vector<std::pair<std::string_view, double>>{};
   result.reserve(this->_counters.size());
 
   for (const auto& event : this->_counters) {
@@ -201,7 +201,7 @@ perf::EventCounterMT::result(const std::uint64_t normalization) const
 {
   /// Build result with all counters, including hidden ones.
   const auto& main_perf = this->_thread_local_counter.front();
-  auto temporary_result = std::vector<std::pair<std::string, double>>{};
+  auto temporary_result = std::vector<std::pair<std::string_view, double>>{};
   temporary_result.reserve(main_perf._counters.size());
 
   for (const auto& event : main_perf._counters) {
@@ -217,7 +217,7 @@ perf::EventCounterMT::result(const std::uint64_t normalization) const
 
   /// Calculate metrics and copy not-hidden counters.
   auto counter_result = CounterResult{ std::move(temporary_result) };
-  auto result = std::vector<std::pair<std::string, double>>{};
+  auto result = std::vector<std::pair<std::string_view, double>>{};
   result.reserve(main_perf._counters.size());
 
   for (const auto& event : main_perf._counters) {

@@ -11,9 +11,10 @@ The `perf::EventCounterMT` class allows you to copy the measurement on every thr
 ### 1) Define the counters you want to record
 ```cpp
 #include <perfcpp/event_counter.h>
+/// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
 auto counter_definitions = perf::CounterDefinition{};
-auto event_counter = perf::EventCounter{counter_definitions};
 
+auto event_counter = perf::EventCounter{counter_definitions};
 event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
 ```
 
