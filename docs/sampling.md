@@ -264,25 +264,60 @@ Data source where the data was sampled (e.g., local mem, remote mem, L1d, L2, ..
 From our experience, this only works on Intel hardware (ARM might work, too) and only with specific triggers.
 
 The data source can be accessed via `sample.data_source()`, which provides a specific `perf::DataSource` object.
-The `perf::DataSource` object can be queried if ...
-* ... the data was loaded (`sample.data_source().value().is_load()`)
-  * or stored (`sample.data_source().value().is_store()`)
-  * or prefetched (`sample.data_source().value().is_prefetch()`)
-* ... the data was a (memory subsystem related) hit (`sample.data_source().value().is_mem_hit()`)
-  * or miss (`sample.data_source().value().is_mem_miss()`)
-* ... the data was found (or missed) in the L1 data cache (`sample.data_source().value().is_mem_l1()`)
-  * or Line Fill Buffer / Miss Address Buffer (`sample.data_source().value().is_mem_lfb()`)
-  * or L2 cache (`sample.data_source().value().is_mem_l2()`)
-  * or L3 cache (`sample.data_source().value().is_mem_l3()`)
-  * or local memory (`sample.data_source().value().is_mem_local_ram()`)
-  * or remote memory with one hop distance (`sample.data_source().value().is_mem_remote_ram1()`)
-  * or remote memory with two hops distance (`sample.data_source().value().is_mem_remote_ram2()`)
-  * or remote cache with one hop distance (`sample.data_source().value().is_mem_remote_cce1()`)
-  * or remote cache with two hops distance (`sample.data_source().value().is_mem_remote_cce2()`)
-* ... the data was a TLB hit (`sample.data_source().value().is_tlb_hit()`)
-  * or miss (`sample.data_source().value().is_tlb_miss()`)
-* ... the dTLB was accessed (`sample.data_source().value().is_tlb_l1()`)
-  * or the STLB was accessed (`sample.data_source().value().is_tlb_l2()`)
+The `perf::DataSource` object can be queried for the following information:
+
+| Query                                               | Information                                                                            |
+|-----------------------------------------------------|----------------------------------------------------------------------------------------|
+| `sample.data_source().value().is_load()`            | `True`, if the access was a load operation.                                            |
+| `sample.data_source().value().is_store()`           | `True`, if the access was a store operation.                                           |
+| `sample.data_source().value().is_prefetch()`        | `True`, if the access was a prefetch operation.                                        |
+| `sample.data_source().value().is_exec()`            | `True`, if the access was an execute operation.                                        |
+| `sample.data_source().value().is_mem_hit()`         | `True`, if the access was a hit.                                                       |
+| `sample.data_source().value().is_mem_miss()`        | `True`, if the access was a miss.                                                      |
+| `sample.data_source().value().is_mem_hit()`         | `True`, if the access was a hit.                                                       |
+| `sample.data_source().value().is_mem_l1()`          | `True`, if the data was found in the L1 cache.                                         |
+| `sample.data_source().value().is_mem_l2()`          | `True`, if the data was found in the L2 cache.                                         |
+| `sample.data_source().value().is_mem_l3()`          | `True`, if the data was found in the L3 cache.                                         |
+| `sample.data_source().value().is_mem_l4()`          | `True`, if the data was found in the L4 cache.                                         |
+| `sample.data_source().value().is_mem_lfb()`         | `True`, if the data was found in the Line Fill Buffer (or Miss Address Buffer on AMD). |
+| `sample.data_source().value().is_mem_ram()`         | `True`, if the data was found in any RAM.                                              |
+| `sample.data_source().value().is_mem_local_ram()`   | `True`, if the data was found in the local RAM.                                        |
+| `sample.data_source().value().is_mem_remote_ram()`  | `True`, if the data was found in any remote RAM.                                       |
+| `sample.data_source().value().is_mem_hops0()`       | `True`, if the data was found locally.                                                 |
+| `sample.data_source().value().is_mem_hops1()`       | `True`, if the data was found on the same node.                                        |
+| `sample.data_source().value().is_mem_hops2()`       | `True`, if the data was found on a remote socket.                                      |
+| `sample.data_source().value().is_mem_hops3()`       | `True`, if the data was found on a remote board.                                       |
+| `sample.data_source().value().is_mem_remote_ram1()` | `True`, if the data was found in a remote RAM on the same node.                        |
+| `sample.data_source().value().is_mem_remote_ram2()` | `True`, if the data was found in a remote RAM on a different socket.                   |
+| `sample.data_source().value().is_mem_remote_ram3()` | `True`, if the data was found in a remote RAM on a different board.                    |
+| `sample.data_source().value().is_mem_remote_cce1()` | `True`, if the data was found in cache with one hop distance.                          |
+| `sample.data_source().value().is_mem_remote_cce2()` | `True`, if the data was found in cache with two hops distance.                         |
+| `sample.data_source().value().is_pmem()`            | `True`, if the data was found on a PMEM device.                                        |
+| `sample.data_source().value().is_cxl()`             | `True`, if the data was transferred via Compute Express Link.                          |
+| `sample.data_source().value().is_tlb_hit()`         | `True`, if the access was a TLB hit.                                                   |
+| `sample.data_source().value().is_tlb_miss()`        | `True`, if the access was a TLB miss.                                                  |
+| `sample.data_source().value().is_tlb_l1()`          | `True`, if the access can be associated with the dTLB.                                 |
+| `sample.data_source().value().is_tlb_l2()`          | `True`, if the access can be associated with the STLB.                                 |
+| `sample.data_source().value().is_tlb_walk()`        | `True`, if the access can be associated with the hardware walker.                      |
+| `sample.data_source().value().is_locked()`          | `True`, If the address was accessed via lock instruction.                              |
+| `sample.data_source().value().is_data_blocked()`    | `True` in case the data could not be forwarded.                                        |
+| `sample.data_source().value().is_address_blocked()` | `True` in case of an address conflict.                                                 |
+| `sample.data_source().value().is_snoop_hit()`       | `True`, if access was a snoop hit.                                                     |
+| `sample.data_source().value().is_snoop_miss()`      | `True`, if access was a snoop miss.                                                    |
+| `sample.data_source().value().is_snoop_hit_modified()`          | `True`, if access was a snoop hit modified.                                            |
+
+All these queries wrap around the `perf_mem_data_src` data structure.
+Since we may have missed specific operations, you can also access each particular data structure:
+* `sample.data_source().value().op()` accesses the `PERF_MEM_OP` structure.
+* `sample.data_source().value().lvl()` accesses the `PERF_MEM_LVL` structure. Note that this structure is deprecated, use `sample.data_source().value().lvl_num()` instead.
+* `sample.data_source().value().lvl_num()` accesses the `PERF_MEM_LVL_NUM` structure.
+* `sample.data_source().value().remote()` accesses the `PERF_MEM_REMOTE` structure.
+* `sample.data_source().value().snoop()` accesses the `PERF_MEM_SNOOP` structure.
+* `sample.data_source().value().snoopx()` accesses the `PERF_MEM_SNOOPX` structure.
+* `sample.data_source().value().lock()` accesses the `PERF_MEM_LOCK` structure.
+* `sample.data_source().value().blk()` accesses the `PERF_MEM_BLK` structure.
+* `sample.data_source().value().tlb()` accesses the `PERF_MEM_TLB` structure.
+* `sample.data_source().value().hops()` accesses the `PERF_MEM_HOPS` structure.
 
 &rarr; [See example](../examples/address_sampling.cpp)
 
