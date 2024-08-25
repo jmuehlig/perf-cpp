@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <numeric>
 #include <perfcpp/perf.h>
-
 bool
 perf::EventCounter::add(std::string&& counter_name)
 {
@@ -31,7 +30,8 @@ perf::EventCounter::add(std::string&& counter_name)
     for (auto&& dependent_counter_name : this->_counter_definitions.metric(counter_name)->required_counter_names()) {
       auto dependent_counter_config = this->_counter_definitions.counter(dependent_counter_name);
       if (dependent_counter_config.has_value()) {
-        const auto is_added = this->add(std::get<0>(dependent_counter_config.value()), std::get<1>(dependent_counter_config.value()), true);
+        const auto is_added =
+          this->add(std::get<0>(dependent_counter_config.value()), std::get<1>(dependent_counter_config.value()), true);
         if (!is_added) {
           return false;
         }
@@ -175,39 +175,19 @@ perf::EventCounter::result(std::uint64_t normalization) const
   return CounterResult{ std::move(result) };
 }
 
-perf::EventCounterMT::EventCounterMT(perf::EventCounter&& event_counter, const std::uint16_t num_threads)
-{
-  this->_thread_local_counter.reserve(num_threads);
-  for (auto i = 0U; i < num_threads - 1U; ++i) {
-    this->_thread_local_counter.push_back(event_counter);
-  }
-  this->_thread_local_counter.emplace_back(std::move(event_counter));
-}
-
-bool
-perf::EventCounterMT::start(const std::uint16_t thread_id)
-{
-  return this->_thread_local_counter[thread_id].start();
-}
-
-void
-perf::EventCounterMT::stop(const std::uint16_t thread_id)
-{
-  this->_thread_local_counter[thread_id].stop();
-}
-
 perf::CounterResult
-perf::EventCounterMT::result(const std::uint64_t normalization) const
+perf::MultiEventCounterBase::result(const std::vector<perf::EventCounter>& event_counters,
+                                    const std::uint64_t normalization)
 {
   /// Build result with all counters, including hidden ones.
-  const auto& main_perf = this->_thread_local_counter.front();
+  const auto& main_perf = event_counters.front();
   auto temporary_result = std::vector<std::pair<std::string_view, double>>{};
   temporary_result.reserve(main_perf._counters.size());
 
   for (const auto& event : main_perf._counters) {
     if (event.is_counter()) {
       auto value = .0;
-      for (const auto& thread_local_counter : this->_thread_local_counter) {
+      for (const auto& thread_local_counter : event_counters) {
         value += thread_local_counter._groups[event.group_id()].get(event.in_group_id());
       }
       const auto normalized_value = value / double(normalization);
@@ -244,4 +224,100 @@ perf::EventCounterMT::result(const std::uint64_t normalization) const
   }
 
   return CounterResult{ std::move(result) };
+}
+
+perf::EventCounterMT::EventCounterMT(perf::EventCounter&& event_counter, const std::uint16_t num_threads)
+{
+  this->_thread_local_counter.reserve(num_threads);
+  for (auto i = 0U; i < num_threads - 1U; ++i) {
+    this->_thread_local_counter.push_back(event_counter);
+  }
+  this->_thread_local_counter.emplace_back(std::move(event_counter));
+}
+
+bool
+perf::EventCounterMT::start(const std::uint16_t thread_id)
+{
+  return this->_thread_local_counter[thread_id].start();
+}
+
+void
+perf::EventCounterMT::stop(const std::uint16_t thread_id)
+{
+  this->_thread_local_counter[thread_id].stop();
+}
+
+perf::EventCounterMP::EventCounterMP(perf::EventCounter&& event_counter, std::vector<pid_t>&& process_ids)
+{
+  this->_process_local_counter.reserve(process_ids.size());
+  auto config = event_counter.config();
+
+  for (auto i = 0U; i < process_ids.size() - 1U; ++i) {
+    config.process_id(process_ids[i]);
+    auto process_local_counter = perf::EventCounter{ event_counter };
+    process_local_counter.config(config);
+
+    this->_process_local_counter.emplace_back(std::move(process_local_counter));
+  }
+
+  config.process_id(process_ids.back());
+  event_counter.config(config);
+  this->_process_local_counter.emplace_back(std::move(event_counter));
+}
+
+bool
+perf::EventCounterMP::start()
+{
+  auto is_all_started = true;
+  for (auto& event_counter : this->_process_local_counter) {
+    is_all_started &= event_counter.start();
+  }
+
+  return is_all_started;
+}
+
+void
+perf::EventCounterMP::stop()
+{
+  for (auto& event_counter : this->_process_local_counter) {
+    event_counter.stop();
+  }
+}
+
+perf::EventCounterMC::EventCounterMC(perf::EventCounter&& event_counter, std::vector<std::uint16_t>&& cpu_ids)
+{
+  this->_cpu_local_counter.reserve(cpu_ids.size());
+  auto config = event_counter.config();
+  config.process_id(-1); /// Record every thread/process on the given CPUs.
+
+  for (auto i = 0U; i < cpu_ids.size() - 1U; ++i) {
+    config.cpu_id(cpu_ids[i]);
+    auto process_local_counter = perf::EventCounter{ event_counter };
+    process_local_counter.config(config);
+
+    this->_cpu_local_counter.emplace_back(std::move(process_local_counter));
+  }
+
+  config.cpu_id(cpu_ids.back());
+  event_counter.config(config);
+  this->_cpu_local_counter.emplace_back(std::move(event_counter));
+}
+
+bool
+perf::EventCounterMC::start()
+{
+  auto is_all_started = true;
+  for (auto& event_counter : this->_cpu_local_counter) {
+    is_all_started &= event_counter.start();
+  }
+
+  return is_all_started;
+}
+
+void
+perf::EventCounterMC::stop()
+{
+  for (auto& event_counter : this->_cpu_local_counter) {
+    event_counter.stop();
+  }
 }

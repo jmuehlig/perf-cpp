@@ -13,7 +13,7 @@
 namespace perf {
 class EventCounter
 {
-  friend class EventCounterMT;
+  friend class MultiEventCounterBase;
 
 private:
   class Event
@@ -125,6 +125,18 @@ public:
    */
   [[nodiscard]] CounterResult result(std::uint64_t normalization = 1U) const;
 
+  /**
+   * @return Configuration of the counter.
+   */
+  [[nodiscard]] Config config() const noexcept { return _config; }
+
+  /**
+   * Update the configuration of the counter.
+   *
+   * @param config New config.
+   */
+  void config(Config config) noexcept { _config = config; }
+
 private:
   const CounterDefinition& _counter_definitions;
 
@@ -148,7 +160,19 @@ private:
   bool add(std::string_view counter_name, CounterConfig counter, bool is_hidden);
 };
 
-class EventCounterMT
+class MultiEventCounterBase
+{
+protected:
+  [[nodiscard]] static CounterResult result(const std::vector<EventCounter>& event_counter,
+                                            std::uint64_t normalization = 1U);
+};
+
+/**
+ * Wrapper for EventCounter to record counters on different user-level threads.
+ * Each thread can start/stop its own counter.
+ * The results can be aggregated or queried for a specific thread.
+ */
+class EventCounterMT final : private MultiEventCounterBase
 {
 public:
   EventCounterMT(EventCounter&& perf, std::uint16_t num_threads);
@@ -181,7 +205,10 @@ public:
    * @param normalization Normalization value, default = 1.
    * @return List of counter names and values.
    */
-  [[nodiscard]] CounterResult result(std::uint64_t normalization = 1U) const;
+  [[nodiscard]] CounterResult result(std::uint64_t normalization = 1U) const
+  {
+    return MultiEventCounterBase::result(_thread_local_counter, normalization);
+  }
 
   /**
    * Returns the result of the performance measurement for a given thread.
@@ -197,5 +224,93 @@ public:
 
 private:
   std::vector<perf::EventCounter> _thread_local_counter;
+};
+
+/**
+ * Wrapper for EventCounter to record counters on different process ids (i.e., linux thread ids).
+ * ProcessIds / ThreadIds have to be specified. The counter can be started/stopped at once.
+ * The results will be aggregated.
+ */
+class EventCounterMP final : private MultiEventCounterBase
+{
+public:
+  EventCounterMP(EventCounter&& perf, std::vector<pid_t>&& process_ids);
+
+  EventCounterMP(const EventCounter& event_counter, std::vector<pid_t>&& process_ids)
+    : EventCounterMP(perf::EventCounter{ event_counter }, std::move(process_ids))
+  {
+  }
+
+  ~EventCounterMP() = default;
+
+  /**
+   * Opens and starts recording performance counters for the given thread.
+   *
+   * @return True, of the performance counters could be started.
+   */
+  bool start();
+
+  /**
+   * Stops and closes recording performance counters.
+   */
+  void stop();
+
+  /**
+   * Returns the result of the performance measurement.
+   *
+   * @param normalization Normalization value, default = 1.
+   * @return List of counter names and values.
+   */
+  [[nodiscard]] CounterResult result(std::uint64_t normalization = 1U) const
+  {
+    return MultiEventCounterBase::result(_process_local_counter, normalization);
+  }
+
+private:
+  std::vector<perf::EventCounter> _process_local_counter;
+};
+
+/**
+ * Wrapper for EventCounter to record counters on different CPU ids.
+ * CPU ids have to be specified. The counter can be started/stopped at once.
+ * The results will be aggregated.
+ */
+class EventCounterMC final : private MultiEventCounterBase
+{
+public:
+  EventCounterMC(EventCounter&& perf, std::vector<std::uint16_t>&& cpu_ids);
+
+  EventCounterMC(const EventCounter& event_counter, std::vector<std::uint16_t>&& cpu_ids)
+    : EventCounterMC(perf::EventCounter{ event_counter }, std::move(cpu_ids))
+  {
+  }
+
+  ~EventCounterMC() = default;
+
+  /**
+   * Opens and starts recording performance counters for the given thread.
+   *
+   * @return True, of the performance counters could be started.
+   */
+  bool start();
+
+  /**
+   * Stops and closes recording performance counters.
+   */
+  void stop();
+
+  /**
+   * Returns the result of the performance measurement.
+   *
+   * @param normalization Normalization value, default = 1.
+   * @return List of counter names and values.
+   */
+  [[nodiscard]] CounterResult result(std::uint64_t normalization = 1U) const
+  {
+    return MultiEventCounterBase::result(_cpu_local_counter, normalization);
+  }
+
+private:
+  std::vector<perf::EventCounter> _cpu_local_counter;
 };
 }

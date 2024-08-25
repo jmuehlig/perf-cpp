@@ -69,7 +69,8 @@ public:
    * @param name Name of the counter or metric to access.
    * @return The value, or std::nullopt of the result has no counter or value with the requested name.
    */
-  //[[nodiscard]] std::optional<double> get(const std::string& name) const noexcept { return get(std::string_view{name}); }
+  //[[nodiscard]] std::optional<double> get(const std::string& name) const noexcept { return
+  //get(std::string_view{name}); }
 
   /**
    * Access the result of the counter or metric with the given name.

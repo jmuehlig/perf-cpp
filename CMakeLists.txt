@@ -45,6 +45,14 @@ target_link_libraries(inherit-thread perf-cpp)
 add_executable(multi-thread examples/multi_thread.cpp examples/access_benchmark.cpp)
 target_link_libraries(multi-thread perf-cpp)
 
+#### Multi-CPU with per-CPU counter
+add_executable(multi-cpu examples/multi_cpu.cpp examples/access_benchmark.cpp)
+target_link_libraries(multi-cpu perf-cpp)
+
+#### Multi-Process with per-process counter
+add_executable(multi-process examples/multi_process.cpp examples/access_benchmark.cpp)
+target_link_libraries(multi-process perf-cpp)
+
 #### Sampling instruction pointers
 add_executable(instruction-pointer-sampling examples/instruction_pointer_sampling.cpp examples/access_benchmark.cpp)
 target_link_libraries(instruction-pointer-sampling perf-cpp)

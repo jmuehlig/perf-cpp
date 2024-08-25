@@ -43,7 +43,9 @@ perf::Group::open(const perf::Config config)
     }
 
     /// Open the counter.
-    const std::int32_t file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, leader_file_descriptor, 0);
+    const std::int32_t cpu_id = config.cpu_id().has_value() ? std::int32_t{ config.cpu_id().value() } : -1;
+    const std::int32_t file_descriptor =
+      syscall(__NR_perf_event_open, &perf_event, config.process_id(), cpu_id, leader_file_descriptor, 0);
     counter.file_descriptor(file_descriptor);
 
     /// Print debug output, if requested.

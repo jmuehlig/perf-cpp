@@ -28,6 +28,9 @@ public:
 
   [[nodiscard]] bool is_debug() const noexcept { return _is_debug; }
 
+  [[nodiscard]] std::optional<std::uint16_t> cpu_id() const noexcept { return _cpu_id; }
+  [[nodiscard]] pid_t process_id() const noexcept { return _process_id; }
+
   void max_groups(const std::uint8_t max_groups) noexcept { _max_groups = max_groups; }
   void max_counters_per_group(const std::uint8_t max_counters_per_group) noexcept
   {
@@ -48,6 +51,9 @@ public:
 
   void is_debug(const bool is_debug) noexcept { _is_debug = is_debug; }
 
+  void cpu_id(const std::uint16_t cpu_id) noexcept { _cpu_id = cpu_id; }
+  void process_id(const pid_t process_id) noexcept { _process_id = process_id; }
+
 private:
   std::uint8_t _max_groups{ 5U };
   std::uint8_t _max_counters_per_group{ 4U };
@@ -62,6 +68,9 @@ private:
   bool _is_include_guest{ true };
 
   bool _is_debug{ false };
+
+  std::optional<std::uint16_t> _cpu_id{ std::nullopt };
+  pid_t _process_id{ 0 };
 };
 
 class SampleConfig final : public Config
