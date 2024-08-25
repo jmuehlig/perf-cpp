@@ -54,7 +54,7 @@ Capture performance counters and samples directly within your C++ application, f
 The perf::EventCounter class offers an interface to add and manage counters, as well as to start and stop recordings. 
 Utilize predefined counters or customize counters specific to your hardware.
 
-&rarr; See the documentation for [single-threaded](docs/recording-performance-counters.md) and [multithreaded](docs/recording-performance-counters-multithreaded.md) recording.
+&rarr; See the documentation for [recording basics](docs/recording-performance-counters.md) and [multithreaded](docs/recording-performance-counters-multithreaded.md) recording.
 
 ```cpp
 #include <perfcpp/event_counter.h>
@@ -82,7 +82,7 @@ for (const auto [name, value] : result)
 The `perf::Sampler` class delivers an interface to specify sampling criteria and control the start/stop of recordings. 
 You can sample various aspects such as instructions, time, memory addresses, access latency, call chains, branches, and more.
 
-&rarr; See the documentation for [sampling](docs/sampling.md).
+&rarr; See the documentation for [sampling basics](docs/sampling.md) and [multithreaded sampling](docs/sampling-parallel.md).
 
 ```cpp
 #include <perfcpp/sampler.h>
