@@ -58,10 +58,7 @@ public:
   /**
    * @return True, if the memory address was found in the Line Fill Buffer (or Miss Address Buffer on AMD).
    */
-  [[nodiscard]] bool is_mem_lfb() const noexcept
-  {
-    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_LFB);
-  }
+  [[nodiscard]] bool is_mem_lfb() const noexcept { return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_LFB); }
 
   /**
    * @return True, if the memory address was found in the L2 cache.
@@ -81,18 +78,14 @@ public:
   /**
    * @return True, if the memory address was found in the RAM.
    */
-  [[nodiscard]] bool is_mem_ram() const noexcept
-  {
-    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_RAM);
-  }
+  [[nodiscard]] bool is_mem_ram() const noexcept { return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_RAM); }
 
   /**
    * @return True, if the memory address was found in the local RAM.
    */
   [[nodiscard]] bool is_mem_local_ram() const noexcept
   {
-    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_RAM) &&
-           static_cast<bool>(remote() != PERF_MEM_REMOTE_REMOTE);
+    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_RAM) && static_cast<bool>(remote() != PERF_MEM_REMOTE_REMOTE);
   }
 
   /**
@@ -100,8 +93,7 @@ public:
    */
   [[nodiscard]] bool is_mem_remote_ram() const noexcept
   {
-    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_RAM) &&
-           static_cast<bool>(remote() == PERF_MEM_REMOTE_REMOTE);
+    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_RAM) && static_cast<bool>(remote() == PERF_MEM_REMOTE_REMOTE);
   }
 
   /**
@@ -142,18 +134,12 @@ public:
   /**
    * @return True, if the memory address was found in a remote cache with one hop distance.
    */
-  [[nodiscard]] bool is_mem_remote_cce1() const noexcept
-  {
-    return static_cast<bool>(lvl() & PERF_MEM_LVL_REM_CCE1);
-  }
+  [[nodiscard]] bool is_mem_remote_cce1() const noexcept { return static_cast<bool>(lvl() & PERF_MEM_LVL_REM_CCE1); }
 
   /**
    * @return True, if the memory address was found in a remote cache with two hops distance.
    */
-  [[nodiscard]] bool is_mem_remote_cce2() const noexcept
-  {
-    return static_cast<bool>(lvl() & PERF_MEM_LVL_REM_CCE2);
-  }
+  [[nodiscard]] bool is_mem_remote_cce2() const noexcept { return static_cast<bool>(lvl() & PERF_MEM_LVL_REM_CCE2); }
 
   /**
    * @return True, if the memory address is stored in a PMEM module.
