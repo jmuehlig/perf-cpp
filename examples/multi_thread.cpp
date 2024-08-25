@@ -39,11 +39,12 @@ main()
   constexpr auto count_threads = 2U;
   const auto items_per_thread = benchmark.size() / count_threads;
   auto threads = std::vector<std::thread>{};
-  auto thread_local_results = std::vector<std::uint64_t>(count_threads, 0U); /// Array to store the thread-local results.
+  auto thread_local_results =
+    std::vector<std::uint64_t>(count_threads, 0U); /// Array to store the thread-local results.
 
   /// Create a perf counter for every thread.
   /// Note that the `event_counter` object cannot be used afterwards.
-  auto multithread_event_counter = perf::EventCounterMT{ std::move(event_counter), count_threads };
+  auto multithread_event_counter = perf::MultiThreadEventCounter{ std::move(event_counter), count_threads };
 
   for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
     threads.emplace_back(

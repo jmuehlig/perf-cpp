@@ -226,7 +226,8 @@ perf::MultiEventCounterBase::result(const std::vector<perf::EventCounter>& event
   return CounterResult{ std::move(result) };
 }
 
-perf::EventCounterMT::EventCounterMT(perf::EventCounter&& event_counter, const std::uint16_t num_threads)
+perf::MultiThreadEventCounter::MultiThreadEventCounter(perf::EventCounter&& event_counter,
+                                                       const std::uint16_t num_threads)
 {
   this->_thread_local_counter.reserve(num_threads);
   for (auto i = 0U; i < num_threads - 1U; ++i) {
@@ -236,18 +237,19 @@ perf::EventCounterMT::EventCounterMT(perf::EventCounter&& event_counter, const s
 }
 
 bool
-perf::EventCounterMT::start(const std::uint16_t thread_id)
+perf::MultiThreadEventCounter::start(const std::uint16_t thread_id)
 {
   return this->_thread_local_counter[thread_id].start();
 }
 
 void
-perf::EventCounterMT::stop(const std::uint16_t thread_id)
+perf::MultiThreadEventCounter::stop(const std::uint16_t thread_id)
 {
   this->_thread_local_counter[thread_id].stop();
 }
 
-perf::EventCounterMP::EventCounterMP(perf::EventCounter&& event_counter, std::vector<pid_t>&& process_ids)
+perf::MultiProcessEventCounter::MultiProcessEventCounter(perf::EventCounter&& event_counter,
+                                                         std::vector<pid_t>&& process_ids)
 {
   this->_process_local_counter.reserve(process_ids.size());
   auto config = event_counter.config();
@@ -266,7 +268,7 @@ perf::EventCounterMP::EventCounterMP(perf::EventCounter&& event_counter, std::ve
 }
 
 bool
-perf::EventCounterMP::start()
+perf::MultiProcessEventCounter::start()
 {
   auto is_all_started = true;
   for (auto& event_counter : this->_process_local_counter) {
@@ -277,14 +279,15 @@ perf::EventCounterMP::start()
 }
 
 void
-perf::EventCounterMP::stop()
+perf::MultiProcessEventCounter::stop()
 {
   for (auto& event_counter : this->_process_local_counter) {
     event_counter.stop();
   }
 }
 
-perf::EventCounterMC::EventCounterMC(perf::EventCounter&& event_counter, std::vector<std::uint16_t>&& cpu_ids)
+perf::MultiCoreEventCounter::MultiCoreEventCounter(perf::EventCounter&& event_counter,
+                                                   std::vector<std::uint16_t>&& cpu_ids)
 {
   this->_cpu_local_counter.reserve(cpu_ids.size());
   auto config = event_counter.config();
@@ -304,7 +307,7 @@ perf::EventCounterMC::EventCounterMC(perf::EventCounter&& event_counter, std::ve
 }
 
 bool
-perf::EventCounterMC::start()
+perf::MultiCoreEventCounter::start()
 {
   auto is_all_started = true;
   for (auto& event_counter : this->_cpu_local_counter) {
@@ -315,7 +318,7 @@ perf::EventCounterMC::start()
 }
 
 void
-perf::EventCounterMC::stop()
+perf::MultiCoreEventCounter::stop()
 {
   for (auto& event_counter : this->_cpu_local_counter) {
     event_counter.stop();

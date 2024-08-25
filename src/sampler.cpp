@@ -107,12 +107,20 @@ perf::Sampler::open()
       perf_event.sample_regs_intr = this->_config.kernel_registers().mask();
     }
 
+    const std::int32_t cpu_id =
+      this->_config.cpu_id().has_value() ? std::int32_t{ this->_config.cpu_id().value() } : -1;
+
     /// Open the counter. Try to decrease the precise_ip if the file syscall was not successful, reporting an invalid
     /// argument.
     std::int32_t file_descriptor;
     for (auto precise_ip = std::int32_t{ this->_config.precise_ip() }; precise_ip > -1; --precise_ip) {
       perf_event.precise_ip = std::uint64_t(precise_ip);
-      file_descriptor = syscall(__NR_perf_event_open, &perf_event, 0, -1, this->_group.leader_file_descriptor(), 0);
+      file_descriptor = syscall(__NR_perf_event_open,
+                                &perf_event,
+                                this->_config.process_id(),
+                                cpu_id,
+                                this->_group.leader_file_descriptor(),
+                                0);
       if (file_descriptor > -1 || errno != EINVAL) {
         break;
       }
@@ -395,4 +403,56 @@ perf::Sampler::result() const
   }
 
   return result;
+}
+
+std::vector<perf::Sample>
+perf::MultiSamplerBase::result(const std::vector<Sampler>& sampler)
+{
+  if (!sampler.empty()) {
+    auto result = sampler.front().result();
+
+    for (auto i = 1U; i < sampler.size(); ++i) {
+      auto temp_result = sampler[i].result();
+      std::move(temp_result.begin(), temp_result.end(), std::back_inserter(result));
+    }
+
+    return result;
+  }
+
+  return std::vector<perf::Sample>{};
+}
+
+perf::MultiThreadSampler::MultiThreadSampler(const perf::CounterDefinition& counter_list,
+                                             std::vector<std::string>&& counter_names,
+                                             const std::uint64_t type,
+                                             const std::uint16_t num_threads,
+                                             const perf::SampleConfig config)
+{
+  for (auto i = 0U; i < num_threads; ++i) {
+    this->_thread_local_samplers.emplace_back(counter_list, std::vector<std::string>{ counter_names }, type, config);
+  }
+}
+
+perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_list,
+                                         std::vector<std::string>&& counter_names,
+                                         const std::uint64_t type,
+                                         std::vector<std::uint16_t>&& core_ids,
+                                         perf::SampleConfig config)
+{
+  config.process_id(-1); /// Record all processes on the CPUs.
+  for (const auto cpu_id : core_ids) {
+    config.cpu_id(cpu_id);
+    this->_core_local_samplers.emplace_back(counter_list, std::vector<std::string>{ counter_names }, type, config);
+  }
+}
+
+bool
+perf::MultiCoreSampler::start()
+{
+  auto is_all_started = true;
+  for (auto& sampler : this->_core_local_samplers) {
+    is_all_started &= sampler.start();
+  }
+
+  return is_all_started;
 }

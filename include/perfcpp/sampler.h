@@ -149,4 +149,146 @@ private:
     std::array<value, Group::MAX_MEMBERS> values;
   };
 };
+
+class MultiSamplerBase
+{
+protected:
+  [[nodiscard]] static std::vector<Sample> result(const std::vector<Sampler>& sampler);
+};
+
+class MultiThreadSampler final : private MultiSamplerBase
+{
+public:
+  MultiThreadSampler(const CounterDefinition& counter_list,
+                     const std::string& counter_name,
+                     const std::uint64_t type,
+                     const std::uint16_t num_threads,
+                     SampleConfig config = {})
+    : MultiThreadSampler(counter_list, std::string{ counter_name }, type, num_threads, config)
+  {
+  }
+
+  MultiThreadSampler(const CounterDefinition& counter_list,
+                     std::string&& counter_name,
+                     const std::uint64_t type,
+                     const std::uint16_t num_threads,
+                     SampleConfig config = {})
+    : MultiThreadSampler(counter_list, std::vector<std::string>{ std::move(counter_name) }, type, num_threads, config)
+  {
+  }
+
+  MultiThreadSampler(const CounterDefinition& counter_list,
+                     std::vector<std::string>&& counter_names,
+                     std::uint64_t type,
+                     std::uint16_t num_threads,
+                     SampleConfig config = {});
+
+  MultiThreadSampler(MultiThreadSampler&&) noexcept = default;
+
+  ~MultiThreadSampler() = default;
+
+  /**
+   * Opens and starts recording performance counters on a specific thread.
+   *
+   * @param thread_id Id of the thread to start.
+   * @return True, of the performance counters could be started.
+   */
+  bool start(const std::uint16_t thread_id) { return _thread_local_samplers[thread_id].start(); }
+
+  /**
+   * Stops recording performance counters for a specific thread.
+   *
+   * @param thread_id Id of the thread to stop.
+   */
+  void stop(const std::uint16_t thread_id) { _thread_local_samplers[thread_id].stop(); }
+
+  /**
+   * Closes the sampler, including mapped buffer, for all threads.
+   */
+  void close()
+  {
+    for (auto& sampler : _thread_local_samplers) {
+      sampler.close();
+    }
+  }
+
+  /**
+   * @return List of sampled events after closing the sampler.
+   */
+  [[nodiscard]] std::vector<Sample> result() const { return MultiSamplerBase::result(_thread_local_samplers); }
+
+private:
+  std::vector<Sampler> _thread_local_samplers;
+};
+
+class MultiCoreSampler final : private MultiSamplerBase
+{
+public:
+  MultiCoreSampler(const CounterDefinition& counter_list,
+                   const std::string& counter_name,
+                   const std::uint64_t type,
+                   std::vector<std::uint16_t>&& core_ids,
+                   SampleConfig config = {})
+    : MultiCoreSampler(counter_list, std::string{ counter_name }, type, std::move(core_ids), config)
+  {
+  }
+
+  MultiCoreSampler(const CounterDefinition& counter_list,
+                   std::string&& counter_name,
+                   const std::uint64_t type,
+                   std::vector<std::uint16_t>&& core_ids,
+                   SampleConfig config = {})
+    : MultiCoreSampler(counter_list,
+                       std::vector<std::string>{ std::move(counter_name) },
+                       type,
+                       std::move(core_ids),
+                       config)
+  {
+  }
+
+  MultiCoreSampler(const CounterDefinition& counter_list,
+                   std::vector<std::string>&& counter_names,
+                   std::uint64_t type,
+                   std::vector<std::uint16_t>&& core_ids,
+                   SampleConfig config = {});
+
+  MultiCoreSampler(MultiCoreSampler&&) noexcept = default;
+
+  ~MultiCoreSampler() = default;
+
+  /**
+   * Opens and starts recording performance counters for all specified cores.
+   *
+   * @return True, of the performance counters could be started.
+   */
+  bool start();
+
+  /**
+   * Stops recording performance counters for all specified cores.
+   */
+  void stop()
+  {
+    for (auto& sampler : _core_local_samplers) {
+      sampler.stop();
+    }
+  }
+
+  /**
+   * Closes the sampler, including mapped buffer, for all threads.
+   */
+  void close()
+  {
+    for (auto& sampler : _core_local_samplers) {
+      sampler.close();
+    }
+  }
+
+  /**
+   * @return List of sampled events after closing the sampler.
+   */
+  [[nodiscard]] std::vector<Sample> result() const { return MultiSamplerBase::result(_core_local_samplers); }
+
+private:
+  std::vector<Sampler> _core_local_samplers;
+};
 }

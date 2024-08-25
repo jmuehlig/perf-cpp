@@ -2,7 +2,7 @@
 
 Here, we introduce the interface designed to facilitate the recording of performance counters directly from your C++ application. 
 
-&rarr; [See our single-threaded example: `examples/single_thread.cpp`](../examples/single_thread.cpp)
+&rarr; [See our single-threaded code example: `examples/single_thread.cpp`](../examples/single_thread.cpp)
 
 ## 1) Define the counters you want to record
 ```cpp
@@ -117,7 +117,7 @@ The output will be something like that, indicating that we have more than one ca
     1.6294 cache-misses per cache line
     8.03031 cycles-per-instruction per cache line
 
-If you're interested in seeing the outcome with unshuffled `access_pattern_indices`, thereby establishing a predictable access pattern:
+If you're interested in seeing the outcome with not-shuffled `access_pattern_indices`, thereby establishing a predictable access pattern:
 
     6.85057 instructions per cache line
     8.94096 cycles per cache line

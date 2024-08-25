@@ -172,17 +172,17 @@ protected:
  * Each thread can start/stop its own counter.
  * The results can be aggregated or queried for a specific thread.
  */
-class EventCounterMT final : private MultiEventCounterBase
+class MultiThreadEventCounter final : private MultiEventCounterBase
 {
 public:
-  EventCounterMT(EventCounter&& perf, std::uint16_t num_threads);
+  MultiThreadEventCounter(EventCounter&& perf, std::uint16_t num_threads);
 
-  EventCounterMT(const EventCounter& event_counter, const std::uint16_t num_threads)
-    : EventCounterMT(perf::EventCounter{ event_counter }, num_threads)
+  MultiThreadEventCounter(const EventCounter& event_counter, const std::uint16_t num_threads)
+    : MultiThreadEventCounter(perf::EventCounter{ event_counter }, num_threads)
   {
   }
 
-  ~EventCounterMT() = default;
+  ~MultiThreadEventCounter() = default;
 
   /**
    * Opens and starts recording performance counters for the given thread.
@@ -226,22 +226,24 @@ private:
   std::vector<perf::EventCounter> _thread_local_counter;
 };
 
+using EventCounterMT = MultiThreadEventCounter;
+
 /**
  * Wrapper for EventCounter to record counters on different process ids (i.e., linux thread ids).
  * ProcessIds / ThreadIds have to be specified. The counter can be started/stopped at once.
  * The results will be aggregated.
  */
-class EventCounterMP final : private MultiEventCounterBase
+class MultiProcessEventCounter final : private MultiEventCounterBase
 {
 public:
-  EventCounterMP(EventCounter&& perf, std::vector<pid_t>&& process_ids);
+  MultiProcessEventCounter(EventCounter&& perf, std::vector<pid_t>&& process_ids);
 
-  EventCounterMP(const EventCounter& event_counter, std::vector<pid_t>&& process_ids)
-    : EventCounterMP(perf::EventCounter{ event_counter }, std::move(process_ids))
+  MultiProcessEventCounter(const EventCounter& event_counter, std::vector<pid_t>&& process_ids)
+    : MultiProcessEventCounter(perf::EventCounter{ event_counter }, std::move(process_ids))
   {
   }
 
-  ~EventCounterMP() = default;
+  ~MultiProcessEventCounter() = default;
 
   /**
    * Opens and starts recording performance counters for the given thread.
@@ -271,21 +273,21 @@ private:
 };
 
 /**
- * Wrapper for EventCounter to record counters on different CPU ids.
+ * Wrapper for EventCounter to record counters on different CPU cores.
  * CPU ids have to be specified. The counter can be started/stopped at once.
  * The results will be aggregated.
  */
-class EventCounterMC final : private MultiEventCounterBase
+class MultiCoreEventCounter final : private MultiEventCounterBase
 {
 public:
-  EventCounterMC(EventCounter&& perf, std::vector<std::uint16_t>&& cpu_ids);
+  MultiCoreEventCounter(EventCounter&& perf, std::vector<std::uint16_t>&& cpu_ids);
 
-  EventCounterMC(const EventCounter& event_counter, std::vector<std::uint16_t>&& cpu_ids)
-    : EventCounterMC(perf::EventCounter{ event_counter }, std::move(cpu_ids))
+  MultiCoreEventCounter(const EventCounter& event_counter, std::vector<std::uint16_t>&& cpu_ids)
+    : MultiCoreEventCounter(perf::EventCounter{ event_counter }, std::move(cpu_ids))
   {
   }
 
-  ~EventCounterMC() = default;
+  ~MultiCoreEventCounter() = default;
 
   /**
    * Opens and starts recording performance counters for the given thread.

@@ -95,7 +95,7 @@ main()
   std::cout << std::endl;
 
   /// Turn the single EventCounter into a multi-core CPU counter for all cores on the machine.
-  auto multi_cpu_event_counter = perf::EventCounterMP{ std::move(event_counter), std::move(process_ids) };
+  auto multi_cpu_event_counter = perf::MultiProcessEventCounter{ std::move(event_counter), std::move(process_ids) };
 
   /// Start recording performance counter.
   /// In contrast to the inherit-thread example (see inherit_thread.cpp), we

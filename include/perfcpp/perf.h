@@ -3,5 +3,5 @@
 
 namespace perf {
 using Perf = EventCounter;
-using PerfMT = EventCounterMT;
+using PerfMT = MultiThreadEventCounter;
 }

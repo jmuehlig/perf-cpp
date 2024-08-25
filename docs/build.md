@@ -29,7 +29,7 @@ The counter `cgroup-switches` is only provided since Kernel `5.13`.
 If you have an older Kernel, the counter cannot be used and will be deactivated.
 
 ### Linux Kernel version `< 5.12`
-Sampling *weight as struct* (`Type::WeightStruct`, see [sampling documentation](docs/sampling.md)) is only provided since Kernel `5.12`.
+Sampling *weight as struct* (`Type::WeightStruct`, see [sampling documentation](sampling.md)) is only provided since Kernel `5.12`.
 However, you can sample for weight using `Type::Weight`. To avoid compilation errors, you have to define 
 
 
@@ -39,7 +39,7 @@ However, you can sample for weight using `Type::Weight`. To avoid compilation er
 when compiling the binary that is linked against `libperf-cpp`.
 
 ### Linux Kernel version `< 5.11`
-Sampling *data page size* and *code page size*  (see [sampling documentation](docs/sampling.md)) is only provided since Kernel `5.11`.
+Sampling *data page size* and *code page size*  (see [sampling documentation](sampling.md)) is only provided since Kernel `5.11`.
 If you have an older Kernel you need to define
 
 

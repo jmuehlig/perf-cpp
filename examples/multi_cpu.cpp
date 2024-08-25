@@ -42,8 +42,7 @@ main()
   auto threads = std::vector<std::thread>{};
   auto thread_local_results = std::vector<std::uint64_t>(2U, 0U); /// Array to store the thread-local results.
 
-  /// Create a perf counter for every thread.
-  /// Note that the `event_counter` object cannot be used afterwards.
+  /// Create a list of cpus to record performance counters on (all available, in this example).
   auto cpus_to_watch = std::vector<std::uint16_t>(std::thread::hardware_concurrency());
   std::iota(cpus_to_watch.begin(), cpus_to_watch.end(), 0U);
 
@@ -54,7 +53,7 @@ main()
   std::cout << std::endl;
 
   /// Turn the single EventCounter into a multi-core CPU counter for all cores on the machine.
-  auto multi_cpu_event_counter = perf::EventCounterMC{ std::move(event_counter), std::move(cpus_to_watch) };
+  auto multi_cpu_event_counter = perf::MultiCoreEventCounter{ std::move(event_counter), std::move(cpus_to_watch) };
 
   /// Barrier for the threads to wait.
   auto thread_barrier = std::atomic<bool>{ false };
@@ -63,7 +62,7 @@ main()
     threads.emplace_back([thread_index, items_per_thread, &thread_local_results, &benchmark, &thread_barrier]() {
       auto local_value = 0ULL;
 
-      /// Wait for the barrier to become "true".
+      /// Wait for the barrier to become "true", i.e., all threads are spawned.
       while (!thread_barrier)
         ;
 

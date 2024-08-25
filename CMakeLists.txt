@@ -73,5 +73,13 @@ target_link_libraries(address-sampling perf-cpp)
 add_executable(register-sampling examples/register_sampling.cpp examples/access_benchmark.cpp)
 target_link_libraries(register-sampling perf-cpp)
 
+#### Sampling on multiple threads
+add_executable(multi-thread-sampling examples/multi_thread_sampling.cpp examples/access_benchmark.cpp)
+target_link_libraries(multi-thread-sampling perf-cpp)
+
+#### Sampling on multiple threads
+add_executable(multi-cpu-sampling examples/multi_cpu_sampling.cpp examples/access_benchmark.cpp)
+target_link_libraries(multi-cpu-sampling perf-cpp)
+
 ### Target to create the perf list CSV
 add_custom_target(perf-list python3 ${CMAKE_SOURCE_DIR}/script/create_perf_list.py)

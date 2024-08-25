@@ -2,11 +2,11 @@
 
 Performance counters can be recorded for each thread.
 To monitor multiple threads, you have two options:
-* Record counters individually for each thread and combine the results afterward (&rarr; [See our multithreaded example: `examples/multi_thread.cpp`](../examples/multi_thread.cpp)).
-* Initiate measurements that record counters for all child threads simultaneously (&rarr; [See our multithreaded inheritance example: `examples/inherit_thread.cpp`](../examples/inherit_thread.cpp)).
+* Record counters individually for each thread and combine the results afterward (&rarr; [See our multithreaded code example: `examples/multi_thread.cpp`](../examples/multi_thread.cpp)).
+* Initiate measurements that record counters for all child threads simultaneously (&rarr; [See our multithreaded inheritance code example: `examples/inherit_thread.cpp`](../examples/inherit_thread.cpp)).
 
 ## First Option: Record counters individually for each thread
-The `perf::EventCounterMT` class allows you to copy the measurement on every thread and combines the results.
+The `perf::MultiThreadEventCounter` class allows you to copy the measurement on every thread and combines the results.
 
 ### 1) Define the counters you want to record
 ```cpp
@@ -20,7 +20,7 @@ event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache
 
 ### 2) Create N thread-local counters
 ```cpp
-auto multithread_event_counter = perf::EventCounterMT{std::move(event_counter), count_threads};
+auto multithread_event_counter = perf::MultiThreadEventCounter{std::move(event_counter), count_threads};
 ```
 
 ### 3) Wrap `start()` and `stop()` around your thread-local processing code

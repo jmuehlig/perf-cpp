@@ -18,6 +18,9 @@ The following data can be recorded:
 
 &rarr; [See details below](#what-can-be-recorded-and-how-to-access-the-data).
 
+The details below provide an overview of how sampling works.
+For specific information about sampling in parallel settings (i.e., sampling multiple threads and cores) take a look [into the "parallel sampling" documentation](sampling-parallel.md).
+
 ## Interface
 ### 1) Define what is recorded and when
 ```cpp
@@ -132,7 +135,7 @@ The instruction pointer of the current instruction.
 You may need to adjust the `sample_config.precise_ip(X)` setting on different hardware (ranging from `0` to `3`). 
 The sampled instruction pointer can be accessed via `sample.instruction_pointer()`.
 
-&rarr; [See example](../examples/instruction_pointer_sampling.cpp)
+&rarr; [See code example](../examples/instruction_pointer_sampling.cpp)
 
 ### `perf::Sampler::Type::ThreadId`
 The thread id. Can be accessed via `sample.thread_id()`.
@@ -140,7 +143,7 @@ The thread id. Can be accessed via `sample.thread_id()`.
 ### `perf::Sampler::Type::Time`
 A timestamp. Can be accessed via `sample.time()`.
 
-&rarr; [See example](../examples/instruction_pointer_sampling.cpp)
+&rarr; [See code example](../examples/instruction_pointer_sampling.cpp)
 
 ### `perf::Sampler::Type::LogicalMemAddress`
 The logical (or virtual) memory address.
@@ -148,7 +151,7 @@ Can be accessed via `sample.logical_memory_address()`.
 From our experience, this only works on Intel hardware (ARM might work, too) and only with specific triggers.
 You may need to adjust the `sample_config.precise_ip(X)` setting on different hardware (ranging from `0` to `3`).
 
-&rarr; [See example](../examples/address_sampling.cpp)
+&rarr; [See code example](../examples/address_sampling.cpp)
 
 ### `perf::Sampler::Type::CounterValues`
 Multiple counter values. Additional counter values to record must be specified along with the trigger (which is the first counter in the list):
@@ -164,7 +167,7 @@ The results are retrievable through the `sample.counter_result()` method, return
 This can be accessed in the same manner as when recording counters. 
 For example, to access the "cycles" counter, you would use `sample.counter_result().value().get("cycles")`.
 
-&rarr; [See example](../examples/counter_sampling.cpp)
+&rarr; [See code example](../examples/counter_sampling.cpp)
 
 ### `perf::Sampler::Type::Callchain`
 Callchain as a list of instruction pointers.
@@ -173,7 +176,7 @@ Can be accessed via `sample.callchain()`, which returns a vector of `std::uintpt
 ### `perf::Sampler::Type::CPU`
 CPU id, accessible via `sample.cpu_id()`.
 
-&rarr; [See example](../examples/instruction_pointer_sampling.cpp)
+&rarr; [See code example](../examples/instruction_pointer_sampling.cpp)
 
 ### `perf::Sampler::Type::Period`
 Sample period, accessible via `sample.period()`.
@@ -213,7 +216,7 @@ The possible branch type values are:
 * `perf::BranchType::InTransaction`: Sample branches in transactions of transactional memory.
 * `perf::BranchType::NotInTransaction`: Sample branches not in transactions of transactional memory.
 
-&rarr; [See example](../examples/branch_sampling.cpp)
+&rarr; [See code example](../examples/branch_sampling.cpp)
 
 ### `perf::Sampler::Type::UserRegisters`
 Values of user registers (the values in the process before the kernel was called).
@@ -221,7 +224,7 @@ The values that should be sampled must be set before sampling (see `SampleConfig
 The result can be accessed through `sample.user_registers()`, which returns a vector of `std::uint64_t` values.
 The ABI can be queried using `sample.user_registers_abi()`.
 
-&rarr; [See example](../examples/register_sampling.cpp)
+&rarr; [See code example](../examples/register_sampling.cpp)
 
 ### `perf::Sampler::Type::KernelRegisters`
 Values of user registers (the values in the process when the kernel was called).
@@ -240,7 +243,7 @@ Can be accessed via `sample.weight()`, which returns a `perf::Weight` class, whi
 * `sample.weight().value().var2()` returns "other information" (not specified by perf) **but** only for `perf::Sampler::Type::WeightStruct`. On Intel's Sapphire Rapids architecture, it seems to record the instruction latency (which is higher than the load latency and includes the latter).
 * `sample.weight().value().var3()` returns "other information" (not specified by perf) **but** only for `perf::Sampler::Type::WeightStruct`.
 
-&rarr; [See example](../examples/address_sampling.cpp)
+&rarr; [See code example](../examples/address_sampling.cpp)
 
 #### Specific Notice for Intel's Sapphire Rapids architecture
 To use weight-sampling on Intel's Sapphire Rapids architecture, perf needs an auxiliary counter to be added to the group, before the "real" counter is added (see [this commit](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).
@@ -319,7 +322,7 @@ Since we may have missed specific operations, you can also access each particula
 * `sample.data_source().value().tlb()` accesses the `PERF_MEM_TLB` structure.
 * `sample.data_source().value().hops()` accesses the `PERF_MEM_HOPS` structure.
 
-&rarr; [See example](../examples/address_sampling.cpp)
+&rarr; [See code example](../examples/address_sampling.cpp)
 
 ### `perf::Sampler::Type::Identifier`
 Sample id, accessible via `sample.id()`.
