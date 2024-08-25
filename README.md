@@ -17,10 +17,12 @@ Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
 ## Documentation
 * [Building and including this library](docs/build.md)
 * **Recording performance counters**
-    * [Overview (single threaded)](docs/recording-performance-counters.md)
-    * [Multithreaded](docs/recording-performance-counters-multithreaded.md)
+    * [Overview and basics of Recording performance counters (single threaded)](docs/recording-performance-counters.md)
+    * [Recording counters in parallel (multithread / multicore) settings](docs/recording-performance-counters-multithreaded.md)
     * [Defining and using metrics](docs/metrics.md)
-* [Event sampling](docs/sampling.md)
+* **Event Sampling**
+  * [Overview and basics of event sampling](docs/sampling.md)
+  * [Event sampling in parallel (multithread / multicore) settings](docs/sampling-parallel.md)
 * [Built-in and hardware-specific performance counters](docs/counters.md)
 
 ---
