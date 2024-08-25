@@ -122,19 +122,21 @@ for (const auto& sample : samples)
 
 ---
 
-## Further Examples
+## Further Code Examples
 We provide a variety of examples detailed below. 
 Build them effortlessly by running `make`. 
 All compiled example binaries are located in examples/bin and can be executed directly without additional arguments.
 
-* Example for recording counters on a [single thread: `examples/single_thread.cpp`](examples/single_thread.cpp)
-* Example for recording counters on [multiple threads: `examples/multi_thread.cpp`](examples/multi_thread.cpp)
-* Example for recording counters on  [multiple threads through inheritance: `examples/inherit_thread.cpp`](examples/inherit_thread.cpp)
-* Example for sampling [counter values: `counter_sampling.cpp`](examples/counter_sampling.cpp)
-* Example for sampling [instruction pointers: `instruction_pointer_sampling.cpp`](examples/instruction_pointer_sampling.cpp)
-* Example for sampling [memory addresses: `address_sampling.cpp`](examples/address_sampling.cpp)
-* Example for sampling [branches: `branch_sampling.cpp`](examples/branch_sampling.cpp)
-* Example for sampling [register values: `register_sampling.cpp`](examples/register_sampling.cpp)
+* Code example for recording counters on a [single thread: `examples/single_thread.cpp`](examples/single_thread.cpp)
+* Code example for recording counters on [multiple threads: `examples/multi_thread.cpp`](examples/multi_thread.cpp)
+* Code example for recording counters on  [multiple threads through inheritance: `examples/inherit_thread.cpp`](examples/inherit_thread.cpp)
+* Code example for sampling [counter values: `counter_sampling.cpp`](examples/counter_sampling.cpp)
+* Code example for sampling [instruction pointers: `instruction_pointer_sampling.cpp`](examples/instruction_pointer_sampling.cpp)
+* Code example for sampling [memory addresses: `address_sampling.cpp`](examples/address_sampling.cpp)
+* Code example for sampling [branches: `branch_sampling.cpp`](examples/branch_sampling.cpp)
+* Code example for sampling [register values: `register_sampling.cpp`](examples/register_sampling.cpp)
+* Code example for [multithreaded sampling: `multi_thread_sampling.cpp`](examples/multi_thread_sampling.cpp)
+* Code example for [multitcore sampling: `multi_cpu_sampling.cpp`](examples/multi_cpu_sampling.cpp)
 
 ## System Requirements
 * Minimum *Linux Kernel version*: `>= 5.4`
