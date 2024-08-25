@@ -51,7 +51,7 @@ Capture performance counters and samples directly within your C++ application, f
 &rarr; Further details are available in the [documentation](docs/README.md).
 
 #### Record Counters
-The perf::EventCounter class offers an interface to add and manage counters, as well as to start and stop recordings. 
+The `perf::EventCounter` class offers an interface to add and manage counters, as well as to start and stop recordings. 
 Utilize predefined counters or customize counters specific to your hardware.
 
 &rarr; See the documentation for [recording basics](docs/recording-performance-counters.md) and [multithreaded](docs/recording-performance-counters-multithreaded.md) recording.
@@ -108,7 +108,7 @@ for (const auto& sample : samples)
     std::cout 
         << "Time = " << sample.time().value() 
         << " | Instruction = 0x" << std::hex << sample.instruction_pointer().value() << std::dec
-        << " | CPU = " << sample.cpu().value()
+        << " | CPU = " << sample.cpu_id().value()
         << std::endl;
 }
 
@@ -136,7 +136,7 @@ All compiled example binaries are located in examples/bin and can be executed di
 * Code example for sampling [branches: `branch_sampling.cpp`](examples/branch_sampling.cpp)
 * Code example for sampling [register values: `register_sampling.cpp`](examples/register_sampling.cpp)
 * Code example for [multithreaded sampling: `multi_thread_sampling.cpp`](examples/multi_thread_sampling.cpp)
-* Code example for [multitcore sampling: `multi_cpu_sampling.cpp`](examples/multi_cpu_sampling.cpp)
+* Code example for [multicore sampling: `multi_cpu_sampling.cpp`](examples/multi_cpu_sampling.cpp)
 
 ## System Requirements
 * Minimum *Linux Kernel version*: `>= 5.4`
