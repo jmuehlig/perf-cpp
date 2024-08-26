@@ -17,8 +17,8 @@ Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
 ## Documentation
 * [Building and including this library](docs/build.md)
 * **Recording performance counters**
-    * [Overview and basics of Recording performance counters (single threaded)](docs/recording-performance-counters.md)
-    * [Recording counters in parallel (multithread / multicore) settings](docs/recording-performance-counters-multithreaded.md)
+    * [Overview and basics of Recording performance counters (single threaded)](docs/recording)
+    * [Recording counters in parallel (multithread / multicore) settings](docs/recording-parallel)
     * [Defining and using metrics](docs/metrics.md)
 * **Event Sampling**
   * [Overview and basics of event sampling](docs/sampling.md)
@@ -54,7 +54,7 @@ Capture performance counters and samples directly within your C++ application, f
 The `perf::EventCounter` class offers an interface to add and manage counters, as well as to start and stop recordings. 
 Utilize predefined counters or customize counters specific to your hardware.
 
-&rarr; See the documentation for [recording basics](docs/recording-performance-counters.md) and [multithreaded](docs/recording-performance-counters-multithreaded.md) recording.
+&rarr; See the documentation for [recording basics](docs/recording) and [multithreaded](docs/recording-parallel) recording.
 
 ```cpp
 #include <perfcpp/event_counter.h>

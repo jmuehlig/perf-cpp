@@ -4,8 +4,8 @@ Below, you'll find the Table of Contents which guides you through various topics
 
 * [Building and including this library](build.md)
 * **Recording performance counters**
-  * [Overview and basics of Recording performance counters (single threaded)](recording-performance-counters.md)
-  * [Recording counters in parallel (multithread / multicore) settings](recording-performance-counters-multithreaded.md)
+  * [Overview and basics of Recording performance counters (single threaded)](recording)
+  * [Recording counters in parallel (multithread / multicore) settings](recording-parallel)
   * [Defining and using metrics](metrics.md)
 * **Sampling**
   * [Overview and basics of event sampling](sampling.md)

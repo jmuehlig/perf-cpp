@@ -1,11 +1,12 @@
 # Recording performance counters for multithreaded applications
 
 Performance counters can be recorded for each thread.
-To monitor multiple threads, you have two options:
+To monitor multiple threads or CPU cores, you have various options:
 * Record counters individually for each thread and combine the results afterward (&rarr; [See our multithreaded code example: `examples/multi_thread.cpp`](../examples/multi_thread.cpp)).
 * Initiate measurements that record counters for all child threads simultaneously (&rarr; [See our multithreaded inheritance code example: `examples/inherit_thread.cpp`](../examples/inherit_thread.cpp)).
+* Monitor specific CPU cores and record counters of all processes executed there (&rarr; [See our multi cpu code example: `examples/multi_cpu.cpp`](../examples/multi_cpu.cpp)).
 
-## First Option: Record counters individually for each thread
+## 1st Option: Record counters individually for each thread
 The `perf::MultiThreadEventCounter` class allows you to copy the measurement on every thread and combines the results.
 
 ### 1) Define the counters you want to record
@@ -18,7 +19,7 @@ auto event_counter = perf::EventCounter{counter_definitions};
 event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
 ```
 
-### 2) Create N thread-local counters
+### 2) Create thread-local counters
 ```cpp
 auto multithread_event_counter = perf::MultiThreadEventCounter{std::move(event_counter), count_threads};
 ```
@@ -65,7 +66,7 @@ std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << s
 std::cout << result.to_json() << std::endl;
 ```
 
-## Second Option: Record counters for all child threads simultaneously
+## 2nd Option: Record counters for all child threads simultaneously
 The `perf::Config` class allows you to inherit the measurement to all child threads.
 
 ### 1) Define inheritance and the counters you want to record
@@ -105,6 +106,65 @@ event_counter.stop();
 ```cpp
 /// Calculate the result.
 const auto result = event_counter.result();
+
+/// Ask the result for specific counters.
+const auto cycles = result.get("cycles");
+std::cout << "Took " << cycles.value() << " cycles" << std::endl;
+
+/// Or print all counters on your own.
+for (const auto [name, value] : result)
+{
+    std::cout << "Counter " << name << " = " << value << std::endl;
+}
+
+/// Or print in CSV and JSON.
+std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << std::endl;
+std::cout << result.to_json() << std::endl;
+```
+
+## 3rd Option: Record counters for entire CPU cores
+The `perf::MultiCoreEventCounter` class allows you record performance counters on specified CPU cores.
+Please note that you may record events of other applications running on that CPU cores.
+
+According to the [`perf_event_open` documentation](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), this option needs a `/proc/sys/kernel/perf_event_paranoid` value of `< 1`.
+
+### 1) Define the counters you want to record
+```cpp
+#include <perfcpp/event_counter.h>
+/// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
+auto counter_definitions = perf::CounterDefinition{};
+
+auto event_counter = perf::EventCounter{counter_definitions};
+event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
+```
+
+### 2) Define CPU cores to watch
+```cpp
+/// Create a list of (logical) cpu ids to record performance counters on.
+auto cpus_to_watch = std::vector<std::uint16_t>{};
+cpus_to_watch.add(0U);
+cpus_to_watch.add(1U);
+/// ... add more.
+```
+
+### 3) Create CPU core-local counters
+```cpp
+auto multi_cpu_event_counter = perf::MultiCoreEventCounter{std::move(event_counter), std::move(cpus_to_watch)};
+```
+
+### 4) Start and stop the counters whenever you want
+```cpp
+/// You can start threads here.
+multi_cpu_event_counter.start();
+/// ... wait until some work is done on the CPUs.
+/// For example, join threads here.
+multi_cpu_event_counter.stop();
+```
+
+### 5) Access the combined counters
+```cpp
+/// Calculate the result.
+const auto result = multi_cpu_event_counter.result();
 
 /// Ask the result for specific counters.
 const auto cycles = result.get("cycles");
