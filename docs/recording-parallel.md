@@ -15,16 +15,11 @@ The `perf::MultiThreadEventCounter` class allows you to copy the measurement on 
 /// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
 auto counter_definitions = perf::CounterDefinition{};
 
-auto event_counter = perf::EventCounter{counter_definitions};
+auto multithread_event_counter = perf::MultiThreadEventCounter{counter_definitions};
 event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
 ```
 
-### 2) Create thread-local counters
-```cpp
-auto multithread_event_counter = perf::MultiThreadEventCounter{std::move(event_counter), count_threads};
-```
-
-### 3) Wrap `start()` and `stop()` around your thread-local processing code
+### 2) Wrap `start()` and `stop()` around your thread-local processing code
 ```cpp
 auto threads = std::vector<std::thread>{};
 for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
@@ -39,14 +34,14 @@ for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
 }
 ```
 
-### 4) Wait for the threads to finish
+### 3) Wait for the threads to finish
 ```cpp
 for (auto &thread: threads) {
     thread.join();
 }
 ```
 
-### 5) Access the combined counters
+### 4) Access the combined counters
 ```cpp
 /// Calculate the result.
 const auto result = multithread_event_counter.result();
@@ -128,17 +123,7 @@ Please note that you may record events of other applications running on that CPU
 
 According to the [`perf_event_open` documentation](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), this option needs a `/proc/sys/kernel/perf_event_paranoid` value of `< 1`.
 
-### 1) Define the counters you want to record
-```cpp
-#include <perfcpp/event_counter.h>
-/// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
-auto counter_definitions = perf::CounterDefinition{};
-
-auto event_counter = perf::EventCounter{counter_definitions};
-event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
-```
-
-### 2) Define CPU cores to watch
+### 1) Define CPU cores to watch
 ```cpp
 /// Create a list of (logical) cpu ids to record performance counters on.
 auto cpus_to_watch = std::vector<std::uint16_t>{};
@@ -147,12 +132,17 @@ cpus_to_watch.add(1U);
 /// ... add more.
 ```
 
-### 3) Create CPU core-local counters
+### 2) Define the counters you want to record
 ```cpp
-auto multi_cpu_event_counter = perf::MultiCoreEventCounter{std::move(event_counter), std::move(cpus_to_watch)};
+#include <perfcpp/event_counter.h>
+/// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
+auto counter_definitions = perf::CounterDefinition{};
+
+auto multi_cpu_event_counter = perf::MultiCoreEventCounter{counter_definitions};
+multi_cpu_event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
 ```
 
-### 4) Start and stop the counters whenever you want
+### 3) Start and stop the counters whenever you want
 ```cpp
 /// You can start threads here.
 multi_cpu_event_counter.start();
@@ -161,7 +151,7 @@ multi_cpu_event_counter.start();
 multi_cpu_event_counter.stop();
 ```
 
-### 5) Access the combined counters
+### 4) Access the combined counters
 ```cpp
 /// Calculate the result.
 const auto result = multi_cpu_event_counter.result();

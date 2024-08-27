@@ -15,14 +15,23 @@ main()
                "afterwards."
             << std::endl;
 
+  /// Create a list of cpus to record performance counters on (all available, in this example).
+  auto cpus_to_watch = std::vector<std::uint16_t>(std::thread::hardware_concurrency());
+  std::iota(cpus_to_watch.begin(), cpus_to_watch.end(), 0U);
+  std::cout << "Creating counters for CPUs: ";
+  for (auto cpu : cpus_to_watch) {
+    std::cout << std::int32_t(cpu) << " ";
+  }
+  std::cout << std::endl;
+
   /// Initialize performance counters.
   /// Note that the perf::CounterDefinition holds all counter names and must be
   /// alive until the benchmark finishes.
   auto counter_definitions = perf::CounterDefinition{};
-  auto event_counter = perf::EventCounter{ counter_definitions };
+  auto multi_cpu_event_counter = perf::MultiCoreEventCounter{ counter_definitions, std::move(cpus_to_watch) };
 
   /// Add all the performance counters we want to record.
-  if (!event_counter.add({ "instructions",
+  if (!multi_cpu_event_counter.add({ "instructions",
                            "cycles",
                            "branches",
                            "cache-misses",
@@ -41,19 +50,6 @@ main()
   const auto items_per_thread = benchmark.size() / count_threads;
   auto threads = std::vector<std::thread>{};
   auto thread_local_results = std::vector<std::uint64_t>(2U, 0U); /// Array to store the thread-local results.
-
-  /// Create a list of cpus to record performance counters on (all available, in this example).
-  auto cpus_to_watch = std::vector<std::uint16_t>(std::thread::hardware_concurrency());
-  std::iota(cpus_to_watch.begin(), cpus_to_watch.end(), 0U);
-
-  std::cout << "Creating counters for CPUs: ";
-  for (auto cpu : cpus_to_watch) {
-    std::cout << std::int32_t(cpu) << " ";
-  }
-  std::cout << std::endl;
-
-  /// Turn the single EventCounter into a multi-core CPU counter for all cores on the machine.
-  auto multi_cpu_event_counter = perf::MultiCoreEventCounter{ std::move(event_counter), std::move(cpus_to_watch) };
 
   /// Barrier for the threads to wait.
   auto thread_barrier = std::atomic<bool>{ false };

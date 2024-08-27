@@ -14,14 +14,16 @@ main()
                "afterwards."
             << std::endl;
 
+  constexpr auto count_threads = 2U;
+
   /// Initialize performance counters.
   /// Note that the perf::CounterDefinition holds all counter names and must be
   /// alive until the benchmark finishes.
   auto counter_definitions = perf::CounterDefinition{};
-  auto event_counter = perf::EventCounter{ counter_definitions };
+  auto multithread_event_counter = perf::MultiThreadEventCounter{ counter_definitions, count_threads };
 
   /// Add all the performance counters we want to record.
-  if (!event_counter.add({ "instructions",
+  if (!multithread_event_counter.add({ "instructions",
                            "cycles",
                            "branches",
                            "cache-misses",
@@ -36,15 +38,10 @@ main()
                                                    /* create benchmark of 1024 MB */ 1024U };
 
   /// One event_counter instance for every thread.
-  constexpr auto count_threads = 2U;
   const auto items_per_thread = benchmark.size() / count_threads;
   auto threads = std::vector<std::thread>{};
   auto thread_local_results =
     std::vector<std::uint64_t>(count_threads, 0U); /// Array to store the thread-local results.
-
-  /// Create a perf counter for every thread.
-  /// Note that the `event_counter` object cannot be used afterwards.
-  auto multithread_event_counter = perf::MultiThreadEventCounter{ std::move(event_counter), count_threads };
 
   for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
     threads.emplace_back(

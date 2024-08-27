@@ -15,23 +15,6 @@ main()
                "afterwards."
             << std::endl;
 
-  /// Initialize performance counters.
-  /// Note that the perf::CounterDefinition holds all counter names and must be
-  /// alive until the benchmark finishes.
-  auto counter_definitions = perf::CounterDefinition{};
-  auto event_counter = perf::EventCounter{ counter_definitions };
-
-  /// Add all the performance counters we want to record.
-  if (!event_counter.add({ "instructions",
-                           "cycles",
-                           "branches",
-                           "cache-misses",
-                           "dTLB-miss-ratio",
-                           "L1-data-miss-ratio",
-                           "cycles-per-instruction" })) {
-    std::cerr << "Could not add performance counters." << std::endl;
-  }
-
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
                                                    /* create benchmark of 1024 MB */ 1024U };
@@ -94,8 +77,22 @@ main()
   }
   std::cout << std::endl;
 
-  /// Turn the single EventCounter into a multi-core CPU counter for all cores on the machine.
-  auto multi_cpu_event_counter = perf::MultiProcessEventCounter{ std::move(event_counter), std::move(process_ids) };
+  /// Initialize performance counters.
+  /// Note that the perf::CounterDefinition holds all counter names and must be
+  /// alive until the benchmark finishes.
+  auto counter_definitions = perf::CounterDefinition{};
+  auto multi_cpu_event_counter = perf::MultiProcessEventCounter{ counter_definitions, std::move(process_ids) };
+
+  /// Add all the performance counters we want to record.
+  if (!multi_cpu_event_counter.add({ "instructions",
+                           "cycles",
+                           "branches",
+                           "cache-misses",
+                           "dTLB-miss-ratio",
+                           "L1-data-miss-ratio",
+                           "cycles-per-instruction" })) {
+    std::cerr << "Could not add performance counters." << std::endl;
+  }
 
   /// Start recording performance counter.
   /// In contrast to the inherit-thread example (see inherit_thread.cpp), we
