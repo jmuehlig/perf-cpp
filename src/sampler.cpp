@@ -74,6 +74,7 @@ perf::Sampler::open()
 
     if (is_leader || is_secret_leader) {
       perf_event.sample_type = this->_sample_type;
+      perf_event.sample_id_all = 1;
 
       if (this->_config.is_frequency()) {
         perf_event.freq = 1U;
@@ -207,21 +208,24 @@ perf::Sampler::result() const
   while (iterator < end) {
     auto* event_header = reinterpret_cast<perf_event_header*>(iterator);
 
-    if (event_header->type == PERF_RECORD_SAMPLE) {
-      auto mode = Sample::Mode::Unknown;
-      if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_KERNEL)) {
-        mode = Sample::Mode::Kernel;
-      } else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_USER)) {
-        mode = Sample::Mode::User;
-      } else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_HYPERVISOR)) {
-        mode = Sample::Mode::Hypervisor;
-      } else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_GUEST_KERNEL)) {
-        mode = Sample::Mode::GuestKernel;
-      } else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_GUEST_USER)) {
-        mode = Sample::Mode::GuestUser;
-      }
+    auto mode = Sample::Mode::Unknown;
+    if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_KERNEL)) {
+      mode = Sample::Mode::Kernel;
+    } else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_USER)) {
+      mode = Sample::Mode::User;
+    } else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_HYPERVISOR)) {
+      mode = Sample::Mode::Hypervisor;
+    } else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_GUEST_KERNEL)) {
+      mode = Sample::Mode::GuestKernel;
+    } else if (static_cast<bool>(event_header->misc & PERF_RECORD_MISC_GUEST_USER)) {
+      mode = Sample::Mode::GuestUser;
+    }
 
-      auto sample = Sample{ mode };
+    auto sample = Sample{ mode };
+
+    if (event_header->type == PERF_RECORD_SAMPLE) { /// Read "normal" samples.
+
+      sample.is_exact_ip(static_cast<bool>(event_header->misc & PERF_RECORD_MISC_EXACT_IP));
 
       auto sample_ptr = std::uintptr_t(reinterpret_cast<void*>(event_header + 1U));
 
@@ -393,6 +397,36 @@ perf::Sampler::result() const
 
       if (this->_sample_type & perf::Sampler::Type::CodePageSize) {
         sample.code_page_size(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+      }
+
+      result.push_back(sample);
+    } else if (event_header->type == PERF_RECORD_LOST_SAMPLES) {  /// Read lost samples.
+
+      auto sample_ptr = std::uintptr_t(reinterpret_cast<void*>(event_header + 1U));
+
+      sample.count_loss(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+      sample_ptr += sizeof(std::uint64_t);
+
+      if (this->_sample_type & perf::Sampler::Type::ThreadId) {
+        sample.process_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint32_t);
+
+        sample.thread_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint32_t);
+      }
+
+      if (this->_sample_type & perf::Sampler::Type::Time) {
+        sample.timestamp(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint64_t);
+      }
+
+      if (this->_sample_type & perf::Sampler::Type::CPU) {
+        sample.cpu_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
+        sample_ptr += sizeof(std::uint64_t);
+      }
+
+      if (this->_sample_type & perf::Sampler::Type::Identifier) {
+        sample.id(*reinterpret_cast<std::uint64_t*>(sample_ptr));
       }
 
       result.push_back(sample);

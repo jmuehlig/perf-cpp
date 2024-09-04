@@ -416,6 +416,8 @@ public:
   void callchain(std::vector<std::uintptr_t>&& callchain) noexcept { _callchain = std::move(callchain); }
   void data_page_size(const std::uint64_t size) noexcept { _data_page_size = size; }
   void code_page_size(const std::uint64_t size) noexcept { _code_page_size = size; }
+  void count_loss(const std::uint64_t count_loss) noexcept { _count_loss = count_loss; }
+  void is_exact_ip(const bool is_exact_ip) noexcept { _is_exact_ip = is_exact_ip; }
 
   [[nodiscard]] Mode mode() const noexcept { return _mode; }
   [[nodiscard]] std::optional<std::uint64_t> sample_id() const noexcept { return _sample_id; }
@@ -455,6 +457,8 @@ public:
   [[nodiscard]] std::optional<std::vector<std::uintptr_t>>& callchain() noexcept { return _callchain; }
   [[nodiscard]] std::optional<std::uint64_t> data_page_size() const noexcept { return _data_page_size; }
   [[nodiscard]] std::optional<std::uint64_t> code_page_size() const noexcept { return _code_page_size; }
+  [[nodiscard]] std::optional<std::uint64_t> count_loss() const noexcept { return _count_loss; }
+  [[nodiscard]] bool is_exact_ip() const noexcept { return _is_exact_ip; }
 
 private:
   Mode _mode;
@@ -479,5 +483,7 @@ private:
   std::optional<std::vector<std::uintptr_t>> _callchain{ std::nullopt };
   std::optional<std::uint64_t> _data_page_size{ std::nullopt };
   std::optional<std::uint64_t> _code_page_size{ std::nullopt };
+  std::optional<std::uint64_t> _count_loss {std::nullopt};
+  bool _is_exact_ip {false};
 };
 }
