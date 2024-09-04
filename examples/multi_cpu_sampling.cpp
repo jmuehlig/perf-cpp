@@ -110,8 +110,8 @@ main()
 
     /// Since we recorded the time, period, the instruction pointer, and the CPU
     /// id, we can only read these values.
-    if (sample.time().has_value() && sample.cpu_id().has_value() && sample.thread_id().has_value() && sample.instruction_pointer().has_value() &&
-        sample.cpu_id().has_value()) {
+    if (sample.time().has_value() && sample.cpu_id().has_value() && sample.thread_id().has_value() &&
+        sample.instruction_pointer().has_value() && sample.cpu_id().has_value()) {
       std::cout << "Time = " << sample.time().value() << " | CPU ID = " << sample.cpu_id().value()
                 << " | Thread ID = " << sample.thread_id().value() << " | Instruction Pointer = 0x" << std::hex
                 << sample.instruction_pointer().value() << std::dec << "\n";

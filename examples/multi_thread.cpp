@@ -24,12 +24,12 @@ main()
 
   /// Add all the performance counters we want to record.
   if (!multithread_event_counter.add({ "instructions",
-                           "cycles",
-                           "branches",
-                           "cache-misses",
-                           "dTLB-miss-ratio",
-                           "L1-data-miss-ratio",
-                           "cycles-per-instruction" })) {
+                                       "cycles",
+                                       "branches",
+                                       "cache-misses",
+                                       "dTLB-miss-ratio",
+                                       "L1-data-miss-ratio",
+                                       "cycles-per-instruction" })) {
     std::cerr << "Could not add performance counters." << std::endl;
   }
 
