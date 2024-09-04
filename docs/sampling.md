@@ -148,7 +148,6 @@ A timestamp. Can be accessed via `sample.time()`.
 ### `perf::Sampler::Type::LogicalMemAddress`
 The logical (or virtual) memory address.
 Can be accessed via `sample.logical_memory_address()`.
-From our experience, this only works on Intel hardware (ARM might work, too) and only with specific triggers.
 You may need to adjust the `sample_config.precise_ip(X)` setting on different hardware (ranging from `0` to `3`).
 
 &rarr; [See code example](../examples/address_sampling.cpp)
@@ -236,7 +235,6 @@ The ABI can be queried using `sample.kernel_registers_abi()`.
 
 ### `perf::Sampler::Type::Weight` (Linux Kernel `< 5.12`) / `perf::Sampler::Type::WeightStruct` (since Kernel `5.12`)
 The weight indicates how costly the event was.
-From our experience, the access latency and can only be accessed on Intel hardware (ARM may work, too).
 Since Linux Kernel version `5.12`, the Kernel might generate more information than only the "weight".
 Can be accessed via `sample.weight()`, which returns a `perf::Weight` class, which has the following attributes:
 * `sample.weight().value().latency()` returns the latency (for both `perf::Sampler::Type::Weight` and `perf::Sampler::Type::WeightStruct`).
@@ -264,7 +262,6 @@ The sampler will detect that auxiliary counter automatically.
 
 ### `perf::Sampler::Type::DataSource`
 Data source where the data was sampled (e.g., local mem, remote mem, L1d, L2, ...).
-From our experience, this only works on Intel hardware (ARM might work, too) and only with specific triggers.
 
 The data source can be accessed via `sample.data_source()`, which provides a specific `perf::DataSource` object.
 The `perf::DataSource` object can be queried for the following information:
@@ -330,7 +327,6 @@ Sample id, accessible via `sample.id()`.
 ### `perf::Sampler::Type::PhysicalMemAddress`
 The physical memory address.
 Can be accessed via `sample.physical_memory_address()`.
-From our experience, this only works on Intel hardware (ARM might work, too) and only with specific triggers.
 You may need to adjust the `sample_config.precise_ip(X)` setting on different hardware (ranging from `0` to `3`).
 
 ### `perf::Sampler::Type::DataPageSize`
@@ -350,3 +346,13 @@ In addition, the following data will be set in a sample:
 * `sample.timestamp()`, if `perf::Sampler::Type::Time` was specified,
 * `sample.cpu_id()`, if `perf::Sampler::Type::CPU` was specified, and
 * `sample.id()`, if `perf::Sampler::Type::Identifier` was specified.
+
+## Specific Notes for different CPU Vendors
+### Intel
+Sampling might work without problems since _Cascade Lake_, however, _Sapphire Rapids_  is much more exact (e.g., about the latency).
+
+### AMD
+Especially memory sampling is a problem on AMD hardware. 
+The Instruction Based Sampling (IBS) mechanism cannot tag specific load and store instructions, but randomly tags instructions to monitor.
+In case the instruction was not a load/store instruction, the sample will not include data source and a memory address ([see kernel mailing list](https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/)).
+To use IBS, create an IBS counter (`counter_definitions.add("ibs_op", perf::CounterConfig{ 11U, 0x0 });`) and use ot for sampling (&rarr; [see code example](../examples/address_sampling.cpp)).
