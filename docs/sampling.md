@@ -341,3 +341,12 @@ Can be accessed via `sample.data_page_size()`.
 Size of pages of sampled instruction pointers (e.g., when sampling for `perf::Sample::Type::InstructionPointer`).
 Can be accessed via `sample.code_page_size()`.
 
+## Lost Samples
+Sample records can be lost, e.g., if the buffer is out of capacity or the CPU is too busy.
+Lost samples are recorded and are reported as such through `sample.count_loss()`, which holds an `std::nullopt` if the sample was a regular sample and an integer, if the perf subsystem reported losses.
+
+In addition, the following data will be set in a sample:
+* `sample.process_id()` and `sample.thread_id()`, if `perf::Sampler::Type::ThreadId` was specified,
+* `sample.timestamp()`, if `perf::Sampler::Type::Time` was specified,
+* `sample.cpu_id()`, if `perf::Sampler::Type::CPU` was specified, and
+* `sample.id()`, if `perf::Sampler::Type::Identifier` was specified.
