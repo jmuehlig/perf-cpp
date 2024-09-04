@@ -400,7 +400,7 @@ perf::Sampler::result() const
       }
 
       result.push_back(sample);
-    } else if (event_header->type == PERF_RECORD_LOST_SAMPLES) {  /// Read lost samples.
+    } else if (event_header->type == PERF_RECORD_LOST_SAMPLES) { /// Read lost samples.
 
       auto sample_ptr = std::uintptr_t(reinterpret_cast<void*>(event_header + 1U));
 

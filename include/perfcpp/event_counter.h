@@ -20,7 +20,7 @@ private:
   {
   public:
     explicit Event(std::string_view name) noexcept
-      : _name(std::move(name))
+      : _name(name)
       , _is_hidden(false)
       , _is_counter(false)
       , _group_id(0U)
@@ -32,7 +32,7 @@ private:
           const bool is_hidden,
           const std::uint8_t group_id,
           const std::uint8_t in_group_id) noexcept
-      : _name(std::move(name))
+      : _name(name)
       , _is_hidden(is_hidden)
       , _is_counter(true)
       , _group_id(group_id)
@@ -167,7 +167,8 @@ protected:
 
   [[nodiscard]] static bool add(std::vector<EventCounter>& event_counter, std::vector<std::string>&& counter_names);
 
-  [[nodiscard]] static bool add(std::vector<EventCounter>& event_counter, const std::vector<std::string>& counter_names);
+  [[nodiscard]] static bool add(std::vector<EventCounter>& event_counter,
+                                const std::vector<std::string>& counter_names);
 
   [[nodiscard]] static CounterResult result(const std::vector<EventCounter>& event_counter,
                                             std::uint64_t normalization = 1U);
@@ -199,7 +200,10 @@ public:
    * @param counter_name Name of the counter.
    * @return True, if the counter could be added.
    */
-  bool add(std::string&& counter_name) { return MultiEventCounterBase::add(this->_thread_local_counter, std::move(counter_name)); }
+  bool add(std::string&& counter_name)
+  {
+    return MultiEventCounterBase::add(this->_thread_local_counter, std::move(counter_name));
+  }
 
   /**
    * Add the specified counter to the list of monitored performance counters.
@@ -217,7 +221,10 @@ public:
    * @param counter_names List of names of the counters.
    * @return True, if the counters could be added.
    */
-  bool add(std::vector<std::string>&& counter_names) { return MultiEventCounterBase::add(this->_thread_local_counter, std::move(counter_names)); }
+  bool add(std::vector<std::string>&& counter_names)
+  {
+    return MultiEventCounterBase::add(this->_thread_local_counter, std::move(counter_names));
+  }
 
   /**
    * Add the specified counters to the list of monitored performance counters.
@@ -226,7 +233,10 @@ public:
    * @param counter_names List of names of the counters.
    * @return True, if the counters could be added.
    */
-  bool add(const std::vector<std::string>& counter_names) { return MultiEventCounterBase::add(this->_thread_local_counter, counter_names); }
+  bool add(const std::vector<std::string>& counter_names)
+  {
+    return MultiEventCounterBase::add(this->_thread_local_counter, counter_names);
+  }
 
   /**
    * Opens and starts recording performance counters for the given thread.
@@ -298,7 +308,10 @@ public:
    * @param counter_name Name of the counter.
    * @return True, if the counter could be added.
    */
-  bool add(std::string&& counter_name) { return MultiEventCounterBase::add(this->_process_local_counter, std::move(counter_name)); }
+  bool add(std::string&& counter_name)
+  {
+    return MultiEventCounterBase::add(this->_process_local_counter, std::move(counter_name));
+  }
 
   /**
    * Add the specified counter to the list of monitored performance counters.
@@ -316,7 +329,10 @@ public:
    * @param counter_names List of names of the counters.
    * @return True, if the counters could be added.
    */
-  bool add(std::vector<std::string>&& counter_names) { return MultiEventCounterBase::add(this->_process_local_counter, std::move(counter_names)); }
+  bool add(std::vector<std::string>&& counter_names)
+  {
+    return MultiEventCounterBase::add(this->_process_local_counter, std::move(counter_names));
+  }
 
   /**
    * Add the specified counters to the list of monitored performance counters.
@@ -325,7 +341,10 @@ public:
    * @param counter_names List of names of the counters.
    * @return True, if the counters could be added.
    */
-  bool add(const std::vector<std::string>& counter_names) { return MultiEventCounterBase::add(this->_process_local_counter, counter_names); }
+  bool add(const std::vector<std::string>& counter_names)
+  {
+    return MultiEventCounterBase::add(this->_process_local_counter, counter_names);
+  }
 
   /**
    * Opens and starts recording performance counters for the given thread.
@@ -362,7 +381,9 @@ private:
 class MultiCoreEventCounter final : private MultiEventCounterBase
 {
 public:
-  MultiCoreEventCounter(const CounterDefinition& counter_list, std::vector<std::uint16_t>&& cpu_ids, Config config = {});
+  MultiCoreEventCounter(const CounterDefinition& counter_list,
+                        std::vector<std::uint16_t>&& cpu_ids,
+                        Config config = {});
 
   MultiCoreEventCounter(EventCounter&& perf, std::vector<std::uint16_t>&& cpu_ids);
 
@@ -380,7 +401,10 @@ public:
    * @param counter_name Name of the counter.
    * @return True, if the counter could be added.
    */
-  bool add(std::string&& counter_name) { return MultiEventCounterBase::add(this->_cpu_local_counter, std::move(counter_name)); }
+  bool add(std::string&& counter_name)
+  {
+    return MultiEventCounterBase::add(this->_cpu_local_counter, std::move(counter_name));
+  }
 
   /**
    * Add the specified counter to the list of monitored performance counters.
@@ -398,7 +422,10 @@ public:
    * @param counter_names List of names of the counters.
    * @return True, if the counters could be added.
    */
-  bool add(std::vector<std::string>&& counter_names) { return MultiEventCounterBase::add(this->_cpu_local_counter, std::move(counter_names)); }
+  bool add(std::vector<std::string>&& counter_names)
+  {
+    return MultiEventCounterBase::add(this->_cpu_local_counter, std::move(counter_names));
+  }
 
   /**
    * Add the specified counters to the list of monitored performance counters.
@@ -407,7 +434,10 @@ public:
    * @param counter_names List of names of the counters.
    * @return True, if the counters could be added.
    */
-  bool add(const std::vector<std::string>& counter_names) { return MultiEventCounterBase::add(this->_cpu_local_counter, counter_names); }
+  bool add(const std::vector<std::string>& counter_names)
+  {
+    return MultiEventCounterBase::add(this->_cpu_local_counter, counter_names);
+  }
 
   /**
    * Opens and starts recording performance counters for the given thread.

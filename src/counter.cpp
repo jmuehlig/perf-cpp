@@ -64,7 +64,7 @@ perf::Counter::to_string() const
           stream << " | ";
         }
 
-        stream << std::move(name);
+        stream << name;
         is_first = false;
       }
     };
@@ -126,6 +126,10 @@ perf::Counter::to_string() const
 
   if (this->_event_attribute.mmap > 0U) {
     stream << "        mmap: " << this->_event_attribute.mmap << "\n";
+  }
+
+  if (this->_event_attribute.sample_id_all > 0U) {
+    stream << "        sample_id_all: " << this->_event_attribute.sample_id_all << "\n";
   }
 
   if (this->_event_attribute.read_format > 0U) {

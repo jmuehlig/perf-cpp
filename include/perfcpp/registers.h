@@ -151,28 +151,28 @@ public:
 
   Registers() noexcept = default;
 
-  Registers(std::vector<x86>&& registers) noexcept
+  explicit Registers(std::vector<x86>&& registers) noexcept
   {
     for (const auto reg : registers) {
       _mask |= static_cast<std::uint64_t>(1U) << static_cast<std::uint64_t>(reg);
     }
   }
 
-  Registers(std::vector<arm>&& registers) noexcept
+  explicit Registers(std::vector<arm>&& registers) noexcept
   {
     for (const auto reg : registers) {
       _mask |= static_cast<std::uint64_t>(1U) << static_cast<std::uint64_t>(reg);
     }
   }
 
-  Registers(std::vector<arm64>&& registers) noexcept
+  explicit Registers(std::vector<arm64>&& registers) noexcept
   {
     for (const auto reg : registers) {
       _mask |= static_cast<std::uint64_t>(1U) << static_cast<std::uint64_t>(reg);
     }
   }
 
-  Registers(std::vector<riscv>&& registers) noexcept
+  explicit Registers(std::vector<riscv>&& registers) noexcept
   {
     for (const auto reg : registers) {
       _mask |= static_cast<std::uint64_t>(1U) << static_cast<std::uint64_t>(reg);

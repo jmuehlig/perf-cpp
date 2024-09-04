@@ -178,10 +178,8 @@ perf::EventCounter::result(std::uint64_t normalization) const
 bool
 perf::MultiEventCounterBase::add(std::vector<EventCounter>& event_counter, std::string&& counter_name)
 {
-  for (auto i = 0U; i < event_counter.size() - 1U; ++i)
-  {
-    if (!event_counter[i].add(std::string{counter_name}))
-    {
+  for (auto i = 0U; i < event_counter.size() - 1U; ++i) {
+    if (!event_counter[i].add(std::string{ counter_name })) {
       return false;
     }
   }
@@ -192,10 +190,8 @@ perf::MultiEventCounterBase::add(std::vector<EventCounter>& event_counter, std::
 bool
 perf::MultiEventCounterBase::add(std::vector<EventCounter>& event_counter, std::vector<std::string>&& counter_names)
 {
-  for (auto i = 0U; i < event_counter.size() - 1U; ++i)
-  {
-    if (!event_counter[i].add(std::vector<std::string>{counter_names}))
-    {
+  for (auto i = 0U; i < event_counter.size() - 1U; ++i) {
+    if (!event_counter[i].add(std::vector<std::string>{ counter_names })) {
       return false;
     }
   }
@@ -204,12 +200,11 @@ perf::MultiEventCounterBase::add(std::vector<EventCounter>& event_counter, std::
 }
 
 bool
-perf::MultiEventCounterBase::add(std::vector<EventCounter>& event_counter, const std::vector<std::string>& counter_names)
+perf::MultiEventCounterBase::add(std::vector<EventCounter>& event_counter,
+                                 const std::vector<std::string>& counter_names)
 {
-  for (auto& thread_local_counter : event_counter)
-  {
-    if (!thread_local_counter.add(counter_names))
-    {
+  for (auto& thread_local_counter : event_counter) {
+    if (!thread_local_counter.add(counter_names)) {
       return false;
     }
   }
@@ -268,11 +263,12 @@ perf::MultiEventCounterBase::result(const std::vector<perf::EventCounter>& event
   return CounterResult{ std::move(result) };
 }
 
-perf::MultiThreadEventCounter::MultiThreadEventCounter(const perf::CounterDefinition& counter_list, const std::uint16_t num_threads, const perf::Config config)
+perf::MultiThreadEventCounter::MultiThreadEventCounter(const perf::CounterDefinition& counter_list,
+                                                       const std::uint16_t num_threads,
+                                                       const perf::Config config)
 {
   this->_thread_local_counter.reserve(num_threads);
-  for (auto i = 0U; i < num_threads; ++i)
-  {
+  for (auto i = 0U; i < num_threads; ++i) {
     this->_thread_local_counter.emplace_back(counter_list, config);
   }
 }
@@ -287,7 +283,9 @@ perf::MultiThreadEventCounter::MultiThreadEventCounter(perf::EventCounter&& even
   this->_thread_local_counter.emplace_back(std::move(event_counter));
 }
 
-perf::MultiProcessEventCounter::MultiProcessEventCounter(const perf::CounterDefinition& counter_list, std::vector<pid_t>&& process_ids, perf::Config config)
+perf::MultiProcessEventCounter::MultiProcessEventCounter(const perf::CounterDefinition& counter_list,
+                                                         std::vector<pid_t>&& process_ids,
+                                                         perf::Config config)
 {
   this->_process_local_counter.reserve(process_ids.size());
 
@@ -335,7 +333,9 @@ perf::MultiProcessEventCounter::stop()
   }
 }
 
-perf::MultiCoreEventCounter::MultiCoreEventCounter(const perf::CounterDefinition& counter_list, std::vector<std::uint16_t>&& cpu_ids, perf::Config config)
+perf::MultiCoreEventCounter::MultiCoreEventCounter(const perf::CounterDefinition& counter_list,
+                                                   std::vector<std::uint16_t>&& cpu_ids,
+                                                   perf::Config config)
 {
   config.process_id(-1); /// Record every thread/process on the given CPUs.
 

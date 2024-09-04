@@ -9,7 +9,7 @@ namespace perf {
 class DataSource
 {
 public:
-  DataSource(const std::uint64_t data_source) noexcept
+  explicit DataSource(const std::uint64_t data_source) noexcept
     : _data_source(data_source)
   {
   }
@@ -483,7 +483,7 @@ private:
   std::optional<std::vector<std::uintptr_t>> _callchain{ std::nullopt };
   std::optional<std::uint64_t> _data_page_size{ std::nullopt };
   std::optional<std::uint64_t> _code_page_size{ std::nullopt };
-  std::optional<std::uint64_t> _count_loss {std::nullopt};
-  bool _is_exact_ip {false};
+  std::optional<std::uint64_t> _count_loss{ std::nullopt };
+  bool _is_exact_ip{ false };
 };
 }
