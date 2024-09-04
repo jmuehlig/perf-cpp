@@ -107,8 +107,8 @@ public:
 private:
   std::uint64_t _buffer_pages{ 8192U + 1U };
 
-  bool _is_frequency;
-  std::uint64_t _frequency_or_period;
+  bool _is_frequency {true};
+  std::uint64_t _frequency_or_period {4000U};
 
   std::uint8_t _precise_ip{ 0 };
 
