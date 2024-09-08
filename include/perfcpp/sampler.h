@@ -11,8 +11,11 @@
 #include <vector>
 
 namespace perf {
+class MultiSamplerBase;
 class Sampler
 {
+  friend MultiSamplerBase;
+
 public:
   /**
    * What to sample.
@@ -72,6 +75,14 @@ public:
 
   Sampler(const CounterDefinition& counter_list,
           std::vector<std::string>&& counter_names,
+          const std::uint64_t type,
+          SampleConfig config = {})
+    : Sampler(counter_list, std::vector<std::vector<std::string>>{ std::move(counter_names) }, type, config)
+  {
+  }
+
+  Sampler(const CounterDefinition& counter_list,
+          std::vector<std::vector<std::string>>&& counter_names,
           std::uint64_t type,
           SampleConfig config = {});
 
@@ -100,7 +111,7 @@ public:
   /**
    * @return List of sampled events after closing the sampler.
    */
-  [[nodiscard]] std::vector<Sample> result() const;
+  [[nodiscard]] std::vector<Sample> result(bool sort_by_time = true) const;
 
   [[nodiscard]] std::int64_t last_error() const noexcept { return _last_error; }
 
@@ -113,14 +124,14 @@ private:
   /// Combination of one ore more Sample::Type values.
   std::uint64_t _sample_type;
 
-  /// Real counters to measure.
-  class Group _group;
+  /// Groups of real counters to measure.
+  std::vector<class Group> _groups;
 
-  /// Name of the counters to measure.
-  std::vector<std::string_view> _counter_names;
+  /// Name of the counters to measure (per group).
+  std::vector<std::vector<std::string_view>> _counter_names;
 
-  /// Buffer for the samples.
-  void* _buffer{ nullptr };
+  /// Buffers for the samples of every group.
+  std::vector<void*> _buffers;
 
   /// Will be assigned to errorno.
   std::int64_t _last_error{ 0 };
@@ -153,7 +164,7 @@ private:
 class MultiSamplerBase
 {
 protected:
-  [[nodiscard]] static std::vector<Sample> result(const std::vector<Sampler>& sampler);
+  [[nodiscard]] static std::vector<Sample> result(const std::vector<Sampler>& sampler, bool sort_by_time);
 };
 
 class MultiThreadSampler final : private MultiSamplerBase
@@ -215,7 +226,10 @@ public:
   /**
    * @return List of sampled events after closing the sampler.
    */
-  [[nodiscard]] std::vector<Sample> result() const { return MultiSamplerBase::result(_thread_local_samplers); }
+  [[nodiscard]] std::vector<Sample> result(const bool sort_by_time = true) const
+  {
+    return MultiSamplerBase::result(_thread_local_samplers, sort_by_time);
+  }
 
 private:
   std::vector<Sampler> _thread_local_samplers;
@@ -286,9 +300,18 @@ public:
   /**
    * @return List of sampled events after closing the sampler.
    */
-  [[nodiscard]] std::vector<Sample> result() const { return MultiSamplerBase::result(_core_local_samplers); }
+  [[nodiscard]] std::vector<Sample> result(const bool sort_by_time = true) const
+  {
+    return MultiSamplerBase::result(_core_local_samplers, sort_by_time);
+  }
 
 private:
   std::vector<Sampler> _core_local_samplers;
+};
+
+class SampleTimestampComparator
+{
+public:
+  bool operator()(const Sample& left, const Sample& right) const { return left.time().value() < right.time().value(); }
 };
 }

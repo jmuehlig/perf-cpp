@@ -7,14 +7,16 @@ main()
 {
   std::cout << "libperf-cpp example: Record perf samples including time, "
                "logical memory address, latency, and data source for "
-               "single-threaded random access to an in-memory array."
+               "single-threaded random access to an in-memory array "
+               "using multiple events as trigger."
             << std::endl;
 
   /// Initialize counter definitions.
   /// Note that the perf::CounterDefinition holds all counter names and must be
   /// alive until the benchmark finishes.
   auto counter_definitions = perf::CounterDefinition{};
-  counter_definitions.add("mem_trans_retired.load_latency_gt_3", perf::CounterConfig{ PERF_TYPE_RAW, 0x1CD, 0x3 });
+  counter_definitions.add("loads", perf::CounterConfig{ PERF_TYPE_RAW, 0x1CD, 0x3 });
+  counter_definitions.add("stores", perf::CounterConfig{ PERF_TYPE_RAW, 0x82d0 });
   counter_definitions.add("ibs_op", perf::CounterConfig{ 11U, 0x0 });
 
   /// Initialize sampler.
@@ -28,20 +30,22 @@ main()
   weight_type = perf::Sampler::Type::WeightStruct;
 #endif
 
-  auto sampling_counters = std::vector<std::string>{};
-  if (__builtin_cpu_is("amd") > 0) {
-    perf_config.period(4000U);
-    sampling_counters.emplace_back("ibs_op");
-  } else if (__builtin_cpu_is("intel") > 0) {
+  auto sampling_counters = std::vector<std::vector<std::string>>{};
+
+  if (__builtin_cpu_is("intel") > 0) {
+    sampling_counters.emplace_back(std::vector<std::string>{ "loads" });
+    sampling_counters.emplace_back(std::vector<std::string>{ "stores" });
+
     if (__builtin_cpu_is("sapphirerapids")) {
       /// Note: For sampling on Sapphire Rapids, we have to prepend an auxiliary counter.
-      sampling_counters.emplace_back("mem-loads-aux");
+      for (auto& trigger : sampling_counters) {
+        trigger.insert(trigger.begin(), "mem-loads-aux");
+      }
     }
-    sampling_counters.emplace_back("mem_trans_retired.load_latency_gt_3");
   }
 
   if (sampling_counters.empty()) {
-    std::cout << "Error: Memory sampling is not supported on this CPU." << std::endl;
+    std::cout << "Error: Memory sampling with multiple triggers is not supported on this CPU." << std::endl;
     return 1;
   }
 
@@ -57,7 +61,8 @@ main()
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
-                                                   /* create benchmark of 512 MB */ 512U };
+                                                   /* create benchmark of 512 MB */ 512U,
+                                                   /* also support writing */ true };
 
   /// Start sampling.
   if (!sampler.start()) {
@@ -66,9 +71,12 @@ main()
   }
 
   /// Execute the benchmark (accessing cache lines in a random order).
-  auto value = 0ULL;
+  auto value = 0LL;
   for (auto index = 0U; index < benchmark.size(); ++index) {
     value += benchmark[index].value;
+
+    /// Also write a value to get store events.
+    benchmark.set(index, value);
   }
   asm volatile(""
                : "+r,m"(value)
@@ -80,17 +88,8 @@ main()
   sampler.stop();
 
   /// Get all the recorded samples.
-  auto samples = sampler.result();
+  auto samples = sampler.result(/* sort by time */ true);
   const auto count_samples_before_filter = samples.size();
-
-  /// Filter out samples without data source (AMD samples all instructions, not only data-related).
-  samples.erase(std::remove_if(samples.begin(),
-                               samples.end(),
-                               [](const auto& sample) {
-                                 return sample.count_loss().has_value() || sample.data_src().has_value() == false ||
-                                        sample.data_src().value().is_na();
-                               }),
-                samples.end());
 
   /// Print the first samples.
   const auto count_show_samples = std::min<std::size_t>(samples.size(), 40U);
@@ -116,11 +115,18 @@ main()
         data_source = "local RAM";
       }
 
+      auto type = "N/A";
+      if (sample.data_src()->is_load()) {
+        type = "Load";
+      } else if (sample.data_src()->is_store()) {
+        type = "Store";
+      }
+
       const auto weight = sample.weight().value_or(perf::Weight{ 0U, 0U, 0U });
 
       std::cout << "Time = " << sample.time().value() << " | Logical Mem Address = 0x" << std::hex
                 << sample.logical_memory_address().value() << std::dec << " | Load Latency = " << weight.latency()
-                << ", " << weight.var2() << ", " << weight.var3() << " | Is Load = " << sample.data_src()->is_load()
+                << ", " << weight.var2() << ", " << weight.var3() << " | Type = " << type
                 << " | Data Source = " << data_source << "\n";
     } else if (sample.count_loss().has_value()) {
       std::cout << "Loss = " << sample.count_loss().value() << "\n";
