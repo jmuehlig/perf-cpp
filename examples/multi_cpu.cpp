@@ -31,14 +31,17 @@ main()
   auto multi_cpu_event_counter = perf::MultiCoreEventCounter{ counter_definitions, std::move(cpus_to_watch) };
 
   /// Add all the performance counters we want to record.
-  if (!multi_cpu_event_counter.add({ "instructions",
-                                     "cycles",
-                                     "branches",
-                                     "cache-misses",
-                                     "dTLB-miss-ratio",
-                                     "L1-data-miss-ratio",
-                                     "cycles-per-instruction" })) {
-    std::cerr << "Could not add performance counters." << std::endl;
+  try {
+    multi_cpu_event_counter.add({ "instructions",
+                                  "cycles",
+                                  "branches",
+                                  "cache-misses",
+                                  "dTLB-miss-ratio",
+                                  "L1-data-miss-ratio",
+                                  "cycles-per-instruction" });
+  } catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+    return 1;
   }
 
   /// Create random access benchmark.
@@ -74,7 +77,12 @@ main()
   /// Start recording performance counter.
   /// In contrast to the inherit-thread example (see inherit_thread.cpp), we
   /// will record the performance counters on each logical CPU core.
-  multi_cpu_event_counter.start();
+  try {
+    multi_cpu_event_counter.start();
+  } catch (std::runtime_error& exception) {
+    std::cerr << exception.what() << std::endl;
+    return 1;
+  }
 
   /// Let threads start.
   thread_barrier = true;

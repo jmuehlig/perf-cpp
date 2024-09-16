@@ -17,14 +17,17 @@ main()
   auto event_counter = perf::EventCounter{ counter_definitions };
 
   /// Add all the performance counters we want to record.
-  if (!event_counter.add({ "instructions",
-                           "cycles",
-                           "branches",
-                           "cache-misses",
-                           "dTLB-miss-ratio",
-                           "L1-data-miss-ratio",
-                           "cycles-per-instruction" })) {
-    std::cerr << "Could not add performance counters." << std::endl;
+  try {
+    event_counter.add({ "instructions",
+                        "cycles",
+                        "branches",
+                        "cache-misses",
+                        "dTLB-miss-ratio",
+                        "L1-data-miss-ratio",
+                        "cycles-per-instruction" });
+  } catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+    return 1;
   }
 
   /// Create random access benchmark.
@@ -32,8 +35,11 @@ main()
                                                    /* create benchmark of 512 MB */ 512U };
 
   /// Start recording.
-  if (!event_counter.start()) {
-    std::cerr << "Could not start performance counters." << std::endl;
+  try {
+    event_counter.start();
+  } catch (std::runtime_error& exception) {
+    std::cerr << exception.what() << std::endl;
+    return 1;
   }
 
   /// Execute the benchmark (accessing cache lines in a random order).

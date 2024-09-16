@@ -38,8 +38,10 @@ main()
                                                    /* create benchmark of 512 MB */ 512U };
 
   /// Start sampling.
-  if (!sampler.start()) {
-    std::cerr << "Could not start sampling, errno = " << sampler.last_error() << "." << std::endl;
+  try {
+    sampler.start();
+  } catch (std::runtime_error& exception) {
+    std::cerr << exception.what() << std::endl;
     return 1;
   }
 

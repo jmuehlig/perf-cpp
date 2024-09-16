@@ -25,14 +25,17 @@ main()
   auto event_counter = perf::EventCounter{ counter_definitions, config };
 
   /// Add all the performance counters we want to record.
-  if (!event_counter.add({ "instructions",
-                           "cycles",
-                           "branches",
-                           "cache-misses",
-                           "dTLB-miss-ratio",
-                           "L1-data-miss-ratio",
-                           "cycles-per-instruction" })) {
-    std::cerr << "Could not add performance counters." << std::endl;
+  try {
+    event_counter.add({ "instructions",
+                        "cycles",
+                        "branches",
+                        "cache-misses",
+                        "dTLB-miss-ratio",
+                        "L1-data-miss-ratio",
+                        "cycles-per-instruction" });
+  } catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+    return 1;
   }
 
   /// Create random access benchmark.
@@ -47,7 +50,12 @@ main()
 
   /// Start the performance counters. Note that the counters will also record
   /// the thread-creation.
-  event_counter.start();
+  try {
+    event_counter.start();
+  } catch (std::runtime_error& exception) {
+    std::cerr << exception.what() << std::endl;
+    return 1;
+  }
 
   for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
     threads.emplace_back([thread_index, items_per_thread, &thread_local_results, &benchmark]() {

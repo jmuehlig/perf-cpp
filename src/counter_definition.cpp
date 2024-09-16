@@ -92,8 +92,12 @@ perf::CounterDefinition::initialized_default_counters()
             PERF_TYPE_HW_CACHE,
             PERF_COUNT_HW_CACHE_ITLB | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_MISS << 16));
 
-  /// Auxiliary event, needed on some Intel architectures (starting from Sapphire Rapids).
-  this->add("mem-loads-aux", PERF_TYPE_RAW, 0x8203);
+  if (__builtin_cpu_is("intel") > 0) {
+    /// Auxiliary event, needed on some Intel architectures (starting from Sapphire Rapids).
+    this->add("mem-loads-aux", PERF_TYPE_RAW, 0x8203);
+  } else if (__builtin_cpu_is("amd") > 0) {
+
+  }
 
   /// Pre-defined metrics.
   this->add(std::make_unique<CyclesPerInstruction>());

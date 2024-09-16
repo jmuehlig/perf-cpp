@@ -17,9 +17,9 @@ main()
 
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
-  perf_config.precise_ip(0U);   /// precise_ip controls the amount of skid, see
-                                /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-  perf_config.period(1000000U); /// Record every 1,000,000th event.
+  perf_config.precise_ip(2U); /// precise_ip controls the amount of skid, see
+                              /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
+  perf_config.period(100U);   /// Record every 1,000,000th event.
 
   auto sampler =
     perf::Sampler{ counter_definitions,
@@ -35,8 +35,10 @@ main()
                                                    /* create benchmark of 512 MB */ 512U };
 
   /// Start sampling.
-  if (!sampler.start()) {
-    std::cerr << "Could not start sampling, errno = " << sampler.last_error() << "." << std::endl;
+  try {
+    sampler.start();
+  } catch (std::runtime_error& exception) {
+    std::cerr << exception.what() << std::endl;
     return 1;
   }
 
@@ -70,7 +72,8 @@ main()
         sample.cpu_id().has_value()) {
       std::cout << "Time = " << sample.time().value() << " | Period = " << sample.period().value()
                 << " | Instruction Pointer = 0x" << std::hex << sample.instruction_pointer().value() << std::dec
-                << " | CPU ID = " << sample.cpu_id().value() << "\n";
+                << " | CPU ID = " << sample.cpu_id().value() << " | " << (sample.is_exact_ip() ? "exact" : "not exact")
+                << "\n";
     }
   }
   std::cout << std::flush;

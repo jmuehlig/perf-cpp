@@ -22,7 +22,8 @@ perf::EventCounter::add(std::string&& counter_name)
   /// Try to add the counter, if the name is a counter.
   auto counter_config = this->_counter_definitions.counter(counter_name);
   if (counter_config.has_value()) {
-    return this->add(std::get<0>(counter_config.value()), std::get<1>(counter_config.value()), false);
+    this->add(std::get<0>(counter_config.value()), std::get<1>(counter_config.value()), false);
+    return true;
   }
 
   /// Try to add the metric, if the name is a metric.
@@ -31,13 +32,9 @@ perf::EventCounter::add(std::string&& counter_name)
     for (auto&& dependent_counter_name : this->_counter_definitions.metric(counter_name)->required_counter_names()) {
       auto dependent_counter_config = this->_counter_definitions.counter(dependent_counter_name);
       if (dependent_counter_config.has_value()) {
-        const auto is_added =
           this->add(std::get<0>(dependent_counter_config.value()), std::get<1>(dependent_counter_config.value()), true);
-        if (!is_added) {
-          return false;
-        }
       } else {
-        return false;
+        throw std::runtime_error{std::string{"Cannot find counter '"}.append(dependent_counter_name).append("' for metric '").append(counter_name).append("'.")};
       }
     }
 
@@ -45,10 +42,10 @@ perf::EventCounter::add(std::string&& counter_name)
     return true;
   }
 
-  return false;
+  throw std::runtime_error{std::string{"Cannot find counter or metric with name '"}.append(counter_name).append("'.")};
 }
 
-bool
+void
 perf::EventCounter::add(std::string_view counter_name, perf::CounterConfig counter, const bool is_hidden)
 {
   /// If the counter is already added,
@@ -57,7 +54,7 @@ perf::EventCounter::add(std::string_view counter_name, perf::CounterConfig count
                                    [&counter_name](const auto& counter) { return counter.name() == counter_name; });
       iterator != this->_counters.end()) {
     iterator->is_hidden(iterator->is_hidden() && is_hidden);
-    return true;
+    return;
   }
 
   /// Check if space for more counters left.
@@ -75,8 +72,6 @@ perf::EventCounter::add(std::string_view counter_name, perf::CounterConfig count
   const auto in_group_id = std::uint8_t(this->_groups.back().size());
   this->_counters.emplace_back(counter_name, is_hidden, group_id, in_group_id);
   this->_groups.back().add(counter);
-
-  return true;
 }
 
 bool

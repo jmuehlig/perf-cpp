@@ -23,14 +23,17 @@ main()
   auto multithread_event_counter = perf::MultiThreadEventCounter{ counter_definitions, count_threads };
 
   /// Add all the performance counters we want to record.
-  if (!multithread_event_counter.add({ "instructions",
-                                       "cycles",
-                                       "branches",
-                                       "cache-misses",
-                                       "dTLB-miss-ratio",
-                                       "L1-data-miss-ratio",
-                                       "cycles-per-instruction" })) {
-    std::cerr << "Could not add performance counters." << std::endl;
+  try {
+    multithread_event_counter.add({ "instructions",
+                                    "cycles",
+                                    "branches",
+                                    "cache-misses",
+                                    "dTLB-miss-ratio",
+                                    "L1-data-miss-ratio",
+                                    "cycles-per-instruction" });
+  } catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+    return 1;
   }
 
   /// Create random access benchmark.
@@ -51,7 +54,12 @@ main()
         /// Start recording counters.
         /// In contrast to the inherit-thread example (see inherit_thread.cpp), we
         /// will record the performance counters on each thread.
-        multithread_event_counter.start(thread_index);
+        try {
+          multithread_event_counter.start(thread_index);
+        } catch (std::runtime_error& exception) {
+          std::cerr << exception.what() << std::endl;
+          return;
+        }
 
         /// Process the data.
         for (auto index = 0U; index < items_per_thread; ++index) {

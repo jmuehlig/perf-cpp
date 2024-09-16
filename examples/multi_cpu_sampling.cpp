@@ -72,7 +72,12 @@ main()
   }
 
   /// Start sampling for all specified CPUs at once.
-  sampler.start();
+  try {
+    sampler.start();
+  } catch (std::runtime_error& exception) {
+    std::cerr << exception.what() << std::endl;
+    return 1;
+  }
 
   /// Let threads start.
   thread_barrier = true;

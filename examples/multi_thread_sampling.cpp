@@ -51,7 +51,12 @@ main()
       auto local_value = 0ULL;
 
       /// Start sampling per thread.
-      sampler.start(thread_index);
+      try {
+        sampler.start(thread_index);
+      } catch (std::runtime_error& exception) {
+        std::cerr << exception.what() << std::endl;
+        return;
+      }
 
       /// Process the data.
       for (auto index = 0U; index < items_per_thread; ++index) {

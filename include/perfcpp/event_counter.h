@@ -157,7 +157,7 @@ private:
    * @param is_hidden Indicates if the counter should be exposed in the results.
    * @return True, if the counter was added.
    */
-  bool add(std::string_view counter_name, CounterConfig counter, bool is_hidden);
+  void add(std::string_view counter_name, CounterConfig counter, bool is_hidden);
 };
 
 class MultiEventCounterBase
