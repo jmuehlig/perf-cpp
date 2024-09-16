@@ -46,7 +46,7 @@ bool
 perf::Sampler::open()
 {
   if (this->_groups.empty()) {
-    return false;
+    throw std::runtime_error{"No counter for sampling specified."};
   }
 
   for (auto& group : this->_groups) {
@@ -139,7 +139,7 @@ perf::Sampler::open()
       /// Check if the counter could be opened successfully.
       if (file_descriptor < 0) {
         this->_last_error = errno;
-        return false;
+        throw std::runtime_error{"Cannot create file descriptor for sampling counter (error no: " + std::to_string(errno) + ")."};
       }
     }
 
@@ -147,16 +147,15 @@ perf::Sampler::open()
     /// If the leader is an "auxiliary" counter (like on Sapphire Rapid), use the second counter instead.
     const auto file_descriptor = is_leader_auxiliary_counter && group.size() > 1U ? group.member(1U).file_descriptor()
                                                                                   : group.leader_file_descriptor();
-
     auto* buffer =
       ::mmap(nullptr, this->_config.buffer_pages() * 4096U, PROT_READ | PROT_WRITE, MAP_SHARED, file_descriptor, 0);
     if (buffer == MAP_FAILED) {
       this->_last_error = errno;
-      return false;
+      throw std::runtime_error{"Creating buffer via mmap() failed."};
     }
 
     if (buffer == nullptr) {
-      return false;
+      throw std::runtime_error{"Created buffer via mmap() is null."};
     }
 
     this->_buffers.push_back(buffer);
@@ -169,9 +168,7 @@ bool
 perf::Sampler::start()
 {
   /// Open the groups.
-  if (!this->open()) {
-    return false;
-  }
+  std::ignore = this->open();
 
   /// Start the counters.
   for (const auto& group : this->_groups) {

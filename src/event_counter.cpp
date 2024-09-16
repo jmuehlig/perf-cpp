@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <numeric>
+#include <stdexcept>
 #include <perfcpp/perf.h>
 bool
 perf::EventCounter::add(std::string&& counter_name)
@@ -62,7 +63,7 @@ perf::EventCounter::add(std::string_view counter_name, perf::CounterConfig count
   /// Check if space for more counters left.
   if (this->_groups.size() == this->_config.max_groups() &&
       this->_groups.back().size() >= this->_config.max_counters_per_group()) {
-    return false;
+    throw std::runtime_error{"No more space for counters left."};
   }
 
   /// Add a new group, if needed (no one available or last is full).

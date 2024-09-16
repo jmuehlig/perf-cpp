@@ -4,6 +4,7 @@
 #include <perfcpp/group.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <stdexcept>
 
 using namespace perf;
 
@@ -55,6 +56,8 @@ perf::Group::open(const perf::Config config)
 
     if (counter.is_open()) {
       ::ioctl(file_descriptor, PERF_EVENT_IOC_ID, &counter.id());
+    } else {
+      throw std::runtime_error{"Cannot create file descriptor for counter."};
     }
 
     /// Set the leader file descriptor.
