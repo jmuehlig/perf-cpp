@@ -26,19 +26,19 @@ perf::Sampler::Sampler(const perf::CounterDefinition& counter_list,
 
   for (const auto& counter_group : counter_names) {
     auto group = Group{};
-    auto counter_names = std::vector<std::string_view>{};
+    auto counter_name_references = std::vector<std::string_view>{};
     for (const auto& counter_name : counter_group) {
       if (!this->_counter_definitions.is_metric(counter_name)) /// Metrics are not (yet) supported.
       {
         /// Try to set the counter, if the name refers to a counter.
         if (auto counter_config = this->_counter_definitions.counter(counter_name); counter_config.has_value()) {
           group.add(std::get<1>(counter_config.value()));
-          counter_names.push_back(std::get<0>(counter_config.value()));
+          counter_name_references.push_back(std::get<0>(counter_config.value()));
         }
       }
     }
     this->_groups.push_back(std::move(group));
-    this->_counter_names.push_back(std::move(counter_names));
+    this->_counter_names.push_back(std::move(counter_name_references));
   }
 }
 
