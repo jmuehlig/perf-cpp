@@ -21,23 +21,15 @@ main()
                                 /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
   perf_config.period(1000000U); /// Record every 10000th event.
 
-  perf_config.user_registers(
-    perf::Registers{ { perf::Registers::x86::AX,
-                       perf::Registers::x86::DI,
-                       perf::Registers::x86::R10 } }); /// List of user-level registers to sample.
-
-  perf_config.kernel_registers(
-    perf::Registers{ { perf::Registers::x86::BP, perf::Registers::x86::DI } }); /// List of kernel registers to sample.
-
-  auto sampler =
-    perf::Sampler{ counter_definitions,
-                   "cycles", /// Event that generates an overflow which is samples (here we
-                             /// sample every 1,000,000th cycle)
-                   perf::Sampler::Type::Time | perf::Sampler::Type::UserRegisters |
-                     perf::Sampler::Type::KernelRegisters |
-                     perf::Sampler::Type::CPU, /// Controls what to include into the sample, see
-                                               /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-                   perf_config };
+  auto sampler = perf::Sampler{ counter_definitions, perf_config };
+  sampler.trigger("cycles");
+  sampler.values()
+    .time(true)
+    .user_registers(
+      perf::Registers{ { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 } })
+    .kernel_registers(
+      perf::Registers{ { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 } })
+    .cpu(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
@@ -84,13 +76,14 @@ main()
 
       if (sample.user_registers().has_value()) {
         const auto& user_registers = sample.user_registers().value();
-        std::cout << " | User Registers = AX(" << user_registers[0U] << "), DI(" << user_registers[1U] << "), R10("
+        std::cout << " | User Registers = IP(" << user_registers[0U] << "), DI(" << user_registers[1U] << "), R10("
                   << user_registers[2U] << ")";
       }
 
       if (sample.kernel_registers().has_value()) {
         const auto& kernel_registers = sample.kernel_registers().value();
-        std::cout << " | Kernel Registers = BP(" << kernel_registers[0U] << "), DI(" << kernel_registers[1U] << ")";
+        std::cout << " | Kernel Registers = IP(" << kernel_registers[0U] << "), DI(" << kernel_registers[1U]
+                  << "), R10(" << kernel_registers[2U] << ")";
       }
 
       std::cout << "\n";

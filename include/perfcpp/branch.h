@@ -6,6 +6,8 @@
 namespace perf {
 enum BranchType : std::uint64_t
 {
+  None = 0ULL,
+
   User = PERF_SAMPLE_BRANCH_USER,
   Kernel = PERF_SAMPLE_BRANCH_KERNEL,
   HyperVisor = PERF_SAMPLE_BRANCH_HV,

@@ -2,9 +2,9 @@
 #include <cstring>
 #include <iostream>
 #include <perfcpp/group.h>
+#include <stdexcept>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <stdexcept>
 
 using namespace perf;
 
@@ -12,7 +12,7 @@ bool
 perf::Group::open(const perf::Config config)
 {
   /// File descriptor of the group leader.
-  auto leader_file_descriptor = std::int32_t{ -1 };
+  auto leader_file_descriptor = std::int64_t{ -1 };
 
   auto is_all_open = true;
 
@@ -45,7 +45,7 @@ perf::Group::open(const perf::Config config)
 
     /// Open the counter.
     const std::int32_t cpu_id = config.cpu_id().has_value() ? std::int32_t{ config.cpu_id().value() } : -1;
-    const std::int32_t file_descriptor =
+    const std::int64_t file_descriptor =
       syscall(__NR_perf_event_open, &perf_event, config.process_id(), cpu_id, leader_file_descriptor, 0);
     counter.file_descriptor(file_descriptor);
 
@@ -55,9 +55,9 @@ perf::Group::open(const perf::Config config)
     }
 
     if (counter.is_open()) {
-      ::ioctl(file_descriptor, PERF_EVENT_IOC_ID, &counter.id());
+      ::ioctl(static_cast<std::int32_t>(file_descriptor), PERF_EVENT_IOC_ID, &counter.id());
     } else {
-      throw std::runtime_error{"Cannot create file descriptor for counter."};
+      throw std::runtime_error{ "Cannot create file descriptor for counter." };
     }
 
     /// Set the leader file descriptor.
@@ -76,7 +76,7 @@ perf::Group::close()
 {
   for (auto& counter : this->_members) {
     if (counter.is_open()) {
-      ::close(counter.file_descriptor());
+      ::close(static_cast<std::int32_t>(counter.file_descriptor()));
       counter.file_descriptor(-1);
     }
   }

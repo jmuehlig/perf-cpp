@@ -33,14 +33,13 @@ main()
   perf_config.branch_type(perf::BranchType::User |
                           perf::BranchType::Conditional); /// Only sample conditional branches in user-mode.
 
-  auto sampler =
-    perf::Sampler{ counter_definitions,
-                   "cycles", /// Event generates an overflow which is sampled (here we sample
-                             /// every 1,000,000th cycle), the rest is recorded.
-                   perf::Sampler::Type::Time |
-                     perf::Sampler::Type::BranchStack, /// Controls what to include into the sample, see
-                                                       /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-                   perf_config };
+  auto sampler = perf::Sampler{ counter_definitions, perf_config };
+
+  /// Setup which counters trigger the writing of samples.
+  sampler.trigger("cycles");
+
+  /// Setup which data will be included into samples (timestamp and stack of branches).
+  sampler.values().time(true).branch_stack(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*sequential accesses*/ false,

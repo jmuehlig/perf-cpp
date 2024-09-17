@@ -48,6 +48,11 @@ public:
   }
   [[nodiscard]] std::optional<std::pair<std::string_view, CounterConfig>> counter(
     const std::string& name) const noexcept;
+  [[nodiscard]] std::optional<std::pair<std::string_view, CounterConfig>> counter(
+    const std::string_view name) const noexcept
+  {
+    return counter(std::string{ name });
+  }
   [[nodiscard]] bool is_metric(const std::string& name) const noexcept { return _metrics.find(name) != _metrics.end(); }
   [[nodiscard]] bool is_metric(std::string_view name) const noexcept { return is_metric(std::string{ name }); }
   [[nodiscard]] Metric* metric(const std::string& name) const noexcept

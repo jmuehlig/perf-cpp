@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <numeric>
-#include <stdexcept>
 #include <perfcpp/perf.h>
+#include <stdexcept>
 bool
 perf::EventCounter::add(std::string&& counter_name)
 {
@@ -32,9 +32,13 @@ perf::EventCounter::add(std::string&& counter_name)
     for (auto&& dependent_counter_name : this->_counter_definitions.metric(counter_name)->required_counter_names()) {
       auto dependent_counter_config = this->_counter_definitions.counter(dependent_counter_name);
       if (dependent_counter_config.has_value()) {
-          this->add(std::get<0>(dependent_counter_config.value()), std::get<1>(dependent_counter_config.value()), true);
+        this->add(std::get<0>(dependent_counter_config.value()), std::get<1>(dependent_counter_config.value()), true);
       } else {
-        throw std::runtime_error{std::string{"Cannot find counter '"}.append(dependent_counter_name).append("' for metric '").append(counter_name).append("'.")};
+        throw std::runtime_error{ std::string{ "Cannot find counter '" }
+                                    .append(dependent_counter_name)
+                                    .append("' for metric '")
+                                    .append(counter_name)
+                                    .append("'.") };
       }
     }
 
@@ -42,7 +46,9 @@ perf::EventCounter::add(std::string&& counter_name)
     return true;
   }
 
-  throw std::runtime_error{std::string{"Cannot find counter or metric with name '"}.append(counter_name).append("'.")};
+  throw std::runtime_error{
+    std::string{ "Cannot find counter or metric with name '" }.append(counter_name).append("'.")
+  };
 }
 
 void
@@ -60,7 +66,7 @@ perf::EventCounter::add(std::string_view counter_name, perf::CounterConfig count
   /// Check if space for more counters left.
   if (this->_groups.size() == this->_config.max_groups() &&
       this->_groups.back().size() >= this->_config.max_counters_per_group()) {
-    throw std::runtime_error{"No more space for counters left."};
+    throw std::runtime_error{ "No more space for counters left." };
   }
 
   /// Add a new group, if needed (no one available or last is full).

@@ -20,18 +20,13 @@ main()
                                 /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
   perf_config.period(1000000U); /// Record every 10000th event.
 
-  auto sampler = perf::Sampler{
-    counter_definitions,
-    std::vector<std::string>{
-      "cycles", "L1-dcache-loads", "L1-dcache-load-misses" }, /// List of events. The first event generates
-                                                              /// an overflow which is sampled (here we
-                                                              /// sample every 1,000,000th cycle), the rest
-                                                              /// is recorded.
-    perf::Sampler::Type::Time |
-      perf::Sampler::Type::CounterValues, /// Controls what to include into the sample, see
-                                          /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-    perf_config
-  };
+  auto sampler = perf::Sampler{ counter_definitions, perf_config };
+
+  /// Setup the event that will trigger writing samples.
+  sampler.trigger("cycles");
+
+  /// Setup which data should be included (L1 hit and miss counter, timestamp).
+  sampler.values().counter(std::vector<std::string>{ "L1-dcache-loads", "L1-dcache-load-misses" }).time(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,

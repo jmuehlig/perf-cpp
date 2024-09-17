@@ -25,16 +25,13 @@ main()
                                 /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
   perf_config.period(5000000U); /// Record every 5,000,000th event.
 
-  auto sampler = perf::MultiThreadSampler{
-    counter_definitions,
-    "cycles", /// Event that generates an overflow which is samples (here we
-              /// sample every 1,000,000th cycle)
-    perf::Sampler::Type::Time | perf::Sampler::Type::InstructionPointer | perf::Sampler::Type::CPU |
-      perf::Sampler::Type::ThreadId, /// Controls what to include into the sample, see
-                                     /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-    count_threads,                   /// Number of threads.
-    perf_config
-  };
+  auto sampler = perf::MultiThreadSampler{ counter_definitions, count_threads, perf_config };
+
+  /// Setup event that triggers writing samples.
+  sampler.trigger("cycles");
+
+  /// Setup what data the samples should include (timestamp, instruction pointer, CPU id, thread id).
+  sampler.values().time(true).instruction_pointer(true).cpu(true).thread_id(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
@@ -80,16 +77,8 @@ main()
   auto value = std::accumulate(thread_local_results.begin(), thread_local_results.end(), 0UL);
   asm volatile("" : "+r,m"(value) : : "memory");
 
-  /// Get all the recorded samples.
-  auto samples = sampler.result();
-
-  /// Sort samples by time since they may be mixed from different threads.
-  std::sort(samples.begin(), samples.end(), [](const auto& a, const auto& b) {
-    if (a.time().has_value() && b.time().has_value()) {
-      return a.time().value() < b.time().value();
-    }
-    return false;
-  });
+  /// Get all the recorded samples – ordered by timestamp.
+  auto samples = sampler.result(true);
 
   /// Print the first samples.
   const auto count_show_samples = std::min<std::size_t>(samples.size(), 40U);

@@ -3,7 +3,6 @@
 #include <cstring>
 #include <exception>
 #include <iostream>
-#include <numeric>
 #include <perfcpp/sampler.h>
 #include <stdexcept>
 #include <sys/ioctl.h>
@@ -11,42 +10,145 @@
 #include <unistd.h>
 
 perf::Sampler::Sampler(const perf::CounterDefinition& counter_list,
-                       std::vector<std::vector<std::string>>&& counter_names,
+                       std::vector<std::string>&& counter_names,
                        const std::uint64_t type,
                        perf::SampleConfig config)
   : _counter_definitions(counter_list)
   , _config(config)
-  , _sample_type(type)
 {
-  /// Check if any unsupported types are used.
-  if (type & (std::uint64_t(1U) << 63U)) {
-    throw std::runtime_error{ "The used sample types are not (all) supported by the Linux Kernel version (e.g., "
-                              "DataPageSize and CodePageSize are implemented since 5.11)." };
+  _values.instruction_pointer(static_cast<bool>(type & PERF_SAMPLE_IP))
+    .thread_id(static_cast<bool>(type & PERF_SAMPLE_TID))
+    .time(static_cast<bool>(type & PERF_SAMPLE_TIME))
+    .logical_mem_address(static_cast<bool>(type & PERF_SAMPLE_ADDR))
+    .callchain(static_cast<bool>(type & PERF_SAMPLE_CALLCHAIN))
+    .cpu(static_cast<bool>(type & PERF_SAMPLE_CPU))
+    .branch_stack(static_cast<bool>(type & PERF_SAMPLE_BRANCH_STACK))
+    .weight(static_cast<bool>(type & PERF_SAMPLE_WEIGHT))
+    .data_source(static_cast<bool>(type & PERF_SAMPLE_DATA_SRC))
+    .identifier(static_cast<bool>(type & PERF_SAMPLE_IDENTIFIER))
+    .physical_mem_address(static_cast<bool>(type & PERF_SAMPLE_PHYS_ADDR))
+    .data_page_size(static_cast<bool>(type & Type::DataPageSize))
+    .code_page_size(static_cast<bool>(type & Type::CodePageSize))
+    .weight_struct(static_cast<bool>(type & Type::WeightStruct));
+
+  if (static_cast<bool>(type & PERF_SAMPLE_REGS_USER)) {
+    _values.user_registers(config.user_registers());
   }
 
-  for (const auto& counter_group : counter_names) {
-    auto group = Group{};
-    auto counter_name_references = std::vector<std::string_view>{};
-    for (const auto& counter_name : counter_group) {
-      if (!this->_counter_definitions.is_metric(counter_name)) /// Metrics are not (yet) supported.
-      {
-        /// Try to set the counter, if the name refers to a counter.
-        if (auto counter_config = this->_counter_definitions.counter(counter_name); counter_config.has_value()) {
-          group.add(std::get<1>(counter_config.value()));
-          counter_name_references.push_back(std::get<0>(counter_config.value()));
+  if (static_cast<bool>(type & PERF_SAMPLE_REGS_INTR)) {
+    _values.kernel_registers(config.kernel_registers());
+  }
+
+  /// Extract trigger(s) (the first counter and the second, if the first is an aux counter)
+  /// and counter names that will be added to samples.
+  bool has_auxiliary = false;
+  auto trigger_names = std::vector<std::string>{};
+  auto read_counter_names = std::vector<std::string>{};
+  for (auto counter_id = 0U; counter_id < counter_names.size(); ++counter_id) {
+    auto& counter_name = counter_names[counter_id];
+    if (!this->_counter_definitions.is_metric(counter_name)) /// Metrics are not (yet) supported.
+    {
+      if (auto counter_config = this->_counter_definitions.counter(counter_name); counter_config.has_value()) {
+        if (counter_id == 0U && counter_config->second.is_auxiliary()) {
+          has_auxiliary = true;
+        }
+        if ((has_auxiliary && counter_id < 2U) || counter_id < 1U) {
+          trigger_names.push_back(std::move(counter_name));
+        } else {
+          read_counter_names.emplace_back(std::move(counter_name));
         }
       }
     }
-    this->_groups.push_back(std::move(group));
-    this->_counter_names.push_back(std::move(counter_name_references));
+  }
+
+  /// Add trigger and counters.
+  this->trigger(std::move(trigger_names));
+  if (!read_counter_names.empty()) {
+    this->_values.counter(std::move(read_counter_names));
   }
 }
 
-bool
+perf::Sampler&
+perf::Sampler::trigger(std::vector<std::vector<std::string>>&& trigger_names)
+{
+  this->_trigger_names.reserve(trigger_names.size());
+
+  for (auto& trigger_group : trigger_names) {
+    auto trigger_group_references = std::vector<std::string_view>{};
+    for (auto& counter_name : trigger_group) {
+      if (!this->_counter_definitions.is_metric(counter_name)) {
+        if (auto counter_config = this->_counter_definitions.counter(counter_name); counter_config.has_value()) {
+          trigger_group_references.push_back(std::get<0>(counter_config.value()));
+        } else {
+          throw std::runtime_error{ std::string{ "Cannot find counter '" }.append(counter_name).append("'.") };
+        }
+      } else {
+        throw std::runtime_error{ std::string{ "Counter '" }
+                                    .append(counter_name)
+                                    .append("' seems to be a metric. Metrics are not supported as triggers.") };
+      }
+    }
+    this->_trigger_names.push_back(std::move(trigger_group_references));
+  }
+
+  return *this;
+}
+
+void
 perf::Sampler::open()
 {
+  /// Build the groups from triggers + counters from values.
+  for (const auto& trigger_group : this->_trigger_names) {
+    auto group = Group{};
+
+    if (this->_values.is_set(PERF_SAMPLE_READ)) {
+      /// Add storage for counters, if the user requested to record counter values.
+      this->_counter_names.emplace_back();
+    }
+
+    /// Add the trigger(s) to the group.
+    for (const auto trigger_name : trigger_group) {
+      if (auto counter_config = this->_counter_definitions.counter(trigger_name); counter_config.has_value()) {
+        group.add(std::get<1>(counter_config.value()));
+        if (this->_values.is_set(PERF_SAMPLE_READ)) {
+          this->_counter_names.back().push_back(trigger_name);
+        }
+      }
+    }
+
+    if (!group.empty()) {
+      /// Add possible counters as value to the sample.
+      if (this->_values.is_set(PERF_SAMPLE_READ)) {
+        this->_counter_names.emplace_back();
+
+        for (const auto& counter_name : this->_values.counters()) {
+
+          /// Validate the counter is not a metric.
+          if (!this->_counter_definitions.is_metric(counter_name)) {
+
+            /// Find the counter.
+            if (auto counter_config = this->_counter_definitions.counter(counter_name); counter_config.has_value()) {
+              /// Add the counter to the group and to the list of counters.
+              this->_counter_names.front().push_back(std::get<0>(counter_config.value()));
+              group.add(std::get<1>(counter_config.value()));
+            } else {
+              throw std::runtime_error{ std::string{ "Cannot find counter '" }.append(counter_name).append("'.") };
+            }
+          } else {
+            throw std::runtime_error{ std::string{ "Counter '" }
+                                        .append(counter_name)
+                                        .append("' seems to be a metric. Metrics are not supported for sampling.") };
+          }
+        }
+      }
+
+      this->_groups.push_back(std::move(group));
+    }
+  }
+
+  /// Open the groups.
   if (this->_groups.empty()) {
-    throw std::runtime_error{"No counter for sampling specified."};
+    throw std::runtime_error{ "No trigger for sampling specified." };
   }
 
   for (auto& group : this->_groups) {
@@ -80,7 +182,7 @@ perf::Sampler::open()
       perf_event.exclude_guest = static_cast<std::int32_t>(!this->_config.is_include_guest());
 
       if (is_leader || is_secret_leader) {
-        perf_event.sample_type = this->_sample_type;
+        perf_event.sample_type = this->_values.get();
         perf_event.sample_id_all = 1;
 
         if (this->_config.is_frequency()) {
@@ -90,7 +192,7 @@ perf::Sampler::open()
           perf_event.sample_period = this->_config.frequency_or_period();
         }
 
-        if (this->_sample_type & Sampler::Type::BranchStack) {
+        if (this->_values.is_set(PERF_SAMPLE_BRANCH_STACK)) {
           perf_event.branch_sample_type = this->_config.branch_type();
         }
 
@@ -98,21 +200,21 @@ perf::Sampler::open()
           perf_event.mmap = 1U;
         }
 
-        if (this->_sample_type & static_cast<std::uint64_t>(Type::Callchain)) {
+        if (this->_values.is_set(PERF_SAMPLE_CALLCHAIN)) {
           perf_event.sample_max_stack = this->_config.max_stack();
         }
       }
 
-      if (this->_sample_type & static_cast<std::uint64_t>(Type::CounterValues)) {
+      if (this->_values.is_set(PERF_SAMPLE_READ)) {
         perf_event.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
       }
 
-      if (this->_sample_type & static_cast<std::uint64_t>(Type::UserRegisters)) {
-        perf_event.sample_regs_user = this->_config.user_registers().mask();
+      if (this->_values.is_set(PERF_SAMPLE_REGS_USER)) {
+        perf_event.sample_regs_user = this->_values.user_registers().mask();
       }
 
-      if (this->_sample_type & static_cast<std::uint64_t>(Type::KernelRegisters)) {
-        perf_event.sample_regs_intr = this->_config.kernel_registers().mask();
+      if (this->_values.is_set(PERF_SAMPLE_REGS_INTR)) {
+        perf_event.sample_regs_intr = this->_values.kernel_registers().mask();
       }
 
       const std::int32_t cpu_id =
@@ -120,10 +222,10 @@ perf::Sampler::open()
 
       /// Open the counter. Try to decrease the precise_ip if the file syscall was not successful, reporting an invalid
       /// argument.
-      std::int32_t file_descriptor;
+      std::int64_t file_descriptor;
       for (auto precise_ip = std::int32_t{ this->_config.precise_ip() }; precise_ip > -1; --precise_ip) {
         perf_event.precise_ip = std::uint64_t(precise_ip);
-        file_descriptor = syscall(
+        file_descriptor = ::syscall(
           __NR_perf_event_open, &perf_event, this->_config.process_id(), cpu_id, group.leader_file_descriptor(), 0);
         if (file_descriptor > -1 || errno != EINVAL) {
           break;
@@ -139,7 +241,8 @@ perf::Sampler::open()
       /// Check if the counter could be opened successfully.
       if (file_descriptor < 0) {
         this->_last_error = errno;
-        throw std::runtime_error{"Cannot create file descriptor for sampling counter (error no: " + std::to_string(errno) + ")."};
+        throw std::runtime_error{ "Cannot create file descriptor for sampling counter (error no: " +
+                                  std::to_string(errno) + ")." };
       }
     }
 
@@ -147,28 +250,30 @@ perf::Sampler::open()
     /// If the leader is an "auxiliary" counter (like on Sapphire Rapid), use the second counter instead.
     const auto file_descriptor = is_leader_auxiliary_counter && group.size() > 1U ? group.member(1U).file_descriptor()
                                                                                   : group.leader_file_descriptor();
-    auto* buffer =
-      ::mmap(nullptr, this->_config.buffer_pages() * 4096U, PROT_READ | PROT_WRITE, MAP_SHARED, file_descriptor, 0);
+    auto* buffer = ::mmap(nullptr,
+                          this->_config.buffer_pages() * 4096U,
+                          PROT_READ | PROT_WRITE,
+                          MAP_SHARED,
+                          static_cast<std::int32_t>(file_descriptor),
+                          0);
     if (buffer == MAP_FAILED) {
       this->_last_error = errno;
-      throw std::runtime_error{"Creating buffer via mmap() failed."};
+      throw std::runtime_error{ "Creating buffer via mmap() failed." };
     }
 
     if (buffer == nullptr) {
-      throw std::runtime_error{"Created buffer via mmap() is null."};
+      throw std::runtime_error{ "Created buffer via mmap() is null." };
     }
 
     this->_buffers.push_back(buffer);
   }
-
-  return true;
 }
 
 bool
 perf::Sampler::start()
 {
   /// Open the groups.
-  std::ignore = this->open();
+  this->open();
 
   /// Start the counters.
   for (const auto& group : this->_groups) {
@@ -194,7 +299,10 @@ perf::Sampler::close()
     if (this->_buffers[i] != nullptr) {
       ::munmap(this->_buffers[i], this->_config.buffer_pages() * 4096U);
     }
-    ::close(this->_groups[i].leader_file_descriptor());
+
+    if (this->_groups[i].leader_file_descriptor() > -1) {
+      ::close(this->_groups[i].leader_file_descriptor());
+    }
   }
 }
 
@@ -247,17 +355,17 @@ perf::Sampler::result(const bool sort_by_time) const
 
         auto sample_ptr = std::uintptr_t(reinterpret_cast<void*>(event_header + 1U));
 
-        if (this->_sample_type & perf::Sampler::Type::Identifier) {
+        if (this->_values.is_set(PERF_SAMPLE_IDENTIFIER)) {
           sample.sample_id(*reinterpret_cast<std::uint64_t*>(sample_ptr));
           sample_ptr += sizeof(std::uint64_t);
         }
 
-        if (this->_sample_type & perf::Sampler::Type::InstructionPointer) {
+        if (this->_values.is_set(PERF_SAMPLE_IP)) {
           sample.instruction_pointer(*reinterpret_cast<std::uintptr_t*>(sample_ptr));
           sample_ptr += sizeof(std::uintptr_t);
         }
 
-        if (this->_sample_type & perf::Sampler::Type::ThreadId) {
+        if (this->_values.is_set(PERF_SAMPLE_TID)) {
           sample.process_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
           sample_ptr += sizeof(std::uint32_t);
 
@@ -265,27 +373,27 @@ perf::Sampler::result(const bool sort_by_time) const
           sample_ptr += sizeof(std::uint32_t);
         }
 
-        if (this->_sample_type & perf::Sampler::Type::Time) {
+        if (this->_values.is_set(PERF_SAMPLE_TIME)) {
           sample.timestamp(*reinterpret_cast<std::uint64_t*>(sample_ptr));
           sample_ptr += sizeof(std::uint64_t);
         }
 
-        if (this->_sample_type & perf::Sampler::Type::LogicalMemAddress) {
+        if (this->_values.is_set(PERF_SAMPLE_ADDR)) {
           sample.logical_memory_address(*reinterpret_cast<std::uint64_t*>(sample_ptr));
           sample_ptr += sizeof(std::uint64_t);
         }
 
-        if (this->_sample_type & perf::Sampler::Type::CPU) {
+        if (this->_values.is_set(PERF_SAMPLE_CPU)) {
           sample.cpu_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
           sample_ptr += sizeof(std::uint64_t);
         }
 
-        if (this->_sample_type & perf::Sampler::Type::Period) {
+        if (this->_values.is_set(PERF_SAMPLE_PERIOD)) {
           sample.period(*reinterpret_cast<std::uint64_t*>(sample_ptr));
           sample_ptr += sizeof(std::uint64_t);
         }
 
-        if (this->_sample_type & perf::Sampler::Type::CounterValues) {
+        if (this->_values.is_set(PERF_SAMPLE_READ)) {
           auto* read_format = reinterpret_cast<Sampler::read_format*>(sample_ptr);
           const auto count_counter_values = read_format->count_members;
 
@@ -303,7 +411,7 @@ perf::Sampler::result(const bool sort_by_time) const
             sizeof(Sampler::read_format::count_members) + count_counter_values * sizeof(Sampler::read_format::value);
         }
 
-        if (this->_sample_type & perf::Sampler::Type::Callchain) {
+        if (this->_values.is_set(PERF_SAMPLE_CALLCHAIN)) {
           const auto callchain_size = (*reinterpret_cast<std::uint64_t*>(sample_ptr));
           sample_ptr += sizeof(std::uint64_t);
 
@@ -322,7 +430,7 @@ perf::Sampler::result(const bool sort_by_time) const
           }
         }
 
-        if (this->_sample_type & perf::Sampler::BranchStack) {
+        if (this->_values.is_set(PERF_SAMPLE_BRANCH_STACK)) {
           const auto count_branches = *reinterpret_cast<std::uint64_t*>(sample_ptr);
           sample_ptr += sizeof(std::uint64_t);
 
@@ -343,12 +451,12 @@ perf::Sampler::result(const bool sort_by_time) const
           sample_ptr += sizeof(perf_branch_entry) * count_branches;
         }
 
-        if (this->_sample_type & perf::Sampler::UserRegisters) {
+        if (this->_values.is_set(PERF_SAMPLE_REGS_USER)) {
           const auto abi = *reinterpret_cast<std::uint64_t*>(sample_ptr);
           sample.user_registers_abi(abi);
           sample_ptr += sizeof(std::uint64_t);
 
-          const auto count_user_registers = this->_config.user_registers().size();
+          const auto count_user_registers = this->_values.user_registers().size();
           if (count_user_registers > 0U) {
             auto user_registers = std::vector<std::uint64_t>{};
             user_registers.reserve(count_user_registers);
@@ -364,12 +472,13 @@ perf::Sampler::result(const bool sort_by_time) const
           }
         }
 
-        if (this->_sample_type & perf::Sampler::Type::Weight) {
+        if (this->_values.is_set(PERF_SAMPLE_WEIGHT)) {
           sample.weight(perf::Weight{ std::uint32_t(*reinterpret_cast<std::uint64_t*>(sample_ptr)) });
           sample_ptr += sizeof(std::uint64_t);
         }
+
 #ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT
-        else if (this->_sample_type & perf::Sampler::Type::WeightStruct) {
+        else if (this->_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT)) {
           const auto weight_struct = *reinterpret_cast<perf_sample_weight*>(sample_ptr);
           sample.weight(perf::Weight{ weight_struct.var1_dw, weight_struct.var2_w, weight_struct.var3_w });
 
@@ -377,17 +486,17 @@ perf::Sampler::result(const bool sort_by_time) const
         }
 #endif
 
-        if (this->_sample_type & perf::Sampler::Type::DataSource) {
+        if (this->_values.is_set(PERF_SAMPLE_DATA_SRC)) {
           sample.data_src(perf::DataSource{ *reinterpret_cast<std::uint64_t*>(sample_ptr) });
           sample_ptr += sizeof(std::uint64_t);
         }
 
-        if (this->_sample_type & perf::Sampler::KernelRegisters) {
+        if (this->_values.is_set(PERF_SAMPLE_REGS_INTR)) {
           const auto abi = *reinterpret_cast<std::uint64_t*>(sample_ptr);
           sample.kernel_registers_abi(abi);
           sample_ptr += sizeof(std::uint64_t);
 
-          const auto count_kernel_registers = this->_config.kernel_registers().size();
+          const auto count_kernel_registers = this->_values.kernel_registers().size();
           if (count_kernel_registers > 0U) {
             auto kernel_registers = std::vector<std::uint64_t>{};
             kernel_registers.reserve(count_kernel_registers);
@@ -403,19 +512,22 @@ perf::Sampler::result(const bool sort_by_time) const
           }
         }
 
-        if (this->_sample_type & perf::Sampler::Type::PhysicalMemAddress) {
+        if (this->_values.is_set(PERF_SAMPLE_PHYS_ADDR)) {
           sample.physical_memory_address(*reinterpret_cast<std::uint64_t*>(sample_ptr));
           sample_ptr += sizeof(std::uint64_t);
         }
-
-        if (this->_sample_type & perf::Sampler::Type::DataPageSize) {
+#ifndef NO_PERF_SAMPLE_DATA_PAGE_SIZE
+        if (this->_values.is_set(PERF_SAMPLE_DATA_PAGE_SIZE)) {
           sample.data_page_size(*reinterpret_cast<std::uint64_t*>(sample_ptr));
           sample_ptr += sizeof(std::uint64_t);
         }
+#endif
 
-        if (this->_sample_type & perf::Sampler::Type::CodePageSize) {
+#ifndef NO_PERF_SAMPLE_CODE_PAGE_SIZE
+        if (this->_values.is_set(PERF_SAMPLE_CODE_PAGE_SIZE)) {
           sample.code_page_size(*reinterpret_cast<std::uint64_t*>(sample_ptr));
         }
+#endif
 
         result.push_back(sample);
       } else if (event_header->type == PERF_RECORD_LOST_SAMPLES) { /// Read lost samples.
@@ -425,7 +537,7 @@ perf::Sampler::result(const bool sort_by_time) const
         sample.count_loss(*reinterpret_cast<std::uint64_t*>(sample_ptr));
         sample_ptr += sizeof(std::uint64_t);
 
-        if (this->_sample_type & perf::Sampler::Type::ThreadId) {
+        if (this->_values.is_set(PERF_SAMPLE_TID)) {
           sample.process_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
           sample_ptr += sizeof(std::uint32_t);
 
@@ -433,17 +545,17 @@ perf::Sampler::result(const bool sort_by_time) const
           sample_ptr += sizeof(std::uint32_t);
         }
 
-        if (this->_sample_type & perf::Sampler::Type::Time) {
+        if (this->_values.is_set(PERF_SAMPLE_TIME)) {
           sample.timestamp(*reinterpret_cast<std::uint64_t*>(sample_ptr));
           sample_ptr += sizeof(std::uint64_t);
         }
 
-        if (this->_sample_type & perf::Sampler::Type::CPU) {
+        if (this->_values.is_set(PERF_SAMPLE_CPU)) {
           sample.cpu_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
           sample_ptr += sizeof(std::uint64_t);
         }
 
-        if (this->_sample_type & perf::Sampler::Type::Identifier) {
+        if (this->_values.is_set(PERF_SAMPLE_IDENTIFIER)) {
           sample.id(*reinterpret_cast<std::uint64_t*>(sample_ptr));
         }
 
@@ -456,7 +568,7 @@ perf::Sampler::result(const bool sort_by_time) const
   }
 
   /// Sort the samples if requested and we can sort by time.
-  if ((this->_sample_type & perf::Sampler::Type::Time) && sort_by_time) {
+  if (this->_values.is_set(PERF_SAMPLE_TIME) && sort_by_time) {
     std::sort(result.begin(), result.end(), SampleTimestampComparator{});
   }
 
@@ -470,7 +582,9 @@ perf::MultiSamplerBase::result(const std::vector<Sampler>& sampler, bool sort_by
     auto result = sampler.front().result();
 
     for (auto i = 1U; i < sampler.size(); ++i) {
-      sort_by_time &= (sampler[i]._sample_type & perf::Sampler::Type::Time);
+      /// Only sort if all samplers recorded the timestamp.
+      sort_by_time &= sampler[i]._values.is_set(PERF_SAMPLE_TIME);
+
       auto temp_result = sampler[i].result();
       std::move(temp_result.begin(), temp_result.end(), std::back_inserter(result));
     }
@@ -485,14 +599,102 @@ perf::MultiSamplerBase::result(const std::vector<Sampler>& sampler, bool sort_by
   return std::vector<perf::Sample>{};
 }
 
+void
+perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std::vector<std::string>>&& trigger_names)
+{
+  for (auto sampler_id = 0U; sampler_id < samplers.size(); ++sampler_id) {
+    if (sampler_id < samplers.size() - 1U) {
+      samplers[sampler_id].trigger(std::vector<std::vector<std::string>>{ trigger_names });
+    } else {
+      samplers[sampler_id].trigger(std::move(trigger_names));
+    }
+  }
+}
+
+void
+perf::MultiSamplerBase::start(perf::Sampler& sampler, const perf::SampleConfig config)
+{
+  sampler._values = _values;
+  sampler._config = config;
+
+  std::ignore = sampler.start();
+}
+
 perf::MultiThreadSampler::MultiThreadSampler(const perf::CounterDefinition& counter_list,
                                              std::vector<std::string>&& counter_names,
                                              const std::uint64_t type,
                                              const std::uint16_t num_threads,
                                              const perf::SampleConfig config)
+  : MultiSamplerBase(config)
 {
-  for (auto i = 0U; i < num_threads; ++i) {
-    this->_thread_local_samplers.emplace_back(counter_list, std::vector<std::string>{ counter_names }, type, config);
+  /// Setup new values field (will be transferred to samplers at start).
+  _values.instruction_pointer(static_cast<bool>(type & PERF_SAMPLE_IP))
+    .thread_id(static_cast<bool>(type & PERF_SAMPLE_TID))
+    .time(static_cast<bool>(type & PERF_SAMPLE_TIME))
+    .logical_mem_address(static_cast<bool>(type & PERF_SAMPLE_ADDR))
+    .callchain(static_cast<bool>(type & PERF_SAMPLE_CALLCHAIN))
+    .cpu(static_cast<bool>(type & PERF_SAMPLE_CPU))
+    .branch_stack(static_cast<bool>(type & PERF_SAMPLE_BRANCH_STACK))
+    .weight(static_cast<bool>(type & PERF_SAMPLE_WEIGHT))
+    .data_source(static_cast<bool>(type & PERF_SAMPLE_DATA_SRC))
+    .identifier(static_cast<bool>(type & PERF_SAMPLE_IDENTIFIER))
+    .physical_mem_address(static_cast<bool>(type & PERF_SAMPLE_PHYS_ADDR))
+    .data_page_size(static_cast<bool>(type & Sampler::Type::DataPageSize))
+    .code_page_size(static_cast<bool>(type & Sampler::Type::CodePageSize))
+    .weight_struct(static_cast<bool>(type & Sampler::Type::WeightStruct));
+
+  if (static_cast<bool>(type & PERF_SAMPLE_REGS_USER)) {
+    _values.user_registers(config.user_registers());
+  }
+
+  if (static_cast<bool>(type & PERF_SAMPLE_REGS_INTR)) {
+    _values.kernel_registers(config.kernel_registers());
+  }
+
+  /// Extract trigger(s) (the first counter and the second, if the first is an aux counter)
+  /// and counter names that will be added to samples.
+  bool has_auxiliary = false;
+  auto trigger_names = std::vector<std::string>{};
+  auto read_counter_names = std::vector<std::string>{};
+  for (auto counter_id = 0U; counter_id < counter_names.size(); ++counter_id) {
+    auto& counter_name = counter_names[counter_id];
+    if (counter_list.is_metric(counter_name)) /// Metrics are not (yet) supported.
+    {
+      if (auto counter_config = counter_list.counter(counter_name); counter_config.has_value()) {
+        if (counter_id == 0U && counter_config->second.is_auxiliary()) {
+          has_auxiliary = true;
+        }
+        if ((has_auxiliary && counter_id < 2U) || counter_id < 1U) {
+          trigger_names.push_back(std::move(counter_name));
+        } else {
+          read_counter_names.emplace_back(std::move(counter_name));
+        }
+      }
+    }
+  }
+
+  /// Add trigger and counters.
+  if (!read_counter_names.empty()) {
+    this->_values.counter(std::move(read_counter_names));
+  }
+
+  /// Create thread-local samplers without config (will be set when starting).
+  for (auto thread_id = 0U; thread_id < num_threads; ++thread_id) {
+    auto& thread_sampler = this->_thread_local_samplers.emplace_back(counter_list);
+    if (!trigger_names.empty()) {
+      thread_sampler.trigger(std::vector<std::vector<std::string>>{ trigger_names });
+    }
+  }
+}
+
+perf::MultiThreadSampler::MultiThreadSampler(const perf::CounterDefinition& counter_list,
+                                             const std::uint16_t num_threads,
+                                             const perf::SampleConfig config)
+  : MultiSamplerBase(config)
+{
+  /// Create thread-local samplers without config (will be set when starting).
+  for (auto thread_id = 0U; thread_id < num_threads; ++thread_id) {
+    this->_thread_local_samplers.emplace_back(counter_list);
   }
 }
 
@@ -501,21 +703,95 @@ perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_
                                          const std::uint64_t type,
                                          std::vector<std::uint16_t>&& core_ids,
                                          perf::SampleConfig config)
+  : MultiSamplerBase(config)
+  , _core_ids(std::move(core_ids))
 {
-  config.process_id(-1); /// Record all processes on the CPUs.
-  for (const auto cpu_id : core_ids) {
-    config.cpu_id(cpu_id);
-    this->_core_local_samplers.emplace_back(counter_list, std::vector<std::string>{ counter_names }, type, config);
+  /// Record all processes on the CPUs.
+  _config.process_id(-1);
+
+  /// Setup new values field (will be transferred to samplers at start).
+  _values.instruction_pointer(static_cast<bool>(type & PERF_SAMPLE_IP))
+    .thread_id(static_cast<bool>(type & PERF_SAMPLE_TID))
+    .time(static_cast<bool>(type & PERF_SAMPLE_TIME))
+    .logical_mem_address(static_cast<bool>(type & PERF_SAMPLE_ADDR))
+    .callchain(static_cast<bool>(type & PERF_SAMPLE_CALLCHAIN))
+    .cpu(static_cast<bool>(type & PERF_SAMPLE_CPU))
+    .branch_stack(static_cast<bool>(type & PERF_SAMPLE_BRANCH_STACK))
+    .weight(static_cast<bool>(type & PERF_SAMPLE_WEIGHT))
+    .data_source(static_cast<bool>(type & PERF_SAMPLE_DATA_SRC))
+    .identifier(static_cast<bool>(type & PERF_SAMPLE_IDENTIFIER))
+    .physical_mem_address(static_cast<bool>(type & PERF_SAMPLE_PHYS_ADDR))
+    .data_page_size(static_cast<bool>(type & Sampler::Type::DataPageSize))
+    .code_page_size(static_cast<bool>(type & Sampler::Type::CodePageSize))
+    .weight_struct(static_cast<bool>(type & Sampler::Type::WeightStruct));
+
+  if (static_cast<bool>(type & PERF_SAMPLE_REGS_USER)) {
+    _values.user_registers(config.user_registers());
+  }
+
+  if (static_cast<bool>(type & PERF_SAMPLE_REGS_INTR)) {
+    _values.kernel_registers(config.kernel_registers());
+  }
+
+  /// Extract trigger(s) (the first counter and the second, if the first is an aux counter)
+  /// and counter names that will be added to samples.
+  bool has_auxiliary = false;
+  auto trigger_names = std::vector<std::string>{};
+  auto read_counter_names = std::vector<std::string>{};
+  for (auto counter_id = 0U; counter_id < counter_names.size(); ++counter_id) {
+    auto& counter_name = counter_names[counter_id];
+    if (counter_list.is_metric(counter_name)) /// Metrics are not (yet) supported.
+    {
+      if (auto counter_config = counter_list.counter(counter_name); counter_config.has_value()) {
+        if (counter_id == 0U && counter_config->second.is_auxiliary()) {
+          has_auxiliary = true;
+        }
+        if ((has_auxiliary && counter_id < 2U) || counter_id < 1U) {
+          trigger_names.push_back(std::move(counter_name));
+        } else {
+          read_counter_names.emplace_back(std::move(counter_name));
+        }
+      }
+    }
+  }
+
+  /// Add trigger and counters.
+  if (!read_counter_names.empty()) {
+    this->_values.counter(std::move(read_counter_names));
+  }
+
+  /// Create thread-local samplers without config (will be set when starting).
+  for (const auto _ : this->_core_ids) {
+    auto& cpu_sampler = this->_core_local_samplers.emplace_back(counter_list);
+    if (!trigger_names.empty()) {
+      cpu_sampler.trigger(std::vector<std::vector<std::string>>{ trigger_names });
+    }
+  }
+}
+
+perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_list,
+                                         std::vector<std::uint16_t>&& core_ids,
+                                         perf::SampleConfig config)
+  : MultiSamplerBase(config)
+  , _core_ids(std::move(core_ids))
+{
+  /// Record all processes on the CPUs.
+  _config.process_id(-1);
+
+  /// Create thread-local samplers without config (will be set when starting).
+  for (const auto _ : this->_core_ids) {
+    this->_core_local_samplers.emplace_back(counter_list);
   }
 }
 
 bool
 perf::MultiCoreSampler::start()
 {
-  auto is_all_started = true;
-  for (auto& sampler : this->_core_local_samplers) {
-    is_all_started &= sampler.start();
+  for (auto sampler_id = 0U; sampler_id < this->_core_ids.size(); ++sampler_id) {
+    auto config = this->_config;
+    config.cpu_id(this->_core_ids[sampler_id]);
+    MultiSamplerBase::start(this->_core_local_samplers[sampler_id], config);
   }
 
-  return is_all_started;
+  return true;
 }

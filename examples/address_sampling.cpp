@@ -23,37 +23,35 @@ main()
                               /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
   perf_config.period(1000U);  /// Record every 1000th event.
 
-  auto weight_type = perf::Sampler::Type::Weight;
-#ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT
-  weight_type = perf::Sampler::Type::WeightStruct;
-#endif
-
-  auto sampling_counters = std::vector<std::string>{};
+  auto trigger_counters = std::vector<std::string>{};
   if (__builtin_cpu_is("amd") > 0) {
     perf_config.period(4000U);
-    sampling_counters.emplace_back("ibs_op");
+    trigger_counters.emplace_back("ibs_op");
   } else if (__builtin_cpu_is("intel") > 0) {
     if (__builtin_cpu_is("sapphirerapids")) {
       /// Note: For sampling on Sapphire Rapids, we have to prepend an auxiliary counter.
-      sampling_counters.emplace_back("mem-loads-aux");
+      trigger_counters.emplace_back("mem-loads-aux");
     }
-    sampling_counters.emplace_back("mem_trans_retired.load_latency_gt_3");
+    trigger_counters.emplace_back("mem_trans_retired.load_latency_gt_3");
   }
 
-  if (sampling_counters.empty()) {
+  if (trigger_counters.empty()) {
     std::cout << "Error: Memory sampling is not supported on this CPU." << std::endl;
     return 1;
   }
 
-  auto sampler = perf::Sampler{ counter_definitions,
-                                std::move(sampling_counters), /// Event that generates an overflow
-                                                              /// which is samples (here we sample
-                                                              /// every 1,000 mem load)
-                                perf::Sampler::Type::Time | perf::Sampler::Type::LogicalMemAddress |
-                                  perf::Sampler::Type::DataSource |
-                                  weight_type, /// Controls what to include into the sample, see
-                                               /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-                                perf_config };
+  auto sampler = perf::Sampler{ counter_definitions, perf_config };
+
+  /// Setup which counters trigger the writing of samples (depends on the underlying hardware substrate).
+  sampler.trigger(std::move(trigger_counters));
+
+  /// Setup which data will be included into samples (timestamp, virtual memory address, data source like L1d or RAM, and latency).
+  sampler.values().time(true).logical_mem_address(true).data_source(true);
+#ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT
+  sampler.values().weight_struct(true);
+#else
+  sampler.values().weight(true);
+#endif
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,

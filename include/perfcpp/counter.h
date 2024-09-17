@@ -125,8 +125,8 @@ public:
   [[nodiscard]] std::uint64_t& id() noexcept { return _id; }
   [[nodiscard]] std::uint64_t id() const noexcept { return _id; }
 
-  void file_descriptor(const std::int32_t file_descriptor) noexcept { _file_descriptor = file_descriptor; }
-  [[nodiscard]] std::int32_t file_descriptor() const noexcept { return _file_descriptor; }
+  void file_descriptor(const std::int64_t file_descriptor) noexcept { _file_descriptor = file_descriptor; }
+  [[nodiscard]] std::int64_t file_descriptor() const noexcept { return _file_descriptor; }
   [[nodiscard]] bool is_open() const noexcept { return _file_descriptor > -1; }
 
   [[nodiscard]] bool is_auxiliary() const noexcept { return _config.is_auxiliary(); }
@@ -137,6 +137,6 @@ private:
   CounterConfig _config;
   perf_event_attr _event_attribute{};
   std::uint64_t _id{ 0U };
-  std::int32_t _file_descriptor{ -1 };
+  std::int64_t _file_descriptor{ -1 };
 };
 }

@@ -21,14 +21,15 @@ main()
                               /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
   perf_config.period(100U);   /// Record every 1,000,000th event.
 
-  auto sampler =
-    perf::Sampler{ counter_definitions,
-                   "cycles", /// Event that generates an overflow which is samples (here we
+  auto sampler = perf::Sampler{ counter_definitions, perf_config };
+  sampler.trigger("cycles"); /// Event that generates an overflow which is samples (here we
                              /// sample every 1,000,000th cycle)
-                   perf::Sampler::Type::Time | perf::Sampler::Type::Period | perf::Sampler::Type::InstructionPointer |
-                     perf::Sampler::Type::CPU, /// Controls what to include into the sample, see
-                                               /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-                   perf_config };
+  sampler
+    .values() /// Include Timestamp, period, instruction pointer, and CPU number into samples.
+    .time(true)
+    .period(true)
+    .instruction_pointer(true)
+    .cpu(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,

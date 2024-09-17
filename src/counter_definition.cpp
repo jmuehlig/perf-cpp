@@ -95,8 +95,6 @@ perf::CounterDefinition::initialized_default_counters()
   if (__builtin_cpu_is("intel") > 0) {
     /// Auxiliary event, needed on some Intel architectures (starting from Sapphire Rapids).
     this->add("mem-loads-aux", PERF_TYPE_RAW, 0x8203);
-  } else if (__builtin_cpu_is("amd") > 0) {
-
   }
 
   /// Pre-defined metrics.

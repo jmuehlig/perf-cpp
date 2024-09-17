@@ -25,11 +25,6 @@ main()
                               /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
   perf_config.period(1000U);  /// Record every 1000th event.
 
-  auto weight_type = perf::Sampler::Type::Weight;
-#ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT
-  weight_type = perf::Sampler::Type::WeightStruct;
-#endif
-
   auto sampling_counters = std::vector<std::vector<std::string>>{};
 
   if (__builtin_cpu_is("intel") > 0) {
@@ -49,15 +44,14 @@ main()
     return 1;
   }
 
-  auto sampler = perf::Sampler{ counter_definitions,
-                                std::move(sampling_counters), /// Event that generates an overflow
-                                                              /// which is samples (here we sample
-                                                              /// every 1,000 mem load)
-                                perf::Sampler::Type::Time | perf::Sampler::Type::LogicalMemAddress |
-                                  perf::Sampler::Type::DataSource |
-                                  weight_type, /// Controls what to include into the sample, see
-                                               /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-                                perf_config };
+  auto sampler = perf::Sampler{ counter_definitions, perf_config };
+  sampler.trigger(std::move(sampling_counters));
+  sampler.values().time(true).logical_mem_address(true).data_source(true);
+#ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT
+  sampler.values().weight_struct(true);
+#else
+  sampler.values().weight(true);
+#endif
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,

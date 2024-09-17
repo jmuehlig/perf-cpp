@@ -30,16 +30,13 @@ main()
   auto cpus_to_watch = std::vector<std::uint16_t>(std::thread::hardware_concurrency());
   std::iota(cpus_to_watch.begin(), cpus_to_watch.end(), 0U);
 
-  auto sampler = perf::MultiCoreSampler{
-    counter_definitions,
-    "cycles", /// Event that generates an overflow which is samples (here we
-              /// sample every 1,000,000th cycle)
-    perf::Sampler::Type::Time | perf::Sampler::Type::InstructionPointer | perf::Sampler::Type::CPU |
-      perf::Sampler::Type::ThreadId, /// Controls what to include into the sample, see
-                                     /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-    std::move(cpus_to_watch),        /// List of CPU cores to sample.
-    perf_config
-  };
+  auto sampler = perf::MultiCoreSampler{ counter_definitions, std::move(cpus_to_watch), perf_config };
+
+  /// Setup event that triggers writing samples.
+  sampler.trigger("cycles");
+
+  /// Setup what data the samples should include (timestamp, instruction pointer, CPU id, thread id).
+  sampler.values().time(true).instruction_pointer(true).cpu(true).thread_id(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
@@ -51,7 +48,7 @@ main()
   auto thread_local_results =
     std::vector<std::uint64_t>(count_threads, 0U); /// Array to store the thread-local results.
 
-  /// Barrier for the threads to wait.
+  /// Barrier for the threads to wait in order to start them all at the same time.
   auto thread_barrier = std::atomic<bool>{ false };
 
   for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
@@ -95,16 +92,8 @@ main()
   auto value = std::accumulate(thread_local_results.begin(), thread_local_results.end(), 0UL);
   asm volatile("" : "+r,m"(value) : : "memory");
 
-  /// Get all the recorded samples.
-  auto samples = sampler.result();
-
-  /// Sort samples by time since they may be mixed from different threads.
-  std::sort(samples.begin(), samples.end(), [](const auto& a, const auto& b) {
-    if (a.time().has_value() && b.time().has_value()) {
-      return a.time().value() < b.time().value();
-    }
-    return false;
-  });
+  /// Get all the recorded samples – ordered by timestamp.
+  auto samples = sampler.result(true);
 
   /// Print the first samples.
   const auto count_show_samples = std::min<std::size_t>(samples.size(), 40U);
