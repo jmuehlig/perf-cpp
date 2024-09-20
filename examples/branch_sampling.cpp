@@ -71,12 +71,9 @@ main()
   const auto samples = sampler.result();
 
   /// Print the first samples.
-  const auto count_show_samples = std::min<std::size_t>(samples.size(), 40U);
+  const auto count_show_samples = std::min<std::size_t>(samples.size(), 10U);
   std::cout << "\nRecorded " << samples.size() << " samples." << std::endl;
   std::cout << "Here are the first " << count_show_samples << " recorded samples:\n" << std::endl;
-
-  std::optional<perf::CounterResult> last_counter_result = std::nullopt; /// Remember the last counter result to show
-                                                                         /// only the difference.
 
   for (auto index = 0U; index < count_show_samples; ++index) {
     const auto& sample = samples[index];
@@ -90,8 +87,6 @@ main()
                   << branch.instruction_pointer_from() << " | to instruction " << branch.instruction_pointer_to()
                   << "\n";
       }
-
-      last_counter_result = sample.counter_result();
     }
   }
   std::cout << std::flush;

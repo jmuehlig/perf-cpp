@@ -347,9 +347,9 @@ private:
   std::vector<void*> _buffers;
 
   /// Flag if the sampler is already opened, i.e., the events are configured.
-  /// This enables the user to open the sampler specifically --- or open the
+  /// This enables the user to open the sampler specifically – or open the
   /// sampler when starting.
-  bool _is_opened { false };
+  bool _is_opened{ false };
 
   /// Will be assigned to errorno.
   /// Attention: Will be deprecated when switching to exceptions only.
@@ -486,35 +486,35 @@ protected:
 class MultiThreadSampler final : public MultiSamplerBase
 {
 public:
-  [[deprecated("Creating samplers with counters and sampling type will be replaced by MultiThreadSampler::trigger() "
-               "and MultiThreadSampler::values() interfaces.")]] MultiThreadSampler(
-    const CounterDefinition& counter_list,
-    const std::string& counter_name,
-    const std::uint64_t type,
-    const std::uint16_t num_threads,
-    SampleConfig config = {})
+  [[deprecated(
+    "Creating samplers with counters and sampling type will be replaced by MultiThreadSampler::trigger() "
+    "and MultiThreadSampler::values() interfaces.")]] MultiThreadSampler(const CounterDefinition& counter_list,
+                                                                         const std::string& counter_name,
+                                                                         const std::uint64_t type,
+                                                                         const std::uint16_t num_threads,
+                                                                         SampleConfig config = {})
     : MultiThreadSampler(counter_list, std::string{ counter_name }, type, num_threads, config)
   {
   }
 
-  [[deprecated("Creating samplers with counters and sampling type will be replaced by MultiThreadSampler::trigger() "
-               "and MultiThreadSampler::values() interfaces.")]] MultiThreadSampler(
-    const CounterDefinition& counter_list,
-    std::string&& counter_name,
-    const std::uint64_t type,
-    const std::uint16_t num_threads,
-    SampleConfig config = {})
+  [[deprecated(
+    "Creating samplers with counters and sampling type will be replaced by MultiThreadSampler::trigger() "
+    "and MultiThreadSampler::values() interfaces.")]] MultiThreadSampler(const CounterDefinition& counter_list,
+                                                                         std::string&& counter_name,
+                                                                         const std::uint64_t type,
+                                                                         const std::uint16_t num_threads,
+                                                                         SampleConfig config = {})
     : MultiThreadSampler(counter_list, std::vector<std::string>{ std::move(counter_name) }, type, num_threads, config)
   {
   }
 
-  [[deprecated("Creating samplers with counters and sampling type will be replaced by MultiThreadSampler::trigger() "
-               "and MultiThreadSampler::values() interfaces.")]] MultiThreadSampler(
-    const CounterDefinition& counter_list,
-    std::vector<std::string>&& counter_names,
-    std::uint64_t type,
-    std::uint16_t num_threads,
-    SampleConfig config = {});
+  [[deprecated(
+    "Creating samplers with counters and sampling type will be replaced by MultiThreadSampler::trigger() "
+    "and MultiThreadSampler::values() interfaces.")]] MultiThreadSampler(const CounterDefinition& counter_list,
+                                                                         std::vector<std::string>&& counter_names,
+                                                                         std::uint64_t type,
+                                                                         std::uint16_t num_threads,
+                                                                         SampleConfig config = {});
 
   explicit MultiThreadSampler(const CounterDefinition& counter_list,
                               std::uint16_t num_threads,
@@ -565,10 +565,7 @@ public:
    *
    * @param thread_id Id of the thread to start.
    */
-  void open(const std::uint16_t thread_id)
-  {
-    MultiSamplerBase::open(_thread_local_samplers[thread_id]);
-  }
+  void open(const std::uint16_t thread_id) { MultiSamplerBase::open(_thread_local_samplers[thread_id]); }
 
   /**
    * Opens and starts recording performance counters on a specific thread.
@@ -588,6 +585,7 @@ public:
    * @param thread_id Id of the thread to stop.
    */
   void stop(const std::uint16_t thread_id) { _thread_local_samplers[thread_id].stop(); }
+
 private:
   std::vector<Sampler> _thread_local_samplers;
 
@@ -702,6 +700,7 @@ public:
       sampler.stop();
     }
   }
+
 private:
   /**
    * @return A list of multiple samplers.
