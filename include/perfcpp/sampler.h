@@ -86,7 +86,7 @@ public:
     Values& counter(std::vector<std::string>&& counter_names) noexcept
     {
       _counter_names = std::move(counter_names);
-      set(PERF_SAMPLE_READ, _counter_names.empty() == false);
+      set(PERF_SAMPLE_READ, !_counter_names.empty());
       return *this;
     }
 
@@ -228,7 +228,7 @@ public:
   [[deprecated("Creating samplers with counters and sampling type will be replaced by Sampler::trigger() and "
                "Sampler::values() interfaces.")]] Sampler(const CounterDefinition& counter_list,
                                                           std::vector<std::string>&& counter_names,
-                                                          const std::uint64_t type,
+                                                          std::uint64_t type,
                                                           SampleConfig config = {});
 
   explicit Sampler(const CounterDefinition& counter_list, SampleConfig config = {})
@@ -287,6 +287,11 @@ public:
   [[nodiscard]] SampleConfig& config() noexcept { return _config; }
 
   /**
+   * Opens the sampler.
+   */
+  void open();
+
+  /**
    * Opens and starts recording performance counters.
    *
    * @return True, of the performance counters could be started.
@@ -341,14 +346,14 @@ private:
   /// Buffers for the samples of every group.
   std::vector<void*> _buffers;
 
+  /// Flag if the sampler is already opened, i.e., the events are configured.
+  /// This enables the user to open the sampler specifically --- or open the
+  /// sampler when starting.
+  bool _is_opened { false };
+
   /// Will be assigned to errorno.
   /// Attention: Will be deprecated when switching to exceptions only.
   std::int64_t _last_error{ 0 };
-
-  /**
-   * Opens the sampler.
-   */
-  void open();
 
   /**
    * Read format for sampled counter values.
@@ -388,11 +393,39 @@ public:
    */
   [[nodiscard]] SampleConfig& config() noexcept { return _config; }
 
+  /**
+   * Closes the sampler, including mapped buffer.
+   */
+  void close()
+  {
+    for (auto& sampler : samplers()) {
+      sampler.close();
+    }
+  }
+
+  /**
+   * @return List of sampled events after stopping the sampler.
+   */
+  [[nodiscard]] std::vector<Sample> result(const bool sort_by_time = true) const
+  {
+    return result(samplers(), sort_by_time);
+  }
+
 protected:
   explicit MultiSamplerBase(SampleConfig config)
     : _config(config)
   {
   }
+
+  /**
+   * @return A list of multiple samplers.
+   */
+  [[nodiscard]] virtual std::vector<Sampler>& samplers() noexcept = 0;
+
+  /**
+   * @return A list of multiple samplers.
+   */
+  [[nodiscard]] virtual const std::vector<Sampler>& samplers() const noexcept = 0;
 
   /**
    * Creates a single result from multiple samplers.
@@ -410,6 +443,21 @@ protected:
    * @param trigger_names List of triggers.
    */
   static void trigger(std::vector<Sampler>& samplers, std::vector<std::vector<std::string>>&& trigger_names);
+
+  /**
+   * Initializes the given sampler with values and config.
+   *
+   * @param sampler Sampler to open.
+   */
+  void open(Sampler& sampler) { open(sampler, _config); }
+
+  /**
+   * Initializes the given sampler with values and config.
+   *
+   * @param sampler Sampler to open.
+   * @param config Config for that sampler.
+   */
+  void open(Sampler& sampler, SampleConfig config);
 
   /**
    * Initializes the given sampler with values and config.
@@ -513,6 +561,16 @@ public:
   }
 
   /**
+   * Opens recording performance counters on a specific thread.
+   *
+   * @param thread_id Id of the thread to start.
+   */
+  void open(const std::uint16_t thread_id)
+  {
+    MultiSamplerBase::open(_thread_local_samplers[thread_id]);
+  }
+
+  /**
    * Opens and starts recording performance counters on a specific thread.
    *
    * @param thread_id Id of the thread to start.
@@ -530,27 +588,18 @@ public:
    * @param thread_id Id of the thread to stop.
    */
   void stop(const std::uint16_t thread_id) { _thread_local_samplers[thread_id].stop(); }
-
-  /**
-   * Closes the sampler, including mapped buffer, for all threads.
-   */
-  void close()
-  {
-    for (auto& sampler : _thread_local_samplers) {
-      sampler.close();
-    }
-  }
-
-  /**
-   * @return List of sampled events after closing the sampler.
-   */
-  [[nodiscard]] std::vector<Sample> result(const bool sort_by_time = true) const
-  {
-    return MultiSamplerBase::result(_thread_local_samplers, sort_by_time);
-  }
-
 private:
   std::vector<Sampler> _thread_local_samplers;
+
+  /**
+   * @return A list of multiple samplers.
+   */
+  [[nodiscard]] std::vector<Sampler>& samplers() noexcept override { return _thread_local_samplers; }
+
+  /**
+   * @return A list of multiple samplers.
+   */
+  [[nodiscard]] const std::vector<Sampler>& samplers() const noexcept override { return _thread_local_samplers; }
 };
 
 class MultiCoreSampler final : public MultiSamplerBase
@@ -632,6 +681,12 @@ public:
   }
 
   /**
+   * Opens recording performance counters for all specified cores.
+   *
+   */
+  void open();
+
+  /**
    * Opens and starts recording performance counters for all specified cores.
    *
    * @return True, of the performance counters could be started.
@@ -639,34 +694,25 @@ public:
   bool start();
 
   /**
-   * Stops recording performance counters for all specified cores.
+   * Stops the sampler.
    */
   void stop()
   {
-    for (auto& sampler : _core_local_samplers) {
+    for (auto& sampler : this->_core_local_samplers) {
       sampler.stop();
     }
   }
-
-  /**
-   * Closes the sampler, including mapped buffer, for all threads.
-   */
-  void close()
-  {
-    for (auto& sampler : _core_local_samplers) {
-      sampler.close();
-    }
-  }
-
-  /**
-   * @return List of sampled events after closing the sampler.
-   */
-  [[nodiscard]] std::vector<Sample> result(const bool sort_by_time = true) const
-  {
-    return MultiSamplerBase::result(_core_local_samplers, sort_by_time);
-  }
-
 private:
+  /**
+   * @return A list of multiple samplers.
+   */
+  [[nodiscard]] std::vector<Sampler>& samplers() noexcept override { return _core_local_samplers; }
+
+  /**
+   * @return A list of multiple samplers.
+   */
+  [[nodiscard]] const std::vector<Sampler>& samplers() const noexcept override { return _core_local_samplers; }
+
   /// List of samplers.
   std::vector<Sampler> _core_local_samplers;
 

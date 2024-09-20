@@ -8,6 +8,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <utility>
 
 perf::Sampler::Sampler(const perf::CounterDefinition& counter_list,
                        std::vector<std::string>&& counter_names,
@@ -97,6 +98,11 @@ perf::Sampler::trigger(std::vector<std::vector<std::string>>&& trigger_names)
 void
 perf::Sampler::open()
 {
+  /// Do not open again, if the sampler was already opened.
+  if (std::exchange(this->_is_opened, true)) {
+    return;
+  }
+
   /// Build the groups from triggers + counters from values.
   for (const auto& trigger_group : this->_trigger_names) {
     auto group = Group{};
@@ -241,8 +247,9 @@ perf::Sampler::open()
       /// Check if the counter could be opened successfully.
       if (file_descriptor < 0) {
         this->_last_error = errno;
-        throw std::runtime_error{ "Cannot create file descriptor for sampling counter (error no: " +
-                                  std::to_string(errno) + ")." };
+        throw std::runtime_error{ std::string{ "Cannot create file descriptor for sampling counter (error no: " }
+                                    .append(std::to_string(errno))
+                                    .append(").") };
       }
     }
 
@@ -295,15 +302,23 @@ perf::Sampler::stop()
 void
 perf::Sampler::close()
 {
+  /// Free all buffers and close all groups.
   for (auto i = 0U; i < this->_groups.size(); ++i) {
     if (this->_buffers[i] != nullptr) {
       ::munmap(this->_buffers[i], this->_config.buffer_pages() * 4096U);
     }
 
     if (this->_groups[i].leader_file_descriptor() > -1) {
-      ::close(this->_groups[i].leader_file_descriptor());
+      this->_groups[i].close();
     }
   }
+
+  /// Clear all buffers, groups, and counter names
+  /// in order to enable opening again.
+  this->_buffers.clear();
+  this->_groups.clear();
+  this->_counter_names.clear();
+  this->_is_opened = false;
 }
 
 std::vector<perf::Sample>
@@ -612,6 +627,15 @@ perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std:
 }
 
 void
+perf::MultiSamplerBase::open(perf::Sampler& sampler, const perf::SampleConfig config)
+{
+  sampler._values = _values;
+  sampler._config = config;
+
+  sampler.open();
+}
+
+void
 perf::MultiSamplerBase::start(perf::Sampler& sampler, const perf::SampleConfig config)
 {
   sampler._values = _values;
@@ -781,6 +805,16 @@ perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_
   /// Create thread-local samplers without config (will be set when starting).
   for (const auto _ : this->_core_ids) {
     this->_core_local_samplers.emplace_back(counter_list);
+  }
+}
+
+void
+perf::MultiCoreSampler::open()
+{
+  for (auto sampler_id = 0U; sampler_id < this->_core_ids.size(); ++sampler_id) {
+    auto config = this->_config;
+    config.cpu_id(this->_core_ids[sampler_id]);
+    MultiSamplerBase::open(this->_core_local_samplers[sampler_id], config);
   }
 }
 
