@@ -23,7 +23,6 @@ perf::Sampler::Sampler(const perf::CounterDefinition& counter_list,
     .logical_mem_address(static_cast<bool>(type & PERF_SAMPLE_ADDR))
     .callchain(static_cast<bool>(type & PERF_SAMPLE_CALLCHAIN))
     .cpu(static_cast<bool>(type & PERF_SAMPLE_CPU))
-    .branch_stack(static_cast<bool>(type & PERF_SAMPLE_BRANCH_STACK))
     .weight(static_cast<bool>(type & PERF_SAMPLE_WEIGHT))
     .data_source(static_cast<bool>(type & PERF_SAMPLE_DATA_SRC))
     .identifier(static_cast<bool>(type & PERF_SAMPLE_IDENTIFIER))
@@ -31,6 +30,10 @@ perf::Sampler::Sampler(const perf::CounterDefinition& counter_list,
     .data_page_size(static_cast<bool>(type & Type::DataPageSize))
     .code_page_size(static_cast<bool>(type & Type::CodePageSize))
     .weight_struct(static_cast<bool>(type & Type::WeightStruct));
+
+  if (static_cast<bool>(type & PERF_SAMPLE_BRANCH_STACK)) {
+    _values.branch_stack(std::vector<BranchType>{ config.branch_type() });
+  }
 
   if (static_cast<bool>(type & PERF_SAMPLE_REGS_USER)) {
     _values.user_registers(config.user_registers());
@@ -199,7 +202,7 @@ perf::Sampler::open()
         }
 
         if (this->_values.is_set(PERF_SAMPLE_BRANCH_STACK)) {
-          perf_event.branch_sample_type = this->_config.branch_type();
+          perf_event.branch_sample_type = this->_values.branch_mask();
         }
 
         if (is_leader) {
@@ -658,7 +661,6 @@ perf::MultiThreadSampler::MultiThreadSampler(const perf::CounterDefinition& coun
     .logical_mem_address(static_cast<bool>(type & PERF_SAMPLE_ADDR))
     .callchain(static_cast<bool>(type & PERF_SAMPLE_CALLCHAIN))
     .cpu(static_cast<bool>(type & PERF_SAMPLE_CPU))
-    .branch_stack(static_cast<bool>(type & PERF_SAMPLE_BRANCH_STACK))
     .weight(static_cast<bool>(type & PERF_SAMPLE_WEIGHT))
     .data_source(static_cast<bool>(type & PERF_SAMPLE_DATA_SRC))
     .identifier(static_cast<bool>(type & PERF_SAMPLE_IDENTIFIER))
@@ -666,6 +668,10 @@ perf::MultiThreadSampler::MultiThreadSampler(const perf::CounterDefinition& coun
     .data_page_size(static_cast<bool>(type & Sampler::Type::DataPageSize))
     .code_page_size(static_cast<bool>(type & Sampler::Type::CodePageSize))
     .weight_struct(static_cast<bool>(type & Sampler::Type::WeightStruct));
+
+  if (static_cast<bool>(type & PERF_SAMPLE_BRANCH_STACK)) {
+    _values.branch_stack(std::vector<BranchType>{ config.branch_type() });
+  }
 
   if (static_cast<bool>(type & PERF_SAMPLE_REGS_USER)) {
     _values.user_registers(config.user_registers());
@@ -740,7 +746,6 @@ perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_
     .logical_mem_address(static_cast<bool>(type & PERF_SAMPLE_ADDR))
     .callchain(static_cast<bool>(type & PERF_SAMPLE_CALLCHAIN))
     .cpu(static_cast<bool>(type & PERF_SAMPLE_CPU))
-    .branch_stack(static_cast<bool>(type & PERF_SAMPLE_BRANCH_STACK))
     .weight(static_cast<bool>(type & PERF_SAMPLE_WEIGHT))
     .data_source(static_cast<bool>(type & PERF_SAMPLE_DATA_SRC))
     .identifier(static_cast<bool>(type & PERF_SAMPLE_IDENTIFIER))
@@ -748,6 +753,10 @@ perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_
     .data_page_size(static_cast<bool>(type & Sampler::Type::DataPageSize))
     .code_page_size(static_cast<bool>(type & Sampler::Type::CodePageSize))
     .weight_struct(static_cast<bool>(type & Sampler::Type::WeightStruct));
+
+  if (static_cast<bool>(type & PERF_SAMPLE_BRANCH_STACK)) {
+    _values.branch_stack(std::vector<BranchType>{ config.branch_type() });
+  }
 
   if (static_cast<bool>(type & PERF_SAMPLE_REGS_USER)) {
     _values.user_registers(config.user_registers());

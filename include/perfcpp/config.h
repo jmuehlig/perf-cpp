@@ -120,8 +120,18 @@ public:
   {
     _kernel_registers = registers;
   }
-  void branch_type(const std::uint64_t branch_type) noexcept { _branch_type = branch_type; }
-  void branch_type(const BranchType branch_type) noexcept { _branch_type = static_cast<std::uint64_t>(branch_type); }
+
+  [[deprecated("Branch types will be set through the Sampler::values() interface.")]] void branch_type(
+    const std::uint64_t branch_type) noexcept
+  {
+    _branch_type = branch_type;
+  }
+
+  [[deprecated("Branch types will be set through the Sampler::values() interface.")]] void branch_type(
+    const BranchType branch_type) noexcept
+  {
+    _branch_type = static_cast<std::uint64_t>(branch_type);
+  }
 
 private:
   std::uint64_t _buffer_pages{ 8192U + 1U };

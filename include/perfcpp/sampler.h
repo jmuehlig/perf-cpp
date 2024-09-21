@@ -108,9 +108,14 @@ public:
       return *this;
     }
 
-    Values& branch_stack(const bool include) noexcept
+    Values& branch_stack(std::vector<BranchType>&& branch_types) noexcept
     {
-      set(PERF_SAMPLE_BRANCH_STACK, include);
+      this->_branch_mask = std::uint64_t{ 0U };
+      for (auto branch_type : branch_types) {
+        this->_branch_mask |= static_cast<std::uint64_t>(branch_type);
+      }
+
+      set(PERF_SAMPLE_BRANCH_STACK, this->_branch_mask != 0ULL);
       return *this;
     }
 
@@ -184,6 +189,7 @@ public:
     [[nodiscard]] Registers user_registers() const noexcept { return _user_registers; }
     [[nodiscard]] Registers kernel_registers() const noexcept { return _kernel_registers; }
     [[nodiscard]] const std::vector<std::string>& counters() const noexcept { return _counter_names; }
+    [[nodiscard]] std::uint64_t branch_mask() const noexcept { return _branch_mask; }
 
     [[nodiscard]] std::uint64_t get() const noexcept { return _mask; }
 
@@ -192,6 +198,7 @@ public:
     std::vector<std::string> _counter_names;
     Registers _user_registers;
     Registers _kernel_registers;
+    std::uint64_t _branch_mask{ 0ULL };
 
     void set(const std::uint64_t perf_field, const bool is_enabled) noexcept
     {
