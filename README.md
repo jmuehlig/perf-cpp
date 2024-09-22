@@ -28,22 +28,6 @@ Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
 ---
 
 ## Getting Started
-### Building this library
-&rarr; [More details are here](docs/build.md).
-
-```
-/// 1) Clone the repository
-git clone https://github.com/jmuehlig/perf-cpp.git
-
-/// 2) Switch to the cloned folder
-cd perf-cpp
-
-/// 3) Generate the Makefile
-cmake .
-
-/// 4) Build the library and examples
-make
-```
 
 ### Quick Examples
 Capture performance counters and samples directly within your C++ application, focusing exclusively on the code crucial to your analysis.
@@ -51,7 +35,7 @@ Capture performance counters and samples directly within your C++ application, f
 &rarr; Further details are available in the [documentation](docs/README.md).
 
 #### Record Counters
-The `perf::EventCounter` class offers an interface to add and manage counters, as well as to start and stop recordings. 
+The `perf::EventCounter` class offers an interface to add and manage counters, as well as to start and stop recordings.
 Utilize predefined counters or customize counters specific to your hardware.
 
 &rarr; See the documentation for [recording basics](docs/recording) and [multithreaded](docs/recording-parallel) recording.
@@ -59,7 +43,9 @@ Utilize predefined counters or customize counters specific to your hardware.
 ```cpp
 #include <perfcpp/event_counter.h>
 auto counter_definitions = perf::CounterDefinition{};
-auto event_counter = perf::EventCounter{counter_definitions};
+auto event_counter = perf::EventCounter{ counter_definitions };
+
+/// Add performance counters.
 event_counter.add({"instructions", "cycles", "cache-misses"});
 
 event_counter.start();
@@ -79,7 +65,7 @@ for (const auto [name, value] : result)
 ```
 
 #### Sampling
-The `perf::Sampler` class delivers an interface to specify sampling criteria and control the start/stop of recordings. 
+The `perf::Sampler` class delivers an interface to specify sampling criteria and control the start/stop of recordings.
 You can sample various aspects such as instructions, time, memory addresses, access latency, call chains, branches, and more.
 
 &rarr; See the documentation for [sampling basics](docs/sampling.md) and [multithreaded sampling](docs/sampling-parallel.md).
@@ -87,37 +73,56 @@ You can sample various aspects such as instructions, time, memory addresses, acc
 ```cpp
 #include <perfcpp/sampler.h>
 auto counter_definitions = perf::CounterDefinition{};
+auto sampler = perf::Sampler{ counter_definitions };
 
-auto sample_config = perf::SampleConfig{};
-perf_config.period(1000U);
+/// Add trigger: an overflow of the 'cycles' counter will lead to writing a sample.
+sampler.trigger("cycles");
 
-auto sampler = perf::Sampler{
-    counter_definitions,
-    "cycles",
-    perf::Sampler::Type::Time | perf::Sampler::Type::InstructionPointer 
-        | perf::Sampler::Type::CPU
-};
+/// Add what to record to samples: Timestamp, CPU ID, and instruction pointer.
+sampler.values()
+    .time(true)
+    .cpu(true)
+    .instruction_pointer(true);
 
+/// Start sampling.
 sampler.start();
 /// your code that will be sampled is here...
 sampler.stop();
 
+/// Print the samples with the fields we specified.
 const auto samples = sampler.result();
-for (const auto& sample : samples)
+for (const auto& sample_record : samples)
 {
     std::cout 
-        << "Time = " << sample.time().value() 
-        << " | Instruction = 0x" << std::hex << sample.instruction_pointer().value() << std::dec
-        << " | CPU = " << sample.cpu_id().value()
+        << "Time = " << sample_record.time().value() 
+        << " | CPU = " << sample_record.cpu_id().value()
+        << " | Instruction Pointer = 0x" << std::hex << sample_record.instruction_pointer().value() << std::dec
         << std::endl;
 }
 
 /// Possible output:
-// Time = 365449130714033 | Instruction = 0x5a6e84b2075c | CPU = 8
-// Time = 365449130913157 | Instruction = 0x64af7417c75c | CPU = 8
-// Time = 365449131112591 | Instruction = 0x5a6e84b2075c | CPU = 8
-// Time = 365449131312005 | Instruction = 0x64af7417c75c | CPU = 8
+// Time = 365449130714033 | CPU = 8 | Instruction = 0x5a6e84b2075c
+// Time = 365449130913157 | CPU = 8 | Instruction = 0x64af7417c75c
+// Time = 365449131112591 | CPU = 8 | Instruction = 0x5a6e84b2075c
+// Time = 365449131312005 | CPU = 8 | Instruction = 0x64af7417c75c 
 // ...
+```
+
+### Building this library
+&rarr; [More details are here](docs/build.md).
+
+```
+/// 1) Clone the repository
+git clone https://github.com/jmuehlig/perf-cpp.git
+
+/// 2) Switch to the cloned folder
+cd perf-cpp
+
+/// 3) Generate the Makefile
+cmake .
+
+/// 4) Build the library and examples
+make
 ```
 
 ---
@@ -125,7 +130,7 @@ for (const auto& sample : samples)
 ## Further Code Examples
 We provide a variety of examples detailed below. 
 Build them effortlessly by running `make`. 
-All compiled example binaries are located in examples/bin and can be executed directly without additional arguments.
+All compiled example binaries are located in `examples/bin` and can be executed directly without additional arguments.
 
 * Code example for recording counters on a [single thread: `examples/single_thread.cpp`](examples/single_thread.cpp)
 * Code example for recording counters on [multiple threads: `examples/multi_thread.cpp`](examples/multi_thread.cpp)

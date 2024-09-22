@@ -141,9 +141,13 @@ private:
 
   std::uint8_t _precise_ip{ 0 };
 
+  /// User registers in config is deprecated and will be replaced by Sampler::values() interface.
   Registers _user_registers;
+
+  /// Kernel registers in config is deprecated and will be replaced by Sampler::values() interface.
   Registers _kernel_registers;
 
+  /// Branch type in config is deprecated and will be replaced by Sampler::values() interface.
   std::uint64_t _branch_type{ static_cast<std::uint64_t>(BranchType::Any) };
 };
 }

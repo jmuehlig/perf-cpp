@@ -29,7 +29,7 @@ main()
     .time(true)
     .period(true)
     .instruction_pointer(true)
-    .cpu(true);
+    .cpu_id(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,

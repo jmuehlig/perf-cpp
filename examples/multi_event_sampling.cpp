@@ -46,7 +46,8 @@ main()
 
   auto sampler = perf::Sampler{ counter_definitions, perf_config };
   sampler.trigger(std::move(sampling_counters));
-  sampler.values().time(true).logical_mem_address(true).data_source(true);
+  sampler.values().time(true).logical_memory_address(true).data_src(true);
+
 #ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT
   sampler.values().weight_struct(true);
 #else

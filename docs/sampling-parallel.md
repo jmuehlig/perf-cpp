@@ -15,12 +15,9 @@ The `MultiThreadSampler` needs to know how many threads will be sampled (see `co
 
 ```cpp
 #include <perfcpp/sampler.h>
-constexpr auto count_threads = 4U;
 
 /// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
 auto counter_definitions = perf::CounterDefinition{};
-
-auto event_counter = perf::EventCounter{counter_definitions};
 
 /// Define when the data is recorded.
 /// This can be every Nth event (e.g., every 1000th cycle):
@@ -30,15 +27,18 @@ sample_config.period(1000U);
 sample_config.frequency(2000000U);
 /// Note that you can use only frequency XOR period
 
-/// Define the trigger (cycles in this example) 
-//      and what to record (time and instruction pointer in this example)
-auto multi_thread_sampler = perf::MultiThreadSampler{
+constexpr auto count_threads = 4U;
+auto sampler = perf::MultiThreadSampler{  
     counter_definitions,
-    "cycles",
-    perf::Sampler::Type::Time | perf::Sampler::Type::ThreadId,
     count_threads /// Number of threads
     sample_config
 };
+
+/// Define the trigger (cycles in this example) 
+sampler.trigger("cycles");
+
+//  and what to record (time and instruction pointer in this example)
+sampler.values().time(true).thread_id(true);
 ```
 
 ### 2) Call `start()` and `stop()` from threads
@@ -49,14 +49,18 @@ auto threads = std::vector<std::thread>{};
 for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
     
     /// Create threads.
-    threads.emplace_back([thread_index, &multi_thread_sampler /*,  ... more stuff .. */]() {
+    threads.emplace_back([thread_index, &sampler /*,  ... more stuff .. */]() {
       /// Start sampling per thread.
-      multi_thread_sampler.start(thread_index);
+        try {
+            sampler.start(thread_index);
+        } catch (std::runtime_error& e) {
+            std::cerr << e.what() << std::endl;
+        }
 
       /// ... do some work that is sampled...
 
       /// Stop sampling on this thread.
-      multi_thread_sampler.stop(thread_index);
+      sampler.stop(thread_index);
     });
 }
 
@@ -72,28 +76,18 @@ As you have the flexibility to specify which data elements to sample, each piece
 You may want to sort the results (e.g., based on the timestamp) since threads will write samples in parallel.
 
 ```cpp
-auto result = multi_thread_sampler.result();
-
-/// Sort samples by time since they may be mixed from different threads
-std::sort(result.begin(), result.end(), [](const auto& a, const auto& b) {
-    if (a.time().has_value() && b.time().has_value()) {
-      return a.time().value() < b.time().value();
-    }
-    return false;
-});
+auto result = sampler.result(/* sort samples by time*/ true);
 
 /// Print the samples
-for (const auto& sample : result)
+for (const auto& sample_record : result)
 {
-    if (sample.time().has_value() && sample.thread_id().has_value())
+    if (sample_record.time().has_value() && sample_record.thread_id().has_value())
     {
-        std::cout << "Time = " << sample.time().value() 
-            << " | Thread ID = " << sample.thread_id().value() << std::endl;
+        std::cout 
+            << "Time = " << sample_record.time().value() 
+            << " | Thread ID = " << sample_record.thread_id().value() << std::endl;
     }
 }
-
-/// Close the sampler
-multi_thread_sampler.close();
 ```
 
 The output may be something like this:
@@ -103,6 +97,12 @@ The output may be something like this:
     Time = 173058803625986 | Thread ID = 62804
     Time = 173058803763485 | Thread ID = 62803
     Time = 173058804277715 | Thread ID = 62802
+
+### 4) Closing the sampler
+Closing the sampler will free and un-map all buffers.
+```cpp
+sampler.close();
+```
 
 ---
 
@@ -125,8 +125,6 @@ The `MultiCoreSampler` needs to know which CPU cores will be sampled (see `cpus_
 /// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
 auto counter_definitions = perf::CounterDefinition{};
 
-auto event_counter = perf::EventCounter{counter_definitions};
-
 /// Define when the data is recorded.
 /// This can be every Nth event (e.g., every 1000th cycle):
 auto sample_config = perf::SampleConfig{};
@@ -135,15 +133,17 @@ sample_config.period(1000U);
 sample_config.frequency(2000000U);
 /// Note that you can use only frequency XOR period
 
-/// Define the trigger (cycles in this example) 
-//      and what to record (time and instruction pointer in this example)
-auto multi_cpu_sampler = perf::MultiCoreSampler{
+auto sampler = perf::MultiCoreSampler{
     counter_definitions,
-    "cycles",
-    perf::Sampler::Type::Time | perf::Sampler::Type::CPU | perf::Sampler::Type::ThreadId,
     std::move(cpus_to_watch) /// List of CPUs to sample
     sample_config
 };
+
+/// Define the trigger (cycles in this example) 
+sampler.trigger("cycles");
+
+/// and what to record (time and instruction pointer in this example).
+sampler.values().time(true).cpu_id(true).thread_id(true);
 ```
 
 ### 2) Call `start()` and `stop()` 
@@ -160,7 +160,11 @@ for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
 }
 
 /// Start sampling.
-multi_cpu_sampler.start();
+try {
+    sampler.start();
+} catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+}
 
 /// Wait for all threads to finish.
 for (auto& thread : threads) {
@@ -168,7 +172,7 @@ for (auto& thread : threads) {
 }
 
 /// Stop sampling after all threads have finished.
-multi_cpu_sampler.stop();
+sampler.stop();
 ```
 
 ### 3) Access the recorded samples
@@ -177,29 +181,19 @@ As you have the flexibility to specify which data elements to sample, each piece
 You may want to sort the results (e.g., based on the timestamp) since threads will write samples in parallel.
 
 ```cpp
-auto result = multi_core_sampler.result();
-
-/// Sort samples by time since they may be mixed from different threads
-std::sort(result.begin(), result.end(), [](const auto& a, const auto& b) {
-    if (a.time().has_value() && b.time().has_value()) {
-      return a.time().value() < b.time().value();
-    }
-    return false;
-});
+auto result = sampler.result(/* sort samples by time*/ true);
 
 /// Print the samples
-for (const auto& sample : result)
+for (const auto& sample_record : result)
 {
-    if (sample.time().has_value() && sample.cpu_id().has_value() && sample.thread_id().has_value())
+    if (sample_record.time().has_value() && sample_record.cpu_id().has_value() && sample_record.thread_id().has_value())
     {
-        std::cout << "Time = " << sample.time().value() 
-            << " | CPU ID = " << sample.cpu_id().value()
-            << " | Thread ID = " << sample.thread_id().value() << std::endl;
+        std::cout 
+            << "Time = " << sample_record.time().value() 
+            << " | CPU ID = " << sample_record.cpu_id().value()
+            << " | Thread ID = " << sample_record.thread_id().value() << std::endl;
     }
 }
-
-/// Close the sampler
-multi_cpu_sampler.close();
 ```
 
 The output may be something like this:
@@ -212,3 +206,8 @@ The output may be something like this:
     Time = 173058800943659 | CPU ID = 3 | Thread ID = 62802
     Time = 173058801403355 | CPU ID = 8 | Thread ID = 62804
 
+### 4) Closing the sampler
+Closing the sampler will free and un-map all buffers.
+```cpp
+sampler.close();
+```

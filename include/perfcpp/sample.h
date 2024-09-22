@@ -437,6 +437,7 @@ public:
   [[nodiscard]] std::optional<std::uint32_t> cpu_id() const noexcept { return _cpu_id; }
   [[nodiscard]] std::optional<std::uint64_t> period() const noexcept { return _period; }
   [[nodiscard]] const std::optional<CounterResult>& counter_result() const noexcept { return _counter_result; }
+  [[nodiscard]] const std::optional<CounterResult>& counter() const noexcept { return _counter_result; }
   [[nodiscard]] std::optional<DataSource> data_src() const noexcept { return _data_src; }
   [[nodiscard]] std::optional<Weight> weight() const noexcept { return _weight; }
   [[nodiscard]] const std::optional<std::vector<Branch>>& branches() const noexcept { return _branches; }

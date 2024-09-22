@@ -40,7 +40,7 @@ main()
 
   /// Setup which data will be included into samples (timestamp, virtual memory address, data source like L1d or RAM,
   /// and latency).
-  sampler.values().time(true).logical_mem_address(true).data_source(true);
+  sampler.values().time(true).logical_memory_address(true).data_src(true);
 #ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT
   sampler.values().weight_struct(true);
 #else

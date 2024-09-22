@@ -16,7 +16,11 @@ The `perf::MultiThreadEventCounter` class allows you to copy the measurement on 
 auto counter_definitions = perf::CounterDefinition{};
 
 auto multithread_event_counter = perf::MultiThreadEventCounter{counter_definitions};
-event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
+try {
+    event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
+} catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+}
 ```
 
 ### 2) Wrap `start()` and `stop()` around your thread-local processing code
@@ -25,7 +29,11 @@ auto threads = std::vector<std::thread>{};
 for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
     threads.emplace_back([thread_index, &multithread_event_counter]() {
         
-        multithread_event_counter.start(thread_index);
+        try {
+            multithread_event_counter.start(thread_index);
+        } catch (std::runtime_error& e) {
+            std::cerr << e.what() << std::endl;
+        }
 
         /// ... do some computational work here...
 
@@ -74,14 +82,22 @@ config.include_child_threads(true);
 
 auto event_counter = perf::EventCounter{counter_definitions, config};
 
-event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
+try {
+    event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
+} catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+}
 ```
 
 ### 2) Wrap `start()` and `stop()` around thread-spawning
 ```cpp
 auto threads = std::vector<std::thread>{};
 
-event_counter.start();
+try {
+    event_counter.start()
+} catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+}
 
 for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
     threads.emplace_back([]() {
@@ -139,15 +155,25 @@ cpus_to_watch.add(1U);
 auto counter_definitions = perf::CounterDefinition{};
 
 auto multi_cpu_event_counter = perf::MultiCoreEventCounter{counter_definitions};
-multi_cpu_event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
+try {
+    multi_cpu_event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
+} catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+}
 ```
 
 ### 3) Start and stop the counters whenever you want
 ```cpp
 /// You can start threads here.
-multi_cpu_event_counter.start();
+try {
+    multi_cpu_event_counter.start();
+} catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+}
+
 /// ... wait until some work is done on the CPUs.
 /// For example, join threads here.
+
 multi_cpu_event_counter.stop();
 ```
 

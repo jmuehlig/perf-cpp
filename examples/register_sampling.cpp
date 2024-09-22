@@ -29,7 +29,7 @@ main()
       perf::Registers{ { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 } })
     .kernel_registers(
       perf::Registers{ { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 } })
-    .cpu(true);
+    .cpu_id(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,

@@ -77,7 +77,7 @@ public:
       return *this;
     }
 
-    Values& logical_mem_address(const bool include) noexcept
+    Values& logical_memory_address(const bool include) noexcept
     {
       set(PERF_SAMPLE_ADDR, include);
       return *this;
@@ -96,7 +96,7 @@ public:
       return *this;
     }
 
-    Values& cpu(const bool include) noexcept
+    Values& cpu_id(const bool include) noexcept
     {
       set(PERF_SAMPLE_CPU, include);
       return *this;
@@ -132,7 +132,7 @@ public:
       return *this;
     }
 
-    Values& data_source(const bool include) noexcept
+    Values& data_src(const bool include) noexcept
     {
       set(PERF_SAMPLE_DATA_SRC, include);
       return *this;
@@ -151,7 +151,7 @@ public:
       return *this;
     }
 
-    Values& physical_mem_address(const bool include) noexcept
+    Values& physical_memory_address(const bool include) noexcept
     {
       set(PERF_SAMPLE_PHYS_ADDR, include);
       return *this;

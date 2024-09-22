@@ -12,12 +12,21 @@ Here, we introduce the interface designed to facilitate the recording of perform
 auto counter_definitions = perf::CounterDefinition{}; 
 
 auto event_counter = perf::EventCounter{counter_definitions};
-event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
+try {
+    event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
+} catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+}
 ```
 
 ## 2) Wrap `start()` and `stop()` around your processing code
 ```cpp
-event_counter.start();
+try {
+    event_counter.start();
+} catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+    return 1;
+}
 
 /// ... do some computational work here...
 
@@ -64,7 +73,11 @@ int main()
     /// Initialize performance counters.
     auto counter_definitions = perf::CounterDefinition{};
     auto event_counter = perf::EventCounter{counter_definitions};
-    event_counter.add({"instructions", "cycles", "branches", "cache-misses", "cycles-per-instruction"});
+    try {
+        event_counter.add({"instructions", "cycles", "branches", "cache-misses", "cycles-per-instruction"});
+    } catch (std::runtime_error& e) {
+        std::cerr << e.what() << std::endl;
+    }
     
     /// Setup random access benchmark.
     /// Create data to process: Allocate enough cache lines for 256 MB.
@@ -82,9 +95,10 @@ int main()
     std::shuffle(access_pattern_indices.begin(), access_pattern_indices.end(), std::mt19937 {std::random_device{}()});
 
     /// Start recording.
-    if (!event_counter.start())
-    {
-        std::cerr << "Could not start performance counters." << std::endl;
+    try {
+        event_counter.start()
+    } catch (std::runtime_error& e) {
+        std::cerr << e.what() << std::endl;
     }
 
     /// Process the data and force the value to be not optimized away by the compiler.
@@ -143,6 +157,7 @@ To examine the configuration settings—particularly useful if encountering erro
 ```cpp
 auto config = perf::Config{};
 config.is_debug(true);
+
 auto event_counter = perf::EventCounter{ counter_definitions, config };
 ```
 
