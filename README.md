@@ -17,8 +17,8 @@ Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
 ## Documentation
 * [Building and including this library](docs/build.md)
 * **Recording performance counters**
-    * [Overview and basics of Recording performance counters (single threaded)](docs/recording)
-    * [Recording counters in parallel (multithread / multicore) settings](docs/recording-parallel)
+    * [Overview and basics of Recording performance counters (single threaded)](docs/recording.md)
+    * [Recording counters in parallel (multithread / multicore) settings](docs/recording-parallel.md)
     * [Defining and using metrics](docs/metrics.md)
 * **Event Sampling**
   * [Overview and basics of event sampling](docs/sampling.md)
@@ -38,7 +38,7 @@ Capture performance counters and samples directly within your C++ application, f
 The `perf::EventCounter` class offers an interface to add and manage counters, as well as to start and stop recordings.
 Utilize predefined counters or customize counters specific to your hardware.
 
-&rarr; See the documentation for [recording basics](docs/recording) and [multithreaded](docs/recording-parallel) recording.
+&rarr; See the documentation for [recording basics](docs/recording.md) and [multithreaded](docs/recording-parallel.md) recording.
 
 ```cpp
 #include <perfcpp/event_counter.h>
@@ -93,18 +93,24 @@ sampler.stop();
 const auto samples = sampler.result();
 for (const auto& sample_record : samples)
 {
+    const auto time = sample_record.time().value();
+    const auto cpu_id = sample_record.cpu_id().value();
+    const auto instruction_pointer = sample_record.instruction_pointer().value();
+    
     std::cout 
-        << "Time = " << sample_record.time().value() 
-        << " | CPU = " << sample_record.cpu_id().value()
-        << " | Instruction Pointer = 0x" << std::hex << sample_record.instruction_pointer().value() << std::dec
+        << "Time = " << time << " | CPU = " << cpu_id
+        << " | Instruction Pointer = 0x" << std::hex << instruction_pointer << std::dec
         << std::endl;
 }
 
+/// Close sampler to free buffer and close counter.
+sampler.close();
+
 /// Possible output:
-// Time = 365449130714033 | CPU = 8 | Instruction = 0x5a6e84b2075c
-// Time = 365449130913157 | CPU = 8 | Instruction = 0x64af7417c75c
-// Time = 365449131112591 | CPU = 8 | Instruction = 0x5a6e84b2075c
-// Time = 365449131312005 | CPU = 8 | Instruction = 0x64af7417c75c 
+// Time = 365449130714033 | CPU = 8 | Instruction Pointer = 0x5a6e84b2075c
+// Time = 365449130913157 | CPU = 8 | Instruction Pointer = 0x64af7417c75c
+// Time = 365449131112591 | CPU = 8 | Instruction Pointer = 0x5a6e84b2075c
+// Time = 365449131312005 | CPU = 8 | Instruction Pointer = 0x64af7417c75c 
 // ...
 ```
 
