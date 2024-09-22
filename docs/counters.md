@@ -82,6 +82,9 @@ These counters will be added as `PERF_TYPE_RAW` with the given `config id`.
 The file needs to be provided to `perf::CounterDefinition` when creating it:
 ```cpp
 auto counter_definition = perf::CounterDefinition{"my_file.csv"};
+
+auto event_counter = perf::EventCounter{counter_definitions};
+event_counter.add({"cycle_activity.stalls_l1d_miss", "cycle_activity.stalls_l2_miss"});
 ```
 
 ## Recording the new counters
@@ -92,7 +95,7 @@ counter_definitions.add("llc-load-misses", PERF_TYPE_HW_CACHE, ...);
 
 /// Note, that the (now defined) counter "llc-load-misses" must be also added to the perf instance.
 auto event_counter = perf::EventCounter{counter_definitions};
-event_counter.add({"instructions", "cycles", "llc-load-misses"});
+event_counter.add({"instructions", "cycles", "cycle_activity.stalls_l3_miss", "llc-load-misses"});
 
 /// start, compute, and stop...
 
