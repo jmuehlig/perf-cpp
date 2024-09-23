@@ -96,6 +96,13 @@ public:
       return *this;
     }
 
+    Values& callchain(const std::uint16_t max_call_stack) noexcept
+    {
+      _max_call_stack = max_call_stack;
+      set(PERF_SAMPLE_CALLCHAIN, true);
+      return *this;
+    }
+
     Values& cpu_id(const bool include) noexcept
     {
       set(PERF_SAMPLE_CPU, include);
@@ -190,6 +197,7 @@ public:
     [[nodiscard]] Registers kernel_registers() const noexcept { return _kernel_registers; }
     [[nodiscard]] const std::vector<std::string>& counters() const noexcept { return _counter_names; }
     [[nodiscard]] std::uint64_t branch_mask() const noexcept { return _branch_mask; }
+    [[nodiscard]] std::uint16_t max_call_stack() const noexcept { return _max_call_stack; }
 
     [[nodiscard]] std::uint64_t get() const noexcept { return _mask; }
 
@@ -199,6 +207,8 @@ public:
     Registers _user_registers;
     Registers _kernel_registers;
     std::uint64_t _branch_mask{ 0ULL };
+
+    std::uint16_t _max_call_stack {0U};
 
     void set(const std::uint64_t perf_field, const bool is_enabled) noexcept
     {

@@ -21,6 +21,14 @@ ExternalProject_Add(
 * Add `path/to/your/libs/perf-cpp/src/perf-cpp-external/include` to your `include_directories()`
 * Add `perf-cpp` to your linked libraries
 
+## Build Examples
+By default `make` will build the library, but not the examples.
+Use 
+
+    make examples
+
+to build the examples in the `examples/bin` directory.
+
 ---
 
 ## Notes for older Linux Kernels

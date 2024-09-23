@@ -31,6 +31,10 @@ perf::Sampler::Sampler(const perf::CounterDefinition& counter_list,
     .code_page_size(static_cast<bool>(type & Type::CodePageSize))
     .weight_struct(static_cast<bool>(type & Type::WeightStruct));
 
+  if (_values.is_set(PERF_SAMPLE_CALLCHAIN)) {
+    _values.callchain(this->_config.max_stack());
+  }
+
   if (static_cast<bool>(type & PERF_SAMPLE_BRANCH_STACK)) {
     _values.branch_stack(std::vector<BranchType>{ config.branch_type() });
   }
@@ -210,7 +214,7 @@ perf::Sampler::open()
         }
 
         if (this->_values.is_set(PERF_SAMPLE_CALLCHAIN)) {
-          perf_event.sample_max_stack = this->_config.max_stack();
+          perf_event.sample_max_stack = this->_values.max_call_stack();
         }
       }
 

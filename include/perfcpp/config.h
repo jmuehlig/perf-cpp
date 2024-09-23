@@ -17,6 +17,7 @@ public:
   [[nodiscard]] std::uint8_t max_groups() const noexcept { return _max_groups; }
   [[nodiscard]] std::uint8_t max_counters_per_group() const noexcept { return _max_counters_per_group; }
 
+  [[deprecated("Will be replaced by Sampler::values() interface.")]]
   [[nodiscard]] std::uint16_t max_stack() const noexcept { return _max_stack; }
 
   [[nodiscard]] bool is_include_child_threads() const noexcept { return _is_include_child_threads; }
@@ -37,6 +38,7 @@ public:
     _max_counters_per_group = max_counters_per_group;
   }
 
+  [[deprecated("Will be replaced by Sampler::values() interface.")]]
   void max_stack(const std::uint16_t max_stack) noexcept { _max_stack = max_stack; }
 
   void include_child_threads(const bool is_include_child_threads) noexcept

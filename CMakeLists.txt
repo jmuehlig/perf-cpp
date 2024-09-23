@@ -13,15 +13,15 @@ string(REGEX MATCH "[0-9]+.[0-9]+" LINUX_KERNEL_VERSION ${UNAME_RESULT})
 ### Disable specific features if not provided by the Linux Kernel.
 if (LINUX_KERNEL_VERSION VERSION_LESS 5.13)
     add_definitions(-DNO_PERF_COUNT_SW_CGROUP_SWITCHES)
-endif()
+endif ()
 
 if (LINUX_KERNEL_VERSION VERSION_LESS 5.12)
     add_definitions(-DNO_PERF_SAMPLE_WEIGHT_STRUCT)
-endif()
+endif ()
 
 if (LINUX_KERNEL_VERSION VERSION_LESS 5.11)
     add_definitions(-DNO_PERF_SAMPLE_DATA_PAGE_SIZE -DNO_PERF_SAMPLE_CODE_PAGE_SIZE)
-endif()
+endif ()
 
 
 ### Add include directory.
@@ -34,56 +34,64 @@ add_library(perf-cpp src/counter.cpp src/group.cpp src/counter_definition.cpp sr
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples/bin)
 
 #### Single-threaded
-add_executable(single-thread examples/single_thread.cpp examples/access_benchmark.cpp)
+add_executable(single-thread EXCLUDE_FROM_ALL examples/single_thread.cpp examples/access_benchmark.cpp)
 target_link_libraries(single-thread perf-cpp)
 
 #### Multi-threaded; but inherit counter from main-thread
-add_executable(inherit-thread examples/inherit_thread.cpp examples/access_benchmark.cpp)
+add_executable(inherit-thread EXCLUDE_FROM_ALL examples/inherit_thread.cpp examples/access_benchmark.cpp)
 target_link_libraries(inherit-thread perf-cpp)
 
 #### Multi-threaded with thread-local counter
-add_executable(multi-thread examples/multi_thread.cpp examples/access_benchmark.cpp)
+add_executable(multi-thread EXCLUDE_FROM_ALL examples/multi_thread.cpp examples/access_benchmark.cpp)
 target_link_libraries(multi-thread perf-cpp)
 
 #### Multi-CPU with per-CPU counter
-add_executable(multi-cpu examples/multi_cpu.cpp examples/access_benchmark.cpp)
+add_executable(multi-cpu EXCLUDE_FROM_ALL examples/multi_cpu.cpp examples/access_benchmark.cpp)
 target_link_libraries(multi-cpu perf-cpp)
 
 #### Multi-Process with per-process counter
-add_executable(multi-process examples/multi_process.cpp examples/access_benchmark.cpp)
+add_executable(multi-process EXCLUDE_FROM_ALL examples/multi_process.cpp examples/access_benchmark.cpp)
 target_link_libraries(multi-process perf-cpp)
 
 #### Sampling instruction pointers
-add_executable(instruction-pointer-sampling examples/instruction_pointer_sampling.cpp examples/access_benchmark.cpp)
+add_executable(instruction-pointer-sampling EXCLUDE_FROM_ALL examples/instruction_pointer_sampling.cpp examples/access_benchmark.cpp)
 target_link_libraries(instruction-pointer-sampling perf-cpp)
 
 #### Sampling instruction pointers
-add_executable(counter-sampling examples/counter_sampling.cpp examples/access_benchmark.cpp)
+add_executable(counter-sampling EXCLUDE_FROM_ALL examples/counter_sampling.cpp examples/access_benchmark.cpp)
 target_link_libraries(counter-sampling perf-cpp)
 
 #### Branch sampling
-add_executable(branch-sampling examples/branch_sampling.cpp examples/access_benchmark.cpp)
+add_executable(branch-sampling EXCLUDE_FROM_ALL examples/branch_sampling.cpp examples/access_benchmark.cpp)
 target_link_libraries(branch-sampling perf-cpp)
 
 #### Memory address sampling
-add_executable(address-sampling examples/address_sampling.cpp examples/access_benchmark.cpp)
+add_executable(address-sampling EXCLUDE_FROM_ALL examples/address_sampling.cpp examples/access_benchmark.cpp)
 target_link_libraries(address-sampling perf-cpp)
 
 #### Sampling user_registers
-add_executable(register-sampling examples/register_sampling.cpp examples/access_benchmark.cpp)
+add_executable(register-sampling EXCLUDE_FROM_ALL examples/register_sampling.cpp examples/access_benchmark.cpp)
 target_link_libraries(register-sampling perf-cpp)
 
 #### Sampling on multiple threads
-add_executable(multi-thread-sampling examples/multi_thread_sampling.cpp examples/access_benchmark.cpp)
+add_executable(multi-thread-sampling EXCLUDE_FROM_ALL examples/multi_thread_sampling.cpp examples/access_benchmark.cpp)
 target_link_libraries(multi-thread-sampling perf-cpp)
 
 #### Sampling on multiple threads
-add_executable(multi-cpu-sampling examples/multi_cpu_sampling.cpp examples/access_benchmark.cpp)
+add_executable(multi-cpu-sampling EXCLUDE_FROM_ALL examples/multi_cpu_sampling.cpp examples/access_benchmark.cpp)
 target_link_libraries(multi-cpu-sampling perf-cpp)
 
 #### Sampling with multiple events
-add_executable(multi-event-sampling examples/multi_event_sampling.cpp examples/access_benchmark.cpp)
+add_executable(multi-event-sampling EXCLUDE_FROM_ALL examples/multi_event_sampling.cpp examples/access_benchmark.cpp)
 target_link_libraries(multi-event-sampling perf-cpp)
+
+### One target for all examples
+add_custom_target(examples)
+add_dependencies(examples
+        single-thread inherit-thread multi-thread multi-cpu multi-process
+        instruction-pointer-sampling counter-sampling branch-sampling
+        address-sampling register-sampling multi-thread-sampling multi-cpu-sampling
+        multi-event-sampling)
 
 ### Target to create the perf list CSV
 add_custom_target(perf-list python3 ${CMAKE_SOURCE_DIR}/script/create_perf_list.py)

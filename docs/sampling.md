@@ -191,8 +191,8 @@ Record hardware performance counter values at the time of the record.
 ### Callchain
 Callchain as a list of instruction pointers.
 
-* Request by `sampler.values().callchain(true);`
-* Read from the results by `sample_record.callchain().value();`, which returns a vector of `std::uintptr_t` instruction pointers.
+* Request by `sampler.values().callchain(true);` or `sampler.values().callchain(M);` where `M` is a `std::uint16_t` defining the maximum call stack size. 
+* Read from the results by `sample_record.callchain().value();`, which returns a `std::vector<std::uintptr_t>` of instruction pointers.
 
 ### ID of the recording CPU
 
