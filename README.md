@@ -9,9 +9,9 @@ Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
 ----
 
 ## Key Features
-* **Simplified Performance Measurement**: Directly integrate with hardware performance counters from your C++ application within specific code segments ([read the documentation](docs/recording.md)).
-* **Event Sampling**: Leverage sampling to gather performance data periodically, enabling efficient analysis of resource usage (including instruction pointers, data, branches, registers, and more) over time and/or execution ([read the documentation](docs/sampling.md)).
-* **Customizable Counter Management**: Easily extend the built-in counters with those specific to your underlying hardware substrate ([read the documentation](docs/counters.md)).
+* **Simplified Performance Measurement**: Directly integrate with hardware performance counters from your C++ application within specific code segments (&rarr;[read the documentation](docs/recording.md)).
+* **Event Sampling**: Leverage sampling to gather performance data periodically, enabling efficient analysis of resource usage (including instruction pointers, data, branches, registers, and more) over time and/or execution (&rarr;[read the documentation](docs/sampling.md)).
+* **Customizable Counter Management**: Easily extend the built-in counters with those specific to your underlying hardware substrate (&rarr;[read the documentation](docs/counters.md)).
 
 ---
 
@@ -69,7 +69,7 @@ sampler.trigger("cycles");
 /// Add what to record to samples: Timestamp, CPU ID, and instruction pointer.
 sampler.values()
     .time(true)
-    .cpu(true)
+    .cpu_id(true)
     .instruction_pointer(true);
 
 /// Start sampling.
@@ -118,7 +118,7 @@ cmake .
 /// 4) Build the library (only)
 make
 
-/// 5) Build the examples
+/// 5) Build the examples (optional)
 /// Examples will be compiled to examples/bin/
 make examples
 ```
@@ -140,7 +140,7 @@ make examples
 
 ## Further Code Examples
 We provide a variety of examples detailed below. 
-Build them effortlessly by running `make`. 
+Build them effortlessly by running `make examples`. 
 All compiled example binaries are located in `examples/bin` and can be executed directly without additional arguments.
 
 * Code example for recording counters on a [single thread: `examples/single_thread.cpp`](examples/single_thread.cpp)
