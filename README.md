@@ -9,21 +9,9 @@ Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
 ----
 
 ## Key Features
-* **Simplified Performance Measurement**: Directly integrate with CPU performance counters into your C++ application, using a more accessible interface.
-* **Fine-granular Metrics**: Focus your performance analysis on specific code segments.
-* **Event Sampling**: Leverage sampling to gather performance data periodically, enabling efficient analysis of resource usage (including instruction pointers, data, branches, registers, and more) over time and/or execution.
-* **Customizable Counter Management**: Easily extend the built-in counters with those specific to your underlying hardware substrate.
-
-## Documentation
-* [Building and including this library](docs/build.md)
-* **Recording performance counters**
-    * [Overview and basics of Recording performance counters (single threaded)](docs/recording.md)
-    * [Recording counters in parallel (multithread / multicore) settings](docs/recording-parallel.md)
-    * [Defining and using metrics](docs/metrics.md)
-* **Event Sampling**
-  * [Overview and basics of event sampling](docs/sampling.md)
-  * [Event sampling in parallel (multithread / multicore) settings](docs/sampling-parallel.md)
-* [Built-in and hardware-specific performance counters](docs/counters.md)
+* **Simplified Performance Measurement**: Directly integrate with hardware performance counters from your C++ application within specific code segments ([read the documentation](docs/recording.md)).
+* **Event Sampling**: Leverage sampling to gather performance data periodically, enabling efficient analysis of resource usage (including instruction pointers, data, branches, registers, and more) over time and/or execution ([read the documentation](docs/sampling.md)).
+* **Customizable Counter Management**: Easily extend the built-in counters with those specific to your underlying hardware substrate ([read the documentation](docs/counters.md)).
 
 ---
 
@@ -127,9 +115,26 @@ cd perf-cpp
 /// 3) Generate the Makefile
 cmake .
 
-/// 4) Build the library and examples
+/// 4) Build the library (only)
 make
+
+/// 5) Build the examples
+/// Examples will be compiled to examples/bin/
+make examples
 ```
+
+---
+
+## Documentation
+* [Building and including this library](docs/build.md)
+* **Recording performance counters**
+  * [Overview and basics of Recording performance counters (single threaded)](docs/recording.md)
+  * [Recording counters in parallel (multithread / multicore) settings](docs/recording-parallel.md)
+  * [Defining and using metrics](docs/metrics.md)
+* **Event Sampling**
+  * [Overview and basics of event sampling](docs/sampling.md)
+  * [Event sampling in parallel (multithread / multicore) settings](docs/sampling-parallel.md)
+* [Built-in and hardware-specific performance counters](docs/counters.md)
 
 ---
 
