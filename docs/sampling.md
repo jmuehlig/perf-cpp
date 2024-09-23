@@ -378,6 +378,11 @@ Size of pages of sampled instruction pointers (e.g., when sampling for instructi
 * Request by `sampler.values().code_page_size(true);`
 * Read from the results by `sample_record.code_page_size().value();`
 
+## Precision
+Due to out-of-order execution, samples might not be precise.
+You can request a skid through the `SampleConfig::precise_ip` interface, ranging from `0` ("arbitrary skid"), over `1` ("constant skid") to `2` and `3` ("zero skid).
+
+You can test a sample for its precision using `sample_record.is_exact_ip()`.
 
 ## Lost Samples
 Sample records can be lost, e.g., if the buffer is out of capacity or the CPU is too busy.
