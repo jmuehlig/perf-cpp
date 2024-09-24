@@ -95,7 +95,7 @@ public:
   {
     return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_RAM) && static_cast<bool>(remote() == PERF_MEM_REMOTE_REMOTE);
   }
-
+#if defined(PERF_MEM_HOPS_0) && defined(PERF_MEM_HOPS_1) && (PERF_MEM_HOPS_2) && (PERF_MEM_HOPS_3)
   /**
    * @return True, if the memory address was found in the local RAM.
    */
@@ -115,6 +115,27 @@ public:
    * @return True, if the memory address was found with three hops distance (remote board).
    */
   [[nodiscard]] bool is_mem_hops3() const noexcept { return static_cast<bool>(hops() == PERF_MEM_HOPS_3); }
+#else
+  /**
+   * @return True, if the memory address was found in the local RAM.
+   */
+  [[nodiscard]] bool is_mem_hops0() const noexcept { return is_mem_local_ram(); }
+
+  /**
+   * @return True, if the memory address was found with one hop distance (same node).
+   */
+  [[nodiscard]] bool is_mem_hops1() const noexcept { return false; }
+
+  /**
+   * @return True, if the memory address was found with two hops distance (remote socket, same board).
+   */
+  [[nodiscard]] bool is_mem_hops2() const noexcept { return false; }
+
+  /**
+   * @return True, if the memory address was found with three hops distance (remote board).
+   */
+  [[nodiscard]] bool is_mem_hops3() const noexcept { return false; }
+#endif
 
   /**
    * @return True, if the memory address was found in a remote RAM with one hop distance.
@@ -141,20 +162,41 @@ public:
    */
   [[nodiscard]] bool is_mem_remote_cce2() const noexcept { return static_cast<bool>(lvl() & PERF_MEM_LVL_REM_CCE2); }
 
+#ifdef PERF_MEM_LVLNUM_PMEM
   /**
    * @return True, if the memory address is stored in a PMEM module.
    */
   [[nodiscard]] bool is_pmem() const noexcept { return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_PMEM); }
+#else
+  /**
+   * @return True, if the memory address is stored in a PMEM module.
+   */
+  [[nodiscard]] bool is_pmem() const noexcept { return false; }
+#endif
 
+#ifdef PERF_MEM_LVLNUM_CXL
   /**
    * @return True, if the memory address is transferred via Compute Express Link.
    */
   [[nodiscard]] bool is_cxl() const noexcept { return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_CXL); }
+#else
+  /**
+   * @return True, if the memory address is transferred via Compute Express Link.
+   */
+  [[nodiscard]] bool is_cxl() const noexcept { return false; }
+#endif
 
+#ifdef PERF_MEM_LVLNUM_IO
   /**
    * @return True, if the memory address is I/O.
    */
   [[nodiscard]] bool is_io() const noexcept { return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_IO); }
+#else
+  /**
+   * @return True, if the memory address is I/O.
+   */
+  [[nodiscard]] bool is_io() const noexcept { return false; }
+#endif
 
   /**
    * @return True, if the memory address was a TLB hit.
@@ -288,7 +330,11 @@ public:
    */
   [[nodiscard]] std::uint64_t hops() const noexcept
   {
+#ifdef PERF_MEM_HOPS_0
     return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_hops;
+#else
+    return 0ULL;
+#endif
   }
 
 private:
