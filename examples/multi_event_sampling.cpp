@@ -21,9 +21,10 @@ main()
 
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
-  perf_config.precise_ip(3U); /// precise_ip controls the amount of skid, see
-                              /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-  perf_config.period(1000U);  /// Record every 1000th event.
+  perf_config.precise_ip(
+    perf::Precision::MustHaveZeroSkid); /// precise_ip controls the amount of skid, see
+                                       /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
+  perf_config.period(1000U);           /// Record every 1000th event.
 
   auto sampling_counters = std::vector<std::vector<std::string>>{};
 

@@ -17,15 +17,16 @@ main()
 
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
-  perf_config.precise_ip(2U); /// precise_ip controls the amount of skid, see
-                              /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-  perf_config.period(100U);   /// Record every 1,000,000th event.
+  perf_config.period(10000U);            /// Record every 10,000th event.
 
   auto sampler = perf::Sampler{ counter_definitions, perf_config };
-  sampler.trigger("cycles"); /// Event that generates an overflow which is samples (here we
-                             /// sample every 1,000,000th cycle)
+
+  /// Event that generates an overflow which is samples.
+  sampler.trigger("cycles", perf::Precision::RequestZeroSkid);
+
+  /// Include Timestamp, period, instruction pointer, and CPU number into samples.
   sampler
-    .values() /// Include Timestamp, period, instruction pointer, and CPU number into samples.
+    .values()
     .time(true)
     .period(true)
     .instruction_pointer(true)

@@ -92,50 +92,39 @@ sampler.close();
 
 ---
 
-## Debugging Counter Settings
-In certain scenarios, configuring counters for sampling can be challenging, as settings (e.g., `precise_ip`) may need to be adjusted for different machines. 
-To facilitate this process, perf provides a debug output option:
-
-
-    perf --debug perf-event-open [mem] record ...
-
-
-This command helps visualize configurations for various counters, which is also beneficial for retrieving event codes (for more details, see the [counters documentation](counters.md)).
-
-Similarly, *perf-cpp* includes a debug feature for sampled counters. 
-To examine the configuration settings—particularly useful if encountering errors during `sampler.start();`—enable debugging in your code as follows:
+## Trigger
+Each sampler has one or more **trigger** events.
+If the trigger event reaches the count specified in `SampleConfig::period`, the CPU will write a sample containing the requested data.
+The trigger(s) of a sampler will be defined by, for example,
 
 ```cpp
-sample_config.is_debug(true);
+sampler.trigger("cycles");
 ```
+.
+Multiple triggers can be defined using a vector of trigger names:
 
-When `is_debug` is set to `true`, *perf-cpp* will display the configuration of all counters upon initiating sampling.
-
----
-
-## Sample mode
-Each sample is recorded in one of the following modes:
-* Unknown
-* Kernel
-* User
-* Hypervisor
-* GuestKernel
-* GuestUser
-
-You can check the mode via `Sample::mode()`, for example:
 ```cpp
-for (const auto& sample_record : result)
-{
-  if (sample_record.mode() == perf::Sample::Mode::Kernel)
-  {
-    std::cout << "Sample in Kernel" << std::endl;      
-  }
-  else if (sample_record.mode() == perf::Sample::Mode::User)
-  {
-    std::cout << "Sample in User" << std::endl;      
-  }
-}
+sampler.trigger({"cycles", "instructions"});
 ```
+In that case, both, an overflow of the cycles and of the instructions counter will trigger the CPU to write a sample.
+
+## Precision
+Due to deeply pipelined processors, samples might not be precise, i.e., a sample might contain an instruction pointer that did not generate the overflow (&rarr; [see this blogpost](https://easyperf.net/blog/2019/04/03/Precise-timing-of-machine-code-with-Linux-perf)).
+You can request a specific amount if skid through for each trigger, for example,
+
+```cpp
+sampler.trigger("cycles", perf::Precision::MustHaveZeroSkid);
+```
+
+The precision can have the following values:
+* `perf::Precision::AllowArbitrarySkid`
+* `perf::Precision::MustHaveConstantSkid`
+* `perf::Precision::RequestZeroSkid`
+* `perf::Precision::MustHaveZeroSkid`
+
+the `SampleConfig::precise_ip` interface, ranging from `0` ("arbitrary skid"), over `1` ("constant skid") to `2` and `3` ("zero skid).
+
+You can test a sample for its precision using `sample_record.is_exact_ip()`.
 
 ## What can be recorded and how to access the data?
 Before starting, the sampler need to be instructed what data should be recorded, for example:
@@ -378,11 +367,29 @@ Size of pages of sampled instruction pointers (e.g., when sampling for instructi
 * Request by `sampler.values().code_page_size(true);`
 * Read from the results by `sample_record.code_page_size().value();`
 
-## Precision
-Due to out-of-order execution, samples might not be precise.
-You can request a skid through the `SampleConfig::precise_ip` interface, ranging from `0` ("arbitrary skid"), over `1` ("constant skid") to `2` and `3` ("zero skid).
+## Sample mode
+Each sample is recorded in one of the following modes:
+* Unknown
+* Kernel
+* User
+* Hypervisor
+* GuestKernel
+* GuestUser
 
-You can test a sample for its precision using `sample_record.is_exact_ip()`.
+You can check the mode via `Sample::mode()`, for example:
+```cpp
+for (const auto& sample_record : result)
+{
+  if (sample_record.mode() == perf::Sample::Mode::Kernel)
+  {
+    std::cout << "Sample in Kernel" << std::endl;      
+  }
+  else if (sample_record.mode() == perf::Sample::Mode::User)
+  {
+    std::cout << "Sample in User" << std::endl;      
+  }
+}
+```
 
 ## Lost Samples
 Sample records can be lost, e.g., if the buffer is out of capacity or the CPU is too busy.
@@ -403,3 +410,24 @@ Especially memory sampling is a problem on AMD hardware.
 The Instruction Based Sampling (IBS) mechanism cannot tag specific load and store instructions, but randomly tags instructions to monitor.
 In case the instruction was not a load/store instruction, the sample will not include data source and a memory address ([see kernel mailing list](https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/)).
 To use IBS, create an IBS counter (`counter_definitions.add("ibs_op", perf::CounterConfig{ 11U, 0x0 });`) and use ot for sampling (&rarr; [see code example](../examples/address_sampling.cpp)).
+
+---
+
+## Debugging Counter Settings
+In certain scenarios, configuring counters for sampling can be challenging, as settings (e.g., `precise_ip`) may need to be adjusted for different machines.
+To facilitate this process, perf provides a debug output option:
+
+
+    perf --debug perf-event-open [mem] record ...
+
+
+This command helps visualize configurations for various counters, which is also beneficial for retrieving event codes (for more details, see the [counters documentation](counters.md)).
+
+Similarly, *perf-cpp* includes a debug feature for sampled counters.
+To examine the configuration settings—particularly useful if encountering errors during `sampler.start();`—enable debugging in your code as follows:
+
+```cpp
+sample_config.is_debug(true);
+```
+
+When `is_debug` is set to `true`, *perf-cpp* will display the configuration of all counters upon initiating sampling.

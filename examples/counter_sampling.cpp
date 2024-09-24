@@ -16,14 +16,12 @@ main()
 
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
-  perf_config.precise_ip(0U);   /// precise_ip controls the amount of skid, see
-                                /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-  perf_config.period(1000000U); /// Record every 10000th event.
+  perf_config.period(1000000U); /// Record every 1,000,000th event.
 
   auto sampler = perf::Sampler{ counter_definitions, perf_config };
 
   /// Setup the event that will trigger writing samples.
-  sampler.trigger("cycles");
+  sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid);
 
   /// Setup which data should be included (L1 hit and miss counter, timestamp).
   sampler.values().counter({ "L1-dcache-loads", "L1-dcache-load-misses" }).time(true);
@@ -73,8 +71,7 @@ main()
     if (sample.time().has_value() && sample.counter().has_value()) {
       if (last_counter_result.has_value()) {
         std::cout << "Time = " << sample.time().value() << " | cycles (diff) = "
-                  << sample.counter()->get("cycles").value_or(.0) -
-                       last_counter_result->get("cycles").value_or(.0)
+                  << sample.counter()->get("cycles").value_or(.0) - last_counter_result->get("cycles").value_or(.0)
                   << " | L1-dcache-loads (diff) = "
                   << sample.counter()->get("L1-dcache-loads").value_or(.0) -
                        last_counter_result->get("L1-dcache-loads").value_or(.0)

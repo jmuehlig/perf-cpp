@@ -4,6 +4,7 @@
 #include "registers.h"
 #include <cstdint>
 #include <optional>
+#include "precision.h"
 
 namespace perf {
 class Config
@@ -81,7 +82,7 @@ public:
   SampleConfig() noexcept = default;
   ~SampleConfig() noexcept = default;
 
-  [[nodiscard]] std::uint8_t precise_ip() const noexcept { return _precise_ip; }
+  [[nodiscard]] Precision precise_ip() const noexcept { return _precise_ip; }
   [[nodiscard]] std::uint64_t buffer_pages() const noexcept { return _buffer_pages; }
   [[nodiscard]] std::uint64_t frequency_or_period() const noexcept { return _frequency_or_period; }
   [[nodiscard]] bool is_frequency() const noexcept { return _is_frequency; }
@@ -110,7 +111,17 @@ public:
     _is_frequency = false;
     _frequency_or_period = period;
   }
-  void precise_ip(const std::uint8_t precise_ip) noexcept { _precise_ip = precise_ip; }
+
+  void precise_ip(const Precision precision) noexcept { _precise_ip = precision; }
+
+  void precise_ip(const std::uint8_t precise_ip) noexcept {
+    switch (precise_ip) {
+      case 0U: _precise_ip = Precision::AllowArbitrarySkid; return;
+      case 1U: _precise_ip = Precision::MustHaveConstantSkid; return;
+      case 2U: _precise_ip = Precision::RequestZeroSkid; return;
+      default: _precise_ip = Precision::MustHaveZeroSkid;
+    }
+  }
   void buffer_pages(const std::uint64_t buffer_pages) noexcept { _buffer_pages = buffer_pages; }
   [[deprecated("User Registers will be set through the Sampler::values() interface.")]] void user_registers(
     const Registers registers) noexcept
@@ -141,7 +152,7 @@ private:
   bool _is_frequency{ true };
   std::uint64_t _frequency_or_period{ 4000U };
 
-  std::uint8_t _precise_ip{ 0 };
+  Precision _precise_ip{ Precision::AllowArbitrarySkid };
 
   /// User registers in config is deprecated and will be replaced by Sampler::values() interface.
   Registers _user_registers;

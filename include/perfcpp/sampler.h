@@ -263,14 +263,15 @@ public:
    * Set the trigger for sampling to a single counter.
    *
    * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @param precision Precision of the event.
    * @return Sampler
    */
-  Sampler& trigger(std::string&& trigger_name) { return trigger(std::vector<std::string>{ std::move(trigger_name) }); }
+  Sampler& trigger(std::string&& trigger_name, const Precision precision = Precision::Unspecified) { return trigger(std::vector<std::pair<std::string, Precision>>{ std::make_pair(std::move(trigger_name), precision) }); }
 
   /**
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
    *
-   * @param trigger_name Name of the counters that "triggers" sample recording.
+   * @param trigger_names Names of the counters that "trigger" sample recording.
    * @return Sampler
    */
   Sampler& trigger(std::vector<std::string>&& trigger_names)
@@ -280,13 +281,35 @@ public:
 
   /**
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
+   *
+   * @param triggers List of name-precision tuples that "trigger" sample recording.
+   * @return Sampler
+   */
+  Sampler& trigger(std::vector<std::pair<std::string, Precision>>&& triggers)
+  {
+    return trigger(std::vector<std::vector<std::pair<std::string, Precision>>>{ std::move(triggers) });
+  }
+
+  /**
+   * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
    * Counters of the outer list will be grouped together, to enable auxiliary counter (e.g., needed
    * for Intel's Sapphire Rapids architecture).
    *
-   * @param trigger_name Group of names of the counters that "triggers" sample recording.
+   * @param triggers Group of names of the counters that "trigger" sample recording.
    * @return Sampler
    */
-  Sampler& trigger(std::vector<std::vector<std::string>>&& trigger_names);
+  Sampler& trigger(std::vector<std::vector<std::string>>&& triggers);
+
+  /**
+   * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
+   * Counters of the outer list will be grouped together, to enable auxiliary counter (e.g., needed
+   * for Intel's Sapphire Rapids architecture).
+   *
+   * @param triggers Group of names and precisions of the counters that "trigger" sample recording.
+   * @return Sampler
+   */
+  Sampler& trigger(std::vector<std::vector<std::pair<std::string, Precision>>>&& triggers);
+
 
   /**
    * @return Configurations to enable values that will be sampled.
@@ -345,7 +368,7 @@ private:
   /// List of triggers. Each trigger will open an individual group of counters.
   /// "Normally", a 1-dimensional list would be enough, but since Intel Sapphire Rapids,
   /// we need auxiliary counters for mem-loads, mem-stores, etc.
-  std::vector<std::vector<std::string_view>> _trigger_names;
+  std::vector<std::vector<std::pair<std::string_view, Precision>>> _trigger_names;
 
   /// Values to record into every sample.
   Values _values;

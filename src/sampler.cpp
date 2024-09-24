@@ -77,22 +77,45 @@ perf::Sampler::Sampler(const perf::CounterDefinition& counter_list,
 }
 
 perf::Sampler&
-perf::Sampler::trigger(std::vector<std::vector<std::string>>&& trigger_names)
+perf::Sampler::trigger(std::vector<std::vector<std::string>>&& triggers)
 {
-  this->_trigger_names.reserve(trigger_names.size());
+  auto triggers_with_precision = std::vector<std::vector<std::pair<std::string, Precision>>>{};
+  triggers_with_precision.reserve(triggers.size());
 
-  for (auto& trigger_group : trigger_names) {
-    auto trigger_group_references = std::vector<std::string_view>{};
-    for (auto& counter_name : trigger_group) {
-      if (!this->_counter_definitions.is_metric(counter_name)) {
-        if (auto counter_config = this->_counter_definitions.counter(counter_name); counter_config.has_value()) {
-          trigger_group_references.push_back(std::get<0>(counter_config.value()));
+  for (auto& trigger_names : triggers)
+  {
+    auto trigger_with_precision = std::vector<std::pair<std::string, Precision>>{};
+
+    trigger_with_precision.reserve(trigger_names.size());
+    for (auto& trigger_name : trigger_names) {
+      trigger_with_precision.emplace_back(std::move(trigger_name), Precision::Unspecified);
+    }
+
+    triggers_with_precision.push_back(std::move(trigger_with_precision));
+  }
+
+  return this->trigger(std::move(triggers_with_precision));
+}
+
+perf::Sampler&
+perf::Sampler::trigger(std::vector<std::vector<std::pair<std::string, Precision>>>&& triggers)
+{
+  this->_trigger_names.reserve(triggers.size());
+
+  for (auto& trigger_group : triggers) {
+    auto trigger_group_references = std::vector<std::pair<std::string_view, Precision>>{};
+    for (auto& counter_name_and_precision : trigger_group) {
+      const auto& trigger_name = std::get<0>(counter_name_and_precision);
+
+      if (!this->_counter_definitions.is_metric(trigger_name)) {
+        if (auto counter_config = this->_counter_definitions.counter(trigger_name); counter_config.has_value()) {
+          trigger_group_references.emplace_back(std::get<0>(counter_config.value()), std::get<1>(counter_name_and_precision));
         } else {
-          throw std::runtime_error{ std::string{ "Cannot find counter '" }.append(counter_name).append("'.") };
+          throw std::runtime_error{ std::string{ "Cannot find counter '" }.append(trigger_name).append("'.") };
         }
       } else {
         throw std::runtime_error{ std::string{ "Counter '" }
-                                    .append(counter_name)
+                                    .append(trigger_name)
                                     .append("' seems to be a metric. Metrics are not supported as triggers.") };
       }
     }
@@ -120,11 +143,16 @@ perf::Sampler::open()
     }
 
     /// Add the trigger(s) to the group.
-    for (const auto trigger_name : trigger_group) {
-      if (auto counter_config = this->_counter_definitions.counter(trigger_name); counter_config.has_value()) {
-        group.add(std::get<1>(counter_config.value()));
+    for (const auto trigger : trigger_group) {
+      if (auto counter_config = this->_counter_definitions.counter(std::get<0>(trigger)); counter_config.has_value()) {
+        const auto precision = std::get<1>(trigger) != Precision::Unspecified ? std::get<1>(trigger) : this->_config.precise_ip();
+        auto config = std::get<1>(counter_config.value());
+        config.precise_ip(static_cast<std::uint8_t>(precision));
+
+        group.add(config);
+
         if (this->_values.is_set(PERF_SAMPLE_READ)) {
-          this->_counter_names.back().push_back(trigger_name);
+          this->_counter_names.back().push_back(std::get<0>(trigger));
         }
       }
     }
@@ -216,18 +244,18 @@ perf::Sampler::open()
         if (this->_values.is_set(PERF_SAMPLE_CALLCHAIN)) {
           perf_event.sample_max_stack = this->_values.max_call_stack();
         }
+
+        if (this->_values.is_set(PERF_SAMPLE_REGS_USER)) {
+          perf_event.sample_regs_user = this->_values.user_registers().mask();
+        }
+
+        if (this->_values.is_set(PERF_SAMPLE_REGS_INTR)) {
+          perf_event.sample_regs_intr = this->_values.kernel_registers().mask();
+        }
       }
 
       if (this->_values.is_set(PERF_SAMPLE_READ)) {
         perf_event.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
-      }
-
-      if (this->_values.is_set(PERF_SAMPLE_REGS_USER)) {
-        perf_event.sample_regs_user = this->_values.user_registers().mask();
-      }
-
-      if (this->_values.is_set(PERF_SAMPLE_REGS_INTR)) {
-        perf_event.sample_regs_intr = this->_values.kernel_registers().mask();
       }
 
       const std::int32_t cpu_id =
@@ -236,11 +264,17 @@ perf::Sampler::open()
       /// Open the counter. Try to decrease the precise_ip if the file syscall was not successful, reporting an invalid
       /// argument.
       std::int64_t file_descriptor;
-      for (auto precise_ip = std::int32_t{ this->_config.precise_ip() }; precise_ip > -1; --precise_ip) {
+      for (auto precise_ip = std::int32_t{ counter.precise_ip() }; precise_ip > -1; --precise_ip) {
         perf_event.precise_ip = std::uint64_t(precise_ip);
+
+        counter.precise_ip(static_cast<std::uint8_t>(precise_ip)); /// Set back to counter in case the counter is debugged and the user wants to see the precise_ip that worked.
+
         file_descriptor = ::syscall(
           __NR_perf_event_open, &perf_event, this->_config.process_id(), cpu_id, group.leader_file_descriptor(), 0);
-        if (file_descriptor > -1 || errno != EINVAL) {
+
+        /// If opening the file descriptor was successfully, we can start the counter.
+        /// Otherwise, we will try to decrease the precision and try again.
+        if (file_descriptor > -1 || (errno != EINVAL && errno != EOPNOTSUPP)) {
           break;
         }
       }
