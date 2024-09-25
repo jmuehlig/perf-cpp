@@ -301,6 +301,7 @@ sampler.trigger({
 ```
 
 The sampler will detect that auxiliary counter automatically.
+
 &rarr; [See code example](../examples/multi_event_sampling.cpp)
 
 ### Data source of a memory load
