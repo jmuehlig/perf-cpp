@@ -46,7 +46,20 @@ sampler.trigger("cycles");
 sampler.values().time(true).instruction_pointer(true);
 ```
 
-### 2) Wrap `start()` and `stop()` around your processing code
+### 2) Open the sampler *(optional)* 
+The sampler will be opened by `sampler.start()`, if it is not already opened.
+Opening the sampler means setting up all the counters and buffers, which can take some time.
+If you need precise time measurements and want to exclude the counter setup, you can call open individually.
+
+```cpp
+try {
+    sampler.open();
+} catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+}
+```
+
+### 3) Wrap `start()` and `stop()` around your processing code
 ```cpp
 try {
     sampler.start();
@@ -59,7 +72,7 @@ try {
 sampler.stop();
 ```
 
-### 3) Access the recorded samples
+### 4) Access the recorded samples
 The output consists of a list of `perf::Sample` instances, where each sample may contain comprehensive data. 
 As you have the flexibility to specify which data elements to sample, each piece of data is encapsulated within an `std::optional` to handle its potential absence.
 ```cpp
@@ -84,7 +97,7 @@ The output may be something like this:
     Time = 124853765058918 | IP = 0x5794c991990c
     Time = 124853765256328 | IP = 0x5794c991990c
 
-### 4) Closing the sampler
+### 5) Closing the sampler
 Closing the sampler will free and un-map all buffers.
 ```cpp
 sampler.close();
@@ -109,11 +122,11 @@ sampler.trigger({"cycles", "instructions"});
 In that case, both, an overflow of the cycles and of the instructions counter will trigger the CPU to write a sample.
 
 ## Precision
-Due to deeply pipelined processors, samples might not be precise, i.e., a sample might contain an instruction pointer that did not generate the overflow (&rarr; [see this blogpost](https://easyperf.net/blog/2019/04/03/Precise-timing-of-machine-code-with-Linux-perf)).
+Due to deeply pipelined processors, samples might not be precise, i.e., a sample might contain an instruction pointer or memory address that did not generate the overflow (&rarr; see [a blogpost on easyperf.net](https://easyperf.net/blog/2019/04/03/Precise-timing-of-machine-code-with-Linux-perf) and [the perf documentation](https://man7.org/linux/man-pages/man2/perf_event_open.2.html)).
 You can request a specific amount if skid through for each trigger, for example,
 
 ```cpp
-sampler.trigger("cycles", perf::Precision::MustHaveZeroSkid);
+sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid);
 ```
 
 The precision can have the following values:
@@ -122,9 +135,15 @@ The precision can have the following values:
 * `perf::Precision::RequestZeroSkid`
 * `perf::Precision::MustHaveZeroSkid`
 
-the `SampleConfig::precise_ip` interface, ranging from `0` ("arbitrary skid"), over `1` ("constant skid") to `2` and `3` ("zero skid).
+If you do not set any precision level through the `.trigger()` interface, you can control the *default* precision through the sample config:
 
-You can test a sample for its precision using `sample_record.is_exact_ip()`.
+```cpp
+auto sample_config = perf::SampleConfig{};
+sample_config.precise_ip(perf::Precision::RequestZeroSkid);
+
+auto sampler = perf::Sampler{ counter_definitions, sample_config };
+sampler.trigger("cycles");
+```
 
 ## What can be recorded and how to access the data?
 Before starting, the sampler need to be instructed what data should be recorded, for example:

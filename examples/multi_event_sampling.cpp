@@ -24,18 +24,18 @@ main()
   perf_config.precise_ip(
     perf::Precision::MustHaveZeroSkid); /// precise_ip controls the amount of skid, see
                                        /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-  perf_config.period(1000U);           /// Record every 1000th event.
+  perf_config.period(10000U);           /// Record every 10,000th event.
 
-  auto sampling_counters = std::vector<std::vector<std::string>>{};
+  auto sampling_counters = std::vector<std::vector<std::pair<std::string, perf::Precision>>>{};
 
   if (__builtin_cpu_is("intel") > 0) {
-    sampling_counters.emplace_back(std::vector<std::string>{ "loads" });
-    sampling_counters.emplace_back(std::vector<std::string>{ "stores" });
+    sampling_counters.push_back({ {"loads", perf::Precision::MustHaveZeroSkid} });
+    sampling_counters.push_back({ {"stores", perf::Precision::RequestZeroSkid} });
 
     if (__builtin_cpu_is("sapphirerapids")) {
       /// Note: For sampling on Sapphire Rapids, we have to prepend an auxiliary counter.
       for (auto& trigger : sampling_counters) {
-        trigger.insert(trigger.begin(), "mem-loads-aux");
+        trigger.insert(trigger.begin(), {"mem-loads-aux", perf::Precision::MustHaveZeroSkid});
       }
     }
   }

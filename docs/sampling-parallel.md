@@ -146,7 +146,20 @@ sampler.trigger("cycles");
 sampler.values().time(true).cpu_id(true).thread_id(true);
 ```
 
-### 2) Call `start()` and `stop()` 
+### 2) Open the sampler *(optional)*
+The sampler will be opened by `sampler.start()`, if it is not already opened.
+Opening the sampler means setting up all the counters and buffers, which can take some time.
+If you need precise time measurements and want to exclude the counter setup, you can call open individually.
+
+```cpp
+try {
+    sampler.open();
+} catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+}
+```
+
+### 3) Call `start()` and `stop()` 
 No matter for which threads, the sampler only needs to be started once.
 
 ```cpp
@@ -175,7 +188,7 @@ for (auto& thread : threads) {
 sampler.stop();
 ```
 
-### 3) Access the recorded samples
+### 4) Access the recorded samples
 The output consists of a list of `perf::Sample` instances, where each sample may contain comprehensive data.
 As you have the flexibility to specify which data elements to sample, each piece of data is encapsulated within an `std::optional` to handle its potential absence.
 You may want to sort the results (e.g., based on the timestamp) since threads will write samples in parallel.
@@ -206,7 +219,7 @@ The output may be something like this:
     Time = 173058800943659 | CPU ID = 3 | Thread ID = 62802
     Time = 173058801403355 | CPU ID = 8 | Thread ID = 62804
 
-### 4) Closing the sampler
+### 5) Closing the sampler
 Closing the sampler will free and un-map all buffers.
 ```cpp
 sampler.close();

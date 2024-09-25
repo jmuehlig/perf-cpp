@@ -668,6 +668,18 @@ perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std:
 }
 
 void
+perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std::vector<std::pair<std::string, Precision>>>&& triggers)
+{
+  for (auto sampler_id = 0U; sampler_id < samplers.size(); ++sampler_id) {
+    if (sampler_id < samplers.size() - 1U) {
+      samplers[sampler_id].trigger(std::vector<std::vector<std::pair<std::string, Precision>>>{ triggers });
+    } else {
+      samplers[sampler_id].trigger(std::move(triggers));
+    }
+  }
+}
+
+void
 perf::MultiSamplerBase::open(perf::Sampler& sampler, const perf::SampleConfig config)
 {
   sampler._values = _values;
