@@ -21,8 +21,6 @@ main()
 
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
-  perf_config.precise_ip(0U);   /// precise_ip controls the amount of skid, see
-                                /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
   perf_config.period(5000000U); /// Record every 5,000,000th event.
 
   auto sampler = perf::MultiThreadSampler{ counter_definitions, count_threads, perf_config };

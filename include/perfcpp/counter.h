@@ -24,9 +24,12 @@ public:
 
   ~CounterConfig() noexcept = default;
 
+  void precise_ip(const std::uint8_t precise_ip) noexcept { _precise_ip = precise_ip; }
+
   [[nodiscard]] std::uint32_t type() const noexcept { return _type; }
   [[nodiscard]] std::uint64_t event_id() const noexcept { return _event_id; }
   [[nodiscard]] std::array<std::uint64_t, 2U> event_id_extension() const noexcept { return _event_id_extension; }
+  [[nodiscard]] std::uint8_t precise_ip() const noexcept { return _precise_ip; }
 
   [[nodiscard]] bool is_auxiliary() const noexcept { return _event_id == 0x8203; }
 
@@ -34,6 +37,7 @@ private:
   std::uint32_t _type;
   std::uint64_t _event_id;
   std::array<std::uint64_t, 2U> _event_id_extension;
+  std::uint8_t _precise_ip {0U};
 };
 
 class CounterResult
@@ -120,6 +124,8 @@ public:
   {
     return _config.event_id_extension();
   }
+  void precise_ip(const std::uint8_t precision) { _config.precise_ip(precision); }
+  [[nodiscard]] std::uint8_t precise_ip() const noexcept { return _config.precise_ip(); }
 
   [[nodiscard]] perf_event_attr& event_attribute() noexcept { return _event_attribute; }
   [[nodiscard]] std::uint64_t& id() noexcept { return _id; }

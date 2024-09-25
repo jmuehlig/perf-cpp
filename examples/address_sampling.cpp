@@ -19,20 +19,18 @@ main()
 
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
-  perf_config.precise_ip(3U); /// precise_ip controls the amount of skid, see
-                              /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-  perf_config.period(1000U);  /// Record every 1000th event.
+  perf_config.period(1000U);           /// Record every 1000th event.
 
   auto sampler = perf::Sampler{ counter_definitions, perf_config };
 
   /// Setup which counters trigger the writing of samples (depends on the underlying hardware substrate).
   if (__builtin_cpu_is("amd") > 0) {
-    sampler.trigger("ibs_op");
+    sampler.trigger("ibs_op", perf::Precision::MustHaveZeroSkid);
   } else if (__builtin_cpu_is("intel") > 0 && __builtin_cpu_is("sapphirerapids") > 0) {
     /// Note: For sampling on Sapphire Rapids, we have to prepend an auxiliary counter.
-    sampler.trigger(std::vector<std::string>{ "mem-loads-aux", "mem_trans_retired.load_latency_gt_3" });
+    sampler.trigger({ std::make_pair("mem-loads-aux", perf::Precision::MustHaveZeroSkid), std::make_pair("mem_trans_retired.load_latency_gt_3",perf::Precision::MustHaveZeroSkid) });
   } else if (__builtin_cpu_is("intel") > 0) {
-    sampler.trigger("mem_trans_retired.load_latency_gt_3");
+    sampler.trigger("mem_trans_retired.load_latency_gt_3", perf::Precision::MustHaveZeroSkid);
   } else {
     std::cout << "Error: Memory sampling is not supported on this CPU." << std::endl;
     return 1;
