@@ -63,6 +63,7 @@ public:
     friend Sampler;
     friend MultiThreadSampler;
     friend MultiCoreSampler;
+
   public:
     Values& instruction_pointer(const bool include) noexcept
     {
@@ -213,7 +214,7 @@ public:
     Registers _kernel_registers;
     std::uint64_t _branch_mask{ 0ULL };
 
-    std::uint16_t _max_call_stack {0U};
+    std::uint16_t _max_call_stack{ 0U };
 
     void set(const std::uint64_t perf_field, const bool is_enabled) noexcept
     {
@@ -271,7 +272,11 @@ public:
    * @param precision Precision of the event.
    * @return Sampler
    */
-  Sampler& trigger(std::string&& trigger_name, const Precision precision = Precision::Unspecified) { return trigger(std::vector<std::pair<std::string, Precision>>{ std::make_pair(std::move(trigger_name), precision) }); }
+  Sampler& trigger(std::string&& trigger_name, const Precision precision = Precision::Unspecified)
+  {
+    return trigger(
+      std::vector<std::pair<std::string, Precision>>{ std::make_pair(std::move(trigger_name), precision) });
+  }
 
   /**
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
@@ -314,7 +319,6 @@ public:
    * @return Sampler
    */
   Sampler& trigger(std::vector<std::vector<std::pair<std::string, Precision>>>&& triggers);
-
 
   /**
    * @return Configurations to enable values that will be sampled.
@@ -495,7 +499,8 @@ protected:
    * @param samplers List of samplers.
    * @param trigger_names List of triggers.
    */
-  static void trigger(std::vector<Sampler>& samplers, std::vector<std::vector<std::pair<std::string, Precision>>>&& triggers);
+  static void trigger(std::vector<Sampler>& samplers,
+                      std::vector<std::vector<std::pair<std::string, Precision>>>&& triggers);
 
   /**
    * Initializes the given sampler with values and config.
@@ -585,7 +590,8 @@ public:
    */
   MultiThreadSampler& trigger(std::string&& trigger_name, const Precision precision = Precision::Unspecified)
   {
-    return trigger(std::vector<std::pair<std::string, Precision>>{ std::make_pair(std::move(trigger_name), precision) });
+    return trigger(
+      std::vector<std::pair<std::string, Precision>>{ std::make_pair(std::move(trigger_name), precision) });
   }
 
   /**
@@ -728,7 +734,8 @@ public:
    */
   MultiCoreSampler& trigger(std::string&& trigger_name, const Precision precision = Precision::Unspecified)
   {
-    return trigger(std::vector<std::pair<std::string, Precision>>{ std::make_pair(std::move(trigger_name), precision) });
+    return trigger(
+      std::vector<std::pair<std::string, Precision>>{ std::make_pair(std::move(trigger_name), precision) });
   }
 
   /**

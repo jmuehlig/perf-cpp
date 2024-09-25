@@ -21,19 +21,20 @@ main()
 
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
-  perf_config.period(10000U);           /// Record every 10,000th event.
+  perf_config.period(10000U); /// Record every 10,000th event.
 
   auto sampling_counters = std::vector<std::vector<std::pair<std::string, perf::Precision>>>{};
 
   if (__builtin_cpu_is("intel") > 0) {
     if (__builtin_cpu_is("sapphirerapids")) {
       /// Note: For sampling on Sapphire Rapids, we have to prepend an auxiliary counter.
-      sampling_counters.push_back({ {"mem-loads-aux", perf::Precision::MustHaveZeroSkid}, {"loads", perf::Precision::RequestZeroSkid} });
+      sampling_counters.push_back(
+        { { "mem-loads-aux", perf::Precision::MustHaveZeroSkid }, { "loads", perf::Precision::RequestZeroSkid } });
     } else {
-      sampling_counters.push_back({ {"loads", perf::Precision::RequestZeroSkid} });
+      sampling_counters.push_back({ { "loads", perf::Precision::RequestZeroSkid } });
     }
 
-    sampling_counters.push_back({ {"stores", perf::Precision::MustHaveZeroSkid} });
+    sampling_counters.push_back({ { "stores", perf::Precision::MustHaveZeroSkid } });
   }
 
   if (sampling_counters.empty()) {

@@ -19,7 +19,7 @@ main()
 
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
-  perf_config.period(1000U);           /// Record every 1000th event.
+  perf_config.period(1000U); /// Record every 1000th event.
 
   auto sampler = perf::Sampler{ counter_definitions, perf_config };
 
@@ -28,7 +28,8 @@ main()
     sampler.trigger("ibs_op", perf::Precision::MustHaveZeroSkid);
   } else if (__builtin_cpu_is("intel") > 0 && __builtin_cpu_is("sapphirerapids") > 0) {
     /// Note: For sampling on Sapphire Rapids, we have to prepend an auxiliary counter.
-    sampler.trigger({ std::make_pair("mem-loads-aux", perf::Precision::MustHaveZeroSkid), std::make_pair("mem_trans_retired.load_latency_gt_3",perf::Precision::MustHaveZeroSkid) });
+    sampler.trigger({ std::make_pair("mem-loads-aux", perf::Precision::MustHaveZeroSkid),
+                      std::make_pair("mem_trans_retired.load_latency_gt_3", perf::Precision::MustHaveZeroSkid) });
   } else if (__builtin_cpu_is("intel") > 0) {
     sampler.trigger("mem_trans_retired.load_latency_gt_3", perf::Precision::MustHaveZeroSkid);
   } else {

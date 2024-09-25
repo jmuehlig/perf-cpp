@@ -1,10 +1,10 @@
 #pragma once
 
 #include "branch.h"
+#include "precision.h"
 #include "registers.h"
 #include <cstdint>
 #include <optional>
-#include "precision.h"
 
 namespace perf {
 class Config
@@ -18,8 +18,11 @@ public:
   [[nodiscard]] std::uint8_t max_groups() const noexcept { return _max_groups; }
   [[nodiscard]] std::uint8_t max_counters_per_group() const noexcept { return _max_counters_per_group; }
 
-  [[deprecated("Will be replaced by Sampler::values() interface.")]]
-  [[nodiscard]] std::uint16_t max_stack() const noexcept { return _max_stack; }
+  [[deprecated("Will be replaced by Sampler::values() interface.")]] [[nodiscard]] std::uint16_t max_stack()
+    const noexcept
+  {
+    return _max_stack;
+  }
 
   [[nodiscard]] bool is_include_child_threads() const noexcept { return _is_include_child_threads; }
   [[nodiscard]] bool is_include_kernel() const noexcept { return _is_include_kernel; }
@@ -39,8 +42,11 @@ public:
     _max_counters_per_group = max_counters_per_group;
   }
 
-  [[deprecated("Will be replaced by Sampler::values() interface.")]]
-  void max_stack(const std::uint16_t max_stack) noexcept { _max_stack = max_stack; }
+  [[deprecated("Will be replaced by Sampler::values() interface.")]] void max_stack(
+    const std::uint16_t max_stack) noexcept
+  {
+    _max_stack = max_stack;
+  }
 
   void include_child_threads(const bool is_include_child_threads) noexcept
   {
@@ -114,12 +120,20 @@ public:
 
   void precise_ip(const Precision precision) noexcept { _precise_ip = precision; }
 
-  void precise_ip(const std::uint8_t precise_ip) noexcept {
+  void precise_ip(const std::uint8_t precise_ip) noexcept
+  {
     switch (precise_ip) {
-      case 0U: _precise_ip = Precision::AllowArbitrarySkid; return;
-      case 1U: _precise_ip = Precision::MustHaveConstantSkid; return;
-      case 2U: _precise_ip = Precision::RequestZeroSkid; return;
-      default: _precise_ip = Precision::MustHaveZeroSkid;
+      case 0U:
+        _precise_ip = Precision::AllowArbitrarySkid;
+        return;
+      case 1U:
+        _precise_ip = Precision::MustHaveConstantSkid;
+        return;
+      case 2U:
+        _precise_ip = Precision::RequestZeroSkid;
+        return;
+      default:
+        _precise_ip = Precision::MustHaveZeroSkid;
     }
   }
   void buffer_pages(const std::uint64_t buffer_pages) noexcept { _buffer_pages = buffer_pages; }

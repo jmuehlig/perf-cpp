@@ -83,8 +83,7 @@ perf::Sampler::trigger(std::vector<std::vector<std::string>>&& triggers)
   auto triggers_with_precision = std::vector<std::vector<std::pair<std::string, Precision>>>{};
   triggers_with_precision.reserve(triggers.size());
 
-  for (auto& trigger_names : triggers)
-  {
+  for (auto& trigger_names : triggers) {
     auto trigger_with_precision = std::vector<std::pair<std::string, Precision>>{};
 
     trigger_with_precision.reserve(trigger_names.size());
@@ -110,7 +109,8 @@ perf::Sampler::trigger(std::vector<std::vector<std::pair<std::string, Precision>
 
       if (!this->_counter_definitions.is_metric(trigger_name)) {
         if (auto counter_config = this->_counter_definitions.counter(trigger_name); counter_config.has_value()) {
-          trigger_group_references.emplace_back(std::get<0>(counter_config.value()), std::get<1>(counter_name_and_precision));
+          trigger_group_references.emplace_back(std::get<0>(counter_config.value()),
+                                                std::get<1>(counter_name_and_precision));
         } else {
           throw std::runtime_error{ std::string{ "Cannot find counter '" }.append(trigger_name).append("'.") };
         }
@@ -146,7 +146,8 @@ perf::Sampler::open()
     /// Add the trigger(s) to the group.
     for (const auto trigger : trigger_group) {
       if (auto counter_config = this->_counter_definitions.counter(std::get<0>(trigger)); counter_config.has_value()) {
-        const auto precision = std::get<1>(trigger) != Precision::Unspecified ? std::get<1>(trigger) : this->_config.precise_ip();
+        const auto precision =
+          std::get<1>(trigger) != Precision::Unspecified ? std::get<1>(trigger) : this->_config.precise_ip();
         auto config = std::get<1>(counter_config.value());
         config.precise_ip(static_cast<std::uint8_t>(precision));
 
@@ -268,7 +269,9 @@ perf::Sampler::open()
       for (auto precise_ip = std::int32_t{ counter.precise_ip() }; precise_ip > -1; --precise_ip) {
         perf_event.precise_ip = std::uint64_t(precise_ip);
 
-        counter.precise_ip(static_cast<std::uint8_t>(precise_ip)); /// Set back to counter in case the counter is debugged and the user wants to see the precise_ip that worked.
+        counter.precise_ip(
+          static_cast<std::uint8_t>(precise_ip)); /// Set back to counter in case the counter is debugged and the user
+                                                  /// wants to see the precise_ip that worked.
 
         file_descriptor = ::syscall(
           __NR_perf_event_open, &perf_event, this->_config.process_id(), cpu_id, group.leader_file_descriptor(), 0);
@@ -669,7 +672,8 @@ perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std:
 }
 
 void
-perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std::vector<std::pair<std::string, Precision>>>&& triggers)
+perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers,
+                                std::vector<std::vector<std::pair<std::string, Precision>>>&& triggers)
 {
   for (auto sampler_id = 0U; sampler_id < samplers.size(); ++sampler_id) {
     if (sampler_id < samplers.size() - 1U) {

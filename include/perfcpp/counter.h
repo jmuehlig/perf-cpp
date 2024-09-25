@@ -37,7 +37,7 @@ private:
   std::uint32_t _type;
   std::uint64_t _event_id;
   std::array<std::uint64_t, 2U> _event_id_extension;
-  std::uint8_t _precise_ip {0U};
+  std::uint8_t _precise_ip{ 0U };
 };
 
 class CounterResult

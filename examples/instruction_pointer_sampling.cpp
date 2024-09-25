@@ -17,7 +17,7 @@ main()
 
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
-  perf_config.period(10000U);            /// Record every 10,000th event.
+  perf_config.period(10000U); /// Record every 10,000th event.
 
   auto sampler = perf::Sampler{ counter_definitions, perf_config };
 
@@ -25,12 +25,7 @@ main()
   sampler.trigger("cycles", perf::Precision::RequestZeroSkid);
 
   /// Include Timestamp, period, instruction pointer, and CPU number into samples.
-  sampler
-    .values()
-    .time(true)
-    .period(true)
-    .instruction_pointer(true)
-    .cpu_id(true);
+  sampler.values().time(true).period(true).instruction_pointer(true).cpu_id(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
