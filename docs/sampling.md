@@ -286,17 +286,22 @@ Since Linux Kernel version `5.12`, the Kernel might generate more information th
 &rarr; [See code example](../examples/address_sampling.cpp)
 
 #### Specific Notice for Intel's Sapphire Rapids architecture
-To use weight-sampling on Intel's Sapphire Rapids architecture, perf needs an auxiliary counter to be added to the group, before the "real" counter is added (see [this commit](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).
-*perf-cpp*  defines this counter, you only need to add it accordingly:
+To use weight-sampling on Intel's Sapphire Rapids architecture, perf needs an auxiliary counter to be added to the group, before the first "real" counter is added (see [this commit](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).
+*perf-cpp*  defines this counter, you only need to add it accordingly.
+For example, to record loads (counter `0x1CD`) and stores (counter `0x2CD`):
 
 ```cpp
-sampler.trigger(std::vector<std::string>{
-    /* helper: */       "mem-loads-aux",
-    /* real counter: */ "your-memory-counter"
-});
+sampler.trigger({
+    { 
+        std::make_pair("mem-loads-aux", perf::Precision::MustHaveZeroSkid), /// Helper
+        std::make_pair("loads", perf::Precision::RequestZeroSkid)           /// First "real" counter
+    },
+    { std::make_pair("stores", perf::Precision::MustHaveZeroSkid) }         /// Other "real" counters.
+  });
 ```
 
 The sampler will detect that auxiliary counter automatically.
+&rarr; [See code example](../examples/multi_event_sampling.cpp)
 
 ### Data source of a memory load
 Data source where the data was sampled (e.g., local mem, remote mem, L1d, L2, ...).

@@ -26,15 +26,14 @@ main()
   auto sampling_counters = std::vector<std::vector<std::pair<std::string, perf::Precision>>>{};
 
   if (__builtin_cpu_is("intel") > 0) {
-    sampling_counters.push_back({ {"loads", perf::Precision::RequestZeroSkid} });
-    sampling_counters.push_back({ {"stores", perf::Precision::MustHaveZeroSkid} });
-
     if (__builtin_cpu_is("sapphirerapids")) {
       /// Note: For sampling on Sapphire Rapids, we have to prepend an auxiliary counter.
-      for (auto& trigger : sampling_counters) {
-        trigger.insert(trigger.begin(), {"mem-loads-aux", perf::Precision::MustHaveZeroSkid});
-      }
+      sampling_counters.push_back({ {"mem-loads-aux", perf::Precision::MustHaveZeroSkid}, {"loads", perf::Precision::RequestZeroSkid} });
+    } else {
+      sampling_counters.push_back({ {"loads", perf::Precision::RequestZeroSkid} });
     }
+
+    sampling_counters.push_back({ {"stores", perf::Precision::MustHaveZeroSkid} });
   }
 
   if (sampling_counters.empty()) {
