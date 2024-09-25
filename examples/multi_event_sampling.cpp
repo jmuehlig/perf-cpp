@@ -16,21 +16,18 @@ main()
   /// alive until the benchmark finishes.
   auto counter_definitions = perf::CounterDefinition{};
   counter_definitions.add("loads", perf::CounterConfig{ PERF_TYPE_RAW, 0x1CD, 0x3 });
-  counter_definitions.add("stores", perf::CounterConfig{ PERF_TYPE_RAW, 0x82d0 });
+  counter_definitions.add("stores", perf::CounterConfig{ PERF_TYPE_RAW, 0x2CD });
   counter_definitions.add("ibs_op", perf::CounterConfig{ 11U, 0x0 });
 
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
-  perf_config.precise_ip(
-    perf::Precision::MustHaveZeroSkid); /// precise_ip controls the amount of skid, see
-                                       /// https://man7.org/linux/man-pages/man2/perf_event_open.2.html
   perf_config.period(10000U);           /// Record every 10,000th event.
 
   auto sampling_counters = std::vector<std::vector<std::pair<std::string, perf::Precision>>>{};
 
   if (__builtin_cpu_is("intel") > 0) {
-    sampling_counters.push_back({ {"loads", perf::Precision::MustHaveZeroSkid} });
-    sampling_counters.push_back({ {"stores", perf::Precision::RequestZeroSkid} });
+    sampling_counters.push_back({ {"loads", perf::Precision::RequestZeroSkid} });
+    sampling_counters.push_back({ {"stores", perf::Precision::MustHaveZeroSkid} });
 
     if (__builtin_cpu_is("sapphirerapids")) {
       /// Note: For sampling on Sapphire Rapids, we have to prepend an auxiliary counter.
