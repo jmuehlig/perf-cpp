@@ -12,6 +12,8 @@
 
 namespace perf {
 class MultiSamplerBase;
+class MultiThreadSampler;
+class MultiCoreSampler;
 class Sampler
 {
   friend MultiSamplerBase;
@@ -58,6 +60,9 @@ public:
 
   class Values
   {
+    friend Sampler;
+    friend MultiThreadSampler;
+    friend MultiCoreSampler;
   public:
     Values& instruction_pointer(const bool include) noexcept
     {

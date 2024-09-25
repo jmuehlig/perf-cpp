@@ -36,7 +36,8 @@ perf::Sampler::Sampler(const perf::CounterDefinition& counter_list,
   }
 
   if (static_cast<bool>(type & PERF_SAMPLE_BRANCH_STACK)) {
-    _values.branch_stack(std::vector<BranchType>{ config.branch_type() });
+    _values._branch_mask = config.branch_type();
+    _values.set(PERF_SAMPLE_BRANCH_STACK, true);
   }
 
   if (static_cast<bool>(type & PERF_SAMPLE_REGS_USER)) {
@@ -720,7 +721,8 @@ perf::MultiThreadSampler::MultiThreadSampler(const perf::CounterDefinition& coun
     .weight_struct(static_cast<bool>(type & Sampler::Type::WeightStruct));
 
   if (static_cast<bool>(type & PERF_SAMPLE_BRANCH_STACK)) {
-    _values.branch_stack(std::vector<BranchType>{ config.branch_type() });
+    _values._branch_mask = config.branch_type();
+    _values.set(PERF_SAMPLE_BRANCH_STACK, true);
   }
 
   if (static_cast<bool>(type & PERF_SAMPLE_REGS_USER)) {
@@ -738,7 +740,7 @@ perf::MultiThreadSampler::MultiThreadSampler(const perf::CounterDefinition& coun
   auto read_counter_names = std::vector<std::string>{};
   for (auto counter_id = 0U; counter_id < counter_names.size(); ++counter_id) {
     auto& counter_name = counter_names[counter_id];
-    if (counter_list.is_metric(counter_name)) /// Metrics are not (yet) supported.
+    if (!counter_list.is_metric(counter_name)) /// Metrics are not (yet) supported.
     {
       if (auto counter_config = counter_list.counter(counter_name); counter_config.has_value()) {
         if (counter_id == 0U && counter_config->second.is_auxiliary()) {
@@ -805,7 +807,8 @@ perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_
     .weight_struct(static_cast<bool>(type & Sampler::Type::WeightStruct));
 
   if (static_cast<bool>(type & PERF_SAMPLE_BRANCH_STACK)) {
-    _values.branch_stack(std::vector<BranchType>{ config.branch_type() });
+    _values._branch_mask = config.branch_type();
+    _values.set(PERF_SAMPLE_BRANCH_STACK, true);
   }
 
   if (static_cast<bool>(type & PERF_SAMPLE_REGS_USER)) {
@@ -823,7 +826,7 @@ perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_
   auto read_counter_names = std::vector<std::string>{};
   for (auto counter_id = 0U; counter_id < counter_names.size(); ++counter_id) {
     auto& counter_name = counter_names[counter_id];
-    if (counter_list.is_metric(counter_name)) /// Metrics are not (yet) supported.
+    if (!counter_list.is_metric(counter_name)) /// Metrics are not (yet) supported.
     {
       if (auto counter_config = counter_list.counter(counter_name); counter_config.has_value()) {
         if (counter_id == 0U && counter_config->second.is_auxiliary()) {
