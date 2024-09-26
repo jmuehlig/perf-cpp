@@ -3,7 +3,7 @@
 *perf-cpp* is a streamlined C++ library designed to make performance analysis more intuitive and focused. 
 The key features are:
 
-* **Simplified Performance Measurement**: Directly integrate with hardware performance counters from your C++ application within specific code segments (&rarr;[read the documentation](docs/recording.md)).
+* **Simplified Performance Measurement**: Directly interact with hardware performance counters from your C++ application within specific code segments (&rarr;[read the documentation](docs/recording.md)).
 * **Event Sampling**: Leverage sampling to gather performance data periodically, enabling efficient analysis of resource usage (including instruction pointers, data, branches, registers, and more) over time and/or execution (&rarr;[read the documentation](docs/sampling.md)).
 * **Customizable Counter Management**: Easily extend the built-in counters with those specific to your underlying hardware substrate (&rarr;[read the documentation](docs/counters.md)).
 
