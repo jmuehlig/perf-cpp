@@ -26,6 +26,16 @@ perf::CounterDefinition::counter(const std::string& name) const noexcept
   return std::nullopt;
 }
 
+std::optional<std::pair<std::string_view, perf::Metric&>>
+perf::CounterDefinition::metric(const std::string& name) const noexcept
+{
+  if (auto iterator = _metrics.find(name); iterator != _metrics.end()) {
+    return std::make_optional(std::make_pair(std::string_view(iterator->first), std::ref(*iterator->second)));
+  }
+
+  return std::nullopt;
+}
+
 void
 perf::CounterDefinition::initialized_default_counters()
 {

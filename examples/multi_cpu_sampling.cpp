@@ -25,7 +25,7 @@ main()
   perf_config.period(5000000U); /// Record every 5,000,000th event.
 
   /// Create a list of cpus to sample (all available, in this example).
-  auto cpus_to_watch = std::vector<std::uint16_t>(std::thread::hardware_concurrency());
+  auto cpus_to_watch = std::vector<std::uint16_t>(std::min(4U, std::thread::hardware_concurrency()));
   std::iota(cpus_to_watch.begin(), cpus_to_watch.end(), 0U);
 
   auto sampler = perf::MultiCoreSampler{ counter_definitions, std::move(cpus_to_watch), perf_config };

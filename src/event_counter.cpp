@@ -27,9 +27,10 @@ perf::EventCounter::add(std::string&& counter_name)
   }
 
   /// Try to add the metric, if the name is a metric.
-  if (this->_counter_definitions.is_metric(counter_name)) {
+  auto metric = this->_counter_definitions.metric(counter_name);
+  if (metric.has_value()) {
     /// Add all required counters.
-    for (auto&& dependent_counter_name : this->_counter_definitions.metric(counter_name)->required_counter_names()) {
+    for (auto&& dependent_counter_name : std::get<1>(metric.value()).required_counter_names()) {
       auto dependent_counter_config = this->_counter_definitions.counter(dependent_counter_name);
       if (dependent_counter_config.has_value()) {
         this->add(std::get<0>(dependent_counter_config.value()), std::get<1>(dependent_counter_config.value()), true);
@@ -164,11 +165,11 @@ perf::EventCounter::result(std::uint64_t normalization) const
 
     /// ... and all metrics.
     else {
-      auto* metric = this->_counter_definitions.metric(event.name());
-      if (metric != nullptr) {
-        auto value = metric->calculate(counter_result);
+      auto metric = this->_counter_definitions.metric(event.name());
+      if (metric.has_value()) {
+        const auto value = std::get<1>(metric.value()).calculate(counter_result);
         if (value.has_value()) {
-          result.emplace_back(event.name(), value.value());
+          result.emplace_back(std::get<0>(metric.value()), value.value());
         }
       }
     }
@@ -252,11 +253,11 @@ perf::MultiEventCounterBase::result(const std::vector<perf::EventCounter>& event
 
     /// ... and all metrics.
     else {
-      auto* metric = main_perf._counter_definitions.metric(event.name());
-      if (metric != nullptr) {
-        auto value = metric->calculate(counter_result);
+      auto metric = main_perf._counter_definitions.metric(event.name());
+      if (metric.has_value()) {
+        auto value = std::get<1>(metric.value()).calculate(counter_result);
         if (value.has_value()) {
-          result.emplace_back(event.name(), value.value());
+          result.emplace_back(std::get<0>(metric.value()), value.value());
         }
       }
     }

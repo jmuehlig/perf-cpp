@@ -1,19 +1,15 @@
 # *perf-cpp*: Performance Counter Wrapper for C++
 
-Welcome to *perf-cpp*, a streamlined C++ library designed to make performance analysis more intuitive and focused. 
-At its core, *perf-cpp* serves as a wrapper for the [perf_event_open](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) function, enabling engineers to track performance counters at a fine-granular level within specific blocks of code. 
-Unlike traditional tools (like *perf*) that provide metrics the entire application, *perf-cpp* offers the precision needed to pinpoint performance issues and optimize code-segments effectively.
+*perf-cpp* is a streamlined C++ library designed to make performance analysis more intuitive and focused. 
+The key features are:
 
-Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
-
-----
-
-## Key Features
 * **Simplified Performance Measurement**: Directly integrate with hardware performance counters from your C++ application within specific code segments (&rarr;[read the documentation](docs/recording.md)).
 * **Event Sampling**: Leverage sampling to gather performance data periodically, enabling efficient analysis of resource usage (including instruction pointers, data, branches, registers, and more) over time and/or execution (&rarr;[read the documentation](docs/sampling.md)).
 * **Customizable Counter Management**: Easily extend the built-in counters with those specific to your underlying hardware substrate (&rarr;[read the documentation](docs/counters.md)).
 
----
+Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
+
+----
 
 ## Getting Started
 

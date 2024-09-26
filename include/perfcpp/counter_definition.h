@@ -55,15 +55,9 @@ public:
   }
   [[nodiscard]] bool is_metric(const std::string& name) const noexcept { return _metrics.find(name) != _metrics.end(); }
   [[nodiscard]] bool is_metric(std::string_view name) const noexcept { return is_metric(std::string{ name }); }
-  [[nodiscard]] Metric* metric(const std::string& name) const noexcept
-  {
-    if (auto iterator = _metrics.find(name); iterator != _metrics.end()) {
-      return iterator->second.get();
-    }
-
-    return nullptr;
-  }
-  [[nodiscard]] Metric* metric(std::string_view name) const noexcept { return metric(std::string{ name }); }
+  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(const std::string& name) const noexcept;
+  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(std::string&& name) const noexcept { return metric(name); }
+  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(const std::string_view name) const noexcept { return metric(std::string{name.data(), name.size()}); }
 
   [[nodiscard]] std::vector<std::string> names() const
   {
