@@ -19,8 +19,8 @@ Capture performance counters and samples directly within your C++ application, f
 &rarr; Further details are available in the [documentation](docs/README.md).
 
 #### Record Counters
-The `perf::EventCounter` class offers an interface to add and manage counters, as well as to start and stop recordings.
-Utilize predefined counters or customize counters specific to your hardware.
+The `perf::EventCounter` class offers an interface to record hardware performance counter statistics over a specific code segment – comparable to the `perf stat` command.
+You can add and manage counters, as well as to start and stop recordings.
 
 &rarr; See the documentation for [recording basics](docs/recording.md) and [multithreaded](docs/recording-parallel.md) recording.
 
@@ -49,7 +49,7 @@ for (const auto [name, value] : result)
 ```
 
 #### Sampling
-The `perf::Sampler` class delivers an interface to specify sampling criteria and control the start/stop of recordings.
+The `perf::Sampler` class provides an interface to specify sampling criteria and control the start/stop of recordings – comparable to `perf [mem|c2c] record` and `perf report`; but with control of the recorded code segments.
 You can sample various aspects such as instructions, time, memory addresses, access latency, call chains, branches, and more.
 
 &rarr; See the documentation for [sampling basics](docs/sampling.md) and [multithreaded sampling](docs/sampling-parallel.md).
@@ -134,7 +134,7 @@ make examples
 
 ---
 
-## Further Code Examples
+## Sophisticated Code Examples
 We provide a variety of examples detailed below. 
 Build them effortlessly by running `make examples`. 
 All compiled example binaries are located in `examples/bin` and can be executed directly without additional arguments.
@@ -153,7 +153,7 @@ All compiled example binaries are located in `examples/bin` and can be executed 
 ## System Requirements
 * Minimum *Linux Kernel version*: `>= 5.4`
 * Recommended *Linux Kernel version*: `>= 5.13` (for older Kernel versions see below)
-* Installed `perf` (check if `perf stat ls` provides any output, otherwise follow the instructions)
+* Installed `perf` (check if `perf stat -- ls` provides any output, otherwise follow the instructions)
 
 ### Notes for Linux Kernel < 5.13
 #### Linux Kernel < 5.13
