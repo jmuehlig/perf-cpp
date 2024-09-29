@@ -2,7 +2,8 @@
 
 ## By hand
 * Download the source code (`git clone https://github.com/jmuehlig/perf-cpp.git`)
-* Within the directory, call `cmake .` and `make` within the downloaded folder
+* Within the cloned directory, call `cmake .` to generate the Makefile 
+* Call `make` to generate the project
 * Copy the `include/` directory and the static library `libperf-cpp.a` to your project
 * Include the `include/` folder and link the library: `-lperf-cpp`
 
@@ -13,7 +14,7 @@
 ExternalProject_Add(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v0.5.0"
+  GIT_TAG "v0.7.0"
   PREFIX "path/to/your/libs/perf-cpp"
   INSTALL_COMMAND cmake -E echo ""
 )
