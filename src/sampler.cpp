@@ -254,6 +254,8 @@ perf::Sampler::open()
         if (this->_values.is_set(PERF_SAMPLE_REGS_INTR)) {
           perf_event.sample_regs_intr = this->_values.kernel_registers().mask();
         }
+
+        perf_event.cgroup = this->_values.is_set(PERF_SAMPLE_CGROUP) ? 1U : 0U;
       }
 
       if (this->_values.is_set(PERF_SAMPLE_READ)) {
@@ -576,6 +578,12 @@ perf::Sampler::result(const bool sort_by_time) const
           sample.physical_memory_address(*reinterpret_cast<std::uint64_t*>(sample_ptr));
           sample_ptr += sizeof(std::uint64_t);
         }
+
+        if (this->_values.is_set(PERF_SAMPLE_CGROUP)) {
+          sample.cgroup_id(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+          sample_ptr += sizeof(std::uint64_t);
+        }
+
 #ifndef NO_PERF_SAMPLE_DATA_PAGE_SIZE
         if (this->_values.is_set(PERF_SAMPLE_DATA_PAGE_SIZE)) {
           sample.data_page_size(*reinterpret_cast<std::uint64_t*>(sample_ptr));
@@ -618,6 +626,18 @@ perf::Sampler::result(const bool sort_by_time) const
         if (this->_values.is_set(PERF_SAMPLE_IDENTIFIER)) {
           sample.id(*reinterpret_cast<std::uint64_t*>(sample_ptr));
         }
+
+        result.push_back(sample);
+      } else if (event_header->type == PERF_RECORD_CGROUP) { /// Read CGroup samples.
+
+        auto sample_ptr = std::uintptr_t(reinterpret_cast<void*>(event_header + 1U));
+
+        const auto cgroup_id = *reinterpret_cast<std::uint64_t*>(sample_ptr);
+        sample_ptr += sizeof(std::uint64_t);
+
+        auto* path = reinterpret_cast<char*>(sample_ptr);
+
+        sample.cgroup(CGroup{ cgroup_id, std::string{ path } });
 
         result.push_back(sample);
       }

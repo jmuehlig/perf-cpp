@@ -407,6 +407,25 @@ private:
   std::uint16_t _var3{ 0U };
 };
 
+class CGroup
+{
+public:
+  CGroup(const std::uint64_t id, std::string&& path) noexcept
+    : _id(id)
+    , _path(std::move(path))
+  {
+  }
+  ~CGroup() = default;
+
+  [[nodiscard]] std::uint64_t id() const noexcept { return _id; }
+
+  [[nodiscard]] const std::string& path() const noexcept { return _path; }
+
+private:
+  std::uint64_t _id;
+  std::string _path;
+};
+
 class Sample
 {
 public:
@@ -460,9 +479,11 @@ public:
     _kernel_registers = std::move(kernel_registers);
   }
   void callchain(std::vector<std::uintptr_t>&& callchain) noexcept { _callchain = std::move(callchain); }
+  void cgroup_id(const std::uint64_t cgroup_id) noexcept { _cgroup_id = cgroup_id; }
   void data_page_size(const std::uint64_t size) noexcept { _data_page_size = size; }
   void code_page_size(const std::uint64_t size) noexcept { _code_page_size = size; }
   void count_loss(const std::uint64_t count_loss) noexcept { _count_loss = count_loss; }
+  void cgroup(CGroup&& cgroup) noexcept { _cgroup = std::move(cgroup); }
   void is_exact_ip(const bool is_exact_ip) noexcept { _is_exact_ip = is_exact_ip; }
 
   /*
@@ -628,6 +649,18 @@ public:
   [[nodiscard]] std::optional<std::vector<std::uintptr_t>>& callchain() noexcept { return _callchain; }
 
   /*
+   * Retrieves the cgroup ID of the for the perf_event subsystem.
+   * @return An optional containing the cgroup ID if available.
+   */
+  [[nodiscard]] std::optional<std::uint64_t> cgroup_id() const noexcept { return _cgroup_id; }
+
+  /*
+   * Retrieves the cgroup. CGroups are recorded when created and activated.
+   * @return An optional containing the cgroup if available.
+   */
+  [[nodiscard]] const std::optional<CGroup>& cgroup() const noexcept { return _cgroup; }
+
+  /*
    * Retrieves the data page size at the time of the sample.
    * @return An optional containing the data page size if available.
    */
@@ -672,9 +705,11 @@ private:
   std::optional<std::vector<std::uint64_t>> _kernel_registers{ std::nullopt };
   std::optional<std::uint64_t> _kernel_registers_abi{ std::nullopt };
   std::optional<std::vector<std::uintptr_t>> _callchain{ std::nullopt };
+  std::optional<std::uint64_t> _cgroup_id{ std::nullopt };
   std::optional<std::uint64_t> _data_page_size{ std::nullopt };
   std::optional<std::uint64_t> _code_page_size{ std::nullopt };
   std::optional<std::uint64_t> _count_loss{ std::nullopt };
+  std::optional<CGroup> _cgroup{ std::nullopt };
   bool _is_exact_ip{ false };
 };
 }

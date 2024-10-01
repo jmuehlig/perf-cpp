@@ -5,16 +5,17 @@ Essentially, you define a sampling period or frequency at which data is captured
 At its core, this functionality is akin to traditional profiling tools, like `perf record`, but uniquely tailored to record specific blocks of code rather than the entire application.
 
 The following data can be recorded:
-* Instruction pointers (current and callchain)
-* ID of thread, CPU, and sample
-* Timestamp
-* Logical and physical address
-* Data source (e.g., cache level, memory, etc.)
-* Group of counter values
-* Last branch stack (including jump addresses and prediction)
-* User- and kernel-level registers
-* Weight of the access (which is mostly the latency)
-* Data and code page sizes (when sampling for data addresses or instruction pointers)
+* Instruction pointers (current and callchain),
+* ID of thread, CPU, and sample,
+* Timestamp,
+* Logical and physical address,
+* Data source (e.g., cache level, memory, etc.),
+* Group of counter values,
+* Last branch stack (including jump addresses and prediction),
+* User- and kernel-level registers,
+* Weight of the access (which is mostly the latency),
+* Data and code page sizes (when sampling for data addresses or instruction pointers),
+* Creations and activations of new cgroups.
 
 &rarr; [See details below](#what-can-be-recorded-and-how-to-access-the-data).
 
@@ -391,6 +392,11 @@ Size of pages of sampled data addresses (e.g., when sampling for logical memory 
 Size of pages of sampled instruction pointers (e.g., when sampling for instruction pointers).
 * Request by `sampler.values().code_page_size(true);`
 * Read from the results by `sample_record.code_page_size().value();`
+
+### CGroup
+* Request by `sampler.values().cgroup(true);`
+* CGroup IDs are included into samples and can be read by `sample_record.cgroup_id().value();` 
+* Whenever new cgroups are created or activated, the sample can include a `perf::CGroup` item, containing the ID of the created/activated cgroup (`sample_record.cgroup().value().id();`), which matches one of the `cgroup_id()`s of the sample. `perf::CGroup` also contains a path, which can be accessed by `sample_record.cgroup().value().path();`.
 
 ## Sample mode
 Each sample is recorded in one of the following modes:

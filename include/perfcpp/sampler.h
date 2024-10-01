@@ -170,6 +170,12 @@ public:
       return *this;
     }
 
+    Values& cgroup(const bool include) noexcept
+    {
+      set(PERF_SAMPLE_CGROUP, include);
+      return *this;
+    }
+
     Values& data_page_size([[maybe_unused]] const bool include) noexcept
     {
 #ifndef NO_PERF_SAMPLE_DATA_PAGE_SIZE
