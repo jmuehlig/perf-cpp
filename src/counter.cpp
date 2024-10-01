@@ -212,6 +212,12 @@ perf::Counter::to_string() const
   if (this->_event_attribute.exclude_guest > 0U) {
     stream << "        exclude_guest: " << this->_event_attribute.exclude_guest << "\n";
   }
+  if (this->_event_attribute.context_switch > 0U) {
+    stream << "        context_switch: " << this->_event_attribute.context_switch << "\n";
+  }
+  if (this->_event_attribute.cgroup > 0U) {
+    stream << "        cgroup: " << this->_event_attribute.cgroup << "\n";
+  }
 
   return stream.str();
 }

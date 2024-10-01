@@ -15,6 +15,7 @@ The following data can be recorded:
 * User- and kernel-level registers,
 * Weight of the access (which is mostly the latency),
 * Data and code page sizes (when sampling for data addresses or instruction pointers),
+* Context switches
 * Creations and activations of new cgroups.
 
 &rarr; [See details below](#what-can-be-recorded-and-how-to-access-the-data).
@@ -393,10 +394,29 @@ Size of pages of sampled instruction pointers (e.g., when sampling for instructi
 * Request by `sampler.values().code_page_size(true);`
 * Read from the results by `sample_record.code_page_size().value();`
 
+### Context Switches
+Occurrence of context switches.
+* Request by `sampler.values().context_switch(true);`
+* Read from the results by `sample_record.context_switch().value();` (if `sample_record.context_switch().has_value();`), which returns a `perf::ContextSwitch` object. The context switch contains
+  * a flag if the process was switched in or out (`context_switch.is_in()` or `context_switch.is_out()`),
+  * a flag of the process was preempted (`context_switch.is_preempt()`),
+  * the id of the in or out process, if sampling cpu-wide (`context_switch.process_id()`),
+  * and the id of the in or out thread, if sampling cpu-wide (`context_switch.thread_id()`).
+  * In addition, the following data will be set in a sample:
+    * `sample_record.process_id()` and `sample_record.thread_id()`, if `sampler.thread_id(true)` was specified,
+    * `sample_record.timestamp()`, if `sampler.time(true)` was specified,
+    * `sample_record.cpu_id()`, if `sampler.cpu_id(true)` was specified, and
+    * `sample_record.id()`, if `sampler.identifier(true)` was specified.
+
 ### CGroup
 * Request by `sampler.values().cgroup(true);`
 * CGroup IDs are included into samples and can be read by `sample_record.cgroup_id().value();` 
 * Whenever new cgroups are created or activated, the sample can include a `perf::CGroup` item, containing the ID of the created/activated cgroup (`sample_record.cgroup().value().id();`), which matches one of the `cgroup_id()`s of the sample. `perf::CGroup` also contains a path, which can be accessed by `sample_record.cgroup().value().path();`.
+* In addition, the following data will be set in a sample:
+  * `sample_record.process_id()` and `sample_record.thread_id()`, if `sampler.thread_id(true)` was specified,
+  * `sample_record.timestamp()`, if `sampler.time(true)` was specified,
+  * `sample_record.cpu_id()`, if `sampler.cpu_id(true)` was specified, and
+  * `sample_record.id()`, if `sampler.identifier(true)` was specified.
 
 ## Sample mode
 Each sample is recorded in one of the following modes:
