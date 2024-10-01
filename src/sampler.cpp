@@ -226,7 +226,7 @@ perf::Sampler::open()
 
       if (is_leader || is_secret_leader) {
         perf_event.sample_type = this->_values.get();
-        perf_event.sample_id_all = 1;
+        perf_event.sample_id_all = 1U;
 
         if (this->_config.is_frequency()) {
           perf_event.freq = 1U;
