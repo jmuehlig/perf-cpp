@@ -239,10 +239,6 @@ perf::Sampler::open()
           perf_event.branch_sample_type = this->_values.branch_mask();
         }
 
-        if (is_leader) {
-          perf_event.mmap = 1U;
-        }
-
         if (this->_values.is_set(PERF_SAMPLE_CALLCHAIN)) {
           perf_event.sample_max_stack = this->_values.max_call_stack();
         }
