@@ -182,6 +182,11 @@ You may need to adjust the `sample_config.precise_ip(X)` setting on different ha
 
 &rarr; [See code example](../examples/instruction_pointer_sampling.cpp)
 
+### Stream ID
+Unique ID of an opened event.
+* Request by `sampler.values().stream_id(true);`
+* Read from the results by `sample_record.stream_id().value()`
+
 ### Logical Memory Address
 * Request by `sampler.values().logical_memory_address(true);`
 * Read from the results by `sample_record.logical_memory_address().value()`
@@ -405,6 +410,7 @@ Occurrence of context switches.
   * In addition, the following data will be set in a sample:
     * `sample_record.process_id()` and `sample_record.thread_id()`, if `sampler.thread_id(true)` was specified,
     * `sample_record.timestamp()`, if `sampler.time(true)` was specified,
+    * `sample_record.stream_id()`, if `sampler.stream_id(true)` was specified,
     * `sample_record.cpu_id()`, if `sampler.cpu_id(true)` was specified, and
     * `sample_record.id()`, if `sampler.identifier(true)` was specified.
 
@@ -415,6 +421,7 @@ Occurrence of context switches.
 * In addition, the following data will be set in a sample:
   * `sample_record.process_id()` and `sample_record.thread_id()`, if `sampler.thread_id(true)` was specified,
   * `sample_record.timestamp()`, if `sampler.time(true)` was specified,
+  * `sample_record.stream_id()`, if `sampler.stream_id(true)` was specified,
   * `sample_record.cpu_id()`, if `sampler.cpu_id(true)` was specified, and
   * `sample_record.id()`, if `sampler.identifier(true)` was specified.
 
@@ -449,6 +456,7 @@ Lost samples are recorded and are reported as such through `sample_record.count_
 In addition, the following data will be set in a sample:
 * `sample_record.process_id()` and `sample_record.thread_id()`, if `sampler.thread_id(true)` was specified,
 * `sample_record.timestamp()`, if `sampler.time(true)` was specified,
+* `sample_record.stream_id()`, if `sampler.stream_id(true)` was specified,
 * `sample_record.cpu_id()`, if `sampler.cpu_id(true)` was specified, and
 * `sample_record.id()`, if `sampler.identifier(true)` was specified.
 

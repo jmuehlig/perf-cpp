@@ -89,6 +89,12 @@ public:
       return *this;
     }
 
+    Values& stream_id(const bool include) noexcept
+    {
+      set(PERF_SAMPLE_STREAM_ID, include);
+      return *this;
+    }
+
     Values& counter(std::vector<std::string>&& counter_names) noexcept
     {
       _counter_names = std::move(counter_names);

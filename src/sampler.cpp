@@ -437,6 +437,11 @@ perf::Sampler::result(const bool sort_by_time) const
           sample_ptr += sizeof(std::uint64_t);
         }
 
+        if (this->_values.is_set(PERF_SAMPLE_STREAM_ID)) {
+          sample.stream_id(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+          sample_ptr += sizeof(std::uint64_t);
+        }
+
         if (this->_values.is_set(PERF_SAMPLE_ADDR)) {
           sample.logical_memory_address(*reinterpret_cast<std::uint64_t*>(sample_ptr));
           sample_ptr += sizeof(std::uint64_t);
@@ -673,6 +678,11 @@ perf::Sampler::read_sample_id(std::uintptr_t sample_ptr, perf::Sample& sample) c
 
   if (this->_values.is_set(PERF_SAMPLE_TIME)) {
     sample.timestamp(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+    sample_ptr += sizeof(std::uint64_t);
+  }
+
+  if (this->_values.is_set(PERF_SAMPLE_STREAM_ID)) {
+    sample.stream_id(*reinterpret_cast<std::uint64_t*>(sample_ptr));
     sample_ptr += sizeof(std::uint64_t);
   }
 
