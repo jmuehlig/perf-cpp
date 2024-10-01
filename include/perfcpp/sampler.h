@@ -200,6 +200,12 @@ public:
       return *this;
     }
 
+    Values& context_switch(const bool include) noexcept
+    {
+      _is_include_context_switch = include;
+      return *this;
+    }
+
     [[nodiscard]] bool is_set(const std::uint64_t perf_field) const noexcept
     {
       return static_cast<bool>(_mask & perf_field);
@@ -221,6 +227,8 @@ public:
     std::uint64_t _branch_mask{ 0ULL };
 
     std::uint16_t _max_call_stack{ 0U };
+
+    bool _is_include_context_switch{ false };
 
     void set(const std::uint64_t perf_field, const bool is_enabled) noexcept
     {
@@ -378,6 +386,14 @@ public:
   }
 
 private:
+  /**
+   * Reads the sample_id struct from the data located at sample_ptr into the provided sample.
+   *
+   * @param sample Sample to read the data into.
+   * @return The new (incremented) sample_ptr.
+   */
+  std::uintptr_t read_sample_id(std::uintptr_t sample_ptr, Sample& sample) const noexcept;
+
   const CounterDefinition& _counter_definitions;
 
   /// List of triggers. Each trigger will open an individual group of counters.

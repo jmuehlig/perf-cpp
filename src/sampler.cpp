@@ -255,6 +255,7 @@ perf::Sampler::open()
           perf_event.sample_regs_intr = this->_values.kernel_registers().mask();
         }
 
+        perf_event.context_switch = static_cast<std::uint8_t>(this->_values._is_include_context_switch);
         perf_event.cgroup = this->_values.is_set(PERF_SAMPLE_CGROUP) ? 1U : 0U;
       }
 
@@ -605,30 +606,38 @@ perf::Sampler::result(const bool sort_by_time) const
         sample.count_loss(*reinterpret_cast<std::uint64_t*>(sample_ptr));
         sample_ptr += sizeof(std::uint64_t);
 
-        if (this->_values.is_set(PERF_SAMPLE_TID)) {
-          sample.process_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
-          sample_ptr += sizeof(std::uint32_t);
-
-          sample.thread_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
-          sample_ptr += sizeof(std::uint32_t);
-        }
-
-        if (this->_values.is_set(PERF_SAMPLE_TIME)) {
-          sample.timestamp(*reinterpret_cast<std::uint64_t*>(sample_ptr));
-          sample_ptr += sizeof(std::uint64_t);
-        }
-
-        if (this->_values.is_set(PERF_SAMPLE_CPU)) {
-          sample.cpu_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
-          sample_ptr += sizeof(std::uint64_t);
-        }
-
-        if (this->_values.is_set(PERF_SAMPLE_IDENTIFIER)) {
-          sample.id(*reinterpret_cast<std::uint64_t*>(sample_ptr));
-        }
+        /// Read sample_id.
+        std::ignore = this->read_sample_id(sample_ptr, sample);
 
         result.push_back(sample);
-      } else if (event_header->type == PERF_RECORD_CGROUP) { /// Read CGroup samples.
+      } else if (event_header->type == PERF_RECORD_SWITCH) { /// Read context switch.
+        const auto is_switch_out = static_cast<bool>(event_header->misc & PERF_RECORD_MISC_SWITCH_OUT);
+        const auto is_switch_out_preempt = static_cast<bool>(event_header->misc & PERF_RECORD_MISC_SWITCH_OUT_PREEMPT);
+
+        auto sample_ptr = std::uintptr_t(reinterpret_cast<void*>(event_header + 1U));
+        std::ignore = this->read_sample_id(sample_ptr, sample);
+
+        sample.context_switch(ContextSwitch{ is_switch_out, is_switch_out_preempt });
+
+        result.push_back(sample);
+      } else if (event_header->type == PERF_RECORD_SWITCH_CPU_WIDE) { /// Read context switch.
+        const auto is_switch_out = static_cast<bool>(event_header->misc & PERF_RECORD_MISC_SWITCH_OUT);
+        const auto is_switch_out_preempt = static_cast<bool>(event_header->misc & PERF_RECORD_MISC_SWITCH_OUT_PREEMPT);
+
+        auto sample_ptr = std::uintptr_t(reinterpret_cast<void*>(event_header + 1U));
+
+        const auto process_id = *reinterpret_cast<std::uint32_t*>(sample_ptr);
+        sample_ptr += sizeof(std::uint32_t);
+
+        const auto thread_id = *reinterpret_cast<std::uint32_t*>(sample_ptr);
+        sample_ptr += sizeof(std::uint32_t);
+
+        std::ignore = this->read_sample_id(sample_ptr, sample);
+
+        sample.context_switch(ContextSwitch{ is_switch_out, is_switch_out_preempt, process_id, thread_id });
+
+        result.push_back(sample);
+      } else if (event_header->type == PERF_RECORD_CGROUP) { /// Read cgroup samples.
 
         auto sample_ptr = std::uintptr_t(reinterpret_cast<void*>(event_header + 1U));
 
@@ -653,6 +662,35 @@ perf::Sampler::result(const bool sort_by_time) const
   }
 
   return result;
+}
+
+std::uintptr_t
+perf::Sampler::read_sample_id(std::uintptr_t sample_ptr, perf::Sample& sample) const noexcept
+{
+  if (this->_values.is_set(PERF_SAMPLE_TID)) {
+    sample.process_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
+    sample_ptr += sizeof(std::uint32_t);
+
+    sample.thread_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
+    sample_ptr += sizeof(std::uint32_t);
+  }
+
+  if (this->_values.is_set(PERF_SAMPLE_TIME)) {
+    sample.timestamp(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+    sample_ptr += sizeof(std::uint64_t);
+  }
+
+  if (this->_values.is_set(PERF_SAMPLE_CPU)) {
+    sample.cpu_id(*reinterpret_cast<std::uint32_t*>(sample_ptr));
+    sample_ptr += sizeof(std::uint64_t);
+  }
+
+  if (this->_values.is_set(PERF_SAMPLE_IDENTIFIER)) {
+    sample.id(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+    sample_ptr += sizeof(std::uint64_t);
+  }
+
+  return sample_ptr;
 }
 
 std::vector<perf::Sample>

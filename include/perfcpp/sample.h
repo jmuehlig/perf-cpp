@@ -426,6 +426,39 @@ private:
   std::string _path;
 };
 
+class ContextSwitch
+{
+public:
+  ContextSwitch(const bool is_out, const bool is_preempt) noexcept
+    : _is_out(is_out)
+    , _is_preempt(is_preempt)
+  {
+  }
+  ContextSwitch(const bool is_out,
+                const bool is_preempt,
+                const std::uint32_t process_id,
+                const std::uint32_t thread_id) noexcept
+    : _is_out(is_out)
+    , _is_preempt(is_preempt)
+    , _process_id(process_id)
+    , _thread_id(thread_id)
+  {
+  }
+  ~ContextSwitch() noexcept = default;
+
+  [[nodiscard]] bool is_out() const noexcept { return _is_out; }
+  [[nodiscard]] bool is_in() const noexcept { return !_is_out; }
+  [[nodiscard]] bool is_preempt() const noexcept { return _is_preempt; }
+  [[nodiscard]] std::optional<std::uint32_t> process_id() const noexcept { return _process_id; }
+  [[nodiscard]] std::optional<std::uint32_t> thread_id() const noexcept { return _thread_id; }
+
+private:
+  bool _is_out;
+  bool _is_preempt;
+  std::optional<std::uint32_t> _process_id{ std::nullopt };
+  std::optional<std::uint32_t> _thread_id{ std::nullopt };
+};
+
 class Sample
 {
 public:
@@ -484,6 +517,7 @@ public:
   void code_page_size(const std::uint64_t size) noexcept { _code_page_size = size; }
   void count_loss(const std::uint64_t count_loss) noexcept { _count_loss = count_loss; }
   void cgroup(CGroup&& cgroup) noexcept { _cgroup = std::move(cgroup); }
+  void context_switch(ContextSwitch&& context_switch) noexcept { _context_switch = context_switch; }
   void is_exact_ip(const bool is_exact_ip) noexcept { _is_exact_ip = is_exact_ip; }
 
   /*
@@ -673,6 +707,12 @@ public:
   [[nodiscard]] std::optional<std::uint64_t> code_page_size() const noexcept { return _code_page_size; }
 
   /*
+   * Retrieves the context switch.
+   * @return An optional containing the context switch if available.
+   */
+  [[nodiscard]] std::optional<ContextSwitch> context_switch() const noexcept { return _context_switch; }
+
+  /*
    * Retrieves the count of lost events associated with the sample.
    * @return An optional containing the count of lost events if available.
    */
@@ -710,6 +750,7 @@ private:
   std::optional<std::uint64_t> _code_page_size{ std::nullopt };
   std::optional<std::uint64_t> _count_loss{ std::nullopt };
   std::optional<CGroup> _cgroup{ std::nullopt };
+  std::optional<ContextSwitch> _context_switch{ std::nullopt };
   bool _is_exact_ip{ false };
 };
 }
