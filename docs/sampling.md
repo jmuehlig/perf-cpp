@@ -15,8 +15,9 @@ The following data can be recorded:
 * User- and kernel-level registers,
 * Weight of the access (which is mostly the latency),
 * Data and code page sizes (when sampling for data addresses or instruction pointers),
-* Context switches
-* Creations and activations of new cgroups.
+* Context switches,
+* Throttle/Unthrottle events,
+* and creations and activations of new cgroups.
 
 &rarr; [See details below](#what-can-be-recorded-and-how-to-access-the-data).
 
@@ -418,6 +419,18 @@ Occurrence of context switches.
 * Request by `sampler.values().cgroup(true);`
 * CGroup IDs are included into samples and can be read by `sample_record.cgroup_id().value();` 
 * Whenever new cgroups are created or activated, the sample can include a `perf::CGroup` item, containing the ID of the created/activated cgroup (`sample_record.cgroup().value().id();`), which matches one of the `cgroup_id()`s of the sample. `perf::CGroup` also contains a path, which can be accessed by `sample_record.cgroup().value().path();`.
+* In addition, the following data will be set in a sample:
+  * `sample_record.process_id()` and `sample_record.thread_id()`, if `sampler.thread_id(true)` was specified,
+  * `sample_record.timestamp()`, if `sampler.time(true)` was specified,
+  * `sample_record.stream_id()`, if `sampler.stream_id(true)` was specified,
+  * `sample_record.cpu_id()`, if `sampler.cpu_id(true)` was specified, and
+  * `sample_record.id()`, if `sampler.identifier(true)` was specified.
+
+### Throttle and Unthrottle Events
+* Request by `sampler.values().throttle(true);`
+* Throttle events are included into samples and can be read by `sample_record.throttle().value();`, which returns an optional `perf::Throttle` object. The throttle object contains a flag indicating
+  * that it was a throttle event (`sample_record.throttle().value().is_throttle();`)
+  * or it was an unthrottle event (`sample_record.throttle().value().is_unthrottle();`). Only one of both will return `true`.
 * In addition, the following data will be set in a sample:
   * `sample_record.process_id()` and `sample_record.thread_id()`, if `sampler.thread_id(true)` was specified,
   * `sample_record.timestamp()`, if `sampler.time(true)` was specified,

@@ -459,6 +459,22 @@ private:
   std::optional<std::uint32_t> _thread_id{ std::nullopt };
 };
 
+class Throttle
+{
+public:
+  explicit Throttle(const bool is_throttle) noexcept
+    : _is_throttle(is_throttle)
+  {
+  }
+  ~Throttle() noexcept = default;
+
+  [[nodiscard]] bool is_throttle() const noexcept { return _is_throttle; }
+  [[nodiscard]] bool is_unthrottle() const noexcept { return !_is_throttle; }
+
+private:
+  bool _is_throttle;
+};
+
 class Sample
 {
 public:
@@ -519,6 +535,7 @@ public:
   void count_loss(const std::uint64_t count_loss) noexcept { _count_loss = count_loss; }
   void cgroup(CGroup&& cgroup) noexcept { _cgroup = std::move(cgroup); }
   void context_switch(ContextSwitch&& context_switch) noexcept { _context_switch = context_switch; }
+  void throttle(Throttle&& throttle) noexcept { _throttle = throttle; }
   void is_exact_ip(const bool is_exact_ip) noexcept { _is_exact_ip = is_exact_ip; }
 
   /*
@@ -726,6 +743,12 @@ public:
   [[nodiscard]] std::optional<std::uint64_t> count_loss() const noexcept { return _count_loss; }
 
   /*
+   * Retrieves a throttle/unthrottle event.
+   * @return An optional containing a throttle or an unthrottle flag if available.
+   */
+  [[nodiscard]] std::optional<Throttle> throttle() const noexcept { return _throttle; }
+
+  /*
    * Indicates whether the instruction pointer in the sample is exact.
    * @return True if the instruction pointer is exact; otherwise, false.
    */
@@ -759,6 +782,7 @@ private:
   std::optional<std::uint64_t> _count_loss{ std::nullopt };
   std::optional<CGroup> _cgroup{ std::nullopt };
   std::optional<ContextSwitch> _context_switch{ std::nullopt };
+  std::optional<Throttle> _throttle{ std::nullopt };
   bool _is_exact_ip{ false };
 };
 }

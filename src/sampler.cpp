@@ -650,6 +650,25 @@ perf::Sampler::result(const bool sort_by_time) const
         sample.cgroup(CGroup{ cgroup_id, std::string{ path } });
 
         result.push_back(sample);
+      } else if ((event_header->type == PERF_RECORD_THROTTLE || event_header->type == PERF_RECORD_UNTHROTTLE) &&
+                 this->_values._is_include_throttle) { /// Read (un-) throttle samples.
+        auto sample_ptr = std::uintptr_t(reinterpret_cast<void*>(event_header + 1U));
+
+        if (this->_values.is_set(PERF_SAMPLE_TIME)) {
+          sample.timestamp(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+          sample_ptr += sizeof(std::uint64_t);
+        }
+
+        if (this->_values.is_set(PERF_SAMPLE_STREAM_ID)) {
+          sample.stream_id(*reinterpret_cast<std::uint64_t*>(sample_ptr));
+          sample_ptr += sizeof(std::uint64_t);
+        }
+
+        std::ignore = this->read_sample_id(sample_ptr, sample);
+
+        sample.throttle(Throttle{ event_header->type == PERF_RECORD_THROTTLE });
+
+        result.push_back(sample);
       }
 
       /// Go to the next sample.

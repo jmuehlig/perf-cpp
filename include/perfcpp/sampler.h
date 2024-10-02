@@ -212,6 +212,12 @@ public:
       return *this;
     }
 
+    Values& throttle(const bool include) noexcept
+    {
+      _is_include_throttle = include;
+      return *this;
+    }
+
     [[nodiscard]] bool is_set(const std::uint64_t perf_field) const noexcept
     {
       return static_cast<bool>(_mask & perf_field);
@@ -235,6 +241,7 @@ public:
     std::uint16_t _max_call_stack{ 0U };
 
     bool _is_include_context_switch{ false };
+    bool _is_include_throttle{ false };
 
     void set(const std::uint64_t perf_field, const bool is_enabled) noexcept
     {
