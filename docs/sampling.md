@@ -285,7 +285,7 @@ The ABI can be queried using `sample_record.kernel_registers_abi()`.
 The weight indicates how costly the event was.
 Since Linux Kernel version `5.12`, the Kernel might generate more information than only the "weight".
 
-* Request by `sampler.values().weight(true);`
+* Request by `sampler.values().weight(true);` or `sampler.values().weight_struct(true)`;
 * Read from the results by `sample_record.weight().value();`, which returns a `perf::Weight` class, which has the following attributes:
   * `sample_record.weight().value().cache_latency()` returns the cache latency of the sampled data address (for both `sampler.values().weight(true)` and `sampler.values().weight_struct(true)`).
   * `sample_record.weight().value().instruction_retirement_latency()` returns the latency of retiring the instruction (including the cache access) **but** only for `sampler.values().weight_struct(true)`. To the best of our knowledge, this feature is only supported by new Intel generations.
