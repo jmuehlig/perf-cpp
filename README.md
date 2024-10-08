@@ -161,8 +161,8 @@ The counter `cgroup-switches` is only provided since Kernel `5.13`.
 If you have an older Kernel, the counter cannot be used and will be deactivated.
 
 #### Linux Kernel < 5.12
-Sampling *weight as struct* (`Type::WeightStruct`, see [sampling documentation](docs/sampling.md)) is only provided since Kernel `5.12`.
-However, you can sample for weight using `Type::Weight`. To avoid compilation errors, you have to define
+Sampling *weight as struct* (see [sampling documentation](docs/sampling.md)) is only provided since Kernel `5.12`.
+However, you can sample for weight using normal weight. To avoid compilation errors, you have to define
 
 
     -DNO_PERF_SAMPLE_WEIGHT_STRUCT
