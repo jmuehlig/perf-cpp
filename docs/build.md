@@ -4,8 +4,8 @@
 * Download the source code (`git clone https://github.com/jmuehlig/perf-cpp.git`)
 * Within the cloned directory, call `cmake`, optionally define build options, desired targets or an installation prefix:
   ```
-  cmake -S . -B build -DBUILD_EXAMPLES=ON -DCMAKE_INSTALL_PREFIX=/path/to/libperf-cpp
-  cmake --build build -t perf-cpp -t perf-list -t examples
+  cmake . -B build --DCMAKE_INSTALL_PREFIX=/path/to/libperf-cpp
+  cmake --build build
   cmake --install build # to installl the library
   ```
 * Afterwards, the library should be available for discovery with `find_package` (see below).
@@ -39,7 +39,7 @@ target_link_libraries(perf-cpp::perf-cpp)
 
 Configure the library with `-DBUILD_EXAMPLES=1` and build the `examples` target
 ```
-cmake -S . -B build -DBUILD_EXAMPLES=1
+cmake . -B build -DBUILD_EXAMPLES=1
 cmake --build build --target examples
 ```
 

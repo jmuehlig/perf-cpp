@@ -108,9 +108,9 @@ const auto llc_misses = result.get("llc-load-misses");
 This library includes a Python script (`script/create_perf_list.py`) designed to streamline the extraction of hardware counter values, producing an output similar to the `perf list` command.
 
 #### Executing
-To execute the script, use the following Make command:
+To execute the script, use the following Make commands:
 
-
+    cmake .
     make perf-list
 
 This command generates a CSV file named `perf-list.csv`.
@@ -119,8 +119,9 @@ This file includes the names of all performance counters along with their raw va
 #### Using the counter list `perf-list.csv`
 You can use the resulting CSV file with the `perf::CounterDefinition` class as follows:
 
-
-    auto counter_definitions = perf::CounterDefinition{"perf-list.csv"};
+```cpp
+auto counter_definitions = perf::CounterDefinition{"perf-list.csv"};
+```
 
 This allows your application to access all the counters listed in the CSV file.
 

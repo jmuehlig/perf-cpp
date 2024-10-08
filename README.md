@@ -109,14 +109,14 @@ git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
 
 /// 3) Generate the Makefile
-cmake .
+cmake . -B build -DBUILD_EXAMPLES=1
 
-/// 4) Build the library (only)
-make
+/// 4) Build the library (only) into the build/ folder
+cmake --build build
 
 /// 5) Build the examples (optional)
-/// Examples will be compiled to examples/bin/
-make examples
+/// Examples will be compiled to build/examples/bin/
+cmake --build build --target examples
 ```
 
 ---
