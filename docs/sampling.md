@@ -287,8 +287,8 @@ Since Linux Kernel version `5.12`, the Kernel might generate more information th
 
 * Request by `sampler.values().weight(true);`
 * Read from the results by `sample_record.weight().value();`, which returns a `perf::Weight` class, which has the following attributes:
-  * `sample_record.weight().value().latency()` returns the latency (for both `perf::Sampler::Type::Weight` and `perf::Sampler::Type::WeightStruct`).
-  * `sample_record.weight().value().var2()` returns "other information" (not specified by perf) **but** only for `perf::Sampler::Type::WeightStruct`. On Intel's Sapphire Rapids architecture, it seems to record the instruction latency (which is higher than the load latency and includes the latter).
+  * `sample_record.weight().value().cache_latency()` returns the cache latency of the sampled data address (for both `perf::Sampler::Type::Weight` and `perf::Sampler::Type::WeightStruct`).
+  * `sample_record.weight().value().instruction_retirement_latency()` returns the latency of retiring the instruction (including the cache access) **but** only for `perf::Sampler::Type::WeightStruct`. To the best of our knowledge, this feature is only supported by new Intel generations.
   * `sample_record.weight().value().var3()` returns "other information" (not specified by perf) **but** only for `perf::Sampler::Type::WeightStruct`.
 
 &rarr; [See code example](../examples/address_sampling.cpp)
