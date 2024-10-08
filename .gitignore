@@ -5,3 +5,4 @@ cmake-build-debug
 .cmake
 CMakeCache.txt
 cmake_install.cmake
+build/
