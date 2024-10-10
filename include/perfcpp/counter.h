@@ -144,5 +144,17 @@ private:
   perf_event_attr _event_attribute{};
   std::uint64_t _id{ 0U };
   std::int64_t _file_descriptor{ -1 };
+
+  /**
+   * Prints a name of a type (e.g., sample, branch, ...) to the stream if the type is set in the mask.
+   *
+   * @param stream Stream to print the name of the type on.
+   * @param mask Given mask to check if the type is set.
+   * @param type Type to test in the mask.
+   * @param name Name to print if the type is set.
+   * @param is_first Flag if this is the first printed name. If false, a separator is printed in front of the name.
+   * @return True, if this was the first printed type.
+   */
+  bool print_type_to_stream(std::stringstream& stream, std::uint64_t mask, std::uint64_t type, std::string&& name, bool is_first) const;
 };
 }
