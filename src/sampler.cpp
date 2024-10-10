@@ -303,7 +303,7 @@ perf::Sampler::open()
                                                                                   : group.leader_file_descriptor();
     auto* buffer = ::mmap(nullptr,
                           this->_config.buffer_pages() * 4096U,
-                          PROT_READ | PROT_WRITE,
+                          PROT_READ,
                           MAP_SHARED,
                           static_cast<std::int32_t>(file_descriptor),
                           0);
