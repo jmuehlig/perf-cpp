@@ -30,6 +30,11 @@ public:
     add(std::move(name), CounterConfig{ type, event_id });
   }
 
+  void add(std::string&& name, const std::uint64_t event_id)
+  {
+    add(std::move(name), CounterConfig{ PERF_TYPE_RAW, event_id });
+  }
+
   void add(std::string&& name, CounterConfig config)
   {
     _counter_configs.insert(std::make_pair(std::move(name), config));

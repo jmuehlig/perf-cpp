@@ -42,41 +42,44 @@ perf::CounterDefinition::initialized_default_counters()
   this->_counter_configs.reserve(128U);
   this->_metrics.reserve(64U);
 
-  /// Pre-defined counters.
-  this->add("instructions", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS });
+  this->add("instructions", PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS);
 
-  this->add("cycles", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES });
-  this->add("cpu-cycles", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES });
-  this->add("bus-cycles", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_BUS_CYCLES });
+  /// Cycles
+  this->add("cycles", PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES);
+  this->add("cpu-cycles", PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES);
+  this->add("bus-cycles", PERF_TYPE_HARDWARE, PERF_COUNT_HW_BUS_CYCLES);
 
-  this->add("cache-misses", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_CACHE_MISSES });
-  this->add("cache-references", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_CACHE_REFERENCES });
+  /// Branches
+  this->add("branches", PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_INSTRUCTIONS);
+  this->add("branch-instructions", PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_INSTRUCTIONS);
+  this->add("branch-misses", PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_MISSES);
 
-  this->add("branches", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_INSTRUCTIONS });
-  this->add("branch-instructions", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_INSTRUCTIONS });
-  this->add("branch-misses", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_MISSES });
+  /// Stall events
+  this->add("stalled-cycles-backend", PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_BACKEND);
+  this->add("idle-cycles-backend", PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_BACKEND);
+  this->add("stalled-cycles-frontend", PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_FRONTEND);
+  this->add("idle-cycles-frontend", PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_FRONTEND);
 
-  this->add("stalled-cycles-backend", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_BACKEND });
-  this->add("idle-cycles-backend", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_BACKEND });
-  this->add("stalled-cycles-frontend", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_FRONTEND });
-  this->add("idle-cycles-frontend", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_FRONTEND });
-
-  this->add("cpu-clock", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_CLOCK });
-  this->add("task-clock", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_TASK_CLOCK });
-  this->add("page-faults", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS });
-  this->add("faults", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS });
-  this->add("major-faults", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MAJ });
-  this->add("minor-faults", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MIN });
-  this->add("alignment-faults", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_ALIGNMENT_FAULTS });
-  this->add("emulation-faults", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_EMULATION_FAULTS });
-  this->add("context-switches", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CONTEXT_SWITCHES });
-  this->add("bpf-output", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_BPF_OUTPUT });
+  /// Software events
+  this->add("cpu-clock", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_CLOCK);
+  this->add("task-clock", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_TASK_CLOCK);
+  this->add("page-faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS);
+  this->add("faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS);
+  this->add("major-faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MAJ);
+  this->add("minor-faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MIN);
+  this->add("alignment-faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_ALIGNMENT_FAULTS);
+  this->add("emulation-faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_EMULATION_FAULTS);
+  this->add("context-switches", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CONTEXT_SWITCHES);
+  this->add("bpf-output", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_BPF_OUTPUT);
 #ifndef NO_PERF_COUNT_SW_CGROUP_SWITCHES /// PERF_COUNT_SW_CGROUP_SWITCHES is provided since Linux Kernel 5.13
-  this->add("cgroup-switches", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CGROUP_SWITCHES });
+  this->add("cgroup-switches", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CGROUP_SWITCHES);
 #endif
-  this->add("cpu-migrations", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS });
-  this->add("migrations", CounterConfig{ PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS });
+  this->add("cpu-migrations", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS);
+  this->add("migrations", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS);
 
+  /// Cache events
+  this->add("cache-misses", PERF_TYPE_HARDWARE, PERF_COUNT_HW_CACHE_MISSES);
+  this->add("cache-references", PERF_TYPE_HARDWARE, PERF_COUNT_HW_CACHE_REFERENCES);
   this->add("L1-dcache-loads",
             PERF_TYPE_HW_CACHE,
             PERF_COUNT_HW_CACHE_L1D | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_ACCESS << 16));
@@ -89,6 +92,8 @@ perf::CounterDefinition::initialized_default_counters()
   this->add("L1-icache-load-misses",
             PERF_TYPE_HW_CACHE,
             PERF_COUNT_HW_CACHE_L1I | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_MISS << 16));
+
+  /// TLB events
   this->add("dTLB-loads",
             PERF_TYPE_HW_CACHE,
             PERF_COUNT_HW_CACHE_DTLB | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_ACCESS << 16));

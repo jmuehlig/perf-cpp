@@ -54,20 +54,42 @@ Basically, there are two options to add more counters:
 ### 1) In-code
 The `perf::CounterDefinition` interface offers an `add()` function that takes
 * the name of the counter,
-* the type of that counter (e.g., `PERF_TYPE_RAW` or `PERF_TYPE_HW_CACHE`),
+* the type of that counter (e.g., `PERF_TYPE_HW_CACHE`, `PERF_TYPE_RAW` by default),
 * and the config id
 
 Example:
 ```cpp
 auto counter_definitions = perf::CounterDefinition{};
-counter_definitions.add("cycle_activity.stalls_l3_miss", PERF_TYPE_RAW, 0x65306a3);
+counter_definitions.add(
+  /* name */ "cycle_activity.stalls_l3_miss",
+  /* config id */ 0x65306a3
+);
 ```
 
 or
 
 ```cpp
 auto counter_definitions = perf::CounterDefinition{};
-counter_definitions.add("llc-load-misses", PERF_TYPE_HW_CACHE, PERF_COUNT_HW_CACHE_LL | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_MISS << 16));
+counter_definitions.add(
+  /* name */ "llc-load-misses", 
+  /* type */ PERF_TYPE_HW_CACHE, 
+  /* config id */ PERF_COUNT_HW_CACHE_LL | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_MISS << 16)
+);
+```
+
+You can also use the `perf::CounterConfig` class, which takes extended configs:
+
+```cpp
+auto counter_definitions = perf::CounterDefinition{};
+counter_definitions.add(
+  /* name */ "llc-load-misses", 
+  perf::CounterConfig{
+      /* type */ PERF_TYPE_RAW,
+      /* config id */ 0x1CD,
+      /* config2 */ 0x3,
+      /* config3 */ 0x0
+  }
+);
 ```
 
 ### 2) Using a file
@@ -130,9 +152,9 @@ The script operates by downloading the [libpfm4 library](https://github.com/wcoh
 
 
 ### Manual Configuration with libpfm4
-For manual setup using libpfm4 (available on [GitHub](https://github.com/wcohen/libpfm4)), follow these steps:
+For manual setup using **libpfm4** (available on [GitHub](https://github.com/wcohen/libpfm4)), follow these steps:
 
-1. Clone or download the libpfm4 repository from GitHub.
+1. Clone or download the libpfm4 repository from [GitHub](https://github.com/wcohen/libpfm4).
 2. Call `make` to build all binaries.
 3. Navigate to the `examples/` directory within the downloaded
 4. Select and Check a Specific Counter:
