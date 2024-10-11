@@ -43,7 +43,7 @@ perf::EventCounter::add(std::string&& counter_name)
       }
     }
 
-    this->_counters.emplace_back(std::move(counter_name));
+    this->_counters.emplace_back(std::get<0>(metric.value()));
     return true;
   }
 
@@ -362,12 +362,12 @@ perf::MultiCoreEventCounter::MultiCoreEventCounter(perf::EventCounter&& event_co
     auto process_local_counter = perf::EventCounter{ event_counter };
     process_local_counter.config(config);
 
-    this->_cpu_local_counter.emplace_back(std::move(process_local_counter));
+    this->_cpu_local_counter.push_back(std::move(process_local_counter));
   }
 
   config.cpu_id(cpu_ids.back());
   event_counter.config(config);
-  this->_cpu_local_counter.emplace_back(std::move(event_counter));
+  this->_cpu_local_counter.push_back(std::move(event_counter));
 }
 
 bool
