@@ -15,17 +15,16 @@ main()
   /// alive until the benchmark finishes.
   auto counter_definitions = perf::CounterDefinition{};
   counter_definitions.add("mem_trans_retired.load_latency_gt_3", perf::CounterConfig{ PERF_TYPE_RAW, 0x1CD, 0x3 });
-  counter_definitions.add("ibs_op", perf::CounterConfig{ 11U, 0x0 });
 
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
-  perf_config.period(1000U); /// Record every 1000th event.
+  perf_config.period(16000U); /// Record every 16,000th event.
 
   auto sampler = perf::Sampler{ counter_definitions, perf_config };
 
   /// Setup which counters trigger the writing of samples (depends on the underlying hardware substrate).
   if (__builtin_cpu_is("amd") > 0) {
-    sampler.trigger("ibs_op", perf::Precision::MustHaveZeroSkid);
+    sampler.trigger("ibs_op_uops", perf::Precision::MustHaveZeroSkid);
   } else if (__builtin_cpu_is("intel") > 0 && __builtin_cpu_is("sapphirerapids") > 0) {
     /// Note: For sampling on Sapphire Rapids, we have to prepend an auxiliary counter.
     sampler.trigger({ std::make_pair("mem-loads-aux", perf::Precision::MustHaveZeroSkid),

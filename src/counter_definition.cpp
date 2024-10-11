@@ -1,5 +1,6 @@
 #include <perfcpp/counter_definition.h>
 
+#include <cpuid.h>
 #include <fstream>
 #include <sstream>
 #include <string_view>
@@ -7,13 +8,17 @@
 
 perf::CounterDefinition::CounterDefinition(const std::string& config_file)
 {
-  this->initialized_default_counters();
+  this->initialize_generalized_counters();
+  this->initialize_amd_ibs_counters();
+  this->initialize_intel_pebs_counters();
   this->read_counter_configuration(config_file);
 }
 
 perf::CounterDefinition::CounterDefinition()
 {
-  this->initialized_default_counters();
+  this->initialize_generalized_counters();
+  this->initialize_amd_ibs_counters();
+  this->initialize_intel_pebs_counters();
 }
 
 std::optional<std::pair<std::string_view, perf::CounterConfig>>
@@ -37,7 +42,7 @@ perf::CounterDefinition::metric(const std::string& name) const noexcept
 }
 
 void
-perf::CounterDefinition::initialized_default_counters()
+perf::CounterDefinition::initialize_generalized_counters()
 {
   this->_counter_configs.reserve(128U);
   this->_metrics.reserve(64U);
@@ -107,11 +112,6 @@ perf::CounterDefinition::initialized_default_counters()
             PERF_TYPE_HW_CACHE,
             PERF_COUNT_HW_CACHE_ITLB | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_MISS << 16));
 
-  if (__builtin_cpu_is("intel") > 0) {
-    /// Auxiliary event, needed on some Intel architectures (starting from Sapphire Rapids).
-    this->add("mem-loads-aux", PERF_TYPE_RAW, 0x8203);
-  }
-
   /// Pre-defined metrics.
   this->add(std::make_unique<CyclesPerInstruction>());
   this->add(std::make_unique<CacheHitRatio>());
@@ -121,13 +121,76 @@ perf::CounterDefinition::initialized_default_counters()
 }
 
 void
-perf::CounterDefinition::read_counter_configuration(const std::string& config_file)
+perf::CounterDefinition::initialize_amd_ibs_counters()
+{
+  /// AMD specific counter
+  if (__builtin_cpu_is("amd") > 0) {
+    /// See https://github.com/jlgreathouse/AMD_IBS_Toolkit/blob/master/ibs_with_perf_events.txt
+
+    std::uint32_t eax, ebx, ecx, edx;
+
+    /// Read CPUID
+    if (__get_cpuid_count(0x80000001, 0, &eax, &ebx, &ecx, &edx)) {
+      const auto is_ibs_supported = static_cast<bool>(ecx & (std::uint32_t(1U) << 10U));
+
+      /// Check if L3Miss filtering is provided.
+      auto is_ibs_l3miss_filter_supported = false;
+      if (__get_cpuid_count(0x8000001b, 0, &eax, &ebx, &ecx, &edx)) {
+        is_ibs_l3miss_filter_supported = static_cast<bool>(eax & (std::uint32_t(1U) << 11U));
+      }
+
+      if (is_ibs_supported) {
+        /// IBS OP.
+        {
+          auto ibs_op_stream = std::ifstream{ "/sys/bus/event_source/devices/ibs_op/type" };
+          if (ibs_op_stream.is_open()) {
+            std::uint32_t type;
+            ibs_op_stream >> type;
+            this->add("ibs_op", CounterConfig{ type, 0U });
+            this->add("ibs_op_uops", CounterConfig{ type, 1ULL << 19U });
+
+            if (is_ibs_l3miss_filter_supported) {
+              this->add("ibs_op_l3missonly", CounterConfig{ type, 1ULL << 16U });
+              this->add("ibs_op_uops_l3missonly", CounterConfig{ type, (1ULL << 19U) | (1ULL << 16U) });
+            }
+          }
+        }
+
+        /// IBS Fetch.
+        {
+          auto ibs_op_stream = std::ifstream{ "/sys/bus/event_source/devices/ibs_fetch/type" };
+          if (ibs_op_stream.is_open()) {
+            std::uint32_t type;
+            ibs_op_stream >> type;
+            this->add("ibs_fetch", CounterConfig{ type, 1ULL << 57U });
+
+            if (is_ibs_l3miss_filter_supported) {
+              this->add("ibs_fetch_l3missonly", CounterConfig{ type, (1ULL << 57U) | (1ULL << 16U) });
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void
+perf::CounterDefinition::initialize_intel_pebs_counters()
+{
+  if (__builtin_cpu_is("intel") > 0) {
+    /// Auxiliary event, needed on some Intel architectures (starting from Sapphire Rapids).
+    this->add("mem-loads-aux", PERF_TYPE_RAW, 0x8203);
+  }
+}
+
+void
+perf::CounterDefinition::read_counter_configuration(const std::string& csv_filename)
 {
   /// Read all counter values from the config file in the format
   ///     name,<config>[,<extended config>,<type>]
   /// where <config> and <extended config> are either integer or hex values.
 
-  auto input_file = std::ifstream{ config_file };
+  auto input_file = std::ifstream{ csv_filename };
   if (input_file.is_open()) {
     std::string line;
     while (std::getline(input_file, line)) {

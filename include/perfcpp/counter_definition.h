@@ -61,9 +61,18 @@ public:
   [[nodiscard]] bool is_metric(const std::string& name) const noexcept { return _metrics.find(name) != _metrics.end(); }
   [[nodiscard]] bool is_metric(std::string_view name) const noexcept { return is_metric(std::string{ name }); }
   [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(const std::string& name) const noexcept;
-  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(std::string&& name) const noexcept { return metric(name); }
-  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(const std::string_view name) const noexcept { return metric(std::string{name.data(), name.size()}); }
+  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(std::string&& name) const noexcept
+  {
+    return metric(name);
+  }
+  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(const std::string_view name) const noexcept
+  {
+    return metric(std::string{ name.data(), name.size() });
+  }
 
+  /**
+   * @return List names of all available counters.
+   */
   [[nodiscard]] std::vector<std::string> names() const
   {
     auto names = std::vector<std::string>{};
@@ -73,12 +82,32 @@ public:
     return names;
   }
 
-  void read_counter_configuration(const std::string& config_file);
+  /**
+   * Reads and adds counters from the provided CSV file with counter configurations.
+   * @param csv_filename CSV file with counter configurations.
+   */
+  void read_counter_configuration(const std::string& csv_filename);
 
 private:
+  /// List of added counter configurations.
   std::unordered_map<std::string, CounterConfig> _counter_configs;
+
+  /// List of added metrics.
   std::unordered_map<std::string, std::unique_ptr<Metric>> _metrics;
 
-  void initialized_default_counters();
+  /**
+   * Add all generalized counters to the counter config.
+   */
+  void initialize_generalized_counters();
+
+  /**
+   * If the system is an AMD, read IBS counters, if supported.
+   */
+  void initialize_amd_ibs_counters();
+
+  /**
+   * If the system is an Intel, read some PEBS counters, if supported.
+   */
+  void initialize_intel_pebs_counters();
 };
 }
