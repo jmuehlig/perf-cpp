@@ -95,6 +95,12 @@ public:
       return *this;
     }
 
+    Values& raw(const bool include) noexcept
+    {
+      set(PERF_SAMPLE_RAW, include);
+      return *this;
+    }
+
     Values& counter(std::vector<std::string>&& counter_names) noexcept
     {
       _counter_names = std::move(counter_names);

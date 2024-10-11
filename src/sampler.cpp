@@ -494,6 +494,22 @@ perf::Sampler::result(const bool sort_by_time) const
           }
         }
 
+        if (this->_values.is_set(PERF_SAMPLE_RAW)) {
+          const auto raw_data_size = (*reinterpret_cast<std::uint32_t*>(sample_ptr));
+          sample_ptr += sizeof(std::uint32_t);
+
+          const auto *raw_sample_data = reinterpret_cast<char*>(sample_ptr);
+
+          auto raw_data = std::vector<char>(std::size_t{raw_data_size}, '\0');
+          for (auto i = 0U; i < raw_data_size; ++i) {
+            raw_data[i] = raw_sample_data[i];
+          }
+
+          sample.raw(std::move(raw_data));
+
+          sample_ptr += raw_data_size * sizeof(char);
+        }
+
         if (this->_values.is_set(PERF_SAMPLE_BRANCH_STACK)) {
           const auto count_branches = *reinterpret_cast<std::uint64_t*>(sample_ptr);
           sample_ptr += sizeof(std::uint64_t);

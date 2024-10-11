@@ -521,6 +521,7 @@ public:
   void thread_id(const std::uint32_t thread_id) noexcept { _thread_id = thread_id; }
   void timestamp(const std::uint64_t timestamp) noexcept { _time = timestamp; }
   void stream_id(const std::uint64_t stream_id) noexcept { _stream_id = stream_id; }
+  void raw(std::vector<char>&& raw) noexcept { _raw_data = raw; }
   void logical_memory_address(const std::uintptr_t logical_memory_address) noexcept
   {
     _logical_memory_address = logical_memory_address;
@@ -597,6 +598,12 @@ public:
    * @return An optional containing the stream id if available.
    */
   [[nodiscard]] std::optional<std::uint64_t> stream_id() const noexcept { return _stream_id; }
+
+  /*
+   * Retrieves raw data.
+   * @return An optional containing raw data if available.
+   */
+  [[nodiscard]] const std::optional<std::vector<char>>& raw() const noexcept { return _raw_data; }
 
   /*
    * Retrieves the logical (virtual) memory address relevant to the sample.
@@ -780,6 +787,7 @@ private:
   std::optional<std::uint32_t> _thread_id{ std::nullopt };
   std::optional<std::uint64_t> _time{ std::nullopt };
   std::optional<std::uint64_t> _stream_id{ std::nullopt };
+  std::optional<std::vector<char>> _raw_data{ std::nullopt };
   std::optional<std::uintptr_t> _logical_memory_address{ std::nullopt };
   std::optional<std::uintptr_t> _physical_memory_address{ std::nullopt };
   std::optional<std::uint64_t> _id{ std::nullopt };

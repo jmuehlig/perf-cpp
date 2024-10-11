@@ -86,6 +86,8 @@ perf::Counter::to_string() const
     is_first = this->print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_STREAM_ID, "STREAM_ID", is_first);
     is_first = this->print_type_to_stream(
+      stream, this->_event_attribute.sample_type, PERF_SAMPLE_RAW, "RAW", is_first);
+    is_first = this->print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_BRANCH_STACK, "BRANCH_STACK", is_first);
     is_first = this->print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_REGS_USER, "REGS_USER", is_first);
