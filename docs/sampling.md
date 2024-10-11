@@ -478,7 +478,7 @@ In addition, the following data will be set in a sample:
 Sampling might work without problems since _Cascade Lake_, however, _Sapphire Rapids_  is much more exact (e.g., about the latency).
 
 ### AMD (Instruction Based Sampling)
-AMD uses Instruction Based Sampling to tag instructions randomly for sampling and collect various information for each sample.
+AMD uses Instruction Based Sampling to tag instructions randomly for sampling and collect various information for each sample ([see the programmer reference](https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/24593.pdf)).
 In contrast to Intel's mechanism, IBS cannot tag specific load and store instructions (and apply a filter on the latency).
 In case the instruction was a load/store instruction, the sample will include data source, latency, and a memory address ([see kernel mailing list](https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/)).
 
