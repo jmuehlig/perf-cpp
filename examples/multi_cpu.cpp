@@ -16,7 +16,7 @@ main()
             << std::endl;
 
   /// Create a list of cpus to record performance counters on (all available, in this example).
-  auto cpus_to_watch = std::vector<std::uint16_t>(std::min(4U, std::thread::hardware_concurrency()));
+  auto cpus_to_watch = std::vector<std::uint16_t>(std::thread::hardware_concurrency());
   std::iota(cpus_to_watch.begin(), cpus_to_watch.end(), 0U);
   std::cout << "Creating counters for CPUs: ";
   for (auto cpu : cpus_to_watch) {
