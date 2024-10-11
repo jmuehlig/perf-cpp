@@ -477,12 +477,18 @@ In addition, the following data will be set in a sample:
 ### Intel
 Sampling might work without problems since _Cascade Lake_, however, _Sapphire Rapids_  is much more exact (e.g., about the latency).
 
-### AMD
-Especially memory sampling is a problem on AMD hardware. 
-The Instruction Based Sampling (IBS) mechanism cannot tag specific load and store instructions, but randomly tags instructions to monitor.
-In case the instruction was not a load/store instruction, the sample will not include data source and a memory address ([see kernel mailing list](https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/)).
-To use IBS, create an IBS counter (`counter_definitions.add("ibs_op", perf::CounterConfig{ 11U, 0x0 });`) and use ot for sampling (&rarr; [see code example](../examples/address_sampling.cpp)).
+### AMD (Instruction Based Sampling)
+AMD uses Instruction Based Sampling to tag instructions randomly for sampling and collect various information for each sample.
+In contrast to Intel's mechanism, IBS cannot tag specific load and store instructions (and apply a filter on the latency).
+In case the instruction was a load/store instruction, the sample will include data source, latency, and a memory address ([see kernel mailing list](https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/)).
 
+*perf-cpp* –or the `perf::CounterDefinition` class to be precise– will detect IBS support on AMD devices and adds the following counters that can be used as **trigger** for sampling on AMD:
+* `ibs_op` selects instructions during the execution pipeline. CPU cycles (on the specified period/frequency) will lead to tag an instruction.
+* `ibs_op_uops` selects instructions during the execution pipeline, **but** the period/frequency refers to the number of executed micro-operations, **not** CPU cycles.
+* `ibs_op_l3missonly` selects instructions during the execution pipeline that miss the L3 cache. CPU cycles are used as the trigger.
+* `ibs_op_uops_l3missonly` selects instructions during the execution pipeline that miss the L3 cache, using micro-operations as the trigger.
+* `ibs_fetch` selects instructions in the fetch-state (frontend) using cycles as the trigger.
+* `ibs_fetch_l3missonly` selects instructions in the fetch-state (frontend) that miss the L3 cache, again, using cycles as a trigger.
 ---
 
 ## Debugging Counter Settings
