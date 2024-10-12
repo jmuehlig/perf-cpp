@@ -22,41 +22,42 @@ public:
   /**
    * What to sample.
    */
-  enum [[deprecated("Sampler::Type will be replaced by Sampler::values() interface.")]] Type : std::uint64_t{
-    InstructionPointer = PERF_SAMPLE_IP,
-    ThreadId = PERF_SAMPLE_TID,
-    Time = PERF_SAMPLE_TIME,
-    LogicalMemAddress = PERF_SAMPLE_ADDR,
-    CounterValues = PERF_SAMPLE_READ,
-    Callchain = PERF_SAMPLE_CALLCHAIN,
-    CPU = PERF_SAMPLE_CPU,
-    Period = PERF_SAMPLE_PERIOD,
-    BranchStack = PERF_SAMPLE_BRANCH_STACK,
-    UserRegisters = PERF_SAMPLE_REGS_USER,
-    Weight = PERF_SAMPLE_WEIGHT,
-    DataSource = PERF_SAMPLE_DATA_SRC,
-    Identifier = PERF_SAMPLE_IDENTIFIER,
-    KernelRegisters = PERF_SAMPLE_REGS_INTR,
-    PhysicalMemAddress = PERF_SAMPLE_PHYS_ADDR,
+  enum
+    [[deprecated("Sampler::Type will be replaced by Sampler::values() interface from v.0.9.0.")]] Type : std::uint64_t{
+      InstructionPointer = PERF_SAMPLE_IP,
+      ThreadId = PERF_SAMPLE_TID,
+      Time = PERF_SAMPLE_TIME,
+      LogicalMemAddress = PERF_SAMPLE_ADDR,
+      CounterValues = PERF_SAMPLE_READ,
+      Callchain = PERF_SAMPLE_CALLCHAIN,
+      CPU = PERF_SAMPLE_CPU,
+      Period = PERF_SAMPLE_PERIOD,
+      BranchStack = PERF_SAMPLE_BRANCH_STACK,
+      UserRegisters = PERF_SAMPLE_REGS_USER,
+      Weight = PERF_SAMPLE_WEIGHT,
+      DataSource = PERF_SAMPLE_DATA_SRC,
+      Identifier = PERF_SAMPLE_IDENTIFIER,
+      KernelRegisters = PERF_SAMPLE_REGS_INTR,
+      PhysicalMemAddress = PERF_SAMPLE_PHYS_ADDR,
 
 #ifndef NO_PERF_SAMPLE_DATA_PAGE_SIZE /// PERF_SAMPLE_DATA_PAGE_SIZE is provided since Linux Kernel 5.11
-    DataPageSize = PERF_SAMPLE_DATA_PAGE_SIZE,
+      DataPageSize = PERF_SAMPLE_DATA_PAGE_SIZE,
 #else
-    DataPageSize = std::uint64_t(1U) << 63,
+      DataPageSize = std::uint64_t(1U) << 63,
 #endif
 
 #ifndef NO_PERF_SAMPLE_CODE_PAGE_SIZE /// PERF_SAMPLE_CODE_PAGE_SIZE is provided since Linux Kernel 5.11
-    CodePageSize = PERF_SAMPLE_CODE_PAGE_SIZE,
+      CodePageSize = PERF_SAMPLE_CODE_PAGE_SIZE,
 #else
-    CodePageSize = std::uint64_t(1U) << 63,
+      CodePageSize = std::uint64_t(1U) << 63,
 #endif
 
 #ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT /// PERF_SAMPLE_WEIGHT_STRUCT is provided since Linux Kernel 5.12
-    WeightStruct = PERF_SAMPLE_WEIGHT_STRUCT
+      WeightStruct = PERF_SAMPLE_WEIGHT_STRUCT
 #else
-    WeightStruct = std::uint64_t(1U) << 63,
+      WeightStruct = std::uint64_t(1U) << 63,
 #endif
-  };
+    };
 
   class Values
   {
@@ -728,22 +729,24 @@ private:
 class MultiCoreSampler final : public MultiSamplerBase
 {
 public:
-  [[deprecated("Creating samplers with counters and sampling type will be replaced by MultiCoreSampler::trigger() and "
-               "MultiCoreSampler::values() interfaces.")]] MultiCoreSampler(const CounterDefinition& counter_list,
-                                                                            const std::string& counter_name,
-                                                                            const std::uint64_t type,
-                                                                            std::vector<std::uint16_t>&& core_ids,
-                                                                            SampleConfig config = {})
+  [[deprecated(
+    "Creating samplers with counters and sampling type will be replaced by MultiCoreSampler::trigger() and "
+    "MultiCoreSampler::values() interfaces from v.0.9.0.")]] MultiCoreSampler(const CounterDefinition& counter_list,
+                                                                              const std::string& counter_name,
+                                                                              const std::uint64_t type,
+                                                                              std::vector<std::uint16_t>&& core_ids,
+                                                                              SampleConfig config = {})
     : MultiCoreSampler(counter_list, std::string{ counter_name }, type, std::move(core_ids), config)
   {
   }
 
-  [[deprecated("Creating samplers with counters and sampling type will be replaced by MultiCoreSampler::trigger() and "
-               "MultiCoreSampler::values() interfaces.")]] MultiCoreSampler(const CounterDefinition& counter_list,
-                                                                            std::string&& counter_name,
-                                                                            const std::uint64_t type,
-                                                                            std::vector<std::uint16_t>&& core_ids,
-                                                                            SampleConfig config = {})
+  [[deprecated(
+    "Creating samplers with counters and sampling type will be replaced by MultiCoreSampler::trigger() and "
+    "MultiCoreSampler::values() interfaces from v.0.9.0.")]] MultiCoreSampler(const CounterDefinition& counter_list,
+                                                                              std::string&& counter_name,
+                                                                              const std::uint64_t type,
+                                                                              std::vector<std::uint16_t>&& core_ids,
+                                                                              SampleConfig config = {})
     : MultiCoreSampler(counter_list,
                        std::vector<std::string>{ std::move(counter_name) },
                        type,
@@ -752,12 +755,13 @@ public:
   {
   }
 
-  [[deprecated("Creating samplers with counters and sampling type will be replaced by MultiCoreSampler::trigger() and "
-               "MultiCoreSampler::values() interfaces.")]] MultiCoreSampler(const CounterDefinition& counter_list,
-                                                                            std::vector<std::string>&& counter_names,
-                                                                            std::uint64_t type,
-                                                                            std::vector<std::uint16_t>&& core_ids,
-                                                                            SampleConfig config = {});
+  [[deprecated(
+    "Creating samplers with counters and sampling type will be replaced by MultiCoreSampler::trigger() and "
+    "MultiCoreSampler::values() interfaces from v.0.9.0.")]] MultiCoreSampler(const CounterDefinition& counter_list,
+                                                                              std::vector<std::string>&& counter_names,
+                                                                              std::uint64_t type,
+                                                                              std::vector<std::uint16_t>&& core_ids,
+                                                                              SampleConfig config = {});
 
   explicit MultiCoreSampler(const CounterDefinition& counter_list,
                             std::vector<std::uint16_t>&& core_ids,

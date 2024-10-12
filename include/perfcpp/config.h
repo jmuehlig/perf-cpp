@@ -18,8 +18,8 @@ public:
   [[nodiscard]] std::uint8_t max_groups() const noexcept { return _max_groups; }
   [[nodiscard]] std::uint8_t max_counters_per_group() const noexcept { return _max_counters_per_group; }
 
-  [[deprecated("Will be replaced by Sampler::values() interface.")]] [[nodiscard]] std::uint16_t max_stack()
-    const noexcept
+  [[deprecated("Will be replaced by Sampler::values() interface from v.0.9.0.")]] [[nodiscard]] std::uint16_t
+  max_stack() const noexcept
   {
     return _max_stack;
   }
@@ -105,7 +105,11 @@ public:
     return _kernel_registers;
   }
 
-  [[nodiscard]] std::uint64_t branch_type() const noexcept { return _branch_type; }
+  [[deprecated("Kernel Registers will be set through the Sampler::values() interface.")]] [[nodiscard]] std::uint64_t
+  branch_type() const noexcept
+  {
+    return _branch_type;
+  }
 
   void frequency(const std::uint64_t frequency) noexcept
   {
@@ -137,24 +141,24 @@ public:
     }
   }
   void buffer_pages(const std::uint64_t buffer_pages) noexcept { _buffer_pages = buffer_pages; }
-  [[deprecated("User Registers will be set through the Sampler::values() interface.")]] void user_registers(
-    const Registers registers) noexcept
+  [[deprecated("User Registers will be set through the Sampler::values() interface from v.0.9.0.")]] void
+  user_registers(const Registers registers) noexcept
   {
     _user_registers = registers;
   }
-  [[deprecated("Kernel Registers will be set through the Sampler::values() interface.")]] void kernel_registers(
-    const Registers registers) noexcept
+  [[deprecated("Kernel Registers will be set through the Sampler::values() interface from v.0.9.0.")]] void
+  kernel_registers(const Registers registers) noexcept
   {
     _kernel_registers = registers;
   }
 
-  [[deprecated("Branch types will be set through the Sampler::values() interface.")]] void branch_type(
+  [[deprecated("Branch types will be set through the Sampler::values() interface from v.0.9.0.")]] void branch_type(
     const std::uint64_t branch_type) noexcept
   {
     _branch_type = branch_type;
   }
 
-  [[deprecated("Branch types will be set through the Sampler::values() interface.")]] void branch_type(
+  [[deprecated("Branch types will be set through the Sampler::values() interface from v.0.9.0.")]] void branch_type(
     const BranchType branch_type) noexcept
   {
     _branch_type = static_cast<std::uint64_t>(branch_type);
