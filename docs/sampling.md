@@ -193,10 +193,11 @@ Unique ID of an opened event.
 * Read from the results by `sample_record.logical_memory_address().value()`
 
 **Note**: Recording memory addresses (logical and physical) requires an appropriate trigger. 
-On Intel, `perf list` reports these triggers as "*Supports address when precise*".
-On AMD, you need the `ibs_op` counter (&rarr;[see kernel mailing list](https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/)).
+On **Intel**, `perf list` reports these triggers as "*Supports address when precise*".
+On **AMD**, memory sampling is implemented through Instruction Based sampling (IBS) ([see kernel mailing list](https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/)).
+*perf-cpp* will add IBS-related counter at runtime if the underlying (AMD) system supports IBS (&rarr; see [documentation about AMD IBS](#amd-instruction-based-sampling)).
 
-You may need to adjust the `sample_config.precise_ip(X)` setting on different hardware (ranging from `0` to `3`).
+In addition, you may need to adjust the `sample_config.precise_ip(X)` setting on different hardware (ranging from `perf::Precision::AllowArbitrarySkid` to `perf::Precision::MustHaveZeroSkid`).
 
 &rarr; [See code example](../examples/address_sampling.cpp)
 
