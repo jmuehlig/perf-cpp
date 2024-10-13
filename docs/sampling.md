@@ -158,7 +158,7 @@ sampler.values()
 
 This includes the **timestamp** and **instruction pointer** into the sample record.
 After sampling and retrieving the results, the recorded fields can be accessed by
-```
+```cpp
 for (const auto& sample_record : sampler.results()) {
     const auto timestamp = sample_record.time().value();
     const auto instruction_pointer = sample_record.instruction_pointer().value();
