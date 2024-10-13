@@ -1,11 +1,12 @@
 # *perf-cpp*: Performance Counter Wrapper for C++
 
-*perf-cpp* is a streamlined C++ library designed to make performance analysis more intuitive and focused. 
+*perf-cpp* is a streamlined C++ library that leverages the *perf subsystem* on Linux to enable performance counters directly from the application. 
 The key features are:
 
 * **Simplified Performance Measurement**: Directly interact with hardware performance counters from your C++ application within specific code segments (&rarr;[read the documentation](docs/recording.md)).
 * **Event Sampling**: Leverage sampling to gather performance data periodically, enabling efficient analysis of resource usage (including instruction pointers, data, branches, registers, and more) over time and/or execution (&rarr;[read the documentation](docs/sampling.md)).
 * **Customizable Counter Management**: Easily extend the built-in counters with those specific to your underlying hardware substrate (&rarr;[read the documentation](docs/counters.md)).
+* We included various [examples](examples/) to learn how to integrate the library into your C++ application.
 
 Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
 
@@ -135,20 +136,28 @@ cmake --build build --target examples
 ---
 
 ## Sophisticated Code Examples
-We provide a variety of examples detailed below. 
-Build them effortlessly by running `make examples`. 
+We provide a variety of [examples](examples/) detailed below. 
+
+Build them effortlessly by running `cmake --build build --target examples`. 
 All compiled example binaries are located in `examples/bin` and can be executed directly without additional arguments.
 
+### Recording Performance Counter Statistics
 * Code example for recording counters on a [single thread: `examples/single_thread.cpp`](examples/single_thread.cpp)
-* Code example for recording counters on [multiple threads: `examples/multi_thread.cpp`](examples/multi_thread.cpp)
 * Code example for recording counters on  [multiple threads through inheritance: `examples/inherit_thread.cpp`](examples/inherit_thread.cpp)
-* Code example for sampling [counter values: `counter_sampling.cpp`](examples/counter_sampling.cpp)
-* Code example for sampling [instruction pointers: `instruction_pointer_sampling.cpp`](examples/instruction_pointer_sampling.cpp)
-* Code example for sampling [memory addresses: `address_sampling.cpp`](examples/address_sampling.cpp)
-* Code example for sampling [branches: `branch_sampling.cpp`](examples/branch_sampling.cpp)
-* Code example for sampling [register values: `register_sampling.cpp`](examples/register_sampling.cpp)
-* Code example for [multithreaded sampling: `multi_thread_sampling.cpp`](examples/multi_thread_sampling.cpp)
-* Code example for [multicore sampling: `multi_cpu_sampling.cpp`](examples/multi_cpu_sampling.cpp)
+* Code example for recording counters on [multiple threads: `examples/multi_thread.cpp`](examples/multi_thread.cpp)
+* Code example for recording counters on  [specific CPU cores: `examples/multi_cpu.cpp`](examples/inherit_thread.cpp)
+
+### Recording Samples
+* Code example for sampling [instruction pointers: `examples/instruction_pointer_sampling.cpp`](examples/instruction_pointer_sampling.cpp)
+* Code example for sampling [memory addresses: `examples/address_sampling.cpp`](examples/address_sampling.cpp)
+* Code example for sampling [counter values: `examples/counter_sampling.cpp`](examples/counter_sampling.cpp)
+* Code example for sampling [branches: `examples/branch_sampling.cpp`](examples/branch_sampling.cpp)
+* Code example for sampling [register values: `examples/register_sampling.cpp`](examples/register_sampling.cpp)
+* Code example for sampling [raw values using AMD IBS: `examples/amd_ibs_raw_sampling.cpp`](examples/amd_ibs_raw_sampling.cpp)
+* Code example for sampling [context switches: `examples/context_switch_sampling.cpp`](examples/context_switch_sampling.cpp)
+* Code example for sampling [with multiple triggers: `examples/multi_event_sampling.cpp`](examples/multi_event_sampling.cpp)
+* Code example for [multithreaded sampling: `examples/multi_thread_sampling.cpp`](examples/multi_thread_sampling.cpp)
+* Code example for [multicore sampling: `examples/multi_cpu_sampling.cpp`](examples/multi_cpu_sampling.cpp)
 
 ## System Requirements
 * Minimum *Linux Kernel version*: `>= 5.4`
