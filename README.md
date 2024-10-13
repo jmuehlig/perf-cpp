@@ -139,7 +139,7 @@ cmake --build build --target examples
 We provide a variety of [examples](examples/) detailed below. 
 
 Build them effortlessly by running `cmake --build build --target examples`. 
-All compiled example binaries are located in `examples/bin` and can be executed directly without additional arguments.
+All compiled example binaries are located in `build/examples/bin` and can be executed directly without additional arguments.
 
 ### Recording Performance Counter Statistics
 * Code example for recording counters on a [single thread: `examples/single_thread.cpp`](examples/single_thread.cpp)
