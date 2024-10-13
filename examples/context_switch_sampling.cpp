@@ -18,7 +18,6 @@ main()
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
   perf_config.period(10000U); /// Record every 10,000th event.
-  perf_config.is_debug(true);
 
   auto sampler = perf::Sampler{ counter_definitions, perf_config };
 
@@ -26,11 +25,11 @@ main()
   sampler.trigger("cycles", perf::Precision::RequestZeroSkid);
 
   /// Include Timestamp, period, instruction pointer, and CPU number into samples.
-  sampler.values().time(true).period(true).instruction_pointer(true).cpu_id(true).context_switch(true);
+  sampler.values().time(true).cpu_id(true).context_switch(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
-                                                   /* create benchmark of 512 MB */ 2048U };
+                                                   /* create benchmark of 2 GB */ 2048U };
 
   /// Start sampling.
   try {
@@ -55,21 +54,27 @@ main()
   sampler.stop();
 
   /// Get all the recorded samples.
-  const auto samples = sampler.result();
+  auto samples = sampler.result();
+  const auto count_samples_before_filter = samples.size();
+
+  /// Filter out samples without context switch.
+  samples.erase(std::remove_if(samples.begin(),
+                               samples.end(),
+                               [](const auto& sample) {
+                                 return !sample.cpu_id().has_value() || !sample.time().has_value() || !sample.context_switch().has_value();
+                               }),
+                samples.end());
 
   /// Print the first samples.
-  std::cout << "\nRecorded " << samples.size() << " samples." << std::endl;
-  for (auto index = 0U; index < samples.size(); ++index) {
+  const auto count_show_samples = std::min<std::size_t>(samples.size(), 40U);
+  std::cout << "\nRecorded " << count_samples_before_filter << " samples. " << samples.size()
+            << " remaining after filter." << std::endl;
+  std::cout << "Here are the first " << count_show_samples << " recorded samples:\n" << std::endl;
+  for (auto index = 0U; index < count_show_samples; ++index) {
     const auto& sample = samples[index];
 
-    /// Since we recorded the time, period, the instruction pointer, and the CPU
-    /// id, we can only read these values.
-    if (sample.time().has_value() && sample.context_switch().has_value()) {
-      std::cout << "Time = " << sample.time().value()
-                << " | is in = " << sample.context_switch().value().is_in()
-                << " | is preempt = " << sample.context_switch().value().is_preempt()
-                << "\n";
-    }
+    std::cout << "Time = " << sample.time().value() << " | CPU ID = " << sample.cpu_id().value() << " | is in = " << sample.context_switch().value().is_in()
+              << " | is preempt = " << sample.context_switch().value().is_preempt() << "\n";
   }
   std::cout << std::flush;
 

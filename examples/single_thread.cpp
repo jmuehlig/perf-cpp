@@ -59,11 +59,14 @@ main()
   /// Get the result (normalized per cache line).
   const auto result = event_counter.result(benchmark.size());
 
-  /// Print the performance counters.
-  std::cout << "\nHere are the results:\n" << std::endl;
+  /// Print the performance counters manually.
+  std::cout << "\nResults:\n";
   for (const auto& [counter_name, counter_value] : result) {
-    std::cout << counter_value << " " << counter_name << " per cache line" << std::endl;
+    std::cout << counter_value << " " << counter_name << " / cache line" << std::endl;
   }
+
+  /// Print the performance counters as table.
+  std::cout << "\nResults as table:\n" << result.to_string() << std::endl;
 
   return 0;
 }

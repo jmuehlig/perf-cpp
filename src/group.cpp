@@ -36,11 +36,11 @@ perf::Group::open(const perf::Config config)
     perf_event.exclude_idle = static_cast<std::int32_t>(!config.is_include_idle());
     perf_event.exclude_guest = static_cast<std::int32_t>(!config.is_include_guest());
 
+    perf_event.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
+
+    /// Record the time activated and running for leaders.
     if (is_leader) {
-      perf_event.read_format =
-        PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING | PERF_FORMAT_GROUP | PERF_FORMAT_ID;
-    } else {
-      perf_event.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
+      perf_event.read_format |= PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING;
     }
 
     /// Open the counter.
@@ -86,7 +86,7 @@ bool
 perf::Group::start()
 {
   if (this->_members.empty()) {
-    return false;
+    throw std::runtime_error{ "Cannot start an empty group." };
   }
 
   const auto leader_file_descriptor = this->leader_file_descriptor();

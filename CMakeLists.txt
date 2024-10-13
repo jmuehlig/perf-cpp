@@ -86,13 +86,21 @@ if(BUILD_EXAMPLES)
     add_executable(multi-event-sampling EXCLUDE_FROM_ALL examples/multi_event_sampling.cpp examples/access_benchmark.cpp)
     target_link_libraries(multi-event-sampling perf-cpp)
 
+    #### Sampling with raw values
+    add_executable(amd-ibs-raw-sampling EXCLUDE_FROM_ALL examples/amd_ibs_raw_sampling.cpp examples/access_benchmark.cpp)
+    target_link_libraries(amd-ibs-raw-sampling perf-cpp)
+
+    #### Sampling with raw values
+    add_executable(context-switch-sampling EXCLUDE_FROM_ALL examples/context_switch_sampling.cpp examples/access_benchmark.cpp)
+    target_link_libraries(context-switch-sampling perf-cpp)
+
     ### One target for all examples
     add_custom_target(examples)
     add_dependencies(examples
             single-thread inherit-thread multi-thread multi-cpu multi-process
             instruction-pointer-sampling counter-sampling branch-sampling
             address-sampling register-sampling multi-thread-sampling multi-cpu-sampling
-            multi-event-sampling)
+            multi-event-sampling amd-ibs-raw-sampling context-switch-sampling)
 endif()
 
 ### Target to create the perf list CSV

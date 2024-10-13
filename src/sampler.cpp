@@ -498,9 +498,9 @@ perf::Sampler::result(const bool sort_by_time) const
           const auto raw_data_size = (*reinterpret_cast<std::uint32_t*>(sample_ptr));
           sample_ptr += sizeof(std::uint32_t);
 
-          const auto *raw_sample_data = reinterpret_cast<char*>(sample_ptr);
+          const auto* raw_sample_data = reinterpret_cast<char*>(sample_ptr);
 
-          auto raw_data = std::vector<char>(std::size_t{raw_data_size}, '\0');
+          auto raw_data = std::vector<char>(std::size_t{ raw_data_size }, '\0');
           for (auto i = 0U; i < raw_data_size; ++i) {
             raw_data[i] = raw_sample_data[i];
           }

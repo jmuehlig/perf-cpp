@@ -11,6 +11,7 @@ perf::CounterDefinition::CounterDefinition(const std::string& config_file)
   this->initialize_generalized_counters();
   this->initialize_amd_ibs_counters();
   this->initialize_intel_pebs_counters();
+
   this->read_counter_configuration(config_file);
 }
 

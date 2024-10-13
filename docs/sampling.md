@@ -214,6 +214,15 @@ Callchain as a list of instruction pointers.
 * Request by `sampler.values().callchain(true);` or `sampler.values().callchain(M);` where `M` is a `std::uint16_t` defining the maximum call stack size. 
 * Read from the results by `sample_record.callchain().value();`, which returns a `std::vector<std::uintptr_t>` of instruction pointers.
 
+### Raw Values
+Hardware will record different data, depending on the CPU generation and manufacture.
+While the perf subsystem will parse the data and map it to a generalized interface, the raw data can also be accessed using raw sampling.
+
+* Request by `sampler.values().raw(true);`
+* Read the results by `sample_record.raw().value();`
+
+&rarr; [See code example for AMD IBS](../examples/amd_ibs_raw_sampling.cpp) (more information about how to access the raw data is provided by the [AMD manual](https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/24593.pdf) from page 428)
+
 ### ID of the recording CPU
 
 * Request by `sampler.values().cpu_id(true);`
@@ -414,6 +423,8 @@ Occurrence of context switches.
     * `sample_record.stream_id()`, if `sampler.stream_id(true)` was specified,
     * `sample_record.cpu_id()`, if `sampler.cpu_id(true)` was specified, and
     * `sample_record.id()`, if `sampler.identifier(true)` was specified.
+
+&rarr; [See code example](../examples/context_switch_sampling.cpp)
 
 ### CGroup
 * Request by `sampler.values().cgroup(true);`

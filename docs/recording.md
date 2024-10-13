@@ -33,7 +33,7 @@ try {
 event_counter.stop();
 ```
 
-## 3) Access the counter
+## 3) Access the measured results
 ```cpp
 /// Calculate the result.
 const auto result = event_counter.result();
@@ -48,7 +48,10 @@ for (const auto [name, value] : result)
     std::cout << "Counter " << name << " = " << value << std::endl;
 }
 
-/// Or print in CSV and JSON.
+//// Or print results as table.
+std::cout << result.to_string() << std::endl;
+
+/// Or get as CSV and JSON.
 std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << std::endl;
 std::cout << result.to_json() << std::endl;
 ```

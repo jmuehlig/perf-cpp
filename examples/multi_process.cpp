@@ -128,9 +128,9 @@ main()
   auto result = multi_cpu_event_counter.result(benchmark.size());
 
   /// Print the performance counters.
-  std::cout << "\nHere are the results for " << count_threads << " threads:\n" << std::endl;
+  std::cout << "\nResults:\n";
   for (const auto& [counter_name, counter_value] : result) {
-    std::cout << counter_value << " " << counter_name << " per cache line" << std::endl;
+    std::cout << counter_value << " " << counter_name << " / cache line" << std::endl;
   }
 
   return 0;

@@ -67,23 +67,6 @@ public:
    */
   [[nodiscard]] std::optional<double> get(std::string_view name) const noexcept;
 
-  /**
-   * Access the result of the counter or metric with the given name.
-   *
-   * @param name Name of the counter or metric to access.
-   * @return The value, or std::nullopt of the result has no counter or value with the requested name.
-   */
-  //[[nodiscard]] std::optional<double> get(const std::string& name) const noexcept { return
-  // get(std::string_view{name}); }
-
-  /**
-   * Access the result of the counter or metric with the given name.
-   *
-   * @param name Name of the counter or metric to access.
-   * @return The value, or std::nullopt of the result has no counter or value with the requested name.
-   */
-  //[[nodiscard]] std::optional<double> get(std::string&& name) const noexcept { return get(name); }
-
   [[nodiscard]] iterator begin() { return _results.begin(); }
   [[nodiscard]] iterator end() { return _results.end(); }
   [[nodiscard]] const_iterator begin() const { return _results.begin(); }
@@ -103,6 +86,12 @@ public:
    * @return Result in CSV format.
    */
   [[nodiscard]] std::string to_csv(char delimiter = ',', bool print_header = true) const;
+
+  /**
+   * Converts the result to a table-formatted string.
+   * @return Result as a table-formatted string.
+   */
+  [[nodiscard]] std::string to_string() const;
 
 private:
   std::vector<std::pair<std::string_view, double>> _results;
@@ -155,6 +144,10 @@ private:
    * @param is_first Flag if this is the first printed name. If false, a separator is printed in front of the name.
    * @return True, if this was the first printed type.
    */
-  bool print_type_to_stream(std::stringstream& stream, std::uint64_t mask, std::uint64_t type, std::string&& name, bool is_first) const;
+  static bool print_type_to_stream(std::stringstream& stream,
+                                   std::uint64_t mask,
+                                   std::uint64_t type,
+                                   std::string&& name,
+                                   bool is_first);
 };
 }
