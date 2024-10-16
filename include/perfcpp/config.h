@@ -170,7 +170,7 @@ private:
   bool _is_frequency{ true };
   std::uint64_t _frequency_or_period{ 4000U };
 
-  Precision _precise_ip{ Precision::AllowArbitrarySkid };
+  Precision _precise_ip{ Precision::MustHaveConstantSkid /* Enable PEBS by default */ };
 
   /// User registers in config is deprecated and will be replaced by Sampler::values() interface.
   Registers _user_registers;

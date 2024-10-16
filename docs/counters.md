@@ -82,7 +82,7 @@ You can also use the `perf::CounterConfig` class, which takes extended configs:
 ```cpp
 auto counter_definitions = perf::CounterDefinition{};
 counter_definitions.add(
-  /* name */ "llc-load-misses", 
+  /* name */ "mem-loads-lat-3", 
   perf::CounterConfig{
       /* type */ PERF_TYPE_RAW,
       /* config id */ 0x1CD,
@@ -93,7 +93,7 @@ counter_definitions.add(
 ```
 
 ### 2) Using a file
-Alternatively, you can use a file in csv-like format with `name,config id` in every line. 
+Alternatively, you can use a file in csv-like format with `name,config id[,config2]` in every line. 
 Example:
 
     cycle_activity.stalls_l1d_miss,0xc530ca3
