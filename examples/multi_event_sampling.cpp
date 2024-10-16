@@ -17,33 +17,37 @@ main()
   auto counter_definitions = perf::CounterDefinition{};
   counter_definitions.add("loads", perf::CounterConfig{ PERF_TYPE_RAW, 0x1CD, 0x3 });
   counter_definitions.add("stores", perf::CounterConfig{ PERF_TYPE_RAW, 0x2CD });
-  counter_definitions.add("ibs_op", perf::CounterConfig{ 11U, 0x0 });
 
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
   perf_config.period(10000U); /// Record every 10,000th event.
 
-  auto sampling_counters = std::vector<std::vector<std::pair<std::string, perf::Precision>>>{};
+  auto sampler = perf::Sampler{ counter_definitions, perf_config };
+  sampler.trigger(std::vector<std::string>{"cycles", "instructions"});
 
   if (__builtin_cpu_is("intel") > 0) {
     if (__builtin_cpu_is("sapphirerapids")) {
-      /// Note: For sampling on Sapphire Rapids, we have to prepend an auxiliary counter.
-      sampling_counters.push_back(
-        { { "mem-loads-aux", perf::Precision::MustHaveZeroSkid }, { "loads", perf::Precision::RequestZeroSkid } });
+      sampler.trigger({
+        {
+          perf::Sampler::Trigger{ "mem-loads-aux", perf::Precision::MustHaveZeroSkid }, /// Helper
+          perf::Sampler::Trigger{ "loads", perf::Precision::RequestZeroSkid }           /// Loads
+        },
+        { perf::Sampler::Trigger{ "stores", perf::Precision::MustHaveZeroSkid } } /// Stores
+      });
     } else {
-      sampling_counters.push_back({ { "loads", perf::Precision::RequestZeroSkid } });
+      sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
+        {
+          perf::Sampler::Trigger{ "loads", perf::Precision::RequestZeroSkid } /// Loads
+        },
+        { perf::Sampler::Trigger{ "stores", perf::Precision::MustHaveZeroSkid } } /// Stores
+      });
     }
-
-    sampling_counters.push_back({ { "stores", perf::Precision::MustHaveZeroSkid } });
-  }
-
-  if (sampling_counters.empty()) {
+  } else {
     std::cout << "Error: Memory sampling with multiple triggers is not supported on this CPU." << std::endl;
     return 1;
   }
 
-  auto sampler = perf::Sampler{ counter_definitions, perf_config };
-  sampler.trigger(std::move(sampling_counters));
+  /// Define what to sample.
   sampler.values().time(true).logical_memory_address(true).data_src(true);
 
 #ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT

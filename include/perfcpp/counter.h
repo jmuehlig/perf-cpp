@@ -25,11 +25,15 @@ public:
   ~CounterConfig() noexcept = default;
 
   void precise_ip(const std::uint8_t precise_ip) noexcept { _precise_ip = precise_ip; }
+  void period(const std::uint64_t period) noexcept { _is_frequency = false; _period_or_frequency = period; }
+  void frequency(const std::uint64_t frequency) noexcept { _is_frequency = true; _period_or_frequency = frequency; }
 
   [[nodiscard]] std::uint32_t type() const noexcept { return _type; }
   [[nodiscard]] std::uint64_t event_id() const noexcept { return _event_id; }
   [[nodiscard]] std::array<std::uint64_t, 2U> event_id_extension() const noexcept { return _event_id_extension; }
   [[nodiscard]] std::uint8_t precise_ip() const noexcept { return _precise_ip; }
+  [[nodiscard]] bool is_frequency() const noexcept { return _is_frequency; }
+  [[nodiscard]] std::uint64_t period_or_frequency() const noexcept { return _period_or_frequency; }
 
   [[nodiscard]] bool is_auxiliary() const noexcept { return _event_id == 0x8203; }
 
@@ -38,6 +42,8 @@ private:
   std::uint64_t _event_id;
   std::array<std::uint64_t, 2U> _event_id_extension;
   std::uint8_t _precise_ip{ 0U };
+  bool _is_frequency;
+  std::uint64_t _period_or_frequency;
 };
 
 class CounterResult
@@ -115,6 +121,9 @@ public:
   }
   void precise_ip(const std::uint8_t precision) { _config.precise_ip(precision); }
   [[nodiscard]] std::uint8_t precise_ip() const noexcept { return _config.precise_ip(); }
+
+  [[nodiscard]] bool is_frequency() const noexcept { return _config.is_frequency(); }
+  [[nodiscard]] std::uint64_t period_or_frequency() const noexcept { return _config.period_or_frequency(); }
 
   [[nodiscard]] perf_event_attr& event_attribute() noexcept { return _event_attribute; }
   [[nodiscard]] std::uint64_t& id() noexcept { return _id; }

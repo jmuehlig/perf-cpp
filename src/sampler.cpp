@@ -78,49 +78,47 @@ perf::Sampler::Sampler(const perf::CounterDefinition& counter_list,
 }
 
 perf::Sampler&
-perf::Sampler::trigger(std::vector<std::vector<std::string>>&& triggers)
+perf::Sampler::trigger(std::vector<std::vector<std::string>>&& list_of_trigger_names)
 {
-  auto triggers_with_precision = std::vector<std::vector<std::pair<std::string, Precision>>>{};
-  triggers_with_precision.reserve(triggers.size());
+  auto triggers = std::vector<std::vector<Trigger>>{};
+  triggers.reserve(triggers.size());
 
-  for (auto& trigger_names : triggers) {
-    auto trigger_with_precision = std::vector<std::pair<std::string, Precision>>{};
+  for (auto& trigger_names : list_of_trigger_names) {
+    auto trigger_with_precision = std::vector<Trigger>{};
 
     trigger_with_precision.reserve(trigger_names.size());
     for (auto& trigger_name : trigger_names) {
-      trigger_with_precision.emplace_back(std::move(trigger_name), Precision::Unspecified);
+      trigger_with_precision.emplace_back(std::move(trigger_name));
     }
 
-    triggers_with_precision.push_back(std::move(trigger_with_precision));
+    triggers.push_back(std::move(trigger_with_precision));
   }
 
-  return this->trigger(std::move(triggers_with_precision));
+  return this->trigger(std::move(triggers));
 }
 
 perf::Sampler&
-perf::Sampler::trigger(std::vector<std::vector<std::pair<std::string, Precision>>>&& triggers)
+perf::Sampler::trigger(std::vector<std::vector<Trigger>>&& triggers)
 {
-  this->_trigger_names.reserve(triggers.size());
+  this->_triggers.reserve(triggers.size());
 
   for (auto& trigger_group : triggers) {
-    auto trigger_group_references = std::vector<std::pair<std::string_view, Precision>>{};
-    for (auto& counter_name_and_precision : trigger_group) {
-      const auto& trigger_name = std::get<0>(counter_name_and_precision);
-
-      if (!this->_counter_definitions.is_metric(trigger_name)) {
-        if (auto counter_config = this->_counter_definitions.counter(trigger_name); counter_config.has_value()) {
+    auto trigger_group_references = std::vector<std::tuple<std::string_view, std::optional<Precision>, std::optional<PeriodOrFrequency>>>{};
+    for (auto& trigger : trigger_group) {
+      if (!this->_counter_definitions.is_metric(trigger.name())) {
+        if (auto counter_config = this->_counter_definitions.counter(trigger.name()); counter_config.has_value()) {
           trigger_group_references.emplace_back(std::get<0>(counter_config.value()),
-                                                std::get<1>(counter_name_and_precision));
+                                                trigger.precision(), trigger.period_or_frequency());
         } else {
-          throw std::runtime_error{ std::string{ "Cannot find counter '" }.append(trigger_name).append("'.") };
+          throw std::runtime_error{ std::string{ "Cannot find counter '" }.append(trigger.name()).append("'.") };
         }
       } else {
         throw std::runtime_error{ std::string{ "Counter '" }
-                                    .append(trigger_name)
+                                    .append(trigger.name())
                                     .append("' seems to be a metric. Metrics are not supported as triggers.") };
       }
     }
-    this->_trigger_names.push_back(std::move(trigger_group_references));
+    this->_triggers.push_back(std::move(trigger_group_references));
   }
 
   return *this;
@@ -135,7 +133,7 @@ perf::Sampler::open()
   }
 
   /// Build the groups from triggers + counters from values.
-  for (const auto& trigger_group : this->_trigger_names) {
+  for (const auto& trigger_group : this->_triggers) {
     auto group = Group{};
 
     if (this->_values.is_set(PERF_SAMPLE_READ)) {
@@ -145,13 +143,26 @@ perf::Sampler::open()
 
     /// Add the trigger(s) to the group.
     for (const auto trigger : trigger_group) {
-      if (auto counter_config = this->_counter_definitions.counter(std::get<0>(trigger)); counter_config.has_value()) {
-        const auto precision =
-          std::get<1>(trigger) != Precision::Unspecified ? std::get<1>(trigger) : this->_config.precise_ip();
-        auto config = std::get<1>(counter_config.value());
-        config.precise_ip(static_cast<std::uint8_t>(precision));
+      if (auto counter_name_and_config = this->_counter_definitions.counter(std::get<0>(trigger)); counter_name_and_config.has_value()) {
+        auto counter_config = std::get<1>(counter_name_and_config.value());
 
-        group.add(config);
+        /// Set the counters precise_ip (fall back to config if empty).
+        const auto precision = std::get<1>(trigger).value_or(this->_config.precise_ip());
+        counter_config.precise_ip(static_cast<std::uint8_t>(precision));
+
+        /// Set the counters period or frequency (fall back to config if empty).
+        const auto period_or_frequency = std::get<2>(trigger).value_or(this->_config.period_for_frequency());
+        std::visit([&counter_config](const auto period_or_frequency) {
+          using T = std::decay_t<decltype(period_or_frequency)>;
+          if constexpr (std::is_same_v<T, class Period>) {
+            counter_config.period(period_or_frequency.get());
+          } else if constexpr (std::is_same_v<T, class Frequency>) {
+            counter_config.frequency(period_or_frequency.get());
+          }
+        }, period_or_frequency);
+
+        /// Add the counter to the group.
+        group.add(counter_config);
 
         if (this->_values.is_set(PERF_SAMPLE_READ)) {
           this->_counter_names.back().push_back(std::get<0>(trigger));
@@ -228,12 +239,9 @@ perf::Sampler::open()
         perf_event.sample_type = this->_values.get();
         perf_event.sample_id_all = 1U;
 
-        if (this->_config.is_frequency()) {
-          perf_event.freq = 1U;
-          perf_event.sample_freq = this->_config.frequency_or_period();
-        } else {
-          perf_event.sample_period = this->_config.frequency_or_period();
-        }
+        /// Set period of frequency.
+        perf_event.freq = static_cast<std::uint64_t>(counter.is_frequency());
+        perf_event.sample_freq = counter.period_or_frequency();
 
         if (this->_values.is_set(PERF_SAMPLE_BRANCH_STACK)) {
           perf_event.branch_sample_type = this->_values.branch_mask();
@@ -772,11 +780,11 @@ perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std:
 
 void
 perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers,
-                                std::vector<std::vector<std::pair<std::string, Precision>>>&& triggers)
+                                std::vector<std::vector<Sampler::Trigger>>&& triggers)
 {
   for (auto sampler_id = 0U; sampler_id < samplers.size(); ++sampler_id) {
     if (sampler_id < samplers.size() - 1U) {
-      samplers[sampler_id].trigger(std::vector<std::vector<std::pair<std::string, Precision>>>{ triggers });
+      samplers[sampler_id].trigger(std::vector<std::vector<Sampler::Trigger>>{ triggers });
     } else {
       samplers[sampler_id].trigger(std::move(triggers));
     }

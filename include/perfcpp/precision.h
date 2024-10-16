@@ -16,7 +16,5 @@ enum Precision : std::uint8_t
   MustHaveConstantSkid = 1U,
   RequestZeroSkid = 2U,
   MustHaveZeroSkid = 3U,
-
-  Unspecified = std::numeric_limits<std::uint8_t>::max()
 };
 }

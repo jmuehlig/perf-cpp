@@ -120,7 +120,7 @@ sampler.trigger("cycles");
 Multiple triggers can be defined using a vector of trigger names:
 
 ```cpp
-sampler.trigger({"cycles", "instructions"});
+sampler.trigger(std::vector<std::string>{"cycles", "instructions"});
 ```
 In that case, both, an overflow of the cycles and of the instructions counter will trigger the CPU to write a sample.
 
@@ -132,9 +132,17 @@ You can request a specific amount if skid through for each trigger, for example,
 sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid);
 ```
 
+## Precision
+Due to deeply pipelined processors, samples might not be precise, i.e., a sample might contain an instruction pointer or memory address that did not generate the overflow (&rarr; see [a blogpost on easyperf.net](https://easyperf.net/blog/2019/04/03/Precise-timing-of-machine-code-with-Linux-perf) and [the perf documentation](https://man7.org/linux/man-pages/man2/perf_event_open.2.html)).
+You can request a specific amount if skid through for each trigger, for example,
+
+```cpp
+sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid);
+```
+
 The precision can have the following values:
-* `perf::Precision::AllowArbitrarySkid`
-* `perf::Precision::MustHaveConstantSkid`
+* `perf::Precision::AllowArbitrarySkid` (this does **not** enable Intel PEBS)
+* `perf::Precision::MustHaveConstantSkid` (default)
 * `perf::Precision::RequestZeroSkid`
 * `perf::Precision::MustHaveZeroSkid`
 
@@ -143,6 +151,40 @@ If you do not set any precision level through the `.trigger()` interface, you ca
 ```cpp
 auto sample_config = perf::SampleConfig{};
 sample_config.precise_ip(perf::Precision::RequestZeroSkid);
+
+auto sampler = perf::Sampler{ counter_definitions, sample_config };
+sampler.trigger("cycles");
+```
+
+## Period / Frequency
+You can request a specific period **or** frequency for each trigger – basically how often the hardware should write samples –, for example,
+
+```cpp
+/// Every 4000th cycle.
+sampler.trigger("cycles", perf::Period{4000U});
+```
+
+**or**
+
+```cpp
+/// With a frequency of 1000 samples per second 
+// (the hardware will adjust the period according to the provided frequency).
+sampler.trigger("cycles", perf::Frequency{1000U});
+```
+
+You can also combine the configurations, for example, by
+```cpp
+/// Every 4000th cycle with zero skid.
+sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{4000U});
+```
+
+If you do not set any precision level through the `.trigger()` interface, you can control the *default* period of frequency through the sample config:
+
+```cpp
+auto sample_config = perf::SampleConfig{};
+sample_config.period(4000U);
+/// or:
+sample_config.frequency(1000U);
 
 auto sampler = perf::Sampler{ counter_definitions, sample_config };
 sampler.trigger("cycles");
@@ -311,10 +353,10 @@ For example, to record loads (counter `0x1CD`) and stores (counter `0x2CD`):
 ```cpp
 sampler.trigger({
     { 
-        std::make_pair("mem-loads-aux", perf::Precision::MustHaveZeroSkid), /// Helper
-        std::make_pair("loads", perf::Precision::RequestZeroSkid)           /// First "real" counter
+        perf::Sampler::Trigger{"mem-loads-aux", perf::Precision::MustHaveZeroSkid}, /// Helper
+        perf::Sampler::Trigger{"loads", perf::Precision::RequestZeroSkid}           /// First "real" counter
     },
-    { std::make_pair("stores", perf::Precision::MustHaveZeroSkid) }         /// Other "real" counters.
+    { perf::Sampler::Trigger{"stores", perf::Precision::MustHaveZeroSkid} }         /// Other "real" counters.
   });
 ```
 

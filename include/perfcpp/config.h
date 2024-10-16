@@ -3,6 +3,7 @@
 #include "branch.h"
 #include "precision.h"
 #include "registers.h"
+#include "period.h"
 #include <cstdint>
 #include <optional>
 
@@ -90,8 +91,7 @@ public:
 
   [[nodiscard]] Precision precise_ip() const noexcept { return _precise_ip; }
   [[nodiscard]] std::uint64_t buffer_pages() const noexcept { return _buffer_pages; }
-  [[nodiscard]] std::uint64_t frequency_or_period() const noexcept { return _frequency_or_period; }
-  [[nodiscard]] bool is_frequency() const noexcept { return _is_frequency; }
+  [[nodiscard]] PeriodOrFrequency period_for_frequency() const noexcept { return _period_or_frequency; }
 
   [[deprecated("User Registers will be set through the Sampler::values() interface.")]] [[nodiscard]] Registers
   user_registers() const noexcept
@@ -113,13 +113,11 @@ public:
 
   void frequency(const std::uint64_t frequency) noexcept
   {
-    _is_frequency = true;
-    _frequency_or_period = frequency;
+    _period_or_frequency = Frequency{frequency};
   }
   void period(const std::uint64_t period) noexcept
   {
-    _is_frequency = false;
-    _frequency_or_period = period;
+    _period_or_frequency = Period{period};
   }
 
   void precise_ip(const Precision precision) noexcept { _precise_ip = precision; }
@@ -167,8 +165,7 @@ public:
 private:
   std::uint64_t _buffer_pages{ 8192U + 1U };
 
-  bool _is_frequency{ true };
-  std::uint64_t _frequency_or_period{ 4000U };
+  PeriodOrFrequency _period_or_frequency{ Period{4000U} };
 
   Precision _precise_ip{ Precision::MustHaveConstantSkid /* Enable PEBS by default */ };
 

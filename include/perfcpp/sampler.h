@@ -9,6 +9,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <utility>
 
 namespace perf {
 class MultiSamplerBase;
@@ -264,6 +265,23 @@ public:
     void disable(const std::uint64_t perf_field) noexcept { _mask &= ~perf_field; }
   };
 
+  class Trigger {
+  public:
+    explicit Trigger(std::string&& name) noexcept : _name(std::move(name)) { }
+    Trigger(std::string&& name, const Precision precision) noexcept : _name(std::move(name)), _precision(precision) { }
+    Trigger(std::string&& name, const PeriodOrFrequency period_or_frequency) noexcept : _name(std::move(name)), _period_or_frequency(period_or_frequency) { }
+    Trigger(std::string&& name, const Precision precision,  const PeriodOrFrequency period_or_frequency) noexcept : _name(std::move(name)), _precision(precision), _period_or_frequency(period_or_frequency) { }
+    ~Trigger() = default;
+
+    [[nodiscard]] const std::string& name() const noexcept { return _name; }
+    [[nodiscard]] std::optional<Precision> precision() const noexcept { return _precision; }
+    [[nodiscard]] std::optional<PeriodOrFrequency> period_or_frequency() const noexcept { return _period_or_frequency; }
+  private:
+    std::string _name;
+    std::optional<Precision> _precision{ std::nullopt };
+    std::optional<PeriodOrFrequency> _period_or_frequency{ std::nullopt };
+  };
+
   [[deprecated("Creating samplers with counters and sampling type will be replaced by Sampler::trigger() and "
                "Sampler::values() interfaces.")]] Sampler(const CounterDefinition& counter_list,
                                                           const std::string& counter_name,
@@ -303,14 +321,76 @@ public:
    * Set the trigger for sampling to a single counter.
    *
    * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @return Sampler
+   */
+  Sampler& trigger(std::string&& trigger_name)
+  {
+    return trigger(std::vector<std::vector<Trigger>>{std::vector<Trigger>{Trigger{std::move(trigger_name)}}});
+  }
+
+  /**
+   * Set the trigger for sampling to a single counter.
+   *
+   * @param trigger_name Name of the counter that "triggers" sample recording.
    * @param precision Precision of the event.
    * @return Sampler
    */
-  Sampler& trigger(std::string&& trigger_name, const Precision precision = Precision::Unspecified)
+  Sampler& trigger(std::string&& trigger_name, const Precision precision)
   {
-    return trigger(
-      std::vector<std::pair<std::string, Precision>>{ std::make_pair(std::move(trigger_name), precision) });
+    return trigger(std::vector<std::vector<Trigger>>{std::vector<Trigger>{Trigger{std::move(trigger_name), precision}}});
   }
+
+  /**
+   * Set the trigger for sampling to a single counter.
+   *
+   * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @param period Sampling period of the event.
+   * @return Sampler
+   */
+  Sampler& trigger(std::string&& trigger_name, const class Period period)
+  {
+    return trigger(std::vector<std::vector<Trigger>>{std::vector<Trigger>{Trigger{std::move(trigger_name), period}}});
+  }
+
+  /**
+   * Set the trigger for sampling to a single counter.
+   *
+   * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @param frequency Sampling frequency of the event.
+   * @return Sampler
+   */
+  Sampler& trigger(std::string&& trigger_name, const Frequency frequency)
+  {
+    return trigger(std::vector<std::vector<Trigger>>{std::vector<Trigger>{Trigger{std::move(trigger_name), frequency}}});
+  }
+
+  /**
+   * Set the trigger for sampling to a single counter.
+   *
+   * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @param precision Precision of the event.
+   * @param period Sampling period of the event.
+   * @return Sampler
+   */
+  Sampler& trigger(std::string&& trigger_name, const Precision precision, const class Period period)
+  {
+    return trigger(std::vector<std::vector<Trigger>>{std::vector<Trigger>{Trigger{std::move(trigger_name), precision, period}}});
+  }
+
+  /**
+   * Set the trigger for sampling to a single counter.
+   *
+   * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @param precision Precision of the event.
+   * @param frequency Sampling frequency of the event.
+   * @return Sampler
+   */
+  Sampler& trigger(std::string&& trigger_name, const Precision precision, const Frequency frequency)
+  {
+    return trigger(std::vector<std::vector<Trigger>>{std::vector<Trigger>{Trigger{std::move(trigger_name), precision, frequency}}});
+  }
+
+
 
   /**
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
@@ -329,9 +409,9 @@ public:
    * @param triggers List of name-precision tuples that "trigger" sample recording.
    * @return Sampler
    */
-  Sampler& trigger(std::vector<std::pair<std::string, Precision>>&& triggers)
+  Sampler& trigger(std::vector<Trigger>&& triggers)
   {
-    return trigger(std::vector<std::vector<std::pair<std::string, Precision>>>{ std::move(triggers) });
+    return trigger(std::vector<std::vector<Trigger>>{ std::move(triggers) });
   }
 
   /**
@@ -352,7 +432,7 @@ public:
    * @param triggers Group of names and precisions of the counters that "trigger" sample recording.
    * @return Sampler
    */
-  Sampler& trigger(std::vector<std::vector<std::pair<std::string, Precision>>>&& triggers);
+  Sampler& trigger(std::vector<std::vector<Trigger>>&& triggers);
 
   /**
    * @return Configurations to enable values that will be sampled.
@@ -419,7 +499,7 @@ private:
   /// List of triggers. Each trigger will open an individual group of counters.
   /// "Normally", a 1-dimensional list would be enough, but since Intel Sapphire Rapids,
   /// we need auxiliary counters for mem-loads, mem-stores, etc.
-  std::vector<std::vector<std::pair<std::string_view, Precision>>> _trigger_names;
+  std::vector<std::vector<std::tuple<std::string_view, std::optional<Precision>, std::optional<PeriodOrFrequency>>>> _triggers;
 
   /// Values to record into every sample.
   Values _values;
@@ -542,7 +622,7 @@ protected:
    * @param trigger_names List of triggers.
    */
   static void trigger(std::vector<Sampler>& samplers,
-                      std::vector<std::vector<std::pair<std::string, Precision>>>&& triggers);
+                      std::vector<std::vector<Sampler::Trigger>>&& triggers);
 
   /**
    * Initializes the given sampler with values and config.
@@ -630,10 +710,58 @@ public:
    * @param trigger_name Name of the counter that "triggers" sample recording.
    * @return MultiThreadSampler
    */
-  MultiThreadSampler& trigger(std::string&& trigger_name, const Precision precision = Precision::Unspecified)
+  MultiThreadSampler& trigger(std::string&& trigger_name)
   {
-    return trigger(
-      std::vector<std::pair<std::string, Precision>>{ std::make_pair(std::move(trigger_name), precision) });
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name)}}});
+  }
+
+  /**
+   * Set the trigger for sampling to a single counter.
+   *
+   * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @param precision Precision of the event.
+   * @return MultiThreadSampler
+   */
+  MultiThreadSampler& trigger(std::string&& trigger_name, const Precision precision)
+  {
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), precision}}});
+  }
+
+  /**
+   * Set the trigger for sampling to a single counter.
+   *
+   * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @param period Sampling period of the event.
+   * @return MultiThreadSampler
+   */
+  MultiThreadSampler& trigger(std::string&& trigger_name, const class Period period)
+  {
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), period}}});
+  }
+
+  /**
+   * Set the trigger for sampling to a single counter.
+   *
+   * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @param frequency Sampling frequency of the event.
+   * @return MultiThreadSampler
+   */
+  MultiThreadSampler& trigger(std::string&& trigger_name, const Frequency frequency)
+  {
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), frequency}}});
+  }
+
+  /**
+   * Set the trigger for sampling to a single counter.
+   *
+   * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @param precision Precision of the event.
+   * @param period Sampling period of the event.
+   * @return MultiThreadSampler
+   */
+  MultiThreadSampler& trigger(std::string&& trigger_name, const Precision precision, const class Period period)
+  {
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), precision, period}}});
   }
 
   /**
@@ -650,12 +778,12 @@ public:
   /**
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
    *
-   * @param triggers List of name-precision tuples that "trigger" sample recording.
+   * @param triggers List of triggers tuples that "trigger" sample recording.
    * @return MultiThreadSampler
    */
-  MultiThreadSampler& trigger(std::vector<std::pair<std::string, Precision>>&& triggers)
+  MultiThreadSampler& trigger(std::vector<Sampler::Trigger>&& triggers)
   {
-    return trigger(std::vector<std::vector<std::pair<std::string, Precision>>>{ std::move(triggers) });
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{ std::move(triggers) });
   }
 
   /**
@@ -680,7 +808,7 @@ public:
    * @param triggers Group of names and precisions of the counters that "trigger" sample recording.
    * @return MultiThreadSampler
    */
-  MultiThreadSampler& trigger(std::vector<std::vector<std::pair<std::string, Precision>>>&& triggers)
+  MultiThreadSampler& trigger(std::vector<std::vector<Sampler::Trigger>>&& triggers)
   {
     MultiSamplerBase::trigger(_thread_local_samplers, std::move(triggers));
     return *this;
@@ -777,17 +905,65 @@ public:
    * @param trigger_name Name of the counter that "triggers" sample recording.
    * @return MultiCoreSampler
    */
-  MultiCoreSampler& trigger(std::string&& trigger_name, const Precision precision = Precision::Unspecified)
+  MultiCoreSampler& trigger(std::string&& trigger_name)
   {
-    return trigger(
-      std::vector<std::pair<std::string, Precision>>{ std::make_pair(std::move(trigger_name), precision) });
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name)}}});
+  }
+
+  /**
+   * Set the trigger for sampling to a single counter.
+   *
+   * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @param precision Precision of the event.
+   * @return MultiCoreSampler
+   */
+  MultiCoreSampler& trigger(std::string&& trigger_name, const Precision precision)
+  {
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), precision}}});
+  }
+
+  /**
+   * Set the trigger for sampling to a single counter.
+   *
+   * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @param period Sampling period of the event.
+   * @return MultiCoreSampler
+   */
+  MultiCoreSampler& trigger(std::string&& trigger_name, const class Period period)
+  {
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), period}}});
+  }
+
+  /**
+   * Set the trigger for sampling to a single counter.
+   *
+   * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @param frequency Sampling frequency of the event.
+   * @return MultiCoreSampler
+   */
+  MultiCoreSampler& trigger(std::string&& trigger_name, const Frequency frequency)
+  {
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), frequency}}});
+  }
+
+  /**
+   * Set the trigger for sampling to a single counter.
+   *
+   * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @param precision Precision of the event.
+   * @param period Sampling period of the event.
+   * @return MultiCoreSampler
+   */
+  MultiCoreSampler& trigger(std::string&& trigger_name, const Precision precision, const class Period period)
+  {
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), precision, period}}});
   }
 
   /**
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
    *
    * @param trigger_name Name of the counters that "triggers" sample recording.
-   * @return MultiThreadSampler
+   * @return MultiCoreSampler
    */
   MultiCoreSampler& trigger(std::vector<std::string>&& trigger_names)
   {
@@ -797,12 +973,12 @@ public:
   /**
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
    *
-   * @param triggers List of name-precision tuples that "trigger" sample recording.
+   * @param triggers List of triggers tuples that "trigger" sample recording.
    * @return MultiCoreSampler
    */
-  MultiCoreSampler& trigger(std::vector<std::pair<std::string, Precision>>&& triggers)
+  MultiCoreSampler& trigger(std::vector<Sampler::Trigger>&& triggers)
   {
-    return trigger(std::vector<std::vector<std::pair<std::string, Precision>>>{ std::move(triggers) });
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{ std::move(triggers) });
   }
 
   /**
@@ -811,7 +987,7 @@ public:
    * for Intel's Sapphire Rapids architecture).
    *
    * @param trigger_name Group of names of the counters that "triggers" sample recording.
-   * @return MultiThreadSampler
+   * @return MultiCoreSampler
    */
   MultiCoreSampler& trigger(std::vector<std::vector<std::string>>&& trigger_names)
   {
@@ -827,7 +1003,7 @@ public:
    * @param triggers Group of names and precisions of the counters that "trigger" sample recording.
    * @return MultiCoreSampler
    */
-  MultiCoreSampler& trigger(std::vector<std::vector<std::pair<std::string, Precision>>>&& triggers)
+  MultiCoreSampler& trigger(std::vector<std::vector<Sampler::Trigger>>&& triggers)
   {
     MultiSamplerBase::trigger(_core_local_samplers, std::move(triggers));
     return *this;

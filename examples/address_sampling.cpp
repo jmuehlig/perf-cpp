@@ -27,8 +27,8 @@ main()
     sampler.trigger("ibs_op_uops", perf::Precision::MustHaveZeroSkid);
   } else if (__builtin_cpu_is("intel") > 0 && __builtin_cpu_is("sapphirerapids") > 0) {
     /// Note: For sampling on Sapphire Rapids, we have to prepend an auxiliary counter.
-    sampler.trigger({ std::make_pair("mem-loads-aux", perf::Precision::MustHaveZeroSkid),
-                      std::make_pair("mem_trans_retired.load_latency_gt_3", perf::Precision::MustHaveZeroSkid) });
+    sampler.trigger({ perf::Sampler::Trigger{"mem-loads-aux", perf::Precision::MustHaveZeroSkid},
+                      perf::Sampler::Trigger{"mem_trans_retired.load_latency_gt_3", perf::Precision::MustHaveZeroSkid} });
   } else if (__builtin_cpu_is("intel") > 0) {
     sampler.trigger("mem_trans_retired.load_latency_gt_3", perf::Precision::MustHaveZeroSkid);
   } else {
