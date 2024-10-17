@@ -840,6 +840,15 @@ public:
    */
   void stop(const std::uint16_t thread_id) { _thread_local_samplers[thread_id].stop(); }
 
+  /**
+   * Stops recording performance counters for all threads.
+   */
+  void stop() {
+    for (auto& sampler : _thread_local_samplers) {
+      sampler.stop();
+    }
+  }
+
 private:
   std::vector<Sampler> _thread_local_samplers;
 
