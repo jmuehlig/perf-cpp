@@ -28,7 +28,7 @@ endif ()
 include_directories(include/)
 
 ### Library
-add_library(perf-cpp src/counter.cpp src/group.cpp src/counter_definition.cpp src/event_counter.cpp src/sampler.cpp)
+add_library(perf-cpp src/counter.cpp src/group.cpp src/counter_definition.cpp src/event_counter.cpp src/sampler.cpp src/analyzer/data.cpp)
 
 ### Examples
 if(BUILD_EXAMPLES)
@@ -94,13 +94,17 @@ if(BUILD_EXAMPLES)
     add_executable(context-switch-sampling EXCLUDE_FROM_ALL examples/context_switch_sampling.cpp examples/access_benchmark.cpp)
     target_link_libraries(context-switch-sampling perf-cpp)
 
+    #### Analyze Samples with DataAnalyzer
+    add_executable(data-analyzer EXCLUDE_FROM_ALL examples/data_analyzer.cpp examples/access_benchmark.cpp)
+    target_link_libraries(data-analyzer perf-cpp)
+
     ### One target for all examples
     add_custom_target(examples)
     add_dependencies(examples
             single-thread inherit-thread multi-thread multi-cpu multi-process
             instruction-pointer-sampling counter-sampling branch-sampling
             address-sampling register-sampling multi-thread-sampling multi-cpu-sampling
-            multi-event-sampling amd-ibs-raw-sampling context-switch-sampling)
+            multi-event-sampling amd-ibs-raw-sampling context-switch-sampling data-analyzer)
 endif()
 
 ### Target to create the perf list CSV

@@ -40,6 +40,9 @@ public:
 
   void set(const std::size_t index, const std::int64_t value) { _data_to_write[_indices[index]].value = value; }
 
+  [[nodiscard]] const std::vector<std::uint64_t>& indices() const noexcept { return _indices; }
+  [[nodiscard]] const std::vector<cache_line>& data_to_read() const noexcept { return _data_to_read; }
+
 private:
   /// Indices, defining the order in which the memory chunk is accessed.
   std::vector<std::uint64_t> _indices;
