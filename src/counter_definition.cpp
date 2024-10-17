@@ -6,6 +6,15 @@
 #include <string_view>
 #include <utility>
 
+#if defined(__has_builtin) // supported for gcc >= 10
+#if !__has_builtin(__builtin_cpu_is)
+#define __builtin_cpu_is(x) 0
+#endif
+// If we can't check builtin-support, we assume it is supported (x86 is very likely)
+// #else
+// #define __builtin_cpu_is(x) 0
+#endif
+
 perf::CounterDefinition::CounterDefinition(const std::string& config_file)
 {
   this->initialize_generalized_counters();
