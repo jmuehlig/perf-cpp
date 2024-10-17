@@ -5,6 +5,10 @@
 #include <string_view>
 #include <utility>
 
+#ifndef __builtin_cpu_is
+#define __builtin_cpu_is(x) 0
+#endif
+
 perf::CounterDefinition::CounterDefinition(const std::string& config_file)
 {
   this->initialized_default_counters();
