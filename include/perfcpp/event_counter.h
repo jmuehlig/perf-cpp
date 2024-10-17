@@ -254,6 +254,15 @@ public:
   void stop(std::uint16_t thread_id) { this->_thread_local_counter[thread_id].stop(); }
 
   /**
+   * Stops and closes recording performance counters for all threads.
+   */
+  void stop() {
+    for (auto& event_counter : this->_thread_local_counter) {
+      event_counter.stop();
+    }
+  }
+
+  /**
    * Returns the result of the performance measurement.
    *
    * @param normalization Normalization value, default = 1.
