@@ -749,7 +749,7 @@ perf::MultiSamplerBase::result(const std::vector<Sampler>& sampler, bool sort_by
     auto result = sampler.front().result();
 
     sort_by_time &= sampler.front()._values.is_set(PERF_SAMPLE_TIME);
-    
+
     for (auto i = 1U; i < sampler.size(); ++i) {
       /// Only sort if all samplers recorded the timestamp.
       sort_by_time &= sampler[i]._values.is_set(PERF_SAMPLE_TIME);
