@@ -1,6 +1,7 @@
 #include "access_benchmark.h"
 #include <iostream>
 #include <perfcpp/analyzer/data.h>
+#include <perfcpp/hardware_info.h>
 #include <perfcpp/sampler.h>
 
 int
@@ -21,15 +22,17 @@ main()
   auto sampler = perf::Sampler{ counter_definitions, perf_config };
 
   /// Setup which counters trigger the writing of samples (depends on the underlying hardware substrate).
-  if (__builtin_cpu_is("amd") > 0) {
+  if (perf::HardwareInfo::is_amd_ibs_supported()) {
     sampler.trigger("ibs_op_uops", perf::Precision::MustHaveZeroSkid);
-  } else if (__builtin_cpu_is("intel") > 0 && __builtin_cpu_is("sapphirerapids") > 0) {
-    /// Note: For sampling on Sapphire Rapids, we have to prepend an auxiliary counter.
-    sampler.trigger(
-      { perf::Sampler::Trigger{ "mem-loads-aux", perf::Precision::MustHaveZeroSkid },
-        perf::Sampler::Trigger{ "mem_trans_retired.load_latency_gt_3", perf::Precision::MustHaveZeroSkid } });
-  } else if (__builtin_cpu_is("intel") > 0) {
-    sampler.trigger("mem_trans_retired.load_latency_gt_3", perf::Precision::MustHaveZeroSkid);
+  } else if (perf::HardwareInfo::is_intel()) {
+    if (perf::HardwareInfo::is_intel_aux_counter_required()) {
+      /// Note: For sampling on Sapphire Rapids, we have to prepend an auxiliary counter.
+      sampler.trigger(
+        { perf::Sampler::Trigger{ "mem-loads-aux", perf::Precision::MustHaveZeroSkid },
+          perf::Sampler::Trigger{ "mem_trans_retired.load_latency_gt_3", perf::Precision::MustHaveZeroSkid } });
+    } else {
+      sampler.trigger("mem_trans_retired.load_latency_gt_3", perf::Precision::MustHaveZeroSkid);
+    }
   } else {
     std::cout << "Error: Memory sampling is not supported on this CPU." << std::endl;
     return 1;
