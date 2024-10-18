@@ -94,7 +94,7 @@ std::string
 perf::analyzer::DataAnalyzerResult::to_string() const noexcept
 {
   auto column_headers = std::vector<std::string>{
-    "",        "samples", "loads",          "avg. load lat.",  "L1d hits", "LFB hits",
+    "", "",        "samples", "loads",          "avg. load lat.",  "L1d hits", "LFB hits",
     "L2 hits", "L3 hits", "local RAM hits", "remote RAM hits", "stores",   "avg. store lat."
   };
   auto max_sizes = std::vector<std::uint64_t>{};
@@ -143,6 +143,7 @@ perf::analyzer::DataAnalyzerResult::to_string() const noexcept
       auto columns = std::vector<std::string>{};
       columns.reserve(column_headers.size());
 
+      columns.emplace_back(std::to_string(member.offset()).append(": "));
       columns.emplace_back(
         std::string{ member.name() }.append(" (").append(std::to_string(member.size())).append("B)"));
       columns.emplace_back(std::to_string(member.samples().size()));
@@ -177,10 +178,10 @@ perf::analyzer::DataAnalyzerResult::to_string() const noexcept
 
     stream << "DataType " << name << " {\n";
 
-    stream << "    ";
+    stream << " ";
     for (auto header_id = 0U; header_id < column_headers.size(); ++header_id) {
-      if (header_id == 0U) {
-        stream << column_headers[header_id] << std::string(max_sizes[0U] - column_headers[0].size(), ' ');
+      if (header_id == 1U) {
+        stream << column_headers[header_id] << std::string(max_sizes[1U] - column_headers[1].size(), ' ');
       } else {
         stream << "   " << std::setw(std::int32_t(max_sizes[header_id])) << column_headers[header_id];
       }
@@ -188,11 +189,11 @@ perf::analyzer::DataAnalyzerResult::to_string() const noexcept
     stream << "\n";
 
     for (const auto& member : members) {
-      stream << "    ";
+      stream << " ";
 
       for (auto column_id = 0U; column_id < member.size(); ++column_id) {
-        if (column_id == 0U) {
-          stream << member[column_id] << std::string(max_sizes[0U] - member[0].size(), ' ');
+        if (column_id == 1U) {
+          stream << member[column_id] << std::string(max_sizes[1U] - member[1].size(), ' ');
         } else {
           stream << "   " << std::setw(std::int32_t(max_sizes[column_id])) << member[column_id];
         }
