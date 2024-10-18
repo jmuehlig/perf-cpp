@@ -1,5 +1,6 @@
 #include "access_benchmark.h"
 #include <iostream>
+#include <perfcpp/hardware_info.h>
 #include <perfcpp/sampler.h>
 
 int
@@ -21,7 +22,7 @@ main()
   auto sampler = perf::Sampler{ counter_definitions, perf_config };
 
   /// Setup which counters trigger the writing of samples (depends on the underlying hardware substrate).
-  if (__builtin_cpu_is("amd") > 0) {
+  if (perf::HardwareInfo::is_amd_ibs_supported()) {
     sampler.trigger("ibs_op", perf::Precision::MustHaveZeroSkid);
   } else {
     std::cout << "Error: The example for raw sampling is only implemented for AMD IBS." << std::endl;

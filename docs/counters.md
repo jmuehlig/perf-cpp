@@ -162,3 +162,28 @@ For manual setup using **libpfm4** (available on [GitHub](https://github.com/wco
     * Retrieve the specific code for this counter by running the check_events executable with the counter's name as an argument. For example: `./check_events cycle_activity.stalls_l3_miss`
     * The output from this command will provide the identifier (ID) that can be used as a raw value to reference the counter.
 
+## Querying the Hardware at Runtime
+When you are writing cross-platform code, you might decide on the underlying hardware, which counters to add.
+To that end, you can query the `HardwareInfo` class as follows:
+
+```cpp
+#include <perfcpp/hardware_info.h>
+
+if (HardwareInfo::is_intel()) {
+  /// Add intel-specifics like counters, etc.
+
+  if (HardwareInfo::is_intel_aux_counter_required()) {
+    /// Add the "mem-loads-aux" counter in front of precise memory counters.
+    /// See the sampling documentation for specifics.
+  }
+}
+
+if (HardwareInfo::is_amd()) {
+    /// Add amd-specifics like counters, etc.
+    
+    if (HardwareInfo::is_amd_ibs_supported()) {
+        /// You can use ibs_op and further AMD IBS-related sampling mechanisms.
+        /// See sampling documentation for specifics.
+    }
+}
+```

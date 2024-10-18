@@ -1,5 +1,6 @@
 #include "access_benchmark.h"
 #include <iostream>
+#include <perfcpp/hardware_info.h>
 #include <perfcpp/sampler.h>
 
 int
@@ -23,10 +24,9 @@ main()
   perf_config.period(10000U); /// Record every 10,000th event.
 
   auto sampler = perf::Sampler{ counter_definitions, perf_config };
-  sampler.trigger(std::vector<std::string>{"cycles", "instructions"});
 
-  if (__builtin_cpu_is("intel") > 0) {
-    if (__builtin_cpu_is("sapphirerapids")) {
+  if (perf::HardwareInfo::is_intel()) {
+    if (perf::HardwareInfo::is_intel_aux_counter_required()) {
       sampler.trigger({
         {
           perf::Sampler::Trigger{ "mem-loads-aux", perf::Precision::MustHaveZeroSkid }, /// Helper
