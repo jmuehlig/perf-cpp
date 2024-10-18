@@ -6,6 +6,10 @@
 #include <string_view>
 #include <utility>
 
+#if !(defined(__x86_64__) || defined(__i386__))
+#define __builtin_cpu_is(x) 0
+#endif
+
 perf::CounterDefinition::CounterDefinition(const std::string& config_file)
 {
   this->initialize_generalized_counters();
