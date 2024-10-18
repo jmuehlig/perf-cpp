@@ -6,6 +6,13 @@ To monitor multiple threads or CPU cores, you have various options:
 * Initiate measurements that record counters for all child threads simultaneously (&rarr; [See our multithreaded inheritance code example: `examples/inherit_thread.cpp`](../examples/inherit_thread.cpp)).
 * Monitor specific CPU cores and record counters of all processes executed there (&rarr; [See our multi cpu code example: `examples/multi_cpu.cpp`](../examples/multi_cpu.cpp)).
 
+----
+## Table of Contents
+- [1st Option: Record counters individually for each thread](#1st-option-record-counters-individually-for-each-thread)
+- [2nd Option: Record counters for all child threads simultaneously](#2nd-option-record-counters-for-all-child-threads-simultaneously)
+- [3rd Option: Record counters for entire CPU cores](#3rd-option-record-counters-for-entire-cpu-cores)
+---
+
 ## 1st Option: Record counters individually for each thread
 The `perf::MultiThreadEventCounter` class allows you to copy the measurement on every thread and combines the results.
 

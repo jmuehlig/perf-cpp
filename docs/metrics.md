@@ -15,6 +15,13 @@ L1-data-miss-ratio
 
 **Attention**: Metrics will not work with sampling.
 
+---
+## Table of Contents
+- [Recording metrics](#recording-metrics)
+- [Defining specific metrics](#defining-specific-metrics)
+    - [Measure the new metric](#measure-the-new-metric)
+---
+
 ## Recording metrics
 You can add metrics like counters.
 ```cpp

@@ -2,6 +2,21 @@
 Sampling for parallel executed code can be done by sampling individual threads or individual CPU cores.
 We will describe both option in detail below.
 
+---
+## Table of Contents
+- [Sample individual threads](#sample-individual-threads)
+    - [1) Creating a sampler for multiple threads](#1-creating-a-sampler-for-multiple-threads)
+    - [2) Call `start()` and `stop()` from threads](#2-call-start-and-stop-from-threads)
+    - [3) Access the recorded samples](#3-access-the-recorded-samples)
+    - [4) Closing the sampler](#4-closing-the-sampler)
+- [Sample on specific CPU cores](#sample-on-specific-cpu-cores)
+    - [1) Creating a sampler for multiple CPU cores](#1-creating-a-sampler-for-multiple-cpu-cores)
+    - [2) Open the sampler *(optional)*](#2-open-the-sampler-optional)
+    - [3) Call `start()` and `stop()`](#3-call-start-and-stop)
+    - [4) Access the recorded samples](#4-access-the-recorded-samples-1)
+    - [5) Closing the sampler](#5-closing-the-sampler)
+---
+
 ## Sample individual threads
 Sampling is always done for the calling thread.
 The `perf::MultiThreadSampler` class provides a wrapper that can hold multiple samplers for multiple threads.

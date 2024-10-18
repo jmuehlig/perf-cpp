@@ -4,6 +4,15 @@ Here, we introduce the interface designed to facilitate the recording of perform
 
 &rarr; [See our single-threaded code example: `examples/single_thread.cpp`](../examples/single_thread.cpp)
 
+---
+## Table of Contents
+- [1) Define the counters you want to record](#1-define-the-counters-you-want-to-record)
+- [2) Wrap `start()` and `stop()` around your processing code](#2-wrap-start-and-stop-around-your-processing-code)
+- [3) Access the measured results](#3-access-the-measured-results)
+- [Example: Accessing memory in a random fashion](#example-accessing-memory-in-a-random-fashion)
+- [Debugging Counter Settings](#debugging-counter-settings)
+---
+
 ## 1) Define the counters you want to record
 ```cpp
 #include <perfcpp/event_counter.h>

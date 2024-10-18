@@ -1,16 +1,65 @@
 # How to build and include *perf-cpp* in your project
 
-## By hand
+## Table of Contents
+- [Building by hand](#building-by-hand)
+- [Using `CMake` and `ExternalProject`](#using-cmake-and-externalproject)
+- [Using `CMake` and `FetchContent`](#using-cmake-and-fetchcontent)
+- [Using `CMake` and `find_package`](#using-cmake-and-find_package)
+- [Notes for older Linux Kernels](#notes-for-older-linux-kernels)
+  - [Linux Kernel version `< 5.13`](#linux-kernel-version--513)
+  - [Linux Kernel version `< 5.12`](#linux-kernel-version--512)
+  - [Linux Kernel version `< 5.11`](#linux-kernel-version--511)
+---
+
+## Building by hand
+### Build the Library
 * Download the source code (`git clone https://github.com/jmuehlig/perf-cpp.git`)
 * Within the cloned directory, call `cmake`, optionally define build options, desired targets or an installation prefix:
-  ```
-  cmake . -B build --DCMAKE_INSTALL_PREFIX=/path/to/libperf-cpp
-  cmake --build build
-  cmake --install build # to installl the library
-  ```
-* Afterwards, the library should be available for discovery with `find_package` (see below).
 
-## Using `CMake` and `FetchContent`
+```
+cmake . -B build --DCMAKE_INSTALL_PREFIX=/path/to/libperf-cpp
+cmake --build build
+```
+
+Note that the build directory `build` can be replaced by any directory you want (including `.`).
+
+### Installing the Library
+* After building, you can install the library by:
+
+```
+cmake --install build
+```
+
+* Afterward, the library should be available for discovery with `find_package` (see below).
+
+Note that the build directory `build` can be replaced by any directory you want (including `.`).
+
+### Build Examples
+Configure the library with `-DBUILD_EXAMPLES=1` and build the `examples` target
+```
+cmake . -B build -DBUILD_EXAMPLES=1
+cmake --build build --target examples
+```
+
+## Using CMake and `ExternalProject`
+* Add `include(ExternalProject)` to your `CMakeLists.txt`
+* Define an external project:
+```
+ExternalProject_Add(
+  perf-cpp-external
+  GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
+  GIT_TAG "v0.7.1"
+  PREFIX "lib/perf-cpp"
+  INSTALL_COMMAND cmake -E echo ""
+)
+```
+* Add `lib/perf-cpp/src/perf-cpp-external/include` to your `include_directories()`
+* Add `lib/perf-cpp/src/perf-cpp-external-build` to your `link_directories()`
+
+Note that **lib/** can be replaced by any folder you want to store the library in.
+  
+
+## Using CMake and `FetchContent`
 * Add `include(FetchContent)` to your `CMakeLists.txt`
 * Define an external project:
 ```
@@ -26,7 +75,7 @@ FetchContent_MakeAvailable(perf-cpp-external)
 * Add `perf-cpp` to your linked libraries
 * Add `${perf-cpp-external_SOURCE_DIR}/include/` to your include directories
 
-## Using `CMake` and `find_package`
+## Using CMake and `find_package`
 
 This assumes `perf-cpp` is already installed on your system. Then, it should be enough to call `find_package` and link it against your target:
 
@@ -34,15 +83,6 @@ This assumes `perf-cpp` is already installed on your system. Then, it should be 
 find_package(perf-cpp REQUIRED)
 target_link_libraries(perf-cpp::perf-cpp)
 ```
-
-## Build Examples
-
-Configure the library with `-DBUILD_EXAMPLES=1` and build the `examples` target
-```
-cmake . -B build -DBUILD_EXAMPLES=1
-cmake --build build --target examples
-```
-
 ---
 
 ## Notes for older Linux Kernels

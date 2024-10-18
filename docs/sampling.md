@@ -4,25 +4,52 @@
 Essentially, you define a sampling period or frequency at which data is captured. 
 At its core, this functionality is akin to traditional profiling tools, like `perf record`, but uniquely tailored to record specific blocks of code rather than the entire application.
 
-The following data can be recorded:
-* Instruction pointers (current and callchain),
-* ID of thread, CPU, and sample,
-* Timestamp,
-* Logical and physical address,
-* Data source (e.g., cache level, memory, etc.),
-* Group of counter values,
-* Last branch stack (including jump addresses and prediction),
-* User- and kernel-level registers,
-* Weight of the access (which is mostly the latency),
-* Data and code page sizes (when sampling for data addresses or instruction pointers),
-* Context switches,
-* Throttle/Unthrottle events,
-* and creations and activations of new cgroups.
-
 &rarr; [See details below](#what-can-be-recorded-and-how-to-access-the-data).
 
 The details below provide an overview of how sampling works.
 For specific information about sampling in parallel settings (i.e., sampling multiple threads and cores) take a look [into the "parallel sampling" documentation](sampling-parallel.md).
+
+---
+## Table of Contents
+- [Interface](#interface)
+  - [1) Define what is recorded and when](#1-define-what-is-recorded-and-when)
+  - [2) Open the sampler *(optional)*](#2-open-the-sampler-optional)
+  - [3) Wrap `start()` and `stop()` around your processing code](#3-wrap-start-and-stop-around-your-processing-code)
+  - [4) Access the recorded samples](#4-access-the-recorded-samples)
+  - [5) Closing the sampler](#5-closing-the-sampler)
+- [Trigger](#trigger)
+- [Precision](#precision)
+- [Period / Frequency](#period--frequency)
+- [What can be recorded and how to access the data?](#what-can-be-recorded-and-how-to-access-the-data)
+  - [Instruction Pointer](#instruction-pointer)
+  - [ID of the recording thread](#id-of-the-recording-thread)
+  - [Time](#time)
+  - [Stream ID](#stream-id)
+  - [Logical Memory Address](#logical-memory-address)
+  - [Performance Counter Values](#performance-counter-values)
+  - [Callchain](#callchain)
+  - [Raw Values](#raw-values)
+  - [ID of the recording CPU](#id-of-the-recording-cpu)
+  - [Period](#period)
+  - [Branch Stack (LBR)](#branch-stack-lbr)
+  - [Registers in user-level](#registers-in-user-level)
+  - [Registers in kernel-level](#registers-in-kernel-level)
+  - [Weight (Linux Kernel `< 5.12`) / Weight Struct (since Kernel `5.12`)](#weight-linux-kernel--512--weight-struct-since-kernel-512)
+  - [Data source of a memory load](#data-source-of-a-memory-load)
+  - [Identifier](#identifier)
+  - [Physical Memory Address](#physical-memory-address)
+  - [Size of the Data Page](#size-of-the-data-page)
+  - [Size of the Code Page](#size-of-the-code-page)
+  - [Context Switches](#context-switches)
+  - [CGroup](#cgroup)
+  - [Throttle and Unthrottle Events](#throttle-and-unthrottle-events)
+- [Sample mode](#sample-mode)
+- [Lost Samples](#lost-samples)
+- [Specific Notes for different CPU Vendors](#specific-notes-for-different-cpu-vendors)
+  - [Intel](#intel)
+  - [AMD (Instruction Based Sampling)](#amd-instruction-based-sampling)
+- [Debugging Counter Settings](#debugging-counter-settings)
+---
 
 ## Interface
 ### 1) Define what is recorded and when

@@ -6,6 +6,19 @@ The `perf::CounterDefinition` class facilitates the addition and access of diver
 
 &rarr; This library also ships a script to read all hardware-specific counters, see [**How to get _raw_ counter codes?**](#how-to-get-raw-counter-codes) below.
 
+---
+## Table of Contents
+- [Built-in counters](#built-in-counters)
+- [Adding hardware-specific performance counters](#adding-hardware-specific-performance-counters)
+   - [1) In-code](#1-in-code)
+   - [2) Using a file](#2-using-a-file)
+- [Recording the new counters](#recording-the-new-counters)
+- [How to get raw counter codes?](#how-to-get-raw-counter-codes)
+   - [Automatically](#automatically)
+   - [Manual Configuration with libpfm4](#manual-configuration-with-libpfm4)
+- [Querying the Hardware at Runtime](#querying-the-hardware-at-runtime)
+---
+
 ## Built-in counters
 Several performance counters, common across most CPUs, are pre-defined by the library and ready for immediate use out-of-the-box (see `src/counter_definition.cpp` for details):
 
@@ -47,6 +60,9 @@ Several performance counters, common across most CPUs, are pre-defined by the li
 
 
 ## Adding hardware-specific performance counters
+All counters, their names and configurations, are stored within the `perf::CounterDefinition`.
+This class is passed to all event counter instances as a reference – consequentially, the instance **must be alive throughout the entire monitoring phase**.
+
 Basically, there are two options to add more counters:
 
 &rarr; See paragraph [**How to get raw counter codes?**](#how-to-get-raw-counter-codes) below for instructions to get all hardware-counters.
@@ -133,7 +149,7 @@ This library includes a Python script (`script/create_perf_list.py`) designed to
 To execute the script, use the following Make commands:
 
     cmake .
-    make perf-list
+    cmake --build . --target perf-list
 
 This command generates a CSV file named `perf-list.csv`.
 This file includes the names of all performance counters along with their raw values, which are extracted from the system's underlying hardware.
