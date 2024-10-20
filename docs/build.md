@@ -1,17 +1,18 @@
 # How to build and include *perf-cpp* in your project
 
 ## Table of Contents
-- [Building by hand](#building-by-hand)
-- [Using `CMake` and `ExternalProject`](#using-cmake-and-externalproject)
-- [Using `CMake` and `FetchContent`](#using-cmake-and-fetchcontent)
-- [Using `CMake` and `find_package`](#using-cmake-and-find_package)
+- [Building by Hand](#building-by-hand)
+- [Using CMake](#using-cmake)
+  - [CMake and ExternalProject](#cmake-and-externalproject)
+  - [CMake and FetchContent](#cmake-and-fetchcontent)
+  - [CMake and find_package](#cmake-and-find_package)
 - [Notes for older Linux Kernels](#notes-for-older-linux-kernels)
   - [Linux Kernel version `< 5.13`](#linux-kernel-version--513)
   - [Linux Kernel version `< 5.12`](#linux-kernel-version--512)
   - [Linux Kernel version `< 5.11`](#linux-kernel-version--511)
 ---
 
-## Building by hand
+## Building by Hand
 ### Build the Library
 * Download the source code (`git clone https://github.com/jmuehlig/perf-cpp.git`)
 * Within the cloned directory, call `cmake`, optionally define build options, desired targets or an installation prefix:
@@ -41,7 +42,11 @@ cmake . -B build -DBUILD_EXAMPLES=1
 cmake --build build --target examples
 ```
 
-## Using CMake and `ExternalProject`
+## Using CMake
+*perf-cpp*  uses [CMake](https://cmake.org/) as a build system, allowing for including *perf-cpp* into further CMake projects.
+You can choose one of the following approaches.
+
+### CMake and ExternalProject
 * Add `include(ExternalProject)` to your `CMakeLists.txt`
 * Define an external project:
 ```
@@ -59,7 +64,7 @@ ExternalProject_Add(
 Note that **lib/** can be replaced by any folder you want to store the library in.
   
 
-## Using CMake and `FetchContent`
+### CMake and FetchContent
 * Add `include(FetchContent)` to your `CMakeLists.txt`
 * Define an external project:
 ```
@@ -75,7 +80,7 @@ FetchContent_MakeAvailable(perf-cpp-external)
 * Add `perf-cpp` to your linked libraries
 * Add `${perf-cpp-external_SOURCE_DIR}/include/` to your include directories
 
-## Using CMake and `find_package`
+### CMake and find_package
 
 This assumes `perf-cpp` is already installed on your system. Then, it should be enough to call `find_package` and link it against your target:
 
