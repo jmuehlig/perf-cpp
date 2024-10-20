@@ -8,8 +8,8 @@
 #include <functional>
 #include <optional>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace perf {
 class MultiSamplerBase;
@@ -265,17 +265,35 @@ public:
     void disable(const std::uint64_t perf_field) noexcept { _mask &= ~perf_field; }
   };
 
-  class Trigger {
+  class Trigger
+  {
   public:
-    explicit Trigger(std::string&& name) noexcept : _name(std::move(name)) { }
-    Trigger(std::string&& name, const Precision precision) noexcept : _name(std::move(name)), _precision(precision) { }
-    Trigger(std::string&& name, const PeriodOrFrequency period_or_frequency) noexcept : _name(std::move(name)), _period_or_frequency(period_or_frequency) { }
-    Trigger(std::string&& name, const Precision precision,  const PeriodOrFrequency period_or_frequency) noexcept : _name(std::move(name)), _precision(precision), _period_or_frequency(period_or_frequency) { }
+    explicit Trigger(std::string&& name) noexcept
+      : _name(std::move(name))
+    {
+    }
+    Trigger(std::string&& name, const Precision precision) noexcept
+      : _name(std::move(name))
+      , _precision(precision)
+    {
+    }
+    Trigger(std::string&& name, const PeriodOrFrequency period_or_frequency) noexcept
+      : _name(std::move(name))
+      , _period_or_frequency(period_or_frequency)
+    {
+    }
+    Trigger(std::string&& name, const Precision precision, const PeriodOrFrequency period_or_frequency) noexcept
+      : _name(std::move(name))
+      , _precision(precision)
+      , _period_or_frequency(period_or_frequency)
+    {
+    }
     ~Trigger() = default;
 
     [[nodiscard]] const std::string& name() const noexcept { return _name; }
     [[nodiscard]] std::optional<Precision> precision() const noexcept { return _precision; }
     [[nodiscard]] std::optional<PeriodOrFrequency> period_or_frequency() const noexcept { return _period_or_frequency; }
+
   private:
     std::string _name;
     std::optional<Precision> _precision{ std::nullopt };
@@ -325,7 +343,7 @@ public:
    */
   Sampler& trigger(std::string&& trigger_name)
   {
-    return trigger(std::vector<std::vector<Trigger>>{std::vector<Trigger>{Trigger{std::move(trigger_name)}}});
+    return trigger(std::vector<std::vector<Trigger>>{ std::vector<Trigger>{ Trigger{ std::move(trigger_name) } } });
   }
 
   /**
@@ -337,7 +355,8 @@ public:
    */
   Sampler& trigger(std::string&& trigger_name, const Precision precision)
   {
-    return trigger(std::vector<std::vector<Trigger>>{std::vector<Trigger>{Trigger{std::move(trigger_name), precision}}});
+    return trigger(
+      std::vector<std::vector<Trigger>>{ std::vector<Trigger>{ Trigger{ std::move(trigger_name), precision } } });
   }
 
   /**
@@ -349,7 +368,8 @@ public:
    */
   Sampler& trigger(std::string&& trigger_name, const class Period period)
   {
-    return trigger(std::vector<std::vector<Trigger>>{std::vector<Trigger>{Trigger{std::move(trigger_name), period}}});
+    return trigger(
+      std::vector<std::vector<Trigger>>{ std::vector<Trigger>{ Trigger{ std::move(trigger_name), period } } });
   }
 
   /**
@@ -361,7 +381,8 @@ public:
    */
   Sampler& trigger(std::string&& trigger_name, const Frequency frequency)
   {
-    return trigger(std::vector<std::vector<Trigger>>{std::vector<Trigger>{Trigger{std::move(trigger_name), frequency}}});
+    return trigger(
+      std::vector<std::vector<Trigger>>{ std::vector<Trigger>{ Trigger{ std::move(trigger_name), frequency } } });
   }
 
   /**
@@ -374,7 +395,8 @@ public:
    */
   Sampler& trigger(std::string&& trigger_name, const Precision precision, const class Period period)
   {
-    return trigger(std::vector<std::vector<Trigger>>{std::vector<Trigger>{Trigger{std::move(trigger_name), precision, period}}});
+    return trigger(std::vector<std::vector<Trigger>>{
+      std::vector<Trigger>{ Trigger{ std::move(trigger_name), precision, period } } });
   }
 
   /**
@@ -387,10 +409,9 @@ public:
    */
   Sampler& trigger(std::string&& trigger_name, const Precision precision, const Frequency frequency)
   {
-    return trigger(std::vector<std::vector<Trigger>>{std::vector<Trigger>{Trigger{std::move(trigger_name), precision, frequency}}});
+    return trigger(std::vector<std::vector<Trigger>>{
+      std::vector<Trigger>{ Trigger{ std::move(trigger_name), precision, frequency } } });
   }
-
-
 
   /**
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
@@ -487,44 +508,120 @@ public:
 
 private:
   /**
-   * Reads the sample_id struct from the data located at sample_ptr into the provided sample.
-   *
-   * @param sample Sample to read the data into.
-   * @return The new (incremented) sample_ptr.
+   * Represents a counter that is configured to somple;
+   * including the counter group (plus counter names) and the buffer
+   * user-level buffer that is used by the perf subsystem to store the samples.
    */
-  std::uintptr_t read_sample_id(std::uintptr_t sample_ptr, Sample& sample) const noexcept;
+  class SampleCounter
+  {
+  public:
+    explicit SampleCounter(Group&& group)
+      : _group(std::move(group))
+    {
+    }
+    SampleCounter(Group&& group, std::vector<std::string_view>&& counter_names)
+      : _group(std::move(group))
+      , _counter_names(std::move(counter_names))
+    {
+    }
 
-  const CounterDefinition& _counter_definitions;
+    void buffer(void* buffer) noexcept { _buffer = buffer; }
 
-  /// List of triggers. Each trigger will open an individual group of counters.
-  /// "Normally", a 1-dimensional list would be enough, but since Intel Sapphire Rapids,
-  /// we need auxiliary counters for mem-loads, mem-stores, etc.
-  std::vector<std::vector<std::tuple<std::string_view, std::optional<Precision>, std::optional<PeriodOrFrequency>>>> _triggers;
+    [[nodiscard]] Group& group() noexcept { return _group; }
+    [[nodiscard]] const Group& group() const noexcept { return _group; }
+    [[nodiscard]] void* buffer() const noexcept { return _buffer; }
+    [[nodiscard]] const std::vector<std::string_view>& counter_names() const noexcept { return _counter_names; }
 
-  /// Values to record into every sample.
-  Values _values;
+  private:
+    /// Group including the leader that is responsible for sampling.
+    Group _group;
 
-  /// Perf config.
-  SampleConfig _config;
+    /// User-level, mmap-ed buffer that receives the samples by the perf subsystem.
+    void* _buffer{ nullptr };
 
-  /// Groups of real counters to measure – will be filled when "opening" the sampler.
-  std::vector<class Group> _groups;
+    /// List of counter names if counter values are sampled.
+    std::vector<std::string_view> _counter_names;
+  };
 
-  /// Name of the counters to measure (per group).
-  /// Attention: Will be deprecated and stored within values.
-  std::vector<std::vector<std::string_view>> _counter_names;
+  /**
+   * The UserLevelBufferEntry represents an entry in the user-level buffer filled by the perf-subsystem by parsing the
+   * hardware-related samples. This helper assists in consuming data from the buffer and turning it into Samples.
+   */
+  class UserLevelBufferEntry
+  {
+  public:
+    UserLevelBufferEntry(perf_event_header* header) noexcept
+      : _head(std::uintptr_t(header + 1U))
+      , _misc(header->misc)
+      , _type(header->type)
+    {
+    }
+    ~UserLevelBufferEntry() noexcept = default;
 
-  /// Buffers for the samples of every group.
-  std::vector<void*> _buffers;
+    template<typename T>
+    [[nodiscard]] T read() noexcept
+    {
+      const auto data = *reinterpret_cast<T*>(_head);
+      _head += sizeof(T);
 
-  /// Flag if the sampler is already opened, i.e., the events are configured.
-  /// This enables the user to open the sampler specifically – or open the
-  /// sampler when starting.
-  bool _is_opened{ false };
+      return data;
+    }
 
-  /// Will be assigned to errorno.
-  /// Attention: Will be deprecated when switching to exceptions only.
-  std::int64_t _last_error{ 0 };
+    template<typename T>
+    [[nodiscard]] const T* read(const std::size_t size) noexcept
+    {
+      auto* begin = reinterpret_cast<T*>(_head);
+      _head += sizeof(T) * size;
+
+      return begin;
+    }
+
+    template<typename T>
+    void skip() noexcept
+    {
+      _head += sizeof(T);
+    }
+
+    template<typename T>
+    void skip(const std::size_t size) noexcept
+    {
+      _head += sizeof(T) * size;
+    }
+
+    template<typename T>
+    T as() const noexcept
+    {
+      return reinterpret_cast<T>(_head);
+    }
+
+    [[nodiscard]] Sample::Mode mode() const noexcept;
+
+    [[nodiscard]] bool is_sample_event() const noexcept { return _type == PERF_RECORD_SAMPLE; }
+    [[nodiscard]] bool is_loss_event() const noexcept { return _type == PERF_RECORD_LOST_SAMPLES; }
+    [[nodiscard]] bool is_context_switch_event() const noexcept
+    {
+      return _type == PERF_RECORD_SWITCH || _type == PERF_RECORD_SWITCH_CPU_WIDE;
+    }
+    [[nodiscard]] bool is_context_switch_cpu_wide() const noexcept { return _type == PERF_RECORD_SWITCH_CPU_WIDE; }
+    [[nodiscard]] bool is_cgroup_event() const noexcept { return _type == PERF_RECORD_CGROUP; }
+    [[nodiscard]] bool is_throttle_event() const noexcept
+    {
+      return _type == PERF_RECORD_THROTTLE || _type == PERF_RECORD_UNTHROTTLE;
+    }
+    [[nodiscard]] bool is_throttle() const noexcept { return _type == PERF_RECORD_THROTTLE; }
+
+    [[nodiscard]] bool is_exact_ip() const noexcept { return _misc & PERF_RECORD_MISC_EXACT_IP; }
+    [[nodiscard]] bool is_context_switch_out() const noexcept { return _misc & PERF_RECORD_MISC_SWITCH_OUT; }
+    [[nodiscard]] bool is_context_switch_out_preempt() const noexcept
+    {
+      return _misc & PERF_RECORD_MISC_SWITCH_OUT_PREEMPT;
+    }
+
+  private:
+    std::uintptr_t _head;
+    const std::uint16_t _misc;
+    const std::uint32_t _type;
+  };
 
   /**
    * Read format for sampled counter values.
@@ -542,6 +639,85 @@ private:
     std::uint64_t count_members;
     std::array<value, Group::MAX_MEMBERS> values;
   };
+
+  /**
+   * Reads the sample_id struct from the data located at sample_ptr into the provided sample.
+   *
+   * @param sample Sample to read the data into.
+   */
+  void read_sample_id(UserLevelBufferEntry& entry, Sample& sample) const noexcept;
+
+  /**
+   * Translates the current entry from the user-level buffer into a "normal" sample.
+   *
+   * @param entry Entry of the user-level buffer.
+   * @param sample_counter The SampleCounter the entry is linked to in order to get the recorded counters (if any).
+   *
+   * @return Sample.
+   */
+  [[nodiscard]] perf::Sample read_sample_event(UserLevelBufferEntry entry, const SampleCounter& sample_counter) const;
+
+  /**
+   * Translates the current entry from the user-level buffer into a lost sample.
+   *
+   * @param entry Entry of the user-level buffer.
+   *
+   * @return Sample containing the loss.
+   */
+  [[nodiscard]] perf::Sample read_loss_event(UserLevelBufferEntry entry) const;
+
+  /**
+   * Translates the current entry from the user-level buffer into a context switch sample.
+   *
+   * @param entry Entry of the user-level buffer.
+   *
+   * @return Sample containing the context switch.
+   */
+  [[nodiscard]] perf::Sample read_context_switch_event(UserLevelBufferEntry entry) const;
+
+  /**
+   * Translates the current entry from the user-level buffer into a cgroup sample.
+   *
+   * @param entry Entry of the user-level buffer.
+   *
+   * @return Sample containing the cgroup.
+   */
+  [[nodiscard]] perf::Sample read_cgroup_event(UserLevelBufferEntry entry) const;
+
+  /**
+   * Translates the current entry from the user-level buffer into a throttle or unthrottle sample.
+   *
+   * @param entry Entry of the user-level buffer.
+   *
+   * @return Sample containing the throttle.
+   */
+  [[nodiscard]] perf::Sample read_throttle_event(UserLevelBufferEntry entry) const;
+
+  const CounterDefinition& _counter_definitions;
+
+  /// List of triggers. Each trigger will open an individual group of counters.
+  /// "Normally", a 1-dimensional list would be enough, but since Intel Sapphire Rapids,
+  /// we need auxiliary counters for mem-loads, mem-stores, etc.
+  std::vector<std::vector<std::tuple<std::string_view, std::optional<Precision>, std::optional<PeriodOrFrequency>>>>
+    _triggers;
+
+  /// Values to record into every sample.
+  Values _values;
+
+  /// Perf config.
+  SampleConfig _config;
+
+  /// List of counter groups used to sample – will be filled when "opening" the sampler.
+  std::vector<SampleCounter> _sample_counter;
+
+  /// Flag if the sampler is already opened, i.e., the events are configured.
+  /// This enables the user to open the sampler specifically – or open the
+  /// sampler when starting.
+  bool _is_opened{ false };
+
+  /// Will be assigned to errorno.
+  /// Attention: Will be deprecated when switching to exceptions only.
+  std::int64_t _last_error{ 0 };
 };
 
 class MultiSamplerBase
@@ -621,8 +797,7 @@ protected:
    * @param samplers List of samplers.
    * @param trigger_names List of triggers.
    */
-  static void trigger(std::vector<Sampler>& samplers,
-                      std::vector<std::vector<Sampler::Trigger>>&& triggers);
+  static void trigger(std::vector<Sampler>& samplers, std::vector<std::vector<Sampler::Trigger>>&& triggers);
 
   /**
    * Initializes the given sampler with values and config.
@@ -712,7 +887,8 @@ public:
    */
   MultiThreadSampler& trigger(std::string&& trigger_name)
   {
-    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name)}}});
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{
+      std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name) } } });
   }
 
   /**
@@ -724,7 +900,8 @@ public:
    */
   MultiThreadSampler& trigger(std::string&& trigger_name, const Precision precision)
   {
-    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), precision}}});
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{
+      std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name), precision } } });
   }
 
   /**
@@ -736,7 +913,8 @@ public:
    */
   MultiThreadSampler& trigger(std::string&& trigger_name, const class Period period)
   {
-    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), period}}});
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{
+      std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name), period } } });
   }
 
   /**
@@ -748,7 +926,8 @@ public:
    */
   MultiThreadSampler& trigger(std::string&& trigger_name, const Frequency frequency)
   {
-    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), frequency}}});
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{
+      std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name), frequency } } });
   }
 
   /**
@@ -761,7 +940,8 @@ public:
    */
   MultiThreadSampler& trigger(std::string&& trigger_name, const Precision precision, const class Period period)
   {
-    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), precision, period}}});
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{
+      std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name), precision, period } } });
   }
 
   /**
@@ -843,7 +1023,8 @@ public:
   /**
    * Stops recording performance counters for all threads.
    */
-  void stop() {
+  void stop()
+  {
     for (auto& sampler : _thread_local_samplers) {
       sampler.stop();
     }
@@ -916,7 +1097,8 @@ public:
    */
   MultiCoreSampler& trigger(std::string&& trigger_name)
   {
-    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name)}}});
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{
+      std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name) } } });
   }
 
   /**
@@ -928,7 +1110,8 @@ public:
    */
   MultiCoreSampler& trigger(std::string&& trigger_name, const Precision precision)
   {
-    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), precision}}});
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{
+      std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name), precision } } });
   }
 
   /**
@@ -940,7 +1123,8 @@ public:
    */
   MultiCoreSampler& trigger(std::string&& trigger_name, const class Period period)
   {
-    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), period}}});
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{
+      std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name), period } } });
   }
 
   /**
@@ -952,7 +1136,8 @@ public:
    */
   MultiCoreSampler& trigger(std::string&& trigger_name, const Frequency frequency)
   {
-    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), frequency}}});
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{
+      std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name), frequency } } });
   }
 
   /**
@@ -965,7 +1150,8 @@ public:
    */
   MultiCoreSampler& trigger(std::string&& trigger_name, const Precision precision, const class Period period)
   {
-    return trigger(std::vector<std::vector<Sampler::Trigger>>{std::vector<Sampler::Trigger>{Sampler::Trigger{std::move(trigger_name), precision, period}}});
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{
+      std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name), precision, period } } });
   }
 
   /**
