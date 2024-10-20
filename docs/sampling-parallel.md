@@ -4,12 +4,12 @@ We will describe both option in detail below.
 
 ---
 ## Table of Contents
-- [Sample individual threads](#sample-individual-threads)
+- [Sample individual Threads](#sample-individual-threads)
     - [1) Creating a sampler for multiple threads](#1-creating-a-sampler-for-multiple-threads)
     - [2) Call `start()` and `stop()` from threads](#2-call-start-and-stop-from-threads)
     - [3) Access the recorded samples](#3-access-the-recorded-samples)
     - [4) Closing the sampler](#4-closing-the-sampler)
-- [Sample on specific CPU cores](#sample-on-specific-cpu-cores)
+- [Sample on specific CPU Cores](#sample-on-specific-cpu-cores)
     - [1) Creating a sampler for multiple CPU cores](#1-creating-a-sampler-for-multiple-cpu-cores)
     - [2) Open the sampler *(optional)*](#2-open-the-sampler-optional)
     - [3) Call `start()` and `stop()`](#3-call-start-and-stop)
@@ -17,7 +17,7 @@ We will describe both option in detail below.
     - [5) Closing the sampler](#5-closing-the-sampler)
 ---
 
-## Sample individual threads
+## Sample individual Threads
 Sampling is always done for the calling thread.
 The `perf::MultiThreadSampler` class provides a wrapper that can hold multiple samplers for multiple threads.
 Each wrapper has to be started and stopped *locally* on a specific thread.
@@ -121,7 +121,7 @@ sampler.close();
 
 ---
 
-## Sample on specific CPU cores
+## Sample on specific CPU Cores
 If you do not want (or cannot) start sampling on individual threads, you can also choose specific CPU cores, no matter which thread is executed there, by using the `MultiCoreSampler`.
 The `MultiCoreSampler` will be started and stopped for all CPU cores at once.
 Please keep in mind that this also implies that undesirable events are sampled, such as when other apps run on these cores.

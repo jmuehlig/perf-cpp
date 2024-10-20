@@ -8,18 +8,18 @@ The `perf::CounterDefinition` class facilitates the addition and access of diver
 
 ---
 ## Table of Contents
-- [Built-in counters](#built-in-counters)
-- [Adding hardware-specific performance counters](#adding-hardware-specific-performance-counters)
+- [Built-in Counters](#built-in-counters)
+- [Adding Hardware-specific Performance Counters](#adding-hardware-specific-performance-counters)
    - [1) In-code](#1-in-code)
    - [2) Using a file](#2-using-a-file)
-- [Recording the new counters](#recording-the-new-counters)
-- [How to get raw counter codes?](#how-to-get-raw-counter-codes)
+- [Recording added Counters](#recording-added-counters)
+- [How to get Raw Counter Codes?](#how-to-get-raw-counter-codes)
    - [Automatically](#automatically)
    - [Manual Configuration with libpfm4](#manual-configuration-with-libpfm4)
 - [Querying the Hardware at Runtime](#querying-the-hardware-at-runtime)
 ---
 
-## Built-in counters
+## Built-in Counters
 Several performance counters, common across most CPUs, are pre-defined by the library and ready for immediate use out-of-the-box (see `src/counter_definition.cpp` for details):
 
     branches 
@@ -59,7 +59,7 @@ Several performance counters, common across most CPUs, are pre-defined by the li
     migrations
 
 
-## Adding hardware-specific performance counters
+## Adding Hardware-specific Performance Counters
 All counters, their names and configurations, are stored within the `perf::CounterDefinition`.
 This class is passed to all event counter instances as a reference – consequentially, the instance **must be alive throughout the entire monitoring phase**.
 
@@ -125,7 +125,7 @@ auto event_counter = perf::EventCounter{counter_definitions};
 event_counter.add({"cycle_activity.stalls_l1d_miss", "cycle_activity.stalls_l2_miss"});
 ```
 
-## Recording the new counters
+## Recording added Counters
 In both scenarios, the counters can be added to the `perf::EventCounter` instance:
 ```cpp
 auto counter_definitions = perf::CounterDefinition{"my_file.csv"};
@@ -141,7 +141,7 @@ const auto result = event_counter.result();
 const auto llc_misses = result.get("llc-load-misses");
 ```
 
-## How to get raw counter codes?
+## How to get Raw Counter Codes?
 ### Automatically
 This library includes a Python script (`script/create_perf_list.py`) designed to streamline the extraction of hardware counter values, producing an output similar to the `perf list` command.
 

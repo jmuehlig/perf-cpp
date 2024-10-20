@@ -1,4 +1,4 @@
-# Recording performance counters
+# Recording Performance Counters
 
 Here, we introduce the interface designed to facilitate the recording of performance counters directly from your C++ application. 
 
@@ -6,14 +6,14 @@ Here, we introduce the interface designed to facilitate the recording of perform
 
 ---
 ## Table of Contents
-- [1) Define the counters you want to record](#1-define-the-counters-you-want-to-record)
-- [2) Wrap `start()` and `stop()` around your processing code](#2-wrap-start-and-stop-around-your-processing-code)
-- [3) Access the measured results](#3-access-the-measured-results)
-- [Example: Accessing memory in a random fashion](#example-accessing-memory-in-a-random-fashion)
+- [1) Define the Counters to Record](#1-define-the-counters-to-record)
+- [2) Wrap `start()` and `stop()` around the Processing Code](#2-wrap-start-and-stop-around-the-processing-code)
+- [3) Access the Results](#3-access-the-results)
+- [Example: Impact of Random Access Patterns](#example-impact-of-random-access-patterns)
 - [Debugging Counter Settings](#debugging-counter-settings)
 ---
 
-## 1) Define the counters you want to record
+## 1) Define the Counters to record
 ```cpp
 #include <perfcpp/event_counter.h>
 
@@ -28,7 +28,7 @@ try {
 }
 ```
 
-## 2) Wrap `start()` and `stop()` around your processing code
+## 2) Wrap `start()` and `stop()` around the Processing Code
 ```cpp
 try {
     event_counter.start();
@@ -42,7 +42,7 @@ try {
 event_counter.stop();
 ```
 
-## 3) Access the measured results
+## 3) Access the Results
 ```cpp
 /// Calculate the result.
 const auto result = event_counter.result();
@@ -65,7 +65,7 @@ std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << s
 std::cout << result.to_json() << std::endl;
 ```
 ---
-## Example: Accessing memory in a random fashion
+## Example: Impact of Random Access Patterns
 Random access patterns invariably incur high costs, as hardware prefetchers struggle to anticipate such patterns. 
 Let's delve into precisely how costly this can be.
 
@@ -164,7 +164,7 @@ To enable insides into counter configurations, perf provides a debug output opti
 This command helps visualize configurations for various counters, which is also beneficial for retrieving event codes (for more details, see the [counters documentation](counters.md)).
 
 Similarly, *perf-cpp* includes a debug feature for sampled counters.
-To examine the configuration settings—particularly useful if encountering errors during `sampler.start();`—enable debugging in your code as follows:
+To examine the configuration settings—particularly useful if encountering errors during `event_counter.start();`—enable debugging in your code as follows:
 
 ```cpp
 auto config = perf::Config{};

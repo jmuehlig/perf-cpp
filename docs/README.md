@@ -2,12 +2,12 @@
 Welcome to the detailed documentation for *perf-cpp*. 
 Below, you'll find the Table of Contents which guides you through various topics, from setup to advanced usage.
 
-* [Building and including this library](build.md)
+* [Building and Including the *perf-cpp* Library](build.md)
 * **Recording performance counters**
-  * [Overview and basics of Recording performance counters (single threaded)](recording.md)
-  * [Recording counters in parallel (multithread / multicore) settings](recording-parallel.md)
-  * [Defining and using metrics](metrics.md)
+  * [Overview and Basics of Recording Performance Counters (single threaded)](recording.md)
+  * [Recording Counters in Parallel (multithread / multicore) Settings](recording-parallel.md)
+  * [Defining and Using Metrics](metrics.md)
 * **Sampling**
-  * [Overview and basics of event sampling](sampling.md)
-  * [Event sampling in parallel (multithread / multicore) settings](sampling-parallel.md)
-* [Built-in and hardware-specific performance counters](counters.md)
+  * [Overview and Basics of Event Sampling](sampling.md)
+  * [Event Sampling in Parallel (multithread / multicore) Settings](sampling-parallel.md)
+* [Built-in and Hardware-specific Performance Counters](counters.md)

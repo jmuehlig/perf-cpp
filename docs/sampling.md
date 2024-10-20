@@ -12,17 +12,17 @@ For specific information about sampling in parallel settings (i.e., sampling mul
 ---
 ## Table of Contents
 - [Interface](#interface)
-  - [1) Define what is recorded and when](#1-define-what-is-recorded-and-when)
-  - [2) Open the sampler *(optional)*](#2-open-the-sampler-optional)
-  - [3) Wrap `start()` and `stop()` around your processing code](#3-wrap-start-and-stop-around-your-processing-code)
-  - [4) Access the recorded samples](#4-access-the-recorded-samples)
-  - [5) Closing the sampler](#5-closing-the-sampler)
+  - [1) Define What is Recorded and When](#1-define-what-is-recorded-and-when)
+  - [2) Open the Sampler *(optional)*](#2-open-the-sampler-optional)
+  - [3) Wrap `start()` and `stop()` around the Processing Code](#3-wrap-start-and-stop-around-the-processing-code)
+  - [4) Access the Recorded Samples](#4-access-the-recorded-samples)
+  - [5) Closing the Sampler](#5-closing-the-sampler)
 - [Trigger](#trigger)
 - [Precision](#precision)
 - [Period / Frequency](#period--frequency)
-- [What can be recorded and how to access the data?](#what-can-be-recorded-and-how-to-access-the-data)
+- [What can be Recorded and how to Access the Data?](#what-can-be-recorded-and-how-to-access-the-data)
   - [Instruction Pointer](#instruction-pointer)
-  - [ID of the recording thread](#id-of-the-recording-thread)
+  - [ID of the tecording Thread](#id-of-the-recording-thread)
   - [Time](#time)
   - [Stream ID](#stream-id)
   - [Logical Memory Address](#logical-memory-address)
@@ -35,7 +35,7 @@ For specific information about sampling in parallel settings (i.e., sampling mul
   - [Registers in user-level](#registers-in-user-level)
   - [Registers in kernel-level](#registers-in-kernel-level)
   - [Weight (Linux Kernel `< 5.12`) / Weight Struct (since Kernel `5.12`)](#weight-linux-kernel--512--weight-struct-since-kernel-512)
-  - [Data source of a memory load](#data-source-of-a-memory-load)
+  - [Data Source of a Memory Load](#data-source-of-a-memory-load)
   - [Identifier](#identifier)
   - [Physical Memory Address](#physical-memory-address)
   - [Size of the Data Page](#size-of-the-data-page)
@@ -52,7 +52,7 @@ For specific information about sampling in parallel settings (i.e., sampling mul
 ---
 
 ## Interface
-### 1) Define what is recorded and when
+### 1) Define What is Recorded and When
 ```cpp
 #include <perfcpp/sampler.h>
 /// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
@@ -76,7 +76,7 @@ sampler.trigger("cycles");
 sampler.values().time(true).instruction_pointer(true);
 ```
 
-### 2) Open the sampler *(optional)* 
+### 2) Open the Sampler *(optional)* 
 The sampler will be opened by `sampler.start()`, if it is not already opened.
 Opening the sampler means setting up all the counters and buffers, which can take some time.
 If you need precise time measurements and want to exclude the counter setup, you can call open individually.
@@ -89,7 +89,7 @@ try {
 }
 ```
 
-### 3) Wrap `start()` and `stop()` around your processing code
+### 3) Wrap `start()` and `stop()` around the Processing Code
 ```cpp
 try {
     sampler.start();
@@ -102,7 +102,7 @@ try {
 sampler.stop();
 ```
 
-### 4) Access the recorded samples
+### 4) Access the Recorded Samples
 The output consists of a list of `perf::Sample` instances, where each sample may contain comprehensive data. 
 As you have the flexibility to specify which data elements to sample, each piece of data is encapsulated within an `std::optional` to handle its potential absence.
 ```cpp
@@ -127,7 +127,7 @@ The output may be something like this:
     Time = 124853765058918 | IP = 0x5794c991990c
     Time = 124853765256328 | IP = 0x5794c991990c
 
-### 5) Closing the sampler
+### 5) Closing the Sampler
 Closing the sampler will free and un-map all buffers.
 ```cpp
 sampler.close();
@@ -217,7 +217,7 @@ auto sampler = perf::Sampler{ counter_definitions, sample_config };
 sampler.trigger("cycles");
 ```
 
-## What can be recorded and how to access the data?
+## What can be Recorded and how to Access the Data?
 Before starting, the sampler need to be instructed what data should be recorded, for example:
 ```cpp
 sampler.values()
@@ -242,7 +242,7 @@ You may need to adjust the `sample_config.precise_ip(X)` setting on different ha
 
 &rarr; [See code example](../examples/instruction_pointer_sampling.cpp)
 
-### ID of the recording thread
+### ID of the recording Thread
 * Request by `sampler.values().thread_id(true);`
 * Read from the results by `sample_record.thread_id().value()`
 
@@ -391,7 +391,7 @@ The sampler will detect that auxiliary counter automatically.
 
 &rarr; [See code example](../examples/multi_event_sampling.cpp)
 
-### Data source of a memory load
+### Data Source of a Memory Load
 Data source where the data was sampled (e.g., local mem, remote mem, L1d, L2, ...).
 
 * Request by `sampler.values().data_src(true);`
