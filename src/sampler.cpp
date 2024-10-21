@@ -1,9 +1,9 @@
 #include <algorithm>
 #include <asm/unistd.h>
 #include <cstring>
-#include <stdexcept>
 #include <iostream>
 #include <perfcpp/sampler.h>
+#include <stdexcept>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <unistd.h>
@@ -449,7 +449,7 @@ perf::Sampler::read_sample_id(perf::Sampler::UserLevelBufferEntry& entry, perf::
 
   if (this->_values.is_set(PERF_SAMPLE_CPU)) {
     sample.cpu_id(entry.read<std::uint32_t>());
-    entry.skip<std::uint32_t>();
+    entry.skip<std::uint32_t>(); /// Skip "res".
   }
 
   if (this->_values.is_set(PERF_SAMPLE_IDENTIFIER)) {
@@ -509,7 +509,7 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
 
   if (this->_values.is_set(PERF_SAMPLE_CPU)) {
     sample.cpu_id(entry.read<std::uint32_t>());
-    entry.skip<std::uint32_t>();
+    entry.skip<std::uint32_t>(); /// Skip "res".
   }
 
   if (this->_values.is_set(PERF_SAMPLE_PERIOD)) {
@@ -517,30 +517,33 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
   }
 
   if (this->_values.is_set(PERF_SAMPLE_READ)) {
-    auto* read_format = entry.as<Sampler::read_format*>();
-    const auto count_counter_values = read_format->count_members;
+    /// Read the number of counters.
+    const auto count_counter_values = entry.read<typeof(Sampler::read_format::count_members)>();
 
+    /// Read the counters (if the number matches the number of specified counters).
+    auto* counter_values = entry.read<read_format::value>(count_counter_values);
     if (count_counter_values == sample_counter.group().size()) {
-      auto counter_values = std::vector<std::pair<std::string_view, double>>{};
+      auto counter_results = std::vector<std::pair<std::string_view, double>>{};
+
+      /// Add each counter and its value to the result set of the sample.
       for (auto counter_id = 0U; counter_id < sample_counter.group().size(); ++counter_id) {
-        counter_values.emplace_back(sample_counter.counter_names()[counter_id],
-                                    double(read_format->values[counter_id].value));
+        const auto counter_name = sample_counter.counter_names()[counter_id];
+        const auto counter_result = double(counter_values[counter_id].value);
+        counter_results.emplace_back(counter_name, counter_result);
       }
-
-      sample.counter_result(CounterResult{ std::move(counter_values) });
+      sample.counter_result(CounterResult{ std::move(counter_results) });
     }
-
-    entry.skip<typeof(Sampler::read_format::count_members)>();
-    entry.skip<Sampler::read_format::value>(count_counter_values);
   }
 
   if (this->_values.is_set(PERF_SAMPLE_CALLCHAIN)) {
+    /// Read the size of the callchain.
     const auto callchain_size = entry.read<std::uint64_t>();
 
     if (callchain_size > 0U) {
       auto callchain = std::vector<std::uintptr_t>{};
       callchain.reserve(callchain_size);
 
+      /// Read the callchain entries.
       auto* instruction_pointers = entry.read<std::uint64_t>(callchain_size);
       for (auto index = 0U; index < callchain_size; ++index) {
         callchain.push_back(std::uintptr_t{ instruction_pointers[index] });
@@ -551,9 +554,11 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
   }
 
   if (this->_values.is_set(PERF_SAMPLE_RAW)) {
+    /// Read the size of the raw sample.
     const auto raw_data_size = entry.read<std::uint32_t>();
-    const auto* raw_sample_data = entry.read<char>(raw_data_size);
 
+    /// Read the raw data.
+    const auto* raw_sample_data = entry.read<char>(raw_data_size);
     auto raw_data = std::vector<char>(std::size_t{ raw_data_size }, '\0');
     for (auto i = 0U; i < raw_data_size; ++i) {
       raw_data[i] = raw_sample_data[i];
@@ -563,12 +568,14 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
   }
 
   if (this->_values.is_set(PERF_SAMPLE_BRANCH_STACK)) {
+    /// Read the size of the branch stack.
     const auto count_branches = entry.read<std::uint64_t>();
 
     if (count_branches > 0U) {
       auto branches = std::vector<Branch>{};
       branches.reserve(count_branches);
 
+      /// Read the branch stack entries.
       auto* sampled_branches = entry.read<perf_branch_entry>(count_branches);
       for (auto i = 0U; i < count_branches; ++i) {
         const auto& branch = sampled_branches[i];
@@ -581,13 +588,17 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
   }
 
   if (this->_values.is_set(PERF_SAMPLE_REGS_USER)) {
+    /// Read the register ABI.
     sample.user_registers_abi(entry.read<std::uint64_t>());
 
+    /// Read the number of registers.
     const auto count_user_registers = this->_values.user_registers().size();
+
     if (count_user_registers > 0U) {
       auto user_registers = std::vector<std::uint64_t>{};
       user_registers.reserve(count_user_registers);
 
+      /// Read the register values.
       const auto* perf_user_registers = entry.read<std::uint64_t>(count_user_registers);
       for (auto register_id = 0U; register_id < count_user_registers; ++register_id) {
         user_registers.push_back(perf_user_registers[register_id]);
@@ -613,13 +624,17 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
   }
 
   if (this->_values.is_set(PERF_SAMPLE_REGS_INTR)) {
+    /// Read the register ABI.
     sample.kernel_registers_abi(entry.read<std::uint64_t>());
 
+    /// Read the number of registers.
     const auto count_kernel_registers = this->_values.kernel_registers().size();
+
     if (count_kernel_registers > 0U) {
       auto kernel_registers = std::vector<std::uint64_t>{};
       kernel_registers.reserve(count_kernel_registers);
 
+      /// Read the register values.
       const auto* perf_kernel_registers = entry.read<std::uint64_t>(count_kernel_registers);
       for (auto register_id = 0U; register_id < count_kernel_registers; ++register_id) {
         kernel_registers.push_back(perf_kernel_registers[register_id]);
@@ -673,20 +688,19 @@ perf::Sampler::read_context_switch_event(perf::Sampler::UserLevelBufferEntry ent
   const auto is_switch_out = entry.is_context_switch_out();
   const auto is_switch_out_preempt = entry.is_context_switch_out_preempt();
 
+  std::optional<std::uint32_t> process_id{ std::nullopt };
+  std::optional<std::uint32_t> thread_id{ std::nullopt };
+
+  /// CPU wide context switches contain the process and thread ids.
   if (entry.is_context_switch_cpu_wide()) {
-    const auto process_id = entry.read<std::uint32_t>();
-    const auto thread_id = entry.read<std::uint32_t>();
-
-    /// Read sample_id.
-    this->read_sample_id(entry, sample);
-
-    sample.context_switch(ContextSwitch{ is_switch_out, is_switch_out_preempt, process_id, thread_id });
-  } else {
-    /// Read sample_id.
-    this->read_sample_id(entry, sample);
-
-    sample.context_switch(ContextSwitch{ is_switch_out, is_switch_out_preempt });
+    process_id = entry.read<std::uint32_t>();
+    thread_id = entry.read<std::uint32_t>();
   }
+
+  /// Read sample_id.
+  this->read_sample_id(entry, sample);
+
+  sample.context_switch(ContextSwitch{ is_switch_out, is_switch_out_preempt, process_id, thread_id });
 
   return sample;
 }

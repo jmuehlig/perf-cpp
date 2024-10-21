@@ -447,15 +447,10 @@ private:
 class ContextSwitch
 {
 public:
-  ContextSwitch(const bool is_out, const bool is_preempt) noexcept
-    : _is_out(is_out)
-    , _is_preempt(is_preempt)
-  {
-  }
   ContextSwitch(const bool is_out,
                 const bool is_preempt,
-                const std::uint32_t process_id,
-                const std::uint32_t thread_id) noexcept
+                const std::optional<std::uint32_t> process_id,
+                const std::optioanl<std::uint32_t> thread_id) noexcept
     : _is_out(is_out)
     , _is_preempt(is_preempt)
     , _process_id(process_id)
