@@ -2,10 +2,13 @@
 
 ## Table of Contents
 - [Building by Hand](#building-by-hand)
-- [Using CMake](#using-cmake)
-  - [CMake and ExternalProject](#cmake-and-externalproject)
-  - [CMake and FetchContent](#cmake-and-fetchcontent)
-  - [CMake and find_package](#cmake-and-find_package)
+  - [Build](#build-the-library)
+  - [Install](#install-the-library)
+  - [Build Examples](#build-examples)
+- [Including into `CMakeLists.txt`](#including-into-cmakeliststxt)
+  - [ExternalProject](#cmake-and-externalproject)
+  - [FetchContent](#cmake-and-fetchcontent)
+  - [find_package](#cmake-and-find_package)
 - [Notes for older Linux Kernels](#notes-for-older-linux-kernels)
   - [Linux Kernel version `< 5.13`](#linux-kernel-version--513)
   - [Linux Kernel version `< 5.12`](#linux-kernel-version--512)
@@ -14,24 +17,31 @@
 
 ## Building by Hand
 ### Build the Library
-* Download the source code (`git clone https://github.com/jmuehlig/perf-cpp.git`)
-* Within the cloned directory, call `cmake`, optionally define build options, desired targets or an installation prefix:
+#### Download the source code
+
+```
+git clone git clone https://github.com/jmuehlig/perf-cpp.git
+cd perf-cpp
+git checkout v0.7.1   # optional
+```
+
+#### Generate the Makefile and build
 
 ```
 cmake . -B build --DCMAKE_INSTALL_PREFIX=/path/to/libperf-cpp
 cmake --build build
 ```
 
-Note that the build directory `build` can be replaced by any directory you want (including `.`).
+**Note** that the build directory `build` can be replaced by any directory you want (including `.`).
 
-### Installing the Library
-* After building, you can install the library by:
+### Install the Library
+After building, you can install the library by:
 
 ```
 cmake --install build
 ```
 
-* Afterward, the library should be available for discovery with `find_package` (see below).
+Afterward, the library should be available for discovery with CMake and `find_package` (see [below](#cmake-and-find_package)).
 
 Note that the build directory `build` can be replaced by any directory you want (including `.`).
 
@@ -42,7 +52,7 @@ cmake . -B build -DBUILD_EXAMPLES=1
 cmake --build build --target examples
 ```
 
-## Using CMake
+## Including into `CMakeLists.txt`
 *perf-cpp*  uses [CMake](https://cmake.org/) as a build system, allowing for including *perf-cpp* into further CMake projects.
 You can choose one of the following approaches.
 
@@ -72,7 +82,7 @@ include(FetchContent)
 FetchContent_Declare(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v0.7.0"
+  GIT_TAG "v0.7.1"
 )
 FetchContent_MakeAvailable(perf-cpp-external)
 ```

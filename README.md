@@ -6,7 +6,7 @@ The key features are:
 * **Simplified Performance Measurement**: Directly interact with hardware performance counters from your C++ application within specific code segments (&rarr;[read the documentation](docs/recording.md)).
 * **Event Sampling**: Leverage sampling to gather performance data periodically, enabling efficient analysis of resource usage (including instruction pointers, data, branches, registers, and more) over time and/or execution (&rarr;[read the documentation](docs/sampling.md)).
 * **Customizable Counter Management**: Easily extend the built-in counters with those specific to your underlying hardware substrate (&rarr;[read the documentation](docs/counters.md)).
-* We included various [examples](examples/) to learn how to integrate the library into your C++ application.
+* We included various [**examples**](examples/) to learn how to utilize the library from your C++ application.
 
 Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
 
@@ -99,8 +99,8 @@ sampler.close();
 // ...
 ```
 
-### Building this library
-&rarr; [More details are here](docs/build.md).
+### Building
+*perf-cpp* can be built by hand or included into CMake projects (&rarr; [see more details](docs/build.md)).
 
 ```
 /// 1) Clone the repository
@@ -109,13 +109,16 @@ git clone https://github.com/jmuehlig/perf-cpp.git
 /// 2) Switch to the cloned folder
 cd perf-cpp
 
-/// 3) Generate the Makefile
+/// 3) Switch to the current stable version (optional)
+git checkout v0.7.1
+
+/// 4) Generate the Makefile
 cmake . -B build -DBUILD_EXAMPLES=1
 
-/// 4) Build the library (only) into the build/ folder
+/// 5) Build the library (only) into the build/ folder
 cmake --build build
 
-/// 5) Build the examples (optional)
+/// 6) Build the examples (optional)
 /// Examples will be compiled to build/examples/bin/
 cmake --build build --target examples
 ```
@@ -123,15 +126,15 @@ cmake --build build --target examples
 ---
 
 ## Documentation
-* [Building and including this library](docs/build.md)
-* **Recording performance counters**
-  * [Overview and basics of Recording performance counters (single threaded)](docs/recording.md)
-  * [Recording counters in parallel (multithread / multicore) settings](docs/recording-parallel.md)
-  * [Defining and using metrics](docs/metrics.md)
+* [Building and Including this Library](docs/build.md)
+* **Recording Performance Counters**
+  * [Overview and Basics of Recording Performance Counters](docs/recording.md)
+  * [Recording Counters in Parallel (multithread / multicore) Settings](docs/recording-parallel.md)
+  * [Defining and Using Metrics](docs/metrics.md)
 * **Event Sampling**
-  * [Overview and basics of event sampling](docs/sampling.md)
-  * [Event sampling in parallel (multithread / multicore) settings](docs/sampling-parallel.md)
-* [Built-in and hardware-specific performance counters](docs/counters.md)
+  * [Overview and Basics of Event Sampling](docs/sampling.md)
+  * [Event Sampling in Parallel (multithread / multicore) Settings](docs/sampling-parallel.md)
+* [Built-in and Hardware-specific Performance Counters](docs/counters.md)
 
 ---
 
@@ -199,6 +202,22 @@ Below is a non-exhaustive list of some other valuable profiling projects:
 * Intel's [Instrumentation and Tracing Technology](https://github.com/intel/ittapi) allows applications to manage the collection of trace data effectively when used in conjunction with [Intel VTune Profiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html).
 * [PerfEvent](https://github.com/viktorleis/perfevent) provides lightweight access to performance counters, facilitating streamlined performance monitoring.
 * For those who prefer a more hands-on approach, the [perf_event_open](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) system call can be utilized directly without any wrappers.
+
+
+## Resources about (Perf-) Profiling
+This is a non-exhaustive list of academic research papers and blog articles (feel free to add to it, e.g., via pull request – also your own work).
+
+### Academical Papers
+* [Quantitative Evaluation of Intel PEBS Overhead for Online System-Noise Analysis](https://soramichi.jp/pdf/ROSS2017.pdf) (2017)
+* [Analyzing memory accesses with modern processors](https://dl.acm.org/doi/abs/10.1145/3399666.3399896) (2020)
+* [Precise Event Sampling on AMD Versus Intel: Quantitative and Qualitative Comparison](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10068807&tag=1) (2023)
+* [Multi-level Memory-Centric Profiling on ARM Processors with ARM SPE](https://arxiv.org/html/2410.01514v1) (2024)
+
+### Blog Posts
+* [C2C - False Sharing Detection in Linux Perf](https://joemario.github.io/blog/2016/09/01/c2c-blog/) (2016)
+* [PMU counters and profiling basics.](https://easyperf.net/blog/2018/06/01/PMU-counters-and-profiling-basics) (2018)
+* [Detect false sharing with Data Address Profiling.](https://easyperf.net/blog/2019/12/17/Detecting-false-sharing-using-perf) (2019)
+* [Advanced profiling topics. PEBS and LBR.](https://easyperf.net/blog/2018/06/08/Advanced-profiling-topics-PEBS-and-LBR) (2018)
 
 ---
 
