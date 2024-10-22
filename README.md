@@ -167,18 +167,6 @@ All compiled example binaries are located in `build/examples/bin` and can be exe
 * Recommended *Linux Kernel version*: `>= 5.13` (for older Kernel versions see below)
 * Installed `perf` (check if `perf stat -- ls` provides any output, otherwise follow the instructions)
 
-### Notes for Linux Kernel < 5.13
-#### Linux Kernel < 5.13
-The counter `cgroup-switches` is only provided since Kernel `5.13`.
-If you have an older Kernel, the counter cannot be used and will be deactivated.
-
-#### Linux Kernel < 5.12
-Sampling *weight as struct* (see [sampling documentation](docs/sampling.md)) is only provided since Kernel `5.12`.
-However, you can sample for weight using normal weight. 
-
-#### Linux Kernel < 5.11
-Sampling *data page size* and *code page size*  (see [sampling documentation](docs/sampling.md)) is only provided since Kernel `5.11`.
-
 ---
 
 ## Other Noteworthy Profiling Projects

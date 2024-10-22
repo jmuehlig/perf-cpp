@@ -41,12 +41,12 @@ For specific information about sampling in parallel settings (i.e., sampling mul
   - [Size of the Data Page](#size-of-the-data-page)
   - [Size of the Code Page](#size-of-the-code-page)
   - [Context Switches](#context-switches)
-  - [CGroup](#cgroup)
+  - [CGroup (Linux Kernel `> 5.7`)](#cgroup-since-kernel-57)
   - [Throttle and Unthrottle Events](#throttle-and-unthrottle-events)
 - [Sample mode](#sample-mode)
 - [Lost Samples](#lost-samples)
 - [Specific Notes for different CPU Vendors](#specific-notes-for-different-cpu-vendors)
-  - [Intel](#intel)
+  - [Intel (PEBS)](#intel-pebs)
   - [AMD (Instruction Based Sampling)](#amd-instruction-based-sampling)
 - [Debugging Counter Settings](#debugging-counter-settings)
 ---
@@ -361,10 +361,10 @@ The ABI can be queried using `sample_record.kernel_registers_abi()`.
 &rarr; [See example](../examples/register_sampling.cpp)
 
 ### Weight (Linux Kernel `< 5.12`) / Weight Struct (since Kernel `5.12`)
-The weight indicates how costly the event was.
-Since Linux Kernel version `5.12`, the Kernel might generate more information than only the "weight".
+The weight indicates how costly the event was (basically the latency).
+Since Linux Kernel version `5.12`, the Kernel might generate more information than only a single value, which is used to differentiate between **memory-** (from cache towards memory) and **instruction latency**.
 
-* Request by `sampler.values().weight(true);` or `sampler.values().weight_struct(true)`;
+* Request by `sampler.values().weight(true);` or `sampler.values().weight_struct(true);` (**the latter only from Kernel `5.12`**)
 * Read from the results by `sample_record.weight().value();`, which returns a `perf::Weight` class, which has the following attributes:
   * `sample_record.weight().value().cache_latency()` returns the cache latency of the sampled data address (for both `sampler.values().weight(true)` and `sampler.values().weight_struct(true)`).
   * `sample_record.weight().value().instruction_retirement_latency()` returns the latency of retiring the instruction (including the cache access) **but** only for `sampler.values().weight_struct(true)`. To the best of our knowledge, this feature is only supported by new Intel generations.
@@ -372,24 +372,8 @@ Since Linux Kernel version `5.12`, the Kernel might generate more information th
 
 &rarr; [See code example](../examples/address_sampling.cpp)
 
-#### Specific Notice for Intel's Sapphire Rapids architecture
-To use weight-sampling on Intel's Sapphire Rapids architecture, perf needs an auxiliary counter to be added to the group, before the first "real" counter is added (see [this commit](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).
-*perf-cpp*  defines this counter, you only need to add it accordingly.
-For example, to record loads (counter `0x1CD`) and stores (counter `0x2CD`):
+**Note** that memory sampling depends on the underlying sampling mechanism. &rarr; [See hardware-specific information (e.g., Intel PEBS vs AMD IBS)](#specific-notes-for-different-cpu-vendors)
 
-```cpp
-sampler.trigger({
-    { 
-        perf::Sampler::Trigger{"mem-loads-aux", perf::Precision::MustHaveZeroSkid}, /// Helper
-        perf::Sampler::Trigger{"loads", perf::Precision::RequestZeroSkid}           /// First "real" counter
-    },
-    { perf::Sampler::Trigger{"stores", perf::Precision::MustHaveZeroSkid} }         /// Other "real" counters.
-  });
-```
-
-The sampler will detect that auxiliary counter automatically.
-
-&rarr; [See code example](../examples/multi_event_sampling.cpp)
 
 ### Data Source of a Memory Load
 Data source where the data was sampled (e.g., local mem, remote mem, L1d, L2, ...).
@@ -496,7 +480,7 @@ Occurrence of context switches.
 
 &rarr; [See code example](../examples/context_switch_sampling.cpp)
 
-### CGroup
+### CGroup (since Kernel `5.7`)
 * Request by `sampler.values().cgroup(true);`
 * CGroup IDs are included into samples and can be read by `sample_record.cgroup_id().value();` 
 * Whenever new cgroups are created or activated, the sample can include a `perf::CGroup` item, containing the ID of the created/activated cgroup (`sample_record.cgroup().value().id();`), which matches one of the `cgroup_id()`s of the sample. `perf::CGroup` also contains a path, which can be accessed by `sample_record.cgroup().value().path();`.
@@ -555,8 +539,27 @@ In addition, the following data will be set in a sample:
 * `sample_record.id()`, if `sampler.identifier(true)` was specified.
 
 ## Specific Notes for different CPU Vendors
-### Intel
+### Intel (PEBS)
 Sampling might work without problems since _Cascade Lake_, however, _Sapphire Rapids_  is much more exact (e.g., about the latency).
+
+#### Sapphire Rapids
+To use weight-sampling on Intel's Sapphire Rapids architecture, perf needs an auxiliary counter to be added to the group, before the first "real" counter is added (see [this commit](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).
+*perf-cpp*  defines this counter, you only need to add it accordingly.
+For example, to record loads (counter `0x1CD`) and stores (counter `0x2CD`):
+
+```cpp
+sampler.trigger({
+    { 
+        perf::Sampler::Trigger{"mem-loads-aux", perf::Precision::MustHaveZeroSkid}, /// Helper
+        perf::Sampler::Trigger{"loads", perf::Precision::RequestZeroSkid}           /// First "real" counter
+    },
+    { perf::Sampler::Trigger{"stores", perf::Precision::MustHaveZeroSkid} }         /// Other "real" counters.
+  });
+```
+
+The sampler will detect that auxiliary counter automatically.
+
+&rarr; [See code example](../examples/multi_event_sampling.cpp)
 
 ### AMD (Instruction Based Sampling)
 AMD uses Instruction Based Sampling to tag instructions randomly for sampling and collect various information for each sample ([see the programmer reference](https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/24593.pdf)).

@@ -54,7 +54,7 @@ Several performance counters, common across most CPUs, are pre-defined by the li
     emulation-faults
     context-switches
     bpf-output
-    cgroup-switches
+    cgroup-switches     # only since Linux Kernel 5.13
     cpu-migrations
     migrations
 
