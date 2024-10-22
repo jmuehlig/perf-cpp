@@ -266,7 +266,10 @@ perf::Sampler::open()
         }
 
         perf_event.context_switch = static_cast<std::uint8_t>(this->_values._is_include_context_switch);
+
+#ifndef PERFCPP_NO_RECORD_CGROUP
         perf_event.cgroup = this->_values.is_set(PERF_SAMPLE_CGROUP) ? 1U : 0U;
+#endif
       }
 
       if (this->_values.is_set(PERF_SAMPLE_READ)) {
