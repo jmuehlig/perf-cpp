@@ -50,7 +50,7 @@ main()
   /// Define what to sample.
   sampler.values().time(true).logical_memory_address(true).data_src(true);
 
-#ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT
+#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT
   sampler.values().weight_struct(true);
 #else
   sampler.values().weight(true);

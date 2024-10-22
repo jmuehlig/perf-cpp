@@ -174,23 +174,10 @@ If you have an older Kernel, the counter cannot be used and will be deactivated.
 
 #### Linux Kernel < 5.12
 Sampling *weight as struct* (see [sampling documentation](docs/sampling.md)) is only provided since Kernel `5.12`.
-However, you can sample for weight using normal weight. To avoid compilation errors, you have to define
-
-
-    -DNO_PERF_SAMPLE_WEIGHT_STRUCT
-
-
-when compiling the binary that links `perf-cpp`. This is not true for the examples (will be done automatically).
+However, you can sample for weight using normal weight. 
 
 #### Linux Kernel < 5.11
 Sampling *data page size* and *code page size*  (see [sampling documentation](docs/sampling.md)) is only provided since Kernel `5.11`.
-If you have an older Kernel **and** you want to link the library, you need to define
-
-
-    -DNO_PERF_SAMPLE_DATA_PAGE_SIZE -DNO_PERF_SAMPLE_CODE_PAGE_SIZE
-
-
-when compiling the binary that links `perf-cpp`. This is not true for the examples (will be done automatically).
 
 ---
 

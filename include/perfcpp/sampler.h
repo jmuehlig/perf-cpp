@@ -2,6 +2,7 @@
 
 #include "config.h"
 #include "counter_definition.h"
+#include "feature.h"
 #include "group.h"
 #include "sample.h"
 #include <chrono>
@@ -41,19 +42,19 @@ public:
       KernelRegisters = PERF_SAMPLE_REGS_INTR,
       PhysicalMemAddress = PERF_SAMPLE_PHYS_ADDR,
 
-#ifndef NO_PERF_SAMPLE_DATA_PAGE_SIZE /// PERF_SAMPLE_DATA_PAGE_SIZE is provided since Linux Kernel 5.11
+#ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE /// PERF_SAMPLE_DATA_PAGE_SIZE is provided since Linux Kernel 5.11
       DataPageSize = PERF_SAMPLE_DATA_PAGE_SIZE,
 #else
       DataPageSize = std::uint64_t(1U) << 63,
 #endif
 
-#ifndef NO_PERF_SAMPLE_CODE_PAGE_SIZE /// PERF_SAMPLE_CODE_PAGE_SIZE is provided since Linux Kernel 5.11
+#ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE /// PERF_SAMPLE_CODE_PAGE_SIZE is provided since Linux Kernel 5.11
       CodePageSize = PERF_SAMPLE_CODE_PAGE_SIZE,
 #else
       CodePageSize = std::uint64_t(1U) << 63,
 #endif
 
-#ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT /// PERF_SAMPLE_WEIGHT_STRUCT is provided since Linux Kernel 5.12
+#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// PERF_SAMPLE_WEIGHT_STRUCT is provided since Linux Kernel 5.12
       WeightStruct = PERF_SAMPLE_WEIGHT_STRUCT
 #else
       WeightStruct = std::uint64_t(1U) << 63,
@@ -186,13 +187,15 @@ public:
 
     Values& cgroup(const bool include) noexcept
     {
+#ifndef PERFCPP_NO_SAMPLE_CGROUP
       set(PERF_SAMPLE_CGROUP, include);
+#endif
       return *this;
     }
 
     Values& data_page_size([[maybe_unused]] const bool include) noexcept
     {
-#ifndef NO_PERF_SAMPLE_DATA_PAGE_SIZE
+#ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE
       set(PERF_SAMPLE_DATA_PAGE_SIZE, include);
 #endif
       return *this;
@@ -200,7 +203,7 @@ public:
 
     Values& code_page_size([[maybe_unused]] const bool include) noexcept
     {
-#ifndef NO_PERF_SAMPLE_CODE_PAGE_SIZE
+#ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE
       set(PERF_SAMPLE_CODE_PAGE_SIZE, include);
 #endif
       return *this;
@@ -208,7 +211,7 @@ public:
 
     Values& weight_struct([[maybe_unused]] const bool include) noexcept
     {
-#ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT
+#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT
       set(PERF_SAMPLE_WEIGHT_STRUCT, include);
 #endif
       return *this;
@@ -603,7 +606,14 @@ private:
       return _type == PERF_RECORD_SWITCH || _type == PERF_RECORD_SWITCH_CPU_WIDE;
     }
     [[nodiscard]] bool is_context_switch_cpu_wide() const noexcept { return _type == PERF_RECORD_SWITCH_CPU_WIDE; }
-    [[nodiscard]] bool is_cgroup_event() const noexcept { return _type == PERF_RECORD_CGROUP; }
+    [[nodiscard]] bool is_cgroup_event() const noexcept
+    {
+#ifndef PERFCPP_NO_RECORD_CGROUP
+      return _type == PERF_RECORD_CGROUP;
+#else
+      return false;
+#endif
+    }
     [[nodiscard]] bool is_throttle_event() const noexcept
     {
       return _type == PERF_RECORD_THROTTLE || _type == PERF_RECORD_UNTHROTTLE;

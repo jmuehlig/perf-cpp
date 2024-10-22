@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <perfcpp/counter.h>
+#include <perfcpp/feature.h>
 #include <sstream>
 
 std::optional<double>
@@ -77,9 +78,8 @@ perf::CounterResult::to_string() const
   auto table_stream = std::stringstream{};
   table_stream
     /// Print the header.
-    << "| Value"
-    << std::setw(std::int32_t(max_value_length) - 4) << " "
-    << "| Counter" << std::setw(std::int32_t(max_name_length) - 6) << " "
+    << "| Value" << std::setw(std::int32_t(max_value_length) - 4) << " " << "| Counter"
+    << std::setw(std::int32_t(max_name_length) - 6) << " "
     << "|\n"
 
     /// Print the separator line.
@@ -87,11 +87,8 @@ perf::CounterResult::to_string() const
 
   /// Print the results as columns.
   for (const auto& [name, value] : result) {
-    table_stream << "\n| "
-                 << std::setw(std::int32_t(max_value_length)) << value
-                 << " | "
-                 << name << std::setw(std::int32_t(max_name_length - name.size()) + 1) << " "
-                 << "|";
+    table_stream << "\n| " << std::setw(std::int32_t(max_value_length)) << value << " | " << name
+                 << std::setw(std::int32_t(max_name_length - name.size()) + 1) << " " << "|";
   }
 
   table_stream << std::flush;
@@ -151,20 +148,23 @@ perf::Counter::to_string() const
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_REGS_INTR, "REGS_INTR", is_first);
     is_first = Counter::print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_PHYS_ADDR, "PHYS_ADDR", is_first);
+
+#ifndef PERFCPP_NO_SAMPLE_CGROUP
     is_first =
       Counter::print_type_to_stream(stream, this->_event_attribute.sample_type, PERF_SAMPLE_CGROUP, "CGROUP", is_first);
+#endif
 
-#ifndef NO_PERF_SAMPLE_DATA_PAGE_SIZE
+#ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE
     is_first = Counter::print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_DATA_PAGE_SIZE, "DATA_PAGE_SIZE", is_first);
 #endif
 
-#ifndef NO_PERF_SAMPLE_CODE_PAGE_SIZE
+#ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE
     is_first = Counter::print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_CODE_PAGE_SIZE, "PAGE_SIZE", is_first);
 #endif
 
-#ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT
+#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT
     Counter::print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_WEIGHT_STRUCT, "WEIGHT_STRUCT", is_first);
 #endif

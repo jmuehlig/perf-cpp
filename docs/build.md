@@ -9,10 +9,6 @@
   - [ExternalProject](#cmake-and-externalproject)
   - [FetchContent](#cmake-and-fetchcontent)
   - [find_package](#cmake-and-find_package)
-- [Notes for older Linux Kernels](#notes-for-older-linux-kernels)
-  - [Linux Kernel version `< 5.13`](#linux-kernel-version--513)
-  - [Linux Kernel version `< 5.12`](#linux-kernel-version--512)
-  - [Linux Kernel version `< 5.11`](#linux-kernel-version--511)
 ---
 
 ## Building by Hand
@@ -98,29 +94,3 @@ This assumes `perf-cpp` is already installed on your system. Then, it should be 
 find_package(perf-cpp REQUIRED)
 target_link_libraries(perf-cpp::perf-cpp)
 ```
----
-
-## Notes for older Linux Kernels
-###  Linux Kernel version `< 5.13`
-The counter `cgroup-switches` is only provided since Kernel `5.13`.
-If you have an older Kernel, the counter cannot be used and will be deactivated.
-
-### Linux Kernel version `< 5.12`
-Sampling *weight as struct* ( see [sampling documentation](sampling.md)) is only provided since Kernel `5.12`.
-However, you can sample for weight using normal weight. To avoid compilation errors, you have to define
-
-
-    -DNO_PERF_SAMPLE_WEIGHT_STRUCT
-
-
-when compiling the binary that is linked against `libperf-cpp`.
-
-### Linux Kernel version `< 5.11`
-Sampling *data page size* and *code page size*  (see [sampling documentation](sampling.md)) is only provided since Kernel `5.11`.
-If you have an older Kernel you need to define
-
-
-    -DNO_PERF_SAMPLE_DATA_PAGE_SIZE -DNO_PERF_SAMPLE_CODE_PAGE_SIZE
-
-
-when compiling the binary that is linked against `libperf-cpp`.

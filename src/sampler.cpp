@@ -612,7 +612,7 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
     sample.weight(perf::Weight{ static_cast<std::uint32_t>(entry.read<std::uint64_t>()) });
   }
 
-#ifndef NO_PERF_SAMPLE_WEIGHT_STRUCT
+#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT
   else if (this->_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT)) {
     const auto weight_struct = entry.read<perf_sample_weight>();
     sample.weight(perf::Weight{ weight_struct.var1_dw, weight_struct.var2_w, weight_struct.var3_w });
@@ -652,13 +652,13 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
     sample.cgroup_id(entry.read<std::uint64_t>());
   }
 
-#ifndef NO_PERF_SAMPLE_DATA_PAGE_SIZE
+#ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE
   if (this->_values.is_set(PERF_SAMPLE_DATA_PAGE_SIZE)) {
     sample.data_page_size(entry.read<std::uint64_t>());
   }
 #endif
 
-#ifndef NO_PERF_SAMPLE_CODE_PAGE_SIZE
+#ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE
   if (this->_values.is_set(PERF_SAMPLE_CODE_PAGE_SIZE)) {
     sample.code_page_size(entry.read<std::uint64_t>());
   }
