@@ -41,7 +41,7 @@ For specific information about sampling in parallel settings (i.e., sampling mul
   - [Size of the Data Page](#size-of-the-data-page)
   - [Size of the Code Page](#size-of-the-code-page)
   - [Context Switches](#context-switches)
-  - [CGroup (Linux Kernel `> 5.7`)](#cgroup-since-kernel-57)
+  - [CGroup](#cgroup)
   - [Throttle and Unthrottle Events](#throttle-and-unthrottle-events)
 - [Sample mode](#sample-mode)
 - [Lost Samples](#lost-samples)
@@ -443,6 +443,8 @@ Since we may have missed specific operations, you can also access each particula
 * Read from the results by `sample_record.id().value();`
 
 ### Physical Memory Address
+Sampling the physical memory address requires a Linux Kernel version of `4.13` or higher.
+
 * Request by `sampler.values().physical_memory_address(true);`
 * Read from the results by `sample_record.physical_memory_address().value();`
 
@@ -454,12 +456,15 @@ You may need to adjust the `sample_config.precise_ip(X)` setting on different ha
 
 ### Size of the Data Page
 Size of pages of sampled data addresses (e.g., when sampling for logical memory address).
+Sampling the data page size requires a Linux Kernel version of `5.11` or higher.
 
 * Request by `sampler.values().data_page_size(true);`
 * Read from the results by `sample_record.data_page_size().value();`
 
 ### Size of the Code Page
 Size of pages of sampled instruction pointers (e.g., when sampling for instruction pointers).
+Sampling the code page size requires a Linux Kernel version of `5.11` or higher.
+
 * Request by `sampler.values().code_page_size(true);`
 * Read from the results by `sample_record.code_page_size().value();`
 
@@ -468,7 +473,7 @@ Occurrence of context switches.
 * Request by `sampler.values().context_switch(true);`
 * Read from the results by `sample_record.context_switch().value();` (if `sample_record.context_switch().has_value();`), which returns a `perf::ContextSwitch` object. The context switch contains
   * a flag if the process was switched in or out (`context_switch.is_in()` or `context_switch.is_out()`),
-  * a flag of the process was preempted (`context_switch.is_preempt()`),
+  * a flag of the process was preempted (`context_switch.is_preempt()`) (**only** from Linux Kernel `4.17`),
   * the id of the in or out process, if sampling cpu-wide (`context_switch.process_id()`),
   * and the id of the in or out thread, if sampling cpu-wide (`context_switch.thread_id()`).
   * In addition, the following data will be set in a sample:
@@ -480,7 +485,9 @@ Occurrence of context switches.
 
 &rarr; [See code example](../examples/context_switch_sampling.cpp)
 
-### CGroup (since Kernel `5.7`)
+### CGroup
+Sampling cgroups requires a Linux Kernel version of `5.7` or higher.
+
 * Request by `sampler.values().cgroup(true);`
 * CGroup IDs are included into samples and can be read by `sample_record.cgroup_id().value();` 
 * Whenever new cgroups are created or activated, the sample can include a `perf::CGroup` item, containing the ID of the created/activated cgroup (`sample_record.cgroup().value().id();`), which matches one of the `cgroup_id()`s of the sample. `perf::CGroup` also contains a path, which can be accessed by `sample_record.cgroup().value().path();`.

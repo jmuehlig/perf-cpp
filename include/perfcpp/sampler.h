@@ -40,7 +40,11 @@ public:
       DataSource = PERF_SAMPLE_DATA_SRC,
       Identifier = PERF_SAMPLE_IDENTIFIER,
       KernelRegisters = PERF_SAMPLE_REGS_INTR,
+#ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR
       PhysicalMemAddress = PERF_SAMPLE_PHYS_ADDR,
+#else
+      PhysicalMemAddress = std::uint64_t(1U) << 63,
+#endif
 
 #ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE /// PERF_SAMPLE_DATA_PAGE_SIZE is provided since Linux Kernel 5.11
       DataPageSize = PERF_SAMPLE_DATA_PAGE_SIZE,
@@ -181,7 +185,9 @@ public:
 
     Values& physical_memory_address(const bool include) noexcept
     {
+#ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR
       set(PERF_SAMPLE_PHYS_ADDR, include);
+#endif
       return *this;
     }
 
@@ -624,7 +630,11 @@ private:
     [[nodiscard]] bool is_context_switch_out() const noexcept { return _misc & PERF_RECORD_MISC_SWITCH_OUT; }
     [[nodiscard]] bool is_context_switch_out_preempt() const noexcept
     {
+#ifndef PERFCPP_NO_RECORD_MISC_SWITCH_OUT_PREEMPT
       return _misc & PERF_RECORD_MISC_SWITCH_OUT_PREEMPT;
+#else
+      return false;
+#endif
     }
 
   private:

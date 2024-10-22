@@ -146,8 +146,10 @@ perf::Counter::to_string() const
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_IDENTIFIER, "IDENTIFIER", is_first);
     is_first = Counter::print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_REGS_INTR, "REGS_INTR", is_first);
+#ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR
     is_first = Counter::print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_PHYS_ADDR, "PHYS_ADDR", is_first);
+#endif
 
 #ifndef PERFCPP_NO_SAMPLE_CGROUP
     is_first =

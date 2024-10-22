@@ -25,7 +25,9 @@ perf::Sampler::Sampler(const perf::CounterDefinition& counter_list,
     .weight(static_cast<bool>(type & PERF_SAMPLE_WEIGHT))
     .data_src(static_cast<bool>(type & PERF_SAMPLE_DATA_SRC))
     .identifier(static_cast<bool>(type & PERF_SAMPLE_IDENTIFIER))
+#ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR
     .physical_memory_address(static_cast<bool>(type & PERF_SAMPLE_PHYS_ADDR))
+#endif
     .data_page_size(static_cast<bool>(type & Type::DataPageSize))
     .code_page_size(static_cast<bool>(type & Type::CodePageSize))
     .weight_struct(static_cast<bool>(type & Type::WeightStruct));
@@ -249,9 +251,11 @@ perf::Sampler::open()
           perf_event.branch_sample_type = this->_values.branch_mask();
         }
 
+#ifndef PERFCPP_NO_SAMPLE_MAX_STACK
         if (this->_values.is_set(PERF_SAMPLE_CALLCHAIN)) {
           perf_event.sample_max_stack = this->_values.max_call_stack();
         }
+#endif
 
         if (this->_values.is_set(PERF_SAMPLE_REGS_USER)) {
           perf_event.sample_regs_user = this->_values.user_registers().mask();
@@ -644,9 +648,11 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
     }
   }
 
+#ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR
   if (this->_values.is_set(PERF_SAMPLE_PHYS_ADDR)) {
     sample.physical_memory_address(entry.read<std::uint64_t>());
   }
+#endif
 
   if (this->_values.is_set(PERF_SAMPLE_CGROUP)) {
     sample.cgroup_id(entry.read<std::uint64_t>());
@@ -824,7 +830,9 @@ perf::MultiThreadSampler::MultiThreadSampler(const perf::CounterDefinition& coun
     .weight(static_cast<bool>(type & PERF_SAMPLE_WEIGHT))
     .data_src(static_cast<bool>(type & PERF_SAMPLE_DATA_SRC))
     .identifier(static_cast<bool>(type & PERF_SAMPLE_IDENTIFIER))
+#ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR
     .physical_memory_address(static_cast<bool>(type & PERF_SAMPLE_PHYS_ADDR))
+#endif
     .data_page_size(static_cast<bool>(type & Sampler::Type::DataPageSize))
     .code_page_size(static_cast<bool>(type & Sampler::Type::CodePageSize))
     .weight_struct(static_cast<bool>(type & Sampler::Type::WeightStruct));
@@ -910,7 +918,9 @@ perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_
     .weight(static_cast<bool>(type & PERF_SAMPLE_WEIGHT))
     .data_src(static_cast<bool>(type & PERF_SAMPLE_DATA_SRC))
     .identifier(static_cast<bool>(type & PERF_SAMPLE_IDENTIFIER))
+#ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR
     .physical_memory_address(static_cast<bool>(type & PERF_SAMPLE_PHYS_ADDR))
+#endif
     .data_page_size(static_cast<bool>(type & Sampler::Type::DataPageSize))
     .code_page_size(static_cast<bool>(type & Sampler::Type::CodePageSize))
     .weight_struct(static_cast<bool>(type & Sampler::Type::WeightStruct));

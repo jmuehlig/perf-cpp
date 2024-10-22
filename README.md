@@ -163,7 +163,7 @@ All compiled example binaries are located in `build/examples/bin` and can be exe
 * Code example for [multicore sampling: `examples/multi_cpu_sampling.cpp`](examples/multi_cpu_sampling.cpp)
 
 ## System Requirements
-* Minimum *Linux Kernel version*: `>= 5.4`
+* Minimum *Linux Kernel version*: `>= 4.4`
 * Recommended *Linux Kernel version*: `>= 5.13` (older Kernels might not implement all features like sampling for latency).
 * Installed `perf` (check if `perf stat -- ls` provides any output, otherwise follow the instructions)
 
