@@ -21,25 +21,26 @@ For specific information about sampling in parallel settings (i.e., sampling mul
 - [Precision](#precision)
 - [Period / Frequency](#period--frequency)
 - [What can be Recorded and how to Access the Data?](#what-can-be-recorded-and-how-to-access-the-data)
-  - [Instruction Pointer](#instruction-pointer)
-  - [ID of the tecording Thread](#id-of-the-recording-thread)
   - [Time](#time)
   - [Stream ID](#stream-id)
-  - [Logical Memory Address](#logical-memory-address)
-  - [Performance Counter Values](#performance-counter-values)
-  - [Callchain](#callchain)
-  - [Raw Values](#raw-values)
-  - [ID of the recording CPU](#id-of-the-recording-cpu)
   - [Period](#period)
-  - [Branch Stack (LBR)](#branch-stack-lbr)
+  - [Identifier](#identifier)
+  - [Instruction Pointer](#instruction-pointer)
+  - [Callchain](#callchain)
   - [Registers in user-level](#registers-in-user-level)
   - [Registers in kernel-level](#registers-in-kernel-level)
-  - [Weight (Linux Kernel `< 5.12`) / Weight Struct (since Kernel `5.12`)](#weight-linux-kernel--512--weight-struct-since-kernel-512)
-  - [Data Source of a Memory Load](#data-source-of-a-memory-load)
-  - [Identifier](#identifier)
-  - [Physical Memory Address](#physical-memory-address)
-  - [Size of the Data Page](#size-of-the-data-page)
+  - [ID of the recording Thread](#id-of-the-recording-thread)
+  - [ID of the recording CPU](#id-of-the-recording-cpu)
   - [Size of the Code Page](#size-of-the-code-page)
+  - [Performance Counter Values](#performance-counter-values)
+  - [Branch Stack (LBR)](#branch-stack-lbr)
+  - [Physical Memory Address](#physical-memory-address)
+  - [Logical Memory Address](#logical-memory-address)
+  - [Memory Access Latency](#memory-access-latency)
+  - [Data Source of a Memory Load](#data-source-of-a-memory-load)
+  - [Size of the Data Page](#size-of-the-data-page)
+  - [Transaction Abort](#transaction-abort)
+  - [Raw Values](#raw-values)
   - [Context Switches](#context-switches)
   - [CGroup](#cgroup)
   - [Throttle and Unthrottle Events](#throttle-and-unthrottle-events)
@@ -234,18 +235,6 @@ for (const auto& sample_record : sampler.results()) {
 }
 ```
 
-### Instruction Pointer
-* Request by `sampler.values().instruction_pointer(true);`
-* Read from the results by `sample_record.instruction_pointer().value()`
-
-You may need to adjust the `sample_config.precise_ip(X)` setting on different hardware (ranging from `0` to `3`). 
-
-&rarr; [See code example](../examples/instruction_pointer_sampling.cpp)
-
-### ID of the recording Thread
-* Request by `sampler.values().thread_id(true);`
-* Read from the results by `sample_record.thread_id().value()`
-
 ### Time
 * Request by `sampler.values().time(true);`
 * Read from the results by `sample_record.time().value()`
@@ -257,41 +246,51 @@ Unique ID of an opened event.
 * Request by `sampler.values().stream_id(true);`
 * Read from the results by `sample_record.stream_id().value()`
 
-### Logical Memory Address
-* Request by `sampler.values().logical_memory_address(true);`
-* Read from the results by `sample_record.logical_memory_address().value()`
+### Period
+* Request by `sampler.values().period(true);`
+* Read from the results by `sample_record.period().value();`
 
-**Note**: Recording memory addresses (logical and physical) requires an appropriate trigger. 
-On **Intel**, `perf list` reports these triggers as "*Supports address when precise*".
-On **AMD**, memory sampling is implemented through Instruction Based sampling (IBS) ([see kernel mailing list](https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/)).
-*perf-cpp* will add IBS-related counter at runtime if the underlying (AMD) system supports IBS (&rarr; see [documentation about AMD IBS](#amd-instruction-based-sampling)).
+### Identifier
+* Request by `sampler.values().identifier(true);`
+* Read from the results by `sample_record.id().value();`
 
-In addition, you may need to adjust the `sample_config.precise_ip(X)` setting on different hardware (ranging from `perf::Precision::AllowArbitrarySkid` to `perf::Precision::MustHaveZeroSkid`).
+### Instruction Pointer
+* Request by `sampler.values().instruction_pointer(true);`
+* Read from the results by `sample_record.instruction_pointer().value()`
 
-&rarr; [See code example](../examples/address_sampling.cpp)
+You may need to adjust the `sample_config.precise_ip(X)` setting on different hardware (ranging from `0` to `3`). 
 
-### Performance Counter Values
-Record hardware performance counter values at the time of the record.
-
-* Request by `sampler.values().counter({"instructions", "cache-misses"});`
-* Read from the results by `sample_record.counter_result().value().get("cache-misses");`. This can be accessed in the same manner as when recording counters. 
-
-&rarr; [See code example](../examples/counter_sampling.cpp)
+&rarr; [See code example](../examples/instruction_pointer_sampling.cpp)
 
 ### Callchain
 Callchain as a list of instruction pointers.
 
-* Request by `sampler.values().callchain(true);` or `sampler.values().callchain(M);` where `M` is a `std::uint16_t` defining the maximum call stack size. 
+* Request by `sampler.values().callchain(true);` or `sampler.values().callchain(M);` where `M` is a `std::uint16_t` defining the maximum call stack size.
 * Read from the results by `sample_record.callchain().value();`, which returns a `std::vector<std::uintptr_t>` of instruction pointers.
 
-### Raw Values
-Hardware will record different data, depending on the CPU generation and manufacture.
-While the perf subsystem will parse the data and map it to a generalized interface, the raw data can also be accessed using raw sampling.
+### Registers in user-level
+Values of user registers (the values in the process before the kernel was called).
 
-* Request by `sampler.values().raw(true);`
-* Read the results by `sample_record.raw().value();`
+* Request by `sampler.values().user_registers( { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 });`
+* Read from the results by `sample_record.user_registers().value()[0];` (`0` for the first register, `perf::Registers::x86::IP` in this example)
 
-&rarr; [See code example for AMD IBS](../examples/amd_ibs_raw_sampling.cpp) (more information about how to access the raw data is provided by the [AMD manual](https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/24593.pdf) from page 428)
+The ABI can be queried using `sample_record.user_registers_abi()`.
+
+&rarr; [See code example](../examples/register_sampling.cpp)
+
+### Registers in kernel-level
+Values of user registers (the values in the process when the kernel was called).
+
+* Request by `sampler.values().kernel_registers( { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 });`
+* Read from the results by `sample_record.kernel_registers().value()[0];` (`0` for the first register, `perf::Registers::x86::IP` in this example)
+
+The ABI can be queried using `sample_record.kernel_registers_abi()`.
+
+&rarr; [See example](../examples/register_sampling.cpp)
+
+### ID of the recording Thread
+* Request by `sampler.values().thread_id(true);`
+* Read from the results by `sample_record.thread_id().value()`
 
 ### ID of the recording CPU
 
@@ -300,9 +299,20 @@ While the perf subsystem will parse the data and map it to a generalized interfa
 
 &rarr; [See code example](../examples/instruction_pointer_sampling.cpp)
 
-### Period
-* Request by `sampler.values().period(true);`
-* Read from the results by `sample_record.period().value();`
+### Size of the Code Page
+Size of pages of sampled instruction pointers (e.g., when sampling for instruction pointers).
+Sampling the code page size requires a Linux Kernel version of `5.11` or higher.
+
+* Request by `sampler.values().code_page_size(true);`
+* Read from the results by `sample_record.code_page_size().value();`
+
+### Performance Counter Values
+Record hardware performance counter values at the time of the record.
+
+* Request by `sampler.values().counter({"instructions", "cache-misses"});`
+* Read from the results by `sample_record.counter_result().value().get("cache-misses");`. This can be accessed in the same manner as when recording counters.
+
+&rarr; [See code example](../examples/counter_sampling.cpp)
 
 ### Branch Stack (LBR)
 Branch history with jump addresses and flag if predicted correctly.
@@ -327,7 +337,7 @@ The possible branch type values are:
 * `perf::BranchType::NotInTransaction`: Sample branches not in transactions of transactional memory.
 
 #### Read from the results
-Read from the results by `sample_record.branches()`, which returns a vector of `perf::Branch`. 
+Read from the results by `sample_record.branches()`, which returns a vector of `perf::Branch`.
 
 Each `perf::Branch` instance has the following values:
 * Instruction pointer from where the branch started (`branch.instruction_pointer_from()`).
@@ -340,28 +350,27 @@ Each `perf::Branch` instance has the following values:
 
 &rarr; [See code example](../examples/branch_sampling.cpp)
 
-### Registers in user-level
-Values of user registers (the values in the process before the kernel was called).
+### Physical Memory Address
+Sampling the physical memory address requires a Linux Kernel version of `4.13` or higher.
 
-* Request by `sampler.values().user_registers( { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 });`
-* Read from the results by `sample_record.user_registers().value()[0];` (`0` for the first register, `perf::Registers::x86::IP` in this example)
+* Request by `sampler.values().physical_memory_address(true);`
+* Read from the results by `sample_record.physical_memory_address().value();`
 
-The ABI can be queried using `sample_record.user_registers_abi()`.
+### Logical Memory Address
+* Request by `sampler.values().logical_memory_address(true);`
+* Read from the results by `sample_record.logical_memory_address().value()`
 
-&rarr; [See code example](../examples/register_sampling.cpp)
+**Note**: Recording memory addresses (logical and physical) requires an appropriate trigger. 
+On **Intel**, `perf list` reports these triggers as "*Supports address when precise*".
+On **AMD**, memory sampling is implemented through Instruction Based sampling (IBS) ([see kernel mailing list](https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/)).
+*perf-cpp* will add IBS-related counter at runtime if the underlying (AMD) system supports IBS (&rarr; see [documentation about AMD IBS](#amd-instruction-based-sampling)).
 
-### Registers in kernel-level
-Values of user registers (the values in the process when the kernel was called).
+In addition, you may need to adjust the `sample_config.precise_ip(X)` setting on different hardware (ranging from `perf::Precision::AllowArbitrarySkid` to `perf::Precision::MustHaveZeroSkid`).
 
-* Request by `sampler.values().kernel_registers( { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 });`
-* Read from the results by `sample_record.kernel_registers().value()[0];` (`0` for the first register, `perf::Registers::x86::IP` in this example)
+&rarr; [See code example](../examples/address_sampling.cpp)
 
-The ABI can be queried using `sample_record.kernel_registers_abi()`.
-
-&rarr; [See example](../examples/register_sampling.cpp)
-
-### Weight (Linux Kernel `< 5.12`) / Weight Struct (since Kernel `5.12`)
-The weight indicates how costly the event was (basically the latency).
+### Memory Access Latency
+The weight (and weight struct) indicates how costly the event was (basically the latency).
 Since Linux Kernel version `5.12`, the Kernel might generate more information than only a single value, which is used to differentiate between **memory-** (from cache towards memory) and **instruction latency**.
 
 * Request by `sampler.values().weight(true);` or `sampler.values().weight_struct(true);` (**the latter only from Kernel `5.12`**)
@@ -373,7 +382,6 @@ Since Linux Kernel version `5.12`, the Kernel might generate more information th
 &rarr; [See code example](../examples/address_sampling.cpp)
 
 **Note** that memory sampling depends on the underlying sampling mechanism. &rarr; [See hardware-specific information (e.g., Intel PEBS vs AMD IBS)](#specific-notes-for-different-cpu-vendors)
-
 
 ### Data Source of a Memory Load
 Data source where the data was sampled (e.g., local mem, remote mem, L1d, L2, ...).
@@ -438,21 +446,18 @@ Since we may have missed specific operations, you can also access each particula
 
 &rarr; [See code example](../examples/address_sampling.cpp)
 
-### Identifier
-* Request by `sampler.values().identifier(true);`
-* Read from the results by `sample_record.id().value();`
-
-### Physical Memory Address
-Sampling the physical memory address requires a Linux Kernel version of `4.13` or higher.
-
-* Request by `sampler.values().physical_memory_address(true);`
-* Read from the results by `sample_record.physical_memory_address().value();`
-
 **Note**: Recording memory addresses (logical and physical) requires an appropriate trigger.
 On Intel, `perf list` reports these triggers as "*Supports address when precise*".
 On AMD, you need the `ibs_op` counter (&rarr;[see kernel mailing list](https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/)).
 
 You may need to adjust the `sample_config.precise_ip(X)` setting on different hardware (ranging from `0` to `3`).
+
+### Size of the Data Page
+Size of pages of sampled data addresses (e.g., when sampling for logical memory address).
+Sampling the data page size requires a Linux Kernel version of `5.11` or higher.
+
+* Request by `sampler.values().data_page_size(true);`
+* Read from the results by `sample_record.data_page_size().value();`
 
 ### Transaction Abort
 Reports the reason for an abort of a transactional memory transaction.
@@ -469,19 +474,14 @@ Reports the reason for an abort of a transactional memory transaction.
   * `sample_record.transaction_abort().value().is_capacity_read()`, which returns `true`, if the abort is due to read capacity.
   * In addition, `sample_record.transaction_abort().value().code()` returns the abort-code for a transaction as specified by the user.
 
-### Size of the Data Page
-Size of pages of sampled data addresses (e.g., when sampling for logical memory address).
-Sampling the data page size requires a Linux Kernel version of `5.11` or higher.
+### Raw Values
+Hardware will record different data, depending on the CPU generation and manufacture.
+While the perf subsystem will parse the data and map it to a generalized interface, the raw data can also be accessed using raw sampling.
 
-* Request by `sampler.values().data_page_size(true);`
-* Read from the results by `sample_record.data_page_size().value();`
+* Request by `sampler.values().raw(true);`
+* Read the results by `sample_record.raw().value();`
 
-### Size of the Code Page
-Size of pages of sampled instruction pointers (e.g., when sampling for instruction pointers).
-Sampling the code page size requires a Linux Kernel version of `5.11` or higher.
-
-* Request by `sampler.values().code_page_size(true);`
-* Read from the results by `sample_record.code_page_size().value();`
+&rarr; [See code example for AMD IBS](../examples/amd_ibs_raw_sampling.cpp) (more information about how to access the raw data is provided by the [AMD manual](https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/24593.pdf) from page 428)
 
 ### Context Switches
 Occurrence of context switches.
