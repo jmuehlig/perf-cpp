@@ -317,10 +317,10 @@ The possible branch type values are:
 * `perf::BranchType::HyperVisor`: Sample branches in HV mode.
 * `perf::BranchType::Any` (the default): Sample all branches.
 * `perf::BranchType::Call`: Sample any call (direct, indirect, far jumps).
-* `perf::BranchType::DirectCall`: Sample direct call.
+* `perf::BranchType::DirectCall`: Sample direct call (requires Linux Kernel `4.4` or higher).
 * `perf::BranchType::IndirectCall`: Sample indirect call.
 * `perf::BranchType::Return`: Sample return branches.
-* `perf::BranchType::IndirectJump`: Sample indirect jumps.
+* `perf::BranchType::IndirectJump`: Sample indirect jumps (requires Linux Kernel `4.2` or higher).
 * `perf::BranchType::Conditional`: Sample conditional branches.
 * `perf::BranchType::TransactionalMemoryAbort`: Sample branches that abort transactional memory.
 * `perf::BranchType::InTransaction`: Sample branches in transactions of transactional memory.
@@ -470,6 +470,7 @@ Sampling the code page size requires a Linux Kernel version of `5.11` or higher.
 
 ### Context Switches
 Occurrence of context switches.
+Sampling context switches requires a Linux Kernel version of `4.3` or higher.
 * Request by `sampler.values().context_switch(true);`
 * Read from the results by `sample_record.context_switch().value();` (if `sample_record.context_switch().has_value();`), which returns a `perf::ContextSwitch` object. The context switch contains
   * a flag if the process was switched in or out (`context_switch.is_in()` or `context_switch.is_out()`),

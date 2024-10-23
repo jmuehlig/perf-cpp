@@ -609,9 +609,19 @@ private:
     [[nodiscard]] bool is_loss_event() const noexcept { return _type == PERF_RECORD_LOST_SAMPLES; }
     [[nodiscard]] bool is_context_switch_event() const noexcept
     {
+#ifndef PERFCPP_NO_RECORD_SWITCH
       return _type == PERF_RECORD_SWITCH || _type == PERF_RECORD_SWITCH_CPU_WIDE;
+#else
+      return false;
+#endif
     }
-    [[nodiscard]] bool is_context_switch_cpu_wide() const noexcept { return _type == PERF_RECORD_SWITCH_CPU_WIDE; }
+    [[nodiscard]] bool is_context_switch_cpu_wide() const noexcept {
+#ifndef PERFCPP_NO_RECORD_SWITCH
+      return _type == PERF_RECORD_SWITCH_CPU_WIDE;
+#else
+      return false;
+#endif
+    }
     [[nodiscard]] bool is_cgroup_event() const noexcept
     {
 #ifndef PERFCPP_NO_RECORD_CGROUP
@@ -627,7 +637,13 @@ private:
     [[nodiscard]] bool is_throttle() const noexcept { return _type == PERF_RECORD_THROTTLE; }
 
     [[nodiscard]] bool is_exact_ip() const noexcept { return _misc & PERF_RECORD_MISC_EXACT_IP; }
-    [[nodiscard]] bool is_context_switch_out() const noexcept { return _misc & PERF_RECORD_MISC_SWITCH_OUT; }
+    [[nodiscard]] bool is_context_switch_out() const noexcept {
+#ifndef PERFCPP_NO_RECORD_SWITCH
+      return _misc & PERF_RECORD_MISC_SWITCH_OUT;
+#else
+      return false;
+#endif
+    }
     [[nodiscard]] bool is_context_switch_out_preempt() const noexcept
     {
 #ifndef PERFCPP_NO_RECORD_MISC_SWITCH_OUT_PREEMPT

@@ -265,7 +265,9 @@ perf::Sampler::open()
           perf_event.sample_regs_intr = this->_values.kernel_registers().mask();
         }
 
+#ifndef PERFCPP_NO_RECORD_SWITCH
         perf_event.context_switch = static_cast<std::uint8_t>(this->_values._is_include_context_switch);
+#endif
 
 #ifndef PERFCPP_NO_RECORD_CGROUP
         perf_event.cgroup = this->_values.is_set(PERF_SAMPLE_CGROUP) ? 1U : 0U;
