@@ -13,7 +13,7 @@
 
 ## Building by Hand
 ### Build the Library
-#### Download the source code
+#### 1) Download the source code
 
 ```
 git clone git clone https://github.com/jmuehlig/perf-cpp.git
@@ -21,25 +21,31 @@ cd perf-cpp
 git checkout v0.7.1   # optional
 ```
 
-#### Generate the Makefile and build
+#### 2) Generate the Makefile and build
 
 ```
-cmake . -B build --DCMAKE_INSTALL_PREFIX=/path/to/libperf-cpp
+cmake . -B build 
 cmake --build build
 ```
 
 **Note** that the build directory `build` can be replaced by any directory you want (including `.`).
 
 ### Install the Library
-After building, you can install the library by:
+To install the library, you need to define the `CMAKE_INSTALL_PREFIX`:
 
+```
+cmake . -B build -DCMAKE_INSTALL_PREFIX=/path/to/install/dir
+cmake --build build
+```
+
+Afterward you can install the library by:
 ```
 cmake --install build
 ```
 
-Afterward, the library should be available for discovery with CMake and `find_package` (see [below](#cmake-and-find_package)).
+The library should be available for discovery with CMake and `find_package` (see [below](#cmake-and-find_package)).
 
-Note that the build directory `build` can be replaced by any directory you want (including `.`).
+**Note** that the build directory `build` can be replaced by any directory you want (including `.`).
 
 ### Build Examples
 Configure the library with `-DBUILD_EXAMPLES=1` and build the `examples` target
@@ -47,6 +53,8 @@ Configure the library with `-DBUILD_EXAMPLES=1` and build the `examples` target
 cmake . -B build -DBUILD_EXAMPLES=1
 cmake --build build --target examples
 ```
+
+The example binaries can be found in `build/examples/bin`.
 
 ## Including into `CMakeLists.txt`
 *perf-cpp*  uses [CMake](https://cmake.org/) as a build system, allowing for including *perf-cpp* into further CMake projects.
