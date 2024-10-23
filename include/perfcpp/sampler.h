@@ -170,6 +170,12 @@ public:
       return *this;
     }
 
+    Values& transaction_abort(const bool include) noexcept
+    {
+      set(PERF_SAMPLE_TRANSACTION, include);
+      return *this;
+    }
+
     Values& identifier(const bool include) noexcept
     {
       set(PERF_SAMPLE_IDENTIFIER, include);

@@ -454,6 +454,21 @@ On AMD, you need the `ibs_op` counter (&rarr;[see kernel mailing list](https://l
 
 You may need to adjust the `sample_config.precise_ip(X)` setting on different hardware (ranging from `0` to `3`).
 
+### Transaction Abort
+Reports the reason for an abort of a transactional memory transaction.
+
+* Request by `sampler.values().transaction_abort(true);`
+* Read from the results by `sample_record.transaction_abort().value();`, which returns an instance of the type `perf::TransactionAbort`. The abort can be queried by:
+  * `sample_record.transaction_abort().value().is_elision()`, which returns `true`, if the abort comes from an elision type transaction (Intel-specific).
+  * `sample_record.transaction_abort().value().is_transaction()`, which returns `true`, if the abort comes a generic transaction.
+  * `sample_record.transaction_abort().value().is_synchronous()`, which returns `true`, if the abort is synchronous.
+  * `sample_record.transaction_abort().value().is_asynchronous()`, which returns `true`, if the abort is asynchronous.
+  * `sample_record.transaction_abort().value().is_retry()`, which returns `true`, if the abort is retryable.
+  * `sample_record.transaction_abort().value().is_conflict()`, which returns `true`, if the abort is due to a conflict.
+  * `sample_record.transaction_abort().value().is_capacity_write()`, which returns `true`, if the abort is due to write capacity.
+  * `sample_record.transaction_abort().value().is_capacity_read()`, which returns `true`, if the abort is due to read capacity.
+  * In addition, `sample_record.transaction_abort().value().code()` returns the abort-code for a transaction as specified by the user.
+
 ### Size of the Data Page
 Size of pages of sampled data addresses (e.g., when sampling for logical memory address).
 Sampling the data page size requires a Linux Kernel version of `5.11` or higher.

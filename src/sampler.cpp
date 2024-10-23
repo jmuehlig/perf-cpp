@@ -644,6 +644,10 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
     sample.data_src(perf::DataSource{ entry.read<std::uint64_t>() });
   }
 
+  if (this->_values.is_set(PERF_SAMPLE_TRANSACTION)) {
+    sample.transaction_abort(TransactionAbort{entry.read<std::uint64_t>()});
+  }
+
   if (this->_values.is_set(PERF_SAMPLE_REGS_INTR)) {
     /// Read the register ABI.
     sample.kernel_registers_abi(entry.read<std::uint64_t>());

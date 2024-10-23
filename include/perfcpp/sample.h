@@ -4,6 +4,7 @@
 #include "data_source.h"
 #include "branch.h"
 #include "weight.h"
+#include "transaction.h"
 #include <cstdint>
 #include <linux/perf_event.h>
 #include <optional>
@@ -147,6 +148,7 @@ public:
   void period(const std::uint64_t period) noexcept { _period = period; }
   void counter_result(CounterResult&& counter_result) noexcept { _counter_result = std::move(counter_result); }
   void data_src(const DataSource data_src) noexcept { _data_src = data_src; }
+  void transaction_abort(const TransactionAbort transaction_abort) noexcept { _transaction_abort = transaction_abort; }
   void weight(const Weight weight) noexcept { _weight = weight; }
   void branches(std::vector<Branch>&& branches) noexcept { _branches = std::move(branches); }
   void user_registers_abi(const std::uint64_t abi) noexcept { _user_registers_abi = abi; }
@@ -270,6 +272,12 @@ public:
    * @return An optional containing the data source if available.
    */
   [[nodiscard]] std::optional<DataSource> data_src() const noexcept { return _data_src; }
+
+  /*
+   * Retrieves the transaction abort of the sample.
+   * @return An optional containing the transaction abort if available.
+   */
+  [[nodiscard]] std::optional<TransactionAbort> transaction_abort() const noexcept { return _transaction_abort; }
 
   /*
    * Retrieves the weight value representing the cost or impact of the sample.
@@ -407,6 +415,7 @@ private:
   std::optional<std::uint64_t> _period{ std::nullopt };
   std::optional<CounterResult> _counter_result{ std::nullopt };
   std::optional<DataSource> _data_src{ std::nullopt };
+  std::optional<TransactionAbort> _transaction_abort{ std::nullopt };
   std::optional<Weight> _weight{ std::nullopt };
   std::optional<std::vector<Branch>> _branches{ std::nullopt };
   std::optional<std::uint64_t> _user_registers_abi{ std::nullopt };
