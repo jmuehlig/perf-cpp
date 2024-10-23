@@ -615,7 +615,8 @@ private:
       return false;
 #endif
     }
-    [[nodiscard]] bool is_context_switch_cpu_wide() const noexcept {
+    [[nodiscard]] bool is_context_switch_cpu_wide() const noexcept
+    {
 #ifndef PERFCPP_NO_RECORD_SWITCH
       return _type == PERF_RECORD_SWITCH_CPU_WIDE;
 #else
@@ -637,7 +638,8 @@ private:
     [[nodiscard]] bool is_throttle() const noexcept { return _type == PERF_RECORD_THROTTLE; }
 
     [[nodiscard]] bool is_exact_ip() const noexcept { return _misc & PERF_RECORD_MISC_EXACT_IP; }
-    [[nodiscard]] bool is_context_switch_out() const noexcept {
+    [[nodiscard]] bool is_context_switch_out() const noexcept
+    {
 #ifndef PERFCPP_NO_RECORD_SWITCH
       return _misc & PERF_RECORD_MISC_SWITCH_OUT;
 #else
@@ -673,6 +675,14 @@ private:
 
     /// Number of counters in the following array.
     std::uint64_t count_members;
+
+    /// Time the event was enabled.
+    std::uint64_t time_enabled;
+
+    /// Time the event was running.
+    std::uint64_t time_running;
+
+    /// Values of the members.
     std::array<value, Group::MAX_MEMBERS> values;
   };
 

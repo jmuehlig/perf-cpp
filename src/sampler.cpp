@@ -276,6 +276,10 @@ perf::Sampler::open()
 
       if (this->_values.is_set(PERF_SAMPLE_READ)) {
         perf_event.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
+
+        if (is_leader) {
+          perf_event.read_format |= PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING;
+        }
       }
 
       const std::int32_t cpu_id =
@@ -529,6 +533,11 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
     /// Read the number of counters.
     const auto count_counter_values = entry.read<typeof(Sampler::read_format::count_members)>();
 
+    /// Time enabled and running for correction.
+    const auto time_enabled = entry.read<typeof(Sampler::read_format::time_enabled)>();
+    const auto time_running = entry.read<typeof(Sampler::read_format::time_running)>();
+    const auto multiplexing_correction = double(time_enabled) / double(time_running);
+
     /// Read the counters (if the number matches the number of specified counters).
     auto* counter_values = entry.read<read_format::value>(count_counter_values);
     if (count_counter_values == sample_counter.group().size()) {
@@ -537,7 +546,10 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
       /// Add each counter and its value to the result set of the sample.
       for (auto counter_id = 0U; counter_id < sample_counter.group().size(); ++counter_id) {
         const auto counter_name = sample_counter.counter_names()[counter_id];
-        const auto counter_result = double(counter_values[counter_id].value);
+
+        /// Counter value (corrected).
+        const auto counter_result = double(counter_values[counter_id].value) * multiplexing_correction;
+
         counter_results.emplace_back(counter_name, counter_result);
       }
       sample.counter_result(CounterResult{ std::move(counter_results) });
