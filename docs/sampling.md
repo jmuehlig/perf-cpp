@@ -13,10 +13,10 @@ For specific information about sampling in parallel settings (i.e., sampling mul
 ## Table of Contents
 - [Interface](#interface)
   - [1) Define What is Recorded and When](#1-define-what-is-recorded-and-when)
-  - [2) Open the Sampler *(optional)*](#2-open-the-sampler-optional)
+  - [2) Open the Sampler *(optional)*](#2-open-the-sampler-optional-)
   - [3) Wrap `start()` and `stop()` around the Processing Code](#3-wrap-start-and-stop-around-the-processing-code)
   - [4) Access the Recorded Samples](#4-access-the-recorded-samples)
-  - [5) Closing the Sampler](#5-closing-the-sampler)
+  - [5) Closing the Sampler](#5-closing-the-sampler-optional)
 - [Trigger](#trigger)
 - [Precision](#precision)
 - [Period / Frequency](#period--frequency)

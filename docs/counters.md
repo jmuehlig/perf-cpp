@@ -1,10 +1,12 @@
-# Built-in and hardware-specific performance counters
+# Built-in and Hardware-specific Performance Counters
 
-Each CPU generation comes equipped with its own set of performance counters. 
-If you're looking to measure your code's performance across various machines, you might need to incorporate different counters. 
-The `perf::CounterDefinition` class facilitates the addition and access of diverse counters to accommodate this need.
+Each CPU generation comes equipped with its own set of performance events. 
+If you're looking to measure your code's performance across various machines, you might need to incorporate different events. 
+The `perf::CounterDefinition` class facilitates the addition and access of diverse events to accommodate this need.
 
-&rarr; This library also ships a script to read all hardware-specific counters, see [**How to get _raw_ counter codes?**](#how-to-get-raw-counter-codes) below.
+&rarr; This library also ships a script to read all hardware-specific events, see [**How to get _raw_ counter codes?**](#how-to-get-raw-counter-codes) below.
+
+To get an idea of existing events on Intel hardware, you can also see [the perfmon website](https://perfmon-events.intel.com/).
 
 ---
 ## Table of Contents
@@ -63,7 +65,7 @@ Several performance counters, common across most CPUs, are pre-defined by the li
 All counters, their names and configurations, are stored within the `perf::CounterDefinition`.
 This class is passed to all event counter instances as a reference – consequentially, the instance **must be alive throughout the entire monitoring phase**.
 
-Basically, there are two options to add more counters:
+Basically, there are two options to add more counters: defining counters in-code and using an external file.
 
 &rarr; See paragraph [**How to get raw counter codes?**](#how-to-get-raw-counter-codes) below for instructions to get all hardware-counters.
 

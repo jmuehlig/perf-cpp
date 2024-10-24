@@ -12,8 +12,8 @@ We will describe both option in detail below.
 - [Sample on specific CPU Cores](#sample-on-specific-cpu-cores)
     - [1) Creating a sampler for multiple CPU cores](#1-creating-a-sampler-for-multiple-cpu-cores)
     - [2) Open the sampler *(optional)*](#2-open-the-sampler-optional)
-    - [3) Call `start()` and `stop()`](#3-call-start-and-stop)
-    - [4) Access the recorded samples](#4-access-the-recorded-samples-1)
+    - [3) Call `start()` and `stop()`](#3-call-start-and-stop-)
+    - [4) Access the recorded samples](#4-access-the-recorded-samples)
     - [5) Closing the sampler](#5-closing-the-sampler)
 ---
 
