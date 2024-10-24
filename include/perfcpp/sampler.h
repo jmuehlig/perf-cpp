@@ -348,7 +348,7 @@ public:
   Sampler(Sampler&&) noexcept = default;
   Sampler(const Sampler&) = default;
 
-  ~Sampler() = default;
+  ~Sampler();
 
   /**
    * Set the trigger for sampling to a single counter.

@@ -78,6 +78,11 @@ perf::Sampler::Sampler(const perf::CounterDefinition& counter_list,
   }
 }
 
+perf::Sampler::~Sampler()
+{
+  this->close();
+}
+
 perf::Sampler&
 perf::Sampler::trigger(std::vector<std::vector<std::string>>&& list_of_trigger_names)
 {
@@ -374,21 +379,22 @@ perf::Sampler::stop()
 void
 perf::Sampler::close()
 {
-  /// Free all buffers and close all groups.
-  for (auto& sample_counter : this->_sample_counter) {
-    if (sample_counter.buffer()) {
-      ::munmap(sample_counter.buffer(), this->_config.buffer_pages() * 4096U);
+  if (std::exchange(this->_is_opened, false)) {
+    /// Free all buffers and close all groups.
+    for (auto& sample_counter : this->_sample_counter) {
+      if (sample_counter.buffer()) {
+        ::munmap(sample_counter.buffer(), this->_config.buffer_pages() * 4096U);
+      }
+
+      if (sample_counter.group().leader_file_descriptor() > -1) {
+        sample_counter.group().close();
+      }
     }
 
-    if (sample_counter.group().leader_file_descriptor() > -1) {
-      sample_counter.group().close();
-    }
+    /// Clear all buffers, groups, and counter names
+    /// in order to enable opening again.
+    this->_sample_counter.clear();
   }
-
-  /// Clear all buffers, groups, and counter names
-  /// in order to enable opening again.
-  this->_sample_counter.clear();
-  this->_is_opened = false;
 }
 
 std::vector<perf::Sample>
@@ -645,7 +651,7 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
   }
 
   if (this->_values.is_set(PERF_SAMPLE_TRANSACTION)) {
-    sample.transaction_abort(TransactionAbort{entry.read<std::uint64_t>()});
+    sample.transaction_abort(TransactionAbort{ entry.read<std::uint64_t>() });
   }
 
   if (this->_values.is_set(PERF_SAMPLE_REGS_INTR)) {

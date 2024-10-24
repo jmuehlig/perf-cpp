@@ -1,9 +1,9 @@
 #pragma once
 
 #include "branch.h"
+#include "period.h"
 #include "precision.h"
 #include "registers.h"
-#include "period.h"
 #include <cstdint>
 #include <optional>
 
@@ -111,16 +111,12 @@ public:
     return _branch_type;
   }
 
-  void frequency(const std::uint64_t frequency) noexcept
-  {
-    _period_or_frequency = Frequency{frequency};
-  }
-  void period(const std::uint64_t period) noexcept
-  {
-    _period_or_frequency = Period{period};
-  }
+  void frequency(const std::uint64_t frequency) noexcept { _period_or_frequency = Frequency{ frequency }; }
+  void period(const std::uint64_t period) noexcept { _period_or_frequency = Period{ period }; }
 
   void precise_ip(const Precision precision) noexcept { _precise_ip = precision; }
+
+  void precision(const Precision precision) noexcept { _precise_ip = precision; }
 
   void precise_ip(const std::uint8_t precise_ip) noexcept
   {
@@ -165,7 +161,7 @@ public:
 private:
   std::uint64_t _buffer_pages{ 8192U + 1U };
 
-  PeriodOrFrequency _period_or_frequency{ Period{4000U} };
+  PeriodOrFrequency _period_or_frequency{ Period{ 4000U } };
 
   Precision _precise_ip{ Precision::MustHaveConstantSkid /* Enable PEBS by default */ };
 

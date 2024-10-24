@@ -15,14 +15,10 @@ main()
   /// alive until the benchmark finishes.
   auto counter_definitions = perf::CounterDefinition{};
 
-  /// Initialize sampler.
-  auto perf_config = perf::SampleConfig{};
-  perf_config.period(10000U); /// Record every 10,000th event.
-
-  auto sampler = perf::Sampler{ counter_definitions, perf_config };
+  auto sampler = perf::Sampler{ counter_definitions };
 
   /// Event that generates an overflow which is samples.
-  sampler.trigger("cycles", perf::Precision::RequestZeroSkid);
+  sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 4000U });
 
   /// Include Timestamp, period, instruction pointer, and CPU number into samples.
   sampler.values().time(true).period(true).instruction_pointer(true).cpu_id(true);
