@@ -1,8 +1,6 @@
-# Recording Performance Counters
+# Counting Hardware Events
 
-Here, we introduce the interface designed to facilitate the recording of performance counters directly from your C++ application. 
-
-&rarr; [See our single-threaded code example: `examples/single_thread.cpp`](../examples/single_thread.cpp)
+Here, we introduce the interface designed to count statistics of hardware performance counters directly from your C++ application. 
 
 ---
 ## Table of Contents
@@ -13,14 +11,14 @@ Here, we introduce the interface designed to facilitate the recording of perform
 - [Debugging Counter Settings](#debugging-counter-settings)
 ---
 
-## 1) Define the Counters to record
+## 1) Define the Events to Record
 ```cpp
 #include <perfcpp/event_counter.h>
 
 /// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
-auto counter_definitions = perf::CounterDefinition{}; 
+auto counters = perf::CounterDefinition{}; 
 
-auto event_counter = perf::EventCounter{counter_definitions};
+auto event_counter = perf::EventCounter{counters};
 try {
     event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
 } catch (std::runtime_error& e) {
@@ -47,7 +45,7 @@ event_counter.stop();
 /// Calculate the result.
 const auto result = event_counter.result();
 
-/// Ask the result for specific counters.
+/// Ask the result for specific events.
 const auto cycles = result.get("cycles");
 std::cout << "Took " << cycles.value() << " cycles" << std::endl;
 
@@ -57,7 +55,7 @@ for (const auto [name, value] : result)
     std::cout << "Counter " << name << " = " << value << std::endl;
 }
 
-//// Or print results as table.
+//// Or print the results as table.
 std::cout << result.to_string() << std::endl;
 
 /// Or get as CSV and JSON.

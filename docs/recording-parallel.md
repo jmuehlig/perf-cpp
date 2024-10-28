@@ -1,6 +1,6 @@
-# Recording performance counters for multithreaded applications
+# Counting Hardware Events in Parallel Applications
 
-Performance counters can be recorded for each thread.
+Performance counters can be counted for each thread or CPU core.
 To monitor multiple threads or CPU cores, you have various options:
 * Record counters individually for each thread and combine the results afterward (&rarr; [See our multithreaded code example: `examples/multi_thread.cpp`](../examples/multi_thread.cpp)).
 * Initiate measurements that record counters for all child threads simultaneously (&rarr; [See our multithreaded inheritance code example: `examples/inherit_thread.cpp`](../examples/inherit_thread.cpp)).
@@ -8,15 +8,15 @@ To monitor multiple threads or CPU cores, you have various options:
 
 ----
 ## Table of Contents
-- [1st Option: Record Counters Individually for each Thread](#1st-option-record-counters-individually-for-each-thread)
-- [2nd Option: Record Counters for all Child Threads Simultaneously](#2nd-option-record-counters-for-all-child-threads-simultaneously)
-- [3rd Option: Record Counters for entire CPU Cores](#3rd-option-record-counters-for-entire-cpu-cores)
+- [1st Option: Count Events Individually for each Thread](#1st-option-count-events-individually-for-each-thread)
+- [2nd Option: Count Events for all Child Threads Simultaneously](#2nd-option-count-events-for-all-child-threads-simultaneously)
+- [3rd Option: Count Events for entire CPU Cores](#3rd-option-count-events-on-specific-cpu-cores)
 ---
 
-## 1st Option: Record Counters Individually for each Thread
+## 1st Option: Count Events Individually for each Thread
 The `perf::MultiThreadEventCounter` class allows you to copy the measurement on every thread and combines the results.
 
-### 1) Define the counters you want to record
+### 1) Define the events to record
 ```cpp
 #include <perfcpp/event_counter.h>
 /// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
@@ -56,7 +56,7 @@ for (auto &thread: threads) {
 }
 ```
 
-### 4) Access the combined counters
+### 4) Access the combined results
 ```cpp
 /// Calculate the result.
 const auto result = multithread_event_counter.result();
@@ -76,10 +76,10 @@ std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << s
 std::cout << result.to_json() << std::endl;
 ```
 
-## 2nd Option: Record Counters for all Child Threads Simultaneously
+## 2nd Option: Count Events for all Child Threads Simultaneously
 The `perf::Config` class allows you to inherit the measurement to all child threads.
 
-### 1) Define inheritance and the counters you want to record
+### 1) Define inheritance and the counters to record
 ```cpp
 #include <perfcpp/event_counter.h>
 auto counter_definitions = perf::CounterDefinition{};
@@ -120,7 +120,7 @@ for (auto &thread: threads) {
 event_counter.stop();
 ```
 
-### 3) Access the counter
+### 3) Access the results
 ```cpp
 /// Calculate the result.
 const auto result = event_counter.result();
@@ -140,7 +140,7 @@ std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << s
 std::cout << result.to_json() << std::endl;
 ```
 
-## 3rd Option: Record Counters for entire CPU Cores
+## 3rd Option: Count Events on specific CPU Cores
 The `perf::MultiCoreEventCounter` class allows you record performance counters on specified CPU cores.
 Please note that you may record events of other applications running on that CPU cores.
 
@@ -184,7 +184,7 @@ try {
 multi_cpu_event_counter.stop();
 ```
 
-### 4) Access the combined counters
+### 4) Access the combined results
 ```cpp
 /// Calculate the result.
 const auto result = multi_cpu_event_counter.result();

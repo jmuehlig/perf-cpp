@@ -205,3 +205,5 @@ if (HardwareInfo::is_amd()) {
     }
 }
 ```
+
+&rarr; [See code example](../examples/address_sampling.cpp)

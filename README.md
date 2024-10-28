@@ -1,4 +1,4 @@
-# *perf-cpp*: Access Performance Counter from C++
+# *perf-cpp*: Access Hardware Performance Counters from C++ Applications
 
 *perf-cpp* is a streamlined C++ library that leverages the *perf subsystem* on Linux to access hardware performance counters directly from the application. 
 The key features are:
@@ -13,92 +13,99 @@ Author: Jan Mühlig (`jan.muehlig@tu-dortmund.de`)
 ----
 
 ## Getting Started
-Capture performance counters and samples directly within your C++ application, focusing exclusively on the code crucial to your analysis.
+Access hardware performance counters directly within your C++ application, focusing exclusively on the code crucial to your analysis.
 
 &rarr; Further details are available in the [documentation](docs/README.md).
 
-### Record Counters
+### Count Hardware Events
 ```cpp
 #include <perfcpp/event_counter.h>
-auto counter_definitions = perf::CounterDefinition{};
-auto event_counter = perf::EventCounter{ counter_definitions };
 
-/// Add performance counters.
+/// Create the counter
+auto counters = perf::CounterDefinition{};
+auto event_counter = perf::EventCounter{ counters };
+
+/// Specify hardware events to record
 event_counter.add({"instructions", "cycles", "cache-misses"});
 
+/// Run the workload
 event_counter.start();
-/// your code that will be measured is here...
+/// ... workload ...
 event_counter.stop();
 
+/// Print the result to the console
 const auto result = event_counter.result();
-for (const auto [name, value] : result)
+for (const auto [event_name, value] : result)
 {
-    std::cout << name << ": " << value << std::endl;
+    std::cout << event_name << ": " << value << std::endl;
 }
-
-/// Possible output:
-// instructions: 5.97298e+07
-// cycles: 5.02462e+08
-// cache-misses: 1.36517e+07
 ```
 
-The `perf::EventCounter` class offers an interface to record hardware performance counter statistics over a specific code segment – comparable to the `perf stat` command.
-You can add and manage counters, as well as to start and stop recordings.
+The output of the program above could look like this:
+```
+instructions: 5.97298e+07
+cycles: 5.02462e+08
+cache-misses: 1.36517e+07
+```
 
-&rarr; See the documentation for [recording basics](docs/recording.md) and [multithreaded](docs/recording-parallel.md) recording.
+The `perf::EventCounter` class offers an interface to count hardware events – comparable to the `perf stat` command, but with control over the monitored code segment.
+The interface allows to specify events, start/stop recordings, and access the results.
 
-### Sampling
+&rarr; See the documentation for [event-counting basics](docs/recording.md) and for [multithreaded/multicore environments](docs/recording-parallel.md).
+
+### Record Samples
 ```cpp
 #include <perfcpp/sampler.h>
-auto counter_definitions = perf::CounterDefinition{};
-auto sampler = perf::Sampler{ counter_definitions };
 
-/// Add trigger: an overflow of the 'cycles' counter will lead to writing a sample.
-sampler.trigger("cycles");
+/// Create the sampler
+auto counters = perf::CounterDefinition{};
+auto sampler = perf::Sampler{ counters };
 
-/// Add what to record to samples: Timestamp, CPU ID, and instruction pointer.
+/// Specify when a sample is recorded: every 4000th cycle
+sampler.trigger("cycles", perf::Period{4000U});
+
+/// Specify what metadata is included into a sample: time, CPU ID, instruction
 sampler.values()
     .time(true)
     .cpu_id(true)
     .instruction_pointer(true);
 
-/// Start sampling.
+/// Run the workload
 sampler.start();
-/// your code that will be sampled is here...
+/// ... workload ...
 sampler.stop();
 
-/// Print the samples with the fields we specified.
+/// Print the samples to the console
 const auto samples = sampler.result();
 for (const auto& sample_record : samples)
 {
     const auto time = sample_record.time().value();
     const auto cpu_id = sample_record.cpu_id().value();
-    const auto instruction_pointer = sample_record.instruction_pointer().value();
+    const auto instruction = sample_record.instruction_pointer().value();
     
     std::cout 
         << "Time = " << time << " | CPU = " << cpu_id
-        << " | Instruction Pointer = 0x" << std::hex << instruction_pointer << std::dec
+        << " | Instruction = 0x" << std::hex << instruction << std::dec
         << std::endl;
 }
+```
 
-/// Close sampler to free buffer and close counter.
-sampler.close();
-
-/// Possible output:
-// Time = 365449130714033 | CPU = 8 | Instruction Pointer = 0x5a6e84b2075c
-// Time = 365449130913157 | CPU = 8 | Instruction Pointer = 0x64af7417c75c
-// Time = 365449131112591 | CPU = 8 | Instruction Pointer = 0x5a6e84b2075c
-// Time = 365449131312005 | CPU = 8 | Instruction Pointer = 0x64af7417c75c 
-// ...
+The output of the program above could look like this:
+```
+Time = 365449130714033 | CPU = 8 | Instruction = 0x5a6e84b2075c
+Time = 365449130913157 | CPU = 8 | Instruction = 0x64af7417c75c
+Time = 365449131112591 | CPU = 8 | Instruction = 0x5a6e84b2075c
+Time = 365449131312005 | CPU = 8 | Instruction = 0x64af7417c75c 
 ```
 
 The `perf::Sampler` class provides an interface to specify sampling criteria and control the start/stop of recordings – comparable to `perf [mem|c2c] record` and `perf report`; but with control of the recorded code segments.
 You can sample various aspects such as instructions, time, memory addresses, access latency, call chains, branches, and more.
 
+
 &rarr; See the documentation for [sampling basics](docs/sampling.md) and [multithreaded sampling](docs/sampling-parallel.md).
 
 
-## Build *perf-cpp*
+## Building
 *perf-cpp* can be built by hand or included into CMake projects (&rarr; [more details in the documentation](docs/build.md)).
 
 ```
@@ -109,7 +116,7 @@ git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
 
 /// 3) Switch to the current stable version (optional)
-git checkout v0.8.0
+git checkout v0.8.1
 
 /// 4) Generate the Makefile
 cmake . -B build -DBUILD_EXAMPLES=1
@@ -149,11 +156,11 @@ cmake --build build --target examples
 
 All compiled example binaries are located in `build/examples/bin` and can be executed directly without additional arguments.
 
-### Recording Performance Counter Statistics
-* Code example for recording counters on a [single thread: `examples/single_thread.cpp`](examples/single_thread.cpp)
-* Code example for recording counters on  [multiple threads through inheritance: `examples/inherit_thread.cpp`](examples/inherit_thread.cpp)
-* Code example for recording counters on [multiple threads: `examples/multi_thread.cpp`](examples/multi_thread.cpp)
-* Code example for recording counters on  [specific CPU cores: `examples/multi_cpu.cpp`](examples/inherit_thread.cpp)
+### Counting Hardware Events
+* Code example for counting hardware events on a [single thread: `examples/single_thread.cpp`](examples/single_thread.cpp)
+* Code example for counting hardware events on  [multiple threads through inheritance: `examples/inherit_thread.cpp`](examples/inherit_thread.cpp)
+* Code example for counting hardware events on [multiple threads: `examples/multi_thread.cpp`](examples/multi_thread.cpp)
+* Code example for counting hardware events on  [specific CPU cores: `examples/multi_cpu.cpp`](examples/inherit_thread.cpp)
 
 ### Recording Samples
 * Code example for sampling [instruction pointers: `examples/instruction_pointer_sampling.cpp`](examples/instruction_pointer_sampling.cpp)
