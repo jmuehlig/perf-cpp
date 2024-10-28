@@ -409,11 +409,11 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
 
   if (this->_values.is_set(PERF_SAMPLE_READ)) {
     /// Read the number of counters.
-    const auto count_counter_values = entry.read<typeof(CounterReadFormat<Group::MAX_MEMBERS>::count_members)>();
+    const auto count_counter_values = entry.read<decltype(CounterReadFormat<Group::MAX_MEMBERS>::count_members)>();
 
     /// Time enabled and running for correction.
-    const auto time_enabled = entry.read<typeof(CounterReadFormat<Group::MAX_MEMBERS>::time_enabled)>();
-    const auto time_running = entry.read<typeof(CounterReadFormat<Group::MAX_MEMBERS>::time_running)>();
+    const auto time_enabled = entry.read<decltype(CounterReadFormat<Group::MAX_MEMBERS>::time_enabled)>();
+    const auto time_running = entry.read<decltype(CounterReadFormat<Group::MAX_MEMBERS>::time_running)>();
     const auto multiplexing_correction = double(time_enabled) / double(time_running);
 
     /// Read the counters (if the number matches the number of specified counters).
