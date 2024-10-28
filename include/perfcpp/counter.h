@@ -42,9 +42,6 @@ public:
   [[nodiscard]] std::uint8_t precise_ip() const noexcept { return _precise_ip; }
   [[nodiscard]] bool is_frequency() const noexcept { return _is_frequency; }
   [[nodiscard]] std::uint64_t period_or_frequency() const noexcept { return _period_or_frequency; }
-
-  [[nodiscard]] bool is_auxiliary() const noexcept { return _event_id == 0x8203; }
-
 private:
   std::uint32_t _type;
   std::uint64_t _event_id;
@@ -132,12 +129,6 @@ public:
   [[nodiscard]] std::int64_t file_descriptor() const noexcept { return _file_descriptor; }
 
   /**
-   * @return True, if the counter is an auxiliary counter, which is needed for (memory) sampling on recent Intel
-   * architectures.
-   */
-  [[nodiscard]] bool is_auxiliary() const noexcept { return _config.is_auxiliary(); }
-
-  /**
    * Opens the counter using the perf subsystem via the perf_event_open system call.
    * The counter will be configured with the provided parameters.
    * After successfully open the counter, the counter's file descriptor will be set.
@@ -199,6 +190,8 @@ public:
                                       std::optional<std::int64_t> group_leader_file_descriptor = std::nullopt,
                                       std::optional<pid_t> process_id = std::nullopt,
                                       std::optional<std::int32_t> cpu_id = std::nullopt) const;
+
+  [[nodiscard]] bool operator==(const CounterConfig config) const noexcept { return _config.type() == config.type() && _config.event_id() == config.event_id(); }
 
 private:
   CounterConfig _config;

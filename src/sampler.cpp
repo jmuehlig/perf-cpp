@@ -78,14 +78,17 @@ perf::Sampler::open()
     throw std::runtime_error{ "No trigger for sampling specified." };
   }
 
+  /// Detect an auxiliary counter as needed for some recent Intel architectures, like Sapphire Rapids.
+  const auto auxiliary_counter = this->_counter_definitions.counter(std::string{"mem-loads-aux"});
+
   /// Open the trigger hardware events.
   for (auto& sample_counter : this->_sample_counter) {
-    /// Detect, if the leader is an auxiliary (specifically for Sapphire Rapids).
-    const auto is_leader_auxiliary_counter = sample_counter.group().member(0U).is_auxiliary();
+    /// Check if the group leader is an auxiliary counter.
+    const auto is_leader_auxiliary_counter = auxiliary_counter.has_value() && sample_counter.group().member(0U) == std::get<1>(auxiliary_counter.value());
 
     auto group_leader_file_descriptor = -1LL;
 
-    /// Open the conunters.
+    /// Open the counters.
     for (auto counter_index = 0U; counter_index < sample_counter.group().size(); ++counter_index) {
       auto& counter = sample_counter.group().member(counter_index);
 
