@@ -3,8 +3,8 @@
 #include <perfcpp/group.h>
 #include <stdexcept>
 #include <sys/ioctl.h>
-#include <unistd.h>
 #include <type_traits>
+#include <unistd.h>
 
 bool
 perf::Group::open(const perf::Config config)
@@ -95,8 +95,9 @@ perf::Group::stop()
   this->disable();
 
   /// Calculate multiplexing correction.
-  this->_multiplexing_correction = double(this->_end_value.time_enabled - this->_start_value.time_enabled) /
-                                   double(this->_end_value.time_running - this->_start_value.time_running);
+  const auto time_enabled = double(this->_end_value.time_enabled - this->_start_value.time_enabled);
+  const auto time_running = double(this->_end_value.time_running - this->_start_value.time_running);
+  this->_multiplexing_correction = time_running > .0 ? time_enabled / time_running : 1.;
 
   return is_read_successful;
 }

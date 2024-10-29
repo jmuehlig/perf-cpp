@@ -10,6 +10,9 @@
 #include <unordered_map>
 
 namespace perf {
+/**
+ * The CounterDefinition holds names and configurations of events and metrics.
+ */
 class CounterDefinition
 {
 public:
@@ -25,46 +28,138 @@ public:
 
   ~CounterDefinition() = default;
 
+  /**
+   * Adds an event with the given name and configuration.
+   *
+   * @param name Name of the event.
+   * @param type Type of the event.
+   * @param event_id Id of the event.
+   */
   void add(std::string&& name, const std::uint32_t type, const std::uint64_t event_id)
   {
     add(std::move(name), CounterConfig{ type, event_id });
   }
 
+  /**
+   * Adds a RAW event with the given name and configuration.
+   *
+   * @param name Name of the event.
+   * @param event_id Id of the event.
+   */
   void add(std::string&& name, const std::uint64_t event_id)
   {
     add(std::move(name), CounterConfig{ PERF_TYPE_RAW, event_id });
   }
 
+  /**
+   * Adds an event with the given name and configuration.
+   *
+   * @param config Config of the event.
+   */
   void add(std::string&& name, CounterConfig config)
   {
     _counter_configs.insert(std::make_pair(std::move(name), config));
   }
 
+  /**
+   * Adds a metric with the given name.
+   *
+   * @param name Name of the metric.
+   * @param metric Metric.
+   */
   void add(std::string&& name, std::unique_ptr<Metric>&& metric)
   {
     _metrics.insert(std::make_pair(std::move(name), std::move(metric)));
   }
 
+  /**
+   * Adds a metric. The name is provided by the metric.
+   *
+   * @param metric Metric.
+   */
   void add(std::unique_ptr<Metric>&& metric) { _metrics.insert(std::make_pair(metric->name(), std::move(metric))); }
 
+  /**
+   * Checks if a specific counter is registered and returns the name and the config.
+   *
+   * @param name Name of the queried counter.
+   *
+   * @return Name and config of the counter, std::nullopt of the counter does not exist.
+   */
   [[nodiscard]] std::optional<std::pair<std::string_view, CounterConfig>> counter(std::string&& name) const noexcept
   {
     return counter(name);
   }
+
+  /**
+   * Checks if a specific counter is registered and returns the name and the config.
+   *
+   * @param name Name of the queried counter.
+   *
+   * @return Name and config of the counter, std::nullopt of the counter does not exist.
+   */
   [[nodiscard]] std::optional<std::pair<std::string_view, CounterConfig>> counter(
     const std::string& name) const noexcept;
+
+  /**
+   * Checks if a specific counter is registered and returns the name and the config.
+   *
+   * @param name Name of the queried counter.
+   *
+   * @return Name and config of the counter, std::nullopt of the counter does not exist.
+   */
   [[nodiscard]] std::optional<std::pair<std::string_view, CounterConfig>> counter(
     const std::string_view name) const noexcept
   {
     return counter(std::string{ name });
   }
+
+  /**
+   * Checks if a metric with the given name is registered.
+   *
+   * @param name Name of the requested query.
+   *
+   * @return True, if the metric exists.
+   */
   [[nodiscard]] bool is_metric(const std::string& name) const noexcept { return _metrics.find(name) != _metrics.end(); }
+
+  /**
+   * Checks if a metric with the given name is registered.
+   *
+   * @param name Name of the requested query.
+   *
+   * @return True, if the metric exists.
+   */
   [[nodiscard]] bool is_metric(std::string_view name) const noexcept { return is_metric(std::string{ name }); }
+
+  /**
+   * Checks if a specific metric is registered and returns the name and the metric.
+   *
+   * @param name Name of the queried metric.
+   *
+   * @return Metric and config, std::nullopt of the metric does not exist.
+   */
   [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(const std::string& name) const noexcept;
+
+  /**
+   * Checks if a specific metric is registered and returns the name and the metric.
+   *
+   * @param name Name of the queried metric.
+   *
+   * @return Metric and config, std::nullopt of the metric does not exist.
+   */
   [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(std::string&& name) const noexcept
   {
     return metric(name);
   }
+
+  /**
+   * Checks if a specific metric is registered and returns the name and the metric.
+   *
+   * @param name Name of the queried metric.
+   *
+   * @return Metric and config, std::nullopt of the metric does not exist.
+   */
   [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(const std::string_view name) const noexcept
   {
     return metric(std::string{ name.data(), name.size() });

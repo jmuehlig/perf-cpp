@@ -68,7 +68,8 @@ perf::Sampler::open()
 
   /// Build the groups from triggers + counters from values.
   for (const auto& trigger : this->_triggers) {
-    /// Convert the trigger (event name, configuration attributes) into a "real" sample counter, which is basically a group of hardware events (one ore multiple triggers and to-recorded hardware events, if requested).
+    /// Convert the trigger (event name, configuration attributes) into a "real" sample counter, which is basically a
+    /// group of hardware events (one ore multiple triggers and to-recorded hardware events, if requested).
     auto sample_counter = this->transform_trigger_to_sample_counter(trigger);
     this->_sample_counter.push_back(std::move(sample_counter));
   }
@@ -78,13 +79,14 @@ perf::Sampler::open()
     throw std::runtime_error{ "No trigger for sampling specified." };
   }
 
-  /// Detect an auxiliary counter as needed for some recent Intel architectures, like Sapphire Rapids.
-  const auto auxiliary_counter = this->_counter_definitions.counter(std::string{"mem-loads-aux"});
+  /// Detect an auxiliary counter as needed for some recent Intel architectures like Sapphire Rapids.
+  const auto auxiliary_counter = this->_counter_definitions.counter(std::string{ "mem-loads-aux" });
 
   /// Open the trigger hardware events.
   for (auto& sample_counter : this->_sample_counter) {
     /// Check if the group leader is an auxiliary counter.
-    const auto is_leader_auxiliary_counter = auxiliary_counter.has_value() && sample_counter.group().member(0U) == std::get<1>(auxiliary_counter.value());
+    const auto is_group_leader_auxiliary_counter =
+      auxiliary_counter.has_value() && sample_counter.group().member(0U) == std::get<1>(auxiliary_counter.value());
 
     auto group_leader_file_descriptor = -1LL;
 
@@ -93,11 +95,11 @@ perf::Sampler::open()
       auto& counter = sample_counter.group().member(counter_index);
 
       /// The first counter in the group has a "special" role, others will use its file descriptor.
-      const auto is_leader = counter_index == 0U;
+      const auto is_group_leader = counter_index == 0U;
 
       /// For Intel's Sapphire Rapids architecture, sampling for memory requires a dummy as first counter.
       /// Only the second counter is the "real" sampling counter.
-      const auto is_secret_leader = is_leader_auxiliary_counter && counter_index == 1U;
+      const auto is_secret_leader = is_group_leader_auxiliary_counter && counter_index == 1U;
 
 #ifndef PERFCPP_NO_RECORD_CGROUP
       const auto is_include_cgroup = this->_values.is_set(PERF_SAMPLE_CGROUP);
@@ -108,7 +110,7 @@ perf::Sampler::open()
       /// Open the hardware counter. If this fails, the counter.open() method fill throw an exception.
       counter.open(
         this->_config.is_debug(),
-        is_leader,
+        is_group_leader,
         is_secret_leader,
         group_leader_file_descriptor,
         this->_config.cpu_id(),
@@ -131,7 +133,7 @@ perf::Sampler::open()
         is_include_cgroup);
 
       /// Set the group leader file descriptor.
-      if (is_leader) {
+      if (is_group_leader) {
         group_leader_file_descriptor = counter.file_descriptor();
       }
     }
@@ -141,13 +143,13 @@ perf::Sampler::open()
     /// However, some architectures (e.g., Intel's Sapphire Rapids) need an "auxiliary" counter.
     /// If this is the case, use the file descriptor of the second counter (the "real" counter) instead.
     auto buffer_file_descriptor = group_leader_file_descriptor;
-    if (is_leader_auxiliary_counter && sample_counter.group().size() > 1U) {
+    if (is_group_leader_auxiliary_counter && sample_counter.group().size() > 1U) {
       buffer_file_descriptor = sample_counter.group().member(1U).file_descriptor();
     }
 
     /// Open the mapped buffer.
     auto* buffer = ::mmap(nullptr,
-                          this->_config.buffer_pages() * 4096U,
+                          this->_config.buffer_pages() * /* page size */ 4096U,
                           PROT_READ,
                           MAP_SHARED,
                           static_cast<std::int32_t>(buffer_file_descriptor),
@@ -198,7 +200,9 @@ perf::Sampler::close()
 }
 
 perf::Sampler::SampleCounter
-perf::Sampler::transform_trigger_to_sample_counter(const std::vector<std::tuple<std::string_view, std::optional<Precision>, std::optional<PeriodOrFrequency>>>& triggers) const
+perf::Sampler::transform_trigger_to_sample_counter(
+  const std::vector<std::tuple<std::string_view, std::optional<Precision>, std::optional<PeriodOrFrequency>>>& triggers)
+  const
 {
   /// Group of hardware events.
   auto group = Group{};
@@ -206,7 +210,8 @@ perf::Sampler::transform_trigger_to_sample_counter(const std::vector<std::tuple<
   /// List of counter names that should be read later from results.
   auto counter_names = std::vector<std::string_view>{};
 
-  /// Add the trigger(s) to the group. For the most time, this will be a single trigger. Some architectures need specific auxiliary counters.
+  /// Add the trigger(s) to the group. For the most time, this will be a single trigger. Some architectures need
+  /// specific auxiliary counters.
   for (const auto trigger : triggers) {
     if (auto counter_name_and_config = this->_counter_definitions.counter(std::get<0>(trigger));
         counter_name_and_config.has_value()) {
@@ -239,7 +244,7 @@ perf::Sampler::transform_trigger_to_sample_counter(const std::vector<std::tuple<
         counter_names.push_back(std::get<0>(trigger));
       }
     } else {
-      throw std::runtime_error{std::string{"Cannot find trigger '"}.append(std::get<0>(trigger)).append("'.")};
+      throw std::runtime_error{ std::string{ "Cannot find trigger '" }.append(std::get<0>(trigger)).append("'.") };
     }
   }
 
@@ -265,11 +270,11 @@ perf::Sampler::transform_trigger_to_sample_counter(const std::vector<std::tuple<
     }
 
     if (!counter_names.empty()) {
-      return SampleCounter{std::move(group), std::move(counter_names)};
+      return SampleCounter{ std::move(group), std::move(counter_names) };
     }
   }
 
-  return SampleCounter{std::move(group)};
+  return SampleCounter{ std::move(group) };
 }
 
 std::vector<perf::Sample>
@@ -296,6 +301,7 @@ perf::Sampler::result(const bool sort_by_time) const
     /// data_head is the size (in bytes) of the samples.
     const auto end = iterator + mmap_page->data_head;
 
+    /// Scan over all samples stored in the user-level buffer.
     while (iterator < end) {
       auto* event_header = reinterpret_cast<perf_event_header*>(iterator);
       auto entry = UserLevelBufferEntry{ event_header };
@@ -343,7 +349,7 @@ perf::Sampler::read_sample_id(perf::Sampler::UserLevelBufferEntry& entry, perf::
 
   if (this->_values.is_set(PERF_SAMPLE_CPU)) {
     sample.cpu_id(entry.read<std::uint32_t>());
-    entry.skip<std::uint32_t>(); /// Skip "res".
+    entry.skip<std::uint32_t>(); /// Skip "res" field.
   }
 
   if (this->_values.is_set(PERF_SAMPLE_IDENTIFIER)) {
@@ -417,7 +423,7 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
     /// Time enabled and running for correction.
     const auto time_enabled = entry.read<decltype(CounterReadFormat<Group::MAX_MEMBERS>::time_enabled)>();
     const auto time_running = entry.read<decltype(CounterReadFormat<Group::MAX_MEMBERS>::time_running)>();
-    const auto multiplexing_correction = double(time_enabled) / double(time_running);
+    const auto multiplexing_correction = time_running > 0ULL ? double(time_enabled) / double(time_running) : 1.;
 
     /// Read the counters (if the number matches the number of specified counters).
     auto* counter_values = entry.read<CounterReadFormat<Group::MAX_MEMBERS>::value>(count_counter_values);
@@ -461,12 +467,7 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
 
     /// Read the raw data.
     const auto* raw_sample_data = entry.read<char>(raw_data_size);
-    auto raw_data = std::vector<char>(std::size_t{ raw_data_size }, '\0');
-    for (auto i = 0U; i < raw_data_size; ++i) {
-      raw_data[i] = raw_sample_data[i];
-    }
-
-    sample.raw(std::move(raw_data));
+    sample.raw(std::vector<char>{ raw_sample_data, raw_sample_data + raw_data_size });
   }
 
   if (this->_values.is_set(PERF_SAMPLE_BRANCH_STACK)) {
@@ -556,9 +557,11 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
   }
 #endif
 
+#ifndef PERFCPP_NO_SAMPLE_CGROUP
   if (this->_values.is_set(PERF_SAMPLE_CGROUP)) {
     sample.cgroup_id(entry.read<std::uint64_t>());
   }
+#endif
 
 #ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE
   if (this->_values.is_set(PERF_SAMPLE_DATA_PAGE_SIZE)) {
@@ -580,6 +583,7 @@ perf::Sampler::read_loss_event(perf::Sampler::UserLevelBufferEntry entry) const
 {
   auto sample = Sample{ entry.mode() };
 
+  /// Read the loss.
   sample.count_loss(entry.read<std::uint64_t>());
 
   /// Read sample_id.
@@ -661,23 +665,23 @@ perf::Sampler::SampleCounter::~SampleCounter()
 }
 
 std::vector<perf::Sample>
-perf::MultiSamplerBase::result(const std::vector<Sampler>& sampler, bool sort_by_time)
+perf::MultiSamplerBase::result(const std::vector<Sampler>& sampler, const bool is_sort_by_time)
 {
   if (!sampler.empty()) {
     auto result = sampler.front().result();
 
-    sort_by_time &= sampler.front()._values.is_set(PERF_SAMPLE_TIME);
-
+    /// Merge the results from all samplers (the result of the first sampler is the start point).
     for (auto i = 1U; i < sampler.size(); ++i) {
-      /// Only sort if all samplers recorded the timestamp.
-      sort_by_time &= sampler[i]._values.is_set(PERF_SAMPLE_TIME);
-
-      auto temp_result = sampler[i].result();
-      std::move(temp_result.begin(), temp_result.end(), std::back_inserter(result));
+      auto sampler_result = sampler[i].result();
+      std::move(sampler_result.begin(), sampler_result.end(), std::back_inserter(result));
     }
 
-    if (sort_by_time) {
-      std::sort(result.begin(), result.end(), SampleTimestampComparator{});
+    /// Sort, if requested and supported by all samplers.
+    if (is_sort_by_time) {
+      /// Verify that all samplers recorded the timestamp that is needed to sort by time.
+      if (std::all_of(sampler.begin(), sampler.end(), [](const auto& sampler) { return sampler._values.is_set(PERF_SAMPLE_TIME); })) {
+        std::sort(result.begin(), result.end(), SampleTimestampComparator{});
+      }
     }
 
     return result;
@@ -749,7 +753,7 @@ perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_
   _config.process_id(-1);
 
   /// Create thread-local samplers without config (will be set when starting).
-  for (const auto _ : this->_core_ids) {
+  for (auto core_id = 0U; core_id < this->_core_ids.size(); ++core_id) {
     this->_core_local_samplers.emplace_back(counter_list);
   }
 }

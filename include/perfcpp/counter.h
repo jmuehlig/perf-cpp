@@ -42,6 +42,7 @@ public:
   [[nodiscard]] std::uint8_t precise_ip() const noexcept { return _precise_ip; }
   [[nodiscard]] bool is_frequency() const noexcept { return _is_frequency; }
   [[nodiscard]] std::uint64_t period_or_frequency() const noexcept { return _period_or_frequency; }
+
 private:
   std::uint32_t _type;
   std::uint64_t _event_id;
@@ -191,12 +192,22 @@ public:
                                       std::optional<pid_t> process_id = std::nullopt,
                                       std::optional<std::int32_t> cpu_id = std::nullopt) const;
 
-  [[nodiscard]] bool operator==(const CounterConfig config) const noexcept { return _config.type() == config.type() && _config.event_id() == config.event_id(); }
+  [[nodiscard]] bool operator==(const CounterConfig config) const noexcept
+  {
+    return _config.type() == config.type() && _config.event_id() == config.event_id();
+  }
 
 private:
+  /// The config of an event.
   CounterConfig _config;
+
+  /// The event description for the perf subsystem, will be configured when opening.
   perf_event_attr _event_attribute{};
+
+  /// Id of an event, will be set by ::ioctl and is needed to match counter values from the perf reading format.
   std::uint64_t _id{ 0U };
+
+  /// The file descriptor as returned by the perf subsystem when opening the counter.
   std::int64_t _file_descriptor{ -1 };
 
   /**

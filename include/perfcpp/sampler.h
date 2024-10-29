@@ -737,10 +737,10 @@ protected:
    * Creates a single result from multiple samplers.
    *
    * @param sampler List of samplers.
-   * @param sort_by_time Flag to sort the result by timestamp attribute (if sampled).
+   * @param is_sort_by_time Flag to sort the result by timestamp attribute (if sampled).
    * @return Single list of results from all incoming samplers.
    */
-  [[nodiscard]] static std::vector<Sample> result(const std::vector<Sampler>& sampler, bool sort_by_time);
+  [[nodiscard]] static std::vector<Sample> result(const std::vector<Sampler>& sampler, bool is_sort_by_time);
 
   /**
    * Initializes the given trigger(s) for the given list of samplers.
