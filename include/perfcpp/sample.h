@@ -1,10 +1,10 @@
 #pragma once
 
+#include "branch.h"
 #include "counter.h"
 #include "data_source.h"
-#include "branch.h"
-#include "weight.h"
 #include "transaction.h"
+#include "weight.h"
 #include <cstdint>
 #include <linux/perf_event.h>
 #include <optional>

@@ -1,8 +1,8 @@
 #pragma once
 
+#include "feature.h"
 #include <cstdint>
 #include <linux/perf_event.h>
-#include "feature.h"
 
 namespace perf {
 enum BranchType : std::uint64_t

@@ -3,8 +3,7 @@
 #include <cstdint>
 #include <linux/perf_event.h>
 
-namespace perf
-{
+namespace perf {
 class DataSource
 {
 public:

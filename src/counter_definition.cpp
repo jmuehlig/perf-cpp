@@ -13,7 +13,8 @@ perf::CounterDefinition::CounterDefinition()
   this->initialize_intel_pebs_counters();
 }
 
-perf::CounterDefinition::CounterDefinition(const std::string& config_file) : CounterDefinition()
+perf::CounterDefinition::CounterDefinition(const std::string& config_file)
+  : CounterDefinition()
 {
   this->read_counter_configuration(config_file);
 }

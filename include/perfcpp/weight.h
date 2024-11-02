@@ -2,8 +2,7 @@
 
 #include <cstdint>
 
-namespace perf
-{
+namespace perf {
 /**
  * Contains information about the "weight" of a memory-based sample, whereas weight mostly refers to the latency of a
  * memory instruction.
