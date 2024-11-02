@@ -142,6 +142,7 @@ public:
    * @param group_leader_file_descriptor File descriptor of the group leader; may be -1 (or any other –unused– value),
    * if this is the group leader.
    * @param is_read_format True, if counters should be read.
+   * @param is_sample True, if counter should be configured for sampling. Some counters (e.g., live readable counters) can have a sample type without being sampled.
    * @param buffer_pages Number of pages allocated for user-level buffer, std::nullopt if counter should not allocated
    * any pages.
    * @param sample_type Mask of sampled values, std::nullopt of sampling is disabled.
@@ -157,6 +158,7 @@ public:
             bool is_secret_leader,
             std::int64_t group_leader_file_descriptor,
             bool is_read_format,
+            bool is_sample,
             std::optional<std::uint64_t> buffer_pages,
             std::optional<std::uint64_t> sample_type,
             std::optional<std::uint64_t> branch_type,

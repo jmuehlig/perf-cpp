@@ -33,6 +33,7 @@ public:
    *
    * @param config Configuration.
    * @param is_read_format True, if counters should be read.
+   * @param is_sample True, if counter should be configured for sampling. Some counters (e.g., live readable counters) can have a sample type without being sampled.
    * @param has_auxiliary_event True, if the group has an auxiliary event as a first event.
    * @param buffer_pages Number of pages allocated for user-level buffer, std::nullopt if counter should not allocated
    * any pages.
@@ -48,6 +49,7 @@ public:
    */
   bool open(const Config& config,
             bool is_read_format,
+            bool is_sample,
             bool has_auxiliary_event,
             std::optional<std::uint64_t> buffer_pages,
             std::optional<std::uint64_t> sample_type,

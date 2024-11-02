@@ -116,6 +116,7 @@ perf::Counter::open(const perf::Config& config,
                     const bool is_secret_leader,
                     const std::int64_t group_leader_file_descriptor,
                     const bool is_read_format,
+                    const bool is_sample,
                     const std::optional<std::uint64_t> buffer_pages,
                     const std::optional<std::uint64_t> sample_type,
                     const std::optional<std::uint64_t> branch_type,
@@ -144,37 +145,40 @@ perf::Counter::open(const perf::Config& config,
   if (sample_type.has_value()) {
     if (is_group_leader || is_secret_leader) {
       this->_event_attribute.sample_type = sample_type.value();
-      this->_event_attribute.sample_id_all = 1U;
 
-      /// Set period of frequency.
-      this->_event_attribute.freq = static_cast<std::uint64_t>(this->_config.is_frequency());
-      this->_event_attribute.sample_freq = this->_config.period_or_frequency();
+      if (is_sample) {
+        this->_event_attribute.sample_id_all = 1U;
 
-      if (branch_type.has_value()) {
-        this->_event_attribute.branch_sample_type = branch_type.value();
-      }
+        /// Set period of frequency.
+        this->_event_attribute.freq = static_cast<std::uint64_t>(this->_config.is_frequency());
+        this->_event_attribute.sample_freq = this->_config.period_or_frequency();
+
+        if (branch_type.has_value()) {
+          this->_event_attribute.branch_sample_type = branch_type.value();
+        }
 
 #ifndef PERFCPP_NO_SAMPLE_MAX_STACK
-      if (max_callstack.has_value()) {
-        this->_event_attribute.sample_max_stack = max_callstack.value();
-      }
+        if (max_callstack.has_value()) {
+          this->_event_attribute.sample_max_stack = max_callstack.value();
+        }
 #endif
 
-      if (user_registers.has_value()) {
-        this->_event_attribute.sample_regs_user = user_registers.value();
-      }
+        if (user_registers.has_value()) {
+          this->_event_attribute.sample_regs_user = user_registers.value();
+        }
 
-      if (kernel_registers.has_value()) {
-        this->_event_attribute.sample_regs_intr = kernel_registers.value();
-      }
+        if (kernel_registers.has_value()) {
+          this->_event_attribute.sample_regs_intr = kernel_registers.value();
+        }
 
 #ifndef PERFCPP_NO_RECORD_SWITCH
-      this->_event_attribute.context_switch = is_include_context_switch;
+        this->_event_attribute.context_switch = is_include_context_switch;
 #endif
 
 #ifndef PERFCPP_NO_RECORD_CGROUP
-      this->_event_attribute.cgroup = is_include_cgroup;
+        this->_event_attribute.cgroup = is_include_cgroup;
 #endif
+      }
     }
   }
 

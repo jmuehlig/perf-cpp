@@ -97,6 +97,7 @@ perf::Sampler::open()
     sample_counter.group().open(
       this->_config,
       this->_values.is_set(PERF_SAMPLE_READ),
+      /* is sample */ true,
       has_auxiliary_event,
       this->_config.buffer_pages(),
       this->_values.get(),

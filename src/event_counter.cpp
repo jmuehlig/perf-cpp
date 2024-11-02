@@ -141,6 +141,7 @@ perf::EventCounter::open()
     for (auto& group : this->_groups) {
       group.open(this->_config,
                  /* is read format */ true,
+                 /* is sample */ false,
                  /* has auxiliary counter */ false,
                  /* buffer pages */ std::nullopt,
                  /* sample type */ std::nullopt,
@@ -159,6 +160,7 @@ perf::EventCounter::open()
                         /* is secret group leader */ false,
                         /* group leader file descriptor */ -1,
                         /* is read format */ false,
+                        /* is sample */ false,
                         /* buffer pages */ std::make_optional(1ULL),
                         /* sample type */ std::make_optional(PERF_SAMPLE_READ),
                         /* branch type */ std::nullopt,
