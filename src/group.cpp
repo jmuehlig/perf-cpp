@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <unistd.h>
+#include <perfcpp/exception.h>
 
 bool
 perf::Group::open(const perf::Config& config,
@@ -70,7 +71,7 @@ bool
 perf::Group::start()
 {
   if (this->_members.empty()) {
-    throw std::runtime_error{ "Cannot start an empty group." };
+    throw CannotStartEmptyGroupError{};
   }
 
   /// Enable the counters.

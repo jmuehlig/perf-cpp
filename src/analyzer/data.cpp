@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <perfcpp/analyzer/data.h>
+#include <perfcpp/exception.h>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_set>
@@ -11,7 +12,7 @@ perf::analyzer::DataAnalyzer::add(perf::analyzer::DataType&& data_type)
   auto name = data_type.name();
 
   if (this->_instances.find(name) != this->_instances.end()) {
-    throw std::runtime_error{ std::string{ "Data type " }.append(name).append(" is already registered.") };
+    throw DataTypeAlreadyRegisteredError{name};
   }
 
   this->_instances.insert(

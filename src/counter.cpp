@@ -5,6 +5,7 @@
 #include <iostream>
 #include <perfcpp/counter.h>
 #include <perfcpp/feature.h>
+#include <perfcpp/exception.h>
 #include <sstream>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -229,9 +230,7 @@ perf::Counter::open(const perf::Config& config,
   }
 
   if (this->_file_descriptor < 0LL) {
-    throw std::runtime_error{
-      std::string{ "Cannot create file descriptor for counter (error no: " }.append(std::to_string(errno)).append(").")
-    };
+    throw CannotCreateFileDescriptorError{errno};
   }
 
   if (buffer_pages.has_value()) {
@@ -246,11 +245,9 @@ perf::Counter::open(const perf::Config& config,
 
     /// Verify the buffer was opened.
     if (this->_user_level_buffer == MAP_FAILED) {
-      throw std::runtime_error{
-        std::string{ "Creating buffer via mmap() failed with errno " }.append(std::to_string(errno)).append(".")
-      };
+      throw MmapError{errno};
     } else if (this->_user_level_buffer == nullptr) {
-      throw std::runtime_error{ "Created buffer via mmap() is null." };
+      throw MmapNullError{};
     }
 
     this->_user_level_buffer_pages = buffer_pages;

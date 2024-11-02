@@ -2,6 +2,7 @@
 #include <perfcpp/sampler.h>
 #include <stdexcept>
 #include <utility>
+#include <perfcpp/exception.h>
 
 perf::Sampler&
 perf::Sampler::trigger(std::vector<std::vector<std::string>>&& list_of_trigger_names)
@@ -36,9 +37,7 @@ perf::Sampler::trigger(std::vector<std::vector<Trigger>>&& triggers)
     for (auto& trigger : trigger_group) {
       /// Reject metrics as trigger events as metrics consist of multiple events.
       if (this->_counter_definitions.is_metric(trigger.name())) {
-        throw std::runtime_error{ std::string{ "Counter '" }
-                                    .append(trigger.name())
-                                    .append("' seems to be a metric. Metrics are not supported as triggers.") };
+        throw MetricNotSupportedError{trigger.name(), "sampling"};
       }
 
       /// Read the config (like event id etc.) from every trigger name and verify that the trigger event exists in the
@@ -47,7 +46,7 @@ perf::Sampler::trigger(std::vector<std::vector<Trigger>>&& triggers)
         trigger_group_references.emplace_back(
           std::get<0>(counter_config.value()), trigger.precision(), trigger.period_or_frequency());
       } else {
-        throw std::runtime_error{ std::string{ "Cannot find counter '" }.append(trigger.name()).append("'.") };
+        throw CannotFindEventError{trigger.name()};
       }
     }
     this->_triggers.push_back(std::move(trigger_group_references));
@@ -75,7 +74,7 @@ perf::Sampler::open()
 
   /// Verify that at least one trigger was configured.
   if (this->_sample_counter.empty()) {
-    throw std::runtime_error{ "No trigger for sampling specified." };
+    throw CannotStartEmptySamplerError{};
   }
 
   /// Detect an auxiliary counter as needed for some recent Intel architectures like Sapphire Rapids.
@@ -190,7 +189,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
         counter_names.push_back(std::get<0>(trigger));
       }
     } else {
-      throw std::runtime_error{ std::string{ "Cannot find trigger '" }.append(std::get<0>(trigger)).append("'.") };
+      throw CannotFindEventError{std::get<0>(trigger)};
     }
   }
 
@@ -200,9 +199,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
 
       /// Verify the counter is not a metric.
       if (this->_counter_definitions.is_metric(counter_name)) {
-        throw std::runtime_error{ std::string{ "Counter '" }
-                                    .append(counter_name)
-                                    .append("' seems to be a metric. Metrics are not supported for sampling.") };
+        throw MetricNotSupportedError{counter_name, "sampling"};
       }
 
       /// Find the counter.
@@ -211,7 +208,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
         counter_names.push_back(std::get<0>(counter_config.value()));
         group.add(std::get<1>(counter_config.value()));
       } else {
-        throw std::runtime_error{ std::string{ "Cannot find counter '" }.append(counter_name).append("'.") };
+        throw CannotFindEventError{counter_name};
       }
     }
 

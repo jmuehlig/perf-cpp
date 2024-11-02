@@ -3,6 +3,7 @@
 #include <perfcpp/perf.h>
 #include <stdexcept>
 #include <utility>
+#include <perfcpp/exception.h>
 
 bool
 perf::EventCounter::add(const std::string& event_name)
@@ -19,10 +20,7 @@ perf::EventCounter::add(const std::string& event_name)
       return true;
     }
 
-    throw std::runtime_error{ std::string{ "Cannot add another group – number of groups: " }
-                                .append(std::to_string(this->_groups.size()))
-                                .append(", maximal number of groups: ")
-                                .append(std::to_string(std::size_t{ this->_config.max_groups() })) };
+    throw MaxCountersReachedError{this->_config.max_groups()};
   }
 
   /// If the given name references an existing counter, add it.
@@ -39,11 +37,7 @@ perf::EventCounter::add(const std::string& event_name)
           dependent_counter_config.has_value()) {
         this->add(std::get<0>(dependent_counter_config.value()), std::get<1>(dependent_counter_config.value()), false);
       } else {
-        throw std::runtime_error{ std::string{ "Cannot find event '" }
-                                    .append(dependent_counter_name)
-                                    .append("' for metric '")
-                                    .append(event_name)
-                                    .append("'.") };
+        throw CannotFindEventForMetricError{dependent_counter_name, event_name};
       }
     }
 
@@ -52,7 +46,7 @@ perf::EventCounter::add(const std::string& event_name)
     return true;
   }
 
-  throw std::runtime_error{ std::string{ "Cannot find event or metric with name '" }.append(event_name).append("'.") };
+  throw CannotFindEventOrMetricError{event_name};
 }
 
 bool
@@ -92,7 +86,7 @@ perf::EventCounter::add(std::string_view event_name, perf::CounterConfig event_c
   /// Check if space for more counters left: If the latest group is "full", check, if there is space for another group.
   if (this->size() == this->_config.max_groups() &&
       this->_groups.back().size() >= this->_config.max_counters_per_group()) {
-    throw std::runtime_error{ "Cannot add more events: Reached maximum number of counters." };
+    throw MaxCountersReachedError{this->_config.max_groups(), this->_config.max_counters_per_group()};
   }
 
   /// If the latest group is "full", add a new group. We already verified that there will be enough space.
@@ -114,7 +108,7 @@ void
 perf::EventCounter::add_live(const std::string& event_name)
 {
   if (this->size() == this->_config.max_groups()) {
-    throw std::runtime_error{ "Cannot add more events: Reached maximum number of counters." };
+    throw MaxCountersReachedError{this->_config.max_groups()};
   }
 
   /// If the given name references an existing counter, add it.
@@ -124,12 +118,10 @@ perf::EventCounter::add_live(const std::string& event_name)
   }
 
   if (auto metric = this->_counter_definitions.metric(event_name); metric.has_value()) {
-    throw std::runtime_error{ std::string{ "The event '" }
-                                .append(event_name)
-                                .append("' appears to be a metric. Metrics are not supported as live counters. ") };
+    throw MetricNotSupportedError{event_name, "live counters"};
   }
 
-  throw std::runtime_error{ std::string{ "Cannot find event with name '" }.append(event_name).append("'.") };
+  throw CannotFindEventError{event_name};
 }
 
 void
