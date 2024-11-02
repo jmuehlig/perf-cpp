@@ -1,5 +1,6 @@
 #pragma once
 
+#include "config.h"
 #include <array>
 #include <cstdint>
 #include <linux/perf_event.h>
@@ -135,21 +136,14 @@ public:
    * After successfully open the counter, the counter's file descriptor will be set.
    * If the counter cannot be opened, it will throw an exception including the error number.
    *
-   * @param is_print_debug If true, the counter's parameters will be print to the console, which is useful for
-   * debugging.
+   * @param config Configuration.
    * @param is_group_leader True, if this counter is the group leader.
    * @param is_secret_leader True, if this counter is not the group leader but the group leader is an auxiliary counter.
    * @param group_leader_file_descriptor File descriptor of the group leader; may be -1 (or any other –unused– value),
    * if this is the group leader.
-   * @param cpu_id ID of the CPU to monitor.
-   * @param process_id ID of the process to monitor.
-   * @param is_inherit True, if child-threads should be monitored.
-   * @param is_include_kernel True, if kernel-activity should be monitored.
-   * @param is_include_user True, if user-activity should be monitored.
-   * @param is_include_hypervisor True, if hypervisor-activity should be monitored.
-   * @param is_include_idle True, if idle-activity should be monitored.
-   * @param is_include_guest True, if guest-activity should be monitored.
    * @param is_read_format True, if counters should be read.
+   * @param buffer_pages Number of pages allocated for user-level buffer, std::nullopt if counter should not allocated
+   * any pages.
    * @param sample_type Mask of sampled values, std::nullopt of sampling is disabled.
    * @param branch_type Mask of sampled branch types, std::nullopt of sampling is disabled.
    * @param user_registers Mask of sampled user registers, std::nullopt of sampling is disabled.
@@ -158,19 +152,12 @@ public:
    * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
    * @param is_include_cgroup True, if cgroups should be sampled, ignored if sampling is disabled.
    */
-  void open(bool is_print_debug,
+  void open(const perf::Config& config,
             bool is_group_leader,
             bool is_secret_leader,
             std::int64_t group_leader_file_descriptor,
-            std::optional<std::uint16_t> cpu_id,
-            pid_t process_id,
-            bool is_inherit,
-            bool is_include_kernel,
-            bool is_include_user,
-            bool is_include_hypervisor,
-            bool is_include_idle,
-            bool is_include_guest,
             bool is_read_format,
+            std::optional<std::uint64_t> buffer_pages,
             std::optional<std::uint64_t> sample_type,
             std::optional<std::uint64_t> branch_type,
             std::optional<std::uint64_t> user_registers,
@@ -183,6 +170,29 @@ public:
    * Closes the counter and resets the file descriptor.
    */
   void close();
+
+  /**
+   * Enables the counter.
+   */
+  void enable() const;
+
+  /**
+   * Disables the counter.
+   */
+  void disable() const;
+
+  /**
+   * Reads the counter "lightweight" without stopping via the "rdpmc" instruction.
+   * Note that this is only possible on x86 architectures.
+   *
+   * @return The current value of the counter.
+   */
+  [[nodiscard]] std::uint64_t lread() const noexcept;
+
+  /**
+   * @return First page of the user-level buffer.
+   */
+  [[nodiscard]] perf_event_mmap_page* user_level_buffer() const noexcept { return _user_level_buffer; }
 
   /**
    * @return A string representing all configurations of this counter.
@@ -209,6 +219,16 @@ private:
 
   /// The file descriptor as returned by the perf subsystem when opening the counter.
   std::int64_t _file_descriptor{ -1 };
+
+  /// Some counter (e.g., triggers for sampling and those read with the rdpmc instruction) use mmap-ed buffers.
+  perf_event_mmap_page* _user_level_buffer{ nullptr };
+
+  /// Number of pages allocated for the user level buffer (needed for closing the buffer).
+  std::optional<std::uint64_t> _user_level_buffer_pages{ std::nullopt };
+
+  /// Index of the counter received via the mmap-page. The index is only relevant for counters that support lightweight
+  /// reads via the "rdpmc" instruction.
+  std::uint32_t _index{ 0U };
 
   /**
    * Do the "final" perf_event_open system call with the provided parameters.

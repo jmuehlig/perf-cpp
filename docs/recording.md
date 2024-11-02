@@ -1,12 +1,14 @@
 # Counting Hardware Events
 
-Here, we introduce the interface designed to count statistics of hardware performance counters directly from your C++ application. 
+This section outlines the interface for counting hardware events, enabling direct access to hardware performance counters from your C++ application. 
+*perf-cpp* additionally supports [counting in parallel settings](recording-parallel.md) and [accessing event counts without halting the counter](recording-live-events.md).
+
 
 ---
 ## Table of Contents
-- [1) Define the Counters to Record](#1-define-the-counters-to-record)
-- [2) Wrap `start()` and `stop()` around the Processing Code](#2-wrap-start-and-stop-around-the-processing-code)
-- [3) Access the Results](#3-access-the-results)
+- [1) Define the Counters to Record](#1-define-the-events-to-record)
+- [3) Wrap `start()` and `stop()` around the Processing Code](#3-wrap-start-and-stop-around-the-processing-code)
+- [4) Access the Results](#4-access-the-results)
 - [Example: Impact of Random Access Patterns](#example-impact-of-random-access-patterns)
 - [Debugging Counter Settings](#debugging-counter-settings)
 ---
@@ -26,13 +28,27 @@ try {
 }
 ```
 
-## 2) Wrap `start()` and `stop()` around the Processing Code
+## 2) Open the Hardware Performance Counters *(optional)*
+Opening the `EventCounter` configures all hardware performance counters without starting them. 
+This step is optional, as the configuration will also occur when the counter is started, if it has not been previously done.
+
+Opening individually is beneficial when measuring time, as it allows the configuration phase to be excluded from the time measurements.
+
+```cpp
+try {
+    event_counter.open();
+} catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+}
+```
+
+
+## 3) Wrap `start()` and `stop()` around the Processing Code
 ```cpp
 try {
     event_counter.start();
 } catch (std::runtime_error& e) {
     std::cerr << e.what() << std::endl;
-    return 1;
 }
 
 /// ... do some computational work here...
@@ -40,7 +56,7 @@ try {
 event_counter.stop();
 ```
 
-## 3) Access the Results
+## 4) Access the Results
 ```cpp
 /// Calculate the result.
 const auto result = event_counter.result();

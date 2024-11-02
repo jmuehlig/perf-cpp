@@ -6,6 +6,7 @@ Below, you'll find the Table of Contents which guides you through various topics
 * **Recording performance counters**
   * [Overview and Basics of Recording Performance Counters (single threaded)](recording.md)
   * [Recording Counters in Parallel (multithread / multicore) Settings](recording-parallel.md)
+  * [Accessing Event Counts without Stopping the Counter](recording-live-events.md)
   * [Defining and Using Metrics](metrics.md)
 * **Sampling**
   * [Overview and Basics of Event Sampling](sampling.md)

@@ -136,6 +136,7 @@ cmake --build build --target examples
 * **Recording Performance Counters**
   * [Overview and Basics of Recording Performance Counters](docs/recording.md)
   * [Recording Counters in Parallel (multithread / multicore) Settings](docs/recording-parallel.md)
+  * [Accessing Event Counts without Stopping the Counter](docs/recording-live-events.md)
   * [Defining and Using Metrics](docs/metrics.md)
 * **Event Sampling**
   * [Overview and Basics of Event Sampling](docs/sampling.md)

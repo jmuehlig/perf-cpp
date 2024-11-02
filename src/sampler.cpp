@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <perfcpp/sampler.h>
 #include <stdexcept>
-#include <sys/mman.h>
 #include <utility>
 
 perf::Sampler&
@@ -82,97 +81,44 @@ perf::Sampler::open()
   /// Detect an auxiliary counter as needed for some recent Intel architectures like Sapphire Rapids.
   const auto auxiliary_counter = this->_counter_definitions.counter(std::string{ "mem-loads-aux" });
 
+  /// Check if cgroup is included into sampling – only if supported by the underlying kernel.
+#ifndef PERFCPP_NO_RECORD_CGROUP
+  const auto is_include_cgroup = this->_values.is_set(PERF_SAMPLE_CGROUP);
+#else
+  const auto is_include_cgroup = false;
+#endif
+
   /// Open the trigger hardware events.
   for (auto& sample_counter : this->_sample_counter) {
     /// Check if the group leader is an auxiliary counter.
-    const auto is_group_leader_auxiliary_counter =
+    const auto has_auxiliary_event =
       auxiliary_counter.has_value() && sample_counter.group().member(0U) == std::get<1>(auxiliary_counter.value());
 
-    auto group_leader_file_descriptor = -1LL;
-
-    /// Open the counters.
-    for (auto counter_index = 0U; counter_index < sample_counter.group().size(); ++counter_index) {
-      auto& counter = sample_counter.group().member(counter_index);
-
-      /// The first counter in the group has a "special" role, others will use its file descriptor.
-      const auto is_group_leader = counter_index == 0U;
-
-      /// For Intel's Sapphire Rapids architecture, sampling for memory requires a dummy as first counter.
-      /// Only the second counter is the "real" sampling counter.
-      const auto is_secret_leader = is_group_leader_auxiliary_counter && counter_index == 1U;
-
-#ifndef PERFCPP_NO_RECORD_CGROUP
-      const auto is_include_cgroup = this->_values.is_set(PERF_SAMPLE_CGROUP);
-#else
-      const auto is_include_cgroup = false;
-#endif
-
-      /// Open the hardware counter. If this fails, the counter.open() method fill throw an exception.
-      counter.open(
-        this->_config.is_debug(),
-        is_group_leader,
-        is_secret_leader,
-        group_leader_file_descriptor,
-        this->_config.cpu_id(),
-        this->_config.process_id(),
-        this->_config.is_include_child_threads(),
-        this->_config.is_include_kernel(),
-        this->_config.is_include_user(),
-        this->_config.is_include_hypervisor(),
-        this->_config.is_include_idle(),
-        this->_config.is_include_guest(),
-        this->_values.is_set(PERF_SAMPLE_READ),
-        this->_values.get(),
-        this->_values.is_set(PERF_SAMPLE_BRANCH_STACK) ? std::make_optional(this->_values.branch_mask()) : std::nullopt,
-        this->_values.is_set(PERF_SAMPLE_REGS_USER) ? std::make_optional(this->_values.user_registers().mask())
-                                                    : std::nullopt,
-        this->_values.is_set(PERF_SAMPLE_REGS_INTR) ? std::make_optional(this->_values.kernel_registers().mask())
-                                                    : std::nullopt,
-        this->_values.is_set(PERF_SAMPLE_CALLCHAIN) ? std::make_optional(this->_values.max_call_stack()) : std::nullopt,
-        this->_values._is_include_context_switch,
-        is_include_cgroup);
-
-      /// Set the group leader file descriptor.
-      if (is_group_leader) {
-        group_leader_file_descriptor = counter.file_descriptor();
-      }
-    }
-
-    /// Get the file descriptor for opening the user-level buffer used for storing samples.
-    /// For the most times, this will be the group leader's file descriptor.
-    /// However, some architectures (e.g., Intel's Sapphire Rapids) need an "auxiliary" counter.
-    /// If this is the case, use the file descriptor of the second counter (the "real" counter) instead.
-    auto buffer_file_descriptor = group_leader_file_descriptor;
-    if (is_group_leader_auxiliary_counter && sample_counter.group().size() > 1U) {
-      buffer_file_descriptor = sample_counter.group().member(1U).file_descriptor();
-    }
-
-    /// Open the mapped buffer.
-    auto* buffer = ::mmap(nullptr,
-                          this->_config.buffer_pages() * /* page size */ 4096U,
-                          PROT_READ,
-                          MAP_SHARED,
-                          static_cast<std::int32_t>(buffer_file_descriptor),
-                          0);
-
-    /// Verify the buffer was opened.
-    if (buffer == MAP_FAILED) {
-      throw std::runtime_error{ "Creating buffer via mmap() failed." };
-    } else if (buffer == nullptr) {
-      throw std::runtime_error{ "Created buffer via mmap() is null." };
-    }
-
-    sample_counter.buffer(buffer, this->_config.buffer_pages());
+    /// Open the group.
+    sample_counter.group().open(
+      this->_config,
+      this->_values.is_set(PERF_SAMPLE_READ),
+      has_auxiliary_event,
+      this->_config.buffer_pages(),
+      this->_values.get(),
+      this->_values.is_set(PERF_SAMPLE_BRANCH_STACK) ? std::make_optional(this->_values.branch_mask()) : std::nullopt,
+      this->_values.is_set(PERF_SAMPLE_REGS_USER) ? std::make_optional(this->_values.user_registers().mask())
+                                                  : std::nullopt,
+      this->_values.is_set(PERF_SAMPLE_REGS_INTR) ? std::make_optional(this->_values.kernel_registers().mask())
+                                                  : std::nullopt,
+      this->_values.is_set(PERF_SAMPLE_CALLCHAIN) ? std::make_optional(this->_values.max_call_stack()) : std::nullopt,
+      this->_values._is_include_context_switch,
+      is_include_cgroup);
   }
 }
 
 bool
 perf::Sampler::start()
 {
-  /// Open the groups.
+  /// Open the groups, if not already done.
   this->open();
 
-  /// Enable the counters.
+  /// Enable the counters to start sampling.
   for (const auto& sample_counter : this->_sample_counter) {
     sample_counter.group().enable();
   }
@@ -284,22 +230,21 @@ perf::Sampler::result(const bool sort_by_time) const
   result.reserve(2048U);
 
   for (const auto& sample_counter : this->_sample_counter) {
-    if (sample_counter.buffer() == nullptr) {
+    auto* user_level_buffer = sample_counter.group().user_level_buffer();
+    if (user_level_buffer == nullptr) {
       continue;
     }
 
-    auto* mmap_page = reinterpret_cast<perf_event_mmap_page*>(sample_counter.buffer());
-
     /// When the ringbuffer is empty or already read, there is nothing to do.
-    if (mmap_page->data_tail >= mmap_page->data_head) {
+    if (user_level_buffer->data_tail >= user_level_buffer->data_head) {
       return result;
     }
 
     /// The buffer starts at page 1 (from 0).
-    auto iterator = std::uintptr_t(sample_counter.buffer()) + 4096U;
+    auto iterator = std::uintptr_t(user_level_buffer) + 4096U;
 
     /// data_head is the size (in bytes) of the samples.
-    const auto end = iterator + mmap_page->data_head;
+    const auto end = iterator + user_level_buffer->data_head;
 
     /// Scan over all samples stored in the user-level buffer.
     while (iterator < end) {
@@ -653,15 +598,8 @@ perf::Sampler::read_throttle_event(perf::Sampler::UserLevelBufferEntry entry) co
 
 perf::Sampler::SampleCounter::~SampleCounter()
 {
-  /// Free the buffer (if mmap-ed).
-  if (this->_buffer != nullptr) {
-    ::munmap(this->_buffer, this->_buffer_pages * 4096U);
-  }
-
   /// Close the group.
-  if (this->_group.leader_file_descriptor() > -1) {
-    this->_group.close();
-  }
+  this->_group.close();
 }
 
 std::vector<perf::Sample>
@@ -679,7 +617,9 @@ perf::MultiSamplerBase::result(const std::vector<Sampler>& sampler, const bool i
     /// Sort, if requested and supported by all samplers.
     if (is_sort_by_time) {
       /// Verify that all samplers recorded the timestamp that is needed to sort by time.
-      if (std::all_of(sampler.begin(), sampler.end(), [](const auto& sampler) { return sampler._values.is_set(PERF_SAMPLE_TIME); })) {
+      if (std::all_of(sampler.begin(), sampler.end(), [](const auto& sampler) {
+            return sampler._values.is_set(PERF_SAMPLE_TIME);
+          })) {
         std::sort(result.begin(), result.end(), SampleTimestampComparator{});
       }
     }

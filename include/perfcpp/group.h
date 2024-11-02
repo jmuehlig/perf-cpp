@@ -32,10 +32,31 @@ public:
    * Opens all counters of the group, configured by the provided config.
    *
    * @param config Configuration.
+   * @param is_read_format True, if counters should be read.
+   * @param has_auxiliary_event True, if the group has an auxiliary event as a first event.
+   * @param buffer_pages Number of pages allocated for user-level buffer, std::nullopt if counter should not allocated
+   * any pages.
+   * @param sample_type Mask of sampled values, std::nullopt of sampling is disabled.
+   * @param branch_type Mask of sampled branch types, std::nullopt of sampling is disabled.
+   * @param user_registers Mask of sampled user registers, std::nullopt of sampling is disabled.
+   * @param kernel_registers Mask of sampled kernel registers, std::nullopt of sampling is disabled.
+   * @param max_callstack Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
+   * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
+   * @param is_include_cgroup True, if cgroups should be sampled, ignored if sampling is disabled.
    *
    * @return True, if the counters could be opened.
    */
-  bool open(Config config);
+  bool open(const Config& config,
+            bool is_read_format,
+            bool has_auxiliary_event,
+            std::optional<std::uint64_t> buffer_pages,
+            std::optional<std::uint64_t> sample_type,
+            std::optional<std::uint64_t> branch_type,
+            std::optional<std::uint64_t> user_registers,
+            std::optional<std::uint64_t> kernel_registers,
+            std::optional<std::uint16_t> max_callstack,
+            bool is_include_context_switch,
+            bool is_include_cgroup);
 
   /**
    * Closes all counters of the group.
@@ -85,20 +106,19 @@ public:
   [[nodiscard]] bool empty() const noexcept { return _members.empty(); }
 
   /**
-   * @return The file descriptor of the group leader (or -1 if the group is empty).
-   */
-  [[nodiscard]] std::int64_t leader_file_descriptor() const noexcept
-  {
-    return !_members.empty() ? _members.front().file_descriptor() : -1LL;
-  }
-
-  /**
    * Reads the result of counter at the given index.
    *
    * @param index Index of the counter to read the result for.
    * @return Result of the counter.
    */
   [[nodiscard]] double get(std::size_t index) const;
+
+  /**
+   * Performs a "lightweight" read of the group leader without stopping/starting the counter.
+   *
+   * @return The current value of the group leader.
+   */
+  [[nodiscard]] std::uint64_t lget() const { return !_members.empty() ? _members.front().lread() : 0ULL; }
 
   /**
    * Grants access to the counter at the given index.
@@ -121,6 +141,24 @@ public:
    */
   [[nodiscard]] std::vector<Counter>& members() { return _members; }
 
+  /**
+   * @return User-level buffer of the first counter (if not nullptr) or the second counter.
+   */
+  [[nodiscard]] perf_event_mmap_page* user_level_buffer() const noexcept
+  {
+    if (!_members.empty()) {
+      if (_members[0U].user_level_buffer() != nullptr) {
+        return _members[0U].user_level_buffer();
+      }
+
+      if (_members.size() > 1U) {
+        return _members[1U].user_level_buffer();
+      }
+    }
+
+    return nullptr;
+  }
+
 private:
   /// List of all the group members.
   std::vector<Counter> _members;
@@ -132,7 +170,7 @@ private:
   CounterReadFormat<Group::MAX_MEMBERS> _end_value{};
 
   /// After stopping the group, we calculate the multiplexing correction once from start- and end-values.
-  double _multiplexing_correction{};
+  double _multiplexing_correction{ 1. };
 
   /**
    * Reads the value of a specific counter (identified by the given ID) from the provided value set.

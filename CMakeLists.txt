@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(libperf-cpp VERSION 0.8.0)
+project(libperf-cpp VERSION 0.9.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE RELEASE)
@@ -80,13 +80,18 @@ if(BUILD_EXAMPLES)
     add_executable(data-analyzer EXCLUDE_FROM_ALL examples/data_analyzer.cpp examples/access_benchmark.cpp)
     target_link_libraries(data-analyzer perf-cpp)
 
+    #### Read event values without stopping the counter.
+    add_executable(live-events EXCLUDE_FROM_ALL examples/live_events.cpp examples/access_benchmark.cpp)
+    target_link_libraries(live-events perf-cpp)
+
     ### One target for all examples
     add_custom_target(examples)
     add_dependencies(examples
             single-thread inherit-thread multi-thread multi-cpu multi-process
             instruction-pointer-sampling counter-sampling branch-sampling
             address-sampling register-sampling multi-thread-sampling multi-cpu-sampling
-            multi-event-sampling amd-ibs-raw-sampling context-switch-sampling data-analyzer)
+            multi-event-sampling amd-ibs-raw-sampling context-switch-sampling data-analyzer
+            live-events)
 endif()
 
 ### Target to create the perf list CSV

@@ -7,9 +7,14 @@
 #include <perfcpp/feature.h>
 #include <sstream>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 #include <utility>
+
+#if defined(__x86_64__) || defined(__i386__)
+#include <x86intrin.h>
+#endif
 
 std::optional<double>
 perf::CounterResult::get(std::string_view name) const noexcept
@@ -105,19 +110,12 @@ perf::CounterResult::to_string() const
 }
 
 void
-perf::Counter::open(const bool is_print_debug,
+perf::Counter::open(const perf::Config& config,
                     const bool is_group_leader,
                     const bool is_secret_leader,
                     const std::int64_t group_leader_file_descriptor,
-                    const std::optional<std::uint16_t> cpu_id,
-                    const pid_t process_id,
-                    const bool is_inherit,
-                    const bool is_include_kernel,
-                    const bool is_include_user,
-                    const bool is_include_hypervisor,
-                    const bool is_include_idle,
-                    const bool is_include_guest,
                     const bool is_read_format,
+                    const std::optional<std::uint64_t> buffer_pages,
                     const std::optional<std::uint64_t> sample_type,
                     const std::optional<std::uint64_t> branch_type,
                     const std::optional<std::uint64_t> user_registers,
@@ -134,12 +132,12 @@ perf::Counter::open(const bool is_print_debug,
   this->_event_attribute.config2 = this->_config.event_id_extension()[1U];
   this->_event_attribute.disabled = is_group_leader;
 
-  this->_event_attribute.inherit = is_inherit;
-  this->_event_attribute.exclude_kernel = !is_include_kernel;
-  this->_event_attribute.exclude_user = !is_include_user;
-  this->_event_attribute.exclude_hv = !is_include_hypervisor;
-  this->_event_attribute.exclude_idle = !is_include_idle;
-  this->_event_attribute.exclude_guest = !is_include_guest;
+  this->_event_attribute.inherit = config.is_include_child_threads();
+  this->_event_attribute.exclude_kernel = !config.is_include_kernel();
+  this->_event_attribute.exclude_user = !config.is_include_user();
+  this->_event_attribute.exclude_hv = !config.is_include_hypervisor();
+  this->_event_attribute.exclude_idle = !config.is_include_idle();
+  this->_event_attribute.exclude_guest = !config.is_include_guest();
 
   /// Set attributes needed for sampling, if sampling is requested.
   if (sample_type.has_value()) {
@@ -191,7 +189,7 @@ perf::Counter::open(const bool is_print_debug,
 
   /// Transform the CPU id to perf's expected format – which is -1 for any CPU (but perf-cpp uses an optional unsigned
   /// integer for that case).
-  const std::int32_t real_cpu_id = cpu_id.has_value() ? std::int32_t{ cpu_id.value() } : -1;
+  const std::int32_t cpu_id = config.cpu_id().has_value() ? std::int32_t{ config.cpu_id().value() } : -1;
 
   if (sample_type.has_value()) {
     /// For sampling, we try to adjust the precision (precise_ip) if we cannot successfully open the counter with the
@@ -203,7 +201,7 @@ perf::Counter::open(const bool is_print_debug,
 
       /// Try to open using the perf subsystem.
       this->_file_descriptor =
-        this->perf_event_open(process_id, real_cpu_id, is_group_leader, group_leader_file_descriptor);
+        this->perf_event_open(config.process_id(), cpu_id, is_group_leader, group_leader_file_descriptor);
 
       /// If opening the file descriptor not successful or the error indicates that adjusting (decreasing) the precision
       /// does not help, we are done.
@@ -215,7 +213,7 @@ perf::Counter::open(const bool is_print_debug,
     /// For monitoring statistics over time (not sampling), we do not need to adjust the precision; a single try is
     /// enough.
     this->_file_descriptor =
-      this->perf_event_open(process_id, real_cpu_id, is_group_leader, group_leader_file_descriptor);
+      this->perf_event_open(config.process_id(), cpu_id, is_group_leader, group_leader_file_descriptor);
   }
 
   /// Read and set the counter's id.
@@ -225,8 +223,9 @@ perf::Counter::open(const bool is_print_debug,
   }
 
   /// Print debug output, if requested.
-  if (is_print_debug) {
-    std::cout << this->to_string(is_group_leader, group_leader_file_descriptor, process_id, real_cpu_id) << std::flush;
+  if (config.is_debug()) {
+    std::cout << this->to_string(is_group_leader, group_leader_file_descriptor, config.process_id(), cpu_id)
+              << std::flush;
   }
 
   if (this->_file_descriptor < 0LL) {
@@ -234,14 +233,96 @@ perf::Counter::open(const bool is_print_debug,
       std::string{ "Cannot create file descriptor for counter (error no: " }.append(std::to_string(errno)).append(").")
     };
   }
+
+  if (buffer_pages.has_value()) {
+    /// Open the mapped buffer.
+    this->_user_level_buffer =
+      reinterpret_cast<perf_event_mmap_page*>(::mmap(nullptr,
+                                                     buffer_pages.value() * /* page size */ 4096U,
+                                                     PROT_READ,
+                                                     MAP_SHARED,
+                                                     static_cast<std::int32_t>(this->_file_descriptor),
+                                                     0));
+
+    /// Verify the buffer was opened.
+    if (this->_user_level_buffer == MAP_FAILED) {
+      throw std::runtime_error{
+        std::string{ "Creating buffer via mmap() failed with errno " }.append(std::to_string(errno)).append(".")
+      };
+    } else if (this->_user_level_buffer == nullptr) {
+      throw std::runtime_error{ "Created buffer via mmap() is null." };
+    }
+
+    this->_user_level_buffer_pages = buffer_pages;
+  }
 }
 
 void
 perf::Counter::close()
 {
-  if (const auto file_descriptor = std::exchange(_file_descriptor, -1LL); file_descriptor > -1LL) {
+  if (const auto file_descriptor = std::exchange(this->_file_descriptor, -1LL); file_descriptor > -1LL) {
     ::close(static_cast<std::int32_t>(file_descriptor));
   }
+
+  if (auto* user_level_buffer = std::exchange(this->_user_level_buffer, nullptr); user_level_buffer != nullptr) {
+    if (const auto user_level_buffer_pages = std::exchange(this->_user_level_buffer_pages, std::nullopt);
+        user_level_buffer_pages.has_value()) {
+      ::munmap(user_level_buffer, user_level_buffer_pages.value() * /* page size */ 4096U);
+    }
+  }
+}
+
+void
+perf::Counter::enable() const
+{
+  ::ioctl(static_cast<std::int32_t>(_file_descriptor), PERF_EVENT_IOC_RESET, 0);
+  ::ioctl(static_cast<std::int32_t>(_file_descriptor), PERF_EVENT_IOC_ENABLE, 0);
+}
+
+void
+perf::Counter::disable() const
+{
+  ::ioctl(static_cast<std::int32_t>(_file_descriptor), PERF_EVENT_IOC_DISABLE, 0);
+}
+
+std::uint64_t
+perf::Counter::lread() const noexcept
+{
+  /// Read the counter without stopping/disabling it via the "rdpmc" instruction.
+  /// This is only possible on x86 architectures.
+  /// For more details see https://man7.org/linux/man-pages/man2/perf_event_open.2.html (section MMAP layout).
+
+#if defined(__x86_64__) || defined(__i386__)
+  std::uint64_t value;
+  std::uint32_t lock;
+
+  do {
+    lock = this->_user_level_buffer->lock;
+
+    /// Memory fence.
+    asm volatile("" ::: "memory");
+
+    /// Read the hardware counter identifier.
+    const auto index = this->_user_level_buffer->index;
+
+    /// Verify that "rdpmc" is allowed.
+    if (index == 0U) {
+      return 0ULL;
+    }
+
+    /// Offset that must be added to the value.
+    const auto offset = this->_user_level_buffer->offset;
+
+    /// Read the value.
+    value = _rdpmc(index - 1U) + offset;
+
+    asm volatile("" ::: "memory");
+  } while (this->_user_level_buffer->lock != lock);
+
+  return value;
+#else
+  return 0;
+#endif
 }
 
 std::int64_t

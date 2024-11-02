@@ -443,6 +443,7 @@ public:
    * @return List of sampled events after closing the sampler.
    */
   [[nodiscard]] std::vector<Sample> result(bool sort_by_time = true) const;
+
 private:
   /**
    * Represents a counter that is configured to sample;
@@ -464,22 +465,13 @@ private:
 
     ~SampleCounter();
 
-    void buffer(void* buffer, const std::uint64_t buffer_pages) noexcept { _buffer = buffer; _buffer_pages = buffer_pages; }
-
     [[nodiscard]] Group& group() noexcept { return _group; }
     [[nodiscard]] const Group& group() const noexcept { return _group; }
-    [[nodiscard]] void* buffer() const noexcept { return _buffer; }
     [[nodiscard]] const std::vector<std::string_view>& counter_names() const noexcept { return _counter_names; }
 
   private:
     /// Group including the leader that is responsible for sampling.
     Group _group;
-
-    /// User-level, mmap-ed buffer that receives the samples by the perf subsystem.
-    void* _buffer{ nullptr };
-
-    /// Number of pages allocated in the mmap-ed buffer.
-    std::uint64_t _buffer_pages{ 0U };
 
     /// List of counter names if counter values are sampled.
     std::vector<std::string_view> _counter_names;
@@ -601,7 +593,9 @@ private:
    *
    * @return Sample counter, consisting of a group of trigger event(s).
    */
-  [[nodiscard]] SampleCounter transform_trigger_to_sample_counter(const std::vector<std::tuple<std::string_view, std::optional<Precision>, std::optional<PeriodOrFrequency>>>& triggers) const;
+  [[nodiscard]] SampleCounter transform_trigger_to_sample_counter(
+    const std::vector<std::tuple<std::string_view, std::optional<Precision>, std::optional<PeriodOrFrequency>>>&
+      triggers) const;
 
   /**
    * Reads the sample_id struct from the data located at sample_ptr into the provided sample.

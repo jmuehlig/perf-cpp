@@ -2,8 +2,10 @@
 #include <numeric>
 #include <perfcpp/perf.h>
 #include <stdexcept>
+#include <utility>
+
 bool
-perf::EventCounter::add(std::string&& event_name)
+perf::EventCounter::add(const std::string& event_name)
 {
   /// If the counter has no name, we interpret this as the user wants to "close" the group and add further counters to
   /// another one.
@@ -12,7 +14,7 @@ perf::EventCounter::add(std::string&& event_name)
       return true;
     }
 
-    if (this->_groups.size() < this->_config.max_groups()) {
+    if (this->size() < this->_config.max_groups()) {
       this->_groups.emplace_back();
       return true;
     }
@@ -53,13 +55,31 @@ perf::EventCounter::add(std::string&& event_name)
   throw std::runtime_error{ std::string{ "Cannot find event or metric with name '" }.append(event_name).append("'.") };
 }
 
+bool
+perf::EventCounter::add(std::vector<std::string>&& event_names)
+{
+  /// Add all counter names. If one of them fails, add() will throw an exception.
+  for (auto& event_name : event_names) {
+    this->add(std::move(event_name));
+  }
+
+  /// If no exception was thrown, we are good to go. The bool is only returned for interface compatibility.
+  return true;
+}
+
+bool
+perf::EventCounter::add(const std::vector<std::string>& event_names)
+{
+  return this->add(std::vector<std::string>(event_names));
+}
+
 void
-perf::EventCounter::add(std::string_view event_name, perf::CounterConfig counter, const bool is_shown_in_results)
+perf::EventCounter::add(std::string_view event_name, perf::CounterConfig event_config, const bool is_shown_in_results)
 {
   /// Check if the event is already added.
   if (auto iterator = std::find_if(this->_events.begin(),
                                    this->_events.end(),
-                                   [&event_name](const auto& counter) { return counter.name() == event_name; });
+                                   [&event_name](const auto& event) { return event.name() == event_name; });
       iterator != this->_events.end()) {
     /// If so, there is no need to add it again – but we need to check if the event was requested (this time) by the
     /// user to show it in the result set. One scenario could be, that the event was added earlier by a metric (i.e., it
@@ -70,11 +90,9 @@ perf::EventCounter::add(std::string_view event_name, perf::CounterConfig counter
   }
 
   /// Check if space for more counters left: If the latest group is "full", check, if there is space for another group.
-  if (this->_groups.size() == this->_config.max_groups() &&
+  if (this->size() == this->_config.max_groups() &&
       this->_groups.back().size() >= this->_config.max_counters_per_group()) {
-    throw std::runtime_error{
-      "Cannot add more events: Reached maximum number of groups and maximum number of events in the latest group."
-    };
+    throw std::runtime_error{ "Cannot add more events: Reached maximum number of counters." };
   }
 
   /// If the latest group is "full", add a new group. We already verified that there will be enough space.
@@ -89,38 +107,92 @@ perf::EventCounter::add(std::string_view event_name, perf::CounterConfig counter
   this->_events.emplace_back(event_name, is_shown_in_results, group_id, in_group_id);
 
   /// Add the event config to the last group.
-  this->_groups.back().add(counter);
+  this->_groups.back().add(event_config);
 }
 
-bool
-perf::EventCounter::add(std::vector<std::string>&& event_names)
+void
+perf::EventCounter::add_live(const std::string& event_name)
 {
-  /// Add all counter names. If one of them fails, add() will throw an exception.
-  for (auto& name : event_names) {
-    this->add(std::move(name));
+  if (this->size() == this->_config.max_groups()) {
+    throw std::runtime_error{ "Cannot add more events: Reached maximum number of counters." };
   }
 
-  /// If no exception was thrown, we are good to go.
-  return true;
+  /// If the given name references an existing counter, add it.
+  if (auto counter_config = this->_counter_definitions.counter(event_name); counter_config.has_value()) {
+    this->_live_counters.emplace_back(std::get<1>(counter_config.value()));
+    return;
+  }
+
+  if (auto metric = this->_counter_definitions.metric(event_name); metric.has_value()) {
+    throw std::runtime_error{ std::string{ "The event '" }
+                                .append(event_name)
+                                .append("' appears to be a metric. Metrics are not supported as live counters. ") };
+  }
+
+  throw std::runtime_error{ std::string{ "Cannot find event with name '" }.append(event_name).append("'.") };
 }
 
-bool
-perf::EventCounter::add(const std::vector<std::string>& event_names)
+void
+perf::EventCounter::add_live(std::vector<std::string>&& event_names)
 {
-  return this->add(std::vector<std::string>(event_names));
+  for (const auto& event_name : event_names) {
+    this->add_live(event_name);
+  }
+}
+
+void
+perf::EventCounter::open()
+{
+  /// Verify that the EventCounter is not already opened (_is_open == false) and set flag appropriately.
+  if (const auto is_open = std::exchange(this->_is_open, true); !is_open) {
+    /// Open all groups. If one of them fails, group.open() will throw an exception.
+    for (auto& group : this->_groups) {
+      group.open(this->_config,
+                 /* is read format */ true,
+                 /* has auxiliary counter */ false,
+                 /* buffer pages */ std::nullopt,
+                 /* sample type */ std::nullopt,
+                 /* branch type */ std::nullopt,
+                 /* user registers */ std::nullopt,
+                 /* kernel registers */ std::nullopt,
+                 /* max callstack */ std::nullopt,
+                 /* include context switches */ false,
+                 /* include cgroup */ false);
+    }
+
+    /// Open all live counters. If one of them fails, counter.open() will throw an exception.
+    for (auto& live_counter : this->_live_counters) {
+      live_counter.open(this->_config,
+                        /* is group leader */ true,
+                        /* is secret group leader */ false,
+                        /* group leader file descriptor */ -1,
+                        /* is read format */ false,
+                        /* buffer pages */ std::make_optional(1ULL),
+                        /* sample type */ std::make_optional(PERF_SAMPLE_READ),
+                        /* branch type */ std::nullopt,
+                        /* user registers */ std::nullopt,
+                        /* kernel registers */ std::nullopt,
+                        /* max callstack */ std::nullopt,
+                        /* include context switches */ false,
+                        /* include cgroup */ false);
+    }
+  }
 }
 
 bool
 perf::EventCounter::start()
 {
-  /// Open all counters. If one of them fails, group.open() will throw an exception.
-  for (auto& group : this->_groups) {
-    group.open(this->_config);
-  }
+  /// Opens the hardware performance counters, if not already done specifically by calling EventCounter::open().
+  this->open();
 
-  /// Start all counters. If one of them fails, group.start() will throw an exception.
+  /// Start all counter groups. If one of them fails, group.start() will throw an exception.
   for (auto& group : this->_groups) {
     group.start();
+  }
+
+  /// Start all live counters.
+  for (auto& live_counter : this->_live_counters) {
+    live_counter.enable();
   }
 
   /// If no exception was thrown, we are good to go.
@@ -130,15 +202,27 @@ perf::EventCounter::start()
 void
 perf::EventCounter::stop()
 {
-  /// Stop all counters. If one of them fails, group.stop() will throw an exception.
+  /// Stop all counter groups.
   for (auto& group : this->_groups) {
     group.stop();
   }
 
-  /// Close all counters. If one of them fails, group.close() will throw an exception.
+  /// Stop all live counters.
+  for (auto& live_counter : this->_live_counters) {
+    live_counter.disable();
+  }
+
+  /// Close all counter groups.
   for (auto& group : this->_groups) {
     group.close();
   }
+
+  /// Close all live counters.
+  for (auto& live_counter : this->_live_counters) {
+    live_counter.close();
+  }
+
+  this->_is_open = false;
 }
 
 perf::CounterResult
@@ -186,6 +270,20 @@ perf::EventCounter::result(std::uint64_t normalization) const
   return CounterResult{ std::move(result) };
 }
 
+void
+perf::EventCounter::live_result(std::vector<double>& result, std::uint64_t normalization) const
+{
+  for (auto counter_id = 0U; counter_id < this->_live_counters.size(); ++counter_id) {
+    result[counter_id] = this->live_result(counter_id, normalization);
+  }
+}
+
+double
+perf::EventCounter::live_result(const std::uint64_t counter_index, const std::uint64_t normalization) const
+{
+  return double(this->_live_counters[counter_index].lread()) / double(normalization);
+}
+
 bool
 perf::MultiEventCounterBase::add(std::string&& event_name)
 {
@@ -213,16 +311,19 @@ perf::MultiEventCounterBase::add(std::vector<std::string>&& event_names)
 bool
 perf::MultiEventCounterBase::add(const std::vector<std::string>& event_names)
 {
+  /// Add the event to every sub event counter.
   for (auto& event_counter : this->event_counters()) {
     event_counter.add(event_names);
   }
 
+  /// The bool is only returned for interface compatibility.
   return true;
 }
 
 void
 perf::MultiEventCounterBase::stop()
 {
+  /// Stop every sub event counter.
   for (auto& event_counter : this->event_counters()) {
     event_counter.stop();
   }
@@ -248,7 +349,7 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
         this->event_counters().begin(),
         this->event_counters().end(),
         .0,
-        [id = event.group_id(), in_group_id = event.in_group_id()](const double sum, const auto& event_counter) {
+        [id = event.group_id(), in_group_id = event.in_group_id()](const auto sum, const auto& event_counter) {
           return sum + event_counter._groups[id].get(in_group_id);
         });
 
@@ -290,10 +391,12 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
 bool
 perf::StartableMultiEventCounterBase::start()
 {
+  /// Start every sub event counter.
   for (auto& event_counter : this->event_counters()) {
     event_counter.start();
   }
 
+  /// The bool is only returned for interface compatibility.
   return true;
 }
 

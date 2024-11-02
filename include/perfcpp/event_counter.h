@@ -11,11 +11,21 @@
 #include <vector>
 
 namespace perf {
+/**
+ * The EventCounter allows to specify events that should be counted by hardware performance counters and start/stop
+ * counting.
+ */
 class EventCounter
 {
   friend class MultiEventCounterBase;
 
 private:
+  /**
+   * The Event class stores information about events that will be recorded, e.g., the group the event is scheduled to,
+   * the index within the group, the name, and a flag if the event should be shown within the results (which is not true
+   * for events only needed for metrics). The EventCounter will have an ordered list of events, dictating the order the
+   * user requested the events to output the events in exactly that order.
+   */
   class Event
   {
   public:
@@ -86,7 +96,7 @@ public:
    * @param event_name Name of the event.
    * @return True, if the event could be added.
    */
-  bool add(std::string&& event_name);
+  bool add(std::string&& event_name) { return add(event_name); }
 
   /**
    * Add the specified event to the list of monitored countered events.
@@ -95,7 +105,7 @@ public:
    * @param event_name Name of the event.
    * @return True, if the event could be added.
    */
-  bool add(const std::string& event_name) { return add(std::string{ event_name }); }
+  bool add(const std::string& event_name);
 
   /**
    * Add the specified events to the list of countered events.
@@ -107,6 +117,33 @@ public:
   bool add(std::vector<std::string>&& event_names);
 
   /**
+   * Add the specified event to the list of countered performance events.
+   * The event can be read "live" without stopping the counter (only x86 hardware).
+   * The event must exist within the counter definitions.
+   *
+   * @param event_name Name of the event.
+   */
+  void add_live(std::string&& event_name) { add_live(event_name); }
+
+  /**
+   * Add the specified event to the list of countered performance events.
+   * The event can be read "live" without stopping the counter (only x86 hardware).
+   * The event must exist within the counter definitions.
+   *
+   * @param event_name Name of the event.
+   */
+  void add_live(const std::string& event_name);
+
+  /**
+   * Add the specified events to the list of countered performance events.
+   * The events can be read "live" without stopping the counter (only x86 hardware).
+   * The events must exist within the counter definitions.
+   *
+   * @param event_names List of event names.
+   */
+  void add_live(std::vector<std::string>&& event_names);
+
+  /**
    * Add the specified events to the list of countered performance events.
    * The events must exist within the counter definitions.
    *
@@ -116,7 +153,12 @@ public:
   bool add(const std::vector<std::string>& event_names);
 
   /**
-   * Opens and starts recording performance counters.
+   * Opens hardware performance counters.
+   */
+  void open();
+
+  /**
+   * Opens (if not already done) and starts recording performance counters.
    *
    * @return True, of the performance counters could be started.
    */
@@ -136,6 +178,24 @@ public:
   [[nodiscard]] CounterResult result(std::uint64_t normalization = 1U) const;
 
   /**
+   * Performs a live read for every group without stopping the counter and writes it into the result input/output.
+   * The reason for having an output parameter is to not allocate any memory during a lightweight read.
+   *
+   * @param result Output parameter to write the result without allocating any memory.
+   * @param normalization  Normalization value, default = 1.
+   */
+  void live_result(std::vector<double>& result, std::uint64_t normalization = 1U) const;
+
+  /**
+   * Performs a live read for every group without stopping the counter.
+   *
+   * @param counter_index Index of the counter to be read live.
+   * @param normalization Normalization value, default = 1.
+   * @return The live value of the counter.
+   */
+  [[nodiscard]] double live_result(std::uint64_t counter_index, std::uint64_t normalization = 1U) const;
+
+  /**
    * @return Configuration of the counter.
    */
   [[nodiscard]] Config config() const noexcept { return _config; }
@@ -148,26 +208,41 @@ public:
   void config(Config config) noexcept { _config = config; }
 
 private:
+  /// List of event names and codes.
   const CounterDefinition& _counter_definitions;
 
+  /// The configuration of counters (include user, kernel, etc.).
   Config _config;
 
-  /// List of requested counters and metrics.
+  /// List of requested counters and metrics that are added to groups. This list is only to track the order and
+  /// configuration of the user's requested events.
   std::vector<Event> _events;
 
-  /// Real counters to measure.
+  /// Counter groups holding performance counters that are started, stopped, and read.
   std::vector<Group> _groups;
+
+  /// List of counters that are marked to be read "live" (without stopping) using the "rdpmc" instruction (only
+  /// implemented on x86 hardware).
+  std::vector<Counter> _live_counters;
+
+  /// Flag indicating if the EventCounter was opened. Opens automatically on startup at the latest.
+  bool _is_open{ false };
+
+  /**
+   * @return The number of opened (or to open) counters (groups or group leaders and live counters).
+   */
+  [[nodiscard]] std::size_t size() const noexcept { return _groups.size() + _live_counters.size(); }
 
   /**
    * Add the specified event to the list of counted performance events.
    * The event must exist within the counter definitions.
    *
-   * @param event_name Name of the counter.
-   * @param counter Configuration of the counter.
+   * @param event_name Name of the event.
+   * @param event_config Configuration of the event.
    * @param is_shown_in_results Indicates if the counter should be exposed in the results.
-   * @return True, if the counter was added.
+   * @return True, if the event was added.
    */
-  void add(std::string_view event_name, CounterConfig counter, bool is_shown_in_results);
+  void add(std::string_view event_name, CounterConfig event_config, bool is_shown_in_results);
 };
 
 class MultiEventCounterBase
@@ -234,7 +309,7 @@ class StartableMultiEventCounterBase : public MultiEventCounterBase
 {
 public:
   StartableMultiEventCounterBase() noexcept = default;
-  virtual ~StartableMultiEventCounterBase() = default;
+  ~StartableMultiEventCounterBase() override = default;
 
   /**
    * Opens and starts all event counters.

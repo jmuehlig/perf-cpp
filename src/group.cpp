@@ -1,43 +1,52 @@
-#include <cerrno>
 #include <iostream>
 #include <perfcpp/group.h>
 #include <stdexcept>
-#include <sys/ioctl.h>
 #include <type_traits>
 #include <unistd.h>
 
 bool
-perf::Group::open(const perf::Config config)
+perf::Group::open(const perf::Config& config,
+                  const bool is_read_format,
+                  const bool has_auxiliary_event,
+                  const std::optional<std::uint64_t> buffer_pages,
+                  const std::optional<std::uint64_t> sample_type,
+                  const std::optional<std::uint64_t> branch_type,
+                  const std::optional<std::uint64_t> user_registers,
+                  const std::optional<std::uint64_t> kernel_registers,
+                  const std::optional<std::uint16_t> max_callstack,
+                  const bool is_include_context_switch,
+                  const bool is_include_cgroup)
 {
   /// File descriptor of the group leader.
   auto group_leader_file_descriptor = -1LL;
 
   for (auto counter_id = 0U; counter_id < this->_members.size(); ++counter_id) {
     auto& counter = this->_members[counter_id];
+
+    /// The first event is the group leader.
     const auto is_group_leader = counter_id == 0U;
+
+    /// The user-level buffer is allocated (via mmap) for the group leader, if the group has no auxiliary event
+    /// (before Intel Sapphire Rapids and all AMD) – or if the group has an auxiliary event but this is the first
+    /// "real" (non-auxiliary) event.
+    const auto is_counter_needs_buffer =
+      (is_group_leader && !has_auxiliary_event) || (has_auxiliary_event && counter_id == 1U);
 
     /// Open the counter for statistical monitoring (only start and end values, not sampling).
     /// If opening fails, the open() call will throw an exception.
-    counter.open(config.is_debug(),
+    counter.open(config,
                  is_group_leader,
-                 /* is_secret_leader */ false,
+                 has_auxiliary_event && counter_id == 1U,
                  group_leader_file_descriptor,
-                 config.cpu_id(),
-                 config.process_id(),
-                 config.is_include_child_threads(),
-                 config.is_include_kernel(),
-                 config.is_include_user(),
-                 config.is_include_hypervisor(),
-                 config.is_include_idle(),
-                 config.is_include_guest(),
-                 /* is_read_format */ true,
-                 /* sample_type */ std::nullopt,
-                 /* branch_type */ std::nullopt,
-                 /* user_registers */ std::nullopt,
-                 /* kernel_registers */ std::nullopt,
-                 /* max_callstack */ std::nullopt,
-                 /* is_include_context_switch */ false,
-                 /* is_include_cgroup */ false);
+                 is_read_format,
+                 is_counter_needs_buffer ? buffer_pages : std::nullopt,
+                 sample_type,
+                 branch_type,
+                 user_registers,
+                 kernel_registers,
+                 max_callstack,
+                 is_include_context_switch,
+                 is_include_cgroup);
 
     /// Set the group leader file descriptor.
     if (is_group_leader) {
@@ -74,11 +83,10 @@ perf::Group::start()
 void
 perf::Group::enable() const
 {
-  const auto leader_file_descriptor = static_cast<std::int32_t>(this->leader_file_descriptor());
-
-  /// Reset and enable counter group.
-  ::ioctl(leader_file_descriptor, PERF_EVENT_IOC_RESET, 0);
-  ::ioctl(leader_file_descriptor, PERF_EVENT_IOC_ENABLE, 0);
+  /// Enable the group leader.
+  if (!this->_members.empty()) {
+    this->_members.front().enable();
+  }
 }
 
 bool
@@ -105,19 +113,23 @@ perf::Group::stop()
 void
 perf::Group::disable() const
 {
-  const auto leader_file_descriptor = static_cast<std::int32_t>(this->leader_file_descriptor());
-
-  ::ioctl(leader_file_descriptor, PERF_EVENT_IOC_DISABLE, 0);
+  /// Disable the group leader.
+  if (!this->empty()) {
+    this->_members.front().disable();
+  }
 }
 
 bool
 perf::Group::read(CounterReadFormat<MAX_MEMBERS>& value) const
 {
-  const auto leader_file_descriptor = static_cast<std::int32_t>(this->leader_file_descriptor());
+  if (!this->empty()) {
+    const auto leader_file_descriptor = static_cast<std::int32_t>(this->_members.front().file_descriptor());
 
-  const auto read_size = ::read(leader_file_descriptor, &value, sizeof(std::remove_reference<decltype(value)>::type));
+    const auto read_size = ::read(leader_file_descriptor, &value, sizeof(std::remove_reference<decltype(value)>::type));
+    return read_size > 0ULL;
+  }
 
-  return read_size > 0ULL;
+  return false;
 }
 
 bool
