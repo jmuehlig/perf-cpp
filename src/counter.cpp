@@ -4,8 +4,8 @@
 #include <iomanip>
 #include <iostream>
 #include <perfcpp/counter.h>
-#include <perfcpp/feature.h>
 #include <perfcpp/exception.h>
+#include <perfcpp/feature.h>
 #include <sstream>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -108,6 +108,12 @@ perf::CounterResult::to_string() const
   table_stream << std::flush;
 
   return table_stream.str();
+}
+
+perf::Counter::~Counter()
+{
+  /// Close the counter, if not already done.
+  this->close();
 }
 
 void
@@ -234,7 +240,7 @@ perf::Counter::open(const perf::Config& config,
   }
 
   if (this->_file_descriptor < 0LL) {
-    throw CannotCreateFileDescriptorError{errno};
+    throw CannotCreateFileDescriptorError{ errno };
   }
 
   if (buffer_pages.has_value()) {
@@ -249,7 +255,7 @@ perf::Counter::open(const perf::Config& config,
 
     /// Verify the buffer was opened.
     if (this->_user_level_buffer == MAP_FAILED) {
-      throw MmapError{errno};
+      throw MmapError{ errno };
     } else if (this->_user_level_buffer == nullptr) {
       throw MmapNullError{};
     }

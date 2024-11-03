@@ -118,7 +118,7 @@ public:
   {
   }
 
-  ~Counter() noexcept = default;
+  ~Counter();
 
   /**
    * @return ID of the counter.
@@ -142,7 +142,8 @@ public:
    * @param group_leader_file_descriptor File descriptor of the group leader; may be -1 (or any other –unused– value),
    * if this is the group leader.
    * @param is_read_format True, if counters should be read.
-   * @param is_sample True, if counter should be configured for sampling. Some counters (e.g., live readable counters) can have a sample type without being sampled.
+   * @param is_sample True, if counter should be configured for sampling. Some counters (e.g., live readable counters)
+   * can have a sample type without being sampled.
    * @param buffer_pages Number of pages allocated for user-level buffer, std::nullopt if counter should not allocated
    * any pages.
    * @param sample_type Mask of sampled values, std::nullopt of sampling is disabled.
@@ -228,10 +229,6 @@ private:
   /// Number of pages allocated for the user level buffer (needed for closing the buffer).
   std::optional<std::uint64_t> _user_level_buffer_pages{ std::nullopt };
 
-  /// Index of the counter received via the mmap-page. The index is only relevant for counters that support lightweight
-  /// reads via the "rdpmc" instruction.
-  std::uint32_t _index{ 0U };
-
   /**
    * Do the "final" perf_event_open system call with the provided parameters.
    *
@@ -262,31 +259,5 @@ private:
                                    std::uint64_t type,
                                    std::string&& name,
                                    bool is_need_print_delimiter);
-};
-
-/**
- * Read format for counter values.
- */
-template<std::size_t S>
-struct CounterReadFormat
-{
-  /// Value and ID delivered by perf.
-  struct value
-  {
-    std::uint64_t value;
-    std::uint64_t id;
-  };
-
-  /// Number of counters in the following array.
-  std::uint64_t count_members;
-
-  /// Time the event was enabled.
-  std::uint64_t time_enabled;
-
-  /// Time the event was running.
-  std::uint64_t time_running;
-
-  /// Values of the members.
-  std::array<value, S> values;
 };
 }

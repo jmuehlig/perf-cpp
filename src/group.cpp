@@ -1,9 +1,9 @@
 #include <iostream>
+#include <perfcpp/exception.h>
 #include <perfcpp/group.h>
 #include <stdexcept>
 #include <type_traits>
 #include <unistd.h>
-#include <perfcpp/exception.h>
 
 bool
 perf::Group::open(const perf::Config& config,
@@ -19,7 +19,7 @@ perf::Group::open(const perf::Config& config,
                   const bool is_include_context_switch,
                   const bool is_include_cgroup)
 {
-  /// File descriptor of the group leader.
+  /// File descriptor of the group leader (the first counter in the group).
   auto group_leader_file_descriptor = -1LL;
 
   for (auto counter_id = 0U; counter_id < this->_members.size(); ++counter_id) {
@@ -123,12 +123,13 @@ perf::Group::disable() const
 }
 
 bool
-perf::Group::read(CounterReadFormat<MAX_MEMBERS>& value) const
+perf::Group::read(CounterValues<MAX_MEMBERS>& values) const
 {
   if (!this->empty()) {
     const auto leader_file_descriptor = static_cast<std::int32_t>(this->_members.front().file_descriptor());
 
-    const auto read_size = ::read(leader_file_descriptor, &value, sizeof(std::remove_reference<decltype(value)>::type));
+    const auto read_size =
+      ::read(leader_file_descriptor, &values, sizeof(std::remove_reference<decltype(values)>::type));
     return read_size > 0ULL;
   }
 
@@ -166,7 +167,7 @@ perf::Group::get(const std::size_t index) const
 }
 
 std::optional<std::uint64_t>
-perf::Group::value_for_id(const CounterReadFormat<Group::MAX_MEMBERS>& counter_values, const std::uint64_t id) noexcept
+perf::Group::value_for_id(const CounterValues<Group::MAX_MEMBERS>& counter_values, const std::uint64_t id) noexcept
 {
   /// Check the Id the counters to find the matching one.
   for (auto i = 0U; i < counter_values.count_members; ++i) {

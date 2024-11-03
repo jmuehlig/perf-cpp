@@ -1,8 +1,8 @@
 #include <algorithm>
+#include <perfcpp/exception.h>
 #include <perfcpp/sampler.h>
 #include <stdexcept>
 #include <utility>
-#include <perfcpp/exception.h>
 
 perf::Sampler&
 perf::Sampler::trigger(std::vector<std::vector<std::string>>&& list_of_trigger_names)
@@ -37,7 +37,7 @@ perf::Sampler::trigger(std::vector<std::vector<Trigger>>&& triggers)
     for (auto& trigger : trigger_group) {
       /// Reject metrics as trigger events as metrics consist of multiple events.
       if (this->_counter_definitions.is_metric(trigger.name())) {
-        throw MetricNotSupportedError{trigger.name(), "sampling"};
+        throw MetricNotSupportedError{ trigger.name(), "sampling" };
       }
 
       /// Read the config (like event id etc.) from every trigger name and verify that the trigger event exists in the
@@ -46,7 +46,7 @@ perf::Sampler::trigger(std::vector<std::vector<Trigger>>&& triggers)
         trigger_group_references.emplace_back(
           std::get<0>(counter_config.value()), trigger.precision(), trigger.period_or_frequency());
       } else {
-        throw CannotFindEventError{trigger.name()};
+        throw CannotFindEventError{ trigger.name() };
       }
     }
     this->_triggers.push_back(std::move(trigger_group_references));
@@ -190,7 +190,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
         counter_names.push_back(std::get<0>(trigger));
       }
     } else {
-      throw CannotFindEventError{std::get<0>(trigger)};
+      throw CannotFindEventError{ std::get<0>(trigger) };
     }
   }
 
@@ -200,7 +200,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
 
       /// Verify the counter is not a metric.
       if (this->_counter_definitions.is_metric(counter_name)) {
-        throw MetricNotSupportedError{counter_name, "sampling"};
+        throw MetricNotSupportedError{ counter_name, "sampling" };
       }
 
       /// Find the counter.
@@ -209,7 +209,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
         counter_names.push_back(std::get<0>(counter_config.value()));
         group.add(std::get<1>(counter_config.value()));
       } else {
-        throw CannotFindEventError{counter_name};
+        throw CannotFindEventError{ counter_name };
       }
     }
 
@@ -361,15 +361,15 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
 
   if (this->_values.is_set(PERF_SAMPLE_READ)) {
     /// Read the number of counters.
-    const auto count_counter_values = entry.read<decltype(CounterReadFormat<Group::MAX_MEMBERS>::count_members)>();
+    const auto count_counter_values = entry.read<decltype(CounterValues<Group::MAX_MEMBERS>::count_members)>();
 
     /// Time enabled and running for correction.
-    const auto time_enabled = entry.read<decltype(CounterReadFormat<Group::MAX_MEMBERS>::time_enabled)>();
-    const auto time_running = entry.read<decltype(CounterReadFormat<Group::MAX_MEMBERS>::time_running)>();
+    const auto time_enabled = entry.read<decltype(CounterValues<Group::MAX_MEMBERS>::time_enabled)>();
+    const auto time_running = entry.read<decltype(CounterValues<Group::MAX_MEMBERS>::time_running)>();
     const auto multiplexing_correction = time_running > 0ULL ? double(time_enabled) / double(time_running) : 1.;
 
     /// Read the counters (if the number matches the number of specified counters).
-    auto* counter_values = entry.read<CounterReadFormat<Group::MAX_MEMBERS>::value>(count_counter_values);
+    auto* counter_values = entry.read<CounterValues<Group::MAX_MEMBERS>::value>(count_counter_values);
     if (count_counter_values == sample_counter.group().size()) {
       auto counter_results = std::vector<std::pair<std::string_view, double>>{};
 

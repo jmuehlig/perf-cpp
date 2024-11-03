@@ -4,8 +4,35 @@
 #include "counter.h"
 
 namespace perf {
+
 /**
- * A group presents a set of counters where the first counter is the group leader.
+ * Format the counter values are stored by the perf subsystem for a single counter group.
+ */
+template<std::size_t S>
+struct CounterValues
+{
+  /// Value and ID delivered by perf.
+  struct value
+  {
+    std::uint64_t value;
+    std::uint64_t id;
+  };
+
+  /// Number of counters in the following array.
+  std::uint64_t count_members;
+
+  /// Time the event was enabled.
+  std::uint64_t time_enabled;
+
+  /// Time the event was running.
+  std::uint64_t time_running;
+
+  /// Values of the members.
+  std::array<value, S> values;
+};
+
+/**
+ * A group presents a set of counters where the first counter is the "group leader".
  * All counters can be started and stopped together, not individually.
  */
 class Group
@@ -33,7 +60,8 @@ public:
    *
    * @param config Configuration.
    * @param is_read_format True, if counters should be read.
-   * @param is_sample True, if counter should be configured for sampling. Some counters (e.g., live readable counters) can have a sample type without being sampled.
+   * @param is_sample True, if counter should be configured for sampling. Some counters (e.g., live readable counters)
+   * can have a sample type without being sampled.
    * @param has_auxiliary_event True, if the group has an auxiliary event as a first event.
    * @param buffer_pages Number of pages allocated for user-level buffer, std::nullopt if counter should not allocated
    * any pages.
@@ -92,10 +120,10 @@ public:
   /**
    * Reads the counter into the given value.
    *
-   * @param value Value to read the counters into.
+   * @param values Value to read the counters into.
    * @return True, if reading was successful.
    */
-  [[nodiscard]] bool read(CounterReadFormat<MAX_MEMBERS>& value) const;
+  [[nodiscard]] bool read(CounterValues<MAX_MEMBERS>& values) const;
 
   /**
    * @return Number of counters in the group.
@@ -166,10 +194,10 @@ private:
   std::vector<Counter> _members;
 
   /// Start value of the hardware performance counters.
-  CounterReadFormat<Group::MAX_MEMBERS> _start_value{};
+  CounterValues<Group::MAX_MEMBERS> _start_value{};
 
   /// End value of the hardware performance counters.
-  CounterReadFormat<Group::MAX_MEMBERS> _end_value{};
+  CounterValues<Group::MAX_MEMBERS> _end_value{};
 
   /// After stopping the group, we calculate the multiplexing correction once from start- and end-values.
   double _multiplexing_correction{ 1. };
@@ -183,7 +211,7 @@ private:
    * @return The value of the specified counter or std::nullopt of the ID was not found.
    */
   [[nodiscard]] static std::optional<std::uint64_t> value_for_id(
-    const CounterReadFormat<Group::MAX_MEMBERS>& counter_values,
+    const CounterValues<Group::MAX_MEMBERS>& counter_values,
     std::uint64_t id) noexcept;
 };
 }

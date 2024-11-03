@@ -114,7 +114,7 @@ public:
    * @param event_names List of names of the events.
    * @return True, if the events could be added.
    */
-  bool add(std::vector<std::string>&& event_names);
+  bool add(std::vector<std::string>&& event_names) { return add(event_names); }
 
   /**
    * Add the specified event to the list of countered performance events.
@@ -251,6 +251,19 @@ private:
    * @return Iterator of the event list.
    */
   [[nodiscard]] std::vector<Event>::iterator find_event(std::string_view event_name) noexcept;
+
+  /**
+   * Takes a result containing all events (also those needed for calculating metrics) and transforms it into a result
+   * requested by the user. The transformed result only contains requested events, i.e., counter values and metrics.
+   *
+   * @param counters Set of defined counters and metrics.
+   * @param hardware_events Result containing all hardware counter values.
+   * @param requested_events Result containing only requested counter and metric results.
+   * @return Result with only requested values.
+   */
+  [[nodiscard]] static CounterResult transform_result_to_requested(const CounterDefinition& counters,
+                                                                   CounterResult&& hardware_events,
+                                                                   const std::vector<Event>& requested_events);
 };
 
 class MultiEventCounterBase
@@ -284,7 +297,7 @@ public:
    * @param counter_names List of names of the counters.
    * @return True, if the counters could be added.
    */
-  bool add(std::vector<std::string>&& counter_names);
+  bool add(std::vector<std::string>&& counter_names) { return add(counter_names); }
 
   /**
    * Add the specified counters to the list of monitored performance counters.
