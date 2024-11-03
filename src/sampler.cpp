@@ -360,47 +360,16 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
   }
 
   if (this->_values.is_set(PERF_SAMPLE_READ)) {
-    /// Read the number of counters.
-    const auto count_counter_values = entry.read<decltype(CounterValues<Group::MAX_MEMBERS>::count_members)>();
-
-    /// Time enabled and running for correction.
-    const auto time_enabled = entry.read<decltype(CounterValues<Group::MAX_MEMBERS>::time_enabled)>();
-    const auto time_running = entry.read<decltype(CounterValues<Group::MAX_MEMBERS>::time_running)>();
-    const auto multiplexing_correction = time_running > 0ULL ? double(time_enabled) / double(time_running) : 1.;
-
-    /// Read the counters (if the number matches the number of specified counters).
-    auto* counter_values = entry.read<CounterValues<Group::MAX_MEMBERS>::value>(count_counter_values);
-    if (count_counter_values == sample_counter.group().size()) {
-      auto counter_results = std::vector<std::pair<std::string_view, double>>{};
-
-      /// Add each counter and its value to the result set of the sample.
-      for (auto counter_id = 0U; counter_id < sample_counter.group().size(); ++counter_id) {
-        const auto counter_name = sample_counter.counter_names()[counter_id];
-
-        /// Counter value (corrected).
-        const auto counter_result = double(counter_values[counter_id].value) * multiplexing_correction;
-
-        counter_results.emplace_back(counter_name, counter_result);
-      }
-      sample.counter_result(CounterResult{ std::move(counter_results) });
+    auto counter_result = Sampler::read_hardware_events(entry, sample_counter);
+    if (counter_result.has_value()) {
+      sample.counter_result(std::move(counter_result.value()));
     }
   }
 
   if (this->_values.is_set(PERF_SAMPLE_CALLCHAIN)) {
-    /// Read the size of the callchain.
-    const auto callchain_size = entry.read<std::uint64_t>();
-
-    if (callchain_size > 0U) {
-      auto callchain = std::vector<std::uintptr_t>{};
-      callchain.reserve(callchain_size);
-
-      /// Read the callchain entries.
-      auto* instruction_pointers = entry.read<std::uint64_t>(callchain_size);
-      for (auto index = 0U; index < callchain_size; ++index) {
-        callchain.push_back(std::uintptr_t{ instruction_pointers[index] });
-      }
-
-      sample.callchain(std::move(callchain));
+    auto callchain = Sampler::read_callchain(entry);
+    if (callchain.has_value()) {
+      sample.callchain(std::move(callchain.value()));
     }
   }
 
@@ -414,22 +383,9 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
   }
 
   if (this->_values.is_set(PERF_SAMPLE_BRANCH_STACK)) {
-    /// Read the size of the branch stack.
-    const auto count_branches = entry.read<std::uint64_t>();
-
-    if (count_branches > 0U) {
-      auto branches = std::vector<Branch>{};
-      branches.reserve(count_branches);
-
-      /// Read the branch stack entries.
-      auto* sampled_branches = entry.read<perf_branch_entry>(count_branches);
-      for (auto i = 0U; i < count_branches; ++i) {
-        const auto& branch = sampled_branches[i];
-        branches.emplace_back(
-          branch.from, branch.to, branch.mispred, branch.predicted, branch.in_tx, branch.abort, branch.cycles);
-      }
-
-      sample.branches(std::move(branches));
+    auto branch_stack = Sampler::read_branch_stack(entry);
+    if (branch_stack.has_value()) {
+      sample.branches(std::move(branch_stack.value()));
     }
   }
 
@@ -498,26 +454,102 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
 }
 
 std::pair<std::uint64_t, std::optional<std::vector<std::uint64_t>>>
-perf::Sampler::read_registers(perf::Sampler::UserLevelBufferEntry entry, const std::uint64_t count_registers)
+perf::Sampler::read_registers(perf::Sampler::UserLevelBufferEntry& entry, const std::uint64_t count_registers)
 {
   /// Read the register ABI.
   const auto abi = entry.read<std::uint64_t>();
 
-  /// Read the number of registers.
-  if (count_registers > 0U) {
-    auto registers = std::vector<std::uint64_t>{};
-    registers.reserve(count_registers);
-
-    /// Read the register values.
-    const auto* perf_kernel_registers = entry.read<std::uint64_t>(count_registers);
-    for (auto register_id = 0U; register_id < count_registers; ++register_id) {
-      registers.push_back(perf_kernel_registers[register_id]);
-    }
-
-    return std::make_pair(abi, std::move(registers));
+  if (count_registers == 0U) {
+    return std::make_pair(abi, std::nullopt);
   }
 
-  return std::make_pair(abi, std::nullopt);
+  auto registers = std::vector<std::uint64_t>{};
+  registers.reserve(count_registers);
+
+  /// Read the register values.
+  const auto* perf_kernel_registers = entry.read<std::uint64_t>(count_registers);
+  for (auto register_id = 0U; register_id < count_registers; ++register_id) {
+    registers.push_back(perf_kernel_registers[register_id]);
+  }
+
+  return std::make_pair(abi, std::move(registers));
+}
+
+std::optional<perf::CounterResult>
+perf::Sampler::read_hardware_events(UserLevelBufferEntry& entry, const SampleCounter& sample_counter)
+{
+  /// Read the number of counters.
+  const auto count_counter_values = entry.read<decltype(CounterValues<Group::MAX_MEMBERS>::count_members)>();
+
+  /// Time enabled and running for correction.
+  const auto time_enabled = entry.read<decltype(CounterValues<Group::MAX_MEMBERS>::time_enabled)>();
+  const auto time_running = entry.read<decltype(CounterValues<Group::MAX_MEMBERS>::time_running)>();
+  const auto multiplexing_correction = time_running > 0ULL ? double(time_enabled) / double(time_running) : 1.;
+
+  /// Read the counters (if the number matches the number of specified counters).
+  auto* counter_values = entry.read<CounterValues<Group::MAX_MEMBERS>::value>(count_counter_values);
+  if (count_counter_values != sample_counter.group().size()) {
+    return std::nullopt;
+  }
+
+  auto counter_results = std::vector<std::pair<std::string_view, double>>{};
+
+  /// Add each counter and its value to the result set of the sample.
+  for (auto counter_id = 0U; counter_id < sample_counter.group().size(); ++counter_id) {
+    const auto counter_name = sample_counter.counter_names()[counter_id];
+
+    /// Counter value (corrected).
+    const auto counter_result = double(counter_values[counter_id].value) * multiplexing_correction;
+
+    counter_results.emplace_back(counter_name, counter_result);
+  }
+  return CounterResult{ std::move(counter_results) };
+}
+
+std::optional<std::vector<std::uintptr_t>>
+perf::Sampler::read_callchain(perf::Sampler::UserLevelBufferEntry& entry)
+{
+  /// Read the size of the callchain.
+  const auto callchain_size = entry.read<std::uint64_t>();
+
+  if (callchain_size == 0U) {
+    return std::nullopt;
+  }
+
+  auto callchain = std::vector<std::uintptr_t>{};
+  callchain.reserve(callchain_size);
+
+  /// Read the callchain entries.
+  auto* instruction_pointers = entry.read<std::uint64_t>(callchain_size);
+  for (auto index = 0U; index < callchain_size; ++index) {
+    callchain.push_back(std::uintptr_t{ instruction_pointers[index] });
+  }
+
+  return callchain;
+}
+
+std::optional<std::vector<perf::Branch>>
+perf::Sampler::read_branch_stack(perf::Sampler::UserLevelBufferEntry& entry)
+{
+  /// Read the size of the branch stack.
+  const auto count_branches = entry.read<std::uint64_t>();
+
+  if (count_branches == 0U) {
+    return std::nullopt;
+  }
+
+  auto branches = std::vector<Branch>{};
+  branches.reserve(count_branches);
+
+  /// Read the branch stack entries.
+  auto* sampled_branches = entry.read<perf_branch_entry>(count_branches);
+  for (auto i = 0U; i < count_branches; ++i) {
+    const auto& branch = sampled_branches[i];
+    branches.emplace_back(
+      branch.from, branch.to, branch.mispred, branch.predicted, branch.in_tx, branch.abort, branch.cycles);
+  }
+
+  return branches;
 }
 
 perf::Sample
