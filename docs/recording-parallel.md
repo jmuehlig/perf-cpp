@@ -24,7 +24,7 @@ auto counter_definitions = perf::CounterDefinition{};
 
 auto multithread_event_counter = perf::MultiThreadEventCounter{counter_definitions};
 try {
-    event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
+    multithread_event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
 } catch (std::runtime_error& e) {
     std::cerr << e.what() << std::endl;
 }

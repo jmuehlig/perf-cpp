@@ -1,26 +1,27 @@
 # Counting Hardware Events
 
-This section outlines the interface for counting hardware events, enabling direct access to hardware performance counters from your C++ application. 
-*perf-cpp* additionally supports [counting in parallel settings](recording-parallel.md) and [accessing event counts without halting the counter](recording-live-events.md).
-
+This section details how to leverage the *perf-cpp* library to monitor and analyze hardware performance counters directly from your C++ applications. 
+The library also supports [multi-threading and multi-CPU counting](recording-parallel.md) and [live access to event counts without stopping the counters](recording-live-events.md).
 
 ---
 ## Table of Contents
-- [1) Define the Counters to Record](#1-define-the-events-to-record)
-- [3) Wrap `start()` and `stop()` around the Processing Code](#3-wrap-start-and-stop-around-the-processing-code)
-- [4) Access the Results](#4-access-the-results)
-- [Example: Impact of Random Access Patterns](#example-impact-of-random-access-patterns)
-- [Debugging Counter Settings](#debugging-counter-settings)
+- [Setting Up Event Counters](#setting-up-event-counters)
+- [Initializing the Hardware Counters *(optional)*](#initializing-the-hardware-counters-optional)
+- [Managing Counter Lifecycle](#managing-counter-lifecycle)
+- [Retrieving Counter Data](#retrieving-counter-data)
+- [Example: Analyzing Random Access Patterns](#example-analyzing-random-access-patterns)
+- [Troubleshooting Counter Configurations](#troubleshooting-counter-configurations)
 ---
 
-## 1) Define the Events to Record
+## Setting Up Event Counters
+Define the specific events you wish to record using the `perf::EventCounter` class:
+
 ```cpp
 #include <perfcpp/event_counter.h>
 
-/// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
 auto counters = perf::CounterDefinition{}; 
-
 auto event_counter = perf::EventCounter{counters};
+
 try {
     event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
 } catch (std::runtime_error& e) {
@@ -28,11 +29,11 @@ try {
 }
 ```
 
-## 2) Open the Hardware Performance Counters *(optional)*
-Opening the `EventCounter` configures all hardware performance counters without starting them. 
-This step is optional, as the configuration will also occur when the counter is started, if it has not been previously done.
+**Note**: The `perf::CounterDefinition` instance is used to store event configurations (e.g., names) and passed as a reference.
+Consequently, the instance needs to be alive while using the `EventCounter` ([as described here](counters.md)).
 
-Opening individually is beneficial when measuring time, as it allows the configuration phase to be excluded from the time measurements.
+## Initializing the Hardware Counters *(optional)*
+Optionally, preparing the hardware counters ahead of time to exclude configuration time from your measurements, though this is also handled automatically at the start if skipped:
 
 ```cpp
 try {
@@ -42,8 +43,9 @@ try {
 }
 ```
 
+## Managing Counter Lifecycle
+Surround your computational code with `start()` and `stop()` methods to count hardware events:
 
-## 3) Wrap `start()` and `stop()` around the Processing Code
 ```cpp
 try {
     event_counter.start();
@@ -56,32 +58,35 @@ try {
 event_counter.stop();
 ```
 
-## 4) Access the Results
+## Retrieving Counter Data
+Extract and analyze the results from the event counter:
+
 ```cpp
-/// Calculate the result.
+/// Retrieve the result.
 const auto result = event_counter.result();
 
-/// Ask the result for specific events.
+/// Query result for specific events.
 const auto cycles = result.get("cycles");
 std::cout << "Took " << cycles.value() << " cycles" << std::endl;
 
-/// Or print all counters on your own.
+/// Or, print all counters.
 for (const auto [name, value] : result)
 {
     std::cout << "Counter " << name << " = " << value << std::endl;
 }
 
-//// Or print the results as table.
+//// Or, print the results as table.
 std::cout << result.to_string() << std::endl;
 
-/// Or get as CSV and JSON.
+/// Or, get as CSV and JSON.
 std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << std::endl;
 std::cout << result.to_json() << std::endl;
 ```
+
 ---
-## Example: Impact of Random Access Patterns
-Random access patterns invariably incur high costs, as hardware prefetchers struggle to anticipate such patterns. 
-Let's delve into precisely how costly this can be.
+
+## Example: Analyzing Random Access Patterns
+Investigate the high costs associated with unpredictable memory access patterns by measuring their impact on hardware prefetching:
 
 ```cpp
 #include <random>
@@ -167,18 +172,9 @@ If you're interested in seeing the outcome with not-shuffled `access_pattern_ind
 
 ---
 
-## Debugging Counter Settings
-In certain scenarios, configuring counters can be challenging.
-To enable insides into counter configurations, perf provides a debug output option:
-
-
-    perf --debug perf-event-open [mem] record ...
-
-
-This command helps visualize configurations for various counters, which is also beneficial for retrieving event codes (for more details, see the [counters documentation](counters.md)).
-
-Similarly, *perf-cpp* includes a debug feature for sampled counters.
-To examine the configuration settings—particularly useful if encountering errors during `event_counter.start();`—enable debugging in your code as follows:
+## Troubleshooting Counter Configurations
+Debugging and configuring hardware counters can sometimes be complex. 
+Utilize *perf-cpp*'s debugging features to gain insights into the internal workings of performance counters and troubleshoot any configuration issues:
 
 ```cpp
 auto config = perf::Config{};
@@ -187,5 +183,10 @@ config.is_debug(true);
 auto event_counter = perf::EventCounter{ counter_definitions, config };
 ```
 
-When `is_debug` is set to `true`, *perf-cpp* will display the configuration of all counters upon opening the counters.
+The idea is borrowed from *Linux Perf*, which can be asked to print counter configurations as follows:
+```bash
+perf --debug perf-event-open stat -- sleep 1
+```
+
+This command helps visualize configurations for various counters, which is also beneficial for retrieving event codes (for more details, see the [counters documentation](counters.md)).
 

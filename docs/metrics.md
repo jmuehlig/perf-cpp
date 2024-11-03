@@ -1,59 +1,61 @@
 # Metrics
-Metrics are defined by calculations based on performance counters. 
-A prevalent metric is "Cycles per Instruction" (CPI), which gauges efficiency by calculating how many CPU cycles are needed per instruction—the lower the number, the better. 
-To compute this metric, the "instructions" and "cycles" counters are essential.
+Performance metrics are critical for evaluating the efficiency of computer hardware using specific, user-defined calculations based on hardware events. 
+One key metric frequently used is the "Cycles per Instruction" (CPI). 
+This metric helps to measure how many CPU cycles are consumed for executiong an instruction, providing insight into the system's efficiency—the fewer the cycles needed per instruction, the more efficient the system.
 
-The library comes pre-equipped with several metrics that can be utilized in the same way as counters. 
-Simply add the metric names to the `perf::EventCounter` instance to use them:
-```
-cycles-per-instruction
-cache-hit-ratio
-dTLB-miss-ratio
-iTLB-miss-ratio
-L1-data-miss-ratio
-```
-
-**Attention**: Metrics will not work with sampling.
+**Note**: Metrics are not applicable for [sampling](sampling.md) and [live events](recording-live-events.md).
 
 ---
 ## Table of Contents
-- [Recording Metrics](#recording-metrics)
-- [Defining Metrics](#defining-metrics)
-    - [Measure defined Metrics](#measure-defined-metrics)
+- [Built-in Metrics](#built-in-metrics)
+- [Utilizing Metrics](#utilizing-metrics)
+- [Defining Metrics](#creating-custom-metrics)
 ---
 
-## Recording Metrics
-You can add metrics like counters.
+## Built-in Metrics
+*perf-cpp* comes pre-equipped with several built-in metrics which can be used analogously to events. 
+To employ these metrics, include their names in the `perf::EventCounter` instance as shown in the [Utilizing Metrics](#utilizing-metrics) section:
+
+* `cycles-per-instruction`: Represents the number of cycles required per instruction.
+* `cache-hit-ratio`: Indicates the ratio of cache hits to total cache accesses.
+* `dTLB-miss-ratio` The ratio of data TLB misses to data TLB accesses.
+* `iTLB-miss-ratio` The ratio of instruction TLB misses to instruction TLB accesses.
+* `L1-data-miss-ratio`: Reflects the ratio of L1 data cache misses to L1 data cache accesses.
+
+## Utilizing Metrics
+Metrics function similarly to hardware events in the  `perf::EventCounter`:
 ```cpp
 #include <perfcpp/event_counter.h>
 auto counter_definitions = perf::CounterDefinition{};
 auto event_counter = perf::EventCounter{counter_definitions};
 
-event_counter.add({"cycles-per-instruction"});
+event_counter.add("cycles-per-instruction");
 ```
+When metrics are used, *perf-cpp* internally counts the required hardware events (like cycles and instructions for CPI) and displays only the specified metrics and events.
 
-## Defining Metrics
-However, the most intriguing metrics depend on the counters that are available on specific hardware. 
-You can use the `perf::Metric` interface to develop your own metrics, tailored to the unique performance counters of your system:
+## Creating Custom Metrics
+You can create custom metrics based on the hardware counters available on your specific hardware. 
+To define these metrics, use the `perf::Metric interface` and adapt it to your hardware characteristics:
 
 ```cpp
 #include <perfcpp/metric.h>
 class StallsPerCacheMiss final : public perf::Metric
 {
 public:
-    /// Set up a name, can be overriden by the counter definition when adding.
+    /// Provides a name used to access the metric value.
     [[nodiscard]] std::string name() const override 
     {
         return "stalls-per-cache-miss"; 
     }
     
-    /// List of counters that need to be measured to calculate this metric.
+    /// Identifies the necessary hardware events for this metric.
     [[nodiscard]] std::vector<std::string> required_counter_names() const 
     { 
         return {"stalls", "cache-misses"}; 
     }
     
-    /// Calculate the metric.
+    /// Calculates the metric using the recorded hardware event data.
+    /// Calculation happens after stopping the EventCounter.
     [[nodiscard]] std::optional<double> calculate(const CounterResult& result) const
     {
         const auto stalls = result.get("stalls");
@@ -67,22 +69,27 @@ public:
         return std::nullopt;
     }
 };
-```
+````
 
-### Measure defined Metrics
-Upon implementation, the metric must be added to the counter definition instance:
+### Use defined Metrics
+After implementing custom metrics, incorporate them into the `perf::CounterDefinition` to utilize them effectively:
+
 ```cpp
 auto counter_definitions = perf::CounterDefinition{};
 counter_definitions.add(std::make_unique<StallsPerCacheMiss>());
-
-/// You can also override the name of the metric
-counter_definitions.add("SPCM", std::make_unique<StallsPerCacheMiss>());
 ```
 
-Then, it can be added to the `perf::EventCounter`-instance:
+You can also rename the metrics as needed:
+
+```cpp
+counter_definitions.add("SPM", std::make_unique<StallsPerCacheMiss>());
+```
+
+Finally, add the custom metrics to your `perf::EventCounter`:
+
 ```cpp
 event_counter.add("stalls-per-cache-miss");
 
-/// Or, in case you have overriden the name:
+/// Or, if you renamed it:
 event_counter.add("SPCM");
 ```
