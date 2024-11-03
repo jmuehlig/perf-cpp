@@ -5,28 +5,29 @@ We included various examples to teach you how to use *perf-cpp* and leverage har
 ## How to Build the Examples
 
 ```
-/// 1) Clone the repository
+# Clone the repository
 git clone https://github.com/jmuehlig/perf-cpp.git
 
-/// 2) Switch to the cloned folder
+# Switch to the cloned folder
 cd perf-cpp
 
-/// 3) Generate the Makefile
+# Generate the Makefile
 cmake . -B build -DBUILD_EXAMPLES=1
 
-/// 4) Build the examples
+# Build the examples
 cmake --build build --target examples
 ```
 
 The examples will be built to `build/examples/bin/`.
 
-## Recording Counter Statistics
+## List of Examples
+### Counting Hardware Events
 * [single_thread.cpp](single_thread.cpp) provides an example to record and read performance counters for a specific code segment on a **single** thread.
 * [inherit_thread.cpp](inherit_thread.cpp) advances the example to record counter statistics not only from one but also for its **child-threads**.
 * [multi_thread.cpp](multi_thread.cpp) shows how to record performance counter statistics on **multiple** threads.
 * [multi_cpu.cpp](multi_cpu.cpp) shows how to pin performance counters to **specific CPU cores** instead of focussing on threads and processes.
 
-## Sampling Data
+### Sampling
 * [instruction_pointer_sampling.cpp](instruction_pointer_sampling.cpp) provides and example to sample instruction pointers on a single thread.
 * [address_sampling.cpp](address_sampling.cpp) provides and example to sample virtual memory addresses, their latency, and their origin.
 * [counter_sampling.cpp](counter_sampling.cpp) shows how to include values of further hardware performance counters into samples.

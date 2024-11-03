@@ -1,5 +1,8 @@
 # *perf-cpp*: Changelog
 
+## v.0.9.0 (in development)
+* New feature: Access interim results from counters without stopping the counter using [live counters](docs/recording-live-events.md).
+
 ## v0.8.0
 * Restructured the build-system – thanks to [@foolnotion](https://github.com/jmuehlig/perf-cpp/commits?author=foolnotion): 
   * Examples are no longer included into default build and must be activated with `-DBUILD_EXAMPLES=1` (see [documentation](docs/build.md#build-examples)). 
