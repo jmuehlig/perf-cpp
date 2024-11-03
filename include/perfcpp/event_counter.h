@@ -243,6 +243,14 @@ private:
    * @return True, if the event was added.
    */
   void add(std::string_view event_name, CounterConfig event_config, bool is_shown_in_results);
+
+  /**
+   * Searches for an event within the event list.
+   *
+   * @param event_name Name of the event.
+   * @return Iterator of the event list.
+   */
+  [[nodiscard]] std::vector<Event>::iterator find_event(std::string_view event_name) noexcept;
 };
 
 class MultiEventCounterBase

@@ -615,6 +615,15 @@ private:
   [[nodiscard]] perf::Sample read_sample_event(UserLevelBufferEntry entry, const SampleCounter& sample_counter) const;
 
   /**
+   * Reads registers from the current buffer entry.
+   *
+   * @param entry Current position at the buffer.
+   * @param count_registers Number of registers requested.
+   * @return Pair of ABI and list of registers (if any).
+   */
+  [[nodiscard]] static std::pair<std::uint64_t, std::optional<std::vector<std::uint64_t>>> read_registers(UserLevelBufferEntry entry, std::uint64_t count_registers);
+
+  /**
    * Translates the current entry from the user-level buffer into a lost sample.
    *
    * @param entry Entry of the user-level buffer.

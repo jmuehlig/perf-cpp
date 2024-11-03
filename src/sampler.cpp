@@ -434,23 +434,11 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
   }
 
   if (this->_values.is_set(PERF_SAMPLE_REGS_USER)) {
-    /// Read the register ABI.
-    sample.user_registers_abi(entry.read<std::uint64_t>());
+    auto [abi, registers] = Sampler::read_registers(entry, this->_values.user_registers().size());
 
-    /// Read the number of registers.
-    const auto count_user_registers = this->_values.user_registers().size();
-
-    if (count_user_registers > 0U) {
-      auto user_registers = std::vector<std::uint64_t>{};
-      user_registers.reserve(count_user_registers);
-
-      /// Read the register values.
-      const auto* perf_user_registers = entry.read<std::uint64_t>(count_user_registers);
-      for (auto register_id = 0U; register_id < count_user_registers; ++register_id) {
-        user_registers.push_back(perf_user_registers[register_id]);
-      }
-
-      sample.user_registers(std::move(user_registers));
+    sample.user_registers_abi(abi);
+    if (registers.has_value()) {
+      sample.user_registers(std::move(registers.value()));
     }
   }
 
@@ -459,9 +447,9 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
   }
 
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT
-  else if (this->_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT)) {
-    const auto weight_struct = entry.read<perf_sample_weight>();
-    sample.weight(perf::Weight{ weight_struct.var1_dw, weight_struct.var2_w, weight_struct.var3_w });
+  if (this->_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT)) {
+    const auto weight = entry.read<perf_sample_weight>();
+    sample.weight(perf::Weight{ weight.var1_dw, weight.var2_w, weight.var3_w });
   }
 #endif
 
@@ -474,23 +462,11 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
   }
 
   if (this->_values.is_set(PERF_SAMPLE_REGS_INTR)) {
-    /// Read the register ABI.
-    sample.kernel_registers_abi(entry.read<std::uint64_t>());
+    auto [abi, registers] = Sampler::read_registers(entry, this->_values.kernel_registers().size());
 
-    /// Read the number of registers.
-    const auto count_kernel_registers = this->_values.kernel_registers().size();
-
-    if (count_kernel_registers > 0U) {
-      auto kernel_registers = std::vector<std::uint64_t>{};
-      kernel_registers.reserve(count_kernel_registers);
-
-      /// Read the register values.
-      const auto* perf_kernel_registers = entry.read<std::uint64_t>(count_kernel_registers);
-      for (auto register_id = 0U; register_id < count_kernel_registers; ++register_id) {
-        kernel_registers.push_back(perf_kernel_registers[register_id]);
-      }
-
-      sample.kernel_registers(std::move(kernel_registers));
+    sample.kernel_registers_abi(abi);
+    if (registers.has_value()) {
+      sample.kernel_registers(std::move(registers.value()));
     }
   }
 
@@ -519,6 +495,29 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
 #endif
 
   return sample;
+}
+
+std::pair<std::uint64_t, std::optional<std::vector<std::uint64_t>>>
+perf::Sampler::read_registers(perf::Sampler::UserLevelBufferEntry entry, const std::uint64_t count_registers)
+{
+  /// Read the register ABI.
+  const auto abi = entry.read<std::uint64_t>();
+
+  /// Read the number of registers.
+  if (count_registers > 0U) {
+    auto registers = std::vector<std::uint64_t>{};
+    registers.reserve(count_registers);
+
+    /// Read the register values.
+    const auto* perf_kernel_registers = entry.read<std::uint64_t>(count_registers);
+    for (auto register_id = 0U; register_id < count_registers; ++register_id) {
+      registers.push_back(perf_kernel_registers[register_id]);
+    }
+
+    return std::make_pair(abi, std::move(registers));
+  }
+
+  return std::make_pair(abi, std::nullopt);
 }
 
 perf::Sample

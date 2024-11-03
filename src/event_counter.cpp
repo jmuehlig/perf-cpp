@@ -71,10 +71,7 @@ void
 perf::EventCounter::add(std::string_view event_name, perf::CounterConfig event_config, const bool is_shown_in_results)
 {
   /// Check if the event is already added.
-  if (auto iterator = std::find_if(this->_events.begin(),
-                                   this->_events.end(),
-                                   [&event_name](const auto& event) { return event.name() == event_name; });
-      iterator != this->_events.end()) {
+  if (auto iterator = this->find_event(event_name); iterator != this->_events.end()) {
     /// If so, there is no need to add it again – but we need to check if the event was requested (this time) by the
     /// user to show it in the result set. One scenario could be, that the event was added earlier by a metric (i.e., it
     /// should not appear in the results), but now, the user requests it, too – switching the state to "show in
@@ -102,6 +99,14 @@ perf::EventCounter::add(std::string_view event_name, perf::CounterConfig event_c
 
   /// Add the event config to the last group.
   this->_groups.back().add(event_config);
+}
+
+std::vector<perf::EventCounter::Event>::iterator
+perf::EventCounter::find_event(const std::string_view event_name) noexcept
+{
+  return std::find_if(this->_events.begin(),
+                      this->_events.end(),
+                      [&event_name](const auto& event) { return event.name() == event_name; });
 }
 
 void
@@ -189,7 +194,7 @@ perf::EventCounter::start()
     live_counter.enable();
   }
 
-  /// If no exception was thrown, we are good to go.
+  /// If no exception was thrown, we are good to go. The bool is only returned for interface compatibility.
   return true;
 }
 
