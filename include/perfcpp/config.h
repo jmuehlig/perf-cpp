@@ -29,7 +29,7 @@ public:
   [[nodiscard]] bool is_debug() const noexcept { return _is_debug; }
 
   [[nodiscard]] std::optional<std::uint16_t> cpu_id() const noexcept { return _cpu_id; }
-  [[nodiscard]] pid_t process_id() const noexcept { return _process_id; }
+  [[nodiscard]] std::optional<pid_t> process_id() const noexcept { return _process_id; }
 
   /**
    * Specify the number of maximum groups per EventCounter.
@@ -130,7 +130,7 @@ private:
   bool _is_debug{ false };
 
   std::optional<std::uint16_t> _cpu_id{ std::nullopt };
-  pid_t _process_id{ 0 };
+  std::optional<pid_t> _process_id{ std::nullopt };
 };
 
 class SampleConfig final : public Config

@@ -420,7 +420,7 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
   if (this->_values.is_set(PERF_SAMPLE_REGS_INTR)) {
     auto [abi, registers] = Sampler::read_registers(entry, this->_values.kernel_registers().size());
 
-    sample.kernel_registers_abi(abi);
+    sample.kernel_registers_abi(static_cast<ABI>(abi));
     if (registers.has_value()) {
       sample.kernel_registers(std::move(registers.value()));
     }
@@ -453,11 +453,11 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
   return sample;
 }
 
-std::pair<std::uint64_t, std::optional<std::vector<std::uint64_t>>>
+std::pair<perf::ABI, std::optional<std::vector<std::uint64_t>>>
 perf::Sampler::read_registers(perf::Sampler::UserLevelBufferEntry& entry, const std::uint64_t count_registers)
 {
   /// Read the register ABI.
-  const auto abi = entry.read<std::uint64_t>();
+  const auto abi = static_cast<ABI>(entry.read<std::uint64_t>());
 
   if (count_registers == 0U) {
     return std::make_pair(abi, std::nullopt);
@@ -545,8 +545,12 @@ perf::Sampler::read_branch_stack(perf::Sampler::UserLevelBufferEntry& entry)
   auto* sampled_branches = entry.read<perf_branch_entry>(count_branches);
   for (auto i = 0U; i < count_branches; ++i) {
     const auto& branch = sampled_branches[i];
-    branches.emplace_back(
-      branch.from, branch.to, branch.mispred, branch.predicted, branch.in_tx, branch.abort, branch.cycles);
+#ifndef PERFCPP_NO_BRANCH_STACK_CYCLES
+    const auto cycles = branch.cycles;
+#else
+    const auto cycles = 0ULL;
+#endif
+    branches.emplace_back(branch.from, branch.to, branch.mispred, branch.predicted, branch.in_tx, branch.abort, cycles);
   }
 
   return branches;

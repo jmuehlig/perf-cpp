@@ -151,12 +151,12 @@ public:
   void transaction_abort(const TransactionAbort transaction_abort) noexcept { _transaction_abort = transaction_abort; }
   void weight(const Weight weight) noexcept { _weight = weight; }
   void branches(std::vector<Branch>&& branches) noexcept { _branches = std::move(branches); }
-  void user_registers_abi(const std::uint64_t abi) noexcept { _user_registers_abi = abi; }
+  void user_registers_abi(const ABI abi) noexcept { _user_registers_abi = abi; }
   void user_registers(std::vector<std::uint64_t>&& user_registers) noexcept
   {
     _user_registers = std::move(user_registers);
   }
-  void kernel_registers_abi(const std::uint64_t abi) noexcept { _kernel_registers_abi = abi; }
+  void kernel_registers_abi(const ABI abi) noexcept { _kernel_registers_abi = abi; }
   void kernel_registers(std::vector<std::uint64_t>&& kernel_registers) noexcept
   {
     _kernel_registers = std::move(kernel_registers);
@@ -301,7 +301,7 @@ public:
    * Retrieves the ABI of the user-space registers.
    * @return An optional containing the user registers ABI if available.
    */
-  [[nodiscard]] std::optional<std::uint64_t> user_registers_abi() const noexcept { return _user_registers_abi; }
+  [[nodiscard]] std::optional<ABI> user_registers_abi() const noexcept { return _user_registers_abi; }
 
   /*
    * Retrieves the user-space registers captured in the sample.
@@ -322,7 +322,7 @@ public:
    * Retrieves the ABI of the kernel-space registers.
    * @return An optional containing the kernel registers ABI if available.
    */
-  [[nodiscard]] std::optional<std::uint64_t> kernel_registers_abi() const noexcept { return _kernel_registers_abi; }
+  [[nodiscard]] std::optional<ABI> kernel_registers_abi() const noexcept { return _kernel_registers_abi; }
 
   /*
    * Retrieves the kernel-space registers captured in the sample.
@@ -418,10 +418,10 @@ private:
   std::optional<TransactionAbort> _transaction_abort{ std::nullopt };
   std::optional<Weight> _weight{ std::nullopt };
   std::optional<std::vector<Branch>> _branches{ std::nullopt };
-  std::optional<std::uint64_t> _user_registers_abi{ std::nullopt };
+  std::optional<ABI> _user_registers_abi{ std::nullopt };
   std::optional<std::vector<std::uint64_t>> _user_registers{ std::nullopt };
+  std::optional<ABI> _kernel_registers_abi{ std::nullopt };
   std::optional<std::vector<std::uint64_t>> _kernel_registers{ std::nullopt };
-  std::optional<std::uint64_t> _kernel_registers_abi{ std::nullopt };
   std::optional<std::vector<std::uintptr_t>> _callchain{ std::nullopt };
   std::optional<std::uint64_t> _cgroup_id{ std::nullopt };
   std::optional<std::uint64_t> _data_page_size{ std::nullopt };

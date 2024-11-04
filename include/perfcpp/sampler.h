@@ -622,7 +622,7 @@ private:
    *
    * @return Pair of ABI and list of registers (if any).
    */
-  [[nodiscard]] static std::pair<std::uint64_t, std::optional<std::vector<std::uint64_t>>> read_registers(
+  [[nodiscard]] static std::pair<ABI, std::optional<std::vector<std::uint64_t>>> read_registers(
     UserLevelBufferEntry& entry,
     std::uint64_t count_registers);
 

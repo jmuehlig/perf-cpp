@@ -212,7 +212,7 @@ perf::Counter::open(const perf::Config& config,
 
       /// Try to open using the perf subsystem.
       this->_file_descriptor =
-        this->perf_event_open(config.process_id(), cpu_id, is_group_leader, group_leader_file_descriptor);
+        this->perf_event_open(config.process_id().value_or(0), cpu_id, is_group_leader, group_leader_file_descriptor);
 
       /// If opening the file descriptor not successful or the error indicates that adjusting (decreasing) the precision
       /// does not help, we are done.
@@ -224,7 +224,7 @@ perf::Counter::open(const perf::Config& config,
     /// For monitoring statistics over time (not sampling), we do not need to adjust the precision; a single try is
     /// enough.
     this->_file_descriptor =
-      this->perf_event_open(config.process_id(), cpu_id, is_group_leader, group_leader_file_descriptor);
+      this->perf_event_open(config.process_id().value_or(0), cpu_id, is_group_leader, group_leader_file_descriptor);
   }
 
   /// Read and set the counter's id.
