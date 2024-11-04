@@ -5,16 +5,19 @@
 #include <string>
 
 namespace perf {
-class CannotCreateFileDescriptorError final : std::runtime_error
+
+class CannotOpenCounterError final : std::runtime_error
 {
 public:
-  explicit CannotCreateFileDescriptorError(const std::int64_t error_code)
-    : std::runtime_error(std::string{ "Cannot create file descriptor for counter (error no: " }
+  explicit CannotOpenCounterError(std::string&& message, const std::int64_t error_code)
+    : std::runtime_error(std::string{ "Cannot open perf counter: " }
+                           .append(message)
+                           .append(" (error no: ")
                            .append(std::to_string(error_code))
                            .append(")."))
   {
   }
-  ~CannotCreateFileDescriptorError() override = default;
+  ~CannotOpenCounterError() override = default;
 };
 
 class MmapError final : std::runtime_error

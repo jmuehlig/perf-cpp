@@ -232,6 +232,9 @@ perf::Counter::open(const perf::Config& config,
       this->perf_event_open(config.process_id().value_or(0), cpu_id, is_group_leader, group_leader_file_descriptor);
   }
 
+  /// In case perf_event_open reported an error, notice it here, but process it later.
+  const auto error_code = errno;
+
   /// Read and set the counter's id.
   /// This is done before (possibly) printing the counter to include the counter id into printing.
   if (this->_file_descriptor > -1LL) {
@@ -244,8 +247,9 @@ perf::Counter::open(const perf::Config& config,
               << std::flush;
   }
 
+  /// Notify the caller that opening the counter via the perf subsystem failed.
   if (this->_file_descriptor < 0LL) {
-    throw CannotCreateFileDescriptorError{ errno };
+    throw CannotOpenCounterError{ Counter::error_message_from_errno(error_code), error_code };
   }
 
   if (buffer_pages.has_value()) {
@@ -258,7 +262,7 @@ perf::Counter::open(const perf::Config& config,
                                                      static_cast<std::int32_t>(this->_file_descriptor),
                                                      0));
 
-    /// Verify the buffer was opened.
+    /// Notify the caller if buffer-allocation via ::mmap() failed.
     if (this->_user_level_buffer == MAP_FAILED) {
       throw MmapError{ errno };
     } else if (this->_user_level_buffer == nullptr) {
@@ -349,6 +353,38 @@ perf::Counter::perf_event_open(pid_t process_id,
                    cpu_id,
                    is_group_leader ? -1LL : group_leader_file_descriptor,
                    0);
+}
+
+std::string
+perf::Counter::error_message_from_errno(const std::int64_t error_code)
+{
+  switch (error_code) {
+    case E2BIG:
+      return "perf_event_attr.size was not configured properly – this could be a bug in the perf-cpp library";
+    case EACCES:
+      return "insufficient access rights to start the counter, e.g. profiling a not user-owned process or "
+             "perf_event_paranoid value too high";
+#ifndef PERFCPP_NO_ERROR_EBUSY
+    case EBUSY:
+      return "another event has exclusive access to the PMU";
+#endif
+    case EINVAL:
+      return "counter is configured with an invalid argument (e.g., too high sample frequency, unknown CPU, invalid "
+             "sample type)";
+    case EMFILE:
+      return "too many open file descriptors (e.g., too many opened counters?)";
+    case ENODEV:
+      return "configured with feature that does not exist on this CPU";
+    case EOVERFLOW:
+      return "maximal callchain stack size is higher than the maximum (see /proc/sys/kernel/perf_event_max_stack)";
+    case EPERM:
+      return "one of the following features is set but not supported: excluding hypervisor, excluding idle, excluding "
+             "user, or excluding kernel";
+    case ESRCH:
+      return "specified process does not exist";
+    default:
+      return "perf_event_open failed with unknown error";
+  }
 }
 
 std::string

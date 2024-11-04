@@ -261,5 +261,13 @@ private:
                                    std::uint64_t type,
                                    std::string&& name,
                                    bool is_need_print_delimiter);
+
+  /**
+   * Creates an exception message based on the errno set when accessing the perf subsystem to open an event.
+   *
+   * @param error_code Error code raised when calling perf_event_open.
+   * @return Error message that can be thrown to inform the user.
+   */
+  [[nodiscard]] static std::string error_message_from_errno(std::int64_t error_code);
 };
 }

@@ -9,6 +9,10 @@
 /// has a great overview of features added in various versions.
 /// For the moment, we support Linux 4.0 and newer.
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
+#define PERFCPP_NO_ERROR_EBUSY
+#endif
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0)
 #define PERFCPP_NO_SAMPLE_BRANCH_IND_JUMP
 #endif
