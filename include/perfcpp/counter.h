@@ -246,6 +246,28 @@ private:
                                std::int64_t group_leader_file_descriptor);
 
   /**
+   * Decides whether adjusting (i.e., decrementing) the precise_ip configuration could help to open a hardware
+   * performance counter if an previous attempt failed. This is only true for sampling, if the current precise_ip is too
+   * high and the error code indicates to do so (e.g., reporting an invalid argument).
+   *
+   * @param current_precise_ip The current value of the precise_ip configuration.
+   * @param sample_type Sample type; std::nullopt if opened for counting only.
+   * @param error_code The error code when failing.
+   * @return True, when the counter should try to open again.
+   */
+  [[nodiscard]] static bool is_adjust_precise_ip(std::int32_t current_precise_ip,
+                                                 std::optional<std::uint64_t> sample_type,
+                                                 std::int64_t error_code) noexcept;
+
+  /**
+   * Creates an exception message based on the errno set when accessing the perf subsystem to open an event.
+   *
+   * @param error_code Error code raised when calling perf_event_open.
+   * @return Error message that can be thrown to inform the user.
+   */
+  [[nodiscard]] static std::string error_message_from_errno(std::int64_t error_code);
+
+  /**
    * Prints a name of a type (e.g., sample, branch, ...) to the stream if the type is set in the mask.
    *
    * @param stream Stream to print the name of the type on.
@@ -261,13 +283,5 @@ private:
                                    std::uint64_t type,
                                    std::string&& name,
                                    bool is_need_print_delimiter);
-
-  /**
-   * Creates an exception message based on the errno set when accessing the perf subsystem to open an event.
-   *
-   * @param error_code Error code raised when calling perf_event_open.
-   * @return Error message that can be thrown to inform the user.
-   */
-  [[nodiscard]] static std::string error_message_from_errno(std::int64_t error_code);
 };
 }

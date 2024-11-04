@@ -160,32 +160,17 @@ perf::Counter::open(const perf::Config& config,
         this->_event_attribute.freq = static_cast<std::uint64_t>(this->_config.is_frequency());
         this->_event_attribute.sample_freq = this->_config.period_or_frequency();
 
-        if (branch_type.has_value()) {
-          this->_event_attribute.branch_sample_type = branch_type.value();
-        }
-
+        /// Set sampled fields.
+        this->_event_attribute.branch_sample_type = branch_type.value_or(0ULL);
 #ifndef PERFCPP_NO_SAMPLE_MAX_STACK
-        if (max_callstack_size.has_value()) {
-          this->_event_attribute.sample_max_stack = max_callstack_size.value();
-        }
+        this->_event_attribute.sample_max_stack = max_callstack_size.value_or(0U);
 #endif
-
-        if (user_registers.has_value()) {
-          this->_event_attribute.sample_regs_user = user_registers.value();
-        }
-
-        if (kernel_registers.has_value()) {
-          this->_event_attribute.sample_regs_intr = kernel_registers.value();
-        }
-
-        if (max_user_stack_size.has_value()) {
-          this->_event_attribute.sample_stack_user = max_user_stack_size.value();
-        }
-
+        this->_event_attribute.sample_regs_user = user_registers.value_or(0ULL);
+        this->_event_attribute.sample_regs_intr = kernel_registers.value_or(0ULL);
+        this->_event_attribute.sample_stack_user = max_user_stack_size.value_or(0U);
 #ifndef PERFCPP_NO_RECORD_SWITCH
         this->_event_attribute.context_switch = is_include_context_switch;
 #endif
-
 #ifndef PERFCPP_NO_RECORD_CGROUP
         this->_event_attribute.cgroup = is_include_cgroup;
 #endif
@@ -207,30 +192,24 @@ perf::Counter::open(const perf::Config& config,
   /// integer for that case).
   const std::int32_t cpu_id = config.cpu_id().has_value() ? std::int32_t{ config.cpu_id().value() } : -1;
 
-  if (sample_type.has_value()) {
-    /// For sampling, we try to adjust the precision (precise_ip) if we cannot successfully open the counter with the
-    /// provided value.
-    for (auto precise_ip = std::int32_t{ this->_config.precise_ip() }; precise_ip > -1; --precise_ip) {
+  /// Use the specified process id or 0 for indicating that the counter should monitor the calling thread/process.
+  const auto process_id = config.process_id().value_or(0);
 
-      /// Adjust the precision, which may be lower than initially requested.
+  /// Try to open the counter. For sampling, we might try to adjust the precise_ip configuration (see
+  /// Counter::is_adjust_precise_ip).
+  auto precise_ip = std::int32_t{ this->_config.precise_ip() };
+  do {
+    /// precise_ip is only needed for sampling, not counting events and live events, where the latter is indicated by
+    /// only PERF_SAMPLE_READ.
+    if (sample_type.value_or(PERF_SAMPLE_READ) != PERF_SAMPLE_READ) {
       this->_event_attribute.precise_ip = std::uint64_t(precise_ip);
-
-      /// Try to open using the perf subsystem.
-      this->_file_descriptor =
-        this->perf_event_open(config.process_id().value_or(0), cpu_id, is_group_leader, group_leader_file_descriptor);
-
-      /// If opening the file descriptor not successful or the error indicates that adjusting (decreasing) the precision
-      /// does not help, we are done.
-      if (this->_file_descriptor > -1LL || (errno != EINVAL && errno != EOPNOTSUPP)) {
-        break;
-      }
     }
-  } else {
-    /// For monitoring statistics over time (not sampling), we do not need to adjust the precision; a single try is
-    /// enough.
-    this->_file_descriptor =
-      this->perf_event_open(config.process_id().value_or(0), cpu_id, is_group_leader, group_leader_file_descriptor);
-  }
+
+    /// Try to open using the perf subsystem.
+    this->_file_descriptor = this->perf_event_open(process_id, cpu_id, is_group_leader, group_leader_file_descriptor);
+
+    /// Repeat until success (file_descriptor has a "valid" value or trying again is hopeless.
+  } while (this->_file_descriptor < 0LL && Counter::is_adjust_precise_ip(precise_ip--, sample_type, errno));
 
   /// In case perf_event_open reported an error, notice it here, but process it later.
   const auto error_code = errno;
@@ -280,7 +259,7 @@ perf::Counter::close()
     ::close(static_cast<std::int32_t>(file_descriptor));
   }
 
-  if (auto* user_level_buffer = std::exchange(this->_user_level_buffer, nullptr); user_level_buffer != nullptr) {
+  if (auto* const user_level_buffer = std::exchange(this->_user_level_buffer, nullptr); user_level_buffer != nullptr) {
     if (const auto user_level_buffer_pages = std::exchange(this->_user_level_buffer_pages, std::nullopt);
         user_level_buffer_pages.has_value()) {
       ::munmap(user_level_buffer, user_level_buffer_pages.value() * /* page size */ 4096U);
@@ -291,14 +270,14 @@ perf::Counter::close()
 void
 perf::Counter::enable() const
 {
-  ::ioctl(static_cast<std::int32_t>(_file_descriptor), PERF_EVENT_IOC_RESET, 0);
-  ::ioctl(static_cast<std::int32_t>(_file_descriptor), PERF_EVENT_IOC_ENABLE, 0);
+  ::ioctl(static_cast<std::int32_t>(this->_file_descriptor), PERF_EVENT_IOC_RESET, 0);
+  ::ioctl(static_cast<std::int32_t>(this->_file_descriptor), PERF_EVENT_IOC_ENABLE, 0);
 }
 
 void
 perf::Counter::disable() const
 {
-  ::ioctl(static_cast<std::int32_t>(_file_descriptor), PERF_EVENT_IOC_DISABLE, 0);
+  ::ioctl(static_cast<std::int32_t>(this->_file_descriptor), PERF_EVENT_IOC_DISABLE, 0);
 }
 
 std::uint64_t
@@ -342,10 +321,10 @@ perf::Counter::lread() const noexcept
 }
 
 std::int64_t
-perf::Counter::perf_event_open(pid_t process_id,
-                               std::int32_t cpu_id,
-                               bool is_group_leader,
-                               std::int64_t group_leader_file_descriptor)
+perf::Counter::perf_event_open(const pid_t process_id,
+                               const std::int32_t cpu_id,
+                               const bool is_group_leader,
+                               const std::int64_t group_leader_file_descriptor)
 {
   return ::syscall(__NR_perf_event_open,
                    &this->_event_attribute,
@@ -353,6 +332,28 @@ perf::Counter::perf_event_open(pid_t process_id,
                    cpu_id,
                    is_group_leader ? -1LL : group_leader_file_descriptor,
                    0);
+}
+
+bool
+perf::Counter::is_adjust_precise_ip(const std::int32_t current_precise_ip,
+                                    const std::optional<std::uint64_t> sample_type,
+                                    const std::int64_t error_code) noexcept
+{
+  /// If the counter was only opened for counting or live counting (indicated by PERF_SAMPLE_READ), precise_ip has no
+  /// impact.
+  if (sample_type.value_or(PERF_SAMPLE_READ) == PERF_SAMPLE_READ) {
+    return false;
+  }
+
+  /// When precise_ip is already the lowest possible configuration (0 or lower), lowering has no impact.
+  if (current_precise_ip < 1LL) {
+    return false;
+  }
+
+  /// EINVAL indicates an invalid argument, which could be a too high value for precise_ip.
+  /// Likewise, EOPNOTSUPP could indicate that such a high value of precise_ip is not supported on the underlying
+  /// machine. In both scenarios, we should decrease the value and try again.
+  return error_code == EINVAL || error_code == EOPNOTSUPP;
 }
 
 std::string
@@ -471,6 +472,8 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
     is_print_delimiter = Counter::print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_STACK_USER, "REGS_USER", is_print_delimiter);
     is_print_delimiter = Counter::print_type_to_stream(
+      stream, this->_event_attribute.sample_type, PERF_SAMPLE_STACK_USER, "STACK_USER", is_print_delimiter);
+    is_print_delimiter = Counter::print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_WEIGHT, "WEIGHT", is_print_delimiter);
     is_print_delimiter = Counter::print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_DATA_SRC, "DATA_SRC", is_print_delimiter);
@@ -540,8 +543,10 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
       stream, this->_event_attribute.read_format, PERF_FORMAT_ID, "ID", is_print_delimiter);
     is_print_delimiter = Counter::print_type_to_stream(
       stream, this->_event_attribute.read_format, PERF_FORMAT_GROUP, "GROUP", is_print_delimiter);
+#ifndef PERFCPP_NO_FORMAT_LOST
     Counter::print_type_to_stream(
       stream, this->_event_attribute.read_format, PERF_FORMAT_LOST, "LOST", is_print_delimiter);
+#endif
 
     stream << "\n";
   }
