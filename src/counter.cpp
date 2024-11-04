@@ -128,7 +128,8 @@ perf::Counter::open(const perf::Config& config,
                     const std::optional<std::uint64_t> branch_type,
                     const std::optional<std::uint64_t> user_registers,
                     const std::optional<std::uint64_t> kernel_registers,
-                    const std::optional<std::uint16_t> max_callstack,
+                    const std::optional<std::uint32_t> max_user_stack_size,
+                    const std::optional<std::uint16_t> max_callstack_size,
                     const bool is_include_context_switch,
                     const bool is_include_cgroup)
 {
@@ -164,8 +165,8 @@ perf::Counter::open(const perf::Config& config,
         }
 
 #ifndef PERFCPP_NO_SAMPLE_MAX_STACK
-        if (max_callstack.has_value()) {
-          this->_event_attribute.sample_max_stack = max_callstack.value();
+        if (max_callstack_size.has_value()) {
+          this->_event_attribute.sample_max_stack = max_callstack_size.value();
         }
 #endif
 
@@ -175,6 +176,10 @@ perf::Counter::open(const perf::Config& config,
 
         if (kernel_registers.has_value()) {
           this->_event_attribute.sample_regs_intr = kernel_registers.value();
+        }
+
+        if (max_user_stack_size.has_value()) {
+          this->_event_attribute.sample_stack_user = max_user_stack_size.value();
         }
 
 #ifndef PERFCPP_NO_RECORD_SWITCH

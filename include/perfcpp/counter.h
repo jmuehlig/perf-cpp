@@ -150,7 +150,8 @@ public:
    * @param branch_type Mask of sampled branch types, std::nullopt of sampling is disabled.
    * @param user_registers Mask of sampled user registers, std::nullopt of sampling is disabled.
    * @param kernel_registers Mask of sampled kernel registers, std::nullopt of sampling is disabled.
-   * @param max_callstack Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
+   * @param max_user_stack_size Maximal size of sampled user stack, std::nullopt of sampling is disabled.
+   * @param max_callstack_size Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
    * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
    * @param is_include_cgroup True, if cgroups should be sampled, ignored if sampling is disabled.
    */
@@ -165,7 +166,8 @@ public:
             std::optional<std::uint64_t> branch_type,
             std::optional<std::uint64_t> user_registers,
             std::optional<std::uint64_t> kernel_registers,
-            std::optional<std::uint16_t> max_callstack,
+            std::optional<std::uint32_t> max_user_stack_size,
+            std::optional<std::uint16_t> max_callstack_size,
             bool is_include_context_switch,
             bool is_include_cgroup);
 

@@ -161,6 +161,7 @@ public:
   {
     _kernel_registers = std::move(kernel_registers);
   }
+  void user_stack(std::vector<char>&& user_stack) noexcept { _user_stack = std::move(user_stack); }
   void callchain(std::vector<std::uintptr_t>&& callchain) noexcept { _callchain = std::move(callchain); }
   void cgroup_id(const std::uint64_t cgroup_id) noexcept { _cgroup_id = cgroup_id; }
   void data_page_size(const std::uint64_t size) noexcept { _data_page_size = size; }
@@ -340,6 +341,18 @@ public:
   [[nodiscard]] std::optional<std::vector<std::uint64_t>>& kernel_registers() noexcept { return _kernel_registers; }
 
   /*
+   * Retrieves the user stack captured in the sample (modifiable).
+   * @return An optional vector of user stack data if available.
+   */
+  [[nodiscard]] const std::optional<std::vector<char>>& user_stack() const noexcept { return _user_stack; }
+
+  /*
+   * Retrieves the user stack captured in the sample (modifiable).
+   * @return An optional vector of user stack data if available.
+   */
+  [[nodiscard]] std::optional<std::vector<char>>& user_stack() noexcept { return _user_stack; }
+
+  /*
    * Retrieves the call chain (stack backtrace) captured in the sample.
    * @return An optional vector of instruction pointers if available.
    */
@@ -422,6 +435,7 @@ private:
   std::optional<std::vector<std::uint64_t>> _user_registers{ std::nullopt };
   std::optional<ABI> _kernel_registers_abi{ std::nullopt };
   std::optional<std::vector<std::uint64_t>> _kernel_registers{ std::nullopt };
+  std::optional<std::vector<char>> _user_stack;
   std::optional<std::vector<std::uintptr_t>> _callchain{ std::nullopt };
   std::optional<std::uint64_t> _cgroup_id{ std::nullopt };
   std::optional<std::uint64_t> _data_page_size{ std::nullopt };

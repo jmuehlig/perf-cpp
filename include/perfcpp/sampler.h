@@ -145,6 +145,13 @@ public:
       return *this;
     }
 
+    Values& user_stack(const std::uint32_t max_stack_size) noexcept
+    {
+      _max_user_stack = max_stack_size;
+      set(PERF_SAMPLE_STACK_USER, max_stack_size > 0U);
+      return *this;
+    }
+
     Values& physical_memory_address(const bool include) noexcept
     {
 #ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR
@@ -204,6 +211,7 @@ public:
 
     [[nodiscard]] Registers user_registers() const noexcept { return _user_registers; }
     [[nodiscard]] Registers kernel_registers() const noexcept { return _kernel_registers; }
+    [[nodiscard]] std::uint32_t max_user_stack() const noexcept { return _max_user_stack; }
     [[nodiscard]] const std::vector<std::string>& counters() const noexcept { return _counter_names; }
     [[nodiscard]] std::uint64_t branch_mask() const noexcept { return _branch_mask; }
     [[nodiscard]] std::uint16_t max_call_stack() const noexcept { return _max_call_stack; }
@@ -215,6 +223,7 @@ public:
     std::vector<std::string> _counter_names;
     Registers _user_registers;
     Registers _kernel_registers;
+    std::uint32_t _max_user_stack{ 0U };
     std::uint64_t _branch_mask{ 0ULL };
 
     std::uint16_t _max_call_stack{ 0U };

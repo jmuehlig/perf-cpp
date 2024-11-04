@@ -2,6 +2,7 @@
 
 ## v.0.9.0 (in development)
 * New feature: Access interim results from counters without stopping the counter using [live counters](docs/recording-live-events.md).
+* New feature: Sampling the user stack (see [documentation](docs/sampling.md#user-stack)).
 
 ## v0.8.0
 * Restructured the build-system – thanks to [@foolnotion](https://github.com/jmuehlig/perf-cpp/commits?author=foolnotion): 

@@ -106,6 +106,7 @@ perf::Sampler::open()
                                                   : std::nullopt,
       this->_values.is_set(PERF_SAMPLE_REGS_INTR) ? std::make_optional(this->_values.kernel_registers().mask())
                                                   : std::nullopt,
+      this->_values.is_set(PERF_SAMPLE_STACK_USER) ? std::make_optional(this->_values.max_user_stack()) : std::nullopt,
       this->_values.is_set(PERF_SAMPLE_CALLCHAIN) ? std::make_optional(this->_values.max_call_stack()) : std::nullopt,
       this->_values._is_include_context_switch,
       is_include_cgroup);
@@ -396,6 +397,14 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
     if (registers.has_value()) {
       sample.user_registers(std::move(registers.value()));
     }
+  }
+
+  if (this->_values.is_set(PERF_SAMPLE_STACK_USER)) {
+    const auto size = entry.read<std::uint64_t>();
+    auto* stack_data = entry.read<char>(size);
+    const auto dyn_size = size > 0ULL ? entry.read<std::uint64_t>() : 0ULL;
+
+    sample.user_stack(std::vector<char>{ stack_data, stack_data + dyn_size });
   }
 
   if (this->_values.is_set(PERF_SAMPLE_WEIGHT)) {

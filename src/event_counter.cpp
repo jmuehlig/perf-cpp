@@ -152,7 +152,8 @@ perf::EventCounter::open()
                  /* branch type */ std::nullopt,
                  /* user registers */ std::nullopt,
                  /* kernel registers */ std::nullopt,
-                 /* max callstack */ std::nullopt,
+                 /* max user stack size */ std::nullopt,
+                 /* max callstack size */ std::nullopt,
                  /* include context switches */ false,
                  /* include cgroup */ false);
     }
@@ -170,7 +171,8 @@ perf::EventCounter::open()
                         /* branch type */ std::nullopt,
                         /* user registers */ std::nullopt,
                         /* kernel registers */ std::nullopt,
-                        /* max callstack */ std::nullopt,
+                        /* max user stack size */ std::nullopt,
+                        /* max callstack size */ std::nullopt,
                         /* include context switches */ false,
                         /* include cgroup */ false);
     }

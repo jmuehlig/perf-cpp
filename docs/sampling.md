@@ -27,6 +27,7 @@ For specific information about sampling in parallel settings (i.e., sampling mul
   - [Identifier](#identifier)
   - [Instruction Pointer](#instruction-pointer)
   - [Callchain](#callchain)
+  - [User Stack](#user-stack)
   - [Registers in user-level](#registers-in-user-level)
   - [Registers in kernel-level](#registers-in-kernel-level)
   - [ID of the recording Thread](#id-of-the-recording-thread)
@@ -278,7 +279,13 @@ Additionally, you can determine if the captured instruction pointer was exact by
 Callchain as a list of instruction pointers.
 
 * Request by `sampler.values().callchain(true);` or `sampler.values().callchain(M);` where `M` is a `std::uint16_t` defining the maximum call stack size.
-* Read from the results by `sample_record.callchain().value();`, which returns a `std::vector<std::uintptr_t>` of instruction pointers.
+* Read from the results by `sample_record.callchain().value();`, which returns an `std::vector<std::uintptr_t>` of instruction pointers.
+
+### User Stack
+The user-level stack as a list of chars.
+
+* Request by `sampler.values().user_stack(M);` where `M` is a `std::uint32_t` defining the maximum size of the user stack.
+* Read from the results by `sample_record.user_stack().value();`, which returns an `std::vector<char>` of data.
 
 ### Registers in user-level
 Values of registers within the user-level.

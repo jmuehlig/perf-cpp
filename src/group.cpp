@@ -15,7 +15,8 @@ perf::Group::open(const perf::Config& config,
                   const std::optional<std::uint64_t> branch_type,
                   const std::optional<std::uint64_t> user_registers,
                   const std::optional<std::uint64_t> kernel_registers,
-                  const std::optional<std::uint16_t> max_callstack,
+                  const std::optional<std::uint32_t> max_user_stack_size,
+                  const std::optional<std::uint16_t> max_callstack_size,
                   const bool is_include_context_switch,
                   const bool is_include_cgroup)
 {
@@ -47,7 +48,8 @@ perf::Group::open(const perf::Config& config,
                  branch_type,
                  user_registers,
                  kernel_registers,
-                 max_callstack,
+                 max_user_stack_size,
+                 max_callstack_size,
                  is_include_context_switch,
                  is_include_cgroup);
 
