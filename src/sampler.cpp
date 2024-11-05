@@ -476,9 +476,9 @@ perf::Sampler::read_registers(perf::Sampler::UserLevelBufferEntry& entry, const 
   registers.reserve(count_registers);
 
   /// Read the register values.
-  const auto* perf_kernel_registers = entry.read<std::uint64_t>(count_registers);
+  const auto* perf_registers = entry.read<std::uint64_t>(count_registers);
   for (auto register_id = 0U; register_id < count_registers; ++register_id) {
-    registers.push_back(perf_kernel_registers[register_id]);
+    registers.push_back(perf_registers[register_id]);
   }
 
   return std::make_pair(abi, std::move(registers));
