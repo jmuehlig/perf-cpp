@@ -3,8 +3,7 @@
 #include <cstdint>
 #include <linux/perf_event.h>
 
-namespace perf
-{
+namespace perf {
 class DataSource
 {
 public:
@@ -52,39 +51,74 @@ public:
   /**
    * @return True, if the memory address was found in the L1 cache.
    */
-  [[nodiscard]] bool is_mem_l1() const noexcept { return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_L1); }
+  [[nodiscard]] bool is_mem_l1() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_LVLNUM
+    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_L1);
+#else
+    return is_mem_hit() && static_cast<bool>(lvl() & PERF_MEM_LVL_L1);
+#endif
+  }
 
   /**
    * @return True, if the memory address was found in the Line Fill Buffer (or Miss Address Buffer on AMD).
    */
-  [[nodiscard]] bool is_mem_lfb() const noexcept { return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_LFB); }
+  [[nodiscard]] bool is_mem_lfb() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_LVLNUM
+    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_LFB);
+#else
+    return is_mem_hit() && static_cast<bool>(lvl() & PERF_MEM_LVL_LFB);
+#endif
+  }
 
   /**
    * @return True, if the memory address was found in the L2 cache.
    */
-  [[nodiscard]] bool is_mem_l2() const noexcept { return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_L2); }
+  [[nodiscard]] bool is_mem_l2() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_LVLNUM
+    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_L2);
+#else
+    return is_mem_hit() && static_cast<bool>(lvl() & PERF_MEM_LVL_L2);
+#endif
+  }
 
   /**
    * @return True, if the memory address was found in the L3 cache.
    */
-  [[nodiscard]] bool is_mem_l3() const noexcept { return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_L3); }
+  [[nodiscard]] bool is_mem_l3() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_LVLNUM
+    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_L3);
+#else
+    return is_mem_hit() && static_cast<bool>(lvl() & PERF_MEM_LVL_L3);
+#endif
+  }
 
   /**
-   * @return True, if the memory address was found in the L4 cache.
+   * @return True, if the memory address was found in the L4 cache (since Linux 4.14).
    */
-  [[nodiscard]] bool is_mem_l4() const noexcept { return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_L4); }
-
-  /**
-   * @return True, if the memory address was found in the RAM.
-   */
-  [[nodiscard]] bool is_mem_ram() const noexcept { return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_RAM); }
+  [[nodiscard]] bool is_mem_l4() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_LVLNUM
+    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_L4);
+#else
+    return false;
+#endif
+  }
 
   /**
    * @return True, if the memory address was found in the local RAM.
    */
   [[nodiscard]] bool is_mem_local_ram() const noexcept
   {
+#ifndef PERFCPP_NO_MEM_LVLNUM
     return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_RAM) && static_cast<bool>(remote() != PERF_MEM_REMOTE_REMOTE);
+    ;
+#else
+    return static_cast<bool>(lvl() & PERF_MEM_LVL_LOC_RAM);
+#endif
   }
 
   /**
@@ -92,49 +126,73 @@ public:
    */
   [[nodiscard]] bool is_mem_remote_ram() const noexcept
   {
+#ifndef PERFCPP_NO_MEM_LVLNUM
     return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_RAM) && static_cast<bool>(remote() == PERF_MEM_REMOTE_REMOTE);
-  }
-#if defined(PERF_MEM_HOPS_0) && defined(PERF_MEM_HOPS_1) && (PERF_MEM_HOPS_2) && (PERF_MEM_HOPS_3)
-  /**
-   * @return True, if the memory address was found in the local RAM.
-   */
-  [[nodiscard]] bool is_mem_hops0() const noexcept { return static_cast<bool>(hops() == PERF_MEM_HOPS_0); }
-
-  /**
-   * @return True, if the memory address was found with one hop distance (same node).
-   */
-  [[nodiscard]] bool is_mem_hops1() const noexcept { return static_cast<bool>(hops() == PERF_MEM_HOPS_1); }
-
-  /**
-   * @return True, if the memory address was found with two hops distance (remote socket, same board).
-   */
-  [[nodiscard]] bool is_mem_hops2() const noexcept { return static_cast<bool>(hops() == PERF_MEM_HOPS_2); }
-
-  /**
-   * @return True, if the memory address was found with three hops distance (remote board).
-   */
-  [[nodiscard]] bool is_mem_hops3() const noexcept { return static_cast<bool>(hops() == PERF_MEM_HOPS_3); }
 #else
-  /**
-   * @return True, if the memory address was found in the local RAM.
-   */
-  [[nodiscard]] bool is_mem_hops0() const noexcept { return is_mem_local_ram(); }
-
-  /**
-   * @return True, if the memory address was found with one hop distance (same node).
-   */
-  [[nodiscard]] bool is_mem_hops1() const noexcept { return false; }
-
-  /**
-   * @return True, if the memory address was found with two hops distance (remote socket, same board).
-   */
-  [[nodiscard]] bool is_mem_hops2() const noexcept { return false; }
-
-  /**
-   * @return True, if the memory address was found with three hops distance (remote board).
-   */
-  [[nodiscard]] bool is_mem_hops3() const noexcept { return false; }
+    return static_cast<bool>(lvl() & PERF_MEM_LVL_REM_RAM1) || static_cast<bool>(lvl() & PERF_MEM_LVL_REM_RAM2);
 #endif
+  }
+
+  /**
+   * @return True, if the memory address was found in the RAM.
+   */
+  [[nodiscard]] bool is_mem_ram() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_LVLNUM
+    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_RAM);
+#else
+    return is_mem_local_ram() || is_mem_remote_ram();
+#endif
+  }
+
+  /**
+   * @return True, if the memory address was found in the local RAM (since Linux 5.16).
+   */
+  [[nodiscard]] bool is_mem_hops0() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_HOPS_0
+    return static_cast<bool>(hops() == PERF_MEM_HOPS_0);
+#else
+    return is_mem_local_ram();
+#endif
+  }
+
+  /**
+   * @return True, if the memory address was found with one hop distance (same node) (since Linux 5.17).
+   */
+  [[nodiscard]] bool is_mem_hops1() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_HOPS_1_3
+    return static_cast<bool>(hops() == PERF_MEM_HOPS_1);
+#else
+    return false;
+#endif
+  }
+
+  /**
+   * @return True, if the memory address was found with two hops distance (remote socket, same board) (since
+   * Linux 5.17).
+   */
+  [[nodiscard]] bool is_mem_hops2() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_HOPS_1_3
+    return static_cast<bool>(hops() == PERF_MEM_HOPS_2);
+#else
+    return false;
+#endif
+  }
+
+  /**
+   * @return True, if the memory address was found with three hops distance (remote board) (since Linux 5.17).
+   */
+  [[nodiscard]] bool is_mem_hops3() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_HOPS_1_3
+    return static_cast<bool>(hops() == PERF_MEM_HOPS_3);
+#else
+    return false;
+#endif
+  }
 
   /**
    * @return True, if the memory address was found in a remote RAM with one hop distance.
@@ -161,41 +219,41 @@ public:
    */
   [[nodiscard]] bool is_mem_remote_cce2() const noexcept { return static_cast<bool>(lvl() & PERF_MEM_LVL_REM_CCE2); }
 
-#ifdef PERF_MEM_LVLNUM_PMEM
   /**
-   * @return True, if the memory address is stored in a PMEM module.
+   * @return True, if the memory address is stored in a PMEM module (since Linux 4.14).
    */
-  [[nodiscard]] bool is_pmem() const noexcept { return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_PMEM); }
+  [[nodiscard]] bool is_pmem() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_LVLNUM_PMEM
+    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_PMEM);
 #else
-  /**
-   * @return True, if the memory address is stored in a PMEM module.
-   */
-  [[nodiscard]] bool is_pmem() const noexcept { return false; }
+    return false;
 #endif
+  }
 
-#ifdef PERF_MEM_LVLNUM_CXL
   /**
-   * @return True, if the memory address is transferred via Compute Express Link.
+   * @return True, if the memory address is transferred via Compute Express Link (since Linux 6.1).
    */
-  [[nodiscard]] bool is_cxl() const noexcept { return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_CXL); }
+  [[nodiscard]] bool is_cxl() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_LVLNUM_CXL
+    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_CXL);
 #else
-  /**
-   * @return True, if the memory address is transferred via Compute Express Link.
-   */
-  [[nodiscard]] bool is_cxl() const noexcept { return false; }
+    return false;
 #endif
+  }
 
-#ifdef PERF_MEM_LVLNUM_IO
   /**
-   * @return True, if the memory address is I/O.
+   * @return True, if the memory address is I/O (since Linux 6.1).
    */
-  [[nodiscard]] bool is_io() const noexcept { return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_IO); }
+  [[nodiscard]] bool is_io() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_LVLNUM_IO
+    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_IO);
 #else
-  /**
-   * @return True, if the memory address is I/O.
-   */
-  [[nodiscard]] bool is_io() const noexcept { return false; }
+    return false;
 #endif
+  }
 
   /**
    * @return True, if the memory address was a TLB hit.
@@ -228,14 +286,28 @@ public:
   [[nodiscard]] bool is_locked() const noexcept { return static_cast<bool>(lock() & PERF_MEM_LOCK_LOCKED); }
 
   /**
-   * @return True, If the data could not be forwarded.
+   * @return True, If the data could not be forwarded (since Linux 5.12).
    */
-  [[nodiscard]] bool is_data_blocked() const noexcept { return static_cast<bool>(blk() & PERF_MEM_BLK_DATA); }
+  [[nodiscard]] bool is_data_blocked() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_BLK
+    return static_cast<bool>(blk() & PERF_MEM_BLK_DATA);
+#else
+    return false;
+#endif
+  }
 
   /**
-   * @return True in case of an address conflict.
+   * @return True in case of an address conflict (since Linux 5.12).
    */
-  [[nodiscard]] bool is_address_blocked() const noexcept { return static_cast<bool>(blk() & PERF_MEM_BLK_ADDR); }
+  [[nodiscard]] bool is_address_blocked() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_BLK
+    return static_cast<bool>(blk() & PERF_MEM_BLK_ADDR);
+#else
+    return false;
+#endif
+  }
 
   /**
    * @return True, if access was a snoop hit.
@@ -317,11 +389,15 @@ public:
   }
 
   /**
-   * @return Direct access to the MEM_BLK structure of the perf_mem_data_src.
+   * @return Direct access to the MEM_BLK structure of the perf_mem_data_src (since Linux 5.12).
    */
   [[nodiscard]] std::uint64_t blk() const noexcept
   {
+#ifndef PERFCPP_NO_MEM_BLK
     return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_blk;
+#else
+    return 0ULL;
+#endif
   }
 
   /**
@@ -329,7 +405,7 @@ public:
    */
   [[nodiscard]] std::uint64_t hops() const noexcept
   {
-#ifdef PERF_MEM_HOPS_0
+#ifndef PERFCPP_NO_MEM_HOPS_0
     return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_hops;
 #else
     return 0ULL;
