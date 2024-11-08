@@ -93,7 +93,7 @@ perf::analyzer::DataAnalyzer::map(const std::vector<Sample>& samples)
 }
 
 std::string
-perf::analyzer::DataAnalyzerResult::to_string() const noexcept
+perf::analyzer::DataAnalyzerResult::to_string() const
 {
   auto column_headers = std::vector<std::string>{
     "",        "",        "samples",        "loads",           "avg. load lat.", "L1d hits",       "LFB hits",
@@ -188,7 +188,7 @@ perf::analyzer::DataAnalyzerResult::to_string() const noexcept
 }
 
 std::string
-perf::analyzer::DataAnalyzerResult::to_json() const noexcept
+perf::analyzer::DataAnalyzerResult::to_json() const
 {
   auto stream = std::stringstream{};
   stream << "[";
@@ -243,9 +243,9 @@ perf::analyzer::DataAnalyzerResult::to_json() const noexcept
 }
 
 std::string
-perf::analyzer::DataAnalyzerResult::to_csv(std::string&& data_type_name,
+perf::analyzer::DataAnalyzerResult::to_csv(const std::string& data_type_name,
                                            const char delimiter,
-                                           const bool print_header) const noexcept
+                                           const bool print_header) const
 {
   auto stream = std::stringstream{};
 

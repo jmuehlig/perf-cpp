@@ -161,9 +161,13 @@ public:
   [[nodiscard]] const std::vector<DataType>& data_types() const noexcept { return _data_types; }
   [[nodiscard]] std::vector<DataType>& data_types() noexcept { return _data_types; }
 
-  [[nodiscard]] std::string to_string() const noexcept;
-  [[nodiscard]] std::string to_json() const noexcept;
-  [[nodiscard]] std::string to_csv(std::string&& data_type_name, char delimiter = ',', bool print_header = true) const noexcept;
+  [[nodiscard]] std::string to_string() const;
+  [[nodiscard]] std::string to_json() const;
+  [[nodiscard]] std::string to_csv(const std::string& data_type_name, char delimiter = ',', bool print_header = true) const;
+  [[nodiscard]] std::string to_csv(std::string&& data_type_name, const char delimiter = ',', const bool print_header = true) const
+  {
+    return to_csv(data_type_name, delimiter, print_header);
+  }
 
 private:
   std::vector<DataType> _data_types;
