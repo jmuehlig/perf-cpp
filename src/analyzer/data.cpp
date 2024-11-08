@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iomanip>
+#include <numeric>
 #include <perfcpp/analyzer/data.h>
 #include <perfcpp/exception.h>
 #include <sstream>
@@ -12,7 +13,7 @@ perf::analyzer::DataAnalyzer::add(perf::analyzer::DataType&& data_type)
   auto name = data_type.name();
 
   if (this->_instances.find(name) != this->_instances.end()) {
-    throw DataTypeAlreadyRegisteredError{name};
+    throw DataTypeAlreadyRegisteredError{ name };
   }
 
   this->_instances.insert(
@@ -95,8 +96,8 @@ std::string
 perf::analyzer::DataAnalyzerResult::to_string() const noexcept
 {
   auto column_headers = std::vector<std::string>{
-    "", "",        "samples", "loads",          "avg. load lat.",  "L1d hits", "LFB hits",
-    "L2 hits", "L3 hits", "local RAM hits", "remote RAM hits", "stores",   "avg. store lat."
+    "",        "",        "samples",        "loads",           "avg. load lat.", "L1d hits",       "LFB hits",
+    "L2 hits", "L3 hits", "local RAM hits", "remote RAM hits", "stores",         "avg. store lat.", "TLB hits", "TLB misses"
   };
   auto max_sizes = std::vector<std::uint64_t>{};
   for (const auto& header : column_headers) {
@@ -110,36 +111,11 @@ perf::analyzer::DataAnalyzerResult::to_string() const noexcept
     auto members = std::vector<std::vector<std::string>>{};
 
     for (const auto& member : data_type.members()) {
-      auto sum_load_latency = 0ULL;
-      auto sum_store_latency = 0ULL;
-      auto count_loads = 0ULL;
-      auto count_stores = 0ULL;
-      auto count_l1 = 0ULL;
-      auto count_lfb = 0ULL;
-      auto count_l2 = 0ULL;
-      auto count_l3 = 0ULL;
-      auto count_l4 = 0ULL;
-      auto count_local_ram = 0ULL;
-      auto count_remote_ram = 0ULL;
-      for (const auto& sample : member.samples()) {
-        if (sample.weight().has_value() && sample.data_src().has_value()) {
-          sum_load_latency +=
-            (static_cast<std::uint64_t>(sample.data_src().value().is_load()) * sample.weight().value().cache_latency());
-          sum_store_latency += (static_cast<std::uint64_t>(sample.data_src().value().is_store()) *
-                                sample.weight().value().cache_latency());
 
-          count_loads += sample.data_src().value().is_load();
-          count_stores += sample.data_src().value().is_store();
-          count_l1 += sample.data_src().value().is_mem_l1();
-          count_lfb += sample.data_src().value().is_mem_lfb();
-          count_l2 += sample.data_src().value().is_mem_l2();
-          count_l3 += sample.data_src().value().is_mem_l3();
-          count_l4 += sample.data_src().value().is_mem_l4();
-
-          count_local_ram += sample.data_src().value().is_mem_local_ram();
-          count_remote_ram += sample.data_src().value().is_mem_remote_ram();
-        }
-      }
+      const auto statistics = std::accumulate(member.samples().cbegin(),
+                                              member.samples().cend(),
+                                              MemberStatistic{},
+                                              [](auto& current, const auto& sample) { return current += sample; });
 
       auto columns = std::vector<std::string>{};
       columns.reserve(column_headers.size());
@@ -148,16 +124,18 @@ perf::analyzer::DataAnalyzerResult::to_string() const noexcept
       columns.emplace_back(
         std::string{ member.name() }.append(" (").append(std::to_string(member.size())).append("B)"));
       columns.emplace_back(std::to_string(member.samples().size()));
-      columns.emplace_back(std::to_string(count_loads));
-      columns.emplace_back(count_loads > 0U ? std::to_string(sum_load_latency / count_loads) : "0");
-      columns.emplace_back(std::to_string(count_l1));
-      columns.emplace_back(std::to_string(count_lfb));
-      columns.emplace_back(std::to_string(count_l2));
-      columns.emplace_back(std::to_string(count_l3));
-      columns.emplace_back(std::to_string(count_local_ram));
-      columns.emplace_back(std::to_string(count_remote_ram));
-      columns.emplace_back(std::to_string(count_stores));
-      columns.emplace_back(count_stores > 0U ? std::to_string(sum_store_latency / count_stores) : "0");
+      columns.emplace_back(std::to_string(statistics.loads()));
+      columns.emplace_back(std::to_string(statistics.load_latency()));
+      columns.emplace_back(std::to_string(statistics.l1_hits()));
+      columns.emplace_back(std::to_string(statistics.lfb_hits()));
+      columns.emplace_back(std::to_string(statistics.l2_hits()));
+      columns.emplace_back(std::to_string(statistics.l3_hits()));
+      columns.emplace_back(std::to_string(statistics.local_ram_hits()));
+      columns.emplace_back(std::to_string(statistics.remote_ram_hits()));
+      columns.emplace_back(std::to_string(statistics.stores()));
+      columns.emplace_back(std::to_string(statistics.store_latency()));
+      columns.emplace_back(std::to_string(statistics.tlb_hits()));
+      columns.emplace_back(std::to_string(statistics.tlb_misses()));
 
       for (auto i = 0U; i < max_sizes.size(); ++i) {
         max_sizes[i] = std::max(max_sizes[i], columns[i].size());
@@ -204,6 +182,99 @@ perf::analyzer::DataAnalyzerResult::to_string() const noexcept
     }
 
     stream << "}\n";
+  }
+
+  return stream.str();
+}
+
+std::string
+perf::analyzer::DataAnalyzerResult::to_json() const noexcept
+{
+  auto stream = std::stringstream{};
+  stream << "[";
+
+  for (auto data_type_index = 0U; data_type_index < this->_data_types.size(); ++data_type_index) {
+    const auto &data_type = this->_data_types[data_type_index];
+
+    if (data_type_index != 0U) {
+      stream << ",";
+    }
+    stream << "{ \"name\":\"" << data_type.name() << "\", \"members\": [";
+
+    for (auto member_index = 0U; member_index < data_type.members().size(); ++member_index) {
+      const auto& member = data_type.members()[member_index];
+
+      const auto statistics = std::accumulate(member.samples().cbegin(),
+                                              member.samples().cend(),
+                                              MemberStatistic{},
+                                              [](auto& current, const auto& sample) { return current += sample; });
+
+      if (member_index != 0U) {
+        stream << ",";
+      }
+      stream
+        << "{"
+        << "\"name\":" << "\"" << member.name() << "\","
+        << "\"offset\":" << member.offset() << ","
+        << "\"size\":" << member.size() << ","
+        << "\"samples\":" << member.samples().size() << ","
+        << "\"loads\":" << statistics.loads() << ","
+        << "\"average load latency\":" << statistics.load_latency() << ","
+        << "\"L1d hits\":" << statistics.l1_hits() << ","
+        << "\"LFB hits\":" << statistics.lfb_hits() << ","
+        << "\"L2 hits\":" << statistics.l2_hits() << ","
+        << "\"L3 hits\":" << statistics.l3_hits() << ","
+        << "\"L4 hits\":" << statistics.l4_hits() << ","
+        << "\"local RAM hits\":" << statistics.local_ram_hits() << ","
+        << "\"remote RAM hits\":" << statistics.remote_ram_hits() << ","
+        << "\"stores\":" << statistics.stores() << ","
+        << "\"average store latency\":" << statistics.store_latency() << ","
+        << "\"TLB hits\":" << statistics.tlb_hits() << ","
+        << "\"TLB misses\":" << statistics.tlb_misses()
+        << "}";
+    }
+
+    stream << "]}";
+
+  }
+
+  stream << "]";
+  return stream.str();
+}
+
+std::string
+perf::analyzer::DataAnalyzerResult::to_csv(std::string&& data_type_name,
+                                           const char delimiter,
+                                           const bool print_header) const noexcept
+{
+  auto stream = std::stringstream{};
+
+  if (print_header) {
+    stream << "name" << delimiter << "offset" << delimiter << "size" << delimiter << "samples" << delimiter << "loads"
+           << delimiter << "average load latency" << delimiter << "L1d hits" << delimiter << "LFB hits" << delimiter
+           << "L2 hits" << delimiter << "L3 hits" << delimiter << "L4 hits" << delimiter << "local RAM hits"
+           << delimiter << "remote RAM hits" << delimiter << "stores" << delimiter << "average store latency" << delimiter << "TLB hits" << delimiter << "TLB misses" << '\n';
+  }
+
+  if (auto data_type =
+        std::find_if(this->_data_types.cbegin(),
+                     this->_data_types.cend(),
+                     [&data_type_name](const auto& data_type) { return data_type.name() == data_type_name; });
+      data_type != this->_data_types.cend()) {
+    for (const auto& member : data_type->members()) {
+
+      const auto statistics = std::accumulate(member.samples().cbegin(),
+                                              member.samples().cend(),
+                                              MemberStatistic{},
+                                              [](auto& current, const auto& sample) { return current += sample; });
+
+      stream << member.name() << delimiter << member.offset() << delimiter << member.size() << delimiter
+             << member.samples().size() << delimiter << statistics.loads() << delimiter << statistics.load_latency()
+             << delimiter << statistics.l1_hits() << delimiter << statistics.lfb_hits() << delimiter
+             << statistics.l2_hits() << delimiter << statistics.l3_hits() << delimiter << statistics.l4_hits()
+             << delimiter << statistics.local_ram_hits() << delimiter << statistics.remote_ram_hits() << delimiter
+             << statistics.stores() << delimiter << statistics.store_latency() << delimiter << statistics.tlb_hits() << delimiter << statistics.tlb_misses() << '\n';
+    }
   }
 
   return stream.str();

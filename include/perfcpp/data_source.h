@@ -217,6 +217,16 @@ public:
   [[nodiscard]] bool is_tlb_l2() const noexcept { return static_cast<bool>(tlb() & PERF_MEM_TLB_L2); }
 
   /**
+   * @return True, if the access hit the dTLB.
+   */
+  [[nodiscard]] bool is_tlb_l1_hit() const noexcept { return is_tlb_l1() && is_tlb_hit(); }
+
+  /**
+   * @return True, if the access hit the STLB.
+   */
+  [[nodiscard]] bool is_tlb_l2_hit() const noexcept { return is_tlb_l2() && is_tlb_hit(); }
+
+  /**
    * @return True, if the access can be associated with the hardware walker.
    */
   [[nodiscard]] bool is_tlb_walk() const noexcept { return static_cast<bool>(tlb() & PERF_MEM_TLB_WK); }

@@ -611,7 +611,7 @@ private:
    *
    * @param sample Sample to read the data into.
    */
-  void read_sample_id(UserLevelBufferEntry& entry, Sample& sample) const noexcept;
+  void read_sample_id_all(UserLevelBufferEntry& entry, Sample& sample) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a "normal" sample.

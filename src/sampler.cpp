@@ -276,7 +276,7 @@ perf::Sampler::result(const bool sort_by_time) const
 }
 
 void
-perf::Sampler::read_sample_id(perf::Sampler::UserLevelBufferEntry& entry, perf::Sample& sample) const noexcept
+perf::Sampler::read_sample_id_all(UserLevelBufferEntry& entry, Sample& sample) const noexcept
 {
   if (this->_values.is_set(PERF_SAMPLE_TID)) {
     sample.process_id(entry.read<std::uint32_t>());
@@ -574,7 +574,7 @@ perf::Sampler::read_loss_event(perf::Sampler::UserLevelBufferEntry entry) const
   sample.count_loss(entry.read<std::uint64_t>());
 
   /// Read sample_id.
-  this->read_sample_id(entry, sample);
+  this->read_sample_id_all(entry, sample);
 
   return sample;
 }
@@ -597,7 +597,7 @@ perf::Sampler::read_context_switch_event(perf::Sampler::UserLevelBufferEntry ent
   }
 
   /// Read sample_id.
-  this->read_sample_id(entry, sample);
+  this->read_sample_id_all(entry, sample);
 
   sample.context_switch(ContextSwitch{ is_switch_out, is_switch_out_preempt, process_id, thread_id });
 
@@ -631,7 +631,7 @@ perf::Sampler::read_throttle_event(perf::Sampler::UserLevelBufferEntry entry) co
   }
 
   /// Read sample_id.
-  this->read_sample_id(entry, sample);
+  this->read_sample_id_all(entry, sample);
 
   sample.throttle(Throttle{ entry.is_throttle() });
 

@@ -158,10 +158,76 @@ public:
   }
   ~DataAnalyzerResult() = default;
 
+  [[nodiscard]] const std::vector<DataType>& data_types() const noexcept { return _data_types; }
+  [[nodiscard]] std::vector<DataType>& data_types() noexcept { return _data_types; }
+
   [[nodiscard]] std::string to_string() const noexcept;
+  [[nodiscard]] std::string to_json() const noexcept;
+  [[nodiscard]] std::string to_csv(std::string&& data_type_name, char delimiter = ',', bool print_header = true) const noexcept;
 
 private:
   std::vector<DataType> _data_types;
+
+  class MemberStatistic
+  {
+  public:
+    MemberStatistic() noexcept = default;
+    ~MemberStatistic() noexcept = default;
+
+    [[nodiscard]] std::uint64_t loads() const noexcept { return _count_loads; }
+    [[nodiscard]] std::uint64_t load_latency() const noexcept { return _count_loads > 0ULL ? _sum_load_latency / _count_loads : 0ULL; }
+    [[nodiscard]] std::uint64_t stores() const noexcept { return _count_stores; }
+    [[nodiscard]] std::uint64_t store_latency() const noexcept { return _count_stores > 0ULL ? _sum_store_latency / _count_stores : 0ULL; }
+    [[nodiscard]] std::uint64_t l1_hits() const noexcept { return _count_l1_hits; }
+    [[nodiscard]] std::uint64_t lfb_hits() const noexcept { return _count_lfb_hits; }
+    [[nodiscard]] std::uint64_t l2_hits() const noexcept { return _count_l2_hits; }
+    [[nodiscard]] std::uint64_t l3_hits() const noexcept { return _count_l3_hits; }
+    [[nodiscard]] std::uint64_t l4_hits() const noexcept { return _count_l4_hits; }
+    [[nodiscard]] std::uint64_t local_ram_hits() const noexcept { return _count_local_ram_hits; }
+    [[nodiscard]] std::uint64_t remote_ram_hits() const noexcept { return _count_remote_ram_hits; }
+    [[nodiscard]] std::uint64_t tlb_hits() const noexcept { return _tlb_hits; }
+    [[nodiscard]] std::uint64_t tlb_misses() const noexcept { return _tlb_misses; }
+
+    MemberStatistic& operator+=(const Sample& sample) noexcept {
+      if (!sample.data_src().has_value() || !sample.weight().has_value()) {
+        return *this;
+      }
+
+      const auto data_src = sample.data_src().value();
+      const auto weight = sample.weight().value();
+
+      _count_loads += static_cast<std::uint64_t>(data_src.is_load());
+      _sum_load_latency +=
+        (static_cast<std::uint64_t>(data_src.is_load()) * weight.cache_latency());
+      _count_stores += static_cast<std::uint64_t>(data_src.is_store());
+      _sum_store_latency +=
+        (static_cast<std::uint64_t>(data_src.is_store()) * weight.cache_latency());
+      _count_l1_hits += static_cast<std::uint64_t>(data_src.is_mem_l1());
+      _count_lfb_hits += static_cast<std::uint64_t>(data_src.is_mem_lfb());
+      _count_l2_hits += static_cast<std::uint64_t>(data_src.is_mem_l2());
+      _count_l3_hits += static_cast<std::uint64_t>(data_src.is_mem_l3());
+      _count_l4_hits += static_cast<std::uint64_t>(data_src.is_mem_l4());
+      _count_local_ram_hits += static_cast<std::uint64_t>(data_src.is_mem_local_ram());
+      _count_remote_ram_hits += static_cast<std::uint64_t>(data_src.is_mem_remote_ram());
+      _tlb_hits = static_cast<std::uint64_t>(data_src.is_tlb_hit());
+      _tlb_misses = static_cast<std::uint64_t>(data_src.is_tlb_miss());
+      return *this;
+    }
+  private:
+    std::uint64_t _count_loads {0ULL};
+    std::uint64_t _sum_load_latency {0ULL};
+    std::uint64_t _count_stores{ 0ULL };
+    std::uint64_t _sum_store_latency {0ULL};
+    std::uint64_t _count_l1_hits {0ULL};
+    std::uint64_t _count_lfb_hits {0ULL};
+    std::uint64_t _count_l2_hits {0ULL};
+    std::uint64_t _count_l3_hits {0ULL};
+    std::uint64_t _count_l4_hits {0ULL};
+    std::uint64_t _count_local_ram_hits {0ULL};
+    std::uint64_t _count_remote_ram_hits {0ULL};
+    std::uint64_t _tlb_hits {0ULL};
+    std::uint64_t _tlb_misses {0ULL};
+  };
 };
 
 class DataAnalyzer
