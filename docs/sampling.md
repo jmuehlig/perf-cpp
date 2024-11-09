@@ -367,7 +367,7 @@ Each `perf::Branch` instance has the following values:
 * A flag that indicates if the branch was mispredicted (`branch.is_mispredicted()`) (`0` if not supported by the hardware).
 * A flag that indicates if the branch was within a transaction (`branch.is_in_transaction()`).
 * A flag that indicates if the branch was a transaction abort (`branch.is_transaction_abort()`).
-* Cycles since the last branch (`branch.cycles()`) (`0` if not supported by the hardware).
+* Cycles since the last branch (`branch.cycles()`) (`0` if not supported by the hardware – since Linux `4.3`).
 
 &rarr; [See code example](../examples/branch_sampling.cpp)
 
@@ -409,58 +409,61 @@ Data source where the data was sampled (e.g., local mem, remote mem, L1d, L2, ..
 
 The `perf::DataSource` object can be queried for the following information:
 
-| Query                                                        | Information                                                                            |
-|--------------------------------------------------------------|----------------------------------------------------------------------------------------|
-| `sample_record.data_src().value().is_load()`                 | `True`, if the access was a load operation.                                            |
-| `sample_record.data_src().value().is_store()`                | `True`, if the access was a store operation.                                           |
-| `sample_record.data_src().value().is_prefetch()`             | `True`, if the access was a prefetch operation.                                        |
-| `sample_record.data_src().value().is_exec()`                 | `True`, if the access was an execute operation.                                        |
-| `sample_record.data_src().value().is_mem_hit()`              | `True`, if the access was a hit.                                                       |
-| `sample_record.data_src().value().is_mem_miss()`             | `True`, if the access was a miss.                                                      |
-| `sample_record.data_src().value().is_mem_hit()`              | `True`, if the access was a hit.                                                       |
-| `sample_record.data_src().value().is_mem_l1()`               | `True`, if the data was found in the L1 cache.                                         |
-| `sample_record.data_src().value().is_mem_l2()`               | `True`, if the data was found in the L2 cache.                                         |
-| `sample_record.data_src().value().is_mem_l3()`               | `True`, if the data was found in the L3 cache.                                         |
-| `sample_record.data_src().value().is_mem_l4()`               | `True`, if the data was found in the L4 cache.                                         |
-| `sample_record.data_src().value().is_mem_lfb()`              | `True`, if the data was found in the Line Fill Buffer (or Miss Address Buffer on AMD). |
-| `sample_record.data_src().value().is_mem_ram()`              | `True`, if the data was found in any RAM.                                              |
-| `sample_record.data_src().value().is_mem_local_ram()`        | `True`, if the data was found in the local RAM.                                        |
-| `sample_record.data_src().value().is_mem_remote_ram()`       | `True`, if the data was found in any remote RAM.                                       |
-| `sample_record.data_src().value().is_mem_hops0()`            | `True`, if the data was found locally.                                                 |
-| `sample_record.data_src().value().is_mem_hops1()`            | `True`, if the data was found on the same node.                                        |
-| `sample_record.data_src().value().is_mem_hops2()`            | `True`, if the data was found on a remote socket.                                      |
-| `sample_record.data_src().value().is_mem_hops3()`            | `True`, if the data was found on a remote board.                                       |
-| `sample_record.data_src().value().is_mem_remote_ram1()`      | `True`, if the data was found in a remote RAM on the same node.                        |
-| `sample_record.data_src().value().is_mem_remote_ram2()`      | `True`, if the data was found in a remote RAM on a different socket.                   |
-| `sample_record.data_src().value().is_mem_remote_ram3()`      | `True`, if the data was found in a remote RAM on a different board.                    |
-| `sample_record.data_src().value().is_mem_remote_cce1()`      | `True`, if the data was found in cache with one hop distance.                          |
-| `sample_record.data_src().value().is_mem_remote_cce2()`      | `True`, if the data was found in cache with two hops distance.                         |
-| `sample_record.data_src().value().is_pmem()`                 | `True`, if the data was found on a PMEM device.                                        |
-| `sample_record.data_src().value().is_cxl()`                  | `True`, if the data was transferred via Compute Express Link.                          |
-| `sample_record.data_src().value().is_tlb_hit()`              | `True`, if the access was a TLB hit.                                                   |
-| `sample_record.data_src().value().is_tlb_miss()`             | `True`, if the access was a TLB miss.                                                  |
-| `sample_record.data_src().value().is_tlb_l1()`               | `True`, if the access can be associated with the dTLB.                                 |
-| `sample_record.data_src().value().is_tlb_l2()`               | `True`, if the access can be associated with the STLB.                                 |
-| `sample_record.data_src().value().is_tlb_walk()`             | `True`, if the access can be associated with the hardware walker.                      |
-| `sample_record.data_src().value().is_locked()`               | `True`, If the address was accessed via lock instruction.                              |
-| `sample_record.data_src().value().is_data_blocked()`         | `True` in case the data could not be forwarded.                                        |
-| `sample_record.data_src().value().is_address_blocked()`      | `True` in case of an address conflict.                                                 |
-| `sample_record.data_src().value().is_snoop_hit()`            | `True`, if access was a snoop hit.                                                     |
-| `sample_record.data_src().value().is_snoop_miss()`           | `True`, if access was a snoop miss.                                                    |
-| `sample_record.data_src().value().is_snoop_hit_modified()`   | `True`, if access was a snoop hit modified.                                            |
+| Query                                                      | Information                                                                              |
+|------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| `sample_record.data_src().value().is_load()`               | `True`, if the access was a load operation.                                              |
+| `sample_record.data_src().value().is_store()`              | `True`, if the access was a store operation.                                             |
+| `sample_record.data_src().value().is_prefetch()`           | `True`, if the access was a prefetch operation.                                          |
+| `sample_record.data_src().value().is_exec()`               | `True`, if the access was an execute operation.                                          |
+| `sample_record.data_src().value().is_mem_hit()`            | `True`, if the access was a hit.                                                         |
+| `sample_record.data_src().value().is_mem_miss()`           | `True`, if the access was a miss.                                                        |
+| `sample_record.data_src().value().is_mem_hit()`            | `True`, if the access was a hit.                                                         |
+| `sample_record.data_src().value().is_mem_l1()`             | `True`, if the data was found in the L1 cache.                                           |
+| `sample_record.data_src().value().is_mem_l2()`             | `True`, if the data was found in the L2 cache.                                           |
+| `sample_record.data_src().value().is_mem_l3()`             | `True`, if the data was found in the L3 cache.                                           |
+| `sample_record.data_src().value().is_mem_l4()`             | `True`, if the data was found in the L4 cache (since Linux `4.14`).                      |
+| `sample_record.data_src().value().is_mem_lfb()`            | `True`, if the data was found in the Line Fill Buffer (or Miss Address Buffer on AMD).   |
+| `sample_record.data_src().value().is_mem_l2_mhb()`         | `True`, if the data was found in the L2 Miss Handling Buffer (since Linux `6.11`).       |
+| `sample_record.data_src().value().is_mem_ram()`            | `True`, if the data was found in any (any) RAM.                                          |
+| `sample_record.data_src().value().is_mem_local_ram()`      | `True`, if the data was found in the local RAM.                                          |
+| `sample_record.data_src().value().is_mem_remote_ram()`     | `True`, if the data was found in any remote RAM.                                         |
+| `sample_record.data_src().value().is_mem_hops0()`          | `True`, if the data was found locally (since Linux `5.16`).                              |
+| `sample_record.data_src().value().is_mem_hops1()`          | `True`, if the data was found on the same node (since Linux `5.17`).                     |
+| `sample_record.data_src().value().is_mem_hops2()`          | `True`, if the data was found on a remote socket (since Linux `5.17`).                   |
+| `sample_record.data_src().value().is_mem_hops3()`          | `True`, if the data was found on a remote board (since Linux `5.17`).                    |
+| `sample_record.data_src().value().is_mem_remote_ram1()`    | `True`, if the data was found in a remote RAM on the same node.                          |
+| `sample_record.data_src().value().is_mem_remote_ram2()`    | `True`, if the data was found in a remote RAM on a different socket.                     |
+| `sample_record.data_src().value().is_mem_remote_ram3()`    | `True`, if the data was found in a remote RAM on a different board (since Linux `5.17`). |
+| `sample_record.data_src().value().is_mem_remote_cce1()`    | `True`, if the data was found in a cache with one hop distance.                          |
+| `sample_record.data_src().value().is_mem_remote_cce2()`    | `True`, if the data was found in a cache with two hops distance.                         |
+| `sample_record.data_src().value().is_pmem()`               | `True`, if the data was found on a PMEM device (since Linux `4.14`).                     |
+| `sample_record.data_src().value().is_cxl()`                | `True`, if the data was transferred via Compute Express Link (since Linux `6.1`).        |
+| `sample_record.data_src().value().is_io()`                 | `True`, if the memory address is I/O.                                                    |
+| `sample_record.data_src().value().is_uncached()`           | `True`, if the memory address is related to uncached memory.                             |
+| `sample_record.data_src().value().is_tlb_hit()`            | `True`, if the access was a TLB hit.                                                     |
+| `sample_record.data_src().value().is_tlb_miss()`           | `True`, if the access was a TLB miss.                                                    |
+| `sample_record.data_src().value().is_tlb_l1()`             | `True`, if the access can be associated with the dTLB.                                   |
+| `sample_record.data_src().value().is_tlb_l2()`             | `True`, if the access can be associated with the STLB.                                   |
+| `sample_record.data_src().value().is_tlb_walk()`           | `True`, if the access can be associated with the hardware walker.                        |
+| `sample_record.data_src().value().is_locked()`             | `True`, If the address was accessed via lock instruction.                                |
+| `sample_record.data_src().value().is_data_blocked()`       | `True` in case the data could not be forwarded.                                          |
+| `sample_record.data_src().value().is_address_blocked()`    | `True` in case of an address conflict (since Linux `5.12`).                              |
+| `sample_record.data_src().value().is_snoop_hit()`          | `True`, if access was a snoop hit.                                                       |
+| `sample_record.data_src().value().is_snoop_miss()`         | `True`, if access was a snoop miss.                                                      |
+| `sample_record.data_src().value().is_snoop_hit_modified()` | `True`, if access was a snoop hit modified.                                              |
 
 All these queries wrap around the `perf_mem_data_src` data structure.
 Since we may have missed specific operations, you can also access each particular data structure:
 * `sample_record.data_src().value().op()` accesses the `PERF_MEM_OP` structure.
 * `sample_record.data_src().value().lvl()` accesses the `PERF_MEM_LVL` structure. Note that this structure is deprecated, use `sample_record.data_src().value().lvl_num()` instead.
-* `sample_record.data_src().value().lvl_num()` accesses the `PERF_MEM_LVL_NUM` structure.
-* `sample_record.data_src().value().remote()` accesses the `PERF_MEM_REMOTE` structure.
+* `sample_record.data_src().value().lvl_num()` accesses the `PERF_MEM_LVL_NUM` structure (since Linux `4.14`).
+* `sample_record.data_src().value().remote()` accesses the `PERF_MEM_REMOTE` structure (since Linux `4.14`).
 * `sample_record.data_src().value().snoop()` accesses the `PERF_MEM_SNOOP` structure.
-* `sample_record.data_src().value().snoopx()` accesses the `PERF_MEM_SNOOPX` structure.
+* `sample_record.data_src().value().snoopx()` accesses the `PERF_MEM_SNOOPX` structure (since Linux `4.14`).
 * `sample_record.data_src().value().lock()` accesses the `PERF_MEM_LOCK` structure.
-* `sample_record.data_src().value().blk()` accesses the `PERF_MEM_BLK` structure.
+* `sample_record.data_src().value().blk()` accesses the `PERF_MEM_BLK` structure (since Linux `5.12`).
 * `sample_record.data_src().value().tlb()` accesses the `PERF_MEM_TLB` structure.
-* `sample_record.data_src().value().hops()` accesses the `PERF_MEM_HOPS` structure.
+* `sample_record.data_src().value().hops()` accesses the `PERF_MEM_HOPS` structure (since Linux `5.16`).
 
 &rarr; [See code example](../examples/address_sampling.cpp)
 

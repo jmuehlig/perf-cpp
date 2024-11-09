@@ -73,6 +73,18 @@ public:
   }
 
   /**
+   * @return True, if the memory address was found in the L2 Miss Handling Buffer (since Linux 6.11).
+   */
+  [[nodiscard]] bool is_mem_l2_mhb() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_LVLNUM_L2_MHB
+    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_L2_MHB);
+#else
+    return false;
+#endif
+  }
+
+  /**
    * @return True, if the memory address was found in the L2 cache.
    */
   [[nodiscard]] bool is_mem_l2() const noexcept
@@ -114,7 +126,7 @@ public:
   [[nodiscard]] bool is_mem_local_ram() const noexcept
   {
 #if !defined(PERFCPP_NO_MEM_LVLNUM) && !defined(PERFCPP_NO_MEM_REMOTE)
-    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_RAM) && static_cast<bool>(remote() != PERF_MEM_REMOTE_REMOTE);
+    return is_mem_ram() && is_mem_local();
     ;
 #else
     return static_cast<bool>(lvl() & PERF_MEM_LVL_LOC_RAM);
@@ -134,7 +146,7 @@ public:
   }
 
   /**
-   * @return True, if the memory address was found in the RAM.
+   * @return True, if the memory address was found in any RAM (locally or remotely).
    */
   [[nodiscard]] bool is_mem_ram() const noexcept
   {
@@ -148,13 +160,21 @@ public:
   /**
    * @return True, if the memory address was found with no hop distance (since Linux 5.16).
    */
-  [[nodiscard]] bool is_mem_hops0() const noexcept
+  [[nodiscard]] bool is_mem_local() const noexcept
   {
 #ifndef PERFCPP_NO_MEM_HOPS_0
     return static_cast<bool>(hops() == PERF_MEM_HOPS_0);
 #else
-    return is_mem_local_ram();
+    return false;
 #endif
+  }
+
+  /**
+   * @return True, if the memory address was found with no hop distance (since Linux 5.16).
+   */
+  [[nodiscard]] bool is_mem_hops0() const noexcept
+  {
+    return is_mem_local();
   }
 
   /**
@@ -165,7 +185,7 @@ public:
 #ifndef PERFCPP_NO_MEM_HOPS_1_3
     return static_cast<bool>(hops() == PERF_MEM_HOPS_1);
 #else
-    return static_cast<bool>(lvl() & PERF_MEM_LVL_REM_RAM1);
+    return false;
 #endif
   }
 
@@ -178,7 +198,7 @@ public:
 #ifndef PERFCPP_NO_MEM_HOPS_1_3
     return static_cast<bool>(hops() == PERF_MEM_HOPS_2);
 #else
-    return static_cast<bool>(lvl() & PERF_MEM_LVL_REM_RAM2);
+    return false;
 #endif
   }
 
@@ -257,6 +277,18 @@ public:
   }
 
   /**
+   * @return True, if the memory address is related to uncached memory.
+   */
+  [[nodiscard]] bool is_uncached() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_LVLNUM_UNC
+    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_UNC);
+#else
+    return return static_cast<bool>(lvl() & PERF_MEM_LVL_UNC);
+#endif
+  }
+
+  /**
    * @return True, if the memory address is stored in a PMEM module (since Linux 4.14).
    */
   [[nodiscard]] bool is_pmem() const noexcept
@@ -281,14 +313,14 @@ public:
   }
 
   /**
-   * @return True, if the memory address is I/O (since Linux 6.1).
+   * @return True, if the memory address is I/O.
    */
   [[nodiscard]] bool is_io() const noexcept
   {
 #ifndef PERFCPP_NO_MEM_LVLNUM_IO
     return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_IO);
 #else
-    return false;
+    return return static_cast<bool>(lvl() & PERF_MEM_LVL_IO);
 #endif
   }
 
