@@ -109,7 +109,7 @@ git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
 
 /// 3) Switch to the current stable version (optional)
-git checkout v0.8.1
+git checkout v0.8.2
 
 /// 4) Generate the Makefile
 cmake . -B build -DBUILD_EXAMPLES=1
@@ -168,8 +168,10 @@ All compiled example binaries are located in `build/examples/bin` and can be exe
 * Code example for [multicore sampling: `examples/multi_cpu_sampling.cpp`](examples/multi_cpu_sampling.cpp)
 
 ## System Requirements
+* Support for C++ `17` features
+* CMake version `3.10` or higher
 * Minimum *Linux Kernel version*: `>= 4.0`
-* Recommended *Linux Kernel version*: `>= 5.13` (older Kernels might not implement all features like sampling for latency).
+* Recommended *Linux Kernel version*: `>= 5.13` (older Kernels might not implement all features like sampling for latency)
 * Installed `perf` (check if `perf stat -- ls` provides any output, otherwise follow the instructions)
 
 ---
