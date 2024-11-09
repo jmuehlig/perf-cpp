@@ -1,7 +1,13 @@
 # *perf-cpp*: Changelog
 
+## v0.8.2
+* Fixed compatibility for older Linux versions that don't provide `PERF_MEM_BLK`, `PERF_MEM_LVLNUM`, and `PERF_MEM_REMOTE`.
+
+## v0.8.1
+* Fixed error using decltype instead of typeof (by [@toge](https://github.com/toge) )
+
 ## v0.8.0
-* Restructured the build-system – thanks to [@foolnotion](https://github.com/jmuehlig/perf-cpp/commits?author=foolnotion): 
+* Restructured the build-system – thanks to [@foolnotion](https://github.com/foolnotion): 
   * Examples are no longer included into default build and must be activated with `-DBUILD_EXAMPLES=1` (see [documentation](docs/build.md#build-examples)). 
   * New feature: Added option to install the library using `-DCMAKE_INSTALL_PREFIX=/path/to/libperf-cpp` (see [documentation](docs/build.md#install-the-library)).
 * New feature: Define period or frequency along with trigger events when sampling (see [documentation](docs/sampling.md#period--frequency)).
