@@ -23,7 +23,7 @@ git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
 
 # Optional: Switch to the latest stable version
-git checkout v0.8.1
+git checkout v0.8.2
 
 # Build the library (in build/)
 cmake . -B build -DBUILD_EXAMPLES=1
@@ -131,8 +131,10 @@ All code examples are available in the [examples/](examples) folder.
 * **[Changelog](CHANGELOG.md)**: Stay updated with the latest changes and improvements.
 
 ## System Requirements
+* Support for C++ `17` features
+* CMake version `3.10` or higher
 * Minimum *Linux Kernel version*: `>= 4.0`
-* Recommended *Linux Kernel version*: `>= 5.13` (older Kernels might not implement all features like sampling for latency).
+* Recommended *Linux Kernel version*: `>= 5.13` (older Kernels might not implement all features like sampling for latency)
 * Installed `perf` (check if `perf stat -- ls` provides any output, otherwise follow the instructions)
 
 ## Contribute and Engage with Us
