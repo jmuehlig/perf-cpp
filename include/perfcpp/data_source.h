@@ -239,7 +239,7 @@ public:
     return static_cast<bool>(remote() == PERF_MEM_REMOTE_REMOTE) && is_mem_hops1() &&
            (is_mem_l1() || is_mem_l2() || is_mem_l3());
 #else
-    return return static_cast<bool>(lvl() & PERF_MEM_LVL_REM_CCE1);
+    return static_cast<bool>(lvl() & PERF_MEM_LVL_REM_CCE1);
 #endif
   }
 
@@ -252,7 +252,7 @@ public:
     return static_cast<bool>(remote() == PERF_MEM_REMOTE_REMOTE) && is_mem_hops2() &&
            (is_mem_l1() || is_mem_l2() || is_mem_l3());
 #else
-    return return static_cast<bool>(lvl() & PERF_MEM_LVL_REM_CCE2);
+    return static_cast<bool>(lvl() & PERF_MEM_LVL_REM_CCE2);
 #endif
   }
 

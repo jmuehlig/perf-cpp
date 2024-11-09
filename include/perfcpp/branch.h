@@ -17,7 +17,7 @@ enum BranchType : std::uint64_t
 #ifndef PERFCPP_NO_SAMPLE_BRANCH_CALL
   Call = PERF_SAMPLE_BRANCH_ANY_CALL,
 #else
-  Call = 1U << 62,
+  Call = 1ULL << 62,
 #endif
   DirectCall = PERF_SAMPLE_BRANCH_CALL,
   IndirectCall = PERF_SAMPLE_BRANCH_IND_CALL,
@@ -25,7 +25,7 @@ enum BranchType : std::uint64_t
 #ifndef PERFCPP_NO_SAMPLE_BRANCH_IND_JUMP
   IndirectJump = PERF_SAMPLE_BRANCH_IND_JUMP,
 #else
-  IndirectJump = 1U << 63,
+  IndirectJump = 1ULL << 63,
 #endif
   Conditional = PERF_SAMPLE_BRANCH_COND,
   TransactionalMemoryAbort = PERF_SAMPLE_BRANCH_ABORT_TX,
