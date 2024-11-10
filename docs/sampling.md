@@ -424,6 +424,8 @@ The `perf::DataSource` object can be queried for the following information:
 | `sample_record.data_src().value().is_mem_l4()`             | `True`, if the data was found in the L4 cache (since Linux `4.14`).                      |
 | `sample_record.data_src().value().is_mem_lfb()`            | `True`, if the data was found in the Line Fill Buffer (or Miss Address Buffer on AMD).   |
 | `sample_record.data_src().value().is_mem_l2_mhb()`         | `True`, if the data was found in the L2 Miss Handling Buffer (since Linux `6.11`).       |
+| `sample_record.data_src().value().is_mem_local()`          | `True`, if the data was found in local memory subsystem (since Linux `5.16`).            |
+| `sample_record.data_src().value().is_mem_remote()`         | `True`, if the data was found in remote memory subsystem (since Linux `5.16`).           |
 | `sample_record.data_src().value().is_mem_ram()`            | `True`, if the data was found in any (any) RAM.                                          |
 | `sample_record.data_src().value().is_mem_local_ram()`      | `True`, if the data was found in the local RAM.                                          |
 | `sample_record.data_src().value().is_mem_remote_ram()`     | `True`, if the data was found in any remote RAM.                                         |

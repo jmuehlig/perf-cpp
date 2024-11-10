@@ -139,7 +139,7 @@ public:
   [[nodiscard]] bool is_mem_remote_ram() const noexcept
   {
 #if !defined(PERFCPP_NO_MEM_LVLNUM) && !defined(PERFCPP_NO_MEM_REMOTE)
-    return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_RAM) && static_cast<bool>(remote() == PERF_MEM_REMOTE_REMOTE);
+    return is_mem_ram() && is_mem_remote();
 #else
     return static_cast<bool>(lvl() & PERF_MEM_LVL_REM_RAM1) || static_cast<bool>(lvl() & PERF_MEM_LVL_REM_RAM2);
 #endif
@@ -158,12 +158,24 @@ public:
   }
 
   /**
-   * @return True, if the memory address was found with no hop distance (since Linux 5.16).
+   * @return True, if the memory address was found in local memory subsystem (since Linux 5.16).
    */
   [[nodiscard]] bool is_mem_local() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_HOPS_0
-    return static_cast<bool>(hops() == PERF_MEM_HOPS_0);
+#ifndef PERFCPP_NO_MEM_REMOTE
+    return static_cast<bool>(remote() != PERF_MEM_REMOTE_REMOTE);
+#else
+    return false;
+#endif
+  }
+
+  /**
+   * @return True, if the memory address was found in remote memory subsystem (since Linux 5.16).
+   */
+  [[nodiscard]] bool is_mem_remote() const noexcept
+  {
+#ifndef PERFCPP_NO_MEM_REMOTE
+    return static_cast<bool>(remote() == PERF_MEM_REMOTE_REMOTE);
 #else
     return false;
 #endif
@@ -174,7 +186,11 @@ public:
    */
   [[nodiscard]] bool is_mem_hops0() const noexcept
   {
-    return is_mem_local();
+#ifndef PERFCPP_NO_MEM_HOPS_0
+    return static_cast<bool>(hops() == PERF_MEM_HOPS_0);
+#else
+    return false;
+#endif
   }
 
   /**
