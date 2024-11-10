@@ -31,6 +31,9 @@ main()
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
                                                    /* create benchmark of 512 MB */ 512U };
 
+  /// Access to live events. Needs to be initiated after adding all live events.
+  auto live_events = perf::LiveEventCounter{ event_counter };
+
   /// Start recording.
   try {
     event_counter.start();
@@ -42,10 +45,8 @@ main()
   /// Execute the benchmark (accessing cache lines in a random order).
   constexpr auto iterations = 20U;
   for (auto i = 0U; i < iterations; ++i) {
-
-    /// Read the current counter value before the benchmark.
-    const auto start_cache_references = event_counter.live_result(/* cache-references counter */ 0U, benchmark.size());
-    const auto start_cache_misses = event_counter.live_result(/* cache-misses counter */ 1U, benchmark.size());
+    /// Read current values of live events and mark them as "start" values.
+    live_events.start();
 
     /// Perform benchmark.
     auto value = 0ULL;
@@ -59,11 +60,11 @@ main()
                               /// this unused value.
 
     /// Read the current counter value after the benchmark.
-    const auto end_cache_references = event_counter.live_result(/* cache-references counter */ 0U, benchmark.size());
-    const auto end_cache_misses = event_counter.live_result(/* cache-misses counter */ 1U, benchmark.size());
+    live_events.stop();
 
-    std::cout << "Live results: " << end_cache_references - start_cache_references << " cache-references, "
-              << end_cache_misses - start_cache_misses << " cache-misses" << std::endl;
+    /// Print the live values.
+    std::cout << "Live results: " << live_events.get("cache-references", benchmark.size()) << " cache-references, "
+              << live_events.get("cache-misses", benchmark.size()) << " cache-misses" << std::endl;
   }
 
   /// Stop recording counters.

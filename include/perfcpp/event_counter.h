@@ -21,15 +21,15 @@ class EventCounter
 
 private:
   /**
-   * The Event class stores information about events that will be recorded, e.g., the group the event is scheduled to,
-   * the index within the group, the name, and a flag if the event should be shown within the results (which is not true
-   * for events only needed for metrics). The EventCounter will have an ordered list of events, dictating the order the
-   * user requested the events to output the events in exactly that order.
+   * The EventView class stores information about events that will be recorded, e.g., the group the event is scheduled
+   * to, the index within the group, the name, and a flag if the event should be shown within the results (which is not
+   * true for events only needed for metrics). The EventCounter will have an ordered list of events, dictating the order
+   * the user requested the events to output the events in exactly that order.
    */
-  class Event
+  class EventView
   {
   public:
-    explicit Event(std::string_view name) noexcept
+    explicit EventView(std::string_view name) noexcept
       : _name(name)
       , _is_shown_in_results(false)
       , _is_event(false)
@@ -38,10 +38,10 @@ private:
     {
     }
 
-    Event(std::string_view name,
-          const bool is_hidden,
-          const std::uint8_t group_id,
-          const std::uint8_t in_group_id) noexcept
+    EventView(std::string_view name,
+              const bool is_hidden,
+              const std::uint8_t group_id,
+              const std::uint8_t in_group_id) noexcept
       : _name(name)
       , _is_shown_in_results(is_hidden)
       , _is_event(true)
@@ -50,7 +50,16 @@ private:
     {
     }
 
-    ~Event() = default;
+    EventView(std::string_view name, const std::uint8_t in_group_id) noexcept
+      : _name(name)
+      , _is_shown_in_results(false)
+      , _is_event(true)
+      , _group_id(0U)
+      , _in_group_id(in_group_id)
+    {
+    }
+
+    ~EventView() = default;
 
     [[nodiscard]] std::string_view name() const noexcept { return _name; }
     [[nodiscard]] bool is_event() const noexcept { return _is_event; }
@@ -182,18 +191,39 @@ public:
    * The reason for having an output parameter is to not allocate any memory during a lightweight read.
    *
    * @param result Output parameter to write the result without allocating any memory.
-   * @param normalization  Normalization value, default = 1.
    */
-  void live_result(std::vector<double>& result, std::uint64_t normalization = 1U) const;
+  void live_result(std::vector<double>& result) const noexcept;
+
+  /**
+   * Performs a live read for every group without stopping the counter and writes it into the result input/output.
+   * The reason for having an output parameter is to not allocate any memory during a lightweight read.
+   *
+   * @param result Output parameter to write the result without allocating any memory.
+   * @param normalization  Normalization value.
+   */
+  void live_result(std::vector<double>& result, std::uint64_t normalization) const noexcept;
 
   /**
    * Performs a live read for every group without stopping the counter.
    *
    * @param counter_index Index of the counter to be read live.
-   * @param normalization Normalization value, default = 1.
    * @return The live value of the counter.
    */
-  [[nodiscard]] double live_result(std::uint64_t counter_index, std::uint64_t normalization = 1U) const;
+  [[nodiscard]] double live_result(std::uint64_t counter_index) const noexcept;
+
+  /**
+   * Performs a live read for every group without stopping the counter.
+   *
+   * @param counter_index Index of the counter to be read live.
+   * @param normalization Normalization value.
+   * @return The live value of the counter.
+   */
+  [[nodiscard]] double live_result(std::uint64_t counter_index, std::uint64_t normalization) const noexcept;
+
+  /**
+   * @return A list of event names that are added as live evens.
+   */
+  [[nodiscard]] std::vector<std::string_view> live_event_names() const;
 
   /**
    * @return Configuration of the counter.
@@ -214,9 +244,13 @@ private:
   /// The configuration of counters (include user, kernel, etc.).
   Config _config;
 
-  /// List of requested counters and metrics that are added to groups. This list is only to track the order and
+  /// List of requested events and metrics that are added to groups. This list is only to track the order and
   /// configuration of the user's requested events.
-  std::vector<Event> _events;
+  std::vector<EventView> _events;
+
+  /// List of requested live events. This list is only to track the order and
+  /// configuration of the user's request.
+  std::vector<EventView> _live_events;
 
   /// Counter groups holding performance counters that are started, stopped, and read.
   std::vector<Group> _groups;
@@ -250,7 +284,7 @@ private:
    * @param event_name Name of the event.
    * @return Iterator of the event list.
    */
-  [[nodiscard]] std::vector<Event>::iterator find_event(std::string_view event_name) noexcept;
+  [[nodiscard]] std::vector<EventView>::iterator find_event(std::string_view event_name) noexcept;
 
   /**
    * Takes a result containing all events (also those needed for calculating metrics) and transforms it into a result
@@ -263,7 +297,60 @@ private:
    */
   [[nodiscard]] static CounterResult transform_result_to_requested(const CounterDefinition& counters,
                                                                    CounterResult&& hardware_events,
-                                                                   const std::vector<Event>& requested_events);
+                                                                   const std::vector<EventView>& requested_events);
+};
+
+/**
+ * The LiveEventCounter grants access to live events of an existing EventCounter.
+ * While live events can be read every time–using EventCounter–, this class enables to "start" (read the current value),
+ * "stop" (read the current value again), and calculate the difference as a result without allocating memory for when
+ * reading the values.
+ */
+class LiveEventCounter
+{
+public:
+  explicit LiveEventCounter(const EventCounter& event_counter);
+  ~LiveEventCounter() = default;
+
+  /**
+   * Retrieves the current value for every live counter and mark them as "start" value.
+   */
+  void start() noexcept;
+
+  /**
+   * Retrieves the current value for every live counter and mark them as "stop" value.
+   */
+  void stop() noexcept;
+
+  /**
+   * Calculates the difference between the start- and the stop values for the live event with the given name.
+   * Returns 0 if the event name was not found.
+   *
+   * @param event_name Event to calculate the stop - start value for.
+   * @return The difference between the stop and the start value, or 0 if the name was not found.
+   */
+  double get(std::string_view event_name) const noexcept;
+
+  /**
+   * Calculates the difference between the start- and the stop values for the live event with the given name.
+   * Returns 0 if the event name was not found.
+   *
+   * @param event_name Event to calculate the stop - start value for.
+   * @param normalization Value to normalize the results.
+   * @return The difference between the stop and the start value divided by the normalization value; or 0 if the name
+   * was not found.
+   */
+  double get(std::string_view event_name, std::uint64_t normalization) const noexcept;
+
+private:
+  /// EventCounter to access live events.
+  const EventCounter& _event_counter;
+
+  /// List of live events, received via EventCounter.
+  std::vector<std::string_view> _event_names;
+
+  /// List of (start, stop) tuples for all live events.
+  std::vector<std::pair<double, double>> _counter_values;
 };
 
 class MultiEventCounterBase

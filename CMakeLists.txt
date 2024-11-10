@@ -80,13 +80,18 @@ if(BUILD_EXAMPLES)
     add_executable(data-analyzer EXCLUDE_FROM_ALL examples/data_analyzer.cpp examples/access_benchmark.cpp)
     target_link_libraries(data-analyzer perf-cpp)
 
+    #### Live Events
+    add_executable(live-events EXCLUDE_FROM_ALL examples/live_events.cpp examples/access_benchmark.cpp)
+    target_link_libraries(live-events perf-cpp)
+
     ### One target for all examples
     add_custom_target(examples)
     add_dependencies(examples
             single-thread inherit-thread multi-thread multi-cpu multi-process
             instruction-pointer-sampling counter-sampling branch-sampling
             address-sampling register-sampling multi-thread-sampling multi-cpu-sampling
-            multi-event-sampling amd-ibs-raw-sampling context-switch-sampling data-analyzer)
+            multi-event-sampling amd-ibs-raw-sampling context-switch-sampling data-analyzer
+            live-events)
 endif()
 
 ### Target to create the perf list CSV

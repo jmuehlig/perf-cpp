@@ -47,7 +47,11 @@ try {
 ```
 
 ## Reading Live Events During Computation
-Efficiently read live event counts by pre-allocating memory for the results to avoid allocation overheads during critical measurement phases:
+The library provides two methods for accessing live events during computation: directly via the `EventCounter` and using a simplified `LiveEventCounter` wrapper.
+
+### Option 1: Direct Access via `EventCounter`
+Events added as live events (via `add_live()`) can be directly accessed from the `EventCounter` without stopping.
+To be efficient, read live event counts by pre-allocating memory for the results to avoid allocation overheads during critical measurement phases:
 
 ```cpp
 try {
@@ -72,6 +76,34 @@ for (auto i = 0U; i < runs; ++i) {
     std::cout << "Live Results: "
         << "cache-misses: " << end_values[0U] - start_values[0U] << ","
         << "cache-references: " << end_values[1U] - start_values[1U] << std::endl;
+}
+```
+
+### Option 2: Simplified Access via `LiveEventCounter` Wrapper
+The `LiveEventCounter` provides a streamlined method to manage live event monitoring by handling memory management and calculation of differences internally.
+
+```cpp
+/// Initiate the LiveEventCounter wrapper before starting.
+auto live_event_counter = perf::LiveEventCounter{ event_counter };
+
+try {
+    event_counter.start();
+} catch (std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
+}
+
+for (auto i = 0U; i < runs; ++i) {
+    /// Capture start values.
+    live_event_counter.start();
+    
+    /// Computation here...
+    
+    /// Capture end values after computation.
+    live_event_counter.stop();
+    
+    std::cout << "Live Results: "
+        << "cache-misses: " << live_event_counter.get("cache-misses") << ","
+        << "cache-references: " << live_event_counter.get("cache-references") << std::endl;
 }
 ```
 
