@@ -125,7 +125,7 @@ public:
    * @param values Value to read the counters into.
    * @return True, if reading was successful.
    */
-  [[nodiscard]] bool read(CounterValues<MAX_MEMBERS>& values) const;
+  [[nodiscard]] bool read(CounterValues<MAX_MEMBERS>& values) const noexcept;
 
   /**
    * @return Number of counters in the group.
@@ -143,14 +143,14 @@ public:
    * @param index Index of the counter to read the result for.
    * @return Result of the counter.
    */
-  [[nodiscard]] double get(std::size_t index) const;
+  [[nodiscard]] double get(std::size_t index) const noexcept;
 
   /**
    * Performs a "lightweight" read of the group leader without stopping/starting the counter.
    *
    * @return The current value of the group leader.
    */
-  [[nodiscard]] std::uint64_t lget() const { return !_members.empty() ? _members.front().lread() : 0ULL; }
+  [[nodiscard]] std::uint64_t lget() const noexcept { return !_members.empty() ? _members.front().lread() : 0ULL; }
 
   /**
    * Grants access to the counter at the given index.
@@ -158,7 +158,7 @@ public:
    * @param index Index of the counter.
    * @return Counter.
    */
-  [[nodiscard]] Counter& member(const std::size_t index) { return _members[index]; }
+  [[nodiscard]] Counter& member(const std::size_t index) noexcept { return _members[index]; }
 
   /**
    * Grants access to the counter at the given index.
@@ -166,12 +166,12 @@ public:
    * @param index Index of the counter.
    * @return Counter.
    */
-  [[nodiscard]] const Counter& member(const std::size_t index) const { return _members[index]; }
+  [[nodiscard]] const Counter& member(const std::size_t index) const noexcept { return _members[index]; }
 
   /**
    * @return List of all members in the group.
    */
-  [[nodiscard]] std::vector<Counter>& members() { return _members; }
+  [[nodiscard]] std::vector<Counter>& members() noexcept { return _members; }
 
   /**
    * @return User-level buffer of the first counter (if not nullptr) or the second counter.

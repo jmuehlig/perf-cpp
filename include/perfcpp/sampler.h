@@ -446,7 +446,7 @@ public:
   /**
    * Closes the sampler, including mapped buffer.
    */
-  void close();
+  void close() noexcept;
 
   /**
    * @return List of sampled events after closing the sampler.
@@ -671,7 +671,7 @@ private:
    *
    * @return Sample containing the loss.
    */
-  [[nodiscard]] perf::Sample read_loss_event(UserLevelBufferEntry entry) const;
+  [[nodiscard]] perf::Sample read_loss_event(UserLevelBufferEntry entry) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a context switch sample.
@@ -680,7 +680,7 @@ private:
    *
    * @return Sample containing the context switch.
    */
-  [[nodiscard]] perf::Sample read_context_switch_event(UserLevelBufferEntry entry) const;
+  [[nodiscard]] perf::Sample read_context_switch_event(UserLevelBufferEntry entry) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a cgroup sample.
@@ -698,7 +698,7 @@ private:
    *
    * @return Sample containing the throttle.
    */
-  [[nodiscard]] perf::Sample read_throttle_event(UserLevelBufferEntry entry) const;
+  [[nodiscard]] perf::Sample read_throttle_event(UserLevelBufferEntry entry) const noexcept;
 
   const CounterDefinition& _counter_definitions;
 
@@ -749,7 +749,7 @@ public:
   /**
    * Closes the sampler, including mapped buffer.
    */
-  void close()
+  void close() noexcept
   {
     for (auto& sampler : samplers()) {
       sampler.close();
@@ -1210,6 +1210,6 @@ private:
 class SampleTimestampComparator
 {
 public:
-  bool operator()(const Sample& left, const Sample& right) const { return left.time().value() < right.time().value(); }
+  bool operator()(const Sample& left, const Sample& right) const noexcept { return left.time().value() < right.time().value(); }
 };
 }

@@ -125,7 +125,7 @@ perf::Group::disable() const
 }
 
 bool
-perf::Group::read(CounterValues<MAX_MEMBERS>& values) const
+perf::Group::read(CounterValues<MAX_MEMBERS>& values) const noexcept
 {
   if (!this->empty()) {
     const auto leader_file_descriptor = static_cast<std::int32_t>(this->_members.front().file_descriptor());
@@ -146,7 +146,7 @@ perf::Group::add(perf::CounterConfig counter)
 }
 
 double
-perf::Group::get(const std::size_t index) const
+perf::Group::get(const std::size_t index) const noexcept
 {
   if (index < this->_members.size()) {
     const auto& counter = this->_members[index];

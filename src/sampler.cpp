@@ -137,7 +137,7 @@ perf::Sampler::stop()
 }
 
 void
-perf::Sampler::close()
+perf::Sampler::close() noexcept
 {
   if (std::exchange(this->_is_opened, false)) {
     /// Clear all buffers, groups, and counter names
@@ -566,7 +566,7 @@ perf::Sampler::read_branch_stack(perf::Sampler::UserLevelBufferEntry& entry)
 }
 
 perf::Sample
-perf::Sampler::read_loss_event(perf::Sampler::UserLevelBufferEntry entry) const
+perf::Sampler::read_loss_event(perf::Sampler::UserLevelBufferEntry entry) const noexcept
 {
   auto sample = Sample{ entry.mode() };
 
@@ -580,7 +580,7 @@ perf::Sampler::read_loss_event(perf::Sampler::UserLevelBufferEntry entry) const
 }
 
 perf::Sample
-perf::Sampler::read_context_switch_event(perf::Sampler::UserLevelBufferEntry entry) const
+perf::Sampler::read_context_switch_event(perf::Sampler::UserLevelBufferEntry entry) const noexcept
 {
   auto sample = Sample{ entry.mode() };
 
@@ -618,7 +618,7 @@ perf::Sampler::read_cgroup_event(perf::Sampler::UserLevelBufferEntry entry)
 }
 
 perf::Sample
-perf::Sampler::read_throttle_event(perf::Sampler::UserLevelBufferEntry entry) const
+perf::Sampler::read_throttle_event(perf::Sampler::UserLevelBufferEntry entry) const noexcept
 {
   auto sample = Sample{ entry.mode() };
 
