@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <linux/perf_event.h>
 #include <optional>
+#include <perfcpp/precision.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -26,31 +27,23 @@ public:
   ~CounterConfig() noexcept = default;
 
   void precise_ip(const std::uint8_t precise_ip) noexcept { _precise_ip = precise_ip; }
-  void period(const std::uint64_t period) noexcept
+  void period_or_frequency(const PeriodOrFrequency period_or_frequency) noexcept
   {
-    _is_frequency = false;
-    _period_or_frequency = period;
-  }
-  void frequency(const std::uint64_t frequency) noexcept
-  {
-    _is_frequency = true;
-    _period_or_frequency = frequency;
+    _period_or_frequency = period_or_frequency;
   }
 
   [[nodiscard]] std::uint32_t type() const noexcept { return _type; }
   [[nodiscard]] std::uint64_t event_id() const noexcept { return _event_id; }
   [[nodiscard]] std::array<std::uint64_t, 2U> event_id_extension() const noexcept { return _event_id_extension; }
-  [[nodiscard]] std::uint8_t precise_ip() const noexcept { return _precise_ip; }
-  [[nodiscard]] bool is_frequency() const noexcept { return _is_frequency; }
-  [[nodiscard]] std::uint64_t period_or_frequency() const noexcept { return _period_or_frequency; }
+  [[nodiscard]] std::optional<std::uint8_t> precise_ip() const noexcept { return _precise_ip; }
+  [[nodiscard]] std::optional<PeriodOrFrequency> period_or_frequency() const noexcept { return _period_or_frequency; }
 
 private:
   std::uint32_t _type;
   std::uint64_t _event_id;
   std::array<std::uint64_t, 2U> _event_id_extension;
-  std::uint8_t _precise_ip{ 0U };
-  bool _is_frequency{ false };
-  std::uint64_t _period_or_frequency{ 4000ULL };
+  std::optional<std::uint8_t> _precise_ip{ std::nullopt };
+  std::optional<PeriodOrFrequency> _period_or_frequency{ std::nullopt };
 };
 
 class CounterResult
@@ -142,8 +135,6 @@ public:
    * @param group_leader_file_descriptor File descriptor of the group leader; may be -1 (or any other –unused– value),
    * if this is the group leader.
    * @param is_read_format True, if counters should be read.
-   * @param is_sample True, if counter should be configured for sampling. Some counters (e.g., live readable counters)
-   * can have a sample type without being sampled.
    * @param buffer_pages Number of pages allocated for user-level buffer, std::nullopt if counter should not allocated
    * any pages.
    * @param sample_type Mask of sampled values, std::nullopt of sampling is disabled.
@@ -160,7 +151,6 @@ public:
             bool is_secret_leader,
             std::int64_t group_leader_file_descriptor,
             bool is_read_format,
-            bool is_sample,
             std::optional<std::uint64_t> buffer_pages,
             std::optional<std::uint64_t> sample_type,
             std::optional<std::uint64_t> branch_type,
@@ -187,12 +177,12 @@ public:
   void disable() const;
 
   /**
-   * Reads the counter "lightweight" without stopping via the "rdpmc" instruction.
+   * Reads the counter "live" without stopping via the "rdpmc" instruction.
    * Note that this is only possible on x86 architectures.
    *
    * @return The current value of the counter.
    */
-  [[nodiscard]] std::uint64_t lread() const noexcept;
+  [[nodiscard]] std::uint64_t read_live() const noexcept;
 
   /**
    * @return First page of the user-level buffer.

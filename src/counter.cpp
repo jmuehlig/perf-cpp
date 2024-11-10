@@ -12,6 +12,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 #include <utility>
+#include <variant>
 
 #if defined(__x86_64__) || defined(__i386__)
 #include <x86intrin.h>
@@ -122,7 +123,6 @@ perf::Counter::open(const perf::Config& config,
                     const bool is_secret_leader,
                     const std::int64_t group_leader_file_descriptor,
                     const bool is_read_format,
-                    const bool is_sample,
                     const std::optional<std::uint64_t> buffer_pages,
                     const std::optional<std::uint64_t> sample_type,
                     const std::optional<std::uint64_t> branch_type,
@@ -151,27 +151,41 @@ perf::Counter::open(const perf::Config& config,
   /// Set attributes needed for sampling, if sampling is requested.
   if (sample_type.has_value()) {
     if (is_group_leader || is_secret_leader) {
+      /// Set the sample type for the group leader (or the counter after the auxiliary-event).
       this->_event_attribute.sample_type = sample_type.value();
 
-      if (is_sample) {
+      /// Sampling is not only indicated by the sample_type since "live" events (read without stopping the counter) also
+      /// have a sample type but are not truly sampling. We assume that true sampling is only requested when
+      /// period/frequency and precision is set since both are needed for sampling but not for reading counter without
+      /// stopping.
+      if (this->_config.period_or_frequency().has_value() && this->_config.precise_ip().has_value()) {
         this->_event_attribute.sample_id_all = 1U;
 
-        /// Set period of frequency.
-        this->_event_attribute.freq = static_cast<std::uint64_t>(this->_config.is_frequency());
-        this->_event_attribute.sample_freq = this->_config.period_or_frequency();
+        /// Set period of frequency, based on the PeriodOrFrequency variant.
+        std::visit(
+          [&event_attribute = this->_event_attribute](const auto period_or_frequency) {
+            using T = std::decay_t<decltype(period_or_frequency)>;
+            if constexpr (std::is_same_v<T, class Period>) {
+              event_attribute.sample_period = period_or_frequency.get();
+            } else if constexpr (std::is_same_v<T, class Frequency>) {
+              event_attribute.freq = true;
+              event_attribute.sample_period = period_or_frequency.get();
+            }
+          },
+          this->_config.period_or_frequency().value());
 
         /// Set sampled fields.
         this->_event_attribute.branch_sample_type = branch_type.value_or(0ULL);
-#ifndef PERFCPP_NO_SAMPLE_MAX_STACK
+#ifndef PERFCPP_NO_SAMPLE_MAX_STACK /// Max sample stack is only supported since Linux 4.8
         this->_event_attribute.sample_max_stack = max_callstack_size.value_or(0U);
 #endif
         this->_event_attribute.sample_regs_user = user_registers.value_or(0ULL);
         this->_event_attribute.sample_regs_intr = kernel_registers.value_or(0ULL);
         this->_event_attribute.sample_stack_user = max_user_stack_size.value_or(0U);
-#ifndef PERFCPP_NO_RECORD_SWITCH
+#ifndef PERFCPP_NO_RECORD_SWITCH /// Record switch is supported since Linux 4.3.
         this->_event_attribute.context_switch = is_include_context_switch;
 #endif
-#ifndef PERFCPP_NO_RECORD_CGROUP
+#ifndef PERFCPP_NO_RECORD_CGROUP /// Recording cgroup is supported since Linux 5.7.
         this->_event_attribute.cgroup = is_include_cgroup;
 #endif
       }
@@ -188,8 +202,8 @@ perf::Counter::open(const perf::Config& config,
     }
   }
 
-  /// Transform the CPU id to perf's expected format – which is -1 for any CPU (but perf-cpp uses an optional unsigned
-  /// integer for that case).
+  /// Transform the CPU id to the format expected by the perf subsystem – which is -1 for any CPU (but perf-cpp uses an
+  /// optional unsigned integer for that case).
   const std::int32_t cpu_id = config.cpu_id().has_value() ? std::int32_t{ config.cpu_id().value() } : -1;
 
   /// Use the specified process id or 0 for indicating that the counter should monitor the calling thread/process.
@@ -197,15 +211,15 @@ perf::Counter::open(const perf::Config& config,
 
   /// Try to open the counter. For sampling, we might try to adjust the precise_ip configuration (see
   /// Counter::is_adjust_precise_ip).
-  auto precise_ip = std::int32_t{ this->_config.precise_ip() };
+  auto precise_ip = std::int32_t{ this->_config.precise_ip().value_or(0U) };
   do {
-    /// precise_ip is only needed for sampling, not counting events and live events, where the latter is indicated by
-    /// only PERF_SAMPLE_READ.
-    if (sample_type.value_or(PERF_SAMPLE_READ) != PERF_SAMPLE_READ) {
+    /// precise_ip is only needed for sampling, not counting events and live events; thus, only set when it has a value.
+    if (this->_config.precise_ip().has_value()) {
       this->_event_attribute.precise_ip = std::uint64_t(precise_ip);
     }
 
-    /// Try to open using the perf subsystem.
+    /// Try to open using the perf subsystem. This might fail. If precise_ip is the reason (derived by the error code),
+    /// we try to adjust the precision and try again (see Counter::is_adjust_precise_ip).
     this->_file_descriptor = this->perf_event_open(process_id, cpu_id, is_group_leader, group_leader_file_descriptor);
 
     /// Repeat until success (file_descriptor has a "valid" value or trying again is hopeless.
@@ -255,15 +269,17 @@ perf::Counter::open(const perf::Config& config,
 void
 perf::Counter::close()
 {
-  if (const auto file_descriptor = std::exchange(this->_file_descriptor, -1LL); file_descriptor > -1LL) {
-    ::close(static_cast<std::int32_t>(file_descriptor));
-  }
-
+  /// Close/un-map the mmaped buffer, if any.
   if (auto* const user_level_buffer = std::exchange(this->_user_level_buffer, nullptr); user_level_buffer != nullptr) {
     if (const auto user_level_buffer_pages = std::exchange(this->_user_level_buffer_pages, std::nullopt);
         user_level_buffer_pages.has_value()) {
       ::munmap(user_level_buffer, user_level_buffer_pages.value() * /* page size */ 4096U);
     }
+  }
+
+  /// Close the file descriptor.
+  if (const auto file_descriptor = std::exchange(this->_file_descriptor, -1LL); file_descriptor > -1LL) {
+    ::close(static_cast<std::int32_t>(file_descriptor));
   }
 }
 
@@ -281,7 +297,7 @@ perf::Counter::disable() const
 }
 
 std::uint64_t
-perf::Counter::lread() const noexcept
+perf::Counter::read_live() const noexcept
 {
   /// Read the counter without stopping/disabling it via the "rdpmc" instruction.
   /// This is only possible on x86 architectures.
@@ -316,7 +332,7 @@ perf::Counter::lread() const noexcept
 
   return value;
 #else
-  return 0;
+  return 0ULL;
 #endif
 }
 
@@ -326,6 +342,7 @@ perf::Counter::perf_event_open(const pid_t process_id,
                                const bool is_group_leader,
                                const std::int64_t group_leader_file_descriptor)
 {
+  /// Finally, pass the configuration to the perf subsystem to open the hardware performance counter.
   return ::syscall(__NR_perf_event_open,
                    &this->_event_attribute,
                    process_id,
@@ -365,7 +382,7 @@ perf::Counter::error_message_from_errno(const std::int64_t error_code)
     case EACCES:
       return "insufficient access rights to start the counter, e.g. profiling a not user-owned process or "
              "perf_event_paranoid value too high";
-#ifndef PERFCPP_NO_ERROR_EBUSY
+#ifndef PERFCPP_NO_ERROR_EBUSY /// Busy error is reported since Linux 4.1
     case EBUSY:
       return "another event has exclusive access to the PMU";
 #endif
@@ -481,27 +498,27 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_IDENTIFIER, "IDENTIFIER", is_print_delimiter);
     is_print_delimiter = Counter::print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_REGS_INTR, "REGS_INTR", is_print_delimiter);
-#ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR
+#ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR /// Sampling for physical address is supported since Linux 4.13
     is_print_delimiter = Counter::print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_PHYS_ADDR, "PHYS_ADDR", is_print_delimiter);
 #endif
 
-#ifndef PERFCPP_NO_SAMPLE_CGROUP
+#ifndef PERFCPP_NO_SAMPLE_CGROUP /// Sampling for cgroup is supported since Linux 5.7
     is_print_delimiter = Counter::print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_CGROUP, "CGROUP", is_print_delimiter);
 #endif
 
-#ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE
+#ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE /// Sampling for data page size is supported since Linux 5.11
     is_print_delimiter = Counter::print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_DATA_PAGE_SIZE, "DATA_PAGE_SIZE", is_print_delimiter);
 #endif
 
-#ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE
+#ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE /// Sampling for code page size is supported since Linux 5.11
     is_print_delimiter = Counter::print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_CODE_PAGE_SIZE, "PAGE_SIZE", is_print_delimiter);
 #endif
 
-#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT
+#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling for weight struct is supported since Linux 5.12
     Counter::print_type_to_stream(
       stream, this->_event_attribute.sample_type, PERF_SAMPLE_WEIGHT_STRUCT, "WEIGHT_STRUCT", is_print_delimiter);
 #endif
@@ -543,7 +560,7 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
       stream, this->_event_attribute.read_format, PERF_FORMAT_ID, "ID", is_print_delimiter);
     is_print_delimiter = Counter::print_type_to_stream(
       stream, this->_event_attribute.read_format, PERF_FORMAT_GROUP, "GROUP", is_print_delimiter);
-#ifndef PERFCPP_NO_FORMAT_LOST
+#ifndef PERFCPP_NO_FORMAT_LOST /// Reading lost values is supported since Linux 6.0
     Counter::print_type_to_stream(
       stream, this->_event_attribute.read_format, PERF_FORMAT_LOST, "LOST", is_print_delimiter);
 #endif

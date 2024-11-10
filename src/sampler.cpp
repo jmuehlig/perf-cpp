@@ -81,7 +81,7 @@ perf::Sampler::open()
   const auto auxiliary_counter = this->_counter_definitions.counter(std::string{ "mem-loads-aux" });
 
   /// Check if cgroup is included into sampling – only if supported by the underlying kernel.
-#ifndef PERFCPP_NO_RECORD_CGROUP
+#ifndef PERFCPP_NO_RECORD_CGROUP /// Recording cgroup is supported since Linux 5.7
   const auto is_include_cgroup = this->_values.is_set(PERF_SAMPLE_CGROUP);
 #else
   const auto is_include_cgroup = false;
@@ -97,7 +97,6 @@ perf::Sampler::open()
     sample_counter.group().open(
       this->_config,
       this->_values.is_set(PERF_SAMPLE_READ),
-      /* is sample */ true,
       has_auxiliary_event,
       this->_config.buffer_pages(),
       this->_values.get(),
@@ -171,17 +170,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
       counter_config.precise_ip(static_cast<std::uint8_t>(precision));
 
       /// Set the counters period or frequency (fall back to config if empty).
-      const auto period_or_frequency = std::get<2>(trigger).value_or(this->_config.period_for_frequency());
-      std::visit(
-        [&counter_config](const auto period_or_frequency) {
-          using T = std::decay_t<decltype(period_or_frequency)>;
-          if constexpr (std::is_same_v<T, class Period>) {
-            counter_config.period(period_or_frequency.get());
-          } else if constexpr (std::is_same_v<T, class Frequency>) {
-            counter_config.frequency(period_or_frequency.get());
-          }
-        },
-        period_or_frequency);
+      counter_config.period_or_frequency(std::get<2>(trigger).value_or(this->_config.period_for_frequency()));
 
       /// Add the counter to the group.
       group.add(counter_config);
@@ -411,7 +400,8 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
     sample.weight(perf::Weight{ static_cast<std::uint32_t>(entry.read<std::uint64_t>()) });
   }
 
-#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT
+#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
+                                        /// Linux 5.12
   if (this->_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT)) {
     const auto weight = entry.read<perf_sample_weight>();
     sample.weight(perf::Weight{ weight.var1_dw, weight.var2_w, weight.var3_w });
@@ -435,25 +425,25 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
     }
   }
 
-#ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR
+#ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR /// Sampling for physical memory address is supported since Linux 4.13
   if (this->_values.is_set(PERF_SAMPLE_PHYS_ADDR)) {
     sample.physical_memory_address(entry.read<std::uint64_t>());
   }
 #endif
 
-#ifndef PERFCPP_NO_SAMPLE_CGROUP
+#ifndef PERFCPP_NO_SAMPLE_CGROUP /// Sampling cgroup is supported since Linux 5.7
   if (this->_values.is_set(PERF_SAMPLE_CGROUP)) {
     sample.cgroup_id(entry.read<std::uint64_t>());
   }
 #endif
 
-#ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE
+#ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE /// Sampling the data page size is supported since Linux 5.11
   if (this->_values.is_set(PERF_SAMPLE_DATA_PAGE_SIZE)) {
     sample.data_page_size(entry.read<std::uint64_t>());
   }
 #endif
 
-#ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE
+#ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE /// Sampling the code page size is supported since Linux 5.11
   if (this->_values.is_set(PERF_SAMPLE_CODE_PAGE_SIZE)) {
     sample.code_page_size(entry.read<std::uint64_t>());
   }
@@ -554,7 +544,7 @@ perf::Sampler::read_branch_stack(perf::Sampler::UserLevelBufferEntry& entry)
   auto* sampled_branches = entry.read<perf_branch_entry>(count_branches);
   for (auto i = 0U; i < count_branches; ++i) {
     const auto& branch = sampled_branches[i];
-#ifndef PERFCPP_NO_BRANCH_STACK_CYCLES
+#ifndef PERFCPP_NO_BRANCH_STACK_CYCLES /// Cycles in branch stacks is supported since Linux 4.3
     const auto cycles = branch.cycles;
 #else
     const auto cycles = 0ULL;

@@ -154,7 +154,7 @@ public:
 
     Values& physical_memory_address(const bool include) noexcept
     {
-#ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR
+#ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR /// Sampling for physical memory address is supported since Linux 4.13
       set(PERF_SAMPLE_PHYS_ADDR, include);
 #endif
       return *this;
@@ -162,7 +162,7 @@ public:
 
     Values& cgroup(const bool include) noexcept
     {
-#ifndef PERFCPP_NO_SAMPLE_CGROUP
+#ifndef PERFCPP_NO_SAMPLE_CGROUP /// Sampling cgroup is supported since Linux 5.7
       set(PERF_SAMPLE_CGROUP, include);
 #endif
       return *this;
@@ -170,7 +170,7 @@ public:
 
     Values& data_page_size([[maybe_unused]] const bool include) noexcept
     {
-#ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE
+#ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE /// Sampling the data page size is supported since Linux 5.11
       set(PERF_SAMPLE_DATA_PAGE_SIZE, include);
 #endif
       return *this;
@@ -178,7 +178,7 @@ public:
 
     Values& code_page_size([[maybe_unused]] const bool include) noexcept
     {
-#ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE
+#ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE /// Sampling the code page size is supported since Linux 5.11
       set(PERF_SAMPLE_CODE_PAGE_SIZE, include);
 #endif
       return *this;
@@ -186,7 +186,8 @@ public:
 
     Values& weight_struct([[maybe_unused]] const bool include) noexcept
     {
-#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT
+#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
+                                        /// Linux 5.12
       set(PERF_SAMPLE_WEIGHT_STRUCT, include);
 #endif
       return *this;
@@ -543,7 +544,7 @@ private:
     [[nodiscard]] bool is_loss_event() const noexcept { return _type == PERF_RECORD_LOST_SAMPLES; }
     [[nodiscard]] bool is_context_switch_event() const noexcept
     {
-#ifndef PERFCPP_NO_RECORD_SWITCH
+#ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3
       return _type == PERF_RECORD_SWITCH || _type == PERF_RECORD_SWITCH_CPU_WIDE;
 #else
       return false;
@@ -551,7 +552,7 @@ private:
     }
     [[nodiscard]] bool is_context_switch_cpu_wide() const noexcept
     {
-#ifndef PERFCPP_NO_RECORD_SWITCH
+#ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3
       return _type == PERF_RECORD_SWITCH_CPU_WIDE;
 #else
       return false;
@@ -559,7 +560,7 @@ private:
     }
     [[nodiscard]] bool is_cgroup_event() const noexcept
     {
-#ifndef PERFCPP_NO_RECORD_CGROUP
+#ifndef PERFCPP_NO_RECORD_CGROUP /// cgroup events is supported since Linux 5.7
       return _type == PERF_RECORD_CGROUP;
 #else
       return false;
@@ -574,7 +575,7 @@ private:
     [[nodiscard]] bool is_exact_ip() const noexcept { return _misc & PERF_RECORD_MISC_EXACT_IP; }
     [[nodiscard]] bool is_context_switch_out() const noexcept
     {
-#ifndef PERFCPP_NO_RECORD_SWITCH
+#ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3
       return _misc & PERF_RECORD_MISC_SWITCH_OUT;
 #else
       return false;
@@ -582,7 +583,7 @@ private:
     }
     [[nodiscard]] bool is_context_switch_out_preempt() const noexcept
     {
-#ifndef PERFCPP_NO_RECORD_MISC_SWITCH_OUT_PREEMPT
+#ifndef PERFCPP_NO_RECORD_MISC_SWITCH_OUT_PREEMPT /// Preempt flag of switch events is supported since Linux 4.3
       return _misc & PERF_RECORD_MISC_SWITCH_OUT_PREEMPT;
 #else
       return false;
@@ -1210,6 +1211,9 @@ private:
 class SampleTimestampComparator
 {
 public:
-  bool operator()(const Sample& left, const Sample& right) const noexcept { return left.time().value() < right.time().value(); }
+  bool operator()(const Sample& left, const Sample& right) const noexcept
+  {
+    return left.time().value() < right.time().value();
+  }
 };
 }

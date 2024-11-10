@@ -158,11 +158,11 @@ public:
   }
 
   /**
-   * @return True, if the memory address was found in local memory subsystem (since Linux 5.16).
+   * @return True, if the memory address was found in local memory subsystem (since Linux 4.14).
    */
   [[nodiscard]] bool is_mem_local() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_REMOTE
+#ifndef PERFCPP_NO_MEM_REMOTE /// Remote field is supported since Linux 4.14
     return static_cast<bool>(remote() != PERF_MEM_REMOTE_REMOTE);
 #else
     return false;
@@ -170,11 +170,11 @@ public:
   }
 
   /**
-   * @return True, if the memory address was found in remote memory subsystem (since Linux 5.16).
+   * @return True, if the memory address was found in remote memory subsystem (since Linux 4.14).
    */
   [[nodiscard]] bool is_mem_remote() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_REMOTE
+#ifndef PERFCPP_NO_MEM_REMOTE /// Remote field is supported since Linux 4.14
     return static_cast<bool>(remote() == PERF_MEM_REMOTE_REMOTE);
 #else
     return false;
@@ -186,7 +186,7 @@ public:
    */
   [[nodiscard]] bool is_mem_hops0() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_HOPS_0
+#ifndef PERFCPP_NO_MEM_HOPS_0 /// Hops0 is supported since Linux 5.16
     return static_cast<bool>(hops() == PERF_MEM_HOPS_0);
 #else
     return false;
@@ -198,7 +198,7 @@ public:
    */
   [[nodiscard]] bool is_mem_hops1() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_HOPS_1_3
+#ifndef PERFCPP_NO_MEM_HOPS_1_3 /// Hops1 is supported since Linux 5.17
     return static_cast<bool>(hops() == PERF_MEM_HOPS_1);
 #else
     return false;
@@ -211,7 +211,7 @@ public:
    */
   [[nodiscard]] bool is_mem_hops2() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_HOPS_1_3
+#ifndef PERFCPP_NO_MEM_HOPS_1_3 /// Hops2 is supported since Linux 5.17
     return static_cast<bool>(hops() == PERF_MEM_HOPS_2);
 #else
     return false;
@@ -223,7 +223,7 @@ public:
    */
   [[nodiscard]] bool is_mem_hops3() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_HOPS_1_3
+#ifndef PERFCPP_NO_MEM_HOPS_1_3 /// Hops3 is supported since Linux 5.17
     return static_cast<bool>(hops() == PERF_MEM_HOPS_3);
 #else
     return false;
@@ -297,7 +297,7 @@ public:
    */
   [[nodiscard]] bool is_uncached() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_LVLNUM_UNC
+#ifndef PERFCPP_NO_MEM_LVLNUM_UNC /// Uncached event of LVLNUM structure is supported since Linux 6.6
     return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_UNC);
 #else
     return return static_cast<bool>(lvl() & PERF_MEM_LVL_UNC);
@@ -309,7 +309,7 @@ public:
    */
   [[nodiscard]] bool is_pmem() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_LVLNUM_PMEM
+#ifndef PERFCPP_NO_MEM_LVLNUM_PMEM /// Pmem flag is supported since Linux 4.14
     return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_PMEM);
 #else
     return false;
@@ -321,7 +321,7 @@ public:
    */
   [[nodiscard]] bool is_cxl() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_LVLNUM_CXL
+#ifndef PERFCPP_NO_MEM_LVLNUM_CXL /// CXL flag is supported since Linux 6.1
     return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_CXL);
 #else
     return false;
@@ -333,7 +333,7 @@ public:
    */
   [[nodiscard]] bool is_io() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_LVLNUM_IO
+#ifndef PERFCPP_NO_MEM_LVLNUM_IO /// IO flag of LVLNUM is supported since Linux 6.1
     return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_IO);
 #else
     return return static_cast<bool>(lvl() & PERF_MEM_LVL_IO);
@@ -385,7 +385,7 @@ public:
    */
   [[nodiscard]] bool is_data_blocked() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_BLK
+#ifndef PERFCPP_NO_MEM_BLK /// BLK is supported since Linux 5.12
     return static_cast<bool>(blk() & PERF_MEM_BLK_DATA);
 #else
     return false;
@@ -397,7 +397,7 @@ public:
    */
   [[nodiscard]] bool is_address_blocked() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_BLK
+#ifndef PERFCPP_NO_MEM_BLK /// BLK is supported since Linux 5.12
     return static_cast<bool>(blk() & PERF_MEM_BLK_ADDR);
 #else
     return false;
@@ -440,7 +440,7 @@ public:
    */
   [[nodiscard]] std::uint64_t remote() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_REMOTE
+#ifndef PERFCPP_NO_MEM_REMOTE /// Remote field is supported since Linux 4.14
     return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_remote;
 #else
     return 0ULL;
@@ -448,11 +448,11 @@ public:
   }
 
   /**
-   * @return Direct access to the MEM_LVL_NUM structure of the perf_mem_data_src.
+   * @return Direct access to the MEM_LVL_NUM structure of the perf_mem_data_src (since Linux 6.1).
    */
   [[nodiscard]] std::uint64_t lvl_num() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_LVLNUM
+#ifndef PERFCPP_NO_MEM_LVLNUM /// lvl_num field is supported since Linux 6.1
     return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_lvl_num;
 #else
     return 0ULL;
@@ -472,7 +472,7 @@ public:
    */
   [[nodiscard]] std::uint64_t snoopx() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_SNOOPX
+#ifndef PERFCPP_NO_MEM_SNOOPX /// Extended snoop field is supported since Linux 4.14
     return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_snoopx;
 #else
     return 0ULL;
@@ -500,7 +500,7 @@ public:
    */
   [[nodiscard]] std::uint64_t blk() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_BLK
+#ifndef PERFCPP_NO_MEM_BLK /// BLK is supported since Linux 5.12
     return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_blk;
 #else
     return 0ULL;
@@ -512,7 +512,7 @@ public:
    */
   [[nodiscard]] std::uint64_t hops() const noexcept
   {
-#ifndef PERFCPP_NO_MEM_HOPS_0
+#ifndef PERFCPP_NO_MEM_HOPS_0 /// Hops field is supported since Linux 5.16
     return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_hops;
 #else
     return 0ULL;

@@ -6,6 +6,16 @@
 
 namespace perf {
 
+class CannotOpenFileError final : std::runtime_error
+{
+public:
+  explicit CannotOpenFileError(const std::string_view file_name)
+    : std::runtime_error(std::string{ "Cannot open file '" }.append(file_name).append("'."))
+  {
+  }
+  ~CannotOpenFileError() override = default;
+};
+
 class CannotOpenCounterError final : std::runtime_error
 {
 public:

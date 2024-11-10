@@ -33,7 +33,7 @@ perf::EventCounter::add(const std::string& event_name)
 
   /// If the given name references an existing metric, add the metric and all its required counters.
   if (auto metric = this->_counter_definitions.metric(event_name); metric.has_value()) {
-    /// Add all required counters.
+    /// Add all hardware counters required by the metric..
     for (auto&& dependent_counter_name : std::get<1>(metric.value()).required_counter_names()) {
       if (auto dependent_counter_config = this->_counter_definitions.counter(dependent_counter_name);
           dependent_counter_config.has_value()) {
@@ -88,15 +88,20 @@ perf::EventCounter::add(std::string_view event_name, perf::CounterConfig event_c
     this->_groups.emplace_back();
   }
 
-  /// Remember the group and the index within the group of the event.
-  const auto group_id = std::uint8_t(this->_groups.size()) - 1U;
-  const auto in_group_index = std::uint8_t(this->_groups.back().size());
+  /// The group the hardware counter is added to. If no groups exist or the latest group is already "full", we make sure
+  /// to add another group before.
+  auto& group = this->_groups.back();
 
-  this->_events.emplace_back(event_name, is_shown_in_results, group_id, in_group_index);
+  /// Add the event config to the group.
+  group.add(event_config);
 
-  /// Add the event config to the last group. We already verified that there is a group, thus, it is safe to use the
-  /// last group in the list.
-  this->_groups.back().add(event_config);
+  /// By organizing multiple hardware counters in groups (this->_groups), we need to remember the "true" order of events
+  /// requested by the user (this->_events). To that end, we manage the user's requested events (this->_events) and
+  /// associate each hardware event with two indices: the index of the group within the vector (group index) and the
+  /// index of the hardware counter within that group (in_group_index).
+  const auto group_index = std::uint8_t(this->_groups.size()) - 1U;
+  const auto in_group_index = std::uint8_t(group.size() - 1U);
+  this->_events.emplace_back(event_name, is_shown_in_results, group_index, in_group_index);
 }
 
 std::vector<perf::EventCounter::EventView>::iterator
@@ -146,7 +151,6 @@ perf::EventCounter::open()
     for (auto& group : this->_groups) {
       group.open(this->_config,
                  /* is read format */ true,
-                 /* is sample */ false,
                  /* has auxiliary counter */ false,
                  /* buffer pages */ std::nullopt,
                  /* sample type */ std::nullopt,
@@ -166,7 +170,6 @@ perf::EventCounter::open()
                         /* is secret group leader */ false,
                         /* group leader file descriptor */ -1,
                         /* is read format */ false,
-                        /* is sample */ false,
                         /* buffer pages */ std::make_optional(1ULL),
                         /* sample type */ std::make_optional(PERF_SAMPLE_READ),
                         /* branch type */ std::nullopt,
@@ -297,7 +300,7 @@ perf::EventCounter::live_result(std::vector<double>& result, std::uint64_t norma
 double
 perf::EventCounter::live_result(const std::uint64_t counter_index) const noexcept
 {
-  return double(this->_live_counters[counter_index].lread());
+  return double(this->_live_counters[counter_index].read_live());
 }
 
 double
