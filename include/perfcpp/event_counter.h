@@ -329,7 +329,7 @@ public:
    * @param event_name Event to calculate the stop - start value for.
    * @return The difference between the stop and the start value, or 0 if the name was not found.
    */
-  double get(std::string_view event_name) const noexcept;
+  [[nodiscard]] double get(std::string_view event_name) const noexcept;
 
   /**
    * Calculates the difference between the start- and the stop values for the live event with the given name.
@@ -340,7 +340,7 @@ public:
    * @return The difference between the stop and the start value divided by the normalization value; or 0 if the name
    * was not found.
    */
-  double get(std::string_view event_name, std::uint64_t normalization) const noexcept;
+  [[nodiscard]] double get(std::string_view event_name, std::uint64_t normalization) const noexcept;
 
 private:
   /// EventCounter to access live events.

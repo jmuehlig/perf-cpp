@@ -143,13 +143,6 @@ public:
   [[nodiscard]] double get(std::size_t index) const noexcept;
 
   /**
-   * Performs a "lightweight" read of the group leader without stopping/starting the counter.
-   *
-   * @return The current value of the group leader.
-   */
-  [[nodiscard]] std::uint64_t lget() const noexcept { return !_members.empty() ? _members.front().read_live() : 0ULL; }
-
-  /**
    * Grants access to the counter at the given index.
    *
    * @param index Index of the counter.

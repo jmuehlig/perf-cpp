@@ -7,7 +7,7 @@ namespace perf {
 class TransactionAbort
 {
 public:
-  TransactionAbort(const std::uint64_t transaction_abort_mask) noexcept
+  explicit TransactionAbort(const std::uint64_t transaction_abort_mask) noexcept
     : _transaction_abort_mask(transaction_abort_mask)
   {
   }
