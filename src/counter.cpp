@@ -617,10 +617,11 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
 
     stream << "\n";
   }
-
+#ifndef PERFCPP_NO_SAMPLE_MAX_STACK
   if (this->_event_attribute.sample_max_stack > 0U) {
     stream << "        sample_max_stack: " << this->_event_attribute.sample_max_stack << "\n";
   }
+#endif
 
   if (this->_event_attribute.sample_regs_user > 0U) {
     stream << "        sample_regs_user: " << this->_event_attribute.sample_regs_user << "\n";
@@ -657,12 +658,16 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
   if (this->_event_attribute.exclude_guest > 0U) {
     stream << "        exclude_guest: " << this->_event_attribute.exclude_guest << "\n";
   }
+#ifndef PERFCPP_NO_RECORD_SWITCH
   if (this->_event_attribute.context_switch > 0U) {
     stream << "        context_switch: " << this->_event_attribute.context_switch << "\n";
   }
+#endif
+#ifndef PERFCPP_NO_RECORD_CGROUP
   if (this->_event_attribute.cgroup > 0U) {
     stream << "        cgroup: " << this->_event_attribute.cgroup << "\n";
   }
+#endif
 
   return stream.str();
 }

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <linux/perf_event.h>
+#include "feature.h"
 
 namespace perf {
 class DataSource

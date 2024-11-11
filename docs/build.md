@@ -21,7 +21,7 @@ git clone git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
 
 # Optional: switch to latest stable version
-git checkout v0.8.2   
+git checkout v0.8.3   
 ```
 
 #### Generate the Makefile and Build
@@ -74,7 +74,7 @@ include(ExternalProject)
 ExternalProject_Add(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v0.8.2"
+  GIT_TAG "v0.8.3"
   PREFIX "lib/perf-cpp"
   INSTALL_COMMAND cmake -E echo ""
 )
@@ -92,7 +92,7 @@ include(FetchContent)
 FetchContent_Declare(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v0.8.2"
+  GIT_TAG "v0.8.3"
 )
 FetchContent_MakeAvailable(perf-cpp-external)
 ```

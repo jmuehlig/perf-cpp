@@ -23,7 +23,7 @@ git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
 
 # Optional: Switch to the latest stable version
-git checkout v0.8.2
+git checkout v0.8.3
 
 # Build the library (in build/)
 cmake . -B build -DBUILD_EXAMPLES=1

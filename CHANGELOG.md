@@ -4,6 +4,9 @@
 * New feature: Access interim results from counters without stopping the counter using [live counters](docs/recording-live-events.md).
 * New feature: Sampling the user stack (see [documentation](docs/sampling.md#user-stack)).
 
+## v0.8.3
+* Fixed multiple compatibility issues where the code relied on Linux kernel features that might not available on different versions.
+
 ## v0.8.2
 * Fixed compatibility for older Linux versions that don't provide `PERF_MEM_BLK`, `PERF_MEM_LVLNUM`, and `PERF_MEM_REMOTE`.
 
