@@ -58,7 +58,7 @@ minor-faults
 alignment-faults
 emulation-faults
 context-switches
-bpf-output
+bpf-output          # only since Linux Kernel 4.4
 cgroup-switches     # only since Linux Kernel 5.13
 cpu-migrations
 migrations

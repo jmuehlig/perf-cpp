@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string_view>
 #include <utility>
+#include <linux/perf_event.h>
 
 perf::CounterDefinition::CounterDefinition()
 {
