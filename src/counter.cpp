@@ -617,7 +617,7 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
 
     stream << "\n";
   }
-#ifndef PERFCPP_NO_SAMPLE_MAX_STACK
+#ifndef PERFCPP_NO_SAMPLE_MAX_STACK /// Max sample stack is supported since Linux 4.8
   if (this->_event_attribute.sample_max_stack > 0U) {
     stream << "        sample_max_stack: " << this->_event_attribute.sample_max_stack << "\n";
   }
@@ -658,12 +658,12 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
   if (this->_event_attribute.exclude_guest > 0U) {
     stream << "        exclude_guest: " << this->_event_attribute.exclude_guest << "\n";
   }
-#ifndef PERFCPP_NO_RECORD_SWITCH
+#ifndef PERFCPP_NO_RECORD_SWITCH /// Context switch is supported since Linux 4.3
   if (this->_event_attribute.context_switch > 0U) {
     stream << "        context_switch: " << this->_event_attribute.context_switch << "\n";
   }
 #endif
-#ifndef PERFCPP_NO_RECORD_CGROUP
+#ifndef PERFCPP_NO_RECORD_CGROUP /// cgroup is supported since Linux 5.7
   if (this->_event_attribute.cgroup > 0U) {
     stream << "        cgroup: " << this->_event_attribute.cgroup << "\n";
   }
