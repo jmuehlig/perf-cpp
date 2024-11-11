@@ -109,7 +109,7 @@ git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
 
 /// 3) Switch to the current stable version (optional)
-git checkout v0.8.2
+git checkout v0.8.3
 
 /// 4) Generate the Makefile
 cmake . -B build -DBUILD_EXAMPLES=1
