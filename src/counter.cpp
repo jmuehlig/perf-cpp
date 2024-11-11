@@ -588,8 +588,10 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
                                                        PERF_SAMPLE_BRANCH_ANY_CALL,
                                                        "BRANCH_ANY_CALL",
                                                        is_print_delimiter);
+#ifndef PERFCPP_NO_SAMPLE_BRANCH_CALL /// Branch type "call" is supported since Linux 4.4
     is_print_delimiter = Counter::print_type_to_stream(
       stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_CALL, "BRANCH_CALL", is_print_delimiter);
+#endif
     is_print_delimiter = Counter::print_type_to_stream(stream,
                                                        this->_event_attribute.branch_sample_type,
                                                        PERF_SAMPLE_BRANCH_IND_CALL,
@@ -600,11 +602,13 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
                                                        PERF_SAMPLE_BRANCH_ANY_RETURN,
                                                        "BRANCH_ANY_RETURN",
                                                        is_print_delimiter);
+#ifndef PERFCPP_NO_SAMPLE_BRANCH_IND_JUMP /// Branch type "indirect jump" is supported since Linux 4.2
     is_print_delimiter = Counter::print_type_to_stream(stream,
                                                        this->_event_attribute.branch_sample_type,
                                                        PERF_SAMPLE_BRANCH_IND_JUMP,
                                                        "BRANCH_IND_JUMP",
                                                        is_print_delimiter);
+#endif
     is_print_delimiter = Counter::print_type_to_stream(stream,
                                                        this->_event_attribute.branch_sample_type,
                                                        PERF_SAMPLE_BRANCH_ABORT_TX,

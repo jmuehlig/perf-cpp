@@ -301,7 +301,7 @@ public:
 #ifndef PERFCPP_NO_MEM_LVLNUM_UNC /// Uncached event of LVLNUM structure is supported since Linux 6.6
     return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_UNC);
 #else
-    return return static_cast<bool>(lvl() & PERF_MEM_LVL_UNC);
+    return static_cast<bool>(lvl() & PERF_MEM_LVL_UNC);
 #endif
   }
 
@@ -337,7 +337,7 @@ public:
 #ifndef PERFCPP_NO_MEM_LVLNUM_IO /// IO flag of LVLNUM is supported since Linux 6.1
     return static_cast<bool>(lvl_num() == PERF_MEM_LVLNUM_IO);
 #else
-    return return static_cast<bool>(lvl() & PERF_MEM_LVL_IO);
+    return static_cast<bool>(lvl() & PERF_MEM_LVL_IO);
 #endif
   }
 
