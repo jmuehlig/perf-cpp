@@ -612,7 +612,14 @@ private:
     [[nodiscard]] Sample::Mode mode() const noexcept;
 
     [[nodiscard]] bool is_sample_event() const noexcept { return _type == PERF_RECORD_SAMPLE; }
-    [[nodiscard]] bool is_loss_event() const noexcept { return _type == PERF_RECORD_LOST_SAMPLES; }
+    [[nodiscard]] bool is_loss_event() const noexcept
+    {
+#ifndef PERFCPP_NO_RECORD_LOST_SAMPLES /// PERF_RECORD_LOST_SAMPLES is supported since Linux 4.2
+      return _type == PERF_RECORD_LOST_SAMPLES;
+#else
+      return false;
+#endif
+    }
     [[nodiscard]] bool is_context_switch_event() const noexcept
     {
 #ifndef PERFCPP_NO_RECORD_SWITCH

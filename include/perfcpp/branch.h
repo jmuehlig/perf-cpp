@@ -1,8 +1,8 @@
 #pragma once
 
+#include "feature.h"
 #include <cstdint>
 #include <linux/perf_event.h>
-#include "feature.h"
 
 namespace perf {
 enum BranchType : std::uint64_t
@@ -17,9 +17,13 @@ enum BranchType : std::uint64_t
 #ifndef PERFCPP_NO_SAMPLE_BRANCH_CALL
   Call = PERF_SAMPLE_BRANCH_ANY_CALL,
 #else
-  Call = 1ULL << 62,
+  Call = 1ULL << 61,
 #endif
+#ifndef PERFCPP_NO_SAMPLE_BRANCH_CALL
   DirectCall = PERF_SAMPLE_BRANCH_CALL,
+#else
+  DirectCall = 1ULL << 62,
+#endif
   IndirectCall = PERF_SAMPLE_BRANCH_IND_CALL,
   Return = PERF_SAMPLE_BRANCH_ANY_RETURN,
 #ifndef PERFCPP_NO_SAMPLE_BRANCH_IND_JUMP

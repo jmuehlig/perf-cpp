@@ -397,8 +397,9 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
       Counter::print_type_to_stream(stream, this->_event_attribute.read_format, PERF_FORMAT_ID, "ID", is_first);
     is_first =
       Counter::print_type_to_stream(stream, this->_event_attribute.read_format, PERF_FORMAT_GROUP, "GROUP", is_first);
+#ifndef PERFCPP_NO_FORMAT_LOST
     Counter::print_type_to_stream(stream, this->_event_attribute.read_format, PERF_FORMAT_LOST, "LOST", is_first);
-
+#endif
     stream << "\n";
   }
 
@@ -415,14 +416,18 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
       stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_ANY, "BRANCH_ANY", is_first);
     is_first = Counter::print_type_to_stream(
       stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_ANY_CALL, "BRANCH_ANY_CALL", is_first);
+#ifndef PERFCPP_NO_SAMPLE_BRANCH_CALL
     is_first = Counter::print_type_to_stream(
       stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_CALL, "BRANCH_CALL", is_first);
+#endif
     is_first = Counter::print_type_to_stream(
       stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_IND_CALL, "BRANCH_IND_CALL", is_first);
     is_first = Counter::print_type_to_stream(
       stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_ANY_RETURN, "BRANCH_ANY_RETURN", is_first);
+#ifndef PERFCPP_NO_SAMPLE_BRANCH_IND_JUMP
     is_first = Counter::print_type_to_stream(
       stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_IND_JUMP, "BRANCH_IND_JUMP", is_first);
+#endif
     is_first = Counter::print_type_to_stream(
       stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_ABORT_TX, "BRANCH_ABORT_TX", is_first);
     is_first = Counter::print_type_to_stream(
@@ -432,10 +437,11 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
 
     stream << "\n";
   }
-
+#ifndef PERFCPP_NO_SAMPLE_MAX_STACK
   if (this->_event_attribute.sample_max_stack > 0U) {
     stream << "        sample_max_stack: " << this->_event_attribute.sample_max_stack << "\n";
   }
+#endif
 
   if (this->_event_attribute.sample_regs_user > 0U) {
     stream << "        sample_regs_user: " << this->_event_attribute.sample_regs_user << "\n";
@@ -472,12 +478,16 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
   if (this->_event_attribute.exclude_guest > 0U) {
     stream << "        exclude_guest: " << this->_event_attribute.exclude_guest << "\n";
   }
+#ifndef PERFCPP_NO_RECORD_SWITCH
   if (this->_event_attribute.context_switch > 0U) {
     stream << "        context_switch: " << this->_event_attribute.context_switch << "\n";
   }
+#endif
+#ifndef PERFCPP_NO_RECORD_CGROUP
   if (this->_event_attribute.cgroup > 0U) {
     stream << "        cgroup: " << this->_event_attribute.cgroup << "\n";
   }
+#endif
 
   return stream.str();
 }

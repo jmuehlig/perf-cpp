@@ -545,8 +545,13 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
       auto* sampled_branches = entry.read<perf_branch_entry>(count_branches);
       for (auto i = 0U; i < count_branches; ++i) {
         const auto& branch = sampled_branches[i];
+#ifndef PERFCPP_NO_BRANCH_STACK_CYCLES /// Cycles in branch stacks is supported since Linux 4.3
+        const auto cycles = branch.cycles;
+#else
+        const auto cycles = 0ULL;
+#endif
         branches.emplace_back(
-          branch.from, branch.to, branch.mispred, branch.predicted, branch.in_tx, branch.abort, branch.cycles);
+          branch.from, branch.to, branch.mispred, branch.predicted, branch.in_tx, branch.abort, cycles);
       }
 
       sample.branches(std::move(branches));
@@ -620,9 +625,11 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
   }
 #endif
 
+#ifndef PERFCPP_NO_SAMPLE_CGROUP /// Sampling cgroup is supported since Linux 5.7
   if (this->_values.is_set(PERF_SAMPLE_CGROUP)) {
     sample.cgroup_id(entry.read<std::uint64_t>());
   }
+#endif
 
 #ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE
   if (this->_values.is_set(PERF_SAMPLE_DATA_PAGE_SIZE)) {
