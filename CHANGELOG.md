@@ -1,5 +1,8 @@
 # *perf-cpp*: Changelog
 
+## v0.8.3
+* Fixed multiple compatibility issues where the code relied on Linux kernel features that might not available on different versions.
+
 ## v0.8.2
 * Fixed compatibility for older Linux versions that don't provide `PERF_MEM_BLK`, `PERF_MEM_LVLNUM`, and `PERF_MEM_REMOTE`.
 
