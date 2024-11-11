@@ -163,8 +163,12 @@ public:
 
   [[nodiscard]] std::string to_string() const;
   [[nodiscard]] std::string to_json() const;
-  [[nodiscard]] std::string to_csv(const std::string& data_type_name, char delimiter = ',', bool print_header = true) const;
-  [[nodiscard]] std::string to_csv(std::string&& data_type_name, const char delimiter = ',', const bool print_header = true) const
+  [[nodiscard]] std::string to_csv(const std::string& data_type_name,
+                                   char delimiter = ',',
+                                   bool print_header = true) const;
+  [[nodiscard]] std::string to_csv(std::string&& data_type_name,
+                                   const char delimiter = ',',
+                                   const bool print_header = true) const
   {
     return to_csv(data_type_name, delimiter, print_header);
   }
@@ -179,9 +183,15 @@ private:
     ~MemberStatistic() noexcept = default;
 
     [[nodiscard]] std::uint64_t loads() const noexcept { return _count_loads; }
-    [[nodiscard]] std::uint64_t load_latency() const noexcept { return _count_loads > 0ULL ? _sum_load_latency / _count_loads : 0ULL; }
+    [[nodiscard]] std::uint64_t load_latency() const noexcept
+    {
+      return _count_loads > 0ULL ? _sum_load_latency / _count_loads : 0ULL;
+    }
     [[nodiscard]] std::uint64_t stores() const noexcept { return _count_stores; }
-    [[nodiscard]] std::uint64_t store_latency() const noexcept { return _count_stores > 0ULL ? _sum_store_latency / _count_stores : 0ULL; }
+    [[nodiscard]] std::uint64_t store_latency() const noexcept
+    {
+      return _count_stores > 0ULL ? _sum_store_latency / _count_stores : 0ULL;
+    }
     [[nodiscard]] std::uint64_t l1_hits() const noexcept { return _count_l1_hits; }
     [[nodiscard]] std::uint64_t lfb_hits() const noexcept { return _count_lfb_hits; }
     [[nodiscard]] std::uint64_t l2_hits() const noexcept { return _count_l2_hits; }
@@ -192,7 +202,8 @@ private:
     [[nodiscard]] std::uint64_t tlb_hits() const noexcept { return _tlb_hits; }
     [[nodiscard]] std::uint64_t tlb_misses() const noexcept { return _tlb_misses; }
 
-    MemberStatistic& operator+=(const Sample& sample) noexcept {
+    MemberStatistic& operator+=(const Sample& sample) noexcept
+    {
       if (!sample.data_src().has_value() || !sample.weight().has_value()) {
         return *this;
       }
@@ -201,11 +212,9 @@ private:
       const auto weight = sample.weight().value();
 
       _count_loads += static_cast<std::uint64_t>(data_src.is_load());
-      _sum_load_latency +=
-        (static_cast<std::uint64_t>(data_src.is_load()) * weight.cache_latency());
+      _sum_load_latency += (static_cast<std::uint64_t>(data_src.is_load()) * weight.cache_latency());
       _count_stores += static_cast<std::uint64_t>(data_src.is_store());
-      _sum_store_latency +=
-        (static_cast<std::uint64_t>(data_src.is_store()) * weight.cache_latency());
+      _sum_store_latency += (static_cast<std::uint64_t>(data_src.is_store()) * weight.cache_latency());
       _count_l1_hits += static_cast<std::uint64_t>(data_src.is_mem_l1());
       _count_lfb_hits += static_cast<std::uint64_t>(data_src.is_mem_lfb());
       _count_l2_hits += static_cast<std::uint64_t>(data_src.is_mem_l2());
@@ -217,20 +226,21 @@ private:
       _tlb_misses = static_cast<std::uint64_t>(data_src.is_tlb_miss());
       return *this;
     }
+
   private:
-    std::uint64_t _count_loads {0ULL};
-    std::uint64_t _sum_load_latency {0ULL};
+    std::uint64_t _count_loads{ 0ULL };
+    std::uint64_t _sum_load_latency{ 0ULL };
     std::uint64_t _count_stores{ 0ULL };
-    std::uint64_t _sum_store_latency {0ULL};
-    std::uint64_t _count_l1_hits {0ULL};
-    std::uint64_t _count_lfb_hits {0ULL};
-    std::uint64_t _count_l2_hits {0ULL};
-    std::uint64_t _count_l3_hits {0ULL};
-    std::uint64_t _count_l4_hits {0ULL};
-    std::uint64_t _count_local_ram_hits {0ULL};
-    std::uint64_t _count_remote_ram_hits {0ULL};
-    std::uint64_t _tlb_hits {0ULL};
-    std::uint64_t _tlb_misses {0ULL};
+    std::uint64_t _sum_store_latency{ 0ULL };
+    std::uint64_t _count_l1_hits{ 0ULL };
+    std::uint64_t _count_lfb_hits{ 0ULL };
+    std::uint64_t _count_l2_hits{ 0ULL };
+    std::uint64_t _count_l3_hits{ 0ULL };
+    std::uint64_t _count_l4_hits{ 0ULL };
+    std::uint64_t _count_local_ram_hits{ 0ULL };
+    std::uint64_t _count_remote_ram_hits{ 0ULL };
+    std::uint64_t _tlb_hits{ 0ULL };
+    std::uint64_t _tlb_misses{ 0ULL };
   };
 };
 
@@ -299,5 +309,19 @@ public:
 
 private:
   std::unordered_map<std::string, std::pair<DataType, std::vector<std::uintptr_t>>> _instances;
+
+  class DataTypeInstanceComp
+  {
+  public:
+    bool operator()(const std::pair<std::uintptr_t, DataType*>& item, const std::uintptr_t address)
+    {
+      return std::get<0>(item) <= address;
+    }
+
+    bool operator()(const std::pair<std::uintptr_t, DataType*>& left, const std::pair<std::uintptr_t, DataType*>& right)
+    {
+      return std::get<0>(left) < std::get<0>(right);
+    }
+  };
 };
 }

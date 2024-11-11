@@ -49,55 +49,80 @@ perf::analyzer::DataAnalyzer::annotate(const std::string& name,
 perf::analyzer::DataAnalyzerResult
 perf::analyzer::DataAnalyzer::map(const std::vector<Sample>& samples)
 {
-  auto instances = this->_instances;
+  /// Copy of all data types; the result will contain a copy since we add the samples to the members.
+  auto data_types = std::unordered_map<std::string_view, DataType>{};
+  data_types.reserve(this->_instances.size());
 
-  auto member_map = std::vector<std::pair<DataType::Member*, std::unordered_set<std::uintptr_t>>>{};
-  member_map.reserve(instances.size() * 8U);
+  /// List of all registered instances and the linked data type.
+  auto registered_addresses = std::vector<std::pair<std::uintptr_t, DataType*>>{};
 
-  for (auto& [_, data_type_and_instances] : instances) {
-    auto& data_type = std::get<0>(data_type_and_instances);
-    const auto& data_type_instances = std::get<1>(data_type_and_instances);
-    for (auto& member : data_type.members()) {
-      auto member_instances = std::unordered_set<std::uintptr_t>{};
-      member_instances.reserve(data_type_instances.size() * member.size());
-      for (const auto instance : data_type_instances) {
-        for (auto member_byte = instance + member.offset(); member_byte < instance + member.offset() + member.size();
-             ++member_byte) {
-          member_instances.insert(member_byte);
-        }
-      }
+  /// Unfold the list of (DataType, [instance addresses]) into a list of [(instance address, DataType)] to perform a
+  /// lower bound search for each sample.
+  for (const auto& [name, data_type_and_start_addresses] : this->_instances) {
 
-      member_map.emplace_back(&member, std::move(member_instances));
+    /// Copy the data type, if not already done.
+    auto data_type_instances = data_types.find(name);
+    if (data_type_instances == data_types.end()) {
+      data_type_instances = std::get<0>(data_types.insert(std::make_pair(name, std::get<0>(data_type_and_start_addresses))));
     }
+
+    /// Unfold the instance addresses into the registered_addresses list.
+    const auto& data_type_start_addresses = std::get<1>(data_type_and_start_addresses);
+    std::transform(
+      data_type_start_addresses.cbegin(),
+      data_type_start_addresses.cend(),
+      std::back_inserter(registered_addresses),
+      [&data_type = data_type_instances->second](const auto address) { return std::make_pair(address, &data_type); });
   }
 
+  /// Sort the addresses to perform a lower bound search.
+  std::sort(registered_addresses.begin(), registered_addresses.end(), DataTypeInstanceComp{});
+
+  /// Scan the samples and annotate each sample to the member of a data type instance the sample may belong to.
   for (const auto& sample : samples) {
-    if (sample.logical_memory_address().has_value()) {
-      const auto memory_address = sample.logical_memory_address().value();
+    const auto memory_address = sample.logical_memory_address().value_or(0ULL);
 
-      for (auto& member : member_map) {
-        if (auto iterator = std::get<1>(member).find(memory_address); iterator != std::get<1>(member).end()) {
-          std::get<0>(member)->samples().emplace_back(sample);
-          break;
+    if (memory_address > 0ULL) {
+
+      /// For every sampled address, find the potentially linked data type instance.
+      auto data_type_instance = std::lower_bound(
+        registered_addresses.begin(), registered_addresses.end(), memory_address, DataTypeInstanceComp{});
+
+      /// The lower bound will find the first data type instance that is not less than the sampled memory address.
+      /// Thus, we have to check if (a) there is a potential data type instance and (b) not all elements are greater.
+      if (data_type_instance != registered_addresses.end() && data_type_instance != registered_addresses.begin()) {
+
+        /// Go back to the potential instance (we found the first that is greater than the potential start address).
+        --data_type_instance;
+
+        /// Calculate the offset within the data type (address - start of the instance)
+        const auto offset = memory_address - data_type_instance->first;
+
+        /// Find the member that the sample may linked to and append the sample to the member's samples.
+        for (auto& member : data_type_instance->second->members()) {
+          if (member.offset() <= offset && offset < (member.offset() + member.size())) {
+            member.samples().emplace_back(sample);
+          }
         }
       }
     }
   }
 
-  auto data_object = std::vector<DataType>{};
-  for (auto& [_, data_type] : instances) {
-    data_object.push_back(std::move(std::get<0>(data_type)));
-  }
-
-  return DataAnalyzerResult{ std::move(data_object) };
+  /// Turn the map of data types (name -> DataType) into single list of DataTypes.
+  auto result_data_types = std::vector<DataType>{};
+  std::transform(data_types.begin(), data_types.end(), std::back_inserter(result_data_types), [](auto& data_type) {
+    return std::move(data_type.second);
+  });
+  return DataAnalyzerResult{ std::move(result_data_types) };
 }
 
 std::string
 perf::analyzer::DataAnalyzerResult::to_string() const
 {
   auto column_headers = std::vector<std::string>{
-    "",        "",        "samples",        "loads",           "avg. load lat.", "L1d hits",       "LFB hits",
-    "L2 hits", "L3 hits", "local RAM hits", "remote RAM hits", "stores",         "avg. store lat.", "TLB hits", "TLB misses"
+    "",          "",        "samples",        "loads",           "avg. load lat.", "L1d hits",        "LFB hits",
+    "L2 hits",   "L3 hits", "local RAM hits", "remote RAM hits", "stores",         "avg. store lat.", "TLB hits",
+    "TLB misses"
   };
   auto max_sizes = std::vector<std::uint64_t>{};
   for (const auto& header : column_headers) {
@@ -194,7 +219,7 @@ perf::analyzer::DataAnalyzerResult::to_json() const
   stream << "[";
 
   for (auto data_type_index = 0U; data_type_index < this->_data_types.size(); ++data_type_index) {
-    const auto &data_type = this->_data_types[data_type_index];
+    const auto& data_type = this->_data_types[data_type_index];
 
     if (data_type_index != 0U) {
       stream << ",";
@@ -212,30 +237,19 @@ perf::analyzer::DataAnalyzerResult::to_json() const
       if (member_index != 0U) {
         stream << ",";
       }
-      stream
-        << "{"
-        << "\"name\":" << "\"" << member.name() << "\","
-        << "\"offset\":" << member.offset() << ","
-        << "\"size\":" << member.size() << ","
-        << "\"samples\":" << member.samples().size() << ","
-        << "\"loads\":" << statistics.loads() << ","
-        << "\"average load latency\":" << statistics.load_latency() << ","
-        << "\"L1d hits\":" << statistics.l1_hits() << ","
-        << "\"LFB hits\":" << statistics.lfb_hits() << ","
-        << "\"L2 hits\":" << statistics.l2_hits() << ","
-        << "\"L3 hits\":" << statistics.l3_hits() << ","
-        << "\"L4 hits\":" << statistics.l4_hits() << ","
-        << "\"local RAM hits\":" << statistics.local_ram_hits() << ","
-        << "\"remote RAM hits\":" << statistics.remote_ram_hits() << ","
-        << "\"stores\":" << statistics.stores() << ","
-        << "\"average store latency\":" << statistics.store_latency() << ","
-        << "\"TLB hits\":" << statistics.tlb_hits() << ","
-        << "\"TLB misses\":" << statistics.tlb_misses()
-        << "}";
+      stream << "{" << "\"name\":" << "\"" << member.name() << "\"," << "\"offset\":" << member.offset() << ","
+             << "\"size\":" << member.size() << "," << "\"samples\":" << member.samples().size() << ","
+             << "\"loads\":" << statistics.loads() << "," << "\"average load latency\":" << statistics.load_latency()
+             << "," << "\"L1d hits\":" << statistics.l1_hits() << "," << "\"LFB hits\":" << statistics.lfb_hits() << ","
+             << "\"L2 hits\":" << statistics.l2_hits() << "," << "\"L3 hits\":" << statistics.l3_hits() << ","
+             << "\"L4 hits\":" << statistics.l4_hits() << "," << "\"local RAM hits\":" << statistics.local_ram_hits()
+             << "," << "\"remote RAM hits\":" << statistics.remote_ram_hits() << ","
+             << "\"stores\":" << statistics.stores() << ","
+             << "\"average store latency\":" << statistics.store_latency() << ","
+             << "\"TLB hits\":" << statistics.tlb_hits() << "," << "\"TLB misses\":" << statistics.tlb_misses() << "}";
     }
 
     stream << "]}";
-
   }
 
   stream << "]";
@@ -253,7 +267,8 @@ perf::analyzer::DataAnalyzerResult::to_csv(const std::string& data_type_name,
     stream << "name" << delimiter << "offset" << delimiter << "size" << delimiter << "samples" << delimiter << "loads"
            << delimiter << "average load latency" << delimiter << "L1d hits" << delimiter << "LFB hits" << delimiter
            << "L2 hits" << delimiter << "L3 hits" << delimiter << "L4 hits" << delimiter << "local RAM hits"
-           << delimiter << "remote RAM hits" << delimiter << "stores" << delimiter << "average store latency" << delimiter << "TLB hits" << delimiter << "TLB misses" << '\n';
+           << delimiter << "remote RAM hits" << delimiter << "stores" << delimiter << "average store latency"
+           << delimiter << "TLB hits" << delimiter << "TLB misses" << '\n';
   }
 
   if (auto data_type =
@@ -273,7 +288,8 @@ perf::analyzer::DataAnalyzerResult::to_csv(const std::string& data_type_name,
              << delimiter << statistics.l1_hits() << delimiter << statistics.lfb_hits() << delimiter
              << statistics.l2_hits() << delimiter << statistics.l3_hits() << delimiter << statistics.l4_hits()
              << delimiter << statistics.local_ram_hits() << delimiter << statistics.remote_ram_hits() << delimiter
-             << statistics.stores() << delimiter << statistics.store_latency() << delimiter << statistics.tlb_hits() << delimiter << statistics.tlb_misses() << '\n';
+             << statistics.stores() << delimiter << statistics.store_latency() << delimiter << statistics.tlb_hits()
+             << delimiter << statistics.tlb_misses() << '\n';
     }
   }
 
