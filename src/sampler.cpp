@@ -158,7 +158,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
 
   /// Add the trigger(s) to the group. For the most time, this will be a single trigger. Some architectures need
   /// specific auxiliary counters.
-  for (const auto trigger : triggers) {
+  for (const auto& trigger : triggers) {
     if (auto counter_name_and_config = this->_counter_definitions.counter(std::get<0>(trigger));
         counter_name_and_config.has_value()) {
 

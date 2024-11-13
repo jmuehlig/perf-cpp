@@ -6,6 +6,7 @@
   - [Build the Library](#build-the-library)
   - [Install the Library](#install-the-library)
   - [Build the Examples](#build-examples)
+  - [Building as a Dynamically Linked Library](#building-as-a-dynamically-linked-library)
 - [Use CMake](#including-into-cmakeliststxt)
   - [ExternalProject](#via-externalproject)
   - [FetchContent](#via-fetchcontent)
@@ -13,6 +14,9 @@
 ---
 
 ## Building Manually
+**Note**: Throughout the documentation, we use `./build` as the build directory.
+However, the build directory can be any directory of your choice (including `.`).
+
 ### Build the Library
 #### Download the source code
 
@@ -30,7 +34,6 @@ git checkout v0.8.3
 cmake . -B build 
 cmake --build build
 ```
-**Note**: The build directory `build` can be any directory of your choice (including `.`).
 
 ### Install the Library
 To install the library, specify the `CMAKE_INSTALL_PREFIX`:
@@ -45,9 +48,7 @@ cmake --build build
 cmake --install build
 ```
 
-The library will then be available for discovery via CMake and `find_package` (see [below](#cmake-and-find_package)).
-
-**Note**: The build directory `build` can be any directory of your choice (including `.`).
+The library will then be available for discovery via CMake and `find_package` (see [below](#via-find_package)).
 
 ### Build Examples
 Enable example compilation with `-DBUILD_EXAMPLES=1` and build the `examples` target:
@@ -61,6 +62,15 @@ cmake --build build --target examples
 ```
 
 The example binaries will be located in `build/examples/bin`.
+
+### Building as a Dynamically Linked Library
+By default, *perf-cpp* is build as a **static** library.
+You can request to build a **shared** library with `-DBUILD_LIB_SHARED=1`:
+
+```bash
+cmake . -B build -DBUILD_LIB_SHARED=1
+cmake --build build
+```
 
 ## Including into `CMakeLists.txt`
 *perf-cpp* uses [CMake](https://cmake.org/) as its build system, facilitating integration into additional CMake projects. 

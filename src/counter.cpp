@@ -80,7 +80,7 @@ perf::CounterResult::to_string() const
   auto max_name_length = 12UL, max_value_length = 5UL;
 
   /// Collect counter names and values as strings.
-  for (const auto [name, value] : this->_results) {
+  for (const auto& [name, value] : this->_results) {
     auto value_string = std::to_string(value);
 
     max_name_length = std::max(max_name_length, name.size());
@@ -325,7 +325,7 @@ perf::Counter::read_live() const noexcept
     const auto offset = this->_user_level_buffer->offset;
 
     /// Read the value.
-    value = _rdpmc(index - 1U) + offset;
+    value = std::uint64_t(std::int64_t(_rdpmc(index - 1U)) + offset);
 
     asm volatile("" ::: "memory");
   } while (this->_user_level_buffer->lock != lock);

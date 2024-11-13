@@ -220,9 +220,9 @@ perf::CounterDefinition::read_counter_configuration(const std::string& csv_filen
           std::string type_str;
           if (std::getline(line_stream, type_str, ',')) {
             if (type_str.rfind("0x", 0ULL) == 0ULL) {
-              type = std::stoull(type_str.substr(2ULL), nullptr, 16);
+              type = std::uint32_t(std::stoul(type_str.substr(2ULL), nullptr, 16));
             } else {
-              type = std::stoull(extended_config_str, nullptr, 0);
+              type = std::uint32_t(std::stoul(extended_config_str, nullptr, 0));
             }
           }
         }

@@ -31,8 +31,8 @@ private:
   public:
     explicit EventView(std::string_view name) noexcept
       : _name(name)
-      , _is_shown_in_results(false)
       , _is_event(false)
+      , _is_shown_in_results(false)
       , _group_id(0U)
       , _in_group_id(0U)
     {
@@ -43,8 +43,8 @@ private:
               const std::uint8_t group_id,
               const std::uint8_t in_group_id) noexcept
       : _name(name)
-      , _is_shown_in_results(is_hidden)
       , _is_event(true)
+      , _is_shown_in_results(is_hidden)
       , _group_id(group_id)
       , _in_group_id(in_group_id)
     {
@@ -52,8 +52,8 @@ private:
 
     EventView(std::string_view name, const std::uint8_t in_group_id) noexcept
       : _name(name)
-      , _is_shown_in_results(false)
       , _is_event(true)
+      , _is_shown_in_results(false)
       , _group_id(0U)
       , _in_group_id(in_group_id)
     {

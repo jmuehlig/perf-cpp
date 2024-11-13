@@ -68,7 +68,7 @@ main()
   }
 
   /// Execute the benchmark (accessing cache lines in a random order).
-  auto value = 0LL;
+  auto value = 0ULL;
   for (auto index = 0U; index < benchmark.size(); ++index) {
     value += benchmark[index].value;
 

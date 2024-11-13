@@ -101,54 +101,54 @@ branchy_function(const perf::example::AccessBenchmark::cache_line& cache_line)
 {
   auto result = cache_line.value;
 
-  for (int i = 0; i < 10; ++i) {
-    switch ((cache_line.value >> (4 * i)) & 0xF) { // Extract 4 bits at a time
-      case 0:
-        result += cache_line.value * (i + 1);
+  for (auto i = 0U; i < 10U; ++i) {
+    switch ((cache_line.value >> (4U * i)) & 0xF) { // Extract 4 bits at a time
+      case 0ULL:
+        result += cache_line.value * (i + 1U);
         break;
-      case 1:
-        result -= cache_line.value / (i + 2);
+      case 1ULL:
+        result -= cache_line.value / (i + 2U);
         break;
-      case 2:
-        result *= cache_line.value + (i * 3);
+      case 2ULL:
+        result *= cache_line.value + (i * 3U);
         break;
-      case 3:
-        result /= (cache_line.value - i) | 1;
+      case 3ULL:
+        result /= (cache_line.value - i) | 1U;
         break; // Avoid division by zero
-      case 4:
+      case 4ULL:
         result ^= cache_line.value << i;
         break;
-      case 5:
-        result %= (cache_line.value >> i) | 1;
+      case 5ULL:
+        result %= (cache_line.value >> i) | 1U;
         break;
-      case 6:
+      case 6ULL:
         result = ~result;
         break;
-      case 7:
-        result &= cache_line.value | (0xFF << (i * 8));
+      case 7ULL:
+        result &= cache_line.value | (std::uint64_t(0xFF) << (i * 8U));
         break;
-      case 8:
-        result |= cache_line.value & (0xFFFF << (i * 16));
+      case 8ULL:
+        result |= cache_line.value & (std::uint64_t(0xFFFF) << (i * 16U));
         break;
-      case 9:
+      case 9ULL:
         result >>= cache_line.value % (i + 1);
         break;
-      case 10:
+      case 10ULL:
         result <<= cache_line.value % (i + 2);
         break;
-      case 11:
+      case 11ULL:
         result += cache_line.value + i * 7;
         break;
-      case 12:
+      case 12ULL:
         result -= cache_line.value - i * 11;
         break;
-      case 13:
+      case 13ULL:
         result *= cache_line.value * (i + 5);
         break;
-      case 14:
+      case 14ULL:
         result /= (cache_line.value / (i + 3)) | 1;
         break;
-      case 15:
+      case 15ULL:
         result ^= cache_line.value ^ (i * 13);
         break;
       default:

@@ -16,7 +16,7 @@ public:
    */
   struct alignas(64U) cache_line
   {
-    std::int64_t value;
+    std::uint64_t value;
   };
 
   AccessBenchmark(bool is_random, std::uint64_t access_data_size_in_mb, bool is_write = false);
@@ -38,7 +38,7 @@ public:
     return _data_to_read[_indices[index]];
   }
 
-  void set(const std::size_t index, const std::int64_t value) { _data_to_write[_indices[index]].value = value; }
+  void set(const std::size_t index, const std::uint64_t value) { _data_to_write[_indices[index]].value = value; }
 
   [[nodiscard]] const std::vector<std::uint64_t>& indices() const noexcept { return _indices; }
   [[nodiscard]] const std::vector<cache_line>& data_to_read() const noexcept { return _data_to_read; }

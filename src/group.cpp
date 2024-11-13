@@ -130,7 +130,7 @@ perf::Group::read(CounterValues<MAX_MEMBERS>& values) const noexcept
 
     const auto read_size =
       ::read(leader_file_descriptor, &values, sizeof(std::remove_reference<decltype(values)>::type));
-    return read_size > 0ULL;
+    return read_size > 0L;
   }
 
   return false;

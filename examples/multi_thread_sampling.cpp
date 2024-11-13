@@ -41,7 +41,7 @@ main()
   auto thread_local_results =
     std::vector<std::uint64_t>(count_threads, 0U); /// Array to store the thread-local results.
 
-  for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
+  for (auto thread_index = std::uint16_t(0U); thread_index < count_threads; ++thread_index) {
     threads.emplace_back([thread_index, items_per_thread, &thread_local_results, &benchmark, &sampler]() {
       auto local_value = 0ULL;
 
