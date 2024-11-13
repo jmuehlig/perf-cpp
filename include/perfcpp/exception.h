@@ -6,7 +6,7 @@
 
 namespace perf {
 
-class CannotOpenFileError final : std::runtime_error
+class CannotOpenFileError final : public std::runtime_error
 {
 public:
   explicit CannotOpenFileError(const std::string_view file_name)
@@ -16,7 +16,7 @@ public:
   ~CannotOpenFileError() override = default;
 };
 
-class CannotOpenCounterError final : std::runtime_error
+class CannotOpenCounterError final : public std::runtime_error
 {
 public:
   explicit CannotOpenCounterError(std::string&& message, const std::int64_t error_code)
@@ -30,7 +30,7 @@ public:
   ~CannotOpenCounterError() override = default;
 };
 
-class MmapError final : std::runtime_error
+class MmapError final : public std::runtime_error
 {
 public:
   explicit MmapError(const std::int64_t error_code)
@@ -41,7 +41,7 @@ public:
   ~MmapError() override = default;
 };
 
-class MmapNullError final : std::runtime_error
+class MmapNullError final : public std::runtime_error
 {
 public:
   MmapNullError()
@@ -51,7 +51,7 @@ public:
   ~MmapNullError() override = default;
 };
 
-class MaxCountersReachedError final : std::runtime_error
+class MaxCountersReachedError final : public std::runtime_error
 {
 public:
   MaxCountersReachedError(const std::uint64_t max_counters, const std::uint64_t max_events_per_counter)
@@ -73,7 +73,7 @@ public:
   ~MaxCountersReachedError() override = default;
 };
 
-class CannotFindEventForMetricError final : std::runtime_error
+class CannotFindEventForMetricError final : public std::runtime_error
 {
 public:
   CannotFindEventForMetricError(const std::string& event_name, const std::string& metric_name)
@@ -87,7 +87,7 @@ public:
   ~CannotFindEventForMetricError() override = default;
 };
 
-class CannotFindEventOrMetricError final : std::runtime_error
+class CannotFindEventOrMetricError final : public std::runtime_error
 {
 public:
   explicit CannotFindEventOrMetricError(const std::string& event_name)
@@ -97,7 +97,7 @@ public:
   ~CannotFindEventOrMetricError() override = default;
 };
 
-class CannotFindEventError final : std::runtime_error
+class CannotFindEventError final : public std::runtime_error
 {
 public:
   explicit CannotFindEventError(const std::string& event_name)
@@ -112,7 +112,7 @@ public:
   ~CannotFindEventError() override = default;
 };
 
-class MetricNotSupportedError final : std::runtime_error
+class MetricNotSupportedError final : public std::runtime_error
 {
 public:
   MetricNotSupportedError(const std::string& event_name, std::string&& feature)
@@ -126,7 +126,7 @@ public:
   ~MetricNotSupportedError() override = default;
 };
 
-class CannotStartEmptyGroupError final : std::runtime_error
+class CannotStartEmptyGroupError final : public std::runtime_error
 {
 public:
   CannotStartEmptyGroupError()
@@ -136,7 +136,7 @@ public:
   ~CannotStartEmptyGroupError() override = default;
 };
 
-class CannotStartEmptySamplerError final : std::runtime_error
+class CannotStartEmptySamplerError final : public std::runtime_error
 {
 public:
   CannotStartEmptySamplerError()
@@ -147,7 +147,7 @@ public:
   ~CannotStartEmptySamplerError() override = default;
 };
 
-class DataTypeAlreadyRegisteredError final : std::runtime_error
+class DataTypeAlreadyRegisteredError final : public std::runtime_error
 {
 public:
   explicit DataTypeAlreadyRegisteredError(const std::string& data_type_name)
@@ -157,6 +157,22 @@ public:
   {
   }
   ~DataTypeAlreadyRegisteredError() override = default;
+};
+
+class CannotParseExpressionError final : public std::runtime_error
+{
+public:
+  explicit CannotParseExpressionError(const std::string_view input)
+    : std::runtime_error(std::string{ "Cannot parse expression from '" }.append(input).append("'."))
+  {
+  }
+
+  CannotParseExpressionError(const std::string_view input, const std::string_view error_message)
+    : std::runtime_error(
+        std::string{ "Cannot parse expression from '" }.append(input).append("': ").append(error_message))
+  {
+  }
+  ~CannotParseExpressionError() override = default;
 };
 
 }
