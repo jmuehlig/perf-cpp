@@ -80,6 +80,17 @@ public:
   void add(std::unique_ptr<Metric>&& metric) { _metrics.insert(std::make_pair(metric->name(), std::move(metric))); }
 
   /**
+   * Adds a formula metric with the given name and formula.
+   *
+   * @param name Name of the metric.
+   * @param formula Expression of the metric.
+   */
+  void add(std::string&& name, std::string&& formula)
+  {
+    this->add(std::make_unique<FormulaMetric>(std::move(name), std::move(formula)));
+  }
+
+  /**
    * Checks if a specific counter is registered and returns the name and the config.
    *
    * @param name Name of the queried counter.

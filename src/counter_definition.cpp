@@ -1,4 +1,5 @@
 #include <fstream>
+#include <linux/perf_event.h>
 #include <perfcpp/counter_definition.h>
 #include <perfcpp/exception.h>
 #include <perfcpp/feature.h>
@@ -6,7 +7,6 @@
 #include <sstream>
 #include <string_view>
 #include <utility>
-#include <linux/perf_event.h>
 
 perf::CounterDefinition::CounterDefinition()
 {
@@ -116,10 +116,13 @@ perf::CounterDefinition::initialize_generalized_counters()
 
   /// Pre-defined metrics.
   this->add(std::make_unique<CyclesPerInstruction>());
+  this->add(std::make_unique<InstructionsPerCycle>());
   this->add(std::make_unique<CacheHitRatio>());
+  this->add(std::make_unique<CacheMissRatio>());
   this->add(std::make_unique<DTLBMissRatio>());
   this->add(std::make_unique<ITLBMissRatio>());
   this->add(std::make_unique<L1DataMissRatio>());
+  this->add(std::make_unique<BranchMissRatio>());
 }
 
 void

@@ -2,15 +2,15 @@ cmake_minimum_required(VERSION 3.10)
 project(libperf-cpp VERSION 0.9.0)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_BUILD_TYPE RELEASE)
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g3")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -DNDEBUG")
+set(CMAKE_BUILD_TYPE RELEASE)
 
 ### Add include directory.
 include_directories(include/)
 
 ### Library
-add_library(perf-cpp src/counter.cpp src/group.cpp src/counter_definition.cpp src/event_counter.cpp src/sampler.cpp src/hardware_info.cpp src/analyzer/data.cpp)
+add_library(perf-cpp src/counter.cpp src/group.cpp src/counter_definition.cpp src/event_counter.cpp src/sampler.cpp src/hardware_info.cpp src/metric_expression.cpp src/analyzer/data.cpp)
 
 ### Examples
 if(BUILD_EXAMPLES)
