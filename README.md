@@ -8,7 +8,7 @@ With *perf-cpp*, you can manage profiling directly within your application and h
 ## Key Features
 * **[Count Hardware Events](docs/recording.md)**: Integrate performance monitoring seamlessly into your development process. Directly interact with hardware counters to focus on critical code segments.
 * **[Sampling](docs/sampling.md)**: Leverage sampling to gather performance data periodically, e.g., instruction pointers, memory addresses, load and store latency, branches, registers, and more.
-* **[Customizable Event Configuration](docs/counters.md)**: Extend the built-in hardware events (e.g., cache-misses) with those specific to your underlying hardware substrate.
+* **[Customizable Event Configuration](docs/counters.md)**: Extend the built-in hardware events (e.g., cache-misses) with those specific to your underlying hardware substrate. Additionally, define and utilize  **[Metrics](docs/metrics.md)**–quantitative measurements like *cycles per instruction*–to gain deeper insights into performance and efficiency.
 * **[Practical Examples](examples/README.md)**: Jumpstart your implementation with our diverse collection of examples that demonstrate practical applications of the library.
 
 
