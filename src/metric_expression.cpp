@@ -21,9 +21,10 @@ perf::Tokenizer::next()
     return this->read_constant_number();
   }
 
-  /// Check if the next character is an alphabetical char, which indicates a string.
-  /// If so, return an identifier token.
-  if (std::isalpha(current_char)) {
+  /// Check if the next character is an alphabetical char, which indicates an identifier.
+  /// Additionally, identifiers can start with single quotes to escape, for example, - operators as part of the
+  /// identifier (e.g., the hardware counter "L1-cache-miss"). If so, return an identifier token.
+  if (std::isalpha(current_char) || current_char == '\'') {
     return this->read_identifier();
   }
 
@@ -84,13 +85,26 @@ perf::Tokenizer::read_identifier()
   /// called.
   auto count = 1ULL;
 
-  /// Read all characters that are alphabetical or numerical(e.g., L2Cache).
-  while ((begin + count) < this->_input.size() && std::isalnum(this->_input[begin + count])) {
-    ++count;
+  /// If the identifier starts with a single quote, we scan until we find the "ending" single quote.
+  const auto starts_with_single_quote = this->_input[begin] == '\'';
+  if (starts_with_single_quote) {
+    while ((begin + count) < this->_input.size() && this->_input[begin + count] != '\'') {
+      ++count;
+    }
+  }
+  /// Otherwise, we read all characters that are alphabetical or numerical(e.g., L2Cache).
+  else {
+    while ((begin + count) < this->_input.size() && Tokenizer::is_identifier_char(this->_input[begin + count])) {
+      ++count;
+    }
   }
 
-  this->_position += count;
-  return Token{ this->_input.substr(begin, count) };
+  /// Increase the position by the number of scanned chars; skip the closing single quite if given.
+  this->_position += count + static_cast<std::uint64_t>(starts_with_single_quote);
+
+  /// Return the identifier; remove single quotes if given.
+  return Token{ this->_input.substr(begin + static_cast<std::uint64_t>(starts_with_single_quote),
+                                    count - static_cast<std::uint64_t>(starts_with_single_quote)) };
 }
 
 std::unique_ptr<perf::MetricExpression>

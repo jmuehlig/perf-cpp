@@ -202,6 +202,17 @@ private:
   [[nodiscard]] Token read_constant_number();
   [[nodiscard]] Token read_identifier();
 
+  /**
+   * Checks if the given char could belong to an identifier (alphanumerical chars, _, ., etc.).
+   *
+   * @param char_ Char to check.
+   * @return True, if the char could belong to an identifier.
+   */
+  [[nodiscard]] static bool is_identifier_char(const char char_) noexcept
+  {
+    return std::isalnum(char_) || char_ == '_' || char_ == '.';
+  }
+
   const std::string _input;
   std::size_t _position{ 0ULL };
 };
