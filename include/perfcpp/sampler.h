@@ -153,7 +153,7 @@ public:
       return *this;
     }
 
-    Values& physical_memory_address(const bool include) noexcept
+    Values& physical_memory_address([[maybe_unused]] const bool include) noexcept
     {
 #ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR /// Sampling for physical memory address is supported since Linux 4.13
       set(PERF_SAMPLE_PHYS_ADDR, include);
@@ -161,7 +161,7 @@ public:
       return *this;
     }
 
-    Values& cgroup(const bool include) noexcept
+    Values& cgroup([[maybe_unused]] const bool include) noexcept
     {
 #ifndef PERFCPP_NO_SAMPLE_CGROUP /// Sampling cgroup is supported since Linux 5.7
       set(PERF_SAMPLE_CGROUP, include);
