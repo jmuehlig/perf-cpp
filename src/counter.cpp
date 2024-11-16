@@ -129,9 +129,9 @@ perf::Counter::open(const perf::Config& config,
                     const std::optional<std::uint64_t> user_registers,
                     const std::optional<std::uint64_t> kernel_registers,
                     const std::optional<std::uint32_t> max_user_stack_size,
-                    const std::optional<std::uint16_t> max_callstack_size,
-                    const bool is_include_context_switch,
-                    const bool is_include_cgroup)
+                    [[maybe_unused]] const std::optional<std::uint16_t> max_callstack_size,
+                    [[maybe_unused]] const bool is_include_context_switch,
+                    [[maybe_unused]] const bool is_include_cgroup)
 {
   std::memset(&this->_event_attribute, 0, sizeof(perf_event_attr));
   this->_event_attribute.type = this->_config.type();
