@@ -107,7 +107,7 @@ Once defined, either through code or configuration files, these events can be in
 ```cpp
 auto counter_definitions = perf::CounterDefinition{"events.csv"};
 auto event_counter = perf::EventCounter{counter_definitions};
-event_counter.add("cycles", "cycle_activity.stalls_l1d_miss");
+event_counter.add({"cycles", "cycle_activity.stalls_l1d_miss"});
 ```
 
 ## Retrieving Raw Event Codes
