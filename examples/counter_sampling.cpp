@@ -14,6 +14,9 @@ main()
   /// alive until the benchmark finishes.
   auto counter_definitions = perf::CounterDefinition{};
 
+  /// Add metric that calculates the L1d miss ratio.
+  counter_definitions.add("L1d-misses-per-load", "'L1-dcache-load-misses'/'L1-dcache-loads'");
+
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
   perf_config.period(1000000U); /// Record every 1,000,000th event.
@@ -24,7 +27,7 @@ main()
   sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid);
 
   /// Setup which data should be included (L1 hit and miss counter, timestamp).
-  sampler.values().counter({ "L1-dcache-loads", "L1-dcache-load-misses" }).time(true);
+  sampler.values().counter({ "L1-dcache-loads", "L1-dcache-load-misses", "L1d-misses-per-load" }).time(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
@@ -78,7 +81,7 @@ main()
                   << " | L1-dcache-load-misses (diff) = "
                   << sample.counter()->get("L1-dcache-load-misses").value_or(.0) -
                        last_counter_result->get("L1-dcache-load-misses").value_or(.0)
-                  << "\n";
+                  << " | L1d-misses-per-load = " << sample.counter()->get("L1d-misses-per-load").value_or(.0) << "\n";
       }
 
       last_counter_result = sample.counter();

@@ -76,7 +76,7 @@ public:
 class CannotFindEventForMetricError final : public std::runtime_error
 {
 public:
-  CannotFindEventForMetricError(const std::string& event_name, const std::string& metric_name)
+  CannotFindEventForMetricError(const std::string_view event_name, const std::string_view metric_name)
     : std::runtime_error(std::string{ "Cannot find an event with name '" }
                            .append(event_name)
                            .append("' for metric '")
@@ -112,18 +112,28 @@ public:
   ~CannotFindEventError() override = default;
 };
 
-class MetricNotSupportedError final : public std::runtime_error
+class MetricNotSupportedAsSamplingTriggerError final : public std::runtime_error
 {
 public:
-  MetricNotSupportedError(const std::string& event_name, std::string&& feature)
+  explicit MetricNotSupportedAsSamplingTriggerError(const std::string& metric_name)
     : std::runtime_error(std::string{ "The event '" }
-                           .append(event_name)
-                           .append("' appears to be a metric. Metrics are not supported for ")
-                           .append(feature)
-                           .append("."))
+                           .append(metric_name)
+                           .append("' appears to be a metric. Metrics are not supported as sampling triggers."))
   {
   }
-  ~MetricNotSupportedError() override = default;
+  ~MetricNotSupportedAsSamplingTriggerError() override = default;
+};
+
+class MetricNotSupportedAsLiveEventError final : public std::runtime_error
+{
+public:
+  explicit MetricNotSupportedAsLiveEventError(const std::string& metric_name)
+    : std::runtime_error(std::string{ "The event '" }
+                           .append(metric_name)
+                           .append("' appears to be a metric. Metrics are not supported as live events."))
+  {
+  }
+  ~MetricNotSupportedAsLiveEventError() override = default;
 };
 
 class CannotStartEmptyGroupError final : public std::runtime_error

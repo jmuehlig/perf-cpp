@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(libperf-cpp VERSION 0.9.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wcast-align -Wunused -Wshadow -Wold-style-cast -Wpointer-arith -Wcast-qual -Wmissing-prototypes -Wno-missing-braces")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wcast-align -Wunused -Wshadow -Wold-style-cast -Wpointer-arith -Wcast-qual -Wno-missing-braces")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g3")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -DNDEBUG")
 set(CMAKE_BUILD_TYPE RELEASE)
@@ -21,14 +21,16 @@ option(BUILD_LIB_SHARED "Build the library as a shared library (default is stati
 #   perf-cpp library definition                             #
 #############################################################
 set(PERF_CPP_SRC
-        src/counter.cpp
-        src/group.cpp
-        src/counter_definition.cpp
-        src/event_counter.cpp
-        src/sampler.cpp
-        src/hardware_info.cpp
-        src/metric_expression.cpp
-        src/analyzer/data.cpp)
+    src/counter.cpp
+    src/group.cpp
+    src/counter_definition.cpp
+    src/event_counter.cpp
+    src/sampler.cpp
+    src/hardware_info.cpp
+    src/metric_expression.cpp
+    src/requested_event.cpp
+    src/analyzer/data.cpp
+)
 if (BUILD_LIB_SHARED)
     add_library(perf-cpp SHARED ${PERF_CPP_SRC})
 else ()

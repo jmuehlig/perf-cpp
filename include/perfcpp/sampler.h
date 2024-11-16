@@ -4,6 +4,7 @@
 #include "counter_definition.h"
 #include "feature.h"
 #include "group.h"
+#include "requested_event.h"
 #include "sample.h"
 #include <chrono>
 #include <functional>
@@ -467,24 +468,25 @@ private:
       : _group(std::move(group))
     {
     }
-    SampleCounter(Group&& group, std::vector<std::string_view>&& counter_names)
+    SampleCounter(Group&& group, RequestedEventSet&& requested_events)
       : _group(std::move(group))
-      , _counter_names(std::move(counter_names))
+      , _requested_events(std::move(requested_events))
     {
     }
+    SampleCounter(SampleCounter&& other) noexcept = default;
 
     ~SampleCounter();
 
     [[nodiscard]] Group& group() noexcept { return _group; }
     [[nodiscard]] const Group& group() const noexcept { return _group; }
-    [[nodiscard]] const std::vector<std::string_view>& counter_names() const noexcept { return _counter_names; }
+    [[nodiscard]] const RequestedEventSet& requested_events() const noexcept { return _requested_events; }
 
   private:
     /// Group including the leader that is responsible for sampling.
     Group _group;
 
-    /// List of counter names if counter values are sampled.
-    std::vector<std::string_view> _counter_names;
+    /// List of scheduled events if counter values are sampled.
+    RequestedEventSet _requested_events;
   };
 
   /**
@@ -651,8 +653,8 @@ private:
    *
    * @return Event values
    */
-  [[nodiscard]] static std::optional<CounterResult> read_hardware_events(UserLevelBufferEntry& entry,
-                                                                         const SampleCounter& sample_counter);
+  [[nodiscard]] std::optional<CounterResult> read_hardware_events(UserLevelBufferEntry& entry,
+                                                                  const SampleCounter& sample_counter) const;
 
   /**
    * Reads the callchain from the current buffer entry.

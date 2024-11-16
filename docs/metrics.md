@@ -3,9 +3,9 @@ Performance metrics are critical for evaluating the efficiency of computer hardw
 One key metric frequently used is the "Cycles per Instruction" (CPI). 
 This metric helps to measure how many CPU cycles are consumed for executiong an instruction, providing insight into the system's efficiency—the fewer the cycles needed per instruction, the more efficient the system.
 
-**Note**: Metrics are not applicable for [sampling](sampling.md) and [live events](recording-live-events.md).
-
 **Hint**: When [defining custom metrics](#creating-custom-metrics), you should take a look at the list of metrics in the [Likwid project](https://github.com/RRZE-HPC/likwid/tree/master/groups).
+
+**Note**: Metrics are not applicable for [live events](recording-live-events.md).
 
 ---
 ## Table of Contents

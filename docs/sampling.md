@@ -330,7 +330,7 @@ Sampling the code page size requires a Linux Kernel version of `5.11` or higher.
 ### Performance Counter Values
 Record hardware performance counter values at the time of the record.
 
-* Request by `sampler.values().counter({"instructions", "cache-misses"});`
+* Request by `sampler.values().counter({"instructions", "cache-misses"});`. You can sample any [hardware event](counters.md) or [metric](metrics.md).
 * Read from the results by `sample_record.counter_result().value().get("cache-misses");`. This can be accessed in the same manner as when recording counters.
 
 &rarr; [See code example](../examples/counter_sampling.cpp)

@@ -4,6 +4,7 @@
 #include "counter.h"
 #include "counter_definition.h"
 #include "group.h"
+#include "requested_event.h"
 #include <chrono>
 #include <optional>
 #include <string>
@@ -18,74 +19,6 @@ namespace perf {
 class EventCounter
 {
   friend class MultiEventCounterBase;
-
-private:
-  /**
-   * The EventView class stores information about events that will be recorded, e.g., the group the event is scheduled
-   * to, the index within the group, the name, and a flag if the event should be shown within the results (which is not
-   * true for events only needed for metrics). The EventCounter will have an ordered list of events, dictating the order
-   * the user requested the events to output the events in exactly that order.
-   */
-  class EventView
-  {
-  public:
-    explicit EventView(std::string_view name) noexcept
-      : _name(name)
-      , _is_event(false)
-      , _is_shown_in_results(false)
-      , _group_id(0U)
-      , _in_group_id(0U)
-    {
-    }
-
-    EventView(std::string_view name,
-              const bool is_hidden,
-              const std::uint8_t group_id,
-              const std::uint8_t in_group_id) noexcept
-      : _name(name)
-      , _is_event(true)
-      , _is_shown_in_results(is_hidden)
-      , _group_id(group_id)
-      , _in_group_id(in_group_id)
-    {
-    }
-
-    EventView(std::string_view name, const std::uint8_t in_group_id) noexcept
-      : _name(name)
-      , _is_event(true)
-      , _is_shown_in_results(false)
-      , _group_id(0U)
-      , _in_group_id(in_group_id)
-    {
-    }
-
-    ~EventView() = default;
-
-    [[nodiscard]] std::string_view name() const noexcept { return _name; }
-    [[nodiscard]] bool is_event() const noexcept { return _is_event; }
-    [[nodiscard]] bool is_shown_in_results() const noexcept { return _is_shown_in_results; }
-    [[nodiscard]] std::uint8_t group_id() const noexcept { return _group_id; }
-    [[nodiscard]] std::uint8_t in_group_id() const noexcept { return _in_group_id; }
-
-    void is_shown_in_results(const bool is_shown_in_results) noexcept { _is_shown_in_results = is_shown_in_results; }
-
-  private:
-    /// Name of the event (references a string in the CounterDefinition).
-    std::string_view _name;
-
-    /// Indicates that the event is a "real" hardware event, not a metric.
-    bool _is_event;
-
-    /// Indicates that the event is included into results. Some events are "only" requested by metrics and are only
-    /// needed for calculating them but are not requested by the user.
-    bool _is_shown_in_results;
-
-    /// Id of the group the event is placed in.
-    std::uint8_t _group_id{ 0U };
-
-    /// Id within a group.
-    std::uint8_t _in_group_id{ 0U };
-  };
 
 public:
   explicit EventCounter(const CounterDefinition& counter_definition, Config config = {})
@@ -246,11 +179,11 @@ private:
 
   /// List of requested events and metrics that are added to groups. This list is only to track the order and
   /// configuration of the user's requested events.
-  std::vector<EventView> _events;
+  RequestedEventSet _events;
 
   /// List of requested live events. This list is only to track the order and
   /// configuration of the user's request.
-  std::vector<EventView> _live_events;
+  RequestedEventSet _live_events;
 
   /// Counter groups holding performance counters that are started, stopped, and read.
   std::vector<Group> _groups;
@@ -277,27 +210,6 @@ private:
    * @return True, if the event was added.
    */
   void add(std::string_view event_name, CounterConfig event_config, bool is_shown_in_results);
-
-  /**
-   * Searches for an event within the event list.
-   *
-   * @param event_name Name of the event.
-   * @return Iterator of the event list.
-   */
-  [[nodiscard]] std::vector<EventView>::iterator find_event(std::string_view event_name) noexcept;
-
-  /**
-   * Takes a result containing all events (also those needed for calculating metrics) and transforms it into a result
-   * requested by the user. The transformed result only contains requested events, i.e., counter values and metrics.
-   *
-   * @param counters Set of defined counters and metrics.
-   * @param hardware_events Result containing all hardware counter values.
-   * @param requested_events Result containing only requested counter and metric results.
-   * @return Result with only requested values.
-   */
-  [[nodiscard]] static CounterResult transform_result_to_requested(const CounterDefinition& counters,
-                                                                   CounterResult&& hardware_events,
-                                                                   const std::vector<EventView>& requested_events);
 };
 
 /**

@@ -44,7 +44,7 @@ perf::EventCounter::add(const std::string& event_name)
     }
 
     /// If all of the metric's counters could be added (i.e., no exception was thrown), add the metric itself.
-    this->_events.emplace_back(std::get<0>(metric.value()));
+    this->_events.add(std::get<0>(metric.value()));
     return true;
   }
 
@@ -64,15 +64,13 @@ perf::EventCounter::add(const std::vector<std::string>& event_names)
 }
 
 void
-perf::EventCounter::add(std::string_view event_name, perf::CounterConfig event_config, const bool is_shown_in_results)
+perf::EventCounter::add(const std::string_view event_name,
+                        perf::CounterConfig event_config,
+                        const bool is_shown_in_results)
 {
-  /// Check if the event is already added.
-  if (auto iterator = this->find_event(event_name); iterator != this->_events.end()) {
-    /// If so, there is no need to add it again – but we need to check if the event was requested (this time) by the
-    /// user to show it in the result set. One scenario could be, that the event was added earlier by a metric (i.e., it
-    /// should not appear in the results), but now, the user requests it, too – switching the state to "show in
-    /// results".
-    iterator->is_shown_in_results(iterator->is_shown_in_results() || is_shown_in_results);
+  /// If the event is already in the set, set the visibility to true (if is_shown_in_results == true), and return since
+  /// we do not need to add the event twice.
+  if (this->_events.adjust_visibility_if_present(event_name, is_shown_in_results)) {
     return;
   }
 
@@ -92,24 +90,14 @@ perf::EventCounter::add(std::string_view event_name, perf::CounterConfig event_c
   /// to add another group before.
   auto& group = this->_groups.back();
 
-  /// Add the event config to the group.
-  group.add(event_config);
-
   /// By organizing multiple hardware counters in groups (this->_groups), we need to remember the "true" order of events
   /// requested by the user (this->_events). To that end, we manage the user's requested events (this->_events) and
   /// associate each hardware event with two indices: the index of the group within the vector (group index) and the
-  /// index of the hardware counter within that group (in_group_index).
-  const auto group_index = std::uint8_t(this->_groups.size()) - 1U;
-  const auto in_group_index = std::uint8_t(group.size() - 1U);
-  this->_events.emplace_back(event_name, is_shown_in_results, group_index, in_group_index);
-}
-
-std::vector<perf::EventCounter::EventView>::iterator
-perf::EventCounter::find_event(const std::string_view event_name) noexcept
-{
-  return std::find_if(this->_events.begin(), this->_events.end(), [&event_name](const auto& event) {
-    return event.name() == event_name;
-  });
+  /// position of the hardware counter within that group (group.size()).
+  const auto group_index = std::uint8_t(this->_groups.size() - 1U);
+  if (this->_events.add(event_name, is_shown_in_results, group_index, std::uint8_t(group.size()))) {
+    group.add(event_config);
+  }
 }
 
 void
@@ -122,13 +110,13 @@ perf::EventCounter::add_live(const std::string& event_name)
   /// If the given name references an existing counter, add it.
   if (auto counter_config = this->_counter_definitions.counter(event_name); counter_config.has_value()) {
     this->_live_counters.emplace_back(std::get<1>(counter_config.value()));
-    this->_live_events.emplace_back(std::get<0>(counter_config.value()), this->_live_counters.size() - 1U);
+    this->_live_events.add(std::get<0>(counter_config.value()), std::uint8_t(this->_live_counters.size() - 1U));
     return;
   }
 
   /// If the counter does not exist, check if it is a metric, which is not supported for live events. Let the user know.
   if (auto metric = this->_counter_definitions.metric(event_name); metric.has_value()) {
-    throw MetricNotSupportedError{ event_name, "live counters" };
+    throw MetricNotSupportedAsLiveEventError{ event_name };
   }
 
   throw CannotFindEventError{ event_name };
@@ -238,47 +226,16 @@ perf::EventCounter::result(std::uint64_t normalization) const
 
   /// Copy only the hardware-event values.
   for (const auto& event : this->_events) {
-    if (event.is_event()) {
-      const auto value = this->_groups[event.group_id()].get(event.in_group_id()) / double(normalization);
+    if (event.is_hardware_event()) {
+      const auto scheduled_group = event.scheduled_group().value();
+      const auto value = this->_groups[scheduled_group.id()].get(scheduled_group.position()) / double(normalization);
       hardware_event_values.emplace_back(event.name(), value);
     }
   }
 
   /// Turn the result of only hardware events into a result containing requested hardware events and metrics (which are
   /// calculated from hardware events).
-  return EventCounter::transform_result_to_requested(
-    this->_counter_definitions, CounterResult{ std::move(hardware_event_values) }, this->_events);
-}
-
-perf::CounterResult
-perf::EventCounter::transform_result_to_requested(const perf::CounterDefinition& counters,
-                                                  perf::CounterResult&& hardware_events,
-                                                  const std::vector<EventView>& requested_events)
-{
-  /// List of all requested values (hardware-events and metrics)
-  auto result = std::vector<std::pair<std::string_view, double>>{};
-  result.reserve(requested_events.size());
-
-  for (const auto& event : requested_events) {
-    /// First, add all hardware events that were requested to be shown: event.is_shown_in_results() indicates that
-    /// the event was requested by the user and not only required by a metric.
-    if (event.is_event()) {
-      if (event.is_shown_in_results()) {
-        if (const auto value = hardware_events.get(event.name()); value.has_value()) {
-          result.emplace_back(event.name(), value.value());
-        }
-      }
-    }
-
-    /// If the event is a metric (not a hardware event), calculate the value of the metric and add it to the result.
-    else if (auto metric = counters.metric(event.name()); metric.has_value()) {
-      if (const auto value = std::get<1>(metric.value()).calculate(hardware_events); value.has_value()) {
-        result.emplace_back(std::get<0>(metric.value()), value.value());
-      }
-    }
-  }
-
-  return CounterResult{ std::move(result) };
+  return this->_events.result(this->_counter_definitions, CounterResult{ std::move(hardware_event_values) });
 }
 
 void
@@ -313,8 +270,8 @@ std::vector<std::string_view>
 perf::EventCounter::live_event_names() const
 {
   auto names = std::vector<std::string_view>{};
-  std::transform(this->_live_events.cbegin(),
-                 this->_live_events.cend(),
+  std::transform(this->_live_events.begin(),
+                 this->_live_events.end(),
                  std::back_inserter(names),
                  [](const auto& event) { return event.name(); });
   return names;
@@ -413,27 +370,27 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
 
   /// Accumulate all hardware events from EventCounters.
   for (const auto& event : reference_event_counter._events) {
-    if (event.is_event()) {
+    if (event.is_hardware_event()) {
 
       /// Add up the values from all individual EventCounters in event_counters.
-      const auto value = std::accumulate(
+      const auto aggregated_value = std::accumulate(
         this->event_counters().cbegin(),
         this->event_counters().cend(),
         .0,
-        [id = event.group_id(), in_group_id = event.in_group_id()](const auto sum, const auto& event_counter) {
-          return sum + event_counter._groups[id].get(in_group_id);
+        [group_id = event.scheduled_group()->id(),
+         in_group_position = event.scheduled_group()->position()](const auto sum, const auto& event_counter) {
+          return sum + event_counter._groups[group_id].get(in_group_position);
         });
 
       /// Normalize the value (by the given normalization parameter) and add to the aggregated results.
-      aggregated_hardware_event_values.emplace_back(event.name(), value / double(normalization));
+      aggregated_hardware_event_values.emplace_back(event.name(), aggregated_value / double(normalization));
     }
   }
 
   /// Turn the result of only aggregated hardware events into a result containing requested hardware events and metrics
   /// (which are calculated from hardware events).
-  return EventCounter::transform_result_to_requested(reference_event_counter._counter_definitions,
-                                                     CounterResult{ std::move(aggregated_hardware_event_values) },
-                                                     reference_event_counter._events);
+  return reference_event_counter._events.result(reference_event_counter._counter_definitions,
+                                                CounterResult{ std::move(aggregated_hardware_event_values) });
 }
 
 bool

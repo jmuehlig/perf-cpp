@@ -37,7 +37,7 @@ perf::Sampler::trigger(std::vector<std::vector<Trigger>>&& triggers)
     for (auto& trigger : trigger_group) {
       /// Reject metrics as trigger events as metrics consist of multiple events.
       if (this->_counter_definitions.is_metric(trigger.name())) {
-        throw MetricNotSupportedError{ trigger.name(), "sampling" };
+        throw MetricNotSupportedAsSamplingTriggerError{ trigger.name() };
       }
 
       /// Read the config (like event id etc.) from every trigger name and verify that the trigger event exists in the
@@ -154,7 +154,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
   auto group = Group{};
 
   /// List of counter names that should be read later from results.
-  auto counter_names = std::vector<std::string_view>{};
+  auto requested_events = RequestedEventSet{};
 
   /// Add the trigger(s) to the group. For the most time, this will be a single trigger. Some architectures need
   /// specific auxiliary counters.
@@ -177,7 +177,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
 
       /// Notice the counter name of the trigger event.
       if (this->_values.is_set(PERF_SAMPLE_READ)) {
-        counter_names.push_back(std::get<0>(trigger));
+        requested_events.add(std::get<0>(trigger), 0U);
       }
     } else {
       throw CannotFindEventError{ std::get<0>(trigger) };
@@ -186,25 +186,52 @@ perf::Sampler::transform_trigger_to_sample_counter(
 
   /// Add possible counters as value to the sample.
   if (this->_values.is_set(PERF_SAMPLE_READ)) {
-    for (const auto& counter_name : this->_values.counters()) {
+    for (const auto& event_name : this->_values.counters()) {
 
-      /// Verify the counter is not a metric.
-      if (this->_counter_definitions.is_metric(counter_name)) {
-        throw MetricNotSupportedError{ counter_name, "sampling" };
+      /// Check if the event is a true hardware counter – if so, just add it to the list.
+      if (auto counter_config = this->_counter_definitions.counter(event_name); counter_config.has_value()) {
+        /// Add the event to the requested event set.
+        /// If the request returns true, the event as indeed added and needs to be added to the group.
+        const auto is_added = requested_events.add(std::get<0>(counter_config.value()), std::uint8_t(group.size()));
+        if (is_added) {
+          group.add(std::get<1>(counter_config.value()));
+        }
       }
 
-      /// Find the counter.
-      if (auto counter_config = this->_counter_definitions.counter(counter_name); counter_config.has_value()) {
-        /// Add the counter to the group and to the list of counters.
-        counter_names.push_back(std::get<0>(counter_config.value()));
-        group.add(std::get<1>(counter_config.value()));
-      } else {
-        throw CannotFindEventError{ counter_name };
+      /// Otherwise, check if the event is a metric. In that case, add all depending hardware counters (if not already
+      /// done).
+      else if (auto metric = this->_counter_definitions.metric(event_name); metric.has_value()) {
+        const auto metric_name = std::get<0>(metric.value());
+        /// For metrics, we need to add every hardware counter the metric depends on (and check their existence).
+        for (const auto& depending_counter_name : std::get<1>(metric.value()).required_counter_names()) {
+          if (auto depending_counter_config = this->_counter_definitions.counter(depending_counter_name);
+              depending_counter_config.has_value()) {
+
+            /// Add the event to the requested event set.
+            /// If the request returns true, the event is indeed added and needs to be added to the group.
+            const auto is_added =
+              requested_events.add(std::get<0>(depending_counter_config.value()), std::uint8_t(group.size()));
+            if (is_added) {
+              group.add(std::get<1>(depending_counter_config.value()));
+            }
+          } else {
+            throw CannotFindEventForMetricError{ depending_counter_name, metric_name };
+          }
+        }
+
+        /// Add the metric to the list of scheduled events.
+        requested_events.add(metric_name);
+
+      }
+
+      /// Throw an exception of the event is neither a hardware event or a metric.
+      else {
+        throw CannotFindEventOrMetricError{ event_name };
       }
     }
 
-    if (!counter_names.empty()) {
-      return SampleCounter{ std::move(group), std::move(counter_names) };
+    if (!requested_events.empty()) {
+      return SampleCounter{ std::move(group), std::move(requested_events) };
     }
   }
 
@@ -475,7 +502,7 @@ perf::Sampler::read_registers(perf::Sampler::UserLevelBufferEntry& entry, const 
 }
 
 std::optional<perf::CounterResult>
-perf::Sampler::read_hardware_events(UserLevelBufferEntry& entry, const SampleCounter& sample_counter)
+perf::Sampler::read_hardware_events(UserLevelBufferEntry& entry, const SampleCounter& sample_counter) const
 {
   /// Read the number of counters.
   const auto count_counter_values = entry.read<decltype(CounterValues<Group::MAX_MEMBERS>::count_members)>();
@@ -491,18 +518,22 @@ perf::Sampler::read_hardware_events(UserLevelBufferEntry& entry, const SampleCou
     return std::nullopt;
   }
 
-  auto counter_results = std::vector<std::pair<std::string_view, double>>{};
-
-  /// Add each counter and its value to the result set of the sample.
-  for (auto counter_id = 0U; counter_id < sample_counter.group().size(); ++counter_id) {
-    const auto counter_name = sample_counter.counter_names()[counter_id];
-
-    /// Counter value (corrected).
-    const auto counter_result = double(counter_values[counter_id].value) * multiplexing_correction;
-
-    counter_results.emplace_back(counter_name, counter_result);
+  /// Create a list of results with only hardware events – regardless of their visibility in the result. This list will
+  /// be used to build a result containing visible events and metrics.
+  auto hardware_counter_results = std::vector<std::pair<std::string_view, double>>{};
+  hardware_counter_results.reserve(sample_counter.group().size());
+  for (const auto& requested_event : sample_counter.requested_events()) {
+    if (requested_event.is_hardware_event()) {
+      const auto counter_index = requested_event.scheduled_group()->position();
+      /// Counter value (corrected).
+      const auto counter_result = double(counter_values[counter_index].value) * multiplexing_correction;
+      hardware_counter_results.emplace_back(requested_event.name(), counter_result);
+    }
   }
-  return CounterResult{ std::move(counter_results) };
+
+  /// Build a result containing metrics and hardware events requested by teh user.
+  return sample_counter.requested_events().result(this->_counter_definitions,
+                                                  CounterResult{ std::move(hardware_counter_results) });
 }
 
 std::optional<std::vector<std::uintptr_t>>

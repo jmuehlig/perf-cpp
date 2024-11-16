@@ -4,6 +4,7 @@
 * New feature: Access interim results from counters without stopping the counter using [live counters](docs/recording-live-events.md).
 * New feature: Sampling the user stack (see the [documentation](docs/sampling.md#user-stack)).
 * New feature: Create custom metrics using expressions (see the [documentation](docs/metrics.md#using-formulas)).
+* New feature: Use [metric](docs/metrics.md) when sampling [counter values](docs/sampling.md#performance-counter-values).
 
 ## v0.8.3
 * Fixed multiple compatibility issues where the code relied on Linux kernel features that might not available on different versions.
