@@ -666,23 +666,25 @@ perf::Sampler::SampleCounter::~SampleCounter()
 }
 
 std::vector<perf::Sample>
-perf::MultiSamplerBase::result(const std::vector<Sampler>& sampler, const bool is_sort_by_time)
+perf::MultiSamplerBase::result(const std::vector<Sampler>& samplers, const bool is_sort_by_time)
 {
-  if (!sampler.empty()) {
-    auto result = sampler.front().result();
+  if (!samplers.empty()) {
+    auto result = samplers.front().result();
 
     /// Merge the results from all samplers (the result of the first sampler is the start point).
-    for (auto i = 1U; i < sampler.size(); ++i) {
-      auto sampler_result = sampler[i].result();
+    for (auto i = 1U; i < samplers.size(); ++i) {
+      auto sampler_result = samplers[i].result();
       std::move(sampler_result.begin(), sampler_result.end(), std::back_inserter(result));
     }
 
     /// Sort, if requested and supported by all samplers.
     if (is_sort_by_time) {
       /// Verify that all samplers recorded the timestamp that is needed to sort by time.
-      if (std::all_of(sampler.begin(), sampler.end(), [](const auto& sampler) {
-            return sampler._values.is_set(PERF_SAMPLE_TIME);
-          })) {
+      const auto is_time_provided = std::all_of(samplers.begin(), samplers.end(), [](const auto& sampler) {
+        return sampler._values.is_set(PERF_SAMPLE_TIME);
+      });
+
+      if (is_time_provided) {
         std::sort(result.begin(), result.end(), SampleTimestampComparator{});
       }
     }

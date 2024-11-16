@@ -245,7 +245,7 @@ private:
    * @param error_code The error code when failing.
    * @return True, when the counter should try to open again.
    */
-  [[nodiscard]] static bool is_adjust_precise_ip(std::int32_t current_precise_ip,
+  [[nodiscard]] static bool is_adjust_precise_ip(std::uint8_t current_precise_ip,
                                                  std::optional<std::uint64_t> sample_type,
                                                  std::int64_t error_code) noexcept;
 

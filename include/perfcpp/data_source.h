@@ -425,7 +425,7 @@ public:
    */
   [[nodiscard]] std::uint64_t op() const noexcept
   {
-    return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_op;
+    return perf_mem_data_src{_data_source}.mem_op;
   }
 
   /**
@@ -433,7 +433,7 @@ public:
    */
   [[nodiscard]] std::uint64_t lvl() const noexcept
   {
-    return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_lvl;
+    return perf_mem_data_src{_data_source}.mem_lvl;
   }
 
   /**
@@ -442,7 +442,7 @@ public:
   [[nodiscard]] std::uint64_t remote() const noexcept
   {
 #ifndef PERFCPP_NO_MEM_REMOTE /// Remote field is supported since Linux 4.14
-    return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_remote;
+    return perf_mem_data_src{_data_source}.mem_remote;
 #else
     return 0ULL;
 #endif
@@ -454,7 +454,7 @@ public:
   [[nodiscard]] std::uint64_t lvl_num() const noexcept
   {
 #ifndef PERFCPP_NO_MEM_LVLNUM /// lvl_num field is supported since Linux 6.1
-    return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_lvl_num;
+    return perf_mem_data_src{_data_source}.mem_lvl_num;
 #else
     return 0ULL;
 #endif
@@ -465,7 +465,7 @@ public:
    */
   [[nodiscard]] std::uint64_t snoop() const noexcept
   {
-    return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_snoop;
+    return perf_mem_data_src{_data_source}.mem_snoop;
   }
 
   /**
@@ -474,7 +474,7 @@ public:
   [[nodiscard]] std::uint64_t snoopx() const noexcept
   {
 #ifndef PERFCPP_NO_MEM_SNOOPX /// Extended snoop field is supported since Linux 4.14
-    return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_snoopx;
+    return perf_mem_data_src{_data_source}.mem_snoopx;
 #else
     return 0ULL;
 #endif
@@ -485,7 +485,7 @@ public:
    */
   [[nodiscard]] std::uint64_t lock() const noexcept
   {
-    return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_lock;
+    return perf_mem_data_src{_data_source}.mem_lock;
   }
 
   /**
@@ -493,7 +493,7 @@ public:
    */
   [[nodiscard]] std::uint64_t tlb() const noexcept
   {
-    return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_dtlb;
+    return perf_mem_data_src{_data_source}.mem_dtlb;
   }
 
   /**
@@ -502,7 +502,7 @@ public:
   [[nodiscard]] std::uint64_t blk() const noexcept
   {
 #ifndef PERFCPP_NO_MEM_BLK /// BLK is supported since Linux 5.12
-    return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_blk;
+    return perf_mem_data_src{_data_source}.mem_blk;
 #else
     return 0ULL;
 #endif
@@ -514,7 +514,7 @@ public:
   [[nodiscard]] std::uint64_t hops() const noexcept
   {
 #ifndef PERFCPP_NO_MEM_HOPS_0 /// Hops field is supported since Linux 5.16
-    return reinterpret_cast<const perf_mem_data_src*>(&_data_source)->mem_hops;
+    return perf_mem_data_src{_data_source}.mem_hops;
 #else
     return 0ULL;
 #endif

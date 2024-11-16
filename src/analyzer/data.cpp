@@ -271,12 +271,12 @@ perf::analyzer::DataAnalyzerResult::to_csv(const std::string& data_type_name,
            << delimiter << "TLB hits" << delimiter << "TLB misses" << '\n';
   }
 
-  if (auto data_type =
+  if (auto data_type_iterator =
         std::find_if(this->_data_types.cbegin(),
                      this->_data_types.cend(),
                      [&data_type_name](const auto& data_type) { return data_type.name() == data_type_name; });
-      data_type != this->_data_types.cend()) {
-    for (const auto& member : data_type->members()) {
+      data_type_iterator != this->_data_types.cend()) {
+    for (const auto& member : data_type_iterator->members()) {
 
       const auto statistics = std::accumulate(member.samples().cbegin(),
                                               member.samples().cend(),

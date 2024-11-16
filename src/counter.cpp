@@ -21,10 +21,10 @@
 std::optional<double>
 perf::CounterResult::get(std::string_view name) const noexcept
 {
-  if (auto iterator = std::find_if(
+  if (const auto result_iterator = std::find_if(
         this->_results.begin(), this->_results.end(), [&name](const auto res) { return name == res.first; });
-      iterator != this->_results.end()) {
-    return iterator->second;
+      result_iterator != this->_results.end()) {
+    return result_iterator->second;
   }
 
   return std::nullopt;
@@ -211,11 +211,11 @@ perf::Counter::open(const perf::Config& config,
 
   /// Try to open the counter. For sampling, we might try to adjust the precise_ip configuration (see
   /// Counter::is_adjust_precise_ip).
-  auto precise_ip = std::int32_t{ this->_config.precise_ip().value_or(0U) };
+  auto precise_ip = this->_config.precise_ip().value_or(0U);
   do {
     /// precise_ip is only needed for sampling, not counting events and live events; thus, only set when it has a value.
     if (this->_config.precise_ip().has_value()) {
-      this->_event_attribute.precise_ip = std::uint64_t(precise_ip);
+      this->_event_attribute.precise_ip = precise_ip & 0b11; /// Use only two bits as perf_event_attr.precise_ip has only two bits.
     }
 
     /// Try to open using the perf subsystem. This might fail. If precise_ip is the reason (derived by the error code),
@@ -352,7 +352,7 @@ perf::Counter::perf_event_open(const pid_t process_id,
 }
 
 bool
-perf::Counter::is_adjust_precise_ip(const std::int32_t current_precise_ip,
+perf::Counter::is_adjust_precise_ip(const std::uint8_t current_precise_ip,
                                     const std::optional<std::uint64_t> sample_type,
                                     const std::int64_t error_code) noexcept
 {
@@ -363,7 +363,7 @@ perf::Counter::is_adjust_precise_ip(const std::int32_t current_precise_ip,
   }
 
   /// When precise_ip is already the lowest possible configuration (0 or lower), lowering has no impact.
-  if (current_precise_ip < 1LL) {
+  if (current_precise_ip < 1U || current_precise_ip > 3U) {
     return false;
   }
 
