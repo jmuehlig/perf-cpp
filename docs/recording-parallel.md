@@ -16,7 +16,7 @@ To monitor multiple threads or CPU cores, you have various options:
 ## 1st Option: Count Events Individually for each Thread
 The `perf::MultiThreadEventCounter` class allows you to copy the measurement on every thread and combines the results.
 
-### 1) Define the events to record
+### Define the events to record
 ```cpp
 #include <perfcpp/event_counter.h>
 /// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
@@ -30,7 +30,7 @@ try {
 }
 ```
 
-### 2) Wrap `start()` and `stop()` around your thread-local processing code
+### Wrap `start()` and `stop()` around your thread-local processing code
 ```cpp
 auto threads = std::vector<std::thread>{};
 for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
@@ -49,14 +49,14 @@ for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
 }
 ```
 
-### 3) Wait for the threads to finish
+### Wait for the threads to finish
 ```cpp
 for (auto &thread: threads) {
     thread.join();
 }
 ```
 
-### 4) Access the combined results
+### Access the combined results
 ```cpp
 /// Calculate the result.
 const auto result = multithread_event_counter.result();
@@ -76,10 +76,22 @@ std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << s
 std::cout << result.to_json() << std::endl;
 ```
 
+### Closing the Hardware Counters *(optional)*
+Once you have initialized the hardware performance counters, you can `start()`, `stop()`, and gather results repeatedly.
+To ultimately release resources such as file descriptors, consider closing the `MultiThreadEventCounter`:
+
+```cpp
+multithread_event_counter.close();
+```
+
+This action is optional and will occur automatically upon object deconstruction if `close()` is not invoked manually.
+
+---
+
 ## 2nd Option: Count Events for all Child Threads Simultaneously
 The `perf::Config` class allows you to inherit the measurement to all child threads.
 
-### 1) Define inheritance and the counters to record
+### Define inheritance and the counters to record
 ```cpp
 #include <perfcpp/event_counter.h>
 auto counter_definitions = perf::CounterDefinition{};
@@ -96,7 +108,7 @@ try {
 }
 ```
 
-### 2) Wrap `start()` and `stop()` around thread-spawning
+### Wrap `start()` and `stop()` around thread-spawning
 ```cpp
 auto threads = std::vector<std::thread>{};
 
@@ -120,7 +132,7 @@ for (auto &thread: threads) {
 event_counter.stop();
 ```
 
-### 3) Access the results
+### Access the results
 ```cpp
 /// Calculate the result.
 const auto result = event_counter.result();
@@ -140,13 +152,25 @@ std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << s
 std::cout << result.to_json() << std::endl;
 ```
 
+### Closing the Hardware Counters *(optional)*
+Once you have initialized the hardware performance counters, you can `start()`, `stop()`, and gather results repeatedly.
+To ultimately release resources such as file descriptors, consider closing the `EventCounter`:
+
+```cpp
+event_counter.close();
+```
+
+This action is optional and will occur automatically upon object deconstruction if `close()` is not invoked manually.
+
+---
+
 ## 3rd Option: Count Events on specific CPU Cores
 The `perf::MultiCoreEventCounter` class allows you record performance counters on specified CPU cores.
 Please note that you may record events of other applications running on that CPU cores.
 
 According to the [`perf_event_open` documentation](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), this option needs a `/proc/sys/kernel/perf_event_paranoid` value of `< 1`.
 
-### 1) Define CPU cores to watch
+### Define CPU cores to watch
 ```cpp
 /// Create a list of (logical) cpu ids to record performance counters on.
 auto cpus_to_watch = std::vector<std::uint16_t>{};
@@ -155,7 +179,7 @@ cpus_to_watch.add(1U);
 /// ... add more.
 ```
 
-### 2) Define the counters you want to record
+### Define the counters you want to record
 ```cpp
 #include <perfcpp/event_counter.h>
 /// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
@@ -169,7 +193,7 @@ try {
 }
 ```
 
-### 3) Start and stop the counters whenever you want
+### Start and stop the counters whenever you want
 ```cpp
 /// You can start threads here.
 try {
@@ -184,7 +208,7 @@ try {
 multi_cpu_event_counter.stop();
 ```
 
-### 4) Access the combined results
+### Access the combined results
 ```cpp
 /// Calculate the result.
 const auto result = multi_cpu_event_counter.result();
@@ -203,3 +227,13 @@ for (const auto [name, value] : result)
 std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << std::endl;
 std::cout << result.to_json() << std::endl;
 ```
+
+### Closing the Hardware Counters *(optional)*
+Once you have initialized the hardware performance counters, you can `start()`, `stop()`, and gather results repeatedly.
+To ultimately release resources such as file descriptors, consider closing the `MultiCoreEventCounter`:
+
+```cpp
+multi_cpu_event_counter.close();
+```
+
+This action is optional and will occur automatically upon object deconstruction if `close()` is not invoked manually.

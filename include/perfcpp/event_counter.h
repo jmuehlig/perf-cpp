@@ -29,7 +29,7 @@ public:
   EventCounter(EventCounter&&) noexcept = default;
   EventCounter(const EventCounter&) = default;
 
-  ~EventCounter() = default;
+  ~EventCounter();
 
   /**
    * Add the specified event to the list of countered performance events.
@@ -107,9 +107,14 @@ public:
   bool start();
 
   /**
-   * Stops and closes recording performance counters.
+   * Stops recording performance counters.
    */
   void stop();
+
+  /**
+   * Closes the hardware performance counters.
+   */
+  void close();
 
   /**
    * Returns the result of the performance measurement.
@@ -308,9 +313,14 @@ public:
   bool add(const std::vector<std::string>& counter_names);
 
   /**
-   * Stops and closes recording performance counters.
+   * Stops recording performance counters.
    */
   void stop();
+
+  /**
+   * Closes the hardware performance counters.
+   */
+  void close();
 
   /**
    * Returns the result of the performance measurement.
@@ -356,7 +366,7 @@ public:
   {
   }
 
-  ~MultiThreadEventCounter() override = default;
+  ~MultiThreadEventCounter() override { this->close(); }
 
   /**
    * Opens and starts recording performance counters for the given thread.
@@ -412,7 +422,7 @@ public:
   {
   }
 
-  ~MultiProcessEventCounter() override = default;
+  ~MultiProcessEventCounter() override { this->close(); }
 
 private:
   std::vector<perf::EventCounter> _process_local_counter;
@@ -443,7 +453,7 @@ public:
   {
   }
 
-  ~MultiCoreEventCounter() override = default;
+  ~MultiCoreEventCounter() override { this->close(); }
 
 private:
   std::vector<perf::EventCounter> _cpu_local_counter;

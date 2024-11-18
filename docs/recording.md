@@ -9,6 +9,7 @@ The library also supports [multi-threading and multi-CPU counting](recording-par
 - [Initializing the Hardware Counters *(optional)*](#initializing-the-hardware-counters-optional)
 - [Managing Counter Lifecycle](#managing-counter-lifecycle)
 - [Retrieving Counter Data](#retrieving-counter-data)
+- [Closing the Hardware Counters *(optional)*](#closing-the-hardware-counters-optional)
 - [Example: Analyzing Random Access Patterns](#example-analyzing-random-access-patterns)
 - [Troubleshooting Counter Configurations](#troubleshooting-counter-configurations)
 ---
@@ -82,6 +83,16 @@ std::cout << result.to_string() << std::endl;
 std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << std::endl;
 std::cout << result.to_json() << std::endl;
 ```
+
+## Closing the Hardware Counters *(optional)*
+Once you have [initialized](#initializing-the-hardware-counters-optional) the hardware performance counters, you can `start()`, `stop()`, and gather results repeatedly. 
+To ultimately release resources such as file descriptors, consider closing the `EventCounter`:
+
+```cpp
+event_counter.close();
+```
+
+This action is optional and will occur automatically upon object deconstruction if `close()` is not invoked manually.
 
 ---
 

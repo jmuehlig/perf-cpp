@@ -5,6 +5,11 @@
 #include <stdexcept>
 #include <utility>
 
+perf::EventCounter::~EventCounter()
+{
+  this->close();
+}
+
 bool
 perf::EventCounter::add(const std::string& event_name)
 {
@@ -203,18 +208,22 @@ perf::EventCounter::stop()
   for (auto& live_counter : this->_live_counters) {
     live_counter.disable();
   }
+}
 
-  /// Close all counter groups.
-  for (auto& group : this->_groups) {
-    group.close();
+void
+perf::EventCounter::close()
+{
+  if (const auto is_open = std::exchange(this->_is_open, false)) {
+    /// Close all counter groups.
+    for (auto& group : this->_groups) {
+      group.close();
+    }
+
+    /// Close all live counters.
+    for (auto& live_counter : this->_live_counters) {
+      live_counter.close();
+    }
   }
-
-  /// Close all live counters.
-  for (auto& live_counter : this->_live_counters) {
-    live_counter.close();
-  }
-
-  this->_is_open = false;
 }
 
 perf::CounterResult
@@ -352,6 +361,15 @@ perf::MultiEventCounterBase::stop()
   /// Stop every sub event counter.
   for (auto& event_counter : this->event_counters()) {
     event_counter.stop();
+  }
+}
+
+void
+perf::MultiEventCounterBase::close()
+{
+  /// Close every sub event counter.
+  for (auto& event_counter : this->event_counters()) {
+    event_counter.close();
   }
 }
 
