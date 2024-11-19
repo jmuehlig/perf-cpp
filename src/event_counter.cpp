@@ -213,7 +213,7 @@ perf::EventCounter::stop()
 void
 perf::EventCounter::close()
 {
-  if (const auto is_open = std::exchange(this->_is_open, false)) {
+  if (const auto is_open = std::exchange(this->_is_open, false); is_open) {
     /// Close all counter groups.
     for (auto& group : this->_groups) {
       group.close();
