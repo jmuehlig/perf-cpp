@@ -145,19 +145,19 @@ To ensure compatibility and optimal performance measurement, you can probe the s
 ```cpp
 #include <perfcpp/hardware_info.h>
 
-if (HardwareInfo::is_intel()) {
+if (perf::HardwareInfo::is_intel()) {
   /// Add intel-specifics like events, etc.
 
-  if (HardwareInfo::is_intel_aux_counter_required()) {
+  if (perf::HardwareInfo::is_intel_aux_counter_required()) {
     /// Add the "mem-loads-aux" event in front of precise memory events.
     /// See the sampling documentation for specifics.
   }
 }
 
-if (HardwareInfo::is_amd()) {
+if (perf::HardwareInfo::is_amd()) {
     /// Add amd-specifics like events, etc.
     
-    if (HardwareInfo::is_amd_ibs_supported()) {
+    if (perf::HardwareInfo::is_amd_ibs_supported()) {
         /// You can use ibs_op and further AMD IBS-related sampling mechanisms.
         /// See sampling documentation for specifics.
     }
