@@ -131,20 +131,39 @@ perf::CounterDefinition::initialize_amd_ibs_counters()
   /// IBS OP.
   if (const auto ibs_op_type = HardwareInfo::amd_ibs_op_type(); ibs_op_type.has_value()) {
     this->add("ibs_op", CounterConfig{ ibs_op_type.value(), 0U });
-    this->add("ibs_op_uops", CounterConfig{ ibs_op_type.value(), 1ULL << 19U });
+
+    /// Read the bit to sample for micro ops from the perf format.
+    auto uops_bit = HardwareInfo::amd_ibs_op_bit();
+    if (uops_bit.has_value()) {
+      this->add("ibs_op_uops", CounterConfig{ ibs_op_type.value(), 1ULL << uops_bit.value() });
+    }
 
     if (HardwareInfo::is_ibs_l3_filter_supported()) {
-      this->add("ibs_op_l3missonly", CounterConfig{ ibs_op_type.value(), 1ULL << 16U });
-      this->add("ibs_op_uops_l3missonly", CounterConfig{ ibs_op_type.value(), (1ULL << 19U) | (1ULL << 16U) });
+
+      /// Read the bit to filter for l3 misses from the perf format.
+      if (const auto l3missonly_bit = HardwareInfo::amd_ibs_op_l3miss_bit(); l3missonly_bit.has_value()) {
+        this->add("ibs_op_l3missonly", CounterConfig{ ibs_op_type.value(), 1ULL << l3missonly_bit.value() });
+
+        if (uops_bit.has_value()) {
+          this->add("ibs_op_uops_l3missonly", CounterConfig{ ibs_op_type.value(), (1ULL << uops_bit.value()) | (1ULL << l3missonly_bit.value()) });
+        }
+      }
     }
   }
 
   /// IBS Fetch.
   if (const auto ibs_fetch_type = HardwareInfo::amd_ibs_fetch_type(); ibs_fetch_type.has_value()) {
-    this->add("ibs_fetch", CounterConfig{ ibs_fetch_type.value(), 1ULL << 57U });
 
-    if (HardwareInfo::is_ibs_l3_filter_supported()) {
-      this->add("ibs_fetch_l3missonly", CounterConfig{ ibs_fetch_type.value(), (1ULL << 57U) | (1ULL << 16U) });
+    /// Read the bit to sample for instruction fetches from the perf format.
+    if (const auto fetch_bit = HardwareInfo::amd_ibs_fetch_bit(); fetch_bit.has_value()) {
+      this->add("ibs_fetch", CounterConfig{ ibs_fetch_type.value(), 1ULL << fetch_bit.value() });
+
+      if (HardwareInfo::is_ibs_l3_filter_supported()) {
+        /// Read the bit to filter for l3 misses from the perf format.
+        if (const auto l3missonly_bit = HardwareInfo::amd_ibs_fetch_l3miss_bit(); l3missonly_bit.has_value()) {
+          this->add("ibs_fetch_l3missonly", CounterConfig{ ibs_fetch_type.value(), (1ULL << fetch_bit.value()) | (1ULL << l3missonly_bit.value()) });
+        }
+      }
     }
   }
 }

@@ -2,6 +2,7 @@
 #include <fstream>
 #include <perfcpp/hardware_info.h>
 #include <sstream>
+#include <regex>
 
 std::optional<std::uint64_t>
 perf::HardwareInfo::intel_pebs_mem_loads_aux_event_id()
@@ -51,6 +52,50 @@ perf::HardwareInfo::amd_ibs_fetch_type()
   }
 
   return std::nullopt;
+}
+
+std::optional<std::uint8_t>
+perf::HardwareInfo::amd_ibs_op_bit()
+{
+  const auto format = HardwareInfo::parse_format("/sys/bus/event_source/devices/ibs_op/format/cnt_ctl");
+  if (format.size() != 1U) {
+    return std::nullopt;
+  }
+
+  return std::get<0U>(std::get<1U>(format.front()));
+}
+
+std::optional<std::uint8_t>
+perf::HardwareInfo::amd_ibs_op_l3miss_bit()
+{
+  const auto format = HardwareInfo::parse_format("/sys/bus/event_source/devices/ibs_op/format/l3missonly");
+  if (format.size() != 1U) {
+    return std::nullopt;
+  }
+
+  return std::get<0U>(std::get<1U>(format.front()));
+}
+
+std::optional<std::uint8_t>
+perf::HardwareInfo::amd_ibs_fetch_bit()
+{
+  const auto format = HardwareInfo::parse_format("/sys/bus/event_source/devices/ibs_fetch/format/rand_en");
+  if (format.size() != 1U) {
+    return std::nullopt;
+  }
+
+  return std::get<0U>(std::get<1U>(format.front()));
+}
+
+std::optional<std::uint8_t>
+perf::HardwareInfo::amd_ibs_fetch_l3miss_bit()
+{
+  const auto format = HardwareInfo::parse_format("/sys/bus/event_source/devices/ibs_fetch/format/l3missonly");
+  if (format.size() != 1U) {
+    return std::nullopt;
+  }
+
+  return std::get<0U>(std::get<1U>(format.front()));
 }
 
 std::optional<std::uint32_t>
@@ -123,4 +168,36 @@ perf::HardwareInfo::parse_event_umask_from_file(std::string&& path)
   }
 
   return std::nullopt;
+}
+
+std::vector<std::pair<std::uint8_t, std::pair<std::uint8_t, std::optional<std::uint8_t>>>>
+perf::HardwareInfo::parse_format(std::string&& path)
+{
+  auto configs = std::vector<std::pair<std::uint8_t, std::pair<std::uint8_t, std::optional<std::uint8_t>>>>{};
+
+  auto format_file = std::ifstream{path};
+
+  if (!format_file.is_open()) {
+    return configs;
+  }
+
+  std::string line;
+  if (std::getline(format_file, line); !line.empty()) {
+    auto config_pattern = std::regex("config([0-9]?):(\\d+)(?:-(\\d+))?");
+
+    auto stream = std::stringstream{line};
+    std::string entry;
+
+    while(std::getline(stream, entry, ',')) {
+      if (std::smatch match; std::regex_match(entry, match, config_pattern)) {
+        const auto config_id = match[1U].length() == 0U ? 0 : std::stoi(match[1U].str());
+        const auto bit_start = std::stoi(match[2U].str());
+        const auto bit_end = match[3U].length() == 0U ? std::nullopt : std::make_optional(std::stoi(match[2U].str()));
+
+        configs.emplace_back(config_id, std::make_pair(bit_start, bit_end));
+      }
+    }
+  }
+
+  return configs;
 }
