@@ -215,7 +215,8 @@ perf::Counter::open(const perf::Config& config,
   do {
     /// precise_ip is only needed for sampling, not counting events and live events; thus, only set when it has a value.
     if (this->_config.precise_ip().has_value()) {
-      this->_event_attribute.precise_ip = precise_ip & 0b11; /// Use only two bits as perf_event_attr.precise_ip has only two bits.
+      this->_event_attribute.precise_ip =
+        precise_ip & 0b11; /// Use only two bits as perf_event_attr.precise_ip has only two bits.
     }
 
     /// Try to open using the perf subsystem. This might fail. If precise_ip is the reason (derived by the error code),
@@ -377,6 +378,9 @@ std::string
 perf::Counter::error_message_from_errno(const std::int64_t error_code)
 {
   switch (error_code) {
+    case ENOENT:
+      return "configuration might not be valid (e.g., wrong type or too many counters scheduled to the same hardware "
+             "counter)";
     case E2BIG:
       return "perf_event_attr.size was not configured properly – this could be a bug in the perf-cpp library";
     case EACCES:
