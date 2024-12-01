@@ -73,6 +73,32 @@ public:
   ~MaxCountersReachedError() override = default;
 };
 
+class MaxGroupsReachedError final : public std::runtime_error
+{
+public:
+  explicit MaxGroupsReachedError(const std::uint64_t max_groups)
+    : std::runtime_error(std::string{ "Cannot add more events: reached maximum number of hardware counters (" }.append(
+        std::to_string(max_groups).append("). Try to increase via perf::Config::max_groups(X).")))
+  {
+  }
+  ~MaxGroupsReachedError() override = default;
+};
+
+class CannotAddCountersToSingleGroupError final : public std::runtime_error
+{
+public:
+  explicit CannotAddCountersToSingleGroupError(const std::uint64_t counters, const std::uint64_t max_counters_per_group)
+    : std::runtime_error(
+        std::string{ "Cannot add " }
+          .append(std::to_string(counters))
+          .append(" counters to a single hardware counter, the maximum counters per hardware counter is ")
+          .append(std::to_string(max_counters_per_group))
+          .append(". Try to increase via perf::Config::max_counters_per_group(X)."))
+  {
+  }
+  ~CannotAddCountersToSingleGroupError() override = default;
+};
+
 class CannotFindEventForMetricError final : public std::runtime_error
 {
 public:
@@ -160,13 +186,23 @@ public:
 class DataTypeAlreadyRegisteredError final : public std::runtime_error
 {
 public:
-  explicit DataTypeAlreadyRegisteredError(const std::string& data_type_name)
+  explicit DataTypeAlreadyRegisteredError(const std::string_view data_type_name)
     : std::runtime_error(std::string{ "The DataType '" }
                            .append(data_type_name)
                            .append("' is already registered and cannot be registered twice."))
   {
   }
   ~DataTypeAlreadyRegisteredError() override = default;
+};
+
+class DataTypeNotRegisteredError final : public std::runtime_error
+{
+public:
+  explicit DataTypeNotRegisteredError(const std::string_view data_type_name)
+    : std::runtime_error(std::string{ "The DataType '" }.append(data_type_name).append("' is was not found."))
+  {
+  }
+  ~DataTypeNotRegisteredError() override = default;
 };
 
 class CannotParseExpressionError final : public std::runtime_error

@@ -1,6 +1,6 @@
 #include "access_benchmark.h"
 #include <iostream>
-#include <perfcpp/analyzer/data.h>
+#include <perfcpp/analyzer/memory_access.h>
 #include <perfcpp/hardware_info.h>
 #include <perfcpp/sampler.h>
 
@@ -72,35 +72,32 @@ main()
   sampler.stop();
 
   /// Create data types for analyzer.
-  auto data_analyzer = perf::analyzer::DataAnalyzer{};
-  /// 1) Cache line that dictates the pattern.
-  auto pattern_cache_line = perf::analyzer::DataType{ "pattern_cache_line", 64U };
-  for (auto i = 0U; i < 8U; ++i) {
-    auto member_name = std::string{ "index[" }.append(std::to_string(i)).append("]");
-    pattern_cache_line.add<std::uint64_t>(std::move(member_name));
-  }
-  data_analyzer.add(std::move(pattern_cache_line));
+  auto data_analyzer = perf::analyzer::MemoryAccess{};
 
-  /// Register instances.
-  data_analyzer.annotate("pattern_cache_line", benchmark.indices().data(), benchmark.indices().size());
+  /// 1) Create and add the "index" data type (normal u64 that dictates the pattern through the data array in the random
+  /// access benchmark).
+  auto index = perf::analyzer::DataType{ "index", sizeof(std::uint64_t) };
+  index.add<std::uint64_t>("index");
+  data_analyzer.add(std::move(index));
 
-  /// 2) Data that is accessed
-  auto data_cache_line = perf::analyzer::DataType{ "data_cache_line", 64U };
-  data_cache_line.add<std::uint64_t>("value");
-  data_analyzer.add(std::move(data_cache_line));
+  /// 2) Create and add the "data_cache_line" data type (single cache line that is accessed in the random access
+  /// benchmark).
+  auto cache_line = perf::analyzer::DataType{ "data_cache_line", sizeof(perf::example::AccessBenchmark::cache_line) };
+  cache_line.add<std::uint64_t>("value");
+  data_analyzer.add(std::move(cache_line));
 
-  /// Register instances.
-  data_analyzer.annotate("data_cache_line", benchmark.data_to_read().data(), benchmark.data_to_read().size());
+  /// 3) Register instances in memory for both data types.
+  data_analyzer.annotate("index", benchmark.indices());
+  data_analyzer.annotate("data_cache_line", benchmark.data_to_read());
 
-  /// Get all the recorded samples.
+  /// 4) Get all the recorded samples.
   auto samples = sampler.result();
+
+  /// 5) Map the samples to data type instances.
   const auto result = data_analyzer.map(samples);
 
+  /// 6) Print the results to the console.
   std::cout << result.to_string() << std::flush;
-
-  /// Close the sampler.
-  /// Note that the sampler can only be closed after reading the samples.
-  sampler.close();
 
   return 0;
 }

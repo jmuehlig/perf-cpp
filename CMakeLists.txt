@@ -7,7 +7,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g3")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -DNDEBUG")
 set(CMAKE_BUILD_TYPE RELEASE)
 
-
 # Include include/ folder.
 include_directories(include/)
 
@@ -29,7 +28,7 @@ set(PERF_CPP_SRC
     src/hardware_info.cpp
     src/metric_expression.cpp
     src/requested_event.cpp
-    src/analyzer/data.cpp
+    src/analyzer/memory_access.cpp
 )
 if (BUILD_LIB_SHARED)
     add_library(perf-cpp SHARED ${PERF_CPP_SRC})
@@ -104,8 +103,8 @@ if(BUILD_EXAMPLES)
     target_link_libraries(context-switch-sampling perf-cpp)
 
     ## Analyze Samples with DataAnalyzer
-    add_executable(data-analyzer EXCLUDE_FROM_ALL examples/data_analyzer.cpp examples/access_benchmark.cpp)
-    target_link_libraries(data-analyzer perf-cpp)
+    add_executable(memory-access-analyzer EXCLUDE_FROM_ALL examples/memory_access_analyzer.cpp examples/access_benchmark.cpp)
+    target_link_libraries(memory-access-analyzer perf-cpp)
 
     ## Live Events
     add_executable(live-events EXCLUDE_FROM_ALL examples/live_events.cpp examples/access_benchmark.cpp)
@@ -117,8 +116,8 @@ if(BUILD_EXAMPLES)
             single-thread inherit-thread multi-thread multi-cpu multi-process
             instruction-pointer-sampling counter-sampling branch-sampling
             address-sampling register-sampling multi-thread-sampling multi-cpu-sampling
-            multi-event-sampling amd-ibs-raw-sampling context-switch-sampling data-analyzer
-            live-events)
+            multi-event-sampling amd-ibs-raw-sampling context-switch-sampling
+            memory-access-analyzer live-events)
 endif()
 
 #############################################################

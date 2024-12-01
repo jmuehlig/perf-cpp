@@ -1,5 +1,4 @@
 # perf-cpp: Access Performance Counters from C++ Applications
-
 Welcome to *perf-cpp*, a robust C++ library designed to streamline the use of the Linux perf subsystem, providing direct access to hardware performance counters. 
 Many modern profiling tools fail to offer precise profiling of specific code segments and to associate profiled data like memory addresses with application-specific details. 
 With *perf-cpp*, you can manage profiling directly within your application and handle the profiled data seamlessly.
@@ -133,11 +132,19 @@ All code examples are available in the [examples/](examples) folder.
 ## System Requirements
 * Support for C++ `17` features
 * CMake version `3.10` or higher
-* Minimum *Linux Kernel version*: `>= 4.0`
-* Recommended *Linux Kernel version*: `>= 5.13` (older Kernels might not implement all features like sampling for latency)
+* *Linux Kernel version*: `>= 4.0` (we recommend `>= 5.13` as older kernels might not implement several features like sampling for latency)
+* Appropriate `perf_event_paranoid` value (see below) value (see the file ` /proc/sys/kernel/perf_event_paranoid` which restricts the access to counters from `-1` (*no restrictions*) to `>= 2` (*)
 * Installed `perf` (check if `perf stat -- ls` provides any output, otherwise follow the instructions)
 
-## Contribute and Engage with Us
+### Paranoid Value
+The `perf_event_paranoid` restricts the access to hardware counters.
+The value is defined in `/proc/sys/kernel/perf_event_paranoid` and can be:
+* `-1` (no restrictions)
+* `0` (allowed, but no raw tracepoint samples)
+* `1` (allow kernel and user level monitoring–default since Linux `4.6`)
+* `>= 2` (only user-level measurements)
+
+## Contribute and Contact
 We welcome contributions and feedback to make *perf-cpp* even better.
 For feature requests, feedback, or bug reports, please reach out via our issue tracker or submit a pull request.
 

@@ -5,7 +5,7 @@ This guide will cover how to set up and utilize these sampling capabilities effe
 
 ---
 ## Table of Contents
-- [Sample Individual Threads](#sample-individual-threads)
+- [Sample Separate Threads](#sample-individual-threads)
   - [Setting Up Multi-threaded Sampler](#setting-up-multi-threaded-sampler)
   - [Starting and Stopping Sampler in Threads](#starting-and-stopping-sampler-in-threads)
   - [Retrieving and Analyzing Samples](#retrieving-and-analyzing-samples)
@@ -18,7 +18,7 @@ This guide will cover how to set up and utilize these sampling capabilities effe
   - [Releasing Sampler Resources *(optional)*](#releasing-sampler-resources-optional-1)
 ---
 
-## Sample Individual Threads
+## Sample Separate Threads
 *perf-cpp* provides the `MultiThreadSampler` class to manage samplers for different threads, enabling precise performance measurements across thread-specific tasks.
 
 &rarr; [See code example `multi_thread_sampling.cpp`](../examples/multi_thread_sampling.cpp)

@@ -10,6 +10,7 @@ The library also supports [multi-threading and multi-CPU counting](recording-par
 - [Managing Counter Lifecycle](#managing-counter-lifecycle)
 - [Retrieving Counter Data](#retrieving-counter-data)
 - [Closing the Hardware Counters *(optional)*](#closing-the-hardware-counters-optional)
+- [Control Scheduling of Events to Hardware Counters](#control-scheduling-of-events-to-hardware-counters)
 - [Example: Analyzing Random Access Patterns](#example-analyzing-random-access-patterns)
 - [Troubleshooting Counter Configurations](#troubleshooting-counter-configurations)
 ---
@@ -93,6 +94,44 @@ event_counter.close();
 ```
 
 This action is optional and will occur automatically upon object deconstruction if `close()` is not invoked manually.
+
+## Control Scheduling of Events to Hardware Counters
+The number of *physical* hardware counters that can count low-level events is limited (around one handful on the most modern CPUs). 
+However, many vendors implement *multiplexing*–allowing to schedule multiple events to the same counter.
+
+By default, *perf-cpp* will try to schedule the events to as few physical hardware counters as possible.
+However, you can control this scheduling via the `EventCounter::add()` method, providing a schedule hint next to the event name(s), for example:
+
+```cpp
+event_counter.add({ "instructions", "cycles",
+                    "branches", "dTLB-miss-ratio",
+                  }, perf::EventCounter::Schedule::Separate);
+```
+
+which will schedule each provided event to a **separate** hardware counter.
+*perf-cpp* implements three different scheduling modes:
+
+| Schedule Mode                            | Description                                                                                                                                                                                   |
+|------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `perf::EventCounter::Schedule::Separate` | Schedule each event to a separate *physical*  hardware counter. If a metric is provided as an event, each counter used to calculate the metric will be placed on a separate hardware counter. |
+| `perf::EventCounter::Schedule::Append`   | Schedule each event to any *physical*  hardware counter and make use of multiplexing. This is the **default**.                                                                                |
+| `perf::EventCounter::Schedule::Group`    | Schedule the list of provided events to the **same** *physical*  hardware counter (this is true for list of events and metrics).                                                              |
+
+`EventCounter::add()` will throw an exception, if the scheduling does not fit (e.g., too many events are requested to group together.)
+
+### Adjusting hardware settings to the underlying system
+*perf-cpp* cannot identify the underlying hardware settings and assumes **four** groups (i.e., *physical* hardware counters) and **five** events per group.
+However, some CPUs (e.g., ARM Cortex-A72) do not implement multiplexing at all.
+
+You can specify the settings using the `perf::Config` configuration as follows:
+
+```cpp
+auto config = perf::Config{};
+config.max_groups(2U);             /// Only two hardware counters
+config.max_counters_per_group(1U); /// Only one event per counter.
+
+auto event_counter = perf::EventCounter{ counter_definitions, config };
+```
 
 ---
 

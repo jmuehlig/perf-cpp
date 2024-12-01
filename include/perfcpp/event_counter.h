@@ -21,6 +21,16 @@ class EventCounter
   friend class MultiEventCounterBase;
 
 public:
+  /**
+   * Mode how to schedule multiple events to physical hardware counters.
+   */
+  enum class Schedule : std::uint8_t
+  {
+    Append,   /// Events are placed on any hardware counter.
+    Separate, /// Events are placed on a separate hardware counters.
+    Group     /// Events are placed on the same hardware counter.
+  };
+
   explicit EventCounter(const CounterDefinition& counter_definition, Config config = {})
     : _counter_definitions(counter_definition)
     , _config(config)
@@ -36,27 +46,45 @@ public:
    * The event must exist within the counter definitions.
    *
    * @param event_name Name of the event.
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual).
    * @return True, if the event could be added.
    */
-  bool add(std::string&& event_name) { return add(event_name); }
+  bool add(std::string&& event_name, const Schedule schedule = Schedule::Append) { return add(event_name, schedule); }
 
   /**
    * Add the specified event to the list of monitored countered events.
    * The event must exist within the counter definitions.
    *
    * @param event_name Name of the event.
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual).
    * @return True, if the event could be added.
    */
-  bool add(const std::string& event_name);
+  bool add(const std::string& event_name, Schedule schedule = Schedule::Append);
 
   /**
    * Add the specified events to the list of countered events.
    * The events must exist within the counter definitions.
    *
    * @param event_names List of names of the events.
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual), or as a
+   * group (all to the same hardware counter).
    * @return True, if the events could be added.
    */
-  bool add(std::vector<std::string>&& event_names) { return add(event_names); }
+  bool add(std::vector<std::string>&& event_names, const Schedule schedule = Schedule::Append)
+  {
+    return add(event_names, schedule);
+  }
+
+  /**
+   * Add the specified events to the list of countered performance events.
+   * The events must exist within the counter definitions.
+   *
+   * @param event_names List of names of the counted events.
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual), or as a
+   * group (all to the same hardware counter).
+   * @return True, if the events could be added.
+   */
+  bool add(const std::vector<std::string>& event_names, Schedule schedule = Schedule::Append);
 
   /**
    * Add the specified event to the list of countered performance events.
@@ -84,15 +112,6 @@ public:
    * @param event_names List of event names.
    */
   void add_live(std::vector<std::string>&& event_names);
-
-  /**
-   * Add the specified events to the list of countered performance events.
-   * The events must exist within the counter definitions.
-   *
-   * @param event_names List of names of the counted events.
-   * @return True, if the events could be added.
-   */
-  bool add(const std::vector<std::string>& event_names);
 
   /**
    * Opens hardware performance counters.
@@ -166,14 +185,14 @@ public:
   /**
    * @return Configuration of the counter.
    */
-  [[nodiscard]] Config config() const noexcept { return _config; }
+  [[nodiscard]] const Config& config() const noexcept { return _config; }
 
   /**
    * Update the configuration of the counter.
    *
    * @param config New config.
    */
-  void config(Config config) noexcept { _config = config; }
+  void config(const Config config) noexcept { _config = config; }
 
 private:
   /// List of event names and codes.
@@ -184,37 +203,80 @@ private:
 
   /// List of requested events and metrics that are added to groups. This list is only to track the order and
   /// configuration of the user's requested events.
-  RequestedEventSet _events;
+  RequestedEventSet _requested_event_set;
 
   /// List of requested live events. This list is only to track the order and
   /// configuration of the user's request.
-  RequestedEventSet _live_events;
+  RequestedEventSet _requested_live_event_set;
 
-  /// Counter groups holding performance counters that are started, stopped, and read.
-  std::vector<Group> _groups;
+  /// Hardware counter groups holding performance counters that are started, stopped, and read. The bool indicates if
+  /// that group is "open", meaning no counter can or should be added (false), because the group is full or the user
+  /// wanted to schedule the counters together without any other.
+  std::vector<std::pair<Group, bool>> _hardware_event_groups;
 
   /// List of counters that are marked to be read "live" (without stopping) using the "rdpmc" instruction (only
   /// implemented on x86 hardware).
-  std::vector<Counter> _live_counters;
+  std::vector<Counter> _hardware_live_counters;
 
   /// Flag indicating if the EventCounter was opened. Opens automatically on startup at the latest.
-  bool _is_open{ false };
+  bool _is_opened{ false };
 
   /**
    * @return The number of opened (or to open) counters (groups or group leaders and live counters).
    */
-  [[nodiscard]] std::size_t size() const noexcept { return _groups.size() + _live_counters.size(); }
+  [[nodiscard]] std::size_t size() const noexcept
+  {
+    return _hardware_event_groups.size() + _hardware_live_counters.size();
+  }
 
   /**
-   * Add the specified event to the list of counted performance events.
-   * The event must exist within the counter definitions.
+   * Extracts information (counter/metric name, hardware counter configuration, flag if is included into events) from
+   * the given event into a given result vector. The result vector can be used to schedule the events, based on the user
+   * request.
+   *
+   * @param event_name Name of the event to add.
+   * @param result_vector List of information about the event. If the event is a single hardware event, the list will
+   * have one entry. If the event is a metric, the list will have multiple entries.
+   */
+  void unfold(const std::string& event_name,
+              std::vector<std::tuple<std::string_view, std::optional<CounterConfig>, bool>>& result_vector) const;
+
+  /**
+   * Adds the provided event to the given result vector.
+   * If the event is already in the result vector, only the visibility (is_shown_in_results) will be adjusted.
    *
    * @param event_name Name of the event.
-   * @param event_config Configuration of the event.
-   * @param is_shown_in_results Indicates if the counter should be exposed in the results.
-   * @return True, if the event was added.
+   * @param counter_config Configuration of the counter.
+   * @param is_shown_in_results Visibility.
+   * @param result_vector Result vector to add the results.
    */
-  void add(std::string_view event_name, CounterConfig event_config, bool is_shown_in_results);
+  static void add(std::string_view event_name,
+                  const CounterConfig& counter_config,
+                  bool is_shown_in_results,
+                  std::vector<std::tuple<std::string_view, std::optional<CounterConfig>, bool>>& result_vector);
+
+  /**
+   * Schedules the given events based on the request into hardware groups and places the event names in the
+   * user-requested event set. If the events do not fit (e.g., based on the request; too many counters requested to be
+   * placed on the same hardware counter), the method will throw an exception to let the user know.
+   *
+   * @param events List of events to schedule.
+   * @param schedule Request of the user.
+   */
+  void schedule(std::vector<std::tuple<std::string_view, std::optional<CounterConfig>, bool>>&& events,
+                Schedule schedule);
+
+  /**
+   * Try to append the given event to any hardware counter.
+   *
+   * @param event_name Name of the event.
+   * @param counter_config Configuration of the event.
+   * @param is_shown_in_results Visibility.
+   * @return True, if the event could be appended to any hardware counter. False, otherwise.
+   */
+  [[nodiscard]] bool append_to_any_hardware_counter(std::string_view event_name,
+                                                    const CounterConfig& counter_config,
+                                                    bool is_shown_in_results);
 };
 
 /**
@@ -281,36 +343,50 @@ public:
    * The event must exist within the counter definitions.
    *
    * @param event_name Name of the event.
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual).
    * @return True, if the event could be added.
    */
-  bool add(std::string&& event_name);
+  bool add(std::string&& event_name, EventCounter::Schedule schedule = EventCounter::Schedule::Append);
 
   /**
    * Add the specified counter to the list of monitored performance counters.
    * The counter must exist within the counter definitions.
    *
    * @param counter_name Name of the counter.
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual).
    * @return True, if the counter could be added.
    */
-  bool add(const std::string& counter_name) { return add(std::string{ counter_name }); }
+  bool add(const std::string& counter_name, const EventCounter::Schedule schedule = EventCounter::Schedule::Append)
+  {
+    return add(std::string{ counter_name }, schedule);
+  }
 
   /**
    * Add the specified counters to the list of monitored performance counters.
    * The counters must exist within the counter definitions.
    *
    * @param counter_names List of names of the counters.
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual), or as a
+   * group (all to the same hardware counter).
    * @return True, if the counters could be added.
    */
-  bool add(std::vector<std::string>&& counter_names) { return add(counter_names); }
+  bool add(std::vector<std::string>&& counter_names,
+           const EventCounter::Schedule schedule = EventCounter::Schedule::Append)
+  {
+    return add(counter_names, schedule);
+  }
 
   /**
    * Add the specified counters to the list of monitored performance counters.
    * The counters must exist within the counter definitions.
    *
    * @param counter_names List of names of the counters.
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual), or as a
+   * group (all to the same hardware counter).
    * @return True, if the counters could be added.
    */
-  bool add(const std::vector<std::string>& counter_names);
+  bool add(const std::vector<std::string>& counter_names,
+           EventCounter::Schedule schedule = EventCounter::Schedule::Append);
 
   /**
    * Stops recording performance counters.

@@ -1,78 +1,88 @@
 #include <algorithm>
 #include <iomanip>
 #include <numeric>
-#include <perfcpp/analyzer/data.h>
+#include <perfcpp/analyzer/memory_access.h>
 #include <perfcpp/exception.h>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_set>
 
 void
-perf::analyzer::DataAnalyzer::add(perf::analyzer::DataType&& data_type)
+perf::analyzer::MemoryAccess::add(perf::analyzer::DataType&& data_type)
 {
-  auto name = data_type.name();
-
-  if (this->_instances.find(name) != this->_instances.end()) {
-    throw DataTypeAlreadyRegisteredError{ name };
-  }
-
-  this->_instances.insert(
-    std::make_pair(std::move(name), std::make_pair(std::move(data_type), std::vector<std::uintptr_t>{})));
-}
-
-void
-perf::analyzer::DataAnalyzer::annotate(const std::string& name, const std::uintptr_t reference)
-{
-  if (auto iterator = _instances.find(name); iterator != _instances.end()) {
-    iterator->second.second.push_back(reference);
+  const auto data_type_iterator = this->find(data_type.name());
+  if (data_type_iterator == this->_data_type_instances.end()) {
+    this->_data_type_instances.emplace_back(std::move(data_type),
+                                            std::unordered_map<std::string, std::vector<std::uintptr_t>>{});
+  } else {
+    throw DataTypeAlreadyRegisteredError{ data_type.name() };
   }
 }
 
 void
-perf::analyzer::DataAnalyzer::annotate(const std::string& name,
-                                       const void* reference,
-                                       const std::uint64_t items_in_array)
+perf::analyzer::MemoryAccess::annotate(const std::string_view data_type_name,
+                                       const std::uintptr_t data_object,
+                                       const std::string& tag)
 {
-  if (auto iterator = _instances.find(name); iterator != _instances.end()) {
-    auto& data_type = std::get<0>(iterator->second);
-    const auto data_type_size = data_type.size();
+  if (auto type_iterator = this->find(data_type_name); type_iterator != this->_data_type_instances.end()) {
+    auto& type_instances = type_iterator->second;
 
-    const auto array_begin = std::uintptr_t(reference);
-    const auto array_end = array_begin + data_type_size * items_in_array;
-
-    for (auto addr = array_begin; addr < array_end; addr += data_type_size) {
-      std::get<1>(iterator->second).emplace_back(addr);
+    /// Check if the data object already contains the tag.
+    if (auto tag_iterator = type_instances.find(tag); tag_iterator != type_instances.end()) {
+      tag_iterator->second.push_back(data_object);
+    } else {
+      /// If the tag did not exist, add it as a new map tag -> [addresses].
+      auto instances = std::vector<std::uintptr_t>{};
+      instances.reserve(2048U);
+      instances.push_back(data_object);
+      type_instances.insert(std::make_pair(tag, std::move(instances)));
     }
+  } else {
+    throw DataTypeNotRegisteredError{ data_type_name };
   }
 }
 
-perf::analyzer::DataAnalyzerResult
-perf::analyzer::DataAnalyzer::map(const std::vector<Sample>& samples)
+std::vector<std::pair<perf::analyzer::DataType, std::unordered_map<std::string, std::vector<std::uintptr_t>>>>::iterator
+perf::analyzer::MemoryAccess::find(std::string_view data_type_name) noexcept
+{
+  return std::find_if(this->_data_type_instances.begin(),
+                      this->_data_type_instances.end(),
+                      [data_type_name](const auto& data_type_and_tags) {
+                        return std::get<0>(data_type_and_tags).name() == data_type_name;
+                      });
+}
+
+perf::analyzer::MemoryAccessResult
+perf::analyzer::MemoryAccess::map(const std::vector<Sample>& samples)
 {
   /// Copy of all data types; the result will contain a copy since we add the samples to the members.
-  auto data_types = std::unordered_map<std::string_view, DataType>{};
-  data_types.reserve(this->_instances.size());
+  auto data_types = std::vector<DataType>{};
+  data_types.reserve(this->_data_type_instances.size());
 
   /// List of all registered instances and the linked data type.
-  auto registered_addresses = std::vector<std::pair<std::uintptr_t, DataType*>>{};
+  auto registered_addresses = std::vector<std::pair<std::uintptr_t, std::reference_wrapper<DataType>>>{};
 
   /// Unfold the list of (DataType, [instance addresses]) into a list of [(instance address, DataType)] to perform a
   /// lower bound search for each sample.
-  for (const auto& [name, data_type_and_start_addresses] : this->_instances) {
+  for (const auto& [data_type, tags] : this->_data_type_instances) {
 
-    /// Copy the data type, if not already done.
-    auto data_type_instances = data_types.find(name);
-    if (data_type_instances == data_types.end()) {
-      data_type_instances = std::get<0>(data_types.insert(std::make_pair(name, std::get<0>(data_type_and_start_addresses))));
+    for (const auto& [tag, addresses] : tags) {
+      auto data_typ_tag_name =
+        tag.empty() ? data_type.name() : std::string{ data_type.name() }.append("::").append(tag);
+
+      /// Copy the data type, if not already done.
+      auto& tagged_data_type = data_types.emplace_back(std::move(data_typ_tag_name), data_type);
+
+      /// Fill up the empty spaces in the data type.
+      MemoryAccess::add_empty_attributes(tagged_data_type);
+
+      /// Unfold the instance addresses into the registered_addresses list.
+      std::transform(
+        addresses.cbegin(),
+        addresses.cend(),
+        std::back_inserter(registered_addresses),
+        [&tagged_data_type](const auto address) { return std::make_pair(address, std::ref(tagged_data_type)); });
     }
-
-    /// Unfold the instance addresses into the registered_addresses list.
-    const auto& data_type_start_addresses = std::get<1>(data_type_and_start_addresses);
-    std::transform(
-      data_type_start_addresses.cbegin(),
-      data_type_start_addresses.cend(),
-      std::back_inserter(registered_addresses),
-      [&data_type = data_type_instances->second](const auto address) { return std::make_pair(address, &data_type); });
   }
 
   /// Sort the addresses to perform a lower bound search.
@@ -99,7 +109,7 @@ perf::analyzer::DataAnalyzer::map(const std::vector<Sample>& samples)
         const auto offset = memory_address - data_type_instance->first;
 
         /// Find the member that the sample may linked to and append the sample to the member's samples.
-        for (auto& member : data_type_instance->second->members()) {
+        for (auto& member : data_type_instance->second.get().members()) {
           if (member.offset() <= offset && offset < (member.offset() + member.size())) {
             member.samples().emplace_back(sample);
           }
@@ -108,16 +118,41 @@ perf::analyzer::DataAnalyzer::map(const std::vector<Sample>& samples)
     }
   }
 
-  /// Turn the map of data types (name -> DataType) into single list of DataTypes.
-  auto result_data_types = std::vector<DataType>{};
-  std::transform(data_types.begin(), data_types.end(), std::back_inserter(result_data_types), [](auto& data_type) {
-    return std::move(data_type.second);
-  });
-  return DataAnalyzerResult{ std::move(result_data_types) };
+  return MemoryAccessResult{ std::move(data_types) };
+}
+
+void
+perf::analyzer::MemoryAccess::add_empty_attributes(perf::analyzer::DataType& data_type)
+{
+  auto& members = data_type.members();
+  if (members.empty()) {
+    return;
+  }
+
+  const auto size = members.size();
+  for (auto i = 0U; i < size - 1U; ++i) {
+
+    /// Check if there is a whole between two members i and i+1.
+    const auto distance = members[i + 1U].offset() - (members[i].offset() + members[i].size());
+
+    /// If there is a whole, add a new member indicating that whole.
+    if (distance > 0U) {
+      members.insert(members.begin() + i + 1U,
+                     DataType::Member("/* unknown */", members[i].offset() + members[i].size(), distance));
+      ++i;
+    }
+  }
+
+  /// Repeat the step for the last member and the size of the data type.
+  const auto& last_member = members[size - 1U];
+  const auto distance = data_type.size() - (last_member.offset() + last_member.size());
+  if (distance > 0U) {
+    members.emplace_back("/* unknown */", last_member.offset() + last_member.size(), distance);
+  }
 }
 
 std::string
-perf::analyzer::DataAnalyzerResult::to_string() const
+perf::analyzer::MemoryAccessResult::to_string() const
 {
   auto column_headers = std::vector<std::string>{
     "",          "",        "samples",        "loads",           "avg. load lat.", "L1d hits",        "LFB hits",
@@ -129,7 +164,7 @@ perf::analyzer::DataAnalyzerResult::to_string() const
     max_sizes.emplace_back(header.size());
   }
 
-  auto data_types = std::vector<std::pair<std::string, std::vector<std::vector<std::string>>>>{};
+  auto data_types = std::vector<std::tuple<std::string, std::size_t, std::vector<std::vector<std::string>>>>{};
 
   for (const auto& data_type : this->_data_types) {
     auto name = data_type.name();
@@ -169,18 +204,18 @@ perf::analyzer::DataAnalyzerResult::to_string() const
       members.emplace_back(std::move(columns));
     }
 
-    data_types.emplace_back(std::move(name), std::move(members));
+    data_types.emplace_back(std::move(name), data_type.size(), std::move(members));
   }
 
   auto stream = std::stringstream{};
   for (auto data_type_id = 0U; data_type_id < data_types.size(); ++data_type_id) {
-    const auto& [name, members] = data_types[data_type_id];
+    const auto& [name, size, members] = data_types[data_type_id];
 
     if (data_type_id > 0U) {
       stream << "\n";
     }
 
-    stream << "DataType " << name << " {\n";
+    stream << "DataType " << name << " (" << size << "B)" << " {\n";
 
     stream << " ";
     for (auto header_id = 0U; header_id < column_headers.size(); ++header_id) {
@@ -213,7 +248,7 @@ perf::analyzer::DataAnalyzerResult::to_string() const
 }
 
 std::string
-perf::analyzer::DataAnalyzerResult::to_json() const
+perf::analyzer::MemoryAccessResult::to_json() const
 {
   auto stream = std::stringstream{};
   stream << "[";
@@ -224,7 +259,7 @@ perf::analyzer::DataAnalyzerResult::to_json() const
     if (data_type_index != 0U) {
       stream << ",";
     }
-    stream << "{ \"name\":\"" << data_type.name() << "\", \"members\": [";
+    stream << "{ \"name\":\"" << data_type.name() << "\", \"size\": " << data_type.size() << ", \"members\": [";
 
     for (auto member_index = 0U; member_index < data_type.members().size(); ++member_index) {
       const auto& member = data_type.members()[member_index];
@@ -257,7 +292,7 @@ perf::analyzer::DataAnalyzerResult::to_json() const
 }
 
 std::string
-perf::analyzer::DataAnalyzerResult::to_csv(const std::string& data_type_name,
+perf::analyzer::MemoryAccessResult::to_csv(const std::string& data_type_name,
                                            const char delimiter,
                                            const bool print_header) const
 {
