@@ -15,6 +15,7 @@ include_directories(include/)
 #############################################################
 option(BUILD_EXAMPLES "Build examples in examples/ directory." OFF)
 option(BUILD_LIB_SHARED "Build the library as a shared library (default is static)." OFF)
+option(BUILD_TESTS "Build the unit tests." OFF)
 
 #############################################################
 #   perf-cpp library definition                             #
@@ -118,6 +119,28 @@ if(BUILD_EXAMPLES)
             address-sampling register-sampling multi-thread-sampling multi-cpu-sampling
             multi-event-sampling amd-ibs-raw-sampling context-switch-sampling
             memory-access-analyzer live-events)
+endif()
+
+#############################################################
+#   Unit tests definition                                   #
+#############################################################
+if(BUILD_TESTS)
+    Include(FetchContent)
+    FetchContent_Declare(
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG        v3.4.0 # or a later release
+    )
+    FetchContent_MakeAvailable(Catch2)
+
+    set(PERF_CPP_TEST
+            test/counter_definition.cpp
+            test/metric.cpp
+    )
+
+    add_executable(tests ${PERF_CPP_SRC} ${PERF_CPP_TEST})
+    target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
+    target_include_directories(tests PRIVATE Catch2::Catch2WithMain)
 endif()
 
 #############################################################
