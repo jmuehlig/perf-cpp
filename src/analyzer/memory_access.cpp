@@ -22,20 +22,20 @@ perf::analyzer::MemoryAccess::add(perf::analyzer::DataType&& data_type)
 void
 perf::analyzer::MemoryAccess::annotate(const std::string_view data_type_name,
                                        const std::uintptr_t data_object,
-                                       const std::string& tag)
+                                       const std::string& instance_name)
 {
   if (auto type_iterator = this->find(data_type_name); type_iterator != this->_data_type_instances.end()) {
     auto& type_instances = type_iterator->second;
 
     /// Check if the data object already contains the tag.
-    if (auto tag_iterator = type_instances.find(tag); tag_iterator != type_instances.end()) {
+    if (auto tag_iterator = type_instances.find(instance_name); tag_iterator != type_instances.end()) {
       tag_iterator->second.push_back(data_object);
     } else {
       /// If the tag did not exist, add it as a new map tag -> [addresses].
       auto instances = std::vector<std::uintptr_t>{};
       instances.reserve(2048U);
       instances.push_back(data_object);
-      type_instances.insert(std::make_pair(tag, std::move(instances)));
+      type_instances.insert(std::make_pair(instance_name, std::move(instances)));
     }
   } else {
     throw DataTypeNotRegisteredError{ data_type_name };

@@ -126,12 +126,12 @@ public:
    *
    * @param data_type_name Name of the (registered) data type.
    * @param data_object Data object to annotate.
-   * @param tag Tag to differentiate multiple instances of the same type (optional).
+   * @param instance_name Tag to differentiate multiple instances of the same type (optional).
    */
   template<typename T>
-  void annotate(const std::string_view data_type_name, T* data_object, std::string&& tag = "")
+  void annotate(const std::string_view data_type_name, T* data_object, std::string&& instance_name = "")
   {
-    annotate(data_type_name, std::uintptr_t(data_object), tag);
+    annotate(data_type_name, std::uintptr_t(data_object), instance_name);
   }
 
   /**
@@ -139,12 +139,12 @@ public:
    *
    * @param data_type_name Name of the (registered) data type.
    * @param data_object Data object to annotate.
-   * @param tag Tag to differentiate multiple instances of the same type (optional).
+   * @param instance_name Tag to differentiate multiple instances of the same type (optional).
    */
   template<typename T>
-  void annotate(const std::string_view data_type_name, const T* data_object, std::string&& tag = "")
+  void annotate(const std::string_view data_type_name, T* data_object, const std::string& instance_name)
   {
-    annotate(data_type_name, std::uintptr_t(data_object), tag);
+    annotate(data_type_name, std::uintptr_t(data_object), instance_name);
   }
 
   /**
@@ -152,12 +152,51 @@ public:
    *
    * @param data_type_name Name of the (registered) data type.
    * @param data_object Data object to annotate.
-   * @param tag Tag to differentiate multiple instances of the same type (optional).
+   * @param instance_name Tag to differentiate multiple instances of the same type (optional).
    */
   template<typename T>
-  void annotate(const std::string_view data_type_name, const T& data_object, std::string&& tag = "")
+  void annotate(const std::string_view data_type_name, const T* data_object, std::string&& instance_name = "")
   {
-    annotate(data_type_name, std::uintptr_t(&data_object), tag);
+    annotate(data_type_name, std::uintptr_t(data_object), instance_name);
+  }
+
+  /**
+   * Annotates the given object with the given type.
+   *
+   * @param data_type_name Name of the (registered) data type.
+   * @param data_object Data object to annotate.
+   * @param instance_name Tag to differentiate multiple instances of the same type (optional).
+   */
+  template<typename T>
+  void annotate(const std::string_view data_type_name, const T* data_object, const std::string& instance_name)
+  {
+    annotate(data_type_name, std::uintptr_t(data_object), instance_name);
+  }
+
+  /**
+   * Annotates the given object with the given type.
+   *
+   * @param data_type_name Name of the (registered) data type.
+   * @param data_object Data object to annotate.
+   * @param instance_name Tag to differentiate multiple instances of the same type (optional).
+   */
+  template<typename T>
+  void annotate(const std::string_view data_type_name, const T& data_object, std::string&& instance_name = "")
+  {
+    annotate(data_type_name, std::uintptr_t(&data_object), instance_name);
+  }
+
+  /**
+   * Annotates the given object with the given type.
+   *
+   * @param data_type_name Name of the (registered) data type.
+   * @param data_object Data object to annotate.
+   * @param instance_name Tag to differentiate multiple instances of the same type (optional).
+   */
+  template<typename T>
+  void annotate(const std::string_view data_type_name, const T& data_object, const std::string& instance_name)
+  {
+    annotate(data_type_name, std::uintptr_t(&data_object), instance_name);
   }
 
   /**
@@ -166,13 +205,16 @@ public:
    * @param data_type_name Name of the (registered) data type.
    * @param data_object Array of data objects to annotate.
    * @param size Size of the array.
-   * @param tag Tag to differentiate multiple instances of the same type (optional).
+   * @param instance_name Tag to differentiate multiple instances of the same type (optional).
    */
   template<typename T>
-  void annotate(const std::string_view data_type_name, const T* data_objects, std::size_t size, std::string&& tag = "")
+  void annotate(const std::string_view data_type_name,
+                const T* data_objects,
+                std::size_t size,
+                std::string&& instance_name = "")
   {
     for (auto i = 0ULL; i < size; ++i) {
-      annotate(data_type_name, std::uintptr_t(&data_objects[i]), tag);
+      annotate(data_type_name, std::uintptr_t(&data_objects[i]), instance_name);
     }
   }
 
@@ -182,13 +224,27 @@ public:
    * @param data_type_name Name of the (registered) data type.
    * @param begin Begin of the container.
    * @param end End of the container.
-   * @param tag Tag to differentiate multiple instances of the same type (optional).
+   * @param instance_name Tag to differentiate multiple instances of the same type (optional).
    */
   template<typename I>
-  void annotate(const std::string_view data_type_name, I begin, I end, std::string&& tag = "")
+  void annotate(const std::string_view data_type_name, I begin, I end, std::string&& instance_name = "")
+  {
+    annotate(data_type_name, begin, end, instance_name);
+  }
+
+  /**
+   * Annotates container of objects with the given type.
+   *
+   * @param data_type_name Name of the (registered) data type.
+   * @param begin Begin of the container.
+   * @param end End of the container.
+   * @param instance_name Tag to differentiate multiple instances of the same type (optional).
+   */
+  template<typename I>
+  void annotate(const std::string_view data_type_name, I begin, I end, const std::string& instance_name)
   {
     for (auto iterator = begin; iterator != end; ++iterator) {
-      annotate(data_type_name, std::uintptr_t(&*iterator), tag);
+      annotate(data_type_name, std::uintptr_t(&*iterator), instance_name);
     }
   }
 
@@ -197,12 +253,14 @@ public:
    *
    * @param data_type_name Name of the (registered) data type.
    * @param data_objects Data objects to annotate.
-   * @param tag Tag to differentiate multiple instances of the same type (optional).
+   * @param instance_name Tag to differentiate multiple instances of the same type (optional).
    */
   template<typename T>
-  void annotate(const std::string_view data_type_name, const std::vector<T>& data_objects, std::string&& tag = "")
+  void annotate(const std::string_view data_type_name,
+                const std::vector<T>& data_objects,
+                std::string&& instance_name = "")
   {
-    annotate(data_type_name, data_objects.cbegin(), data_objects.cend(), std::move(tag));
+    annotate(data_type_name, data_objects.cbegin(), data_objects.cend(), instance_name);
   }
 
   /**
@@ -210,15 +268,15 @@ public:
    *
    * @param data_type_name Name of the (registered) data type.
    * @param data_objects Data objects to annotate.
-   * @param tag Tag to differentiate multiple instances of the same type (optional).
+   * @param instance_name Tag to differentiate multiple instances of the same type (optional).
    */
   template<typename T>
   void annotate(const std::string_view data_type_name,
                 const std::unordered_set<T>& data_objects,
-                std::string&& tag = "")
+                std::string&& instance_name = "")
   {
     for (const auto& data_object : data_objects) {
-      annotate(data_type_name, std::uintptr_t(&data_object), tag);
+      annotate(data_type_name, std::uintptr_t(&data_object), instance_name);
     }
   }
 
@@ -227,13 +285,15 @@ public:
    *
    * @param data_type_name Name of the (registered) data type.
    * @param data_objects Data objects to annotate.
-   * @param tag Tag to differentiate multiple instances of the same type (optional).
+   * @param instance_name Tag to differentiate multiple instances of the same type (optional).
    */
   template<typename T>
-  void annotate(const std::string_view data_type_name, const std::set<T>& data_objects, std::string&& tag = "")
+  void annotate(const std::string_view data_type_name,
+                const std::set<T>& data_objects,
+                std::string&& instance_name = "")
   {
     for (const auto& data_object : data_objects) {
-      annotate(data_type_name, std::uintptr_t(&data_object), tag);
+      annotate(data_type_name, std::uintptr_t(&data_object), instance_name);
     }
   }
 
@@ -242,12 +302,14 @@ public:
    *
    * @param data_type_name Name of the (registered) data type.
    * @param data_objects Data objects to annotate.
-   * @param tag Tag to differentiate multiple instances of the same type (optional).
+   * @param instance_name Tag to differentiate multiple instances of the same type (optional).
    */
   template<typename T>
-  void annotate(const std::string_view data_type_name, const std::list<T>& data_objects, std::string&& tag = "")
+  void annotate(const std::string_view data_type_name,
+                const std::list<T>& data_objects,
+                std::string&& instance_name = "")
   {
-    annotate(data_type_name, data_objects.cbegin(), data_objects.cend(), std::move(tag));
+    annotate(data_type_name, data_objects.cbegin(), data_objects.cend(), instance_name);
   }
 
   /**
@@ -272,7 +334,7 @@ private:
   std::vector<std::pair<DataType, std::unordered_map<std::string, std::vector<std::uintptr_t>>>>::iterator find(
     std::string_view data_type_name) noexcept;
 
-  void annotate(std::string_view data_type_name, std::uintptr_t data_object, const std::string& tag);
+  void annotate(std::string_view data_type_name, std::uintptr_t data_object, const std::string& instance_name);
 
   /**
    * Fills up the data objects with members in wholes (e.g., space between to members or space between the last member
