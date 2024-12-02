@@ -129,6 +129,19 @@ public:
    * @param tag Tag to differentiate multiple instances of the same type (optional).
    */
   template<typename T>
+  void annotate(const std::string_view data_type_name, T* data_object, std::string&& tag = "")
+  {
+    annotate(data_type_name, std::uintptr_t(data_object), tag);
+  }
+
+  /**
+   * Annotates the given object with the given type.
+   *
+   * @param data_type_name Name of the (registered) data type.
+   * @param data_object Data object to annotate.
+   * @param tag Tag to differentiate multiple instances of the same type (optional).
+   */
+  template<typename T>
   void annotate(const std::string_view data_type_name, const T* data_object, std::string&& tag = "")
   {
     annotate(data_type_name, std::uintptr_t(data_object), tag);
