@@ -15,13 +15,17 @@ public:
   [[nodiscard]] virtual std::optional<double> calculate(const CounterResult& result) const = 0;
 };
 
+/**
+ * The FormulaMetric takes a string-based formula containing operations (+,-,*,/), constant numbers, and event
+ * identifiers. The result of the formula will be calculated based on event counter results.
+ */
 class FormulaMetric final : public Metric
 {
 public:
   FormulaMetric(std::string&& name, std::string&& formula)
     : _name(std::move(name))
+    , _expression(ExpressionBuilder::build(std::move(formula)))
   {
-    _expression = ExpressionBuilder::build(std::move(formula));
     _expression->add_required_hardware_counter(this->_required_counter_names);
   }
 
