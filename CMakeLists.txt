@@ -138,8 +138,8 @@ if(BUILD_TESTS)
             test/metric.cpp
     )
 
-    add_executable(tests ${PERF_CPP_SRC} ${PERF_CPP_TEST})
-    target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
+    add_executable(tests ${PERF_CPP_TEST})
+    target_link_libraries(tests PRIVATE Catch2::Catch2WithMain perf-cpp)
     target_include_directories(tests PRIVATE Catch2::Catch2WithMain)
 endif()
 

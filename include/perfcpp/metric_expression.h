@@ -7,6 +7,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <queue>
 #include <string>
 #include <utility>
 #include <vector>
@@ -126,17 +127,18 @@ private:
 class Token
 {
 public:
-  enum class Type
+  enum class Type : std::uint8_t
   {
     ConstantNumber,
     Identifier,
     Operator,
     LeftParenthesis,
     RightParenthesis,
-    End
   };
 
   Token() noexcept = default;
+  Token(Token&&) noexcept = default;
+  Token(const Token&) = default;
 
   explicit Token(const Operator operator_)
     : _type(Type::Operator)
@@ -160,6 +162,7 @@ public:
   ~Token() = default;
 
   bool operator==(const Type type) const noexcept { return _type == type; }
+  bool operator!=(const Type type) const noexcept { return _type != type; }
 
   [[nodiscard]] Type type() const noexcept { return _type; }
   [[nodiscard]] const std::optional<std::string>& text() const noexcept { return _text; }
@@ -167,20 +170,33 @@ public:
   [[nodiscard]] std::optional<double> number() const noexcept { return _number; }
   [[nodiscard]] std::optional<Operator> operator_() const noexcept { return _operator; }
 
-  [[nodiscard]] bool is_dot_operation() const noexcept
+  [[nodiscard]] std::string to_string() const
   {
-    return _type == Type::Operator && _operator.has_value() &&
-           (_operator.value() == Operator::Times || _operator.value() == Operator::Divide);
-  }
-
-  [[nodiscard]] bool is_dash_operation() const noexcept
-  {
-    return _type == Type::Operator && _operator.has_value() &&
-           (_operator.value() == Operator::Plus || _operator.value() == Operator::Minus);
+    switch (_type) {
+      case Type::ConstantNumber:
+        return std::string{ "constant(" }.append(std::to_string(_number.value())).append(")");
+      case Type::Identifier:
+        return std::string{ "identifier(" }.append(_text.value()).append(")");
+      case Type::Operator:
+        switch (_operator.value()) {
+          case Operator::Plus:
+            return "+";
+          case Operator::Minus:
+            return "-";
+          case Operator::Times:
+            return "*";
+          case Operator::Divide:
+            return "/";
+        }
+      case Type::LeftParenthesis:
+        return "(";
+      case Type::RightParenthesis:
+        return ")";
+    }
   }
 
 private:
-  Type _type{ Type::End };
+  Type _type;
   std::optional<std::string> _text{ std::nullopt };
   std::optional<double> _number{ std::nullopt };
   std::optional<Operator> _operator{ std::nullopt };
@@ -196,11 +212,62 @@ public:
 
   [[nodiscard]] const std::string& input() const noexcept { return _input; }
 
-  [[nodiscard]] Token next();
+  /**
+   * Tokenizes the input string.
+   * @return Queue of tokens.
+   */
+  [[nodiscard]] std::queue<Token> tokenize() const;
 
 private:
-  [[nodiscard]] Token read_constant_number();
-  [[nodiscard]] Token read_identifier();
+  [[nodiscard]] Token read_constant(std::size_t& position) const;
+  [[nodiscard]] Token read_identifier(std::size_t& position) const;
+  [[nodiscard]] Token read_operator(char current_char) const;
+
+  /**
+   * Tests if the left operator has greater precedence than the right operator.
+   *
+   * @param left_operator Operator.
+   * @param right_operator Operator.
+   * @return True, if the left operator has a greater precedence than the right operator (or if the right operator is
+   * left associative if both have the same precedence).
+   */
+  [[nodiscard]] static bool has_greater_precedence(const Token& left_operator, const Token& right_operator) noexcept
+  {
+    const auto left_precedence = precedence(left_operator.operator_().value());
+    const auto right_precedence = precedence(right_operator.operator_().value());
+
+    return (is_left_associative(right_operator.operator_().value()) && right_precedence <= left_precedence) ||
+           (right_precedence < left_precedence);
+  }
+
+  [[nodiscard]] static std::uint8_t precedence(const Operator operator_) noexcept
+  {
+    switch (operator_) {
+      case Operator::Plus:
+      case Operator::Minus:
+        return 4U;
+      case Operator::Times:
+      case Operator::Divide:
+        return 8U;
+    }
+  }
+
+  /**
+   * Tests if the operator is left associative.
+   *
+   * @param operator_ Operator to test.
+   * @return True, if left associative.
+   */
+  [[nodiscard]] static std::uint8_t is_left_associative(const Operator operator_) noexcept
+  {
+    switch (operator_) {
+      case Operator::Plus:
+      case Operator::Minus:
+      case Operator::Times:
+      case Operator::Divide:
+        return true;
+    }
+  }
 
   /**
    * Checks if the given char could belong to an identifier (alphanumerical chars, _, ., etc.).
@@ -214,24 +281,14 @@ private:
   }
 
   const std::string _input;
-  std::size_t _position{ 0ULL };
 };
 
-class Parser
+/**
+ * The expression builder translates an expression (string) to an executable metric expression.
+ */
+class ExpressionBuilder
 {
 public:
-  explicit Parser(Tokenizer& tokenizer)
-    : _tokenizer(tokenizer)
-  {
-  }
-
-  [[nodiscard]] std::unique_ptr<MetricExpression> parse() { return parse_dash_operation(); }
-
-private:
-  Tokenizer& _tokenizer;
-
-  [[nodiscard]] std::unique_ptr<MetricExpression> parse_dash_operation();
-  [[nodiscard]] std::unique_ptr<MetricExpression> parse_dot_expression();
-  [[nodiscard]] std::unique_ptr<MetricExpression> parse_factor();
+  [[nodiscard]] static std::unique_ptr<MetricExpression> build(std::string&& expression);
 };
 }

@@ -75,7 +75,9 @@ TEST_CASE("calculating", "[CacheHitRatio]")
   SECTION("calculation")
   {
     auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
-      std::make_pair("cache-misses", 10U), std::make_pair("cache-references", 20U), std::make_pair("some-other-event", 500U) } };
+      std::make_pair("cache-misses", 10U),
+      std::make_pair("cache-references", 20U),
+      std::make_pair("some-other-event", 500U) } };
     REQUIRE(chr_metric.calculate(counter_result).has_value());
     REQUIRE(chr_metric.calculate(counter_result).value() == 2.);
   }
@@ -101,7 +103,9 @@ TEST_CASE("calculating", "[CacheMissRatio]")
   SECTION("calculation")
   {
     auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
-      std::make_pair("cache-misses", 10U), std::make_pair("cache-references", 20U), std::make_pair("some-other-event", 500U) } };
+      std::make_pair("cache-misses", 10U),
+      std::make_pair("cache-references", 20U),
+      std::make_pair("some-other-event", 500U) } };
     REQUIRE(chr_metric.calculate(counter_result).has_value());
     REQUIRE(chr_metric.calculate(counter_result).value() == .5);
   }
@@ -127,7 +131,9 @@ TEST_CASE("calculating", "[DTLBMissRatio]")
   SECTION("calculation")
   {
     auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
-      std::make_pair("dTLB-load-misses", 10U), std::make_pair("dTLB-loads", 20U), std::make_pair("some-other-event", 500U) } };
+      std::make_pair("dTLB-load-misses", 10U),
+      std::make_pair("dTLB-loads", 20U),
+      std::make_pair("some-other-event", 500U) } };
     REQUIRE(dtlbmr_metric.calculate(counter_result).has_value());
     REQUIRE(dtlbmr_metric.calculate(counter_result).value() == .5);
   }
@@ -153,7 +159,9 @@ TEST_CASE("calculating", "[ITLBMissRatio]")
   SECTION("calculation")
   {
     auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
-      std::make_pair("iTLB-load-misses", 10U), std::make_pair("iTLB-loads", 20U), std::make_pair("some-other-event", 500U) } };
+      std::make_pair("iTLB-load-misses", 10U),
+      std::make_pair("iTLB-loads", 20U),
+      std::make_pair("some-other-event", 500U) } };
     REQUIRE(itlbmr_metric.calculate(counter_result).has_value());
     REQUIRE(itlbmr_metric.calculate(counter_result).value() == .5);
   }
@@ -179,7 +187,9 @@ TEST_CASE("calculating", "[L1DataMissRatio]")
   SECTION("calculation")
   {
     auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
-      std::make_pair("L1-dcache-load-misses", 10U), std::make_pair("L1-dcache-loads", 20U), std::make_pair("some-other-event", 500U) } };
+      std::make_pair("L1-dcache-load-misses", 10U),
+      std::make_pair("L1-dcache-loads", 20U),
+      std::make_pair("some-other-event", 500U) } };
     REQUIRE(l1dmr_metric.calculate(counter_result).has_value());
     REQUIRE(l1dmr_metric.calculate(counter_result).value() == .5);
   }
@@ -205,7 +215,9 @@ TEST_CASE("calculating", "[BranchMissRatio]")
   SECTION("calculation")
   {
     auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
-      std::make_pair("branch-misses", 10U), std::make_pair("branches", 20U), std::make_pair("some-other-event", 500U) } };
+      std::make_pair("branch-misses", 10U),
+      std::make_pair("branches", 20U),
+      std::make_pair("some-other-event", 500U) } };
     REQUIRE(bmr_metric.calculate(counter_result).has_value());
     REQUIRE(bmr_metric.calculate(counter_result).value() == .5);
   }
@@ -213,7 +225,7 @@ TEST_CASE("calculating", "[BranchMissRatio]")
 
 TEST_CASE("calculating", "[FormulaMetric]")
 {
-  auto formula_metric = perf::FormulaMetric{"any-formula", "'event-a'*'event-b'/2"};
+  auto formula_metric = perf::FormulaMetric{ "any-formula", "('event-a'*'event-b')/2+13.37" };
 
   SECTION("empty result")
   {
@@ -233,6 +245,6 @@ TEST_CASE("calculating", "[FormulaMetric]")
     auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
       std::make_pair("event-a", 10U), std::make_pair("event-b", 20U), std::make_pair("some-other-event", 500U) } };
     REQUIRE(formula_metric.calculate(counter_result).has_value());
-    REQUIRE(formula_metric.calculate(counter_result).value() == 100.);
+    REQUIRE(formula_metric.calculate(counter_result).value() == 113.37);
   }
 }

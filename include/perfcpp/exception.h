@@ -221,4 +221,15 @@ public:
   ~CannotParseExpressionError() override = default;
 };
 
+class CannotEvaluateExpressionError final : public std::runtime_error
+{
+public:
+  explicit CannotEvaluateExpressionError(const std::string_view input)
+    : std::runtime_error(std::string{ "Cannot evaluate expression '" }.append(input).append("'."))
+  {
+  }
+
+  ~CannotEvaluateExpressionError() override = default;
+};
+
 }

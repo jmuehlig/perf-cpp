@@ -57,6 +57,8 @@ auto counter_definitions = perf::CounterDefinition{};
 counter_definitions.add("stalls-by-mem-loads", "(CYCLE_ACTIVITY_STALLS_LDM_PENDING/CYCLE_ACTIVITY_STALLS_TOTAL)*100");
 ```
 
+**Note**: In formulas, names that contain *math expressions* (like `-`, e.g., `L1D-misses`) need to be **escaped** using single quotes, e.g., `'L1D-misses'`.
+
 **Note**: The example depends on events from the Intel SkylakeX architecture and is taken from [Likwid](https://github.com/RRZE-HPC/likwid/blob/master/groups/skylakeX/CYCLE_STALLS.txt).
 
 ### Implementing Metrics using the Interface

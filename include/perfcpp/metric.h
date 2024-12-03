@@ -21,10 +21,7 @@ public:
   FormulaMetric(std::string&& name, std::string&& formula)
     : _name(std::move(name))
   {
-    auto tokenizer = Tokenizer{ std::move(formula) };
-    auto parser = Parser{ tokenizer };
-
-    _expression = parser.parse();
+    _expression = ExpressionBuilder::build(std::move(formula));
     _expression->add_required_hardware_counter(this->_required_counter_names);
   }
 

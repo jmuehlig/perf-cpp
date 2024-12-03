@@ -1,61 +1,83 @@
 #include <perfcpp/metric_expression.h>
+#include <stack>
 
-perf::Token
-perf::Tokenizer::next()
+std::queue<perf::Token>
+perf::Tokenizer::tokenize() const
 {
+  /// Tokenize the input string using the Shunting yard algorithm.
+  /// For more information see: https://en.wikipedia.org/wiki/Shunting_yard_algorithm
+
+  auto output_queue = std::queue<Token>{};
+  auto operator_stack = std::stack<Token>{};
+
+  auto position = std::size_t{ 0U };
+
   /// Skip all whitespaces.
-  while (this->_position < this->_input.length() && std::isspace(this->_input[this->_position])) {
-    ++this->_position;
+  while (position < this->_input.length() && std::isspace(this->_input[position])) {
+    ++position;
   }
 
-  /// Check if we reached the end.
-  if (this->_position == this->_input.size() || this->_input[this->_position] == '\0') {
-    return Token{};
+  while (position < this->_input.length()) {
+    const auto current_char = this->_input[position];
+
+    /// Check if the next character is a constant number (obviously a digit indicates a number – and so does a ".").
+    /// If so, return a number token.
+    if (std::isdigit(current_char) || current_char == '.') {
+      output_queue.push(Tokenizer::read_constant(position));
+      continue;
+    }
+
+    /// Check if the next character is an alphabetical char, which indicates an identifier.
+    /// Additionally, identifiers can start with single quotes to escape, for example, - operators as part of the
+    /// identifier (e.g., the hardware counter "L1-cache-miss"). If so, return an identifier token.
+    if (std::isalpha(current_char) || current_char == '\'') {
+      output_queue.push(Tokenizer::read_identifier(position));
+      continue;
+    }
+
+    if (!std::isspace(current_char)) {
+      /// Handle parentheses and operators.
+      if (current_char == '(') {
+        operator_stack.emplace(Token::Type::LeftParenthesis);
+      } else if (current_char == ')') {
+        /// Move all operators (except the left parenthesis) from the OP stack to the token queue.
+        while (!operator_stack.empty() && operator_stack.top() != Token::Type::LeftParenthesis) {
+          output_queue.push(operator_stack.top());
+          operator_stack.pop();
+        }
+
+        /// Pop the remaining left parenthesis.
+        operator_stack.pop();
+      } else {
+        const auto operator_ = Tokenizer::read_operator(current_char);
+        while (!operator_stack.empty() && operator_stack.top() != Token::Type::LeftParenthesis &&
+               Tokenizer::has_greater_precedence(operator_stack.top(), operator_)) {
+          output_queue.push(operator_stack.top());
+          operator_stack.pop();
+        }
+        operator_stack.push(operator_);
+      }
+
+      ++position;
+    }
   }
 
-  const auto current_char = this->_input[this->_position];
-
-  /// Check if the next character is a constant number (obviously a digit indicates a number – and so does a ".").
-  /// If so, return a number token.
-  if (std::isdigit(current_char) || current_char == '.') {
-    return this->read_constant_number();
-  }
-
-  /// Check if the next character is an alphabetical char, which indicates an identifier.
-  /// Additionally, identifiers can start with single quotes to escape, for example, - operators as part of the
-  /// identifier (e.g., the hardware counter "L1-cache-miss"). If so, return an identifier token.
-  if (std::isalpha(current_char) || current_char == '\'') {
-    return this->read_identifier();
-  }
-
-  /// Reading a number and an identifier increase _position until the end of the number or identifier.
-  /// For all other single-char tokens, we make progress.
-  ++_position;
-
-  switch (current_char) {
-    case '+':
-      return Token{ Operator::Plus };
-    case '-':
-      return Token{ Operator::Minus };
-    case '*':
-      return Token{ Operator::Times };
-    case '/':
-      return Token{ Operator::Divide };
-    case '(':
-      return Token{ Token::Type::LeftParenthesis };
-    case ')':
-      return Token{ Token::Type::RightParenthesis };
-
-      /// We could not tokenize a number, a sequence of chars. or an operator. This is an error.
-    default:
+  /// Move the remaining tokens from the operator stack into the token queue.
+  while (!operator_stack.empty()) {
+    if (operator_stack.top() == Token::Type::LeftParenthesis) {
       throw CannotParseExpressionError{ _input };
+    }
+    output_queue.push(operator_stack.top());
+    operator_stack.pop();
   }
+
+  return output_queue;
 }
 
 perf::Token
-perf::Tokenizer::read_constant_number()
+perf::Tokenizer::read_constant(std::size_t& position) const
 {
-  const auto begin = this->_position;
+  const auto begin = position;
 
   /// We know that the current character (this->_position) is a digit; otherwise, this function wouldn't have been
   /// called.
@@ -72,14 +94,14 @@ perf::Tokenizer::read_constant_number()
     ++count;
   }
 
-  this->_position += count;
+  position += count;
   return Token{ std::stod(_input.substr(begin, count)) };
 }
 
 perf::Token
-perf::Tokenizer::read_identifier()
+perf::Tokenizer::read_identifier(std::size_t& position) const
 {
-  const auto begin = this->_position;
+  const auto begin = position;
 
   /// We know that the current character (this->_position) is alphabetical; otherwise, this function wouldn't have been
   /// called.
@@ -100,86 +122,90 @@ perf::Tokenizer::read_identifier()
   }
 
   /// Increase the position by the number of scanned chars; skip the closing single quite if given.
-  this->_position += count + static_cast<std::uint64_t>(starts_with_single_quote);
+  position += count + static_cast<std::uint64_t>(starts_with_single_quote);
 
   /// Return the identifier; remove single quotes if given.
   return Token{ this->_input.substr(begin + static_cast<std::uint64_t>(starts_with_single_quote),
                                     count - static_cast<std::uint64_t>(starts_with_single_quote)) };
 }
 
-std::unique_ptr<perf::MetricExpression>
-perf::Parser::parse_dash_operation()
+perf::Token
+perf::Tokenizer::read_operator(const char current_char) const
 {
-  /// Parse the next expression.
-  auto left_expression = this->parse_dot_expression();
+  switch (current_char) {
+    case '+':
+      return Token{ Operator::Plus };
+    case '-':
+      return Token{ Operator::Minus };
+    case '*':
+      return Token{ Operator::Times };
+    case '/':
+      return Token{ Operator::Divide };
 
-  /// If the token after the left expression is an operator, we have a binary expression.
-  if (const auto token = this->_tokenizer.next(); token.is_dash_operation()) {
-
-    /// Parse the right side and build the BinaryExpression.
-    auto right_expression = this->parse_dot_expression();
-
-    if (token.operator_().value() == Operator::Plus) {
-      return std::make_unique<BinaryExpression<Operator::Plus>>(std::move(left_expression),
-                                                                std::move(right_expression));
-    } else if (token.operator_().value() == Operator::Minus) {
-      return std::make_unique<BinaryExpression<Operator::Minus>>(std::move(left_expression),
-                                                                 std::move(right_expression));
-    }
+      /// We could not tokenize a number, a sequence of chars. or an operator. This is an error.
+    default:
+      throw CannotParseExpressionError{ _input };
   }
-
-  return left_expression;
 }
 
 std::unique_ptr<perf::MetricExpression>
-perf::Parser::parse_dot_expression()
+perf::ExpressionBuilder::build(std::string&& expression)
 {
-  /// Parse the next expression.
-  auto left_expression = this->parse_factor();
+  auto tokenizer = Tokenizer{ std::move(expression) };
+  auto token_queue = tokenizer.tokenize();
 
-  /// If the token after the left expression is an operator, we have a binary expression.
-  if (const auto token = this->_tokenizer.next(); token.is_dot_operation()) {
+  /// The expression stack will be built and consumed while scanning the tokens.
+  auto expression_stack = std::stack<std::unique_ptr<MetricExpression>>{};
 
-    /// Parse the right side and build the BinaryExpression.
-    auto right_expression = this->parse_dot_expression();
+  /// Scan the tokenized queue: Push identifier and constants to the expression stack and consume them by binary
+  /// expressions.
+  while (!token_queue.empty()) {
+    /// Fetch the next token from the queue.
+    auto token = std::move(token_queue.front());
+    token_queue.pop();
 
-    if (token.operator_().value() == Operator::Times) {
-      return std::make_unique<BinaryExpression<Operator::Times>>(std::move(left_expression),
-                                                                 std::move(right_expression));
-    } else if (token.operator_().value() == Operator::Divide) {
-      return std::make_unique<BinaryExpression<Operator::Divide>>(std::move(left_expression),
-                                                                  std::move(right_expression));
+    if (token == Token::Type::Identifier) {
+      expression_stack.push(std::make_unique<IdentifierExpression>(std::move(token.text().value())));
+    } else if (token == Token::Type::ConstantNumber) {
+      expression_stack.push(std::make_unique<ConstantExpression>(token.number().value()));
+    } else if (token == Token::Type::Operator) {
+      /// Verify that there are at least two expressions that can be consumed by the binary expression.
+      if (expression_stack.size() < 2U) {
+        throw CannotEvaluateExpressionError{ tokenizer.input() };
+      }
+
+      /// Read the two top expressions.
+      std::unique_ptr<MetricExpression> right_expression = std::move(expression_stack.top());
+      expression_stack.pop();
+      std::unique_ptr<MetricExpression> left_expression = std::move(expression_stack.top());
+      expression_stack.pop();
+
+      /// Create the binary expression.
+      switch (token.operator_().value()) {
+        case Operator::Plus:
+          expression_stack.push(std::make_unique<BinaryExpression<Operator::Plus>>(std::move(left_expression),
+                                                                                   std::move(right_expression)));
+          break;
+        case Operator::Minus:
+          expression_stack.push(std::make_unique<BinaryExpression<Operator::Minus>>(std::move(left_expression),
+                                                                                    std::move(right_expression)));
+          break;
+        case Operator::Times:
+          expression_stack.push(std::make_unique<BinaryExpression<Operator::Times>>(std::move(left_expression),
+                                                                                    std::move(right_expression)));
+          break;
+        case Operator::Divide:
+          expression_stack.push(std::make_unique<BinaryExpression<Operator::Divide>>(std::move(left_expression),
+                                                                                     std::move(right_expression)));
+          break;
+      }
     }
   }
 
-  return left_expression;
-}
-
-std::unique_ptr<perf::MetricExpression>
-perf::Parser::parse_factor()
-{
-  /// Read the next token.
-  Token token = this->_tokenizer.next();
-
-  if (token == Token::Type::ConstantNumber) {
-    return std::make_unique<ConstantExpression>(token.number().value());
+  /// There should be one root expression left.
+  if (expression_stack.size() != 1U) {
+    throw CannotEvaluateExpressionError{ tokenizer.input() };
   }
 
-  if (token == Token::Type::Identifier) {
-    return std::make_unique<IdentifierExpression>(std::move(token.text().value()));
-  }
-
-  if (token == Token::Type::LeftParenthesis) {
-    /// Read the expression that is inside the parentheses.
-    auto expression = this->parse();
-
-    /// Verify that the token after the expression is a closing the parenthesis.
-    if (this->_tokenizer.next() == Token::Type::RightParenthesis) {
-      return expression;
-    }
-
-    throw CannotParseExpressionError{ this->_tokenizer.input(), "Opened parenthesis is not closed." };
-  }
-
-  throw CannotParseExpressionError{ this->_tokenizer.input(), "Unexpected token." };
+  return std::move(expression_stack.top());
 }
