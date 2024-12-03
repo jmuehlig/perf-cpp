@@ -1,8 +1,8 @@
 #pragma once
 
+#include "feature.h"
 #include <cstdint>
 #include <linux/perf_event.h>
-#include "feature.h"
 
 namespace perf {
 class DataSource
@@ -423,18 +423,12 @@ public:
   /**
    * @return Direct access to the MEM_OP structure of the perf_mem_data_src.
    */
-  [[nodiscard]] std::uint64_t op() const noexcept
-  {
-    return perf_mem_data_src{_data_source}.mem_op;
-  }
+  [[nodiscard]] std::uint64_t op() const noexcept { return perf_mem_data_src{ _data_source }.mem_op; }
 
   /**
    * @return Direct access to the MEM_LVL structure of the perf_mem_data_src (note that MEM_LVL is deprecated).
    */
-  [[nodiscard]] std::uint64_t lvl() const noexcept
-  {
-    return perf_mem_data_src{_data_source}.mem_lvl;
-  }
+  [[nodiscard]] std::uint64_t lvl() const noexcept { return perf_mem_data_src{ _data_source }.mem_lvl; }
 
   /**
    * @return Direct access to the MEM_REMOTE structure of the perf_mem_data_src (since Linux 4.14).
@@ -442,7 +436,7 @@ public:
   [[nodiscard]] std::uint64_t remote() const noexcept
   {
 #ifndef PERFCPP_NO_MEM_REMOTE /// Remote field is supported since Linux 4.14
-    return perf_mem_data_src{_data_source}.mem_remote;
+    return perf_mem_data_src{ _data_source }.mem_remote;
 #else
     return 0ULL;
 #endif
@@ -454,7 +448,7 @@ public:
   [[nodiscard]] std::uint64_t lvl_num() const noexcept
   {
 #ifndef PERFCPP_NO_MEM_LVLNUM /// lvl_num field is supported since Linux 6.1
-    return perf_mem_data_src{_data_source}.mem_lvl_num;
+    return perf_mem_data_src{ _data_source }.mem_lvl_num;
 #else
     return 0ULL;
 #endif
@@ -463,10 +457,7 @@ public:
   /**
    * @return Direct access to the MEM_SNOOP structure of the perf_mem_data_src.
    */
-  [[nodiscard]] std::uint64_t snoop() const noexcept
-  {
-    return perf_mem_data_src{_data_source}.mem_snoop;
-  }
+  [[nodiscard]] std::uint64_t snoop() const noexcept { return perf_mem_data_src{ _data_source }.mem_snoop; }
 
   /**
    * @return Direct access to the MEM_SNOOPX structure of the perf_mem_data_src (since Linux 4.14).
@@ -474,7 +465,7 @@ public:
   [[nodiscard]] std::uint64_t snoopx() const noexcept
   {
 #ifndef PERFCPP_NO_MEM_SNOOPX /// Extended snoop field is supported since Linux 4.14
-    return perf_mem_data_src{_data_source}.mem_snoopx;
+    return perf_mem_data_src{ _data_source }.mem_snoopx;
 #else
     return 0ULL;
 #endif
@@ -483,18 +474,12 @@ public:
   /**
    * @return Direct access to the MEM_LOCK structure of the perf_mem_data_src.
    */
-  [[nodiscard]] std::uint64_t lock() const noexcept
-  {
-    return perf_mem_data_src{_data_source}.mem_lock;
-  }
+  [[nodiscard]] std::uint64_t lock() const noexcept { return perf_mem_data_src{ _data_source }.mem_lock; }
 
   /**
    * @return Direct access to the MEM_TLB structure of the perf_mem_data_src.
    */
-  [[nodiscard]] std::uint64_t tlb() const noexcept
-  {
-    return perf_mem_data_src{_data_source}.mem_dtlb;
-  }
+  [[nodiscard]] std::uint64_t tlb() const noexcept { return perf_mem_data_src{ _data_source }.mem_dtlb; }
 
   /**
    * @return Direct access to the MEM_BLK structure of the perf_mem_data_src (since Linux 5.12).
@@ -502,7 +487,7 @@ public:
   [[nodiscard]] std::uint64_t blk() const noexcept
   {
 #ifndef PERFCPP_NO_MEM_BLK /// BLK is supported since Linux 5.12
-    return perf_mem_data_src{_data_source}.mem_blk;
+    return perf_mem_data_src{ _data_source }.mem_blk;
 #else
     return 0ULL;
 #endif
@@ -514,7 +499,7 @@ public:
   [[nodiscard]] std::uint64_t hops() const noexcept
   {
 #ifndef PERFCPP_NO_MEM_HOPS_0 /// Hops field is supported since Linux 5.16
-    return perf_mem_data_src{_data_source}.mem_hops;
+    return perf_mem_data_src{ _data_source }.mem_hops;
 #else
     return 0ULL;
 #endif

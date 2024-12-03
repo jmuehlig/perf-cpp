@@ -5,7 +5,8 @@
 #include <vector>
 
 namespace perf {
-enum class ABI : std::uint8_t {
+enum class ABI : std::uint8_t
+{
   None = 0U,
   Regs32 = 1U,
   Regs64 = 2U

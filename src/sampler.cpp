@@ -680,9 +680,8 @@ perf::MultiSamplerBase::result(const std::vector<Sampler>& samplers, const bool 
     /// Sort, if requested and supported by all samplers.
     if (is_sort_by_time) {
       /// Verify that all samplers recorded the timestamp that is needed to sort by time.
-      const auto is_time_provided = std::all_of(samplers.begin(), samplers.end(), [](const auto& sampler) {
-        return sampler._values.is_set(PERF_SAMPLE_TIME);
-      });
+      const auto is_time_provided = std::all_of(
+        samplers.begin(), samplers.end(), [](const auto& sampler) { return sampler._values.is_set(PERF_SAMPLE_TIME); });
 
       if (is_time_provided) {
         std::sort(result.begin(), result.end(), SampleTimestampComparator{});
