@@ -218,6 +218,9 @@ private:
   /// implemented on x86 hardware).
   std::vector<Counter> _hardware_live_counters;
 
+  /// Start and stop time points for time events.
+  std::pair<std::chrono::steady_clock::time_point, std::chrono::steady_clock::time_point> _start_and_end_time;
+
   /// Flag indicating if the EventCounter was opened. Opens automatically on startup at the latest.
   bool _is_opened{ false };
 
@@ -239,7 +242,8 @@ private:
    * have one entry. If the event is a metric, the list will have multiple entries.
    */
   void unfold(const std::string& event_name,
-              std::vector<std::tuple<std::string_view, std::optional<CounterConfig>, bool>>& result_vector) const;
+              std::vector<std::tuple<std::string_view, RequestedEvent::Type, std::optional<CounterConfig>, bool>>&
+                result_vector) const;
 
   /**
    * Adds the provided event to the given result vector.
@@ -250,10 +254,11 @@ private:
    * @param is_shown_in_results Visibility.
    * @param result_vector Result vector to add the results.
    */
-  static void add(std::string_view event_name,
-                  const CounterConfig& counter_config,
-                  bool is_shown_in_results,
-                  std::vector<std::tuple<std::string_view, std::optional<CounterConfig>, bool>>& result_vector);
+  static void add(
+    std::string_view event_name,
+    const CounterConfig& counter_config,
+    bool is_shown_in_results,
+    std::vector<std::tuple<std::string_view, RequestedEvent::Type, std::optional<CounterConfig>, bool>>& result_vector);
 
   /**
    * Schedules the given events based on the request into hardware groups and places the event names in the
@@ -263,8 +268,9 @@ private:
    * @param events List of events to schedule.
    * @param schedule Request of the user.
    */
-  void schedule(std::vector<std::tuple<std::string_view, std::optional<CounterConfig>, bool>>&& events,
-                Schedule schedule);
+  void schedule(
+    std::vector<std::tuple<std::string_view, RequestedEvent::Type, std::optional<CounterConfig>, bool>>&& events,
+    Schedule schedule);
 
   /**
    * Try to append the given event to any hardware counter.

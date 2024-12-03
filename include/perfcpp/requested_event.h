@@ -40,11 +40,20 @@ public:
     std::uint8_t _position;
   };
 
+  enum class Type : std::uint8_t
+  {
+    HardwareEvent,
+    Metric,
+    TimeEvent
+  };
+
   RequestedEvent(const std::string_view name,
                  const bool is_shown_in_results,
+                 const Type type,
                  const std::optional<ScheduledHardwareCounterGroup> scheduled_group) noexcept
     : _name(name)
     , _is_shown_in_results(is_shown_in_results)
+    , _type(type)
     , _scheduled_hardware_counter_group(scheduled_group)
   {
   }
@@ -52,7 +61,9 @@ public:
   ~RequestedEvent() = default;
 
   [[nodiscard]] std::string_view name() const noexcept { return _name; }
-  [[nodiscard]] bool is_hardware_event() const noexcept { return _scheduled_hardware_counter_group.has_value(); }
+  [[nodiscard]] bool is_hardware_event() const noexcept { return _type == Type::HardwareEvent; }
+  [[nodiscard]] bool is_metric() const noexcept { return _type == Type::Metric; }
+  [[nodiscard]] bool is_time_event() const noexcept { return _type == Type::TimeEvent; }
   [[nodiscard]] bool is_shown_in_results() const noexcept { return _is_shown_in_results; }
   [[nodiscard]] std::optional<ScheduledHardwareCounterGroup> scheduled_group() const noexcept
   {
@@ -68,6 +79,9 @@ private:
   /// Indicates that the event is included into results. Some events are "only" requested by metrics and are only
   /// needed for calculating them but are not requested by the user.
   bool _is_shown_in_results;
+
+  /// Type, e.g., hardware event, metric, or time event.
+  Type _type;
 
   /// Position (hardware counter group id and position within that group) the event is scheduled to.
   std::optional<ScheduledHardwareCounterGroup> _scheduled_hardware_counter_group{ std::nullopt };
@@ -99,7 +113,10 @@ public:
    */
   bool add(const std::string_view event_name, const std::uint8_t in_group_position)
   {
-    return add(event_name, true, RequestedEvent::ScheduledHardwareCounterGroup{ in_group_position });
+    return add(event_name,
+               true,
+               RequestedEvent::Type::HardwareEvent,
+               RequestedEvent::ScheduledHardwareCounterGroup{ in_group_position });
   }
 
   /**
@@ -120,8 +137,10 @@ public:
            const std::uint8_t group_id,
            const std::uint8_t in_group_position)
   {
-    return add(
-      event_name, is_shown_in_results, RequestedEvent::ScheduledHardwareCounterGroup{ group_id, in_group_position });
+    return add(event_name,
+               is_shown_in_results,
+               RequestedEvent::Type::HardwareEvent,
+               RequestedEvent::ScheduledHardwareCounterGroup{ group_id, in_group_position });
   }
 
   /**
@@ -129,10 +148,14 @@ public:
    * The event will be interpreted as a metric (since it is not scheduled to any hardware counter group).
    *
    * @param event_name Name of the event.
+   * @param type Type of the event (e.g., metric or time)
    *
    * @return True, if the event was added. False, if the event was already in the event set.
    */
-  bool add(const std::string_view event_name) { return add(event_name, true, std::nullopt); }
+  bool add(const std::string_view event_name, const RequestedEvent::Type type)
+  {
+    return add(event_name, true, type, std::nullopt);
+  }
 
   /**
    * Checks if the event is present in the requested set. If so, set the visibility.
@@ -185,13 +208,15 @@ private:
    *
    * @param event_name Name of the event.
    * @param is_shown_in_results True, if the event should be visible in the results.
+   * @param type Type, e.g., hardware event, metric, or time event.
    * @param scheduled_group Group id and position within the group the hardware event is scheduled to (if the event is a
-   * hardare event).
+   * hardware event).
    *
    * @return True, if the event was added. False, if the event was already in the event set.
    */
   bool add(std::string_view event_name,
            bool is_shown_in_results,
+           RequestedEvent::Type type,
            std::optional<RequestedEvent::ScheduledHardwareCounterGroup> scheduled_group);
 };
 }

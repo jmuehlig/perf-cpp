@@ -3,13 +3,14 @@
 bool
 perf::RequestedEventSet::add(const std::string_view event_name,
                              const bool is_shown_in_results,
+                             RequestedEvent::Type type,
                              std::optional<RequestedEvent::ScheduledHardwareCounterGroup> scheduled_group)
 {
   /// If the event is not already added (in that case adjust_visibility_if_present() will return false), add it.
   /// If the event is already in the set, adjust_visibility_if_present() will adjust the visibility to true, if
   /// is_shown_in_results is true.
   if (!this->adjust_visibility_if_present(event_name, is_shown_in_results)) {
-    this->_requested_events.emplace_back(event_name, is_shown_in_results, scheduled_group);
+    this->_requested_events.emplace_back(event_name, is_shown_in_results, type, scheduled_group);
     return true;
   }
 
@@ -46,7 +47,7 @@ perf::RequestedEventSet::result(const perf::CounterDefinition& counter_definitio
   for (const auto& requested_event : this->_requested_events) {
     if (requested_event.is_shown_in_results()) {
       /// Hardware events can be copied directly.
-      if (requested_event.is_hardware_event()) {
+      if (requested_event.is_hardware_event() || requested_event.is_time_event()) {
         if (const auto hardware_event_value = hardware_events_result.get(requested_event.name());
             hardware_event_value.has_value()) {
           counter_results.emplace_back(requested_event.name(), hardware_event_value.value());
@@ -54,10 +55,12 @@ perf::RequestedEventSet::result(const perf::CounterDefinition& counter_definitio
       }
 
       /// Metrics need to be calculated by multiple hardware events.
-      else if (auto metric = counter_definition.metric(requested_event.name()); metric.has_value()) {
-        if (const auto calculated_metric_value = std::get<1>(metric.value()).calculate(hardware_events_result);
-            calculated_metric_value.has_value()) {
-          counter_results.emplace_back(requested_event.name(), calculated_metric_value.value());
+      else if (requested_event.is_metric()) {
+        if (auto metric = counter_definition.metric(requested_event.name()); metric.has_value()) {
+          if (const auto calculated_metric_value = std::get<1>(metric.value()).calculate(hardware_events_result);
+              calculated_metric_value.has_value()) {
+            counter_results.emplace_back(requested_event.name(), calculated_metric_value.value());
+          }
         }
       }
     }

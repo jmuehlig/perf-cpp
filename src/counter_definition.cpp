@@ -13,6 +13,7 @@ perf::CounterDefinition::CounterDefinition()
   this->initialize_generalized_counters();
   this->initialize_amd_ibs_counters();
   this->initialize_intel_pebs_counters();
+  this->initialize_time_events();
 }
 
 perf::CounterDefinition::CounterDefinition(const std::string& config_file)
@@ -34,7 +35,17 @@ perf::CounterDefinition::counter(const std::string& name) const noexcept
 std::optional<std::pair<std::string_view, perf::Metric&>>
 perf::CounterDefinition::metric(const std::string& name) const noexcept
 {
-  if (auto iterator = _metrics.find(name); iterator != _metrics.end()) {
+  if (auto iterator = this->_metrics.find(name); iterator != this->_metrics.end()) {
+    return std::make_optional(std::make_pair(std::string_view(iterator->first), std::ref(*iterator->second)));
+  }
+
+  return std::nullopt;
+}
+
+std::optional<std::pair<std::string_view, perf::TimeEvent&>>
+perf::CounterDefinition::time_event(const std::string& name) const noexcept
+{
+  if (auto iterator = this->_time_events.find(name); iterator != this->_time_events.end()) {
     return std::make_optional(std::make_pair(std::string_view(iterator->first), std::ref(*iterator->second)));
   }
 
@@ -195,6 +206,19 @@ perf::CounterDefinition::initialize_intel_pebs_counters()
       this->add("mem-stores", PERF_TYPE_RAW, mem_stores_event_id.value());
     }
   }
+}
+
+void
+perf::CounterDefinition::initialize_time_events()
+{
+  this->add("seconds", std::make_unique<SecondsTimeEvent>());
+  this->add("s", std::make_unique<SecondsTimeEvent>());
+  this->add("milliseconds", std::make_unique<MillisecondsTimeEvent>());
+  this->add("ms", std::make_unique<MillisecondsTimeEvent>());
+  this->add("microseconds", std::make_unique<MicrosecondsTimeEvent>());
+  this->add("us", std::make_unique<MicrosecondsTimeEvent>());
+  this->add("nanoseconds", std::make_unique<NanosecondsTimeEvent>());
+  this->add("ns", std::make_unique<NanosecondsTimeEvent>());
 }
 
 void

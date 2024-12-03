@@ -1,12 +1,13 @@
 # *perf-cpp*: Changelog
 
-## v.0.9.0 (in development)
+## v.0.9.0 (WIP)
 * Removed deprecated warnings about the sampling interface (and the *old* sampling interface).
 * New feature: Access interim results from counters without stopping the counter using [live counters](docs/recording-live-events.md).
 * New feature: Sampling the user stack (see the [documentation](docs/sampling.md#user-stack)).
-* New feature: Create custom metrics using expressions (see the [documentation](docs/metrics.md#using-formulas)).
+* New feature: Create custom metrics using expressions, e.g., `"instructions/cycles"` (see the [documentation](docs/metrics.md#using-formulas)).
 * New feature: Use [metric](docs/metrics.md) when sampling [counter values](docs/sampling.md#performance-counter-values).
 * New feature: Control scheduling of events to *physical* hardware counters (see the [documentation](docs/recording.md#control-scheduling-of-events-to-hardware-counters)).
+* New feature: Added time events (e.g., `seconds`, `milliseconds`, etc.) as *virtual* counters (see the [documentation](docs/counters.md#built-in-events)).
 
 ## v0.8.3
 * Fixed multiple compatibility issues where the code relied on Linux kernel features that might not available on different versions.

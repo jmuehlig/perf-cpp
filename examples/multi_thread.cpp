@@ -30,7 +30,8 @@ main()
                                     "cache-misses",
                                     "dTLB-miss-ratio",
                                     "L1-data-miss-ratio",
-                                    "cycles-per-instruction" });
+                                    "cycles-per-instruction",
+                                    "nanoseconds" });
   } catch (std::runtime_error& e) {
     std::cerr << e.what() << std::endl;
     return 1;

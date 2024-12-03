@@ -214,14 +214,20 @@ perf::Sampler::transform_trigger_to_sample_counter(
             if (is_added) {
               group.add(std::get<1>(depending_counter_config.value()));
             }
+          } else if (this->_counter_definitions.is_time_event(depending_counter_name)) {
+            throw TimeEventNotSupportedForSamplingError{ event_name };
           } else {
             throw CannotFindEventForMetricError{ depending_counter_name, metric_name };
           }
         }
 
         /// Add the metric to the list of scheduled events.
-        requested_events.add(metric_name);
+        requested_events.add(metric_name, RequestedEvent::Type::Metric);
+      }
 
+      /// Otherwise, check if the event is a time event. Time events are not supported for sampling; let the user know.
+      else if (this->_counter_definitions.is_time_event(event_name)) {
+        throw TimeEventNotSupportedForSamplingError{ event_name };
       }
 
       /// Throw an exception of the event is neither a hardware event or a metric.

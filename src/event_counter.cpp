@@ -13,7 +13,7 @@ perf::EventCounter::~EventCounter()
 bool
 perf::EventCounter::add(const std::string& event_name, const Schedule schedule)
 {
-  auto events = std::vector<std::tuple<std::string_view, std::optional<CounterConfig>, bool>>{};
+  auto events = std::vector<std::tuple<std::string_view, RequestedEvent::Type, std::optional<CounterConfig>, bool>>{};
   this->unfold(event_name, events);
 
   /// Schedule the events to hardware event counters.
@@ -26,7 +26,7 @@ perf::EventCounter::add(const std::string& event_name, const Schedule schedule)
 bool
 perf::EventCounter::add(const std::vector<std::string>& event_names, const Schedule schedule)
 {
-  auto events = std::vector<std::tuple<std::string_view, std::optional<CounterConfig>, bool>>{};
+  auto events = std::vector<std::tuple<std::string_view, RequestedEvent::Type, std::optional<CounterConfig>, bool>>{};
 
   /// Unfold all counters.
   for (const auto& event_name : event_names) {
@@ -43,7 +43,8 @@ perf::EventCounter::add(const std::vector<std::string>& event_names, const Sched
 void
 perf::EventCounter::unfold(
   const std::string& event_name,
-  std::vector<std::tuple<std::string_view, std::optional<CounterConfig>, bool>>& result_vector) const
+  std::vector<std::tuple<std::string_view, RequestedEvent::Type, std::optional<CounterConfig>, bool>>& result_vector)
+  const
 {
   if (const auto counter_config = this->_counter_definitions.counter(event_name); counter_config.has_value()) {
     EventCounter::add(std::get<0>(counter_config.value()),
@@ -62,23 +63,33 @@ perf::EventCounter::unfold(
                           std::get<1>(dependent_counter_config.value()),
                           /* hardware counters only used for metrics are not visible */ false,
                           result_vector);
+      } else if (const auto dependent_time_event = this->_counter_definitions.time_event(dependent_counter_name);
+                 dependent_time_event.has_value()) {
+        result_vector.emplace_back(
+          std::get<0>(dependent_time_event.value()), RequestedEvent::Type::TimeEvent, std::nullopt, false);
       } else {
         throw CannotFindEventForMetricError{ dependent_counter_name, event_name };
       }
     }
 
     /// If all of the metric's counters could be added (i.e., no exception was thrown), add the metric itself.
-    result_vector.emplace_back(std::get<0>(metric.value()), std::nullopt, true);
+    result_vector.emplace_back(std::get<0>(metric.value()), RequestedEvent::Type::Metric, std::nullopt, true);
+  }
+
+  /// If the given name references an existing time event, add the time event.
+  else if (const auto time_event = this->_counter_definitions.time_event(event_name); time_event.has_value()) {
+    result_vector.emplace_back(std::get<0>(time_event.value()), RequestedEvent::Type::TimeEvent, std::nullopt, false);
   } else {
     throw CannotFindEventOrMetricError{ event_name };
   }
 }
 
 void
-perf::EventCounter::add(const std::string_view event_name,
-                        const perf::CounterConfig& counter_config,
-                        const bool is_shown_in_results,
-                        std::vector<std::tuple<std::string_view, std::optional<CounterConfig>, bool>>& result_vector)
+perf::EventCounter::add(
+  const std::string_view event_name,
+  const perf::CounterConfig& counter_config,
+  const bool is_shown_in_results,
+  std::vector<std::tuple<std::string_view, RequestedEvent::Type, std::optional<CounterConfig>, bool>>& result_vector)
 {
   /// Find an event with the same name in the result vector.
   auto iterator = std::find_if(result_vector.begin(), result_vector.end(), [event_name](const auto& event) {
@@ -86,23 +97,24 @@ perf::EventCounter::add(const std::string_view event_name,
   });
   if (iterator == result_vector.end()) {
     /// Append, if the event does not exist.
-    result_vector.emplace_back(event_name, counter_config, is_shown_in_results);
+    result_vector.emplace_back(event_name, RequestedEvent::Type::HardwareEvent, counter_config, is_shown_in_results);
   } else if (is_shown_in_results) {
     /// Adjust visibility if the event should be shown.
-    std::get<2>(*iterator) = true;
+    std::get<3>(*iterator) = true;
   }
 }
 
 void
-perf::EventCounter::schedule(std::vector<std::tuple<std::string_view, std::optional<CounterConfig>, bool>>&& events,
-                             const perf::EventCounter::Schedule schedule)
+perf::EventCounter::schedule(
+  std::vector<std::tuple<std::string_view, RequestedEvent::Type, std::optional<CounterConfig>, bool>>&& events,
+  const perf::EventCounter::Schedule schedule)
 {
   if (schedule == Schedule::Append) {
-    for (const auto& [event_name, counter_config, is_shown_in_results] : events) {
-      /// Metrics (indicated by no hardware counter config) do not need to be scheduled to hardware counter groups; just
-      /// add it to the event set.
+    for (const auto& [event_name, type, counter_config, is_shown_in_results] : events) {
+      /// Metrics and time events (indicated by no hardware counter config) do not need to be scheduled to hardware
+      /// counter groups; just add it to the event set.
       if (!counter_config.has_value()) {
-        this->_requested_event_set.add(event_name);
+        this->_requested_event_set.add(event_name, type);
         continue;
       }
 
@@ -135,11 +147,11 @@ perf::EventCounter::schedule(std::vector<std::tuple<std::string_view, std::optio
         event_name, is_shown_in_results, group_id, /* the counter is the first in the group */ 0U);
     }
   } else if (schedule == Schedule::Separate) {
-    for (const auto& [event_name, counter_config, is_shown_in_results] : events) {
-      /// Metrics (indicated by no hardware counter config) do not need to be scheduled to hardware counter groups; just
-      /// add it to the event set.
+    for (const auto& [event_name, type, counter_config, is_shown_in_results] : events) {
+      /// Metrics and time events (indicated by no hardware counter config) do not need to be scheduled to hardware
+      /// counter groups; just add it to the event set.
       if (!counter_config.has_value()) {
-        this->_requested_event_set.add(event_name);
+        this->_requested_event_set.add(event_name, type);
         continue;
       }
 
@@ -172,7 +184,7 @@ perf::EventCounter::schedule(std::vector<std::tuple<std::string_view, std::optio
 
     /// Test, if all the hardware counters fit into a single group.
     const auto count_hardware_counters =
-      std::count_if(events.begin(), events.end(), [](const auto& event) { return std::get<1>(event).has_value(); });
+      std::count_if(events.begin(), events.end(), [](const auto& event) { return std::get<2>(event).has_value(); });
     if (count_hardware_counters > this->_config.max_counters_per_group()) {
       throw CannotAddCountersToSingleGroupError{ std::uint64_t(count_hardware_counters),
                                                  this->_config.max_counters_per_group() };
@@ -184,11 +196,11 @@ perf::EventCounter::schedule(std::vector<std::tuple<std::string_view, std::optio
 
     /// Add all events.
     const auto group_id = std::uint8_t(this->_hardware_event_groups.size() - 1U);
-    for (const auto& [event_name, counter_config, is_shown_in_results] : events) {
-      /// Metrics (indicated by no hardware counter config) do not need to be scheduled to hardware counter groups; just
-      /// add it to the event set.
+    for (const auto& [event_name, type, counter_config, is_shown_in_results] : events) {
+      /// Metrics and time events (indicated by no hardware counter config) do not need to be scheduled to hardware
+      /// counter groups; just add it to the event set.
       if (!counter_config.has_value()) {
-        this->_requested_event_set.add(event_name);
+        this->_requested_event_set.add(event_name, type);
         continue;
       }
 
@@ -326,6 +338,9 @@ perf::EventCounter::start()
     live_counter.enable();
   }
 
+  /// Start timer.
+  std::get<0>(this->_start_and_end_time) = std::chrono::steady_clock::now();
+
   /// If no exception was thrown, we are good to go. The bool is only returned for interface compatibility.
   return true;
 }
@@ -333,6 +348,9 @@ perf::EventCounter::start()
 void
 perf::EventCounter::stop()
 {
+  /// Stop timer.
+  std::get<1>(this->_start_and_end_time) = std::chrono::steady_clock::now();
+
   /// Stop all counter groups.
   for (auto& [group, _] : this->_hardware_event_groups) {
     group.stop();
@@ -374,6 +392,13 @@ perf::EventCounter::result(std::uint64_t normalization) const
       const auto& group = std::get<0>(this->_hardware_event_groups[scheduled_group.id()]);
       const auto value = group.get(scheduled_group.position()) / double(normalization);
       hardware_event_values.emplace_back(event.name(), value);
+    } else if (event.is_time_event()) {
+      if (const auto& time_calculator = this->_counter_definitions.time_event(event.name());
+          time_calculator.has_value()) {
+        auto time = std::get<1>(time_calculator.value())
+                      .calculate(std::get<0>(this->_start_and_end_time), std::get<1>(this->_start_and_end_time));
+        hardware_event_values.emplace_back(event.name(), double(time) / double(normalization));
+      }
     }
   }
 
@@ -523,7 +548,7 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
   auto aggregated_hardware_event_values = std::vector<std::pair<std::string_view, double>>{};
   aggregated_hardware_event_values.reserve(reference_event_counter._requested_event_set.size());
 
-  /// Accumulate all hardware events from EventCounters.
+  /// Accumulate all hardware and time events from EventCounters.
   for (const auto& event : reference_event_counter._requested_event_set) {
     if (event.is_hardware_event()) {
 
@@ -540,6 +565,23 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
 
       /// Normalize the value (by the given normalization parameter) and add to the aggregated results.
       aggregated_hardware_event_values.emplace_back(event.name(), aggregated_value / double(normalization));
+    } else if (event.is_time_event()) {
+      if (const auto time_event = reference_event_counter._counter_definitions.time_event(event.name());
+          time_event.has_value()) {
+        /// Add up the values from all individual EventCounters in event_counters.
+        const auto aggregated_value = std::accumulate(
+          this->event_counters().cbegin(),
+          this->event_counters().cend(),
+          .0,
+          [&time_calculator = std::get<1>(time_event.value())](const auto sum, const auto& event_counter) {
+            const auto event_counter_start = std::get<0>(event_counter._start_and_end_time);
+            const auto event_counter_end = std::get<1>(event_counter._start_and_end_time);
+            return sum + double(time_calculator.calculate(event_counter_start, event_counter_end));
+          });
+
+        /// Normalize the value (by the given normalization parameter) and add to the aggregated results.
+        aggregated_hardware_event_values.emplace_back(event.name(), aggregated_value / double(normalization));
+      }
     }
   }
 

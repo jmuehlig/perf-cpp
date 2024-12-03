@@ -64,6 +64,19 @@ cpu-migrations
 migrations
 ```
 
+Additionally, *perf-cpp* supports *virtual* **time events** (i.e., they do not use hardware counter but `std::chrono`), that can be used as normal counters to measure time or use time in [metrics](metrics.md).
+
+```
+seconds
+s               # short for seconds
+milliseconds 
+ms              # short for milliseconds
+microseconds
+us              # short for microseconds
+nanoseconds 
+ns              # short for nanoseconds
+```
+
 ## Incorporating Hardware-Specific Events
 All events, their names and configurations, are stored within the `perf::CounterDefinition`.
 This class is passed to `EventCounter` and `Sampler` instances as a reference–consequentially, the instance **must be alive throughout the entire monitoring phase**.

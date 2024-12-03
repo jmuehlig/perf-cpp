@@ -162,6 +162,18 @@ public:
   ~MetricNotSupportedAsLiveEventError() override = default;
 };
 
+class TimeEventNotSupportedForSamplingError final : public std::runtime_error
+{
+public:
+  explicit TimeEventNotSupportedForSamplingError(const std::string_view event_name)
+    : std::runtime_error(std::string{ "The event '" }
+                           .append(event_name)
+                           .append("' appears to be a time event. Time events are not supported for sampling."))
+  {
+  }
+  ~TimeEventNotSupportedForSamplingError() override = default;
+};
+
 class CannotStartEmptyGroupError final : public std::runtime_error
 {
 public:

@@ -2,6 +2,7 @@
 
 #include "counter.h"
 #include "metric.h"
+#include "time_event.h"
 #include <algorithm>
 #include <cstdint>
 #include <memory>
@@ -91,6 +92,17 @@ public:
   }
 
   /**
+   * Adds a time event the given name.
+   *
+   * @param name Name of the time event.
+   * @param time_event Time event.
+   */
+  void add(std::string&& name, std::unique_ptr<TimeEvent>&& time_event)
+  {
+    _time_events.insert(std::make_pair(std::move(name), std::move(time_event)));
+  }
+
+  /**
    * Checks if a specific counter is registered and returns the name and the config.
    *
    * @param name Name of the queried counter.
@@ -137,11 +149,14 @@ public:
   /**
    * Checks if a metric with the given name is registered.
    *
-   * @param name Name of the requested query.
+   * @param name Name of the requested metric.
    *
    * @return True, if the metric exists.
    */
-  [[nodiscard]] bool is_metric(std::string_view name) const noexcept { return is_metric(std::string{ name }); }
+  [[nodiscard]] bool is_metric(std::string_view name) const noexcept
+  {
+    return is_metric(std::string{ name.data(), name.size() });
+  }
 
   /**
    * Checks if a specific metric is registered and returns the name and the metric.
@@ -177,6 +192,74 @@ public:
   }
 
   /**
+   * Checks if a time event with the given name is registered.
+   *
+   * @param name Name of the requested time event.
+   *
+   * @return True, if the time event exists.
+   */
+  [[nodiscard]] bool is_time_event(const std::string& name) const noexcept
+  {
+    return _time_events.find(name) != _time_events.end();
+  }
+
+  /**
+   * Checks if a time event with the given name is registered.
+   *
+   * @param name Name of the requested time event.
+   *
+   * @return True, if the time event exists.
+   */
+  [[nodiscard]] bool is_time_event(std::string&& name) const noexcept { return is_time_event(name); }
+
+  /**
+   * Checks if a time event with the given name is registered.
+   *
+   * @param name Name of the requested time event.
+   *
+   * @return True, if the time event exists.
+   */
+  [[nodiscard]] bool is_time_event(const std::string_view name) const noexcept
+  {
+    return is_time_event(std::string{ name.data(), name.size() });
+  }
+
+  /**
+   * Checks if a specific time event is registered and returns the name and the time event.
+   *
+   * @param name Name of the queried time event.
+   *
+   * @return Time event and config, std::nullopt of the time event does not exist.
+   */
+  [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(
+    const std::string& name) const noexcept;
+
+  /**
+   * Checks if a specific time event is registered and returns the name and the time event.
+   *
+   * @param name Name of the queried time event.
+   *
+   * @return Time event and config, std::nullopt of the time event does not exist.
+   */
+  [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(std::string&& name) const noexcept
+  {
+    return time_event(name);
+  }
+
+  /**
+   * Checks if a specific time event is registered and returns the name and the time event.
+   *
+   * @param name Name of the queried time event.
+   *
+   * @return Time event and config, std::nullopt of the time event does not exist.
+   */
+  [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(
+    const std::string_view name) const noexcept
+  {
+    return time_event(std::string{ name.data(), name.size() });
+  }
+
+  /**
    * @return List names of all available counters.
    */
   [[nodiscard]] std::vector<std::string> names() const
@@ -201,6 +284,9 @@ private:
   /// List of added metrics.
   std::unordered_map<std::string, std::unique_ptr<Metric>> _metrics;
 
+  /// List of time events.
+  std::unordered_map<std::string, std::unique_ptr<TimeEvent>> _time_events;
+
   /**
    * Add all generalized counters to the counter config.
    */
@@ -215,5 +301,10 @@ private:
    * If the system is an Intel, read some PEBS counters, if supported.
    */
   void initialize_intel_pebs_counters();
+
+  /**
+   * Initializes time events.
+   */
+  void initialize_time_events();
 };
 }
