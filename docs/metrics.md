@@ -18,14 +18,16 @@ This metric helps to measure how many CPU cycles are consumed for executiong an 
 *perf-cpp* comes pre-equipped with several built-in metrics which can be used analogously to events. 
 To employ these metrics, include their names in the `perf::EventCounter` instance as shown in the [Utilizing Metrics](#utilizing-metrics) section:
 
-* `cycles-per-instruction`: Represents the number of cycles required per instruction.
-* `instructions-per-cycle`: Represents the number of instructions executed per cycle.
-* `cache-hit-ratio`: Indicates the ratio of cache hits to total cache accesses.
-* `cache-miss-ratio`: Indicates the ratio of cache misses to total cache accesses.
-* `dTLB-miss-ratio` The ratio of data TLB misses to data TLB accesses.
-* `iTLB-miss-ratio` The ratio of instruction TLB misses to instruction TLB accesses.
-* `L1-data-miss-ratio`: Reflects the ratio of L1 data cache misses to L1 data cache accesses.
-* `branch-miss-ratio`: Reflects the ratio of branch misses to executed branches.
+| Metric name              | Description                                                          |
+|--------------------------|----------------------------------------------------------------------|
+| `cycles-per-instruction` | Represents the number of cycles required per instruction.            |
+| `instructions-per-cycle` | Represents the number of instructions executed per cycle.            |
+| `cache-hit-ratio`        | Indicates the ratio of cache hits to total cache accesses.           |
+| `cache-miss-ratio`       | Indicates the ratio of cache misses to total cache accesses.         |
+| `dTLB-miss-ratio`        | The ratio of data TLB misses to data TLB accesses.                   |
+| `iTLB-miss-ratio`        | The ratio of instruction TLB misses to instruction TLB accesses.     |
+| `L1-data-miss-ratio`     | Reflects the ratio of L1 data cache misses to L1 data cache accesses.|
+| `branch-miss-ratio`      | Reflects the ratio of branch misses to executed branches.            |
 
 ## Utilizing Metrics
 Metrics function similarly to hardware events in the  `perf::EventCounter`:
