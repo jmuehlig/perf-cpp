@@ -21,7 +21,7 @@ However, the build directory can be any directory of your choice (including `.`)
 #### Download the source code
 
 ```bash
-git clone git clone https://github.com/jmuehlig/perf-cpp.git
+git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
 
 # Optional: switch to latest stable version

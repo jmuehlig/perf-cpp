@@ -62,7 +62,7 @@ The formular can use the following operators: `+`, `-`, `*`, and `/`.
 
 **Note**: In formulas, event names that contain *operators* (like `-` in `L1D-misses`) need to be **escaped** using single quotes, e.g., `'L1D-misses'`.
 
-**Note**: The example depends on events from the Intel SkylakeX architecture and is taken from [Likwid](https://github.com/RRZE-HPC/likwid/blob/master/groups/skylakeX/CYCLE_STALLS.txt).
+The example depends on events from the Intel SkylakeX architecture and is taken from [Likwid](https://github.com/RRZE-HPC/likwid/blob/master/groups/skylakeX/CYCLE_STALLS.txt).
 
 ### Implementing Metrics using the Interface
 The second option is to define metrics by implementing the `perf::Metric` interface, for example:

@@ -1,13 +1,13 @@
 # Built-in and Hardware-specific Performance Events
 
-Each generation of CPUs introduces its own unique performance events. 
-To tailor performance measurement across diverse systems, it's essential to utilize the right events for each processor. 
-The `perf::CounterDefinition` class plays a crucial role in this, facilitating the management of diverse events to cater to different hardware needs.
+Modern CPUs introduce unique performance events with each new generation. 
+To effectively measure performance across different systems, it's essential to utilize the appropriate events for each processor type.
+The `perf::CounterDefinition` class plays a crucial role in this, allowing you to add performance counters for your specific hardware.
 
-Additionally, the library provides a script for retrieving all hardware-specific events.
-For more details, see [Retrieving Raw Event Codes](#retrieving-raw-event-codes) section below.
+The library includes a script to retrieve hardware-specific events **automatically**.
+See the [Retrieving Raw Event Codes](#retrieving-raw-event-codes) section for details.
 
-For a primer on existing events specific to Intel hardware, visit the [perfmon website](https://perfmon-events.intel.com/).
+For a comprehensive list of **Intel-specific** events, refer to the [perfmon website](https://perfmon-events.intel.com/).
 
 ---
 ## Table of Contents
@@ -23,8 +23,8 @@ For a primer on existing events specific to Intel hardware, visit the [perfmon w
 ---
 
 ## Built-in Events
-*perf-cpp* comes with a variety of performance events that are universally applicable across most CPU architectures. 
-These are accessible immediately for use:
+*perf-cpp* includes a variety of built-in performance events that are universally applicable across most CPU architectures.
+These events are readily available for immediate use:
 
 ```
 branches 
@@ -78,8 +78,9 @@ ns              # short for nanoseconds
 ```
 
 ## Incorporating Hardware-Specific Events
-All events, their names and configurations, are stored within the `perf::CounterDefinition`.
-This class is passed to `EventCounter` and `Sampler` instances as a reference–consequentially, the instance **must be alive throughout the entire monitoring phase**.
+All event names and configurations are managed within the `perf::CounterDefinition` class.
+This class is passed by reference to `perf::EventCounter` and `perf::Sampler` instances.
+**Important**: The `perf::CounterDefinition` instance must remain alive for the entire duration of the monitoring phase to ensure correct functionality.
 
 ### Directly in Code
 You can define additional events directly in your code using the `add()` method provided by the `perf::CounterDefinition` interface. 
@@ -94,8 +95,8 @@ counter_definitions.add(
 );
 ```
 
-For the most time, the event codes are specific to the underlying hardware. 
-See below, how you can retrieve the event codes for your system: [Retrieving Raw Event Codes](#retrieving-raw-event-codes).
+Typically, event codes are specific to the underlying hardware. 
+Refer to the [Retrieving Raw Event Codes](#retrieving-raw-event-codes) section below to learn how to obtain the event codes for your system.
 
 ### Through Configuration Files
 Alternatively, hardware-specific events can be added via a CSV-like configuration file, specifying each event's name and configuration details. 
@@ -103,7 +104,7 @@ This method facilitates the bulk addition of events.
 For example:
 
 ```cpp
-auto counter_definition = perf::CounterDefinition{"events.csv"};
+auto counter_definition = perf::CounterDefinition{"perf_list.csv"};
 ```
 
 The CSV file `events.csv` could look like the following:
@@ -115,27 +116,26 @@ cycle_activity.stalls_l3_miss,0x65306a3
 ```
 
 ## Using Newly Added Events
-Once defined, either through code or configuration files, these events can be incorporated into your performance measurements:
+After defining the new events–whether directly in code or via configuration files–you can incorporate them into your performance measurements as follows:
 
 ```cpp
-auto counter_definitions = perf::CounterDefinition{"events.csv"};
+auto counter_definitions = perf::CounterDefinition{"perf_list.csv"};
 auto event_counter = perf::EventCounter{counter_definitions};
 event_counter.add({"cycles", "cycle_activity.stalls_l1d_miss"});
 ```
 
 ## Retrieving Raw Event Codes
 ### Automated Retrieval
-A Python script (`script/create_perf_list.py`) included in the library helps automate the process of fetching hardware event values, similar to the `perf list` command. 
-Execute the script as follows to obtain a comprehensive list of events:
+The library provides a Python script (`script/create_perf_list.py`) to automate the retrieval of hardware event codes, similar to the `perf list` command. 
+To generate a comprehensive list of events, execute the following commands:
 
 ```bash
 cmake .
 cmake --build . --target perf-list
 ```
 
-This command generates a CSV file named `perf-list.csv`.
-This file includes the names of all performance events along with their raw values, which are extracted from the system's underlying hardware.
-The file can be passed to the `perf::CounterDefinition` as demonstrated [above](#through-configuration-files).
+This will produce a CSV file named `perf_list.csv`, containing the names and raw codes of all performance events available on your system. 
+You can then pass this file to `perf::CounterDefinition` as shown in the [Through Configuration Files](#through-configuration-files) section.
 
 
 ### Manual Retrieval with libpfm4
@@ -151,10 +151,11 @@ However, for manual setup, you can utilize libpfm4 to fetch and configure events
     * The output from this command will provide the identifier (ID) that can be used as a raw value to reference the event.
 
 ## Runtime Hardware Querying
-To ensure compatibility and optimal performance measurement, you can probe the specific hardware capabilities at runtime using the `perf::HardwareInfo` class, which helps determine the necessary counters and features to use based on the underlying CPU architecture.
-
+To ensure compatibility and optimal performance measurement, you can probe the specific hardware capabilities at runtime using the `perf::HardwareInfo` class.
+This allows you to determine the appropriate counters and features based on the underlying CPU architecture.
 
 &rarr; [See code example](../examples/address_sampling.cpp)
+
 ```cpp
 #include <perfcpp/hardware_info.h>
 
