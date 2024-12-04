@@ -1,5 +1,5 @@
 # perf-cpp: Access Performance Counters from C++ Applications
-Welcome to *perf-cpp*, a robust C++ library designed to streamline the use of the Linux perf subsystem, providing direct access to hardware performance counters. 
+Welcome to *perf-cpp*, a C++ library designed to streamline the use of the Linux perf subsystem, providing direct access to hardware performance counters from within the application. 
 Many modern profiling tools fail to offer precise profiling of specific code segments and to associate profiled data like memory addresses with application-specific details. 
 With *perf-cpp*, you can manage profiling directly within your application and handle the profiled data seamlessly.
 
@@ -133,7 +133,7 @@ All code examples are available in the [examples/](examples) folder.
 ## System Requirements
 * C++ Standard: Requires support for **C++17** features.
 * CMake Version: **3.10** or higher.
-* Linux Kernel Version: **4.0** or newer (kernel 5.13 or higher recommended for full feature support, such as latency sampling).
+* Linux Kernel Version: **4.0** or newer (note that some features need a newer Kernel).
 * `perf_event_paranoid` Setting: Adjust as needed to allow access to performance counters (see the [Paranoid Value Section](#paranoid-value) below).
 
 ### Adjusting `perf_event_paranoid` Value
