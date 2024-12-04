@@ -174,54 +174,63 @@ public:
 
   /*
    * Returns the mode in which the sample was taken (e.g., Kernel, User, Hypervisor).
+   *
    * @return The sample mode.
    */
   [[nodiscard]] Mode mode() const noexcept { return _mode; }
 
   /*
    * Retrieves the unique identifier for the sample.
+   *
    * @return An optional containing the sample ID if available.
    */
   [[nodiscard]] std::optional<std::uint64_t> sample_id() const noexcept { return _sample_id; }
 
   /*
    * Retrieves the instruction pointer at the time the sample was recorded.
+   *
    * @return An optional containing the instruction pointer address if available.
    */
   [[nodiscard]] std::optional<std::uintptr_t> instruction_pointer() const noexcept { return _instruction_pointer; }
 
   /*
    * Retrieves the process ID associated with the sample.
+   *
    * @return An optional containing the process ID if available.
    */
   [[nodiscard]] std::optional<std::uint32_t> process_id() const noexcept { return _process_id; }
 
   /*
    * Retrieves the thread ID associated with the sample.
+   *
    * @return An optional containing the thread ID if available.
    */
   [[nodiscard]] std::optional<std::uint32_t> thread_id() const noexcept { return _thread_id; }
 
   /*
    * Retrieves the timestamp when the sample was taken.
+   *
    * @return An optional containing the timestamp if available.
    */
   [[nodiscard]] std::optional<std::uint64_t> time() const noexcept { return _time; }
 
   /*
    * Retrieves the stream id.
+   *
    * @return An optional containing the stream id if available.
    */
   [[nodiscard]] std::optional<std::uint64_t> stream_id() const noexcept { return _stream_id; }
 
   /*
    * Retrieves raw data.
+   *
    * @return An optional containing raw data if available.
    */
   [[nodiscard]] const std::optional<std::vector<char>>& raw() const noexcept { return _raw_data; }
 
   /*
    * Retrieves the logical (virtual) memory address relevant to the sample.
+   *
    * @return An optional containing the logical memory address if available.
    */
   [[nodiscard]] std::optional<std::uintptr_t> logical_memory_address() const noexcept
@@ -231,6 +240,7 @@ public:
 
   /*
    * Retrieves the physical memory address relevant to the sample.
+   *
    * @return An optional containing the physical memory address if available.
    */
   [[nodiscard]] std::optional<std::uintptr_t> physical_memory_address() const noexcept
@@ -240,72 +250,84 @@ public:
 
   /*
    * Retrieves the unique ID of the perf_event that generated the sample.
+   *
    * @return An optional containing the perf_event ID if available.
    */
   [[nodiscard]] std::optional<std::uint64_t> id() const noexcept { return _id; }
 
   /*
    * Retrieves the CPU ID where the sample was collected.
+   *
    * @return An optional containing the CPU ID if available.
    */
   [[nodiscard]] std::optional<std::uint32_t> cpu_id() const noexcept { return _cpu_id; }
 
   /*
    * Retrieves the period value indicating the number of events that have occurred.
+   *
    * @return An optional containing the period value if available.
    */
   [[nodiscard]] std::optional<std::uint64_t> period() const noexcept { return _period; }
 
   /*
    * Retrieves the counter result associated with the sample.
+   *
    * @return An optional containing the counter result if available.
    */
   [[nodiscard]] const std::optional<CounterResult>& counter_result() const noexcept { return _counter_result; }
 
   /*
    * Retrieves the counter result associated with the sample.
+   *
    * @return An optional containing the counter result if available.
    */
   [[nodiscard]] const std::optional<CounterResult>& counter() const noexcept { return _counter_result; }
 
   /*
    * Retrieves the data source information of the sample.
+   *
    * @return An optional containing the data source if available.
    */
   [[nodiscard]] std::optional<DataSource> data_src() const noexcept { return _data_src; }
 
   /*
    * Retrieves the transaction abort of the sample.
+   *
    * @return An optional containing the transaction abort if available.
    */
   [[nodiscard]] std::optional<TransactionAbort> transaction_abort() const noexcept { return _transaction_abort; }
 
   /*
    * Retrieves the weight value representing the cost or impact of the sample.
+   *
    * @return An optional containing the weight if available.
    */
   [[nodiscard]] std::optional<Weight> weight() const noexcept { return _weight; }
 
   /*
    * Retrieves the branches recorded in the sample.
+   *
    * @return An optional vector of branches if available.
    */
   [[nodiscard]] const std::optional<std::vector<Branch>>& branches() const noexcept { return _branches; }
 
   /*
    * Retrieves the branches recorded in the sample (modifiable).
+   *
    * @return An optional vector of branches if available.
    */
   [[nodiscard]] std::optional<std::vector<Branch>>& branches() noexcept { return _branches; }
 
   /*
    * Retrieves the ABI of the user-space registers.
+   *
    * @return An optional containing the user registers ABI if available.
    */
   [[nodiscard]] std::optional<ABI> user_registers_abi() const noexcept { return _user_registers_abi; }
 
   /*
    * Retrieves the user-space registers captured in the sample.
+   *
    * @return An optional vector of user registers if available.
    */
   [[nodiscard]] const std::optional<std::vector<std::uint64_t>>& user_registers() const noexcept
@@ -315,18 +337,21 @@ public:
 
   /*
    * Retrieves the user-space registers captured in the sample (modifiable).
+   *
    * @return An optional vector of user registers if available.
    */
   [[nodiscard]] std::optional<std::vector<std::uint64_t>>& user_registers() noexcept { return _user_registers; }
 
   /*
    * Retrieves the ABI of the kernel-space registers.
+   *
    * @return An optional containing the kernel registers ABI if available.
    */
   [[nodiscard]] std::optional<ABI> kernel_registers_abi() const noexcept { return _kernel_registers_abi; }
 
   /*
    * Retrieves the kernel-space registers captured in the sample.
+   *
    * @return An optional vector of kernel registers if available.
    */
   [[nodiscard]] const std::optional<std::vector<std::uint64_t>>& kernel_registers() const noexcept
@@ -336,78 +361,91 @@ public:
 
   /*
    * Retrieves the kernel-space registers captured in the sample (modifiable).
+   *
    * @return An optional vector of kernel registers if available.
    */
   [[nodiscard]] std::optional<std::vector<std::uint64_t>>& kernel_registers() noexcept { return _kernel_registers; }
 
   /*
    * Retrieves the user stack captured in the sample (modifiable).
+   *
    * @return An optional vector of user stack data if available.
    */
   [[nodiscard]] const std::optional<std::vector<char>>& user_stack() const noexcept { return _user_stack; }
 
   /*
    * Retrieves the user stack captured in the sample (modifiable).
+   *
    * @return An optional vector of user stack data if available.
    */
   [[nodiscard]] std::optional<std::vector<char>>& user_stack() noexcept { return _user_stack; }
 
   /*
    * Retrieves the call chain (stack backtrace) captured in the sample.
+   *
    * @return An optional vector of instruction pointers if available.
    */
   [[nodiscard]] const std::optional<std::vector<std::uintptr_t>>& callchain() const noexcept { return _callchain; }
 
   /*
    * Retrieves the call chain (stack backtrace) captured in the sample (modifiable).
+   *
    * @return An optional vector of instruction pointers if available.
    */
   [[nodiscard]] std::optional<std::vector<std::uintptr_t>>& callchain() noexcept { return _callchain; }
 
   /*
    * Retrieves the cgroup ID of the for the perf_event subsystem.
+   *
    * @return An optional containing the cgroup ID if available.
    */
   [[nodiscard]] std::optional<std::uint64_t> cgroup_id() const noexcept { return _cgroup_id; }
 
   /*
    * Retrieves the cgroup. CGroups are recorded when created and activated.
+   *
    * @return An optional containing the cgroup if available.
    */
   [[nodiscard]] const std::optional<CGroup>& cgroup() const noexcept { return _cgroup; }
 
   /*
    * Retrieves the data page size at the time of the sample.
+   *
    * @return An optional containing the data page size if available.
    */
   [[nodiscard]] std::optional<std::uint64_t> data_page_size() const noexcept { return _data_page_size; }
 
   /*
    * Retrieves the code page size at the time of the sample.
+   *
    * @return An optional containing the code page size if available.
    */
   [[nodiscard]] std::optional<std::uint64_t> code_page_size() const noexcept { return _code_page_size; }
 
   /*
    * Retrieves the context switch.
+   *
    * @return An optional containing the context switch if available.
    */
   [[nodiscard]] std::optional<ContextSwitch> context_switch() const noexcept { return _context_switch; }
 
   /*
    * Retrieves the count of lost events associated with the sample.
+   *
    * @return An optional containing the count of lost events if available.
    */
   [[nodiscard]] std::optional<std::uint64_t> count_loss() const noexcept { return _count_loss; }
 
   /*
    * Retrieves a throttle/unthrottle event.
+   *
    * @return An optional containing a throttle or an unthrottle flag if available.
    */
   [[nodiscard]] std::optional<Throttle> throttle() const noexcept { return _throttle; }
 
   /*
    * Indicates whether the instruction pointer in the sample is exact.
+   *
    * @return True if the instruction pointer is exact; otherwise, false.
    */
   [[nodiscard]] bool is_exact_ip() const noexcept { return _is_exact_ip; }

@@ -25,7 +25,8 @@ perf::CounterDefinition::CounterDefinition(const std::string& config_file)
 std::optional<std::pair<std::string_view, perf::CounterConfig>>
 perf::CounterDefinition::counter(const std::string& name) const noexcept
 {
-  if (auto iterator = this->_counter_configs.find(name); iterator != this->_counter_configs.end()) {
+  if (auto iterator = this->_hardware_counter_configurations.find(name);
+      iterator != this->_hardware_counter_configurations.end()) {
     return std::make_optional(std::make_pair(std::string_view(iterator->first), iterator->second));
   }
 
@@ -55,7 +56,7 @@ perf::CounterDefinition::time_event(const std::string& name) const noexcept
 void
 perf::CounterDefinition::initialize_generalized_counters()
 {
-  this->_counter_configs.reserve(128U);
+  this->_hardware_counter_configurations.reserve(128U);
   this->_metrics.reserve(64U);
 
   this->add("instructions", PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS);

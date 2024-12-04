@@ -108,7 +108,6 @@ public:
    *
    * @param event_name Name of the event.
    * @param in_group_position Position of the event within the group.
-   *
    * @return True, if the event was added. False, if the event was already in the event set.
    */
   bool add(const std::string_view event_name, const std::uint8_t in_group_position)
@@ -129,7 +128,6 @@ public:
    * @param is_shown_in_results True, if the event should be visible in the results.
    * @param group_id Id of the group the event was scheduled to.
    * @param in_group_position Position of the event within the group.
-   *
    * @return True, if the event was added. False, if the event was already in the event set.
    */
   bool add(const std::string_view event_name,
@@ -150,7 +148,6 @@ public:
    * @param event_name Name of the event.
    * @param type Type of the event (e.g., metric or time)
    * @param is_shown_in_results True, if the event should be visible in the results.
-   *
    * @return True, if the event was added. False, if the event was already in the event set.
    */
   bool add(const std::string_view event_name, const RequestedEvent::Type type, const bool is_shown_in_results)
@@ -212,7 +209,6 @@ private:
    * @param type Type, e.g., hardware event, metric, or time event.
    * @param scheduled_group Group id and position within the group the hardware event is scheduled to (if the event is a
    * hardware event).
-   *
    * @return True, if the event was added. False, if the event was already in the event set.
    */
   bool add(std::string_view event_name,

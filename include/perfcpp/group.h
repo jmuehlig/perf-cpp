@@ -71,7 +71,6 @@ public:
    * @param max_callstack_size Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
    * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
    * @param is_include_cgroup True, if cgroups should be sampled, ignored if sampling is disabled.
-   *
    * @return True, if the counters could be opened.
    */
   bool open(const Config& config,

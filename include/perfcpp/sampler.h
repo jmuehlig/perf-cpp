@@ -628,7 +628,6 @@ private:
    *
    * @param entry Entry of the user-level buffer.
    * @param sample_counter The SampleCounter the entry is linked to in order to get the recorded counters (if any).
-   *
    * @return Sample.
    */
   [[nodiscard]] perf::Sample read_sample_event(UserLevelBufferEntry entry, const SampleCounter& sample_counter) const;
@@ -638,7 +637,6 @@ private:
    *
    * @param entry Current position at the buffer.
    * @param count_registers Number of registers requested.
-   *
    * @return Pair of ABI and list of registers (if any).
    */
   [[nodiscard]] static std::pair<ABI, std::optional<std::vector<std::uint64_t>>> read_registers(
@@ -650,7 +648,6 @@ private:
    *
    * @param entry Current position at the buffer.
    * @param sample_counter The current sample counter including the counter group and counter names.
-   *
    * @return Event values
    */
   [[nodiscard]] std::optional<CounterResult> read_hardware_events(UserLevelBufferEntry& entry,
@@ -660,7 +657,6 @@ private:
    * Reads the callchain from the current buffer entry.
    *
    * @param entry Current position at the buffer.
-   *
    * @return List of instruction pointers (the callchain).
    */
   [[nodiscard]] static std::optional<std::vector<std::uintptr_t>> read_callchain(UserLevelBufferEntry& entry);
@@ -669,7 +665,6 @@ private:
    * Reads the branch stack from the current buffer entry.
    *
    * @param entry Current position at the buffer.
-   *
    * @return Branch stack.
    */
   [[nodiscard]] static std::optional<std::vector<Branch>> read_branch_stack(UserLevelBufferEntry& entry);
@@ -678,7 +673,6 @@ private:
    * Translates the current entry from the user-level buffer into a lost sample.
    *
    * @param entry Entry of the user-level buffer.
-   *
    * @return Sample containing the loss.
    */
   [[nodiscard]] perf::Sample read_loss_event(UserLevelBufferEntry entry) const noexcept;
@@ -687,7 +681,6 @@ private:
    * Translates the current entry from the user-level buffer into a context switch sample.
    *
    * @param entry Entry of the user-level buffer.
-   *
    * @return Sample containing the context switch.
    */
   [[nodiscard]] perf::Sample read_context_switch_event(UserLevelBufferEntry entry) const noexcept;
@@ -696,7 +689,6 @@ private:
    * Translates the current entry from the user-level buffer into a cgroup sample.
    *
    * @param entry Entry of the user-level buffer.
-   *
    * @return Sample containing the cgroup.
    */
   [[nodiscard]] static perf::Sample read_cgroup_event(UserLevelBufferEntry entry);
@@ -705,7 +697,6 @@ private:
    * Translates the current entry from the user-level buffer into a throttle or un-throttle sample.
    *
    * @param entry Entry of the user-level buffer.
-   *
    * @return Sample containing the throttle.
    */
   [[nodiscard]] perf::Sample read_throttle_event(UserLevelBufferEntry entry) const noexcept;
@@ -870,7 +861,6 @@ public:
    * Set the trigger for sampling to a single counter.
    *
    * @param trigger_name Name of the counter that "triggers" sample recording.
-   *
    * @return MultiThreadSampler
    */
   MultiThreadSampler& trigger(std::string&& trigger_name)
@@ -884,7 +874,6 @@ public:
    *
    * @param trigger_name Name of the counter that "triggers" sample recording.
    * @param precision Precision of the event.
-   *
    * @return MultiThreadSampler
    */
   MultiThreadSampler& trigger(std::string&& trigger_name, const Precision precision)
@@ -898,7 +887,6 @@ public:
    *
    * @param trigger_name Name of the counter that "triggers" sample recording.
    * @param period Sampling period of the event.
-   *
    * @return MultiThreadSampler
    */
   MultiThreadSampler& trigger(std::string&& trigger_name, const class Period period)
@@ -912,7 +900,6 @@ public:
    *
    * @param trigger_name Name of the counter that "triggers" sample recording.
    * @param frequency Sampling frequency of the event.
-   *
    * @return MultiThreadSampler
    */
   MultiThreadSampler& trigger(std::string&& trigger_name, const Frequency frequency)
@@ -927,7 +914,6 @@ public:
    * @param trigger_name Name of the counter that "triggers" sample recording.
    * @param precision Precision of the event.
    * @param period Sampling period of the event.
-   *
    * @return MultiThreadSampler
    */
   MultiThreadSampler& trigger(std::string&& trigger_name, const Precision precision, const class Period period)
@@ -940,7 +926,6 @@ public:
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
    *
    * @param trigger_name Name of the counters that "triggers" sample recording.
-   *
    * @return MultiThreadSampler
    */
   MultiThreadSampler& trigger(std::vector<std::string>&& trigger_names)
@@ -952,7 +937,6 @@ public:
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
    *
    * @param triggers List of triggers tuples that "trigger" sample recording.
-   *
    * @return MultiThreadSampler
    */
   MultiThreadSampler& trigger(std::vector<Sampler::Trigger>&& triggers)
@@ -966,7 +950,6 @@ public:
    * for Intel's Sapphire Rapids architecture).
    *
    * @param trigger_name Group of names of the counters that "triggers" sample recording.
-   *
    * @return MultiThreadSampler
    */
   MultiThreadSampler& trigger(std::vector<std::vector<std::string>>&& trigger_names)
@@ -981,7 +964,6 @@ public:
    * for Intel's Sapphire Rapids architecture).
    *
    * @param triggers Group of names and precisions of the counters that "trigger" sample recording.
-   *
    * @return MultiThreadSampler
    */
   MultiThreadSampler& trigger(std::vector<std::vector<Sampler::Trigger>>&& triggers)
@@ -1001,7 +983,6 @@ public:
    * Opens and starts recording performance counters on a specific thread.
    *
    * @param thread_id Id of the thread to start.
-   *
    * @return True, of the performance counters could be started.
    */
   bool start(const std::uint16_t thread_id)
@@ -1056,7 +1037,6 @@ public:
    * Set the trigger for sampling to a single counter.
    *
    * @param trigger_name Name of the counter that "triggers" sample recording.
-   *
    * @return MultiCoreSampler
    */
   MultiCoreSampler& trigger(std::string&& trigger_name)
@@ -1070,7 +1050,6 @@ public:
    *
    * @param trigger_name Name of the counter that "triggers" sample recording.
    * @param precision Precision of the event.
-   *
    * @return MultiCoreSampler
    */
   MultiCoreSampler& trigger(std::string&& trigger_name, const Precision precision)
@@ -1084,7 +1063,6 @@ public:
    *
    * @param trigger_name Name of the counter that "triggers" sample recording.
    * @param period Sampling period of the event.
-   *
    * @return MultiCoreSampler
    */
   MultiCoreSampler& trigger(std::string&& trigger_name, const class Period period)
@@ -1098,7 +1076,6 @@ public:
    *
    * @param trigger_name Name of the counter that "triggers" sample recording.
    * @param frequency Sampling frequency of the event.
-   *
    * @return MultiCoreSampler
    */
   MultiCoreSampler& trigger(std::string&& trigger_name, const Frequency frequency)
@@ -1113,7 +1090,6 @@ public:
    * @param trigger_name Name of the counter that "triggers" sample recording.
    * @param precision Precision of the event.
    * @param period Sampling period of the event.
-   *
    * @return MultiCoreSampler
    */
   MultiCoreSampler& trigger(std::string&& trigger_name, const Precision precision, const class Period period)
@@ -1126,7 +1102,6 @@ public:
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
    *
    * @param trigger_name Name of the counters that "triggers" sample recording.
-   *
    * @return MultiCoreSampler
    */
   MultiCoreSampler& trigger(std::vector<std::string>&& trigger_names)
@@ -1138,7 +1113,6 @@ public:
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
    *
    * @param triggers List of triggers tuples that "trigger" sample recording.
-   *
    * @return MultiCoreSampler
    */
   MultiCoreSampler& trigger(std::vector<Sampler::Trigger>&& triggers)
@@ -1152,7 +1126,6 @@ public:
    * for Intel's Sapphire Rapids architecture).
    *
    * @param trigger_name Group of names of the counters that "triggers" sample recording.
-   *
    * @return MultiCoreSampler
    */
   MultiCoreSampler& trigger(std::vector<std::vector<std::string>>&& trigger_names)
@@ -1167,7 +1140,6 @@ public:
    * for Intel's Sapphire Rapids architecture).
    *
    * @param triggers Group of names and precisions of the counters that "trigger" sample recording.
-   *
    * @return MultiCoreSampler
    */
   MultiCoreSampler& trigger(std::vector<std::vector<Sampler::Trigger>>&& triggers)

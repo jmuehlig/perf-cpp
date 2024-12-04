@@ -328,7 +328,6 @@ private:
    * Finds a registered data type with the given name.
    *
    * @param data_type_name Name of the data type to lookup.
-   *
    * @return Iterator of the data type.
    */
   std::vector<std::pair<DataType, std::unordered_map<std::string, std::vector<std::uintptr_t>>>>::iterator find(

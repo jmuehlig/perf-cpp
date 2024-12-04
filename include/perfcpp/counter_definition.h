@@ -59,7 +59,7 @@ public:
    */
   void add(std::string&& name, CounterConfig config)
   {
-    _counter_configs.insert(std::make_pair(std::move(name), config));
+    _hardware_counter_configurations.insert(std::make_pair(std::move(name), config));
   }
 
   /**
@@ -106,7 +106,6 @@ public:
    * Checks if a specific counter is registered and returns the name and the config.
    *
    * @param name Name of the queried counter.
-   *
    * @return Name and config of the counter, std::nullopt of the counter does not exist.
    */
   [[nodiscard]] std::optional<std::pair<std::string_view, CounterConfig>> counter(std::string&& name) const noexcept
@@ -118,7 +117,6 @@ public:
    * Checks if a specific counter is registered and returns the name and the config.
    *
    * @param name Name of the queried counter.
-   *
    * @return Name and config of the counter, std::nullopt of the counter does not exist.
    */
   [[nodiscard]] std::optional<std::pair<std::string_view, CounterConfig>> counter(
@@ -128,7 +126,6 @@ public:
    * Checks if a specific counter is registered and returns the name and the config.
    *
    * @param name Name of the queried counter.
-   *
    * @return Name and config of the counter, std::nullopt of the counter does not exist.
    */
   [[nodiscard]] std::optional<std::pair<std::string_view, CounterConfig>> counter(
@@ -141,7 +138,6 @@ public:
    * Checks if a metric with the given name is registered.
    *
    * @param name Name of the requested query.
-   *
    * @return True, if the metric exists.
    */
   [[nodiscard]] bool is_metric(const std::string& name) const noexcept { return _metrics.find(name) != _metrics.end(); }
@@ -150,7 +146,6 @@ public:
    * Checks if a metric with the given name is registered.
    *
    * @param name Name of the requested metric.
-   *
    * @return True, if the metric exists.
    */
   [[nodiscard]] bool is_metric(std::string_view name) const noexcept
@@ -162,7 +157,6 @@ public:
    * Checks if a specific metric is registered and returns the name and the metric.
    *
    * @param name Name of the queried metric.
-   *
    * @return Metric and config, std::nullopt of the metric does not exist.
    */
   [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(const std::string& name) const noexcept;
@@ -171,7 +165,6 @@ public:
    * Checks if a specific metric is registered and returns the name and the metric.
    *
    * @param name Name of the queried metric.
-   *
    * @return Metric and config, std::nullopt of the metric does not exist.
    */
   [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(std::string&& name) const noexcept
@@ -183,7 +176,6 @@ public:
    * Checks if a specific metric is registered and returns the name and the metric.
    *
    * @param name Name of the queried metric.
-   *
    * @return Metric and config, std::nullopt of the metric does not exist.
    */
   [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(const std::string_view name) const noexcept
@@ -195,7 +187,6 @@ public:
    * Checks if a time event with the given name is registered.
    *
    * @param name Name of the requested time event.
-   *
    * @return True, if the time event exists.
    */
   [[nodiscard]] bool is_time_event(const std::string& name) const noexcept
@@ -207,7 +198,6 @@ public:
    * Checks if a time event with the given name is registered.
    *
    * @param name Name of the requested time event.
-   *
    * @return True, if the time event exists.
    */
   [[nodiscard]] bool is_time_event(std::string&& name) const noexcept { return is_time_event(name); }
@@ -216,7 +206,6 @@ public:
    * Checks if a time event with the given name is registered.
    *
    * @param name Name of the requested time event.
-   *
    * @return True, if the time event exists.
    */
   [[nodiscard]] bool is_time_event(const std::string_view name) const noexcept
@@ -228,7 +217,6 @@ public:
    * Checks if a specific time event is registered and returns the name and the time event.
    *
    * @param name Name of the queried time event.
-   *
    * @return Time event and config, std::nullopt of the time event does not exist.
    */
   [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(
@@ -238,7 +226,6 @@ public:
    * Checks if a specific time event is registered and returns the name and the time event.
    *
    * @param name Name of the queried time event.
-   *
    * @return Time event and config, std::nullopt of the time event does not exist.
    */
   [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(std::string&& name) const noexcept
@@ -250,7 +237,6 @@ public:
    * Checks if a specific time event is registered and returns the name and the time event.
    *
    * @param name Name of the queried time event.
-   *
    * @return Time event and config, std::nullopt of the time event does not exist.
    */
   [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(
@@ -265,9 +251,10 @@ public:
   [[nodiscard]] std::vector<std::string> names() const
   {
     auto names = std::vector<std::string>{};
-    std::transform(_counter_configs.begin(), _counter_configs.end(), std::back_inserter(names), [](const auto& config) {
-      return config.first;
-    });
+    std::transform(_hardware_counter_configurations.begin(),
+                   _hardware_counter_configurations.end(),
+                   std::back_inserter(names),
+                   [](const auto& config) { return config.first; });
     return names;
   }
 
@@ -279,7 +266,7 @@ public:
 
 private:
   /// List of added counter configurations.
-  std::unordered_map<std::string, CounterConfig> _counter_configs;
+  std::unordered_map<std::string, CounterConfig> _hardware_counter_configurations;
 
   /// List of added metrics.
   std::unordered_map<std::string, std::unique_ptr<Metric>> _metrics;
