@@ -45,7 +45,7 @@ auto counters = perf::CounterDefinition{};
 auto event_counter = perf::EventCounter{ counters };
 
 /// Specify hardware events to count
-event_counter.add({"instructions", "cycles", "cache-misses"});
+event_counter.add({"seconds", "instructions", "cycles", "cache-misses"});
 
 /// Run the workload
 event_counter.start();
@@ -62,9 +62,10 @@ for (const auto [event_name, value] : result)
 
 Possible output:
 ```
-instructions: 5.97298e+07
-cycles: 5.02462e+08
-cache-misses: 1.36517e+07
+0.0955897 seconds
+5.92087e+07 instructions
+4.70254e+08 cycles
+1.35633e+07 cache-misses
 ```
 
 For further details, including how to count events in parallel settings, visit our **[guide on recording events](docs/recording.md)**.

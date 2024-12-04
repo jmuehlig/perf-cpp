@@ -397,7 +397,7 @@ perf::EventCounter::result(std::uint64_t normalization) const
           time_calculator.has_value()) {
         auto time = std::get<1>(time_calculator.value())
                       .calculate(std::get<0>(this->_start_and_end_time), std::get<1>(this->_start_and_end_time));
-        hardware_event_values.emplace_back(event.name(), double(time) / double(normalization));
+        hardware_event_values.emplace_back(event.name(), time / double(normalization));
       }
     }
   }
@@ -576,7 +576,7 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
           [&time_calculator = std::get<1>(time_event.value())](const auto sum, const auto& event_counter) {
             const auto event_counter_start = std::get<0>(event_counter._start_and_end_time);
             const auto event_counter_end = std::get<1>(event_counter._start_and_end_time);
-            return sum + double(time_calculator.calculate(event_counter_start, event_counter_end));
+            return sum + time_calculator.calculate(event_counter_start, event_counter_end);
           });
 
         /// Normalize the value (by the given normalization parameter) and add to the aggregated results.
