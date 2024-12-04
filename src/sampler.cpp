@@ -222,7 +222,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
         }
 
         /// Add the metric to the list of scheduled events.
-        requested_events.add(metric_name, RequestedEvent::Type::Metric);
+        requested_events.add(metric_name, RequestedEvent::Type::Metric, true);
       }
 
       /// Otherwise, check if the event is a time event. Time events are not supported for sampling; let the user know.

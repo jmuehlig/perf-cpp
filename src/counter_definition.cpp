@@ -127,6 +127,7 @@ perf::CounterDefinition::initialize_generalized_counters()
 
   /// Pre-defined metrics.
   this->add(std::make_unique<CyclesPerInstruction>());
+  this->add(std::make_unique<Gigahertz>());
   this->add(std::make_unique<InstructionsPerCycle>());
   this->add(std::make_unique<CacheHitRatio>());
   this->add(std::make_unique<CacheMissRatio>());

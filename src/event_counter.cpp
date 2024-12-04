@@ -78,7 +78,7 @@ perf::EventCounter::unfold(
 
   /// If the given name references an existing time event, add the time event.
   else if (const auto time_event = this->_counter_definitions.time_event(event_name); time_event.has_value()) {
-    result_vector.emplace_back(std::get<0>(time_event.value()), RequestedEvent::Type::TimeEvent, std::nullopt, false);
+    result_vector.emplace_back(std::get<0>(time_event.value()), RequestedEvent::Type::TimeEvent, std::nullopt, true);
   } else {
     throw CannotFindEventOrMetricError{ event_name };
   }
@@ -114,7 +114,7 @@ perf::EventCounter::schedule(
       /// Metrics and time events (indicated by no hardware counter config) do not need to be scheduled to hardware
       /// counter groups; just add it to the event set.
       if (!counter_config.has_value()) {
-        this->_requested_event_set.add(event_name, type);
+        this->_requested_event_set.add(event_name, type, is_shown_in_results);
         continue;
       }
 
@@ -151,7 +151,7 @@ perf::EventCounter::schedule(
       /// Metrics and time events (indicated by no hardware counter config) do not need to be scheduled to hardware
       /// counter groups; just add it to the event set.
       if (!counter_config.has_value()) {
-        this->_requested_event_set.add(event_name, type);
+        this->_requested_event_set.add(event_name, type, is_shown_in_results);
         continue;
       }
 
@@ -200,7 +200,7 @@ perf::EventCounter::schedule(
       /// Metrics and time events (indicated by no hardware counter config) do not need to be scheduled to hardware
       /// counter groups; just add it to the event set.
       if (!counter_config.has_value()) {
-        this->_requested_event_set.add(event_name, type);
+        this->_requested_event_set.add(event_name, type, is_shown_in_results);
         continue;
       }
 
@@ -379,7 +379,7 @@ perf::EventCounter::close()
 }
 
 perf::CounterResult
-perf::EventCounter::result(std::uint64_t normalization) const
+perf::EventCounter::result(const std::uint64_t normalization) const
 {
   /// Build result with all counters, including hidden ones.
   auto hardware_event_values = std::vector<std::pair<std::string_view, double>>{};

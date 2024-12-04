@@ -25,7 +25,8 @@ main()
                         "dTLB-miss-ratio",
                         "L1-data-miss-ratio",
                         "cycles-per-instruction",
-                        "nanoseconds" });
+                        "nanoseconds",
+                        "gigahertz" });
   } catch (std::runtime_error& e) {
     std::cerr << e.what() << std::endl;
     return 1;

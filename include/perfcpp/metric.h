@@ -46,6 +46,28 @@ private:
  * Measures the average number of cycles required to execute one instruction (CPI). Lower values indicate more efficient
  * instruction execution.
  */
+class Gigahertz final : public Metric
+{
+public:
+  [[nodiscard]] std::string name() const override { return "gigahertz"; }
+  [[nodiscard]] std::vector<std::string> required_counter_names() const override { return { "cycles", "seconds" }; }
+  [[nodiscard]] std::optional<double> calculate(const CounterResult& result) const override
+  {
+    const auto cycles = result.get("cycles");
+    const auto seconds = result.get("seconds");
+
+    if (cycles.has_value() && seconds.has_value()) {
+      return cycles.value() / seconds.value() / 1000000000.;
+    }
+
+    return std::nullopt;
+  }
+};
+
+/*
+ * Measures the average number of cycles required to execute one instruction (CPI). Lower values indicate more efficient
+ * instruction execution.
+ */
 class CyclesPerInstruction final : public Metric
 {
 public:
