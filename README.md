@@ -131,19 +131,29 @@ All code examples are available in the [examples/](examples) folder.
 * **[Changelog](CHANGELOG.md)**: Stay updated with the latest changes and improvements.
 
 ## System Requirements
-* Support for C++ `17` features
-* CMake version `3.10` or higher
-* *Linux Kernel version*: `>= 4.0` (we recommend `>= 5.13` as older kernels might not implement several features like sampling for latency)
-* Appropriate `perf_event_paranoid` value (see below) value (see the file ` /proc/sys/kernel/perf_event_paranoid` which restricts the access to counters from `-1` (*no restrictions*) to `>= 2` (*)
-* Installed `perf` (check if `perf stat -- ls` provides any output, otherwise follow the instructions)
+* C++ Standard: Requires support for **C++17** features.
+* CMake Version: **3.10** or higher.
+* Linux Kernel Version: **4.0** or newer (kernel 5.13 or higher recommended for full feature support, such as latency sampling).
+* `perf_event_paranoid` Setting: Adjust as needed to allow access to performance counters (see the [Paranoid Value Section](#paranoid-value) below).
 
-### Paranoid Value
-The `perf_event_paranoid` restricts the access to hardware counters.
-The value is defined in `/proc/sys/kernel/perf_event_paranoid` and can be:
-* `-1` (no restrictions)
-* `0` (allowed, but no raw tracepoint samples)
-* `1` (allow kernel and user level monitoring–default since Linux `4.6`)
-* `>= 2` (only user-level measurements)
+### Adjusting `perf_event_paranoid` Value
+The `perf_event_paranoid` setting controls access to performance counters:
+* `-1`: No restrictions (full access). 
+* `0`: Allow normal users access, but no raw tracepoint samples. 
+* `1`: Allow user and kernel-level profiling (default since Linux 4.6). 
+* `>= 2`: Only user-level measurements allowed.
+
+#### Checking the Current Value
+```bash
+cat /proc/sys/kernel/perf_event_paranoid
+```
+
+#### Changing the Value Temporarily
+```bash
+sudo sysctl -w kernel.perf_event_paranoid=-1
+```
+
+**Note**: To make this change permanent, edit `/etc/sysctl.conf`  and add `kernel.perf_event_paranoid = -1`.
 
 ## Contribute and Contact
 We welcome contributions and feedback to make *perf-cpp* even better.
