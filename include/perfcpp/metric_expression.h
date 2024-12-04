@@ -22,16 +22,22 @@ enum class Operator
   Divide
 };
 
-class MetricExpression
+/**
+ * The interface vor all evaluable metric expressions.
+ */
+class MetricExpressionInterface
 {
 public:
-  MetricExpression() noexcept = default;
-  virtual ~MetricExpression() = default;
+  MetricExpressionInterface() noexcept = default;
+  virtual ~MetricExpressionInterface() = default;
   [[nodiscard]] virtual std::optional<double> evaluate(const CounterResult& result) const = 0;
   virtual void add_required_hardware_counter(std::vector<std::string>& hardware_counter_names) const = 0;
 };
 
-class ConstantExpression final : public MetricExpression
+/**
+ * Representation of a constant in a metric expression.
+ */
+class ConstantExpression final : public MetricExpressionInterface
 {
 public:
   explicit ConstantExpression(const double value) noexcept
@@ -49,7 +55,10 @@ private:
   const double _value;
 };
 
-class IdentifierExpression final : public MetricExpression
+/**
+ * Resolves an identifier and returns the hardware/time event value of that identifier.
+ */
+class IdentifierExpression final : public MetricExpressionInterface
 {
 public:
   explicit IdentifierExpression(std::string&& identifier)
@@ -73,11 +82,14 @@ private:
   const std::string _identifier;
 };
 
+/**
+ * Implementation of binary expressions (+,-,*,/).
+ */
 template<Operator OP>
-class BinaryExpression final : public MetricExpression
+class BinaryExpression final : public MetricExpressionInterface
 {
 public:
-  BinaryExpression(std::unique_ptr<MetricExpression>&& left, std::unique_ptr<MetricExpression>&& right)
+  BinaryExpression(std::unique_ptr<MetricExpressionInterface>&& left, std::unique_ptr<MetricExpressionInterface>&& right)
     : _left(std::move(left))
     , _right(std::move(right))
   {
@@ -120,8 +132,8 @@ public:
   }
 
 private:
-  std::unique_ptr<MetricExpression> _left;
-  std::unique_ptr<MetricExpression> _right;
+  std::unique_ptr<MetricExpressionInterface> _left;
+  std::unique_ptr<MetricExpressionInterface> _right;
 };
 
 class Token
@@ -136,7 +148,6 @@ public:
     RightParenthesis,
   };
 
-  Token() noexcept = default;
   Token(Token&&) noexcept = default;
   Token(const Token&) = default;
 
@@ -210,6 +221,9 @@ public:
   {
   }
 
+  /**
+   * @return The original input.
+   */
   [[nodiscard]] const std::string& input() const noexcept { return _input; }
 
   /**
@@ -219,8 +233,28 @@ public:
   [[nodiscard]] std::queue<Token> tokenize() const;
 
 private:
+  /**
+   * Reads a constant number (e.g., 13.37) from the input string, starting at the given position.
+   *
+   * @param position Position within the input string.
+   * @return A token containing the constant.
+   */
   [[nodiscard]] Token read_constant(std::size_t& position) const;
+
+  /**
+   * Reads an identifier (e.g., a hardware counter name) from the input string, starting at the given position.
+   *
+   * @param position Position within the input string.
+   * @return A token containing the identifier.
+   */
   [[nodiscard]] Token read_identifier(std::size_t& position) const;
+
+  /**
+   * Reads an operator (e.g., +) from the given char.
+   *
+   * @param current_char Current char from input string.
+   * @return A token containing the operator.
+   */
   [[nodiscard]] Token read_operator(char current_char) const;
 
   /**
@@ -240,6 +274,12 @@ private:
            (right_precedence < left_precedence);
   }
 
+  /**
+   * Returns the precedence of the given operator.
+   *
+   * @param operator_ Operator.
+   * @return Precedence of the operator.
+   */
   [[nodiscard]] static std::uint8_t precedence(const Operator operator_) noexcept
   {
     switch (operator_) {
@@ -250,6 +290,8 @@ private:
       case Operator::Divide:
         return 8U;
     }
+
+    return 0U;
   }
 
   /**
@@ -267,6 +309,8 @@ private:
       case Operator::Divide:
         return true;
     }
+
+    return false;
   }
 
   /**
@@ -289,6 +333,12 @@ private:
 class ExpressionBuilder
 {
 public:
-  [[nodiscard]] static std::unique_ptr<MetricExpression> build(std::string&& expression);
+  /**
+   * Builds an evaluable expression from the given expression-string.
+   *
+   * @param expression Expression.
+   * @return Evaluable expression.
+   */
+  [[nodiscard]] static std::unique_ptr<MetricExpressionInterface> build(std::string&& expression);
 };
 }

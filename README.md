@@ -62,10 +62,10 @@ for (const auto [event_name, value] : result)
 
 Possible output:
 ```
-0.0955897 seconds
-5.92087e+07 instructions
-4.70254e+08 cycles
-1.35633e+07 cache-misses
+seconds:      0.0955897 
+instructions: 5.92087e+07
+cycles:       4.70254e+08
+cache-misses: 1.35633e+07
 ```
 
 For further details, including how to count events in parallel settings, visit our **[guide on recording events](docs/recording.md)**.

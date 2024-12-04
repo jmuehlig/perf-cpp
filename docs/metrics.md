@@ -51,14 +51,16 @@ Take a look at their [groups/ directory](https://github.com/RRZE-HPC/likwid/tree
 There are two ways to define custom metrics.
 
 ### Using Formulas
-The first option is to express a metric as a calculation of several hardware events, for example:
+The first option is to express a metric as a calculation of several hardware and time events, for example:
 
 ```cpp
 auto counter_definitions = perf::CounterDefinition{};
 counter_definitions.add("stalls-by-mem-loads", "(CYCLE_ACTIVITY_STALLS_LDM_PENDING/CYCLE_ACTIVITY_STALLS_TOTAL)*100");
 ```
 
-**Note**: In formulas, names that contain *math expressions* (like `-`, e.g., `L1D-misses`) need to be **escaped** using single quotes, e.g., `'L1D-misses'`.
+The formular can use the following operators: `+`, `-`, `*`, and `/`.
+
+**Note**: In formulas, event names that contain *operators* (like `-` in `L1D-misses`) need to be **escaped** using single quotes, e.g., `'L1D-misses'`.
 
 **Note**: The example depends on events from the Intel SkylakeX architecture and is taken from [Likwid](https://github.com/RRZE-HPC/likwid/blob/master/groups/skylakeX/CYCLE_STALLS.txt).
 

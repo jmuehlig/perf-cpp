@@ -162,6 +162,18 @@ public:
   ~MetricNotSupportedAsLiveEventError() override = default;
 };
 
+class TimeEventNotSupportedAsLiveEventError final : public std::runtime_error
+{
+public:
+  explicit TimeEventNotSupportedAsLiveEventError(const std::string& time_event)
+    : std::runtime_error(std::string{ "The event '" }
+                           .append(time_event)
+                           .append("' appears to be a time event. Time events are not supported as live events."))
+  {
+  }
+  ~TimeEventNotSupportedAsLiveEventError() override = default;
+};
+
 class TimeEventNotSupportedForSamplingError final : public std::runtime_error
 {
 public:

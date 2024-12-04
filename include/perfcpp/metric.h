@@ -38,7 +38,7 @@ public:
 
 private:
   std::string _name;
-  std::unique_ptr<MetricExpression> _expression;
+  std::unique_ptr<MetricExpressionInterface> _expression;
   std::vector<std::string> _required_counter_names;
 };
 

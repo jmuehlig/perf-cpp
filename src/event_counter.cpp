@@ -266,8 +266,14 @@ perf::EventCounter::add_live(const std::string& event_name)
   }
 
   /// If the counter does not exist, check if it is a metric, which is not supported for live events. Let the user know.
-  if (const auto metric = this->_counter_definitions.metric(event_name); metric.has_value()) {
+  if (this->_counter_definitions.is_metric(event_name)) {
     throw MetricNotSupportedAsLiveEventError{ event_name };
+  }
+
+  /// If the counter does not exist, check if it is a time event, which is not supported for live events. Let the user
+  /// know.
+  if (this->_counter_definitions.is_time_event(event_name)) {
+    throw TimeEventNotSupportedAsLiveEventError{ event_name };
   }
 
   throw CannotFindEventError{ event_name };
@@ -382,30 +388,34 @@ perf::CounterResult
 perf::EventCounter::result(const std::uint64_t normalization) const
 {
   /// Build result with all counters, including hidden ones.
-  auto hardware_event_values = std::vector<std::pair<std::string_view, double>>{};
-  hardware_event_values.reserve(this->_requested_event_set.size());
+  auto event_values = std::vector<std::pair<std::string_view, double>>{};
+  event_values.reserve(this->_requested_event_set.size());
 
-  /// Copy only the hardware-event values.
+  /// Copy only the hardware- and time-event values.
   for (const auto& event : this->_requested_event_set) {
+    /// Hardware events are read from the hardware counter (groups).
     if (event.is_hardware_event()) {
       const auto scheduled_group = event.scheduled_group().value();
       const auto& group = std::get<0>(this->_hardware_event_groups[scheduled_group.id()]);
       const auto value = group.get(scheduled_group.position()) / double(normalization);
-      hardware_event_values.emplace_back(event.name(), value);
-    } else if (event.is_time_event()) {
+      event_values.emplace_back(event.name(), value);
+    }
+
+    /// Time events are read using the event counter's start and stop time.
+    else if (event.is_time_event()) {
       if (const auto& time_calculator = this->_counter_definitions.time_event(event.name());
           time_calculator.has_value()) {
-        auto time = std::get<1>(time_calculator.value())
-                      .calculate(std::get<0>(this->_start_and_end_time), std::get<1>(this->_start_and_end_time));
-        hardware_event_values.emplace_back(event.name(), time / double(normalization));
+        const auto start_timestamp = std::get<0>(this->_start_and_end_time);
+        const auto stop_timestamp = std::get<0>(this->_start_and_end_time);
+        const auto time = std::get<1>(time_calculator.value()).calculate(start_timestamp, stop_timestamp);
+        event_values.emplace_back(event.name(), time / double(normalization));
       }
     }
   }
 
   /// Turn the result of only hardware events into a result containing requested hardware events and metrics (which are
   /// calculated from hardware events).
-  return this->_requested_event_set.result(this->_counter_definitions,
-                                           CounterResult{ std::move(hardware_event_values) });
+  return this->_requested_event_set.result(this->_counter_definitions, CounterResult{ std::move(event_values) });
 }
 
 void
@@ -545,11 +555,12 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
   const auto& reference_event_counter = this->event_counters().front();
 
   /// Build one result of only hardware-event values over all EventCounters by aggregating their values.
-  auto aggregated_hardware_event_values = std::vector<std::pair<std::string_view, double>>{};
-  aggregated_hardware_event_values.reserve(reference_event_counter._requested_event_set.size());
+  auto aggregated_event_values = std::vector<std::pair<std::string_view, double>>{};
+  aggregated_event_values.reserve(reference_event_counter._requested_event_set.size());
 
   /// Accumulate all hardware and time events from EventCounters.
   for (const auto& event : reference_event_counter._requested_event_set) {
+    /// Hardware events are read via hardware counter (groups).
     if (event.is_hardware_event()) {
 
       /// Add up the values from all individual EventCounters in event_counters.
@@ -564,8 +575,11 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
         });
 
       /// Normalize the value (by the given normalization parameter) and add to the aggregated results.
-      aggregated_hardware_event_values.emplace_back(event.name(), aggregated_value / double(normalization));
-    } else if (event.is_time_event()) {
+      aggregated_event_values.emplace_back(event.name(), aggregated_value / double(normalization));
+    }
+
+    /// Time events are read via event counter's start and stop timestamps.
+    else if (event.is_time_event()) {
       if (const auto time_event = reference_event_counter._counter_definitions.time_event(event.name());
           time_event.has_value()) {
         /// Add up the values from all individual EventCounters in event_counters.
@@ -574,21 +588,21 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
           this->event_counters().cend(),
           .0,
           [&time_calculator = std::get<1>(time_event.value())](const auto sum, const auto& event_counter) {
-            const auto event_counter_start = std::get<0>(event_counter._start_and_end_time);
-            const auto event_counter_end = std::get<1>(event_counter._start_and_end_time);
-            return sum + time_calculator.calculate(event_counter_start, event_counter_end);
+            const auto start_timestamp = std::get<0>(event_counter._start_and_end_time);
+            const auto stop_timestamp = std::get<1>(event_counter._start_and_end_time);
+            return sum + time_calculator.calculate(start_timestamp, stop_timestamp);
           });
 
         /// Normalize the value (by the given normalization parameter) and add to the aggregated results.
-        aggregated_hardware_event_values.emplace_back(event.name(), aggregated_value / double(normalization));
+        aggregated_event_values.emplace_back(event.name(), aggregated_value / double(normalization));
       }
     }
   }
 
   /// Turn the result of only aggregated hardware events into a result containing requested hardware events and metrics
   /// (which are calculated from hardware events).
-  return reference_event_counter._requested_event_set.result(
-    reference_event_counter._counter_definitions, CounterResult{ std::move(aggregated_hardware_event_values) });
+  return reference_event_counter._requested_event_set.result(reference_event_counter._counter_definitions,
+                                                             CounterResult{ std::move(aggregated_event_values) });
 }
 
 bool

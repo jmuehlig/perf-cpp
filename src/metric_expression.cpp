@@ -65,7 +65,7 @@ perf::Tokenizer::tokenize() const
   /// Move the remaining tokens from the operator stack into the token queue.
   while (!operator_stack.empty()) {
     if (operator_stack.top() == Token::Type::LeftParenthesis) {
-      throw CannotParseExpressionError{ _input };
+      throw CannotParseExpressionError{ this->_input };
     }
     output_queue.push(operator_stack.top());
     operator_stack.pop();
@@ -144,18 +144,18 @@ perf::Tokenizer::read_operator(const char current_char) const
 
       /// We could not tokenize a number, a sequence of chars. or an operator. This is an error.
     default:
-      throw CannotParseExpressionError{ _input };
+      throw CannotParseExpressionError{ this->_input };
   }
 }
 
-std::unique_ptr<perf::MetricExpression>
+std::unique_ptr<perf::MetricExpressionInterface>
 perf::ExpressionBuilder::build(std::string&& expression)
 {
   auto tokenizer = Tokenizer{ std::move(expression) };
   auto token_queue = tokenizer.tokenize();
 
   /// The expression stack will be built and consumed while scanning the tokens.
-  auto expression_stack = std::stack<std::unique_ptr<MetricExpression>>{};
+  auto expression_stack = std::stack<std::unique_ptr<MetricExpressionInterface>>{};
 
   /// Scan the tokenized queue: Push identifier and constants to the expression stack and consume them by binary
   /// expressions.
@@ -175,9 +175,9 @@ perf::ExpressionBuilder::build(std::string&& expression)
       }
 
       /// Read the two top expressions.
-      std::unique_ptr<MetricExpression> right_expression = std::move(expression_stack.top());
+      std::unique_ptr<MetricExpressionInterface> right_expression = std::move(expression_stack.top());
       expression_stack.pop();
-      std::unique_ptr<MetricExpression> left_expression = std::move(expression_stack.top());
+      std::unique_ptr<MetricExpressionInterface> left_expression = std::move(expression_stack.top());
       expression_stack.pop();
 
       /// Create the binary expression.
