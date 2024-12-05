@@ -1,6 +1,6 @@
 # *perf-cpp*: Changelog
 
-## v.0.9.0 (WIP)
+## v.0.9.0
 * Removed deprecated warnings about the sampling interface (and the *old* sampling interface).
 * New feature: Access interim results from counters without stopping the counter using [live counters](docs/recording-live-events.md).
 * New feature: Sampling the user stack (see the [documentation](docs/sampling.md#user-stack)).
