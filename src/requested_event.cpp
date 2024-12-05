@@ -39,7 +39,7 @@ perf::RequestedEventSet::adjust_visibility_if_present(const std::string_view eve
 
 perf::CounterResult
 perf::RequestedEventSet::result(const perf::CounterDefinition& counter_definition,
-                                perf::CounterResult&& hardware_events_result) const
+                                perf::CounterResult&& hardware_events_result, const std::uint64_t normalization) const
 {
   auto counter_results = std::vector<std::pair<std::string_view, double>>{};
 
@@ -50,7 +50,7 @@ perf::RequestedEventSet::result(const perf::CounterDefinition& counter_definitio
       if (requested_event.is_hardware_event() || requested_event.is_time_event()) {
         if (const auto hardware_event_value = hardware_events_result.get(requested_event.name());
             hardware_event_value.has_value()) {
-          counter_results.emplace_back(requested_event.name(), hardware_event_value.value());
+          counter_results.emplace_back(requested_event.name(), hardware_event_value.value() / double(normalization));
         }
       }
 

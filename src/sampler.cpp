@@ -539,7 +539,7 @@ perf::Sampler::read_hardware_events(UserLevelBufferEntry& entry, const SampleCou
 
   /// Build a result containing metrics and hardware events requested by teh user.
   return sample_counter.requested_events().result(this->_counter_definitions,
-                                                  CounterResult{ std::move(hardware_counter_results) });
+                                                  CounterResult{ std::move(hardware_counter_results) }, 1ULL);
 }
 
 std::optional<std::vector<std::uintptr_t>>

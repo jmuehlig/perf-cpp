@@ -397,8 +397,7 @@ perf::EventCounter::result(const std::uint64_t normalization) const
     if (event.is_hardware_event()) {
       const auto scheduled_group = event.scheduled_group().value();
       const auto& group = std::get<0>(this->_hardware_event_groups[scheduled_group.id()]);
-      const auto value = group.get(scheduled_group.position()) / double(normalization);
-      event_values.emplace_back(event.name(), value);
+      event_values.emplace_back(event.name(), group.get(scheduled_group.position()));
     }
 
     /// Time events are read using the event counter's start and stop time.
@@ -406,16 +405,16 @@ perf::EventCounter::result(const std::uint64_t normalization) const
       if (const auto& time_calculator = this->_counter_definitions.time_event(event.name());
           time_calculator.has_value()) {
         const auto start_timestamp = std::get<0>(this->_start_and_end_time);
-        const auto stop_timestamp = std::get<0>(this->_start_and_end_time);
+        const auto stop_timestamp = std::get<1>(this->_start_and_end_time);
         const auto time = std::get<1>(time_calculator.value()).calculate(start_timestamp, stop_timestamp);
-        event_values.emplace_back(event.name(), time / double(normalization));
+        event_values.emplace_back(event.name(), time);
       }
     }
   }
 
   /// Turn the result of only hardware events into a result containing requested hardware events and metrics (which are
   /// calculated from hardware events).
-  return this->_requested_event_set.result(this->_counter_definitions, CounterResult{ std::move(event_values) });
+  return this->_requested_event_set.result(this->_counter_definitions, CounterResult{ std::move(event_values) }, normalization);
 }
 
 void
@@ -553,13 +552,14 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
   /// The reference_event_counter is used to access counters (all EventCounters from the list are required to have the
   /// same events but different values).
   const auto& reference_event_counter = this->event_counters().front();
+  const auto& reference_event_set = reference_event_counter._requested_event_set;
 
   /// Build one result of only hardware-event values over all EventCounters by aggregating their values.
   auto aggregated_event_values = std::vector<std::pair<std::string_view, double>>{};
-  aggregated_event_values.reserve(reference_event_counter._requested_event_set.size());
+  aggregated_event_values.reserve(reference_event_set.size());
 
   /// Accumulate all hardware and time events from EventCounters.
-  for (const auto& event : reference_event_counter._requested_event_set) {
+  for (const auto& event : reference_event_set) {
     /// Hardware events are read via hardware counter (groups).
     if (event.is_hardware_event()) {
 
@@ -574,15 +574,15 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
           return sum + group.get(in_group_position);
         });
 
-      /// Normalize the value (by the given normalization parameter) and add to the aggregated results.
-      aggregated_event_values.emplace_back(event.name(), aggregated_value / double(normalization));
+      /// Add to the aggregated results.
+      aggregated_event_values.emplace_back(event.name(), aggregated_value);
     }
 
     /// Time events are read via event counter's start and stop timestamps.
     else if (event.is_time_event()) {
       if (const auto time_event = reference_event_counter._counter_definitions.time_event(event.name());
           time_event.has_value()) {
-        /// Add up the values from all individual EventCounters in event_counters.
+        /// Aggregate the values from all individual EventCounters in event_counters.
         const auto aggregated_value = std::accumulate(
           this->event_counters().cbegin(),
           this->event_counters().cend(),
@@ -593,16 +593,16 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
             return sum + time_calculator.calculate(start_timestamp, stop_timestamp);
           });
 
-        /// Normalize the value (by the given normalization parameter) and add to the aggregated results.
-        aggregated_event_values.emplace_back(event.name(), aggregated_value / double(normalization));
+        /// Add to the aggregated results.
+        aggregated_event_values.emplace_back(event.name(), aggregated_value);
       }
     }
   }
 
   /// Turn the result of only aggregated hardware events into a result containing requested hardware events and metrics
   /// (which are calculated from hardware events).
-  return reference_event_counter._requested_event_set.result(reference_event_counter._counter_definitions,
-                                                             CounterResult{ std::move(aggregated_event_values) });
+  return reference_event_set.result(reference_event_counter._counter_definitions,
+                                                             CounterResult{ std::move(aggregated_event_values) }, normalization);
 }
 
 bool

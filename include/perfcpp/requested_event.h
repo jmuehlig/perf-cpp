@@ -171,10 +171,11 @@ public:
    *
    * @param counter_definition Counter definition.
    * @param hardware_events_result Result containing only hardware events.
+   * @param normalization Value to normalize the (non-metric) results to.
    * @return CounterResult including all events requested as visible; hardware events and metrics.
    */
   [[nodiscard]] CounterResult result(const CounterDefinition& counter_definition,
-                                     CounterResult&& hardware_events_result) const;
+                                     CounterResult&& hardware_events_result, std::uint64_t normalization) const;
 
   /**
    * @return True, if no event was added.
