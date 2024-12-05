@@ -128,7 +128,6 @@ public:
   {
 #if !defined(PERFCPP_NO_MEM_LVLNUM) && !defined(PERFCPP_NO_MEM_REMOTE)
     return is_mem_ram() && is_mem_local();
-    ;
 #else
     return static_cast<bool>(lvl() & PERF_MEM_LVL_LOC_RAM);
 #endif

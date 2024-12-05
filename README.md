@@ -134,7 +134,7 @@ All code examples are available in the [examples/](examples) folder.
 * C++ Standard: Requires support for **C++17** features.
 * CMake Version: **3.10** or higher.
 * Linux Kernel Version: **4.0** or newer (note that some features need a newer Kernel).
-* `perf_event_paranoid` Setting: Adjust as needed to allow access to performance counters (see the [Paranoid Value Section](#paranoid-value) below).
+* `perf_event_paranoid` Setting: Adjust as needed to allow access to performance counters (see the [Paranoid Value Section](#adjusting-perf_event_paranoid-value) below).
 
 ### Adjusting `perf_event_paranoid` Value
 The `perf_event_paranoid` setting controls access to performance counters:

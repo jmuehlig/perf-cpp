@@ -237,11 +237,6 @@ public:
   {
   }
 
-  CannotParseExpressionError(const std::string_view input, const std::string_view error_message)
-    : std::runtime_error(
-        std::string{ "Cannot parse expression from '" }.append(input).append("': ").append(error_message))
-  {
-  }
   ~CannotParseExpressionError() override = default;
 };
 

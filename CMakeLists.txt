@@ -141,6 +141,10 @@ if(BUILD_TESTS)
     add_executable(tests ${PERF_CPP_TEST})
     target_link_libraries(tests PRIVATE Catch2::Catch2WithMain perf-cpp)
     target_include_directories(tests PRIVATE Catch2::Catch2WithMain)
+    set_target_properties(tests
+            PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+    )
 endif()
 
 #############################################################
