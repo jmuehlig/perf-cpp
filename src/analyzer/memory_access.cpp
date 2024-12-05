@@ -129,7 +129,7 @@ perf::analyzer::MemoryAccess::add_empty_attributes(perf::analyzer::DataType& dat
     return;
   }
 
-  const auto size = members.size();
+  auto size = members.size();
   for (auto i = 0U; i < size - 1U; ++i) {
 
     /// Check if there is a whole between two members i and i+1.
@@ -137,14 +137,15 @@ perf::analyzer::MemoryAccess::add_empty_attributes(perf::analyzer::DataType& dat
 
     /// If there is a whole, add a new member indicating that whole.
     if (distance > 0U) {
-      members.insert(members.begin() + i + 1U,
+      members.insert(members.begin() + (i + 1U),
                      DataType::Member("/* unknown */", members[i].offset() + members[i].size(), distance));
       ++i;
+      ++size;
     }
   }
 
   /// Repeat the step for the last member and the size of the data type.
-  const auto& last_member = members[size - 1U];
+  const auto& last_member = members.back();
   const auto distance = data_type.size() - (last_member.offset() + last_member.size());
   if (distance > 0U) {
     members.emplace_back("/* unknown */", last_member.offset() + last_member.size(), distance);
