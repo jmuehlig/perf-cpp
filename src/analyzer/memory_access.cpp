@@ -165,11 +165,13 @@ perf::analyzer::MemoryAccessResult::to_string() const
     max_sizes.emplace_back(header.size());
   }
 
-  auto data_types = std::vector<std::tuple<std::string, std::size_t, std::vector<std::vector<std::string>>>>{};
+  auto data_types = std::vector<std::tuple<std::string, std::size_t, std::vector<std::vector<std::string>>, std::size_t>>{};
 
   for (const auto& data_type : this->_data_types) {
     auto name = data_type.name();
     auto members = std::vector<std::vector<std::string>>{};
+
+    auto count_samples = 0ULL;
 
     for (const auto& member : data_type.members()) {
 
@@ -203,14 +205,22 @@ perf::analyzer::MemoryAccessResult::to_string() const
       }
 
       members.emplace_back(std::move(columns));
+
+      count_samples += member.samples().size();
     }
 
-    data_types.emplace_back(std::move(name), data_type.size(), std::move(members));
+    data_types.emplace_back(std::move(name), data_type.size(), std::move(members), count_samples);
   }
+
+  /// Sort data type (instances) by number of samples to show types with more samples first.
+  std::sort(data_types.begin(), data_types.end(), [](const auto& left, const auto& right) {
+    return std::get<3>(left) > std::get<3>(right);
+  });
+
 
   auto stream = std::stringstream{};
   for (auto data_type_id = 0U; data_type_id < data_types.size(); ++data_type_id) {
-    const auto& [name, size, members] = data_types[data_type_id];
+    const auto& [name, size, members, _] = data_types[data_type_id];
 
     if (data_type_id > 0U) {
       stream << "\n";
