@@ -1,14 +1,12 @@
 # perf-cpp: Access Performance Counters from C++ Applications
-Welcome to *perf-cpp*, a C++ library designed to streamline the use of the Linux perf subsystem, providing direct access to hardware performance counters from within the application. 
-Many modern profiling tools fail to offer precise profiling of specific code segments and to associate profiled data like memory addresses with application-specific details. 
-With *perf-cpp*, you can manage profiling directly within your application and handle the profiled data seamlessly.
-
+*perf-cpp* is a powerful C++ library that provides **direct access to hardware performance counters** from the application.
+The library allows for precise event-counting and sampling of specific code segments and to link sampled data (e.g., memory addresses) with application-specific details (e.g., class instances).
 
 ## Key Features
-* **[Count Hardware Events](docs/recording.md)**: Integrate performance monitoring seamlessly into your development process. Directly interact with hardware counters to focus on critical code segments.
-* **[Sampling](docs/sampling.md)**: Leverage sampling to gather performance data periodically, e.g., instruction pointers, memory addresses, load and store latency, branches, registers, and more.
-* **[Customizable Event Configuration](docs/counters.md)**: Extend the built-in hardware events (e.g., cache-misses) with those specific to your underlying hardware substrate. Additionally, define and utilize  **[Metrics](docs/metrics.md)**–quantitative measurements like *cycles per instruction*–to gain deeper insights into performance and efficiency.
-* **[Practical Examples](examples/README.md)**: Jumpstart your implementation with our diverse collection of examples that demonstrate practical applications of the library.
+* **[Count Hardware Events](docs/recording.md)**: Integrate performance monitoring into your application. Configure, start, and stop hardware counters to profile specific code segments.
+* **[Sampling](docs/sampling.md)**: Leverage sampling to record performance data periodically, e.g., instruction pointers, memory addresses, access latency, branches, and more.
+* **[Customizable Event Configuration](docs/counters.md)**: Use built-in hardware events (e.g., cycles, instructions, cache-misses) and those specific to your underlying CPU. Additionally, define and utilize  **[Metrics](docs/metrics.md)**–quantitative measurements like *cycles per instruction*–to gain deeper insights into performance and efficiency.
+* **[Practical Examples](examples/README.md)**: Jumpstart your implementation with the diverse collection of examples that demonstrate practical applications of the library.
 
 
 ## Quick Start
