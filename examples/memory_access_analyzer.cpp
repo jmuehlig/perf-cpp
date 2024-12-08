@@ -15,16 +15,13 @@ main()
   auto counter_definitions = perf::CounterDefinition{};
 
   /// Initialize sampler.
-  auto perf_config = perf::SampleConfig{};
-  perf_config.period(16000U); /// Record every 16,000th event.
-
-  auto sampler = perf::Sampler{ counter_definitions, perf_config };
+  auto sampler = perf::Sampler{ counter_definitions };
 
   /// Setup which counters trigger the writing of samples (depends on the underlying hardware substrate).
   if (perf::HardwareInfo::is_amd_ibs_supported()) {
-    sampler.trigger("ibs_op_uops", perf::Precision::MustHaveZeroSkid);
+    sampler.trigger("ibs_op_uops", perf::Precision::MustHaveZeroSkid, perf::Period{ 16000U });
   } else if (perf::HardwareInfo::is_intel()) {
-    sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid);
+    sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid, perf::Period{ 1000U });
   } else {
     std::cout << "Error: Memory sampling is not supported on this CPU." << std::endl;
     return 1;
