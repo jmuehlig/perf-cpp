@@ -479,6 +479,7 @@ private:
 
     [[nodiscard]] Group& group() noexcept { return _group; }
     [[nodiscard]] const Group& group() const noexcept { return _group; }
+    [[nodiscard]] RequestedEventSet& requested_events() noexcept { return _requested_events; }
     [[nodiscard]] const RequestedEventSet& requested_events() const noexcept { return _requested_events; }
 
   private:
@@ -615,6 +616,13 @@ private:
   [[nodiscard]] SampleCounter transform_trigger_to_sample_counter(
     const std::vector<std::tuple<std::string_view, std::optional<Precision>, std::optional<PeriodOrFrequency>>>&
       triggers) const;
+
+  /**
+   * Adds an auxiliary counter as the first counter, if the first counter is a mem-loads counter and the underlying
+   * hardware needs it.
+   * @param trigger List of triggers where the auxiliary event should be added.
+   */
+  void add_auxiliary_counter_if_needed(std::vector<Trigger>& trigger) const;
 
   /**
    * Reads the sample_id struct from the data located at sample_ptr into the provided sample.

@@ -592,9 +592,31 @@ Additionally, memory sampling typically requires a [precision](#precision) setti
 #### Before Sapphire Rapids
 From our experience, Intel's Cascade Lake architecture (and earlier architectures) only reports latency and source for memory loads, not stores – this changes from Sapphire Rapids.
 
-#### Sapphire Rapids
-To use weight-sampling on Intel's Sapphire Rapids architecture, the perf subsystem needs an auxiliary counter to be added to the group, before the first "real" counter is added (see [this commit](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).
-*perf-cpp*  will define this counter, you only need to add it accordingly.
+You can add load and store events like this:
+
+```cpp
+sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid); /// Only load events
+```
+or
+```cpp
+sampler.trigger("mem-stores", perf::Precision::MustHaveZeroSkid); /// Only store events
+```
+or
+```cpp
+/// Load and store events
+sampler.trigger({
+    std::vector<perf::Sampler::Trigger>{{"mem-loads", perf::Precision::MustHaveZeroSkid}}, 
+    std::vector<perf::Sampler::Trigger>{{"mem-stores", perf::Precision::MustHaveZeroSkid}}
+});
+```
+
+#### Sapphire Rapids and Beyond
+To use memory latency sampling on Intel's Sapphire Rapids architecture, the perf subsystem **needs an auxiliary counter** to be added to the group, before the first "real" counter is added (see [this commit](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).
+
+*perf-cpp*  will define this counter and **add it as a trigger automatically** (from version `0.10.0`), when it can detect that the hardware needs it.
+In this case, you can proceed as before *Sapphire Rapids*.
+
+However, if the detection fails but the system needs it, you can add it yourself:
 
 ```cpp
 sampler.trigger({
@@ -607,6 +629,12 @@ sampler.trigger({
 ```
 
 &rarr; [See code example](../examples/multi_event_sampling.cpp)
+
+You can check if the auxiliary counter is needed by checking if the following file exists in the system:
+
+```
+/sys/bus/event_source/devices/cpu/events/mem-loads-aux
+```
 
 ### AMD (Instruction Based Sampling)
 AMD uses Instruction Based Sampling to tag instructions randomly for sampling and collect various information for each sample ([see the programmer reference](https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/24593.pdf)).

@@ -38,6 +38,11 @@ public:
   [[nodiscard]] std::optional<std::uint8_t> precise_ip() const noexcept { return _precise_ip; }
   [[nodiscard]] std::optional<PeriodOrFrequency> period_or_frequency() const noexcept { return _period_or_frequency; }
 
+  [[nodiscard]] bool operator==(const CounterConfig& other) const noexcept
+  {
+    return _type == other._type && _event_id == other._event_id;
+  }
+
 private:
   std::uint32_t _type;
   std::uint64_t _event_id;
@@ -197,10 +202,7 @@ public:
                                       std::optional<pid_t> process_id = std::nullopt,
                                       std::optional<std::int32_t> cpu_id = std::nullopt) const;
 
-  [[nodiscard]] bool operator==(const CounterConfig config) const noexcept
-  {
-    return _config.type() == config.type() && _config.event_id() == config.event_id();
-  }
+  [[nodiscard]] bool operator==(const CounterConfig& config) const noexcept { return _config == config; }
 
 private:
   /// The config of an event.

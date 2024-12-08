@@ -138,6 +138,17 @@ public:
   ~CannotFindEventError() override = default;
 };
 
+class CannotChangeTriggerWhenSamplerOpenedError final : public std::runtime_error
+{
+public:
+  CannotChangeTriggerWhenSamplerOpenedError()
+    : std::runtime_error(
+        "The Sampler was already opened. Cannot modify triggers after opening. Please create a new Sampler.")
+  {
+  }
+  ~CannotChangeTriggerWhenSamplerOpenedError() override = default;
+};
+
 class MetricNotSupportedAsSamplingTriggerError final : public std::runtime_error
 {
 public:

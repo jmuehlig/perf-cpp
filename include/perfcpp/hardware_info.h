@@ -28,17 +28,7 @@ public:
   /**
    * @return True, if the underlying Intel processor requires an aux counter for memory sampling.
    */
-  [[nodiscard]] static bool is_intel_aux_counter_required() noexcept
-  {
-#if (defined(__GNUC__) && __GNUC__ > 10) || (defined(__clang__) && __clang_major__ > 11)
-    /// "sapphirerapids" and "alderlake" is only supported since clang-12 and gcc-11
-    if (is_intel()) {
-      return static_cast<bool>(__builtin_cpu_is("sapphirerapids")) || static_cast<bool>(__builtin_cpu_is("alderlake"));
-    }
-#endif
-
-    return false;
-  }
+  [[nodiscard]] static bool is_intel_aux_counter_required();
 
   /**
    * @return The id of Intel's PEBS "mem-loads-aux" event.

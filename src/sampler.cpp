@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <perfcpp/exception.h>
+#include <perfcpp/hardware_info.h>
 #include <perfcpp/sampler.h>
 #include <stdexcept>
 #include <utility>
@@ -27,8 +28,23 @@ perf::Sampler::trigger(std::vector<std::vector<std::string>>&& list_of_trigger_n
 perf::Sampler&
 perf::Sampler::trigger(std::vector<std::vector<Trigger>>&& triggers)
 {
-  this->_triggers.reserve(triggers.size());
+  /// Deny to modify triggers after the sampler was already opened.
+  if (this->_is_opened) {
+    throw CannotChangeTriggerWhenSamplerOpenedError{};
+  }
 
+  /// Remove all triggers that where added so far.
+  this->_triggers.clear();
+
+  if (triggers.empty()) {
+    return *this;
+  }
+
+  /// Add an auxiliary event if needed (memory loads on some specific Intel architectures like Sapphire Rapids).
+  this->add_auxiliary_counter_if_needed(triggers.front());
+
+  /// Process all requested triggers.
+  this->_triggers.reserve(triggers.size());
   for (auto& trigger_group : triggers) {
     auto trigger_group_references =
       std::vector<std::tuple<std::string_view, std::optional<Precision>, std::optional<PeriodOrFrequency>>>{};
@@ -242,6 +258,35 @@ perf::Sampler::transform_trigger_to_sample_counter(
   }
 
   return SampleCounter{ std::move(group) };
+}
+
+void
+perf::Sampler::add_auxiliary_counter_if_needed(std::vector<Trigger>& trigger) const
+{
+  /// Test if auxiliary event is necessary anyway.
+  if (HardwareInfo::is_intel_aux_counter_required()) {
+    const auto& first_trigger = trigger.front();
+
+    /// Test if the first trigger is a memory load event.
+    const auto mem_loads = this->_counter_definitions.counter(std::string_view{ "mem-loads" });
+    const auto first_trigger_counter = this->_counter_definitions.counter(first_trigger.name());
+    if (mem_loads.has_value() && first_trigger_counter.has_value() &&
+        std::get<1>(mem_loads.value()) == std::get<1>(first_trigger_counter.value())) {
+      /// Test if the auxiliary counter is available.
+      if (const auto auxiliary_counter = this->_counter_definitions.counter(std::string_view{ "mem-loads-aux" });
+          auxiliary_counter.has_value()) {
+        /// Configure the trigger: Try to inject the configuration from the mem-loads counter; fall back to global
+        /// config if not provided.
+        auto auxiliary_name = std::string{ std::get<0>(auxiliary_counter.value()) };
+        const auto auxiliary_precision = first_trigger.precision().value_or(this->_config.precise_ip());
+        const auto auxiliary_period_or_frequency =
+          first_trigger.period_or_frequency().value_or(this->_config.period_for_frequency());
+
+        trigger.insert(trigger.begin(),
+                       Trigger{ std::move(auxiliary_name), auxiliary_precision, auxiliary_period_or_frequency });
+      }
+    }
+  }
 }
 
 std::vector<perf::Sample>
@@ -538,8 +583,8 @@ perf::Sampler::read_hardware_events(UserLevelBufferEntry& entry, const SampleCou
   }
 
   /// Build a result containing metrics and hardware events requested by teh user.
-  return sample_counter.requested_events().result(this->_counter_definitions,
-                                                  CounterResult{ std::move(hardware_counter_results) }, 1ULL);
+  return sample_counter.requested_events().result(
+    this->_counter_definitions, CounterResult{ std::move(hardware_counter_results) }, 1ULL);
 }
 
 std::optional<std::vector<std::uintptr_t>>

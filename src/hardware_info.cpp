@@ -1,13 +1,24 @@
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <perfcpp/hardware_info.h>
 #include <regex>
 #include <sstream>
 
+bool
+perf::HardwareInfo::is_intel_aux_counter_required()
+{
+  if (HardwareInfo::is_intel()) {
+    return std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu/events/mem-loads-aux"));
+  }
+
+  return false;
+}
+
 std::optional<std::uint64_t>
 perf::HardwareInfo::intel_pebs_mem_loads_aux_event_id()
 {
-  if (HardwareInfo::is_intel()) {
+  if (HardwareInfo::is_intel_aux_counter_required()) {
     return HardwareInfo::parse_event_umask_from_file("/sys/bus/event_source/devices/cpu/events/mem-loads-aux");
   }
 
