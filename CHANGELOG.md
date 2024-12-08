@@ -1,5 +1,8 @@
 # *perf-cpp*: Changelog
 
+## v0.10.0 (WIP)
+* Add *auxiliary event* automatically if needed by the (Intel-) hardware.
+
 ## v.0.9.0
 * Removed deprecated warnings about the sampling interface (and the *old* sampling interface).
 * New feature: Access interim results from counters without stopping the counter using [live counters](docs/recording-live-events.md).

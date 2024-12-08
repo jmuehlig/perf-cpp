@@ -26,13 +26,7 @@ main()
   if (perf::HardwareInfo::is_amd_ibs_supported()) {
     sampler.trigger("ibs_op_uops", perf::Precision::MustHaveZeroSkid);
   } else if (perf::HardwareInfo::is_intel()) {
-    if (perf::HardwareInfo::is_intel_aux_counter_required()) {
-      /// Note: For sampling on Sapphire Rapids, we have to prepend an auxiliary counter.
-      sampler.trigger({ perf::Sampler::Trigger{ "mem-loads-aux", perf::Precision::MustHaveZeroSkid },
-                        perf::Sampler::Trigger{ "mem-loads", perf::Precision::MustHaveZeroSkid } });
-    } else {
-      sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid);
-    }
+    sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid);
   } else {
     std::cout << "Error: Memory sampling is not supported on this CPU." << std::endl;
     return 1;

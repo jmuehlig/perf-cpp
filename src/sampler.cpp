@@ -278,12 +278,12 @@ perf::Sampler::add_auxiliary_counter_if_needed(std::vector<Trigger>& trigger) co
         /// Configure the trigger: Try to inject the configuration from the mem-loads counter; fall back to global
         /// config if not provided.
         auto auxiliary_name = std::string{ std::get<0>(auxiliary_counter.value()) };
-        const auto auxiliary_precision = first_trigger.precision().value_or(this->_config.precise_ip());
         const auto auxiliary_period_or_frequency =
           first_trigger.period_or_frequency().value_or(this->_config.period_for_frequency());
 
-        trigger.insert(trigger.begin(),
-                       Trigger{ std::move(auxiliary_name), auxiliary_precision, auxiliary_period_or_frequency });
+        trigger.insert(
+          trigger.begin(),
+          Trigger{ std::move(auxiliary_name), Precision::MustHaveZeroSkid, auxiliary_period_or_frequency });
       }
     }
   }

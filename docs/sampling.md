@@ -597,6 +597,8 @@ You can add load and store events like this:
 ```cpp
 sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid); /// Only load events
 ```
+&rarr; [See code example](../examples/address_sampling.cpp)
+
 or
 ```cpp
 sampler.trigger("mem-stores", perf::Precision::MustHaveZeroSkid); /// Only store events
@@ -604,11 +606,14 @@ sampler.trigger("mem-stores", perf::Precision::MustHaveZeroSkid); /// Only store
 or
 ```cpp
 /// Load and store events
-sampler.trigger({
-    std::vector<perf::Sampler::Trigger>{{"mem-loads", perf::Precision::MustHaveZeroSkid}}, 
-    std::vector<perf::Sampler::Trigger>{{"mem-stores", perf::Precision::MustHaveZeroSkid}}
-});
+sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
+    {
+      perf::Sampler::Trigger{ "mem-loads", perf::Precision::RequestZeroSkid } /// Loads
+    },
+    { perf::Sampler::Trigger{ "mem-stores", perf::Precision::MustHaveZeroSkid } } /// Stores
+  });
 ```
+&rarr; [See code example](../examples/multi_event_sampling.cpp)
 
 #### Sapphire Rapids and Beyond
 To use memory latency sampling on Intel's Sapphire Rapids architecture, the perf subsystem **needs an auxiliary counter** to be added to the group, before the first "real" counter is added (see [this commit](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).
@@ -627,8 +632,6 @@ sampler.trigger({
     { perf::Sampler::Trigger{"mem-stores", perf::Precision::MustHaveZeroSkid} }         /// Other "real" counters.
   });
 ```
-
-&rarr; [See code example](../examples/multi_event_sampling.cpp)
 
 You can check if the auxiliary counter is needed by checking if the following file exists in the system:
 

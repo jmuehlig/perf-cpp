@@ -24,22 +24,12 @@ main()
   auto sampler = perf::Sampler{ counter_definitions, perf_config };
 
   if (perf::HardwareInfo::is_intel()) {
-    if (perf::HardwareInfo::is_intel_aux_counter_required()) {
-      sampler.trigger({
-        {
-          perf::Sampler::Trigger{ "mem-loads-aux", perf::Precision::MustHaveZeroSkid }, /// Helper
-          perf::Sampler::Trigger{ "mem-loads", perf::Precision::RequestZeroSkid }       /// Loads
-        },
-        { perf::Sampler::Trigger{ "mem-stores", perf::Precision::MustHaveZeroSkid } } /// Stores
-      });
-    } else {
-      sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
-        {
-          perf::Sampler::Trigger{ "mem-loads", perf::Precision::RequestZeroSkid } /// Loads
-        },
-        { perf::Sampler::Trigger{ "mem-stores", perf::Precision::MustHaveZeroSkid } } /// Stores
-      });
-    }
+    sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
+      {
+        perf::Sampler::Trigger{ "mem-loads", perf::Precision::RequestZeroSkid } /// Loads
+      },
+      { perf::Sampler::Trigger{ "mem-stores", perf::Precision::MustHaveZeroSkid } } /// Stores
+    });
   } else {
     std::cout << "Error: Memory sampling with multiple triggers is not supported on this CPU." << std::endl;
     return 1;
