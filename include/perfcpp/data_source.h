@@ -420,6 +420,28 @@ public:
   [[nodiscard]] bool is_snoop_hit_modified() const noexcept { return static_cast<bool>(snoop() & PERF_MEM_SNOOP_HITM); }
 
   /**
+   * @return True, if access was a snoop forward.
+   */
+  [[nodiscard]] bool is_snoopx_forward() const noexcept {
+#ifndef PERFCPP_NO_MEM_SNOOPX /// Extended snoop field is supported since Linux 4.14
+    return static_cast<bool>(snoopx() & PERF_MEM_SNOOPX_FWD);
+#else
+    return 0ULL;
+#endif
+  }
+
+  /**
+   * @return True, if access was a snoop peer.
+   */
+  [[nodiscard]] bool is_snoopx_peer() const noexcept {
+#ifndef PERFCPP_NO_MEM_SNOOPX /// Extended snoop field is supported since Linux 4.14
+    return static_cast<bool>(snoopx() & PERF_MEM_SNOOPX_PEER);
+#else
+    return 0ULL;
+#endif
+  }
+
+  /**
    * @return Direct access to the MEM_OP structure of the perf_mem_data_src.
    */
   [[nodiscard]] std::uint64_t op() const noexcept { return perf_mem_data_src{ _data_source }.mem_op; }
