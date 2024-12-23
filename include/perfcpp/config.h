@@ -6,6 +6,7 @@
 #include "registers.h"
 #include <cstdint>
 #include <optional>
+#include <sched.h>
 
 namespace perf {
 class Config
