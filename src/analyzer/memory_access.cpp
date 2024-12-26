@@ -3,6 +3,7 @@
 #include <numeric>
 #include <perfcpp/analyzer/memory_access.h>
 #include <perfcpp/exception.h>
+#include <perfcpp/table.h>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_set>
@@ -85,6 +86,10 @@ perf::analyzer::MemoryAccess::map(const std::vector<Sample>& samples)
     }
   }
 
+  if (registered_addresses.empty()) {
+    return MemoryAccessResult{};
+  }
+
   /// Sort the addresses to perform a lower bound search.
   std::sort(registered_addresses.begin(), registered_addresses.end(), DataTypeInstanceComp{});
 
@@ -100,7 +105,7 @@ perf::analyzer::MemoryAccess::map(const std::vector<Sample>& samples)
 
       /// The lower bound will find the first data type instance that is not less than the sampled memory address.
       /// Thus, we have to check if (a) there is a potential data type instance and (b) not all elements are greater.
-      if (data_type_instance != registered_addresses.end() && data_type_instance != registered_addresses.begin()) {
+      if (data_type_instance != registered_addresses.begin()) {
 
         /// Go back to the potential instance (we found the first that is greater than the potential start address).
         --data_type_instance;
@@ -108,10 +113,14 @@ perf::analyzer::MemoryAccess::map(const std::vector<Sample>& samples)
         /// Calculate the offset within the data type (address - start of the instance)
         const auto offset = memory_address - data_type_instance->first;
 
-        /// Find the member that the sample may linked to and append the sample to the member's samples.
-        for (auto& member : data_type_instance->second.get().members()) {
-          if (member.offset() <= offset && offset < (member.offset() + member.size())) {
-            member.samples().emplace_back(sample);
+        /// Verify that the address maps to that object instance.
+        if (offset < data_type_instance->second.get().size()) {
+          /// Find the member that the sample may linked to and append the sample to the member's samples.
+          for (auto& member : data_type_instance->second.get().members()) {
+            if (member.offset() <= offset && offset < (member.offset() + member.size())) {
+              member.samples().emplace_back(sample);
+              break;
+            }
           }
         }
       }
@@ -155,24 +164,50 @@ perf::analyzer::MemoryAccess::add_empty_attributes(perf::analyzer::DataType& dat
 std::string
 perf::analyzer::MemoryAccessResult::to_string() const
 {
-  auto column_headers = std::vector<std::string>{
-    "",          "",        "samples",        "loads",           "avg. load lat.", "L1d hits",        "LFB hits",
-    "L2 hits",   "L3 hits", "local RAM hits", "remote RAM hits", "stores",         "avg. store lat.", "TLB hits",
-    "TLB misses"
-  };
-  auto max_sizes = std::vector<std::uint64_t>{};
-  for (const auto& header : column_headers) {
-    max_sizes.emplace_back(header.size());
-  }
-
-  auto data_types = std::vector<std::tuple<std::string, std::size_t, std::vector<std::vector<std::string>>, std::size_t>>{};
+  auto data_types = std::vector<std::tuple<std::string, std::size_t, Table, std::size_t>>{};
 
   for (const auto& data_type : this->_data_types) {
     auto name = data_type.name();
-    auto members = std::vector<std::vector<std::string>>{};
 
     auto count_samples = 0ULL;
 
+    /// Create the data type table.
+    auto table = Table{ 2U,
+                        std::vector<Table::Alignment>{
+                          Table::Alignment::Right,
+                          Table::Alignment::Left,
+                          Table::Alignment::Right,
+                          Table::Alignment::Right,
+                          Table::Alignment::Right,
+                          Table::Alignment::Right,
+                          Table::Alignment::Right,
+                          Table::Alignment::Right,
+                          Table::Alignment::Right,
+                          Table::Alignment::Right,
+                          Table::Alignment::Right,
+                          Table::Alignment::Right,
+                          Table::Alignment::Right,
+                          Table::Alignment::Right,
+                          Table::Alignment::Right,
+                          Table::Alignment::Right,
+                        } };
+    table.reserve(data_type.members().size());
+
+    /// Create table headers.
+    auto header_groups = Table::Row{ 8U };
+    header_groups << Table::Column{"", 3U} << Table::Column{"loads", 2U} << Table::Column{"cache hits", 4U} << Table::Column{"RAM hits", 2U,} << Table::Column{"TLB", 3U} << Table::Column{"stores", 2U};
+    table.add(std::move(header_groups));
+
+    auto header = Table::Row{ 24U };
+    header << Table::Column{ "", 2U } << " samples" << "count" << "latency" << "L1d" << "LFB" << "L2" << "L3" << "local"
+           << "remote" << "L1 hits" << "L2 hits" << "misses" << "count" << "latency";
+    table.add(std::move(header));
+
+    /// Add column separators.
+    table.column_separators(
+      { '\0', '\0', '\0', '|', '\0', '|', '\0', '\0', '\0', '|', '\0', '|', '\0', '\0', '|', '\0' });
+
+    /// Add member attributes to table.
     for (const auto& member : data_type.members()) {
 
       const auto statistics = std::accumulate(member.samples().cbegin(),
@@ -180,36 +215,20 @@ perf::analyzer::MemoryAccessResult::to_string() const
                                               MemberStatistic{},
                                               [](auto& current, const auto& sample) { return current += sample; });
 
-      auto columns = std::vector<std::string>{};
-      columns.reserve(column_headers.size());
+      auto row = Table::Row{ 24U };
+      auto member_offset = std::to_string(member.offset()).append(": ");
+      auto member_name = std::string{ member.name() }.append(" (").append(std::to_string(member.size())).append("B)");
+      row << member_offset << member_name << member.samples().size() << statistics.loads() << statistics.load_latency()
+          << statistics.l1_hits() << statistics.lfb_hits() << statistics.l2_hits() << statistics.l3_hits()
+          << statistics.local_ram_hits() << statistics.remote_ram_hits() << statistics.dtlb_hits()
+          << statistics.stlb_hits() << statistics.stlb_misses() << statistics.stores() << statistics.store_latency();
 
-      columns.emplace_back(std::to_string(member.offset()).append(": "));
-      columns.emplace_back(
-        std::string{ member.name() }.append(" (").append(std::to_string(member.size())).append("B)"));
-      columns.emplace_back(std::to_string(member.samples().size()));
-      columns.emplace_back(std::to_string(statistics.loads()));
-      columns.emplace_back(std::to_string(statistics.load_latency()));
-      columns.emplace_back(std::to_string(statistics.l1_hits()));
-      columns.emplace_back(std::to_string(statistics.lfb_hits()));
-      columns.emplace_back(std::to_string(statistics.l2_hits()));
-      columns.emplace_back(std::to_string(statistics.l3_hits()));
-      columns.emplace_back(std::to_string(statistics.local_ram_hits()));
-      columns.emplace_back(std::to_string(statistics.remote_ram_hits()));
-      columns.emplace_back(std::to_string(statistics.stores()));
-      columns.emplace_back(std::to_string(statistics.store_latency()));
-      columns.emplace_back(std::to_string(statistics.tlb_hits()));
-      columns.emplace_back(std::to_string(statistics.tlb_misses()));
-
-      for (auto i = 0U; i < max_sizes.size(); ++i) {
-        max_sizes[i] = std::max(max_sizes[i], columns[i].size());
-      }
-
-      members.emplace_back(std::move(columns));
+      table.add(std::move(row));
 
       count_samples += member.samples().size();
     }
 
-    data_types.emplace_back(std::move(name), data_type.size(), std::move(members), count_samples);
+    data_types.emplace_back(std::move(name), data_type.size(), std::move(table), count_samples);
   }
 
   /// Sort data type (instances) by number of samples to show types with more samples first.
@@ -217,42 +236,16 @@ perf::analyzer::MemoryAccessResult::to_string() const
     return std::get<3>(left) > std::get<3>(right);
   });
 
-
+  /// Print the data types with members as table.
   auto stream = std::stringstream{};
   for (auto data_type_id = 0U; data_type_id < data_types.size(); ++data_type_id) {
-    const auto& [name, size, members, _] = data_types[data_type_id];
+    const auto& [name, size, table, _] = data_types[data_type_id];
 
     if (data_type_id > 0U) {
       stream << "\n";
     }
 
-    stream << "DataType " << name << " (" << size << "B)" << " {\n";
-
-    stream << " ";
-    for (auto header_id = 0U; header_id < column_headers.size(); ++header_id) {
-      if (header_id == 1U) {
-        stream << column_headers[header_id] << std::string(max_sizes[1U] - column_headers[1].size(), ' ');
-      } else {
-        stream << "   " << std::setw(std::int32_t(max_sizes[header_id])) << column_headers[header_id];
-      }
-    }
-    stream << "\n";
-
-    for (const auto& member : members) {
-      stream << " ";
-
-      for (auto column_id = 0U; column_id < member.size(); ++column_id) {
-        if (column_id == 1U) {
-          stream << member[column_id] << std::string(max_sizes[1U] - member[1].size(), ' ');
-        } else {
-          stream << "   " << std::setw(std::int32_t(max_sizes[column_id])) << member[column_id];
-        }
-      }
-
-      stream << "\n";
-    }
-
-    stream << "}\n";
+    stream << "DataType " << name << " (" << size << "B)" << " {\n" << table.to_string() << "}\n";
   }
 
   return stream.str();
@@ -292,7 +285,8 @@ perf::analyzer::MemoryAccessResult::to_json() const
              << "," << "\"remote RAM hits\":" << statistics.remote_ram_hits() << ","
              << "\"stores\":" << statistics.stores() << ","
              << "\"average store latency\":" << statistics.store_latency() << ","
-             << "\"TLB hits\":" << statistics.tlb_hits() << "," << "\"TLB misses\":" << statistics.tlb_misses() << "}";
+             << "\"dTLB hits\":" << statistics.dtlb_hits() << "," << "\"sTLB hits\":" << statistics.stlb_hits() << ","
+             << "\"sTLB misses\":" << statistics.stlb_misses() << "}";
     }
 
     stream << "]}";
@@ -314,7 +308,7 @@ perf::analyzer::MemoryAccessResult::to_csv(const std::string& data_type_name,
            << delimiter << "average load latency" << delimiter << "L1d hits" << delimiter << "LFB hits" << delimiter
            << "L2 hits" << delimiter << "L3 hits" << delimiter << "L4 hits" << delimiter << "local RAM hits"
            << delimiter << "remote RAM hits" << delimiter << "stores" << delimiter << "average store latency"
-           << delimiter << "TLB hits" << delimiter << "TLB misses" << '\n';
+           << delimiter << "dTLB hits" << delimiter << "sTLB hits" << delimiter << "sTLB misses" << '\n';
   }
 
   if (auto data_type_iterator =
@@ -334,8 +328,8 @@ perf::analyzer::MemoryAccessResult::to_csv(const std::string& data_type_name,
              << delimiter << statistics.l1_hits() << delimiter << statistics.lfb_hits() << delimiter
              << statistics.l2_hits() << delimiter << statistics.l3_hits() << delimiter << statistics.l4_hits()
              << delimiter << statistics.local_ram_hits() << delimiter << statistics.remote_ram_hits() << delimiter
-             << statistics.stores() << delimiter << statistics.store_latency() << delimiter << statistics.tlb_hits()
-             << delimiter << statistics.tlb_misses() << '\n';
+             << statistics.stores() << delimiter << statistics.store_latency() << delimiter << statistics.dtlb_hits()
+             << delimiter << statistics.stlb_hits() << delimiter << statistics.stlb_misses() << '\n';
     }
   }
 

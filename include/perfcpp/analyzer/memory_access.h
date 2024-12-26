@@ -15,6 +15,8 @@ namespace perf::analyzer {
 class MemoryAccessResult
 {
 public:
+  MemoryAccessResult() = default;
+
   explicit MemoryAccessResult(std::vector<DataType>&& result) noexcept
     : _data_types(std::move(result))
   {
@@ -62,8 +64,14 @@ private:
     [[nodiscard]] std::uint64_t l4_hits() const noexcept { return _count_l4_hits; }
     [[nodiscard]] std::uint64_t local_ram_hits() const noexcept { return _count_local_ram_hits; }
     [[nodiscard]] std::uint64_t remote_ram_hits() const noexcept { return _count_remote_ram_hits; }
-    [[nodiscard]] std::uint64_t tlb_hits() const noexcept { return _tlb_hits; }
-    [[nodiscard]] std::uint64_t tlb_misses() const noexcept { return _tlb_misses; }
+    [[nodiscard]] std::uint64_t dtlb_hits() const noexcept { return _dtlb_hits; }
+    [[nodiscard]] std::uint64_t stlb_hits() const noexcept { return _stlb_hits; }
+    [[nodiscard]] std::uint64_t stlb_misses() const noexcept { return _stlb_misses; }
+    [[nodiscard]] std::uint64_t snoop_hits() const noexcept { return _snoop_hits; }
+    [[nodiscard]] std::uint64_t snoop_misses() const noexcept { return _snoop_misses; }
+    [[nodiscard]] std::uint64_t snoop_misses_modified() const noexcept { return _snoop_hits_modified; }
+    [[nodiscard]] std::uint64_t snoop_forward() const noexcept { return _snoop_forward; }
+    [[nodiscard]] std::uint64_t snoop_peer() const noexcept { return _snoop_peer; }
 
     MemberStatistic& operator+=(const Sample& sample) noexcept
     {
@@ -85,8 +93,14 @@ private:
       _count_l4_hits += static_cast<std::uint64_t>(data_src.is_mem_l4());
       _count_local_ram_hits += static_cast<std::uint64_t>(data_src.is_mem_local_ram());
       _count_remote_ram_hits += static_cast<std::uint64_t>(data_src.is_mem_remote_ram());
-      _tlb_hits = static_cast<std::uint64_t>(data_src.is_tlb_hit());
-      _tlb_misses = static_cast<std::uint64_t>(data_src.is_tlb_miss());
+      _dtlb_hits += static_cast<std::uint64_t>(data_src.is_tlb_l1_hit());
+      _stlb_hits += static_cast<std::uint64_t>(data_src.is_tlb_l2_hit());
+      _stlb_misses += static_cast<std::uint64_t>(data_src.is_tlb_miss());
+      _snoop_hits += static_cast<std::uint64_t>(data_src.is_snoop_hit());
+      _snoop_misses += static_cast<std::uint64_t>(data_src.is_snoop_miss());
+      _snoop_hits_modified += static_cast<std::uint64_t>(data_src.is_snoop_hit_modified());
+      _snoop_forward += static_cast<std::uint64_t>(data_src.is_snoopx_forward());
+      _snoop_peer += static_cast<std::uint64_t>(data_src.is_snoopx_peer());
       return *this;
     }
 
@@ -102,8 +116,14 @@ private:
     std::uint64_t _count_l4_hits{ 0ULL };
     std::uint64_t _count_local_ram_hits{ 0ULL };
     std::uint64_t _count_remote_ram_hits{ 0ULL };
-    std::uint64_t _tlb_hits{ 0ULL };
-    std::uint64_t _tlb_misses{ 0ULL };
+    std::uint64_t _dtlb_hits{ 0ULL };
+    std::uint64_t _stlb_hits{ 0ULL };
+    std::uint64_t _stlb_misses{ 0ULL };
+    std::uint64_t _snoop_hits{ 0ULL };
+    std::uint64_t _snoop_misses{ 0ULL };
+    std::uint64_t _snoop_hits_modified{ 0ULL };
+    std::uint64_t _snoop_forward{ 0ULL };
+    std::uint64_t _snoop_peer{ 0ULL };
   };
 };
 

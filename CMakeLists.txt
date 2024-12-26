@@ -29,6 +29,7 @@ set(PERF_CPP_SRC
     src/hardware_info.cpp
     src/metric_expression.cpp
     src/requested_event.cpp
+    src/table.cpp
     src/analyzer/memory_access.cpp
 )
 if (BUILD_LIB_SHARED)

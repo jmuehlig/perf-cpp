@@ -125,6 +125,17 @@ public:
   }
 
   /**
+   * Adds a member with a given name to the data type. The Size will be derived from the type in the template.
+   *
+   * @param member_name Name of the member.
+   */
+  template<typename T>
+  void add(const std::string& name)
+  {
+    add(std::string{ name }, sizeof(T));
+  }
+
+  /**
    * Adds a member at a specific offset to the data type. Name and size will be derived from the type in the template.
    *
    * @param offset Offset relative to the data type.

@@ -4,6 +4,25 @@
 #include <vector>
 
 namespace perf::example {
+
+/**
+ * Generator for unique and zipf data sets.
+ */
+class DataGenerator
+{
+public:
+  [[nodiscard]] static std::vector<std::uint64_t> generate_unique(std::size_t size);
+
+  [[nodiscard]] static std::vector<std::uint64_t> generate_zipf(std::size_t size,
+                                                                std::size_t alphabet_size,
+                                                                double zipf_param);
+
+private:
+  [[nodiscard]] static std::vector<std::uint64_t> alphabet(std::size_t size);
+
+  [[nodiscard]] static std::vector<double> lookup_table(double zipf_param, const std::vector<std::uint64_t>& alphabet);
+};
+
 /**
  * Benchmark accessing benchmarks in random or sequential order.
  * This is an example to demonstrate the perfcpp library.
@@ -16,6 +35,13 @@ public:
    */
   struct alignas(64U) cache_line
   {
+    cache_line() noexcept = default;
+    explicit cache_line(const std::uint64_t value_) noexcept
+      : value(value_)
+    {
+    }
+    ~cache_line() noexcept = default;
+
     std::uint64_t value;
   };
 
