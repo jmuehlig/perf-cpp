@@ -2,6 +2,7 @@
 
 ## v0.10.0 (WIP)
 * Add *auxiliary event* automatically if needed by the (Intel-) hardware.
+* Added [Memory Access Analyzer](docs/analyzing-memory-access-patterns), which maps sampled memory addresses to more complex data object instances.
 
 ## v.0.9.0
 * Removed deprecated warnings about the sampling interface (and the *old* sampling interface).

@@ -82,7 +82,7 @@ main()
   data_analyzer.annotate("data_cache_line", benchmark.data_to_read());
 
   /// 4) Get all the recorded samples.
-  auto samples = sampler.result();
+  const auto samples = sampler.result();
 
   /// 5) Map the samples to data type instances.
   const auto result = data_analyzer.map(samples);
