@@ -434,7 +434,7 @@ public:
    * @return True, if access was a snoop peer.
    */
   [[nodiscard]] bool is_snoopx_peer() const noexcept {
-#ifndef PERFCPP_NO_MEM_SNOOPX /// Extended snoop field is supported since Linux 4.14
+#if !defined(PERFCPP_NO_MEM_SNOOPX) && !defined(PERFCPP_NO_MEM_SNOOPX_PEER) /// Peer attribute is supported since Linux 6.1
     return static_cast<bool>(snoopx() & PERF_MEM_SNOOPX_PEER);
 #else
     return 0ULL;
