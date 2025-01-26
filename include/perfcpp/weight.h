@@ -10,6 +10,8 @@ namespace perf {
 class Weight
 {
 public:
+  Weight() noexcept = default;
+
   Weight(const std::uint32_t cache_latency,
          const std::uint16_t instruction_retirement_latency,
          const std::uint16_t var3_w) noexcept
@@ -43,7 +45,7 @@ public:
   [[nodiscard]] std::uint32_t var3() const noexcept { return _var3; }
 
 private:
-  std::uint32_t _var1;
+  std::uint32_t _var1{ 0U };
   std::uint16_t _var2{ 0U };
   std::uint16_t _var3{ 0U };
 };

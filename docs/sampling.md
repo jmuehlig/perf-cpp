@@ -388,14 +388,19 @@ Memory sampling can be tricky; refer to the [specifics of the underlying hardwar
 &rarr; [See code example](../examples/address_sampling.cpp)
 
 ### Memory Access Latency
-The weight (and weight struct) indicates how costly the event was (basically the latency).
+The weight indicates how costly the event was (basically the latency).
 Since Linux Kernel version `5.12`, the Kernel might generate more information than only a single value, which is used to differentiate between **memory-** (from cache towards memory) and **instruction latency**.
 
-* Request by `sampler.values().weight(true);` or `sampler.values().weight_struct(true);` (**the latter only from Kernel `5.12`**)
-* Read from the results by `sample_record.weight().value();`, which returns a `perf::Weight` class, which has the following attributes:
-  * `sample_record.weight().value().cache_latency()` returns the cache latency of the sampled data address (for both `sampler.values().weight(true)` and `sampler.values().weight_struct(true)`).
-  * `sample_record.weight().value().instruction_retirement_latency()` returns the latency of retiring the instruction (including the cache access) **but** only for `sampler.values().weight_struct(true)`. To the best of our knowledge, this feature is only supported by new Intel generations.
-  * `sample_record.weight().value().var3()` returns "other information" (not specified by perf) **but** only for `sampler.values().weight_struct(true)`.
+The perf subsystem reports the latency through the `weight` field (and from Kernel `5.12` via the `weight_struct` field for more information).
+Although *perf-cpp* supports both fields, for more simplicity, you can use the `latency` methods; *perf-cpp* will then check and use the matching variant based on the underlying kernel version.
+
+* Request by either
+  * `sampler.values().latency(true)` (should be preferred)
+  * **or** `sampler.values().weight(true);` or `sampler.values().weight_struct(true);` (**the latter only from Kernel `5.12`**)
+* Read from the results by `sample_record.latency().value();` (or equally `sample_record.weight().value();`), which returns a `perf::Weight` class, which has the following attributes:
+  * `sample_record.latency().value().cache_latency()` returns the cache latency of the sampled data address.
+  * `sample_record.latency().value().instruction_retirement_latency()` returns the latency of retiring the instruction (including the cache access) **but** only for `sampler.values().weight_struct(true)`. To the best of our knowledge, this feature is only supported by new Intel generations.
+  * `sample_record.latency().value().var3()` returns "other information" (not specified by perf) **but** only for `sampler.values().weight_struct(true)`.
 
 &rarr; [See code example](../examples/address_sampling.cpp)
 

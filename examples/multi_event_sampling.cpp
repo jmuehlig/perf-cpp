@@ -36,13 +36,7 @@ main()
   }
 
   /// Define what to sample.
-  sampler.values().time(true).logical_memory_address(true).data_src(true);
-
-#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT
-  sampler.values().weight_struct(true);
-#else
-  sampler.values().weight(true);
-#endif
+  sampler.values().time(true).logical_memory_address(true).data_src(true).latency(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
@@ -109,12 +103,12 @@ main()
         type = "Store";
       }
 
-      const auto weight = sample.weight().value_or(perf::Weight{ 0U, 0U, 0U });
+      const auto latency = sample.latency().value_or(perf::Weight{ });
 
       std::cout << "Time = " << sample.time().value() << " | Logical Mem Address = 0x" << std::hex
                 << sample.logical_memory_address().value() << std::dec
-                << " | Latency (cache, instruction) = " << weight.cache_latency() << ", "
-                << weight.instruction_retirement_latency() << " | Type = " << type << " | Data Source = " << data_source
+                << " | Latency (cache, instruction) = " << latency.cache_latency() << ", "
+                << latency.instruction_retirement_latency() << " | Type = " << type << " | Data Source = " << data_source
                 << "\n";
     } else if (sample.count_loss().has_value()) {
       std::cout << "Loss = " << sample.count_loss().value() << "\n";

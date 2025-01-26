@@ -29,12 +29,7 @@ main()
 
   /// Setup which data will be included into samples (timestamp, virtual memory address, data source like L1d or RAM,
   /// and latency).
-  sampler.values().logical_memory_address(true).data_src(true);
-#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT
-  sampler.values().weight_struct(true);
-#else
-  sampler.values().weight(true);
-#endif
+  sampler.values().logical_memory_address(true).data_src(true).latency(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,

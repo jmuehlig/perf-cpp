@@ -194,6 +194,17 @@ public:
       return *this;
     }
 
+    Values& latency([[maybe_unused]] const bool include) noexcept
+    {
+#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
+                                        /// Linux 5.12
+      weight_struct(include);
+#else
+      weight(include);
+#endif
+      return *this;
+    }
+
     Values& context_switch(const bool include) noexcept
     {
       _is_include_context_switch = include;

@@ -115,7 +115,7 @@ cycle_activity.stalls_l2_miss,0x55305a3
 cycle_activity.stalls_l3_miss,0x65306a3
 ```
 
-## Using Newly Added Events
+## Using (Newly Added) Events
 After defining the new events–whether directly in code or via configuration files–you can incorporate them into your performance measurements as follows:
 
 ```cpp

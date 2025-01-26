@@ -305,6 +305,13 @@ public:
   [[nodiscard]] std::optional<Weight> weight() const noexcept { return _weight; }
 
   /*
+   * Retrieves the weight value representing the cost or impact of the sample.
+   *
+   * @return An optional containing the weight if available.
+   */
+  [[nodiscard]] std::optional<Weight> latency() const noexcept { return _weight; }
+
+  /*
    * Retrieves the branches recorded in the sample.
    *
    * @return An optional vector of branches if available.
