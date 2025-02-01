@@ -16,3 +16,4 @@ Explore the sections below to gain insights and instructions tailored to your ne
   * [Multi-threading and Multi-CPU Event Sampling](sampling-parallel.md)
   * [Analyzing Memory Access Patterns using Sampling](analyzing-memory-access-patterns.md)
 * [Built-in and Hardware-specific Performance Events](counters.md)
+* [Understanding the Perf Paranoid Value](perf-paranoid.md)

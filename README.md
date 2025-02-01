@@ -132,26 +132,7 @@ All code examples are available in the [examples/](examples) folder.
 * C++ Standard: Requires support for **C++17** features.
 * CMake Version: **3.10** or higher.
 * Linux Kernel Version: **4.0** or newer (note that some features need a newer Kernel).
-* `perf_event_paranoid` Setting: Adjust as needed to allow access to performance counters (see the [Paranoid Value Section](#adjusting-perf_event_paranoid-value) below).
-
-### Adjusting `perf_event_paranoid` Value
-The `perf_event_paranoid` setting controls access to performance counters:
-* `-1`: No restrictions (full access). 
-* `0`: Allow normal users access, but no raw tracepoint samples. 
-* `1`: Allow user and kernel-level profiling (default since Linux 4.6). 
-* `>= 2`: Only user-level measurements allowed.
-
-#### Checking the Current Value
-```bash
-cat /proc/sys/kernel/perf_event_paranoid
-```
-
-#### Changing the Value Temporarily
-```bash
-sudo sysctl -w kernel.perf_event_paranoid=-1
-```
-
-**Note**: To make this change permanent, edit `/etc/sysctl.conf`  and add `kernel.perf_event_paranoid = -1`.
+* `perf_event_paranoid` setting: Adjust as needed to allow access to performance counters (see the [Paranoid Value](docs/perf-paranoid.md) documentation).
 
 ## Contribute and Contact
 We welcome contributions and feedback to make *perf-cpp* even better.
