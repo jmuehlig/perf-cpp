@@ -384,8 +384,8 @@ perf::Counter::error_message_from_errno(const std::int64_t error_code)
     case E2BIG:
       return "perf_event_attr.size was not configured properly – this could be a bug in the perf-cpp library";
     case EACCES:
-      return "insufficient access rights to start the counter, e.g. profiling a not user-owned process or "
-             "perf_event_paranoid value too high";
+      return "insufficient access rights to start the counter, e.g., profiling a not user-owned process or "
+             "perf_event_paranoid value too high (see https://github.com/jmuehlig/perf-cpp/blob/dev/docs/perf-paranoid.md)";
 #ifndef PERFCPP_NO_ERROR_EBUSY /// Busy error is reported since Linux 4.1
     case EBUSY:
       return "another event has exclusive access to the PMU";
