@@ -115,6 +115,11 @@ public:
    */
   [[nodiscard]] static std::optional<std::uint8_t> amd_ibs_fetch_l3miss_bit();
 
+  /**
+   * @return The page size of memory of the underlying machine.
+   */
+  [[nodiscard]] static std::uint64_t memory_page_size();
+
 private:
   /**
    * Tries to read the type from the provided file.
@@ -134,7 +139,7 @@ private:
 
   /**
    * Tries to read a format file and returns the id of the config and the number of bits.
-   * Some formats have multiple entires.
+   * Some formats have multiple entries.
    *
    * @param path
    * @return List of pairs (config id, bits).

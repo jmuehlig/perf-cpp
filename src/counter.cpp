@@ -6,6 +6,7 @@
 #include <perfcpp/counter.h>
 #include <perfcpp/exception.h>
 #include <perfcpp/feature.h>
+#include <perfcpp/hardware_info.h>
 #include <sstream>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -123,7 +124,7 @@ perf::Counter::open(const perf::Config& config,
                     const bool is_secret_leader,
                     const std::int64_t group_leader_file_descriptor,
                     const bool is_read_format,
-                    const std::optional<std::uint64_t> buffer_pages,
+                    std::optional<std::uint64_t> buffer_pages,
                     const std::optional<std::uint64_t> sample_type,
                     const std::optional<std::uint64_t> branch_type,
                     const std::optional<std::uint64_t> user_registers,
@@ -243,14 +244,17 @@ perf::Counter::open(const perf::Config& config,
 
   /// Notify the caller that opening the counter via the perf subsystem failed.
   if (this->_file_descriptor < 0LL) {
-    throw CannotOpenCounterError{ Counter::error_message_from_errno(error_code), error_code };
+    throw CannotOpenCounterError{ error_code };
   }
 
-  if (buffer_pages.has_value()) {
+  if (buffer_pages.value_or(0ULL) > 0ULL) {
+    /// Align the number of buffer pages to hold a power of two + one for the header.
+    buffer_pages = Counter::align_number_of_buffer_pages(buffer_pages.value());
+
     /// Open the mapped buffer.
     this->_user_level_buffer =
       reinterpret_cast<perf_event_mmap_page*>(::mmap(nullptr,
-                                                     buffer_pages.value() * /* page size */ 4096U,
+                                                     buffer_pages.value() * HardwareInfo::memory_page_size(),
                                                      PROT_READ,
                                                      MAP_SHARED,
                                                      static_cast<std::int32_t>(this->_file_descriptor),
@@ -263,6 +267,8 @@ perf::Counter::open(const perf::Config& config,
       throw MmapNullError{};
     }
 
+    /// If the ringbuffer was opened successfully, remember the number of pages in order to unmap when closing the
+    /// counter.
     this->_user_level_buffer_pages = buffer_pages;
   }
 }
@@ -270,11 +276,11 @@ perf::Counter::open(const perf::Config& config,
 void
 perf::Counter::close()
 {
-  /// Close/un-map the mmaped buffer, if any.
+  /// Close/un-map the mmap-ed buffer, if any.
   if (auto* const user_level_buffer = std::exchange(this->_user_level_buffer, nullptr); user_level_buffer != nullptr) {
     if (const auto user_level_buffer_pages = std::exchange(this->_user_level_buffer_pages, std::nullopt);
         user_level_buffer_pages.has_value()) {
-      ::munmap(user_level_buffer, user_level_buffer_pages.value() * /* page size */ 4096U);
+      ::munmap(user_level_buffer, user_level_buffer_pages.value() * HardwareInfo::memory_page_size());
     }
   }
 
@@ -374,39 +380,33 @@ perf::Counter::is_adjust_precise_ip(const std::uint8_t current_precise_ip,
   return error_code == EINVAL || error_code == EOPNOTSUPP;
 }
 
-std::string
-perf::Counter::error_message_from_errno(const std::int64_t error_code)
+std::uint64_t
+perf::Counter::align_number_of_buffer_pages(std::uint64_t number_of_buffer_pages)
 {
-  switch (error_code) {
-    case ENOENT:
-      return "configuration might not be valid (e.g., wrong type or too many counters scheduled to the same hardware "
-             "counter)";
-    case E2BIG:
-      return "perf_event_attr.size was not configured properly – this could be a bug in the perf-cpp library";
-    case EACCES:
-      return "insufficient access rights to start the counter, e.g., profiling a not user-owned process or "
-             "perf_event_paranoid value too high (see https://github.com/jmuehlig/perf-cpp/blob/dev/docs/perf-paranoid.md)";
-#ifndef PERFCPP_NO_ERROR_EBUSY /// Busy error is reported since Linux 4.1
-    case EBUSY:
-      return "another event has exclusive access to the PMU";
-#endif
-    case EINVAL:
-      return "counter is configured with an invalid argument (e.g., too high sample frequency, unknown CPU, invalid "
-             "sample type)";
-    case EMFILE:
-      return "too many open file descriptors (e.g., too many opened counters?)";
-    case ENODEV:
-      return "configured with feature that does not exist on this CPU";
-    case EOVERFLOW:
-      return "maximal callchain stack size is higher than the maximum (see /proc/sys/kernel/perf_event_max_stack)";
-    case EPERM:
-      return "one of the following features is set but not supported: excluding hypervisor, excluding idle, excluding "
-             "user, or excluding kernel";
-    case ESRCH:
-      return "specified process does not exist";
-    default:
-      return "perf_event_open failed with unknown error";
+  /// Check if buffer pages is a power of two; if so, add one for the header as specified by the perf_event_open
+  /// documentation.
+  if ((number_of_buffer_pages & (number_of_buffer_pages - 1ULL)) == 0ULL) {
+    /// Add one page for the header.
+    return number_of_buffer_pages + 1ULL;
   }
+
+  /// Check if buffer pages minus one is a power if to (i.e., the number includes already the additional page for the
+  /// header). If not, we align the number to the next power of two and add one page for the header.
+  if (((number_of_buffer_pages - 1ULL) & (number_of_buffer_pages - 2ULL)) != 0ULL) {
+    --number_of_buffer_pages;
+    number_of_buffer_pages |= number_of_buffer_pages >> 1;
+    number_of_buffer_pages |= number_of_buffer_pages >> 2;
+    number_of_buffer_pages |= number_of_buffer_pages >> 4;
+    number_of_buffer_pages |= number_of_buffer_pages >> 8;
+    number_of_buffer_pages |= number_of_buffer_pages >> 16;
+    number_of_buffer_pages |= number_of_buffer_pages >> 32;
+
+    /// Add one as we decremented, plus one for the page.
+    return number_of_buffer_pages + 2ULL;
+  }
+
+  /// The number is already a power of two plus one; everything is correct configured.
+  return number_of_buffer_pages;
 }
 
 std::string

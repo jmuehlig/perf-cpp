@@ -4,6 +4,7 @@
 #include <perfcpp/hardware_info.h>
 #include <regex>
 #include <sstream>
+#include <unistd.h>
 
 bool
 perf::HardwareInfo::is_intel_aux_counter_required()
@@ -107,6 +108,12 @@ perf::HardwareInfo::amd_ibs_fetch_l3miss_bit()
   }
 
   return std::get<0U>(std::get<1U>(format.front()));
+}
+
+std::uint64_t
+perf::HardwareInfo::memory_page_size()
+{
+  return std::uint64_t(std::max(0L, sysconf(_SC_PAGESIZE)));
 }
 
 std::optional<std::uint32_t>

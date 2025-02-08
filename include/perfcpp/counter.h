@@ -252,12 +252,13 @@ private:
                                                  std::int64_t error_code) noexcept;
 
   /**
-   * Creates an exception message based on the errno set when accessing the perf subsystem to open an event.
+   * Aligns the number of buffer pages to a number that is a power of two plus one for the header.
    *
-   * @param error_code Error code raised when calling perf_event_open.
-   * @return Error message that can be thrown to inform the user.
+   * @param number_of_buffer_pages Current number of buffer pages.
+   * @return An aligned number that is a power of two plus one. Nothing changes if the number is already aligned.
    */
-  [[nodiscard]] static std::string error_message_from_errno(std::int64_t error_code);
+  [[nodiscard]] static std::uint64_t align_number_of_buffer_pages(std::uint64_t number_of_buffer_pages);
+
 
   /**
    * Prints a name of a type (e.g., sample, branch, ...) to the stream if the type is set in the mask.

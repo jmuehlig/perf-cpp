@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <perfcpp/feature.h>
+#include <cerrno>
 
 namespace perf {
 
@@ -19,15 +21,57 @@ public:
 class CannotOpenCounterError final : public std::runtime_error
 {
 public:
-  explicit CannotOpenCounterError(std::string&& message, const std::int64_t error_code)
-    : std::runtime_error(std::string{ "Cannot open perf counter: " }
-                           .append(message)
-                           .append(" (error no: ")
+  explicit CannotOpenCounterError(const std::int64_t error_code)
+    : std::runtime_error(std::string{ "Cannot open perf counter (error no "}
                            .append(std::to_string(error_code))
-                           .append(")."))
+                           .append("): ")
+                           .append(CannotOpenCounterError::create_error_message_from_code(error_code))
+                           .append("."))
   {
   }
   ~CannotOpenCounterError() override = default;
+
+private:
+  /**
+   * Creates an exception message based on the errno set when accessing the perf subsystem to open an event.
+   *
+   * @param error_code Error code raised when calling perf_event_open.
+   * @return Error message that can be thrown to inform the user.
+   */
+  [[nodiscard]] static std::string create_error_message_from_code(const std::int64_t error_code)
+  {
+    switch (error_code) {
+      case ENOENT:
+        return "configuration might not be valid (e.g., wrong type or too many counters scheduled to the same hardware "
+               "counter)";
+      case E2BIG:
+        return "perf_event_attr.size was not configured properly – this could be a bug in the perf-cpp library";
+      case EACCES:
+        return "insufficient access rights to start the counter, e.g., profiling a not user-owned process or "
+               "perf_event_paranoid value too high (see "
+               "https://github.com/jmuehlig/perf-cpp/blob/dev/docs/perf-paranoid.md)";
+#ifndef PERFCPP_NO_ERROR_EBUSY /// Busy error is reported since Linux 4.1
+      case EBUSY:
+        return "another event has exclusive access to the PMU";
+#endif
+      case EINVAL:
+        return "counter is configured with an invalid argument (e.g., too high sample frequency, unknown CPU, invalid "
+               "sample type)";
+      case EMFILE:
+        return "too many open file descriptors (e.g., too many opened counters?)";
+      case ENODEV:
+        return "configured with feature that does not exist on this CPU";
+      case EOVERFLOW:
+        return "maximal callchain stack size is higher than the maximum (see /proc/sys/kernel/perf_event_max_stack)";
+      case EPERM:
+        return "one of the following features is set but not supported: excluding hypervisor, excluding idle, excluding "
+               "user, or excluding kernel";
+      case ESRCH:
+        return "specified process does not exist";
+      default:
+        return "perf_event_open failed with unknown error";
+    }
+  }
 };
 
 class MmapError final : public std::runtime_error
