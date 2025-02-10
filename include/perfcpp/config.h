@@ -216,12 +216,12 @@ public:
 
 private:
   /// Number of pages allocated for the user-level buffer.
-  std::uint64_t _buffer_pages{ 8192U + 1U };
+  std::uint64_t _buffer_pages{ /* pages for the data */ 4096U + /* one page for the metadata */ 1U };
 
   /// Default frequency or period, if not specified for a trigger.
   PeriodOrFrequency _period_or_frequency{ Period{ 4000U } };
 
   /// Default precision for sampling, if not specified for a trigger.
-  Precision _precise_ip{ Precision::MustHaveConstantSkid /* Enable PEBS by default */ };
+  Precision _precise_ip{ Precision::MustHaveConstantSkid /* Enable Intel PEBS by default */ };
 };
 }

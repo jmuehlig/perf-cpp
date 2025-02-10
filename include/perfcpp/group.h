@@ -165,19 +165,19 @@ public:
   /**
    * @return User-level buffer of the first counter (if not nullptr) or the second counter.
    */
-  [[nodiscard]] perf_event_mmap_page* user_level_buffer() const noexcept
+  [[nodiscard]] std::vector<std::pair<std::uintptr_t, std::uintptr_t>> sample_buffer_iterators() const
   {
     if (!_members.empty()) {
-      if (_members[0U].user_level_buffer() != nullptr) {
-        return _members[0U].user_level_buffer();
+      if (_members[0U].user_level_buffer().has_value()) {
+        return _members[0U].user_level_buffer()->iterators();
       }
 
-      if (_members.size() > 1U) {
-        return _members[1U].user_level_buffer();
+      if (_members.size() > 1U && _members[0U].user_level_buffer().has_value()) {
+        return _members[1U].user_level_buffer()->iterators();
       }
     }
 
-    return nullptr;
+    return {};
   }
 
 private:

@@ -21,11 +21,13 @@ option(BUILD_TESTS "Build the unit tests." OFF)
 #   perf-cpp library definition                             #
 #############################################################
 set(PERF_CPP_SRC
-    src/counter.cpp
-    src/group.cpp
     src/counter_definition.cpp
+    src/counter_result.cpp
+    src/counter.cpp
     src/event_counter.cpp
+    src/group.cpp
     src/sampler.cpp
+    src/sample_buffer.cpp
     src/hardware_info.cpp
     src/metric_expression.cpp
     src/requested_event.cpp

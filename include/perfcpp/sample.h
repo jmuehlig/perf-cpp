@@ -1,8 +1,9 @@
 #pragma once
 
 #include "branch.h"
-#include "counter.h"
+#include "counter_result.h"
 #include "data_source.h"
+#include "registers.h"
 #include "transaction.h"
 #include "weight.h"
 #include <cstdint>

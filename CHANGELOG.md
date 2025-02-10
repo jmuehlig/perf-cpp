@@ -3,6 +3,8 @@
 ## v0.10.0 (WIP)
 * Add *auxiliary event* automatically if needed by the (Intel-) hardware.
 * Added [Memory Access Analyzer](docs/analyzing-memory-access-patterns), which maps sampled memory addresses to more complex data object instances.
+* Align the number of buffer pages needed for the sampling buffer automatically in case the number is not configured properly.
+* Copy sampled data from the mmap-ed perf buffer into application-level buffer whenever the buffer comes close to full. 
 
 ## v.0.9.0
 * Removed deprecated warnings about the sampling interface (and the *old* sampling interface).
@@ -71,7 +73,7 @@ Changelog:
 * Added more complex `WeightStruct` sampling (via `PERF_SAMPLE_WEIGHT_STRUCT`) to enable sampling for instruction latencies on newer hardware (e.g., Intel's Sapphire Rapids).
 * Implemented debug output for counters by setting an `is_debug` flag in the config.
 * Added more complex branch sampling.
-* Implemented auto-correct of `precise_ip` configuration if the hardware rejects the initial user-set config.
+* Implemented autocorrect of `precise_ip` configuration if the hardware rejects the initial user-set config.
 * Implemented auxiliary counter to enable memory sampling on Intel's Sapphire Rapids.
 
 ## v0.4.1

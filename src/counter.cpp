@@ -6,111 +6,12 @@
 #include <perfcpp/counter.h>
 #include <perfcpp/exception.h>
 #include <perfcpp/feature.h>
-#include <perfcpp/hardware_info.h>
 #include <sstream>
 #include <sys/ioctl.h>
-#include <sys/mman.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 #include <utility>
 #include <variant>
-
-#if defined(__x86_64__) || defined(__i386__)
-#include <x86intrin.h>
-#endif
-
-std::optional<double>
-perf::CounterResult::get(std::string_view name) const noexcept
-{
-  if (const auto result_iterator = std::find_if(
-        this->_results.begin(), this->_results.end(), [&name](const auto res) { return name == res.first; });
-      result_iterator != this->_results.end()) {
-    return result_iterator->second;
-  }
-
-  return std::nullopt;
-}
-
-std::string
-perf::CounterResult::to_json() const
-{
-  auto json_stream = std::stringstream{};
-
-  json_stream << "{";
-
-  for (auto i = 0U; i < this->_results.size(); ++i) {
-    if (i > 0U) {
-      json_stream << ",";
-    }
-
-    json_stream << "\"" << this->_results[i].first << "\": " << this->_results[i].second;
-  }
-
-  json_stream << "}";
-
-  return json_stream.str();
-}
-
-std::string
-perf::CounterResult::to_csv(const char delimiter, const bool print_header) const
-{
-  auto csv_stream = std::stringstream{};
-
-  if (print_header) {
-    csv_stream << "counter" << delimiter << "value\n";
-  }
-
-  for (auto i = 0U; i < this->_results.size(); ++i) {
-    if (i > 0U) {
-      csv_stream << "\n";
-    }
-
-    csv_stream << this->_results[i].first << delimiter << this->_results[i].second;
-  }
-
-  return csv_stream.str();
-}
-
-std::string
-perf::CounterResult::to_string() const
-{
-  auto result = std::vector<std::pair<std::string_view, std::string>>{};
-  result.reserve(this->_results.size());
-
-  /// Default column lengths, equal to the header.
-  auto max_name_length = 12UL, max_value_length = 5UL;
-
-  /// Collect counter names and values as strings.
-  for (const auto& [name, value] : this->_results) {
-    auto value_string = std::to_string(value);
-
-    max_name_length = std::max(max_name_length, name.size());
-    max_value_length = std::max(max_value_length, value_string.size());
-
-    result.emplace_back(name, std::move(value_string));
-  }
-
-  /// Format the counters as a table.
-  auto table_stream = std::stringstream{};
-  table_stream
-    /// Print the header.
-    << "| Value" << std::setw(std::int32_t(max_value_length) - 4) << " " << "| Counter"
-    << std::setw(std::int32_t(max_name_length) - 6) << " "
-    << "|\n"
-
-    /// Print the separator line.
-    << "|" << std::string(max_value_length + 2U, '-') << "|" << std::string(max_name_length + 2U, '-') << "|";
-
-  /// Print the results as columns.
-  for (const auto& [name, value] : result) {
-    table_stream << "\n| " << std::setw(std::int32_t(max_value_length)) << value << " | " << name
-                 << std::setw(std::int32_t(max_name_length - name.size()) + 1) << " " << "|";
-  }
-
-  table_stream << std::flush;
-
-  return table_stream.str();
-}
 
 perf::Counter::~Counter()
 {
@@ -233,7 +134,7 @@ perf::Counter::open(const perf::Config& config,
   /// Read and set the counter's id.
   /// This is done before (possibly) printing the counter to include the counter id into printing.
   if (this->_file_descriptor > -1LL) {
-    ::ioctl(static_cast<std::int32_t>(_file_descriptor), PERF_EVENT_IOC_ID, &_id);
+    ::ioctl(static_cast<std::int32_t>(this->_file_descriptor), PERF_EVENT_IOC_ID, &this->_id);
   }
 
   /// Print debug output, if requested.
@@ -247,29 +148,9 @@ perf::Counter::open(const perf::Config& config,
     throw CannotOpenCounterError{ error_code };
   }
 
+  /// Create a buffer for reading live events and/or storing samples.
   if (buffer_pages.value_or(0ULL) > 0ULL) {
-    /// Align the number of buffer pages to hold a power of two + one for the header.
-    buffer_pages = Counter::align_number_of_buffer_pages(buffer_pages.value());
-
-    /// Open the mapped buffer.
-    this->_user_level_buffer =
-      reinterpret_cast<perf_event_mmap_page*>(::mmap(nullptr,
-                                                     buffer_pages.value() * HardwareInfo::memory_page_size(),
-                                                     PROT_READ,
-                                                     MAP_SHARED,
-                                                     static_cast<std::int32_t>(this->_file_descriptor),
-                                                     0));
-
-    /// Notify the caller if buffer-allocation via ::mmap() failed.
-    if (this->_user_level_buffer == MAP_FAILED) {
-      throw MmapError{ errno };
-    } else if (this->_user_level_buffer == nullptr) {
-      throw MmapNullError{};
-    }
-
-    /// If the ringbuffer was opened successfully, remember the number of pages in order to unmap when closing the
-    /// counter.
-    this->_user_level_buffer_pages = buffer_pages;
+    this->_sample_buffer.emplace(static_cast<std::int32_t>(this->_file_descriptor), buffer_pages.value());
   }
 }
 
@@ -277,11 +158,8 @@ void
 perf::Counter::close()
 {
   /// Close/un-map the mmap-ed buffer, if any.
-  if (auto* const user_level_buffer = std::exchange(this->_user_level_buffer, nullptr); user_level_buffer != nullptr) {
-    if (const auto user_level_buffer_pages = std::exchange(this->_user_level_buffer_pages, std::nullopt);
-        user_level_buffer_pages.has_value()) {
-      ::munmap(user_level_buffer, user_level_buffer_pages.value() * HardwareInfo::memory_page_size());
-    }
+  if (this->_sample_buffer.has_value()) {
+    this->_sample_buffer.reset();
   }
 
   /// Close the file descriptor.
@@ -301,46 +179,6 @@ void
 perf::Counter::disable() const
 {
   ::ioctl(static_cast<std::int32_t>(this->_file_descriptor), PERF_EVENT_IOC_DISABLE, 0);
-}
-
-std::uint64_t
-perf::Counter::read_live() const noexcept
-{
-  /// Read the counter without stopping/disabling it via the "rdpmc" instruction.
-  /// This is only possible on x86 architectures.
-  /// For more details see https://man7.org/linux/man-pages/man2/perf_event_open.2.html (section MMAP layout).
-
-#if defined(__x86_64__) || defined(__i386__)
-  std::uint64_t value;
-  std::uint32_t lock;
-
-  do {
-    lock = this->_user_level_buffer->lock;
-
-    /// Memory fence.
-    asm volatile("" ::: "memory");
-
-    /// Read the hardware counter identifier.
-    const auto index = this->_user_level_buffer->index;
-
-    /// Verify that "rdpmc" is allowed.
-    if (index == 0U) {
-      return 0ULL;
-    }
-
-    /// Offset that must be added to the value.
-    const auto offset = this->_user_level_buffer->offset;
-
-    /// Read the value.
-    value = std::uint64_t(std::int64_t(_rdpmc(index - 1U)) + offset);
-
-    asm volatile("" ::: "memory");
-  } while (this->_user_level_buffer->lock != lock);
-
-  return value;
-#else
-  return 0ULL;
-#endif
 }
 
 std::int64_t
@@ -378,35 +216,6 @@ perf::Counter::is_adjust_precise_ip(const std::uint8_t current_precise_ip,
   /// Likewise, EOPNOTSUPP could indicate that such a high value of precise_ip is not supported on the underlying
   /// machine. In both scenarios, we should decrease the value and try again.
   return error_code == EINVAL || error_code == EOPNOTSUPP;
-}
-
-std::uint64_t
-perf::Counter::align_number_of_buffer_pages(std::uint64_t number_of_buffer_pages)
-{
-  /// Check if buffer pages is a power of two; if so, add one for the header as specified by the perf_event_open
-  /// documentation.
-  if ((number_of_buffer_pages & (number_of_buffer_pages - 1ULL)) == 0ULL) {
-    /// Add one page for the header.
-    return number_of_buffer_pages + 1ULL;
-  }
-
-  /// Check if buffer pages minus one is a power if to (i.e., the number includes already the additional page for the
-  /// header). If not, we align the number to the next power of two and add one page for the header.
-  if (((number_of_buffer_pages - 1ULL) & (number_of_buffer_pages - 2ULL)) != 0ULL) {
-    --number_of_buffer_pages;
-    number_of_buffer_pages |= number_of_buffer_pages >> 1;
-    number_of_buffer_pages |= number_of_buffer_pages >> 2;
-    number_of_buffer_pages |= number_of_buffer_pages >> 4;
-    number_of_buffer_pages |= number_of_buffer_pages >> 8;
-    number_of_buffer_pages |= number_of_buffer_pages >> 16;
-    number_of_buffer_pages |= number_of_buffer_pages >> 32;
-
-    /// Add one as we decremented, plus one for the page.
-    return number_of_buffer_pages + 2ULL;
-  }
-
-  /// The number is already a power of two plus one; everything is correct configured.
-  return number_of_buffer_pages;
 }
 
 std::string

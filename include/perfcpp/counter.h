@@ -1,12 +1,15 @@
 #pragma once
 
 #include "config.h"
+#include "counter_result.h"
+#include "precision.h"
+#include "sample_buffer.h"
 #include <array>
 #include <cstdint>
 #include <linux/perf_event.h>
 #include <optional>
-#include <perfcpp/precision.h>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -49,63 +52,6 @@ private:
   std::array<std::uint64_t, 2U> _event_id_extension;
   std::optional<std::uint8_t> _precise_ip{ std::nullopt };
   std::optional<PeriodOrFrequency> _period_or_frequency{ std::nullopt };
-};
-
-class CounterResult
-{
-public:
-  using iterator = std::vector<std::pair<std::string_view, double>>::iterator;
-  using const_iterator = std::vector<std::pair<std::string_view, double>>::const_iterator;
-
-  CounterResult() = default;
-  CounterResult(CounterResult&&) noexcept = default;
-  CounterResult(const CounterResult&) = default;
-  explicit CounterResult(std::vector<std::pair<std::string_view, double>>&& results) noexcept
-    : _results(std::move(results))
-  {
-  }
-
-  ~CounterResult() = default;
-
-  CounterResult& operator=(CounterResult&&) noexcept = default;
-  CounterResult& operator=(const CounterResult&) = default;
-
-  /**
-   * Access the result of the counter or metric with the given name.
-   *
-   * @param name Name of the counter or metric to access.
-   * @return The value, or std::nullopt of the result has no counter or value with the requested name.
-   */
-  [[nodiscard]] std::optional<double> get(std::string_view name) const noexcept;
-
-  [[nodiscard]] iterator begin() { return _results.begin(); }
-  [[nodiscard]] iterator end() { return _results.end(); }
-  [[nodiscard]] const_iterator begin() const { return _results.begin(); }
-  [[nodiscard]] const_iterator end() const { return _results.end(); }
-
-  /**
-   * Converts the result to a json-formatted string.
-   * @return Result in JSON format.
-   */
-  [[nodiscard]] std::string to_json() const;
-
-  /**
-   * Converts the result to a CSV-formatted string.
-   *
-   * @param delimiter Char to separate columns (',' by default).
-   * @param print_header If true, the header will be printed first (true by default).
-   * @return Result in CSV format.
-   */
-  [[nodiscard]] std::string to_csv(char delimiter = ',', bool print_header = true) const;
-
-  /**
-   * Converts the result to a table-formatted string.
-   * @return Result as a table-formatted string.
-   */
-  [[nodiscard]] std::string to_string() const;
-
-private:
-  std::vector<std::pair<std::string_view, double>> _results;
 };
 
 class Counter
@@ -187,12 +133,12 @@ public:
    *
    * @return The current value of the counter.
    */
-  [[nodiscard]] std::uint64_t read_live() const noexcept;
+  [[nodiscard]] std::uint64_t read_live() const noexcept { return _sample_buffer->read_live(); }
 
   /**
-   * @return First page of the user-level buffer.
+   * @return The sample buffer that manages the mmap-ed buffer for storing samples and/or live events.
    */
-  [[nodiscard]] perf_event_mmap_page* user_level_buffer() const noexcept { return _user_level_buffer; }
+  [[nodiscard]] const std::optional<SampleBuffer>& user_level_buffer() const noexcept { return _sample_buffer; }
 
   /**
    * @return A string representing all configurations of this counter.
@@ -217,11 +163,9 @@ private:
   /// The file descriptor as returned by the perf subsystem when opening the counter.
   std::int64_t _file_descriptor{ -1 };
 
-  /// Some counter (e.g., triggers for sampling and those read with the rdpmc instruction) use mmap-ed buffers.
-  perf_event_mmap_page* _user_level_buffer{ nullptr };
-
-  /// Number of pages allocated for the user level buffer (needed for closing the buffer).
-  std::optional<std::uint64_t> _user_level_buffer_pages{ std::nullopt };
+  /// Buffer used to store samples. The SampleBuffer mmaps a ringbuffer and handles overflows via a separate thread.
+  /// Additionally, the SampleBuffer can read live events.
+  std::optional<SampleBuffer> _sample_buffer{ std::nullopt };
 
   /**
    * Do the "final" perf_event_open system call with the provided parameters.
@@ -250,15 +194,6 @@ private:
   [[nodiscard]] static bool is_adjust_precise_ip(std::uint8_t current_precise_ip,
                                                  std::optional<std::uint64_t> sample_type,
                                                  std::int64_t error_code) noexcept;
-
-  /**
-   * Aligns the number of buffer pages to a number that is a power of two plus one for the header.
-   *
-   * @param number_of_buffer_pages Current number of buffer pages.
-   * @return An aligned number that is a power of two plus one. Nothing changes if the number is already aligned.
-   */
-  [[nodiscard]] static std::uint64_t align_number_of_buffer_pages(std::uint64_t number_of_buffer_pages);
-
 
   /**
    * Prints a name of a type (e.g., sample, branch, ...) to the stream if the type is set in the mask.

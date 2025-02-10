@@ -502,122 +502,6 @@ private:
   };
 
   /**
-   * The UserLevelBufferEntry represents an entry in the user-level buffer filled by the perf-subsystem by parsing the
-   * hardware-related samples. This helper assists in consuming data from the buffer and turning it into Samples.
-   */
-  class UserLevelBufferEntry
-  {
-  public:
-    explicit UserLevelBufferEntry(perf_event_header* header) noexcept
-      : _head(std::uintptr_t(header + 1U))
-      , _misc(header->misc)
-      , _type(header->type)
-    {
-    }
-    ~UserLevelBufferEntry() noexcept = default;
-
-    template<typename T>
-    [[nodiscard]] T read() noexcept
-    {
-      const auto data = *reinterpret_cast<T*>(_head);
-      _head += sizeof(T);
-
-      return data;
-    }
-
-    template<typename T>
-    [[nodiscard]] const T* read(const std::size_t size) noexcept
-    {
-      auto* begin = reinterpret_cast<T*>(_head);
-      _head += sizeof(T) * size;
-
-      return begin;
-    }
-
-    template<typename T>
-    void skip() noexcept
-    {
-      _head += sizeof(T);
-    }
-
-    template<typename T>
-    void skip(const std::size_t size) noexcept
-    {
-      _head += sizeof(T) * size;
-    }
-
-    template<typename T>
-    T as() const noexcept
-    {
-      return reinterpret_cast<T>(_head);
-    }
-
-    [[nodiscard]] Sample::Mode mode() const noexcept;
-
-    [[nodiscard]] bool is_sample_event() const noexcept { return _type == PERF_RECORD_SAMPLE; }
-    [[nodiscard]] bool is_loss_event() const noexcept
-    {
-#ifndef PERFCPP_NO_RECORD_LOST_SAMPLES /// PERF_RECORD_LOST_SAMPLES is supported since Linux 4.2
-      return _type == PERF_RECORD_LOST_SAMPLES;
-#else
-      return false;
-#endif
-    }
-    [[nodiscard]] bool is_context_switch_event() const noexcept
-    {
-#ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3
-      return _type == PERF_RECORD_SWITCH || _type == PERF_RECORD_SWITCH_CPU_WIDE;
-#else
-      return false;
-#endif
-    }
-    [[nodiscard]] bool is_context_switch_cpu_wide() const noexcept
-    {
-#ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3
-      return _type == PERF_RECORD_SWITCH_CPU_WIDE;
-#else
-      return false;
-#endif
-    }
-    [[nodiscard]] bool is_cgroup_event() const noexcept
-    {
-#ifndef PERFCPP_NO_RECORD_CGROUP /// cgroup events is supported since Linux 5.7
-      return _type == PERF_RECORD_CGROUP;
-#else
-      return false;
-#endif
-    }
-    [[nodiscard]] bool is_throttle_event() const noexcept
-    {
-      return _type == PERF_RECORD_THROTTLE || _type == PERF_RECORD_UNTHROTTLE;
-    }
-    [[nodiscard]] bool is_throttle() const noexcept { return _type == PERF_RECORD_THROTTLE; }
-
-    [[nodiscard]] bool is_exact_ip() const noexcept { return _misc & PERF_RECORD_MISC_EXACT_IP; }
-    [[nodiscard]] bool is_context_switch_out() const noexcept
-    {
-#ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3
-      return _misc & PERF_RECORD_MISC_SWITCH_OUT;
-#else
-      return false;
-#endif
-    }
-    [[nodiscard]] bool is_context_switch_out_preempt() const noexcept
-    {
-#ifndef PERFCPP_NO_RECORD_MISC_SWITCH_OUT_PREEMPT /// Preempt flag of switch events is supported since Linux 4.3
-      return _misc & PERF_RECORD_MISC_SWITCH_OUT_PREEMPT;
-#else
-      return false;
-#endif
-    }
-
-  private:
-    std::uintptr_t _head;
-    const std::uint16_t _misc;
-    const std::uint32_t _type;
-  };
-
-  /**
    * Transforms a list of trigger events into a single SampleCounter that includes a group of hardware events.
    *
    * @param triggers List of triggers to transform.
@@ -640,7 +524,7 @@ private:
    *
    * @param sample Sample to read the data into.
    */
-  void read_sample_id_all(UserLevelBufferEntry& entry, Sample& sample) const noexcept;
+  void read_sample_id_all(SampleBuffer::Entry& entry, Sample& sample) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a "normal" sample.
@@ -649,7 +533,7 @@ private:
    * @param sample_counter The SampleCounter the entry is linked to in order to get the recorded counters (if any).
    * @return Sample.
    */
-  [[nodiscard]] perf::Sample read_sample_event(UserLevelBufferEntry entry, const SampleCounter& sample_counter) const;
+  [[nodiscard]] perf::Sample read_sample_event(SampleBuffer::Entry entry, const SampleCounter& sample_counter) const;
 
   /**
    * Reads registers from the current buffer entry.
@@ -659,7 +543,7 @@ private:
    * @return Pair of ABI and list of registers (if any).
    */
   [[nodiscard]] static std::pair<ABI, std::optional<std::vector<std::uint64_t>>> read_registers(
-    UserLevelBufferEntry& entry,
+    SampleBuffer::Entry& entry,
     std::uint64_t count_registers);
 
   /**
@@ -669,7 +553,7 @@ private:
    * @param sample_counter The current sample counter including the counter group and counter names.
    * @return Event values
    */
-  [[nodiscard]] std::optional<CounterResult> read_hardware_events(UserLevelBufferEntry& entry,
+  [[nodiscard]] std::optional<CounterResult> read_hardware_events(SampleBuffer::Entry& entry,
                                                                   const SampleCounter& sample_counter) const;
 
   /**
@@ -678,7 +562,7 @@ private:
    * @param entry Current position at the buffer.
    * @return List of instruction pointers (the callchain).
    */
-  [[nodiscard]] static std::optional<std::vector<std::uintptr_t>> read_callchain(UserLevelBufferEntry& entry);
+  [[nodiscard]] static std::optional<std::vector<std::uintptr_t>> read_callchain(SampleBuffer::Entry& entry);
 
   /**
    * Reads the branch stack from the current buffer entry.
@@ -686,7 +570,7 @@ private:
    * @param entry Current position at the buffer.
    * @return Branch stack.
    */
-  [[nodiscard]] static std::optional<std::vector<Branch>> read_branch_stack(UserLevelBufferEntry& entry);
+  [[nodiscard]] static std::optional<std::vector<Branch>> read_branch_stack(SampleBuffer::Entry& entry);
 
   /**
    * Translates the current entry from the user-level buffer into a lost sample.
@@ -694,7 +578,7 @@ private:
    * @param entry Entry of the user-level buffer.
    * @return Sample containing the loss.
    */
-  [[nodiscard]] perf::Sample read_loss_event(UserLevelBufferEntry entry) const noexcept;
+  [[nodiscard]] perf::Sample read_loss_event(SampleBuffer::Entry entry) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a context switch sample.
@@ -702,7 +586,7 @@ private:
    * @param entry Entry of the user-level buffer.
    * @return Sample containing the context switch.
    */
-  [[nodiscard]] perf::Sample read_context_switch_event(UserLevelBufferEntry entry) const noexcept;
+  [[nodiscard]] perf::Sample read_context_switch_event(SampleBuffer::Entry entry) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a cgroup sample.
@@ -710,7 +594,7 @@ private:
    * @param entry Entry of the user-level buffer.
    * @return Sample containing the cgroup.
    */
-  [[nodiscard]] static perf::Sample read_cgroup_event(UserLevelBufferEntry entry);
+  [[nodiscard]] static perf::Sample read_cgroup_event(SampleBuffer::Entry entry);
 
   /**
    * Translates the current entry from the user-level buffer into a throttle or un-throttle sample.
@@ -718,7 +602,7 @@ private:
    * @param entry Entry of the user-level buffer.
    * @return Sample containing the throttle.
    */
-  [[nodiscard]] perf::Sample read_throttle_event(UserLevelBufferEntry entry) const noexcept;
+  [[nodiscard]] perf::Sample read_throttle_event(SampleBuffer::Entry entry) const noexcept;
 
   const CounterDefinition& _counter_definitions;
 
@@ -1208,6 +1092,9 @@ private:
   std::vector<std::uint16_t> _core_ids;
 };
 
+/**
+ * Comparator to order the samples by timestamp after collecting multiple samples from different threads or cores.
+ */
 class SampleTimestampComparator
 {
 public:

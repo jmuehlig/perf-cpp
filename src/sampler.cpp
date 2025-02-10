@@ -296,41 +296,37 @@ perf::Sampler::result(const bool sort_by_time) const
   result.reserve(2048U);
 
   for (const auto& sample_counter : this->_sample_counter) {
-    auto* user_level_buffer = sample_counter.group().user_level_buffer();
-    if (user_level_buffer == nullptr) {
-      continue;
-    }
 
-    /// When the ringbuffer is empty or already read, there is nothing to do.
-    if (user_level_buffer->data_tail >= user_level_buffer->data_head) {
-      return result;
-    }
+    /// Get all buffers: the current mmap-ed ringbuffer and the application-level buffers used to copy the ringbuffer to
+    const auto buffer_iterators = sample_counter.group().sample_buffer_iterators();
 
-    /// The buffer starts at page 1 (from 0).
-    auto iterator = std::uintptr_t(user_level_buffer) + 4096U;
+    /// Read samples from all the buffers (mmap-ed perf buffer and application-level buffers).
+    for (const auto& [start, end] : buffer_iterators) {
+      auto iterator = start;
 
-    /// data_head is the size (in bytes) of the samples.
-    const auto end = iterator + user_level_buffer->data_head;
+      /// Scan over all samples stored in the user-level buffer.
+      while (iterator < end) {
+        auto entry = SampleBuffer::Entry{ iterator };
 
-    /// Scan over all samples stored in the user-level buffer.
-    while (iterator < end) {
-      auto* event_header = reinterpret_cast<perf_event_header*>(iterator);
-      auto entry = UserLevelBufferEntry{ event_header };
+        if (entry.size() < 1ULL) {
+          break;
+        }
 
-      if (entry.is_sample_event()) { /// Read "normal" samples.
-        result.push_back(this->read_sample_event(entry, sample_counter));
-      } else if (entry.is_loss_event()) { /// Read lost samples.
-        result.push_back(this->read_loss_event(entry));
-      } else if (entry.is_context_switch_event()) { /// Read context switch.
-        result.push_back(this->read_context_switch_event(entry));
-      } else if (entry.is_cgroup_event()) { /// Read cgroup samples.
-        result.push_back(Sampler::read_cgroup_event(entry));
-      } else if (entry.is_throttle_event() && this->_values._is_include_throttle) { /// Read (un-) throttle samples.
-        result.push_back(this->read_throttle_event(entry));
+        if (entry.is_sample_event()) { /// Read "normal" samples.
+          result.push_back(this->read_sample_event(entry, sample_counter));
+        } else if (entry.is_loss_event()) { /// Read lost samples.
+          result.push_back(this->read_loss_event(entry));
+        } else if (entry.is_context_switch_event()) { /// Read context switch.
+          result.push_back(this->read_context_switch_event(entry));
+        } else if (entry.is_cgroup_event()) { /// Read cgroup samples.
+          result.push_back(Sampler::read_cgroup_event(entry));
+        } else if (entry.is_throttle_event() && this->_values._is_include_throttle) { /// Read (un-) throttle samples.
+          result.push_back(this->read_throttle_event(entry));
+        }
+
+        /// Go to the next sample.
+        iterator += entry.size();
       }
-
-      /// Go to the next sample.
-      iterator += event_header->size;
     }
   }
 
@@ -343,7 +339,7 @@ perf::Sampler::result(const bool sort_by_time) const
 }
 
 void
-perf::Sampler::read_sample_id_all(UserLevelBufferEntry& entry, Sample& sample) const noexcept
+perf::Sampler::read_sample_id_all(perf::SampleBuffer::Entry& entry, Sample& sample) const noexcept
 {
   if (this->_values.is_set(PERF_SAMPLE_TID)) {
     sample.process_id(entry.read<std::uint32_t>());
@@ -368,26 +364,8 @@ perf::Sampler::read_sample_id_all(UserLevelBufferEntry& entry, Sample& sample) c
   }
 }
 
-perf::Sample::Mode
-perf::Sampler::UserLevelBufferEntry::mode() const noexcept
-{
-  if (static_cast<bool>(this->_misc & PERF_RECORD_MISC_KERNEL)) {
-    return Sample::Mode::Kernel;
-  } else if (static_cast<bool>(this->_misc & PERF_RECORD_MISC_USER)) {
-    return Sample::Mode::User;
-  } else if (static_cast<bool>(this->_misc & PERF_RECORD_MISC_HYPERVISOR)) {
-    return Sample::Mode::Hypervisor;
-  } else if (static_cast<bool>(this->_misc & PERF_RECORD_MISC_GUEST_KERNEL)) {
-    return Sample::Mode::GuestKernel;
-  } else if (static_cast<bool>(this->_misc & PERF_RECORD_MISC_GUEST_USER)) {
-    return Sample::Mode::GuestUser;
-  }
-
-  return Sample::Mode::Unknown;
-}
-
 perf::Sample
-perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, const SampleCounter& sample_counter) const
+perf::Sampler::read_sample_event(perf::SampleBuffer::Entry entry, const SampleCounter& sample_counter) const
 {
   auto sample = Sample{ entry.mode() };
 
@@ -531,7 +509,7 @@ perf::Sampler::read_sample_event(perf::Sampler::UserLevelBufferEntry entry, cons
 }
 
 std::pair<perf::ABI, std::optional<std::vector<std::uint64_t>>>
-perf::Sampler::read_registers(perf::Sampler::UserLevelBufferEntry& entry, const std::uint64_t count_registers)
+perf::Sampler::read_registers(perf::SampleBuffer::Entry& entry, const std::uint64_t count_registers)
 {
   /// Read the register ABI.
   const auto abi = static_cast<ABI>(entry.read<std::uint64_t>());
@@ -553,7 +531,7 @@ perf::Sampler::read_registers(perf::Sampler::UserLevelBufferEntry& entry, const 
 }
 
 std::optional<perf::CounterResult>
-perf::Sampler::read_hardware_events(UserLevelBufferEntry& entry, const SampleCounter& sample_counter) const
+perf::Sampler::read_hardware_events(perf::SampleBuffer::Entry& entry, const SampleCounter& sample_counter) const
 {
   /// Read the number of counters.
   const auto count_counter_values = entry.read<decltype(CounterValues<Group::MAX_MEMBERS>::count_members)>();
@@ -588,7 +566,7 @@ perf::Sampler::read_hardware_events(UserLevelBufferEntry& entry, const SampleCou
 }
 
 std::optional<std::vector<std::uintptr_t>>
-perf::Sampler::read_callchain(perf::Sampler::UserLevelBufferEntry& entry)
+perf::Sampler::read_callchain(perf::SampleBuffer::Entry& entry)
 {
   /// Read the size of the callchain.
   const auto callchain_size = entry.read<std::uint64_t>();
@@ -610,7 +588,7 @@ perf::Sampler::read_callchain(perf::Sampler::UserLevelBufferEntry& entry)
 }
 
 std::optional<std::vector<perf::Branch>>
-perf::Sampler::read_branch_stack(perf::Sampler::UserLevelBufferEntry& entry)
+perf::Sampler::read_branch_stack(perf::SampleBuffer::Entry& entry)
 {
   /// Read the size of the branch stack.
   const auto count_branches = entry.read<std::uint64_t>();
@@ -638,7 +616,7 @@ perf::Sampler::read_branch_stack(perf::Sampler::UserLevelBufferEntry& entry)
 }
 
 perf::Sample
-perf::Sampler::read_loss_event(perf::Sampler::UserLevelBufferEntry entry) const noexcept
+perf::Sampler::read_loss_event(perf::SampleBuffer::Entry entry) const noexcept
 {
   auto sample = Sample{ entry.mode() };
 
@@ -652,7 +630,7 @@ perf::Sampler::read_loss_event(perf::Sampler::UserLevelBufferEntry entry) const 
 }
 
 perf::Sample
-perf::Sampler::read_context_switch_event(perf::Sampler::UserLevelBufferEntry entry) const noexcept
+perf::Sampler::read_context_switch_event(perf::SampleBuffer::Entry entry) const noexcept
 {
   auto sample = Sample{ entry.mode() };
 
@@ -677,7 +655,7 @@ perf::Sampler::read_context_switch_event(perf::Sampler::UserLevelBufferEntry ent
 }
 
 perf::Sample
-perf::Sampler::read_cgroup_event(perf::Sampler::UserLevelBufferEntry entry)
+perf::Sampler::read_cgroup_event(perf::SampleBuffer::Entry entry)
 {
   auto sample = Sample{ entry.mode() };
 
@@ -690,7 +668,7 @@ perf::Sampler::read_cgroup_event(perf::Sampler::UserLevelBufferEntry entry)
 }
 
 perf::Sample
-perf::Sampler::read_throttle_event(perf::Sampler::UserLevelBufferEntry entry) const noexcept
+perf::Sampler::read_throttle_event(perf::SampleBuffer::Entry entry) const noexcept
 {
   auto sample = Sample{ entry.mode() };
 

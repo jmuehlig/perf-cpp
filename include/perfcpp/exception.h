@@ -1,10 +1,10 @@
 #pragma once
 
+#include <cerrno>
 #include <cstdint>
+#include <perfcpp/feature.h>
 #include <stdexcept>
 #include <string>
-#include <perfcpp/feature.h>
-#include <cerrno>
 
 namespace perf {
 
@@ -22,7 +22,7 @@ class CannotOpenCounterError final : public std::runtime_error
 {
 public:
   explicit CannotOpenCounterError(const std::int64_t error_code)
-    : std::runtime_error(std::string{ "Cannot open perf counter (error no "}
+    : std::runtime_error(std::string{ "Cannot open perf counter (error no " }
                            .append(std::to_string(error_code))
                            .append("): ")
                            .append(CannotOpenCounterError::create_error_message_from_code(error_code))
@@ -64,7 +64,8 @@ private:
       case EOVERFLOW:
         return "maximal callchain stack size is higher than the maximum (see /proc/sys/kernel/perf_event_max_stack)";
       case EPERM:
-        return "one of the following features is set but not supported: excluding hypervisor, excluding idle, excluding "
+        return "one of the following features is set but not supported: excluding hypervisor, excluding idle, "
+               "excluding "
                "user, or excluding kernel";
       case ESRCH:
         return "specified process does not exist";
@@ -304,6 +305,19 @@ public:
   }
 
   ~CannotEvaluateExpressionError() override = default;
+};
+
+class CannotCreateEventFileDescriptor final : public std::runtime_error
+{
+public:
+  explicit CannotCreateEventFileDescriptor(const std::int32_t original_file_descriptor)
+    : std::runtime_error(std::string{ "Cannot create eventfd for file descriptor " }
+                           .append(std::to_string(original_file_descriptor))
+                           .append("."))
+  {
+  }
+
+  ~CannotCreateEventFileDescriptor() override = default;
 };
 
 }
