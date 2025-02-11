@@ -10,7 +10,7 @@ To monitor multiple threads or CPU cores, you have various options:
 ## Table of Contents
 - [1st Option: Count Events Individually for each Thread](#1st-option-count-events-individually-for-each-thread)
 - [2nd Option: Count Events for all Child Threads Simultaneously](#2nd-option-count-events-for-all-child-threads-simultaneously)
-- [3rd Option: Count Events for entire CPU Cores](#3rd-option-count-events-on-specific-cpu-cores)
+- [3rd Option: Count Events for specific CPU Cores](#3rd-option-count-events-on-specific-cpu-cores)
 ---
 
 ## 1st Option: Count Events Individually for each Thread
