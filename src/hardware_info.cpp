@@ -20,27 +20,29 @@ std::optional<std::uint64_t>
 perf::HardwareInfo::intel_pebs_mem_loads_aux_event_id()
 {
   if (HardwareInfo::is_intel_aux_counter_required()) {
-    return HardwareInfo::parse_event_umask_from_file("/sys/bus/event_source/devices/cpu/events/mem-loads-aux");
+    return std::get<0>(
+      HardwareInfo::parse_event_config_from_file("/sys/bus/event_source/devices/cpu/events/mem-loads-aux"));
   }
 
   return std::nullopt;
 }
 
-std::optional<std::uint64_t>
+std::pair<std::optional<std::uint64_t>, std::optional<std::uint64_t>>
 perf::HardwareInfo::intel_pebs_mem_loads_event_id()
 {
   if (HardwareInfo::is_intel()) {
-    return HardwareInfo::parse_event_umask_from_file("/sys/bus/event_source/devices/cpu/events/mem-loads");
+    return HardwareInfo::parse_event_config_from_file("/sys/bus/event_source/devices/cpu/events/mem-loads");
   }
 
-  return std::nullopt;
+  return std::make_pair(std::nullopt, std::nullopt);
 }
 
 std::optional<std::uint64_t>
 perf::HardwareInfo::intel_pebs_mem_stores_event_id()
 {
   if (HardwareInfo::is_intel()) {
-    return HardwareInfo::parse_event_umask_from_file("/sys/bus/event_source/devices/cpu/events/mem-stores");
+    return std::get<0>(
+      HardwareInfo::parse_event_config_from_file("/sys/bus/event_source/devices/cpu/events/mem-stores"));
   }
 
   return std::nullopt;
@@ -130,8 +132,8 @@ perf::HardwareInfo::parse_type_from_file(std::string&& path)
   return std::nullopt;
 }
 
-std::optional<std::uint64_t>
-perf::HardwareInfo::parse_event_umask_from_file(std::string&& path)
+std::pair<std::optional<std::uint64_t>, std::optional<std::uint64_t>>
+perf::HardwareInfo::parse_event_config_from_file(std::string&& path)
 {
   auto event_stream = std::ifstream{ path };
   if (event_stream.is_open()) {
@@ -143,6 +145,7 @@ perf::HardwareInfo::parse_event_umask_from_file(std::string&& path)
 
       auto event = std::optional<std::string>{ std::nullopt };
       auto umask = std::optional<std::string>{ std::nullopt };
+      auto ldlat = std::optional<std::string>{ std::nullopt };
 
       auto token_stream = std::stringstream{ line };
       std::string token;
@@ -175,17 +178,26 @@ perf::HardwareInfo::parse_event_umask_from_file(std::string&& path)
           event = std::move(value);
         } else if (key == "umask") {
           umask = std::move(value);
+        } else if (key == "ldlat") {
+          ldlat = std::move(value);
         }
       }
 
       /// Combine event and umask to a single event id.
       if (event.has_value() && umask.has_value()) {
-        return std::stoull(/* combine <umask><event> */ umask.value().append(event.value()), nullptr, 16);
+        const auto event_configuration =
+          std::stoull(/* combine <umask><event> */ umask.value().append(event.value()), nullptr, 16);
+
+        if (ldlat.has_value()) {
+          return std::make_pair(event_configuration, std::stoull(ldlat.value()));
+        }
+
+        return std::make_pair(event_configuration, std::nullopt);
       }
     }
   }
 
-  return std::nullopt;
+  return std::make_pair(std::nullopt, std::nullopt);
 }
 
 std::vector<std::pair<std::uint8_t, std::pair<std::uint8_t, std::optional<std::uint8_t>>>>

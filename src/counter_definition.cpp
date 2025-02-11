@@ -198,8 +198,10 @@ perf::CounterDefinition::initialize_intel_pebs_counters()
     }
 
     /// mem-loads event.
-    if (const auto mem_loads_event_id = HardwareInfo::intel_pebs_mem_loads_event_id(); mem_loads_event_id.has_value()) {
-      this->add("mem-loads", PERF_TYPE_RAW, mem_loads_event_id.value());
+    if (const auto [mem_loads_event_id, mem_loads_latency] = HardwareInfo::intel_pebs_mem_loads_event_id();
+        mem_loads_event_id.has_value()) {
+      this->add("mem-loads",
+                CounterConfig{ PERF_TYPE_RAW, mem_loads_event_id.value(), mem_loads_latency.value_or(30U) });
     }
 
     /// mem-loads event.

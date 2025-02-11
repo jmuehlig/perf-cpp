@@ -92,7 +92,7 @@ perf::SampleBuffer::buffer_ranges() const
 {
   /// List of (start, end) pointers for different buffers (application-level and mmap-ed ringbuffer).
   auto iterators = std::vector<std::pair<std::uintptr_t, std::uintptr_t>>{};
-  iterators.reserve(this->_application_buffers.size() + 1U);
+  iterators.reserve(this->_application_buffers.size() + /* space for mmap iterators */ 2U);
 
   /// Add the data from the buffers containing the data whenever the mmap-ed buffer was near to overflowing.
   for (const auto& buffer : this->_application_buffers) {
@@ -124,12 +124,12 @@ perf::SampleBuffer::buffer_ranges() const
     /// When the ringbuffer wrapped inbetween, we need to access the first part from tail to end and the second part
     /// from start to head.
     else {
-      /// Add an iterator from tail to buffer end.
+      /// 1st: Add an iterator from tail to buffer end.
       const auto tail_rest_size = data_size - tail_aligned;
       const auto start_tail = data_start + tail_aligned;
       iterators.emplace_back(start_tail, start_tail + tail_rest_size);
 
-      /// Add an iterator from data start to head.
+      /// 2nd: Add an iterator from data start to head.
       iterators.emplace_back(data_start, head_aligned);
     }
   }

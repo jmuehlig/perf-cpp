@@ -175,13 +175,13 @@ perf::Counter::set_period_or_frequency(perf_event_attr& event_attribute,
                                        const perf::PeriodOrFrequency& period_or_frequency)
 {
   std::visit(
-    [&event_attribute](const auto period_or_frequency) {
-      using T = std::decay_t<decltype(period_or_frequency)>;
+    [&event_attribute](const auto& value) {
+      using T = std::decay_t<decltype(value)>;
       if constexpr (std::is_same_v<T, class Period>) {
-        event_attribute.sample_period = period_or_frequency.get();
+        event_attribute.sample_period = value.get();
       } else if constexpr (std::is_same_v<T, class Frequency>) {
         event_attribute.freq = true;
-        event_attribute.sample_period = period_or_frequency.get();
+        event_attribute.sample_period = value.get();
       }
     },
     period_or_frequency);
@@ -267,7 +267,7 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
     if (cpu_id.value() >= 0) {
       stream << cpu_id.value() << "\n";
     } else {
-      stream << cpu_id.value() << "(any)\n";
+      stream << cpu_id.value() << " (any)\n";
     }
   }
 

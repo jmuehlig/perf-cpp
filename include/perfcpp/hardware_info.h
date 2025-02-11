@@ -36,9 +36,10 @@ public:
   [[nodiscard]] static std::optional<std::uint64_t> intel_pebs_mem_loads_aux_event_id();
 
   /**
-   * @return The id of Intel's PEBS "mem-loads" event.
+   * @return The id of Intel's PEBS "mem-loads" event plus latency config (if available).
    */
-  [[nodiscard]] static std::optional<std::uint64_t> intel_pebs_mem_loads_event_id();
+  [[nodiscard]] static std::pair<std::optional<std::uint64_t>, std::optional<std::uint64_t>>
+  intel_pebs_mem_loads_event_id();
 
   /**
    * @return The id of Intel's PEBS "mem-stores" event.
@@ -133,9 +134,10 @@ private:
    * Tries to read event and umask from the provided file.
    *
    * @param path Path to the file.
-   * @return Integer representation of event and umask.
+   * @return Pair of (Integer representation of event and umask, further configuration).
    */
-  [[nodiscard]] static std::optional<std::uint64_t> parse_event_umask_from_file(std::string&& path);
+  [[nodiscard]] static std::pair<std::optional<std::uint64_t>, std::optional<std::uint64_t>>
+  parse_event_config_from_file(std::string&& path);
 
   /**
    * Tries to read a format file and returns the id of the config and the number of bits.
