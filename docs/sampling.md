@@ -20,6 +20,7 @@ For specific information about sampling in parallel settings (i.e., sampling mul
 - [Trigger](#trigger)
 - [Precision](#precision)
 - [Period / Frequency](#period--frequency)
+- [Sample Buffer](#sample-buffer)
 - [What can be Recorded and how to Access the Data?](#what-can-be-recorded-and-how-to-access-the-data)
   - [Time](#time)
   - [Stream ID](#stream-id)
@@ -224,6 +225,24 @@ sample_config.frequency(1000U);
 auto sampler = perf::Sampler{ counter_definitions, sample_config };
 sampler.trigger("cycles");
 ```
+
+## Sample Buffer
+The hardware transfers collected samples into an mmap-ed ring buffer. 
+You can configure the size of this buffer using the `SampleConfig` class as demonstrated below:
+
+```cpp
+auto sample_config = perf::SampleConfig{};
+sample_config.buffer_pages(4096U); // This sets the buffer to 16MB (4096 pages x 4kB per page).
+
+auto sampler = perf::Sampler{ counter_definitions, sample_config };
+```
+
+Because the ring buffer has a finite size, it needs to be drained before it becomes full. 
+*perf-cpp* handles this automatically, though copying the data can be expensive.
+Choosing the right buffer size involves balancing memory usage against the cost of frequent data copying. 
+By default, the buffer is set to `16`MB. 
+
+Note that the number of buffer pages must be a power of two; any non-power-of-two value will be rounded up accordingly.
 
 ## What can be Recorded and how to Access the Data?
 Prior to activation, the sampler must be configured to specify the data to be recorded. For instance:

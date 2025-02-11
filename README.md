@@ -3,9 +3,9 @@
 The library allows for precise event-counting and sampling of specific code segments and to link sampled data (e.g., memory addresses) with application-specific details (e.g., class instances).
 
 ## Key Features
-* **[Count Hardware Events](docs/recording.md)**: Integrate performance monitoring into your application. Configure, start, and stop hardware counters to profile specific code segments.
-* **[Sampling](docs/sampling.md)**: Leverage sampling to record performance data periodically, e.g., instruction pointers, memory addresses, access latency, branches, and more.
-* **[Customizable Event Configuration](docs/counters.md)**: Use built-in hardware events (e.g., cycles, instructions, cache-misses) and those specific to your underlying CPU. Additionally, define and utilize  **[Metrics](docs/metrics.md)**–quantitative measurements like *cycles per instruction*–to gain deeper insights into performance and efficiency.
+* **[Count Hardware Events](docs/recording.md)**: Integrate performance monitoring (like `perf stat`) into your application. Configure, start, and stop hardware counters to profile specific code segments.
+* **[Record Samples](docs/sampling.md)**: Leverage sampling to record performance data periodically (like `perf [mem] record`). Record, for instance, *instruction pointers*, *memory addresses*, *access latency*, *branches*, and more directly from the application.
+* **[Customizable Event Configuration](docs/counters.md)**: Use built-in hardware events (e.g., *cycles*, *instructions*, *cache-misses*) and those specific to your underlying CPU. Additionally, define and utilize  **[Metrics](docs/metrics.md)**–quantitative measurements like *cycles per instruction*–to gain deeper insights into performance and efficiency.
 * **[Practical Examples](examples/README.md)**: Jumpstart your implementation with the diverse collection of examples that demonstrate practical applications of the library.
 
 
