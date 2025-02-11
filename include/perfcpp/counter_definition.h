@@ -32,6 +32,8 @@ public:
   /**
    * Adds an event with the given name and configuration.
    *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/counters.md
+   *
    * @param name Name of the event.
    * @param type Type of the event.
    * @param event_id Id of the event.
@@ -44,6 +46,8 @@ public:
   /**
    * Adds a RAW event with the given name and configuration.
    *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/counters.md
+   *
    * @param name Name of the event.
    * @param event_id Id of the event.
    */
@@ -55,6 +59,8 @@ public:
   /**
    * Adds an event with the given name and configuration.
    *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/counters.md
+   *
    * @param config Config of the event.
    */
   void add(std::string&& name, CounterConfig config)
@@ -64,6 +70,8 @@ public:
 
   /**
    * Adds a metric with the given name.
+   *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/metrics.md
    *
    * @param name Name of the metric.
    * @param metric Metric.
@@ -76,12 +84,16 @@ public:
   /**
    * Adds a metric. The name is provided by the metric.
    *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/metrics.md
+   *
    * @param metric Metric.
    */
   void add(std::unique_ptr<Metric>&& metric) { _metrics.insert(std::make_pair(metric->name(), std::move(metric))); }
 
   /**
    * Adds a formula metric with the given name and formula.
+   *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/metrics.md#using-formulas
    *
    * @param name Name of the metric.
    * @param formula Expression of the metric.

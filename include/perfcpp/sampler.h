@@ -29,42 +29,98 @@ public:
     friend MultiCoreSampler;
 
   public:
+    /**
+     * Manage to include the instruction pointer into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#instruction-pointer
+     *
+     * @param include True, if the instruction pointer should be included.
+     * @return The Values instance.
+     */
     Values& instruction_pointer(const bool include) noexcept
     {
       set(PERF_SAMPLE_IP, include);
       return *this;
     }
 
+    /**
+     * Manage to include the thread id into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#id-of-the-recording-thread
+     *
+     * @param include True, if the thread id should be included.
+     * @return The Values instance.
+     */
     Values& thread_id(const bool include) noexcept
     {
       set(PERF_SAMPLE_TID, include);
       return *this;
     }
 
+    /**
+     * Manage to include a timestamp into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#time
+     *
+     * @param include True, if the timestamp should be included.
+     * @return The Values instance.
+     */
     Values& time(const bool include) noexcept
     {
       set(PERF_SAMPLE_TIME, include);
       return *this;
     }
 
+    /**
+     * Manage to include the logical memory address into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#logical-memory-address
+     *
+     * @param include True, if the logical memory address should be included.
+     * @return The Values instance.
+     */
     Values& logical_memory_address(const bool include) noexcept
     {
       set(PERF_SAMPLE_ADDR, include);
       return *this;
     }
 
+    /**
+     * Manage to include the stream id into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#stream-id
+     *
+     * @param include True, if the stream id should be included.
+     * @return The Values instance.
+     */
     Values& stream_id(const bool include) noexcept
     {
       set(PERF_SAMPLE_STREAM_ID, include);
       return *this;
     }
 
+    /**
+     * Manage to include raw data into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#raw-values
+     *
+     * @param include True, if the raw data should be included.
+     * @return The Values instance.
+     */
     Values& raw(const bool include) noexcept
     {
       set(PERF_SAMPLE_RAW, include);
       return *this;
     }
 
+    /**
+     * Manage to include hardware counter values into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#performance-counter-values
+     *
+     * @param include True, if hardware counter values should be included.
+     * @return The Values instance.
+     */
     Values& counter(std::vector<std::string>&& counter_names) noexcept
     {
       _counter_names = std::move(counter_names);
@@ -72,12 +128,28 @@ public:
       return *this;
     }
 
+    /**
+     * Manage to include the callchain into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#callchain
+     *
+     * @param include True, if the callchain should be included.
+     * @return The Values instance.
+     */
     Values& callchain(const bool include) noexcept
     {
       set(PERF_SAMPLE_CALLCHAIN, include);
       return *this;
     }
 
+    /**
+     * Manage to include the callchain into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#callchain
+     *
+     * @param max_call_stack The maximum call stack size to include.
+     * @return The Values instance.
+     */
     Values& callchain(const std::uint16_t max_call_stack) noexcept
     {
       _max_call_stack = max_call_stack;
@@ -85,18 +157,42 @@ public:
       return *this;
     }
 
+    /**
+     * Manage to include the cpu id into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#id-of-the-recording-cpu
+     *
+     * @param include True, if the cpu id should be included.
+     * @return The Values instance.
+     */
     Values& cpu_id(const bool include) noexcept
     {
       set(PERF_SAMPLE_CPU, include);
       return *this;
     }
 
+    /**
+     * Manage to include the period into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#period
+     *
+     * @param include True, if the period should be included.
+     * @return The Values instance.
+     */
     Values& period(const bool include) noexcept
     {
       set(PERF_SAMPLE_PERIOD, include);
       return *this;
     }
 
+    /**
+     * Manage to include branch stacks into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#branch-stack-lbr
+     *
+     * @param branch_types List of branch types to include.
+     * @return The Values instance.
+     */
     Values& branch_stack(std::vector<BranchType>&& branch_types) noexcept
     {
       this->_branch_mask = std::uint64_t{ 0U };
@@ -108,6 +204,14 @@ public:
       return *this;
     }
 
+    /**
+     * Manage to include user-level registers into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-user-level
+     *
+     * @param registers List of registers to include.
+     * @return The Values instance.
+     */
     Values& user_registers(Registers registers) noexcept
     {
       _user_registers = registers;
@@ -115,30 +219,70 @@ public:
       return *this;
     }
 
+    /**
+     * Manage to include latency information into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#memory-access-latency
+     *
+     * @param include True, if latency information should be included.
+     * @return The Values instance.
+     */
     Values& weight(const bool include) noexcept
     {
       set(PERF_SAMPLE_WEIGHT, include);
       return *this;
     }
 
+    /**
+     * Manage to include the data source for memory addresses into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#data-source-of-a-memory-load
+     *
+     * @param include True, if the data source should be included.
+     * @return The Values instance.
+     */
     Values& data_src(const bool include) noexcept
     {
       set(PERF_SAMPLE_DATA_SRC, include);
       return *this;
     }
 
+    /**
+     * Manage to include transaction abort reasons into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#transaction-abort
+     *
+     * @param include True, if transaction aborts should be included.
+     * @return The Values instance.
+     */
     Values& transaction_abort(const bool include) noexcept
     {
       set(PERF_SAMPLE_TRANSACTION, include);
       return *this;
     }
 
+    /**
+     * Manage to include the ID into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#identifier
+     *
+     * @param include True, if the ID should be included.
+     * @return The Values instance.
+     */
     Values& identifier(const bool include) noexcept
     {
       set(PERF_SAMPLE_IDENTIFIER, include);
       return *this;
     }
 
+    /**
+     * Manage to include kernel-level registers into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-kernel-level
+     *
+     * @param registers List of registers to include.
+     * @return The Values instance.
+     */
     Values& kernel_registers(Registers registers) noexcept
     {
       _kernel_registers = registers;
@@ -146,6 +290,14 @@ public:
       return *this;
     }
 
+    /**
+     * Manage to include the user stack (as a list of bytes) into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#user-stack
+     *
+     * @param max_stack_size The maximum size of the stack.
+     * @return The Values instance.
+     */
     Values& user_stack(const std::uint32_t max_stack_size) noexcept
     {
       _max_user_stack = max_stack_size;
@@ -153,6 +305,14 @@ public:
       return *this;
     }
 
+    /**
+     * Manage to include the physical memory address into samples (only available since Linux 4.13).
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#physical-memory-address
+     *
+     * @param include True, if the physical memory address should be included.
+     * @return The Values instance.
+     */
     Values& physical_memory_address([[maybe_unused]] const bool include) noexcept
     {
 #ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR /// Sampling for physical memory address is supported since Linux 4.13
@@ -161,6 +321,14 @@ public:
       return *this;
     }
 
+    /**
+     * Manage to include the cgroup into samples (only available since Linux 5.7).
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#cgroup
+     *
+     * @param include True, if the cgroup should be included.
+     * @return The Values instance.
+     */
     Values& cgroup([[maybe_unused]] const bool include) noexcept
     {
 #ifndef PERFCPP_NO_SAMPLE_CGROUP /// Sampling cgroup is supported since Linux 5.7
@@ -169,6 +337,14 @@ public:
       return *this;
     }
 
+    /**
+     * Manage to include the data page size of memory accesses into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#size-of-the-data-page
+     *
+     * @param include True, if the data page size should be included.
+     * @return The Values instance.
+     */
     Values& data_page_size([[maybe_unused]] const bool include) noexcept
     {
 #ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE /// Sampling the data page size is supported since Linux 5.11
@@ -177,6 +353,14 @@ public:
       return *this;
     }
 
+    /**
+     * Manage to include the code page size into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#size-of-the-code-page
+     *
+     * @param include True, if the code page size should be included.
+     * @return The Values instance.
+     */
     Values& code_page_size([[maybe_unused]] const bool include) noexcept
     {
 #ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE /// Sampling the code page size is supported since Linux 5.11
@@ -185,6 +369,14 @@ public:
       return *this;
     }
 
+    /**
+     * Manage to include latency information into samples (only from Linux 5.12).
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#memory-access-latency
+     *
+     * @param include True, if latency information should be included.
+     * @return The Values instance.
+     */
     Values& weight_struct([[maybe_unused]] const bool include) noexcept
     {
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
@@ -194,6 +386,14 @@ public:
       return *this;
     }
 
+    /**
+     * Manage to include latency information into samples. This is a wrapper for weight (until Linux 5.12) and weight_struct (since Linux 5.13)
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#memory-access-latency
+     *
+     * @param include True, if latency information should be included.
+     * @return The Values instance.
+     */
     Values& latency([[maybe_unused]] const bool include) noexcept
     {
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
@@ -205,12 +405,28 @@ public:
       return *this;
     }
 
+    /**
+     * Manage to include context switches into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#context-switches
+     *
+     * @param include True, if context switches should be included.
+     * @return The Values instance.
+     */
     Values& context_switch(const bool include) noexcept
     {
       _is_include_context_switch = include;
       return *this;
     }
 
+    /**
+     * Manage to include throttling events into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#throttle-and-unthrottle-events
+     *
+     * @param include True, if throttling events should be included.
+     * @return The Values instance.
+     */
     Values& throttle(const bool include) noexcept
     {
       _is_include_throttle = include;

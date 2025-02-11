@@ -62,6 +62,8 @@ public:
   /**
    * If set, kernel-activity will be monitored.
    *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/perf-paranoid.md#adjusting-monitoring-configuration
+   *
    * @param is_include_kernel Flag indicating that kernel-activity should be monitored.
    */
   void include_kernel(const bool is_include_kernel) noexcept { _is_include_kernel = is_include_kernel; }
@@ -69,12 +71,16 @@ public:
   /**
    * If set, user-activity will be monitored.
    *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/perf-paranoid.md#adjusting-monitoring-configuration
+   *
    * @param is_include_user Flag indicating that user-activity should be monitored.
    */
   void include_user(const bool is_include_user) noexcept { _is_include_user = is_include_user; }
 
   /**
    * If set, user-activity will be monitored.
+   *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/perf-paranoid.md#adjusting-monitoring-configuration
    *
    * @param is_include_hypervisor Flag indicating that hypervisor-activity should be monitored.
    */
@@ -90,6 +96,8 @@ public:
   /**
    * If set, guest-activity will be monitored.
    *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/perf-paranoid.md#adjusting-monitoring-configuration
+   *
    * @param is_include_guest Flag indicating that guest-activity should be monitored.
    */
   void include_guest(const bool is_include_guest) noexcept { _is_include_guest = is_include_guest; }
@@ -98,6 +106,8 @@ public:
    * If debug is set to true (false by default), the counter configuration will be dumped to the console upon opening
    * the counter (in both sampling and monitoring mode). This is especially useful when debugging counter
    * configurations.
+   *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/recording.md#troubleshooting-counter-configurations
    *
    * @param is_debug If set to true, counter configurations will be dumped to console.
    */
@@ -159,6 +169,8 @@ public:
    * Default frequency to sample, if not specified along with a trigger. The frequency denotes to samples per second.
    * Note that either frequency or period can be specified.
    *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#period--frequency
+   *
    * @param frequency Frequency to sample (samples per second).
    */
   void frequency(const std::uint64_t frequency) noexcept { _period_or_frequency = Frequency{ frequency }; }
@@ -167,12 +179,16 @@ public:
    * Default period to sample, if not specified along with a trigger. The period denotes to one sample every <period>
    * trigger events. Note that either frequency or period can be specified.
    *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#period--frequency
+   *
    * @param period Period to sample (one sample every <period> eventy reported by the trigger).
    */
   void period(const std::uint64_t period) noexcept { _period_or_frequency = Period{ period }; }
 
   /**
    * Default precision for sampling, if not specified along with a trigger.
+   *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#precision
    *
    * @param precision Default precision for sampling.
    */
@@ -181,12 +197,16 @@ public:
   /**
    * Default precision for sampling, if not specified along with a trigger.
    *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#precision
+   *
    * @param precision Default precision for sampling.
    */
   void precision(const Precision precision) noexcept { _precise_ip = precision; }
 
   /**
    * Default precision for sampling, if not specified along with a trigger.
+   *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#precision
    *
    * @param precision Default precision for sampling.
    */
@@ -209,6 +229,8 @@ public:
 
   /**
    * Specifies the number of pages allocated for the user-level buffer that receives samples.
+   *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#sample-buffer
    *
    * @param buffer_pages Number of pages allocated for the user-level buffer that receives samples.
    */
