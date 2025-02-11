@@ -1,9 +1,11 @@
 #pragma once
 
+#include "exception.h"
 #include "feature.h"
 #include "sample.h"
 #include <cstdint>
 #include <linux/perf_event.h>
+#include <memory>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -23,11 +25,20 @@ public:
     , _count_pages(std::exchange(other._count_pages, 0U))
     , _application_buffers(std::move(other._application_buffers))
     , _poll_and_handle_ringbuffer_overflow_thread(
-        std::exchange(other._poll_and_handle_ringbuffer_overflow_thread, nullptr))
+        std::exchange(other._poll_and_handle_ringbuffer_overflow_thread, std::nullopt))
+    , _cancel_thread_event_file_descriptor(std::exchange(other._cancel_thread_event_file_descriptor, std::nullopt))
   {
   }
 
-  SampleBuffer(const SampleBuffer&) {}
+  /**
+   * The SampleBuffer should not be copied after initialization.
+   */
+  SampleBuffer(const SampleBuffer& other)
+  {
+    if (other._mmap_ringbuffer != nullptr) {
+      throw CannotCopySampleBuffer{};
+    }
+  }
 
   ~SampleBuffer();
 
@@ -35,7 +46,7 @@ public:
    * @return A list of (start,end) tuples for various buffers, i.e., the mmap-ed ringbuffer and all application-level
    * buffers where data was copied to whenever the mmap-ed buffer was near to overflowing.
    */
-  [[nodiscard]] std::vector<std::pair<std::uintptr_t, std::uintptr_t>> iterators() const;
+  [[nodiscard]] std::vector<std::pair<std::uintptr_t, std::uintptr_t>> buffer_ranges() const;
 
   /**
    * Reads the counter "live" without stopping via the "rdpmc" instruction.
@@ -65,10 +76,10 @@ private:
 
   /// Thread that is notified when the buffer is near to full and copies the data into a separated application-level
   /// buffer.
-  std::thread* _poll_and_handle_ringbuffer_overflow_thread{ nullptr };
+  std::optional<std::thread> _poll_and_handle_ringbuffer_overflow_thread;
 
   /// File descriptor used to cancel the ::select call the poll_and_handle thread is blocked by.
-  std::optional<std::int32_t> _cancel_thread_event_file_descriptor;
+  std::optional<std::int32_t> _cancel_thread_event_file_descriptor{ std::nullopt };
 
   /**
    * Copies the data from the mmap-ed ringbuffer into an application-level buffer in order to free up some space in the

@@ -165,15 +165,15 @@ public:
   /**
    * @return User-level buffer of the first counter (if not nullptr) or the second counter.
    */
-  [[nodiscard]] std::vector<std::pair<std::uintptr_t, std::uintptr_t>> sample_buffer_iterators() const
+  [[nodiscard]] std::vector<std::pair<std::uintptr_t, std::uintptr_t>> sample_buffer_ranges() const
   {
     if (!_members.empty()) {
       if (_members[0U].user_level_buffer().has_value()) {
-        return _members[0U].user_level_buffer()->iterators();
+        return _members[0U].user_level_buffer()->buffer_ranges();
       }
 
       if (_members.size() > 1U && _members[0U].user_level_buffer().has_value()) {
-        return _members[1U].user_level_buffer()->iterators();
+        return _members[1U].user_level_buffer()->buffer_ranges();
       }
     }
 

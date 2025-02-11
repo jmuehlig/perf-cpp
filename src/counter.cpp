@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstring>
-#include <iomanip>
 #include <iostream>
 #include <perfcpp/counter.h>
 #include <perfcpp/exception.h>
@@ -64,17 +63,7 @@ perf::Counter::open(const perf::Config& config,
         this->_event_attribute.sample_id_all = 1U;
 
         /// Set period of frequency, based on the PeriodOrFrequency variant.
-        std::visit(
-          [&event_attribute = this->_event_attribute](const auto period_or_frequency) {
-            using T = std::decay_t<decltype(period_or_frequency)>;
-            if constexpr (std::is_same_v<T, class Period>) {
-              event_attribute.sample_period = period_or_frequency.get();
-            } else if constexpr (std::is_same_v<T, class Frequency>) {
-              event_attribute.freq = true;
-              event_attribute.sample_period = period_or_frequency.get();
-            }
-          },
-          this->_config.period_or_frequency().value());
+        Counter::set_period_or_frequency(this->_event_attribute, this->_config.period_or_frequency().value());
 
         /// Set sampled fields.
         this->_event_attribute.branch_sample_type = branch_type.value_or(0ULL);
@@ -179,6 +168,23 @@ void
 perf::Counter::disable() const
 {
   ::ioctl(static_cast<std::int32_t>(this->_file_descriptor), PERF_EVENT_IOC_DISABLE, 0);
+}
+
+void
+perf::Counter::set_period_or_frequency(perf_event_attr& event_attribute,
+                                       const perf::PeriodOrFrequency& period_or_frequency)
+{
+  std::visit(
+    [&event_attribute](const auto period_or_frequency) {
+      using T = std::decay_t<decltype(period_or_frequency)>;
+      if constexpr (std::is_same_v<T, class Period>) {
+        event_attribute.sample_period = period_or_frequency.get();
+      } else if constexpr (std::is_same_v<T, class Frequency>) {
+        event_attribute.freq = true;
+        event_attribute.sample_period = period_or_frequency.get();
+      }
+    },
+    period_or_frequency);
 }
 
 std::int64_t

@@ -1,6 +1,5 @@
 #include <cstring>
 #include <iostream>
-#include <perfcpp/exception.h>
 #include <perfcpp/hardware_info.h>
 #include <perfcpp/sample_buffer.h>
 #include <sys/eventfd.h>
@@ -52,28 +51,35 @@ perf::SampleBuffer::SampleBuffer(const std::int32_t file_descriptor, std::uint64
       throw CannotCreateEventFileDescriptor{ file_descriptor };
     }
 
-    this->_poll_and_handle_ringbuffer_overflow_thread =
-      new std::thread(&SampleBuffer::poll_for_ringbuffer_overflow,
-                      this,
-                      file_descriptor,
-                      this->_cancel_thread_event_file_descriptor.value());
+    /// Allocate some space for application-level buffers.
+    this->_application_buffers.reserve(32U);
+
+    /// Create the handle thread.
+    this->_poll_and_handle_ringbuffer_overflow_thread = std::thread(&SampleBuffer::poll_for_ringbuffer_overflow,
+                                                                    this,
+                                                                    file_descriptor,
+                                                                    this->_cancel_thread_event_file_descriptor.value());
   }
 }
 
 perf::SampleBuffer::~SampleBuffer()
 {
   /// Notify the thread that copies data from the mmap-ed buffer into application-level buffers to cancel.
-  if (this->_cancel_thread_event_file_descriptor.has_value()) {
-    ::eventfd_write(this->_cancel_thread_event_file_descriptor.value(), 1);
+  if (const auto cancel_file_descriptor = std::exchange(this->_cancel_thread_event_file_descriptor, std::nullopt);
+      cancel_file_descriptor.has_value()) {
+    ::eventfd_write(cancel_file_descriptor.value(), 1);
 
     /// Wait for the thread to return.
-    if (auto* copy_buffer_thread = std::exchange(this->_poll_and_handle_ringbuffer_overflow_thread, nullptr);
-        copy_buffer_thread != nullptr) {
-      copy_buffer_thread->join();
+    if (this->_poll_and_handle_ringbuffer_overflow_thread.has_value()) {
+      this->_poll_and_handle_ringbuffer_overflow_thread->join();
+      this->_poll_and_handle_ringbuffer_overflow_thread.reset();
     }
+
+    /// Close the cancel file descriptor.
+    ::close(cancel_file_descriptor.value());
   }
 
-  /// Close/un-map the mmap-ed buffer, if any.
+  /// Close/un-map the mmap-ed buffer and set number of pages to zero, if any.
   if (auto* const user_level_buffer = std::exchange(this->_mmap_ringbuffer, nullptr); user_level_buffer != nullptr) {
     if (const auto user_level_buffer_pages = std::exchange(this->_count_pages, 0ULL); user_level_buffer_pages > 0ULL) {
       ::munmap(user_level_buffer, user_level_buffer_pages * HardwareInfo::memory_page_size());
@@ -82,7 +88,7 @@ perf::SampleBuffer::~SampleBuffer()
 }
 
 std::vector<std::pair<std::uintptr_t, std::uintptr_t>>
-perf::SampleBuffer::iterators() const
+perf::SampleBuffer::buffer_ranges() const
 {
   /// List of (start, end) pointers for different buffers (application-level and mmap-ed ringbuffer).
   auto iterators = std::vector<std::pair<std::uintptr_t, std::uintptr_t>>{};
@@ -100,8 +106,8 @@ perf::SampleBuffer::iterators() const
     const auto data_start = std::uintptr_t(this->_mmap_ringbuffer) + HardwareInfo::memory_page_size();
 
     /// Align head and tail to the data size in case one or both are wrapped.
-    const auto head_aligned = this->_mmap_ringbuffer->data_tail % data_size;
-    const auto tail_aligned = this->_mmap_ringbuffer->data_size % data_size;
+    const auto head_aligned = this->_mmap_ringbuffer->data_head % data_size;
+    const auto tail_aligned = this->_mmap_ringbuffer->data_tail % data_size;
 
     /// When the tail is behind the head, we can read the samples straightforward.
     if (tail_aligned < head_aligned) {

@@ -320,4 +320,14 @@ public:
   ~CannotCreateEventFileDescriptor() override = default;
 };
 
+class CannotCopySampleBuffer final : public std::runtime_error
+{
+public:
+  CannotCopySampleBuffer()
+    : std::runtime_error{ "Cannot copy sample buffer after initialization." }
+  {
+  }
+  ~CannotCopySampleBuffer() override = default;
+};
+
 }

@@ -298,17 +298,17 @@ perf::Sampler::result(const bool sort_by_time) const
   for (const auto& sample_counter : this->_sample_counter) {
 
     /// Get all buffers: the current mmap-ed ringbuffer and the application-level buffers used to copy the ringbuffer to
-    const auto buffer_iterators = sample_counter.group().sample_buffer_iterators();
+    const auto buffer_ranges = sample_counter.group().sample_buffer_ranges();
 
     /// Read samples from all the buffers (mmap-ed perf buffer and application-level buffers).
-    for (const auto& [start, end] : buffer_iterators) {
+    for (const auto& [start, end] : buffer_ranges) {
       auto iterator = start;
 
       /// Scan over all samples stored in the user-level buffer.
       while (iterator < end) {
         auto entry = SampleBuffer::Entry{ iterator };
 
-        if (entry.size() < 1ULL) {
+        if (entry.size() == 0ULL) {
           break;
         }
 
@@ -446,7 +446,7 @@ perf::Sampler::read_sample_event(perf::SampleBuffer::Entry entry, const SampleCo
 
   if (this->_values.is_set(PERF_SAMPLE_STACK_USER)) {
     const auto size = entry.read<std::uint64_t>();
-    auto* stack_data = entry.read<char>(size);
+    const auto* stack_data = entry.read<char>(size);
     const auto dyn_size = size > 0ULL ? entry.read<std::uint64_t>() : 0ULL;
 
     sample.user_stack(std::vector<char>{ stack_data, stack_data + dyn_size });

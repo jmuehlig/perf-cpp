@@ -168,6 +168,14 @@ private:
   std::optional<SampleBuffer> _sample_buffer{ std::nullopt };
 
   /**
+   * Sets the frequency flag if the given value is a frequency and updates the appropriate value of the event attribute.
+   *
+   * @param event_attribute Perf event attribute to update.
+   * @param period_or_frequency Frequency or period to set.
+   */
+  static void set_period_or_frequency(perf_event_attr& event_attribute, const PeriodOrFrequency& period_or_frequency);
+
+  /**
    * Do the "final" perf_event_open system call with the provided parameters.
    *
    * @param process_id ID of the process to monitor.
