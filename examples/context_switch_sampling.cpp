@@ -17,7 +17,7 @@ main()
 
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
-  perf_config.period(10000U); /// Record every 10,000th event.
+  perf_config.period(8000U); /// Record every 8,000th event.
 
   auto sampler = perf::Sampler{ counter_definitions, perf_config };
 

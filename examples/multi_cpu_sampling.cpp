@@ -22,7 +22,7 @@ main()
 
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
-  perf_config.period(5000000U); /// Record every 5,000,000th event.
+  perf_config.period(32000); /// Record every 32,000th event.
 
   /// Create a list of cpus to sample (all available, in this example).
   auto cpus_to_watch = std::vector<std::uint16_t>(std::min(4U, std::thread::hardware_concurrency()));

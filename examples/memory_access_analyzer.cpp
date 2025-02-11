@@ -19,9 +19,9 @@ main()
 
   /// Setup which counters trigger the writing of samples (depends on the underlying hardware substrate).
   if (perf::HardwareInfo::is_amd_ibs_supported()) {
-    sampler.trigger("ibs_op_uops", perf::Precision::MustHaveZeroSkid, perf::Period{ 16000U });
+    sampler.trigger("ibs_op_uops", perf::Precision::MustHaveZeroSkid, perf::Period{ 8000U });
   } else if (perf::HardwareInfo::is_intel()) {
-    sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid, perf::Period{ 1000U });
+    sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid, perf::Period{ 2000U });
   } else {
     std::cout << "Error: Memory sampling is not supported on this CPU." << std::endl;
     return 1;
@@ -33,7 +33,7 @@ main()
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
-                                                   /* create benchmark of 512 MB */ 512U };
+                                                   /* create benchmark of 2 GB */ 2024U };
 
   /// Start sampling.
   try {
