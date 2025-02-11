@@ -102,7 +102,11 @@ perf::SampleBuffer::buffer_ranges() const
   /// Add the mmap-ed buffer.
   if (this->_mmap_ringbuffer != nullptr) {
     /// Read size and start position.
+#ifndef PERFCPP_NO_MMAP_DATA_SIZE /// The "data_size" attribute was added in Linux 4.1.
     const auto data_size = this->_mmap_ringbuffer->data_size;
+#else
+    const auto data_size = (this->_count_pages - 1U) * HardwareInfo::memory_page_size();
+#endif
     const auto data_start = std::uintptr_t(this->_mmap_ringbuffer) + HardwareInfo::memory_page_size();
 
     /// Align head and tail to the data size in case one or both are wrapped.
@@ -222,7 +226,11 @@ perf::SampleBuffer::copy_perf_ringbuffer_into_application_buffer()
   const auto data_start = std::uintptr_t(this->_mmap_ringbuffer) + HardwareInfo::memory_page_size();
   const auto head = __atomic_load_n(&this->_mmap_ringbuffer->data_head, __ATOMIC_ACQUIRE);
   const auto tail = this->_mmap_ringbuffer->data_tail;
+#ifndef PERFCPP_NO_MMAP_DATA_SIZE /// The "data_size" attribute was added in Linux 4.1.
   const auto data_size = this->_mmap_ringbuffer->data_size;
+#else
+  const auto data_size = (this->_count_pages - 1U) * HardwareInfo::memory_page_size();
+#endif
 
   /// Align head and tail to the data size in case one or both are wrapped. Note: Both aligned values are offsets of
   /// data_start.
