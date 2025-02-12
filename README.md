@@ -1,16 +1,16 @@
 # perf-cpp: Access Performance Counters from C++ Applications
-*perf-cpp* is a powerful C++ library that provides **direct access to hardware performance counters** from the application.
+*perf-cpp* provides **direct access to hardware performance counters** from your C++ application.
 The library allows for precise event-counting and sampling of specific code segments and to link sampled data (e.g., memory addresses) with application-specific details (e.g., class instances).
 
 ## Key Features
-* **[Count Hardware Events](docs/recording.md)**: Integrate performance monitoring (like `perf stat`) into your application. Configure, start, and stop hardware counters to profile specific code segments.
-* **[Record Samples](docs/sampling.md)**: Leverage sampling to record performance data periodically (like `perf [mem] record`). Record, for instance, *instruction pointers*, *memory addresses*, *access latency*, *branches*, and more directly from the application.
-* **[Customizable Event Configuration](docs/counters.md)**: Use built-in hardware events (e.g., *cycles*, *instructions*, *cache-misses*) and those specific to your underlying CPU. Additionally, define and utilize  **[Metrics](docs/metrics.md)**–quantitative measurements like *cycles per instruction*–to gain deeper insights into performance and efficiency.
+* **[Count Hardware Events](docs/recording.md)**: Seamlessly embed performance statistics (similar to `perf stat`) into your app and profile specific code segments instead of the entire application. *perf-cpp* also supports **[Metrics](docs/metrics.md)** (e.g., *cycles per instruction*) and **[Accessing Statistics in Realtime](docs/recording-live-events.md)**.
+* **[Record Samples](docs/sampling.md)**: Periodically capture profiling data–such as instruction pointers and memory accesses–directly from your application (similar to `perf [mem] record`).
+* **[Customizable Event Configuration](docs/counters.md)**: Mix built-in events (e.g., *cycles*, *instructions*, *cache-misses*) with CPU-specific ones.
 * **[Practical Examples](examples/README.md)**: Jumpstart your implementation with the diverse collection of examples that demonstrate practical applications of the library.
 
 
-## Quick Start
-Get up and running with *perf-cpp* in seconds:
+## Building
+*perf-cpp* is designed as a library that can be linked to your application.
 
 ```bash
 # Clone the repository
@@ -30,7 +30,8 @@ cmake --build build
 cmake --build build --target examples
 ```
 
-For detailed building instructions, including how to integrate *perf-cpp* into your *CMake* projects, visit our **[build guide](docs/build.md)**.
+> [!NOTE]
+> Further information and detailed building instructions (e.g., how to integrate into *CMake* projects) are available in the **[Building Guide](docs/build.md)**.
 
 ## Usage Examples
 ### Count Hardware Events
@@ -66,7 +67,9 @@ cycles:       4.70254e+08
 cache-misses: 1.35633e+07
 ```
 
-For further details, including how to count events in parallel settings, visit our **[guide on recording events](docs/recording.md)**.
+> [!NOTE]
+> For additional insights please refer to the **[Recording Events Guide](docs/recording.md)**. 
+> Also, check out the **[Hardware Events Documentation](docs/counters.md)** for comprehensive details on both built-in and hardware-specific events.
 
 ### Record Samples
 Implement detailed sampling with control over the recorded content:
@@ -115,12 +118,14 @@ Time = 365449131112591 | CPU = 8 | Instruction = 0x5a6e84b2075c
 Time = 365449131312005 | CPU = 8 | Instruction = 0x64af7417c75c 
 ```
 
-For further details, for example, which metrics can be included into samples, visit our **[sampling guide](docs/sampling.md)**.
+> [!NOTE]
+> For additional details—such as the types of data that can be included in samples—please consult the **[Sampling Guide](docs/sampling.md)**.
 
 ### Advanced Examples
 We include a comprehensive collection of examples demonstrating the advanced capabilities of *perf-cpp*, including, for example, [counting events in parallel settings](examples/multi_thread.cpp) and [sampling memory accesses](examples/address_sampling.cpp).
 
-All code examples are available in the [examples/](examples) folder.
+> [!TIP]
+> All code examples are available in the [examples/](examples) folder.
 
 
 ## Further Reading
