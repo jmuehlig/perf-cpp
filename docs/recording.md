@@ -31,7 +31,8 @@ try {
 }
 ```
 
-**Note**: The `perf::CounterDefinition` instance is used to store event configurations (e.g., names) and passed as a reference.
+> [!IMPORTANT] 
+> The `perf::CounterDefinition` instance is used to store event configurations (e.g., names) and passed as a reference.
 Consequently, the instance needs to be alive while using the `EventCounter` ([as described here](counters.md)).
 
 ## Initializing the Hardware Counters *(optional)*

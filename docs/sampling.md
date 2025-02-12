@@ -71,7 +71,8 @@ sampler.trigger("cycles");
 sampler.values().time(true).instruction_pointer(true);
 ```
 
-**Note**: The `perf::CounterDefinition` instance is used to store event configurations (e.g., names) and passed as a reference.
+> [!IMPORTANT]
+> The `perf::CounterDefinition` instance is used to store event configurations (e.g., names) and passed as a reference.
 Consequently, the instance needs to be alive while using the `Sampler` ([as described here](counters.md)).
 
 ## Initializing the Sampler *(optional)*
@@ -163,7 +164,8 @@ When configuring event-based sampling, it's important to understand that differe
 Intel CPUs are generally flexible and allow almost every event as a trigger.
 On AMD systems, the range of events that can trigger samples is more restricted: Typically, only the `cycles` event and specific IBS events such as `ibs_fetch` and `ibs_op` are supported.
 
-For more detailed information on configuring event-based sampling for different CPU types and specific notes on memory sampling, refer to the section: [Specific Notes for different CPU Vendors](#specific-notes-for-different-cpu-vendors).
+> [!TIP]
+> For more detailed information on configuring event-based sampling for different CPU types and specific notes on memory sampling, refer to the section: [Specific Notes for different CPU Vendors](#specific-notes-for-different-cpu-vendors).
 
 ## Precision
 Due to deeply pipelined processors, samples might not be precise, i.e., a sample might contain an instruction pointer or memory address that did not generate the overflow (&rarr; see [a blogpost on easyperf.net](https://easyperf.net/blog/2019/04/03/Precise-timing-of-machine-code-with-Linux-perf) and [the perf documentation](https://man7.org/linux/man-pages/man2/perf_event_open.2.html)).
@@ -189,7 +191,8 @@ auto sampler = perf::Sampler{ counter_definitions, sample_config };
 sampler.trigger("cycles");
 ```
 
-**Note**: If the precision setting is too high and the perf subsystem fails to activate the trigger, *perf-cpp* will automatically reduce the precision. 
+> [!NOTE]
+> If the precision setting is too high and the perf subsystem fails to activate the trigger, *perf-cpp* will automatically reduce the precision. 
 However, it will not increase precision autonomously.
 
 ## Period / Frequency
@@ -263,7 +266,8 @@ for (const auto& sample_record : sampler.results()) {
 }
 ```
 
-**Note**: Most fields of the `sample_record` are *optional* – recording these fields must be activated via `sampler.values()`.
+> [!NOTE]
+> Most fields of the `sample_record` are *optional* – recording these fields must be activated via `sampler.values()`.
 
 ### Time
 The timestamp of capturing the sample.
@@ -423,7 +427,8 @@ Although *perf-cpp* supports both fields, for more simplicity, you can use the `
 
 &rarr; [See code example](../examples/address_sampling.cpp)
 
-**Note** that memory sampling depends on the underlying sampling mechanism. &rarr; [See hardware-specific information (e.g., Intel PEBS vs AMD IBS)](#specific-notes-for-different-cpu-vendors)
+> [!NOTE]
+> Memory sampling depends on the underlying sampling mechanism. &rarr; [See hardware-specific information (e.g., Intel PEBS vs AMD IBS)](#specific-notes-for-different-cpu-vendors)
 
 ### Data Source of a Memory Load
 Data source where the data was sampled (e.g., local mem, remote mem, L1d, L2, ...).
