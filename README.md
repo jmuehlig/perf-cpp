@@ -3,7 +3,7 @@
 The library allows for precise event-counting and sampling of specific code segments and to link sampled data (e.g., memory addresses) with application-specific details (e.g., class instances).
 
 ## Key Features
-* **[Count Hardware Events](docs/recording.md)**: Seamlessly embed performance statistics (similar to `perf stat`) into your app and profile specific code segments instead of the entire application. *perf-cpp* also supports **[Metrics](docs/metrics.md)** (e.g., *cycles per instruction*) and **[Accessing Statistics in Realtime](docs/recording-live-events.md)**.
+* **[Count Hardware Events](docs/recording.md)**: Seamlessly embed performance statistics (similar to `perf stat`) into your app and profile specific code segments instead of the entire application. *perf-cpp* also supports **[Metrics](docs/metrics.md)** (e.g., *cycles per instruction*) and accessing **[Statistics in Realtime](docs/recording-live-events.md)**.
 * **[Record Samples](docs/sampling.md)**: Periodically capture profiling data–such as instruction pointers and memory accesses–directly from your application (similar to `perf [mem] record`).
 * **[Customizable Event Configuration](docs/counters.md)**: Mix built-in events (e.g., *cycles*, *instructions*, *cache-misses*) with CPU-specific ones.
 * **[Practical Examples](examples/README.md)**: Jumpstart your implementation with the diverse collection of examples that demonstrate practical applications of the library.
@@ -23,6 +23,7 @@ cd perf-cpp
 git checkout v0.9.0
 
 # Build the library (in build/)
+# Note: -DBUILD_EXAMPLES=1 is optional and only needed if you want to build the examples
 cmake . -B build -DBUILD_EXAMPLES=1
 cmake --build build
 
@@ -34,8 +35,9 @@ cmake --build build --target examples
 > Further information and detailed building instructions (e.g., how to integrate into *CMake* projects) are available in the **[Building Guide](docs/build.md)**.
 
 ## Usage Examples
-### Count Hardware Events
-Quickly set up hardware event monitoring:
+### Record Hardware Event Statistics
+Recording hardware event statistics operates much like `perf stat`: it quantifies critical events—such as executed *instructions*, CPU *cycles*, and *cache misses*–throughout a code segment's execution.
+
 ```cpp
 #include <perfcpp/event_counter.h>
 
@@ -68,11 +70,11 @@ cache-misses: 1.35633e+07
 ```
 
 > [!NOTE]
-> For additional insights please refer to the **[Recording Events Guide](docs/recording.md)**. 
-> Also, check out the **[Hardware Events Documentation](docs/counters.md)** for comprehensive details on both built-in and hardware-specific events.
+> For additional insights please refer to the guides on **[Recording Events](docs/recording.md)** and **[Recording Events on Multiple CPUs/Threads](docs/recording-parallel.md)**. 
+> Also, check out the **[Hardware Events](docs/counters.md)** documentation for comprehensive details on both built-in and hardware-specific events.
 
 ### Record Samples
-Implement detailed sampling with control over the recorded content:
+Recording samples functions much like `perf [mem] record`: it captures execution snapshots, e.g., the *instruction pointer*, executing *CPU*, and *timestamp*, at regular intervals (here every `4,000`th CPU cycle).
 
 ```cpp
 #include <perfcpp/sampler.h>
@@ -120,6 +122,7 @@ Time = 365449131312005 | CPU = 8 | Instruction = 0x64af7417c75c
 
 > [!NOTE]
 > For additional details—such as the types of data that can be included in samples—please consult the **[Sampling Guide](docs/sampling.md)**.
+> Additionally, consult the **[Sampling on Multiple CPUs/Threads Guide](docs/sampling-parallel.md)** for guidance on parallel sampling. 
 
 ### Advanced Examples
 We include a comprehensive collection of examples demonstrating the advanced capabilities of *perf-cpp*, including, for example, [counting events in parallel settings](examples/multi_thread.cpp) and [sampling memory accesses](examples/address_sampling.cpp).
