@@ -1,10 +1,10 @@
 # *perf-cpp*: Changelog
 
 ## v0.10.0 (WIP)
-* Add *auxiliary event* automatically if needed by the (Intel-) hardware.
-* Added [Memory Access Analyzer](docs/analyzing-memory-access-patterns), which maps sampled memory addresses to more complex data object instances.
-* Align the number of buffer pages needed for the sampling buffer automatically in case the number is not configured properly.
-* Copy sampled data from the mmap-ed perf buffer into application-level buffer whenever the buffer comes close to full. 
+* New feature: The *auxiliary event* is added automatically if required by the (Intel-) hardware (see the [documentation](docs/sampling.md#sapphire-rapids-and-beyond)).
+* New feature: The *Memory Access Analyzer* allows to describe complex data objects and maps sampled memory addresses in order to report latency and access information (see the [documentation](docs/analyzing-memory-access-patterns)).
+* The number of pages for the sampling buffer is now aligned automatically in case the number is not configured properly, i.e., a power of two plus one page for the header.
+* New feature: Copy sampled data from the mmap-ed perf buffer into application-level buffer whenever the buffer comes close to full (see the [documentation](docs/sampling.md#sample-buffer)). 
 
 ## v.0.9.0
 * Removed deprecated warnings about the sampling interface (and the *old* sampling interface).
