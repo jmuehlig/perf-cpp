@@ -1,6 +1,32 @@
 #include <perfcpp/metric_expression.h>
 #include <stack>
 
+std::string
+perf::Token::to_string() const
+{
+  switch (this->_type) {
+    case Type::ConstantNumber:
+      return std::string{ "constant(" }.append(std::to_string(_number.value())).append(")");
+    case Type::Identifier:
+      return std::string{ "identifier(" }.append(_text.value()).append(")");
+    case Type::Operator:
+      switch (this->_operator.value()) {
+        case Operator::Plus:
+          return "+";
+        case Operator::Minus:
+          return "-";
+        case Operator::Times:
+          return "*";
+        case Operator::Divide:
+          return "/";
+      }
+    case Type::LeftParenthesis:
+      return "(";
+    case Type::RightParenthesis:
+      return ")";
+  }
+}
+
 std::queue<perf::Token>
 perf::Tokenizer::tokenize() const
 {
@@ -132,6 +158,7 @@ perf::Tokenizer::read_identifier(std::size_t& position) const
 perf::Token
 perf::Tokenizer::read_operator(const char current_char) const
 {
+  /// Translate the given char into an operator, if it is one.
   switch (current_char) {
     case '+':
       return Token{ Operator::Plus };

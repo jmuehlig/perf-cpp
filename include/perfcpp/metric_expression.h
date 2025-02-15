@@ -14,6 +14,9 @@
 
 namespace perf {
 
+/**
+ * Representation of the supported operators.
+ */
 enum class Operator
 {
   Plus,
@@ -30,7 +33,19 @@ class MetricExpressionInterface
 public:
   MetricExpressionInterface() noexcept = default;
   virtual ~MetricExpressionInterface() = default;
+
+  /**
+   * Evaluates the metric with respect to the provided (hardware) counter result.
+   *
+   * @param result Result of hardware counters.
+   * @return The evaluated metric, if all required counters are available.
+   */
   [[nodiscard]] virtual std::optional<double> evaluate(const CounterResult& result) const = 0;
+
+  /**
+   * Adds names of hardware counters that are needed for this metric.
+   * @param hardware_counter_names Names of hardware counters needed to calculate the metric.
+   */
   virtual void add_required_hardware_counter(std::vector<std::string>& hardware_counter_names) const = 0;
 };
 
@@ -47,8 +62,14 @@ public:
 
   ~ConstantExpression() noexcept override = default;
 
+  /**
+   * @return The constant.
+   */
   [[nodiscard]] std::optional<double> evaluate(const CounterResult& /* result */) const override { return _value; }
 
+  /**
+   * For constant expressions, no further hardware counters are required.
+   */
   void add_required_hardware_counter(std::vector<std::string>& /* hardware_counter_names */) const override {}
 
 private:
@@ -68,11 +89,21 @@ public:
 
   ~IdentifierExpression() override = default;
 
+  /**
+   * An identifier refers to a specific counter or metric, i.e., evaluate returns the value of that counter or metric.
+   *
+   * @param result Result of hardware counters.
+   * @return The value of the counter/metric specified by the identifier.
+   */
   [[nodiscard]] std::optional<double> evaluate(const CounterResult& result) const override
   {
     return result.get(_identifier);
   }
 
+  /**
+   * Adds the identifier as required counter.
+   * @param hardware_counter_names List of required counters that will be augmented with the identifier.
+   */
   void add_required_hardware_counter(std::vector<std::string>& hardware_counter_names) const override
   {
     hardware_counter_names.push_back(_identifier);
@@ -98,6 +129,12 @@ public:
 
   ~BinaryExpression() override = default;
 
+  /**
+   * Evaluates a binary expression recursively, i.e., all sub expressions are also evaluated.
+   *
+   * @param result List of results.
+   * @return The evaluated metric, if all required counters are available in the result.
+   */
   [[nodiscard]] std::optional<double> evaluate(const CounterResult& result) const override
   {
     if (const auto left = this->_left->evaluate(result); left.has_value()) {
@@ -126,6 +163,11 @@ public:
     return std::nullopt;
   }
 
+  /**
+   * Adds all counters for both branches of the binary expression.
+   *
+   * @param hardware_counter_names List of hardware counters that will be augmented.
+   */
   void add_required_hardware_counter(std::vector<std::string>& hardware_counter_names) const override
   {
     _left->add_required_hardware_counter(hardware_counter_names);
@@ -137,6 +179,9 @@ private:
   std::unique_ptr<MetricExpressionInterface> _right;
 };
 
+/**
+ * A token represents a single constant, identifier, operator (like +,-, etc.), or parenthesis.
+ */
 class Token
 {
 public:
@@ -176,36 +221,30 @@ public:
   bool operator==(const Type type) const noexcept { return _type == type; }
   bool operator!=(const Type type) const noexcept { return _type != type; }
 
+  /**
+   * @return The type of the token.
+   */
   [[nodiscard]] Type type() const noexcept { return _type; }
-  [[nodiscard]] const std::optional<std::string>& text() const noexcept { return _text; }
+
+  /**
+   * @return The original text of the token.
+   */
   [[nodiscard]] std::optional<std::string>& text() noexcept { return _text; }
+
+  /**
+   * @return The number, if the token is a constant.
+   */
   [[nodiscard]] std::optional<double> number() const noexcept { return _number; }
+
+  /**
+   * @return The operator (e.g., + or -) if the token is an operator.
+   */
   [[nodiscard]] std::optional<Operator> operator_() const noexcept { return _operator; }
 
-  [[nodiscard]] std::string to_string() const
-  {
-    switch (_type) {
-      case Type::ConstantNumber:
-        return std::string{ "constant(" }.append(std::to_string(_number.value())).append(")");
-      case Type::Identifier:
-        return std::string{ "identifier(" }.append(_text.value()).append(")");
-      case Type::Operator:
-        switch (_operator.value()) {
-          case Operator::Plus:
-            return "+";
-          case Operator::Minus:
-            return "-";
-          case Operator::Times:
-            return "*";
-          case Operator::Divide:
-            return "/";
-        }
-      case Type::LeftParenthesis:
-        return "(";
-      case Type::RightParenthesis:
-        return ")";
-    }
-  }
+  /**
+   * @return A text representation of this token.
+   */
+  [[nodiscard]] std::string to_string() const;
 
 private:
   Type _type;
@@ -214,6 +253,9 @@ private:
   std::optional<Operator> _operator{ std::nullopt };
 };
 
+/**
+ * The Tokenizer translates a given input string into a queue of tokens.
+ */
 class Tokenizer
 {
 public:
@@ -309,9 +351,9 @@ private:
       case Operator::Times:
       case Operator::Divide:
         return true;
+      default:
+        return false;
     }
-
-    return false;
   }
 
   /**
