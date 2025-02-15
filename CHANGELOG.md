@@ -1,12 +1,12 @@
 # *perf-cpp*: Changelog
 
-## v0.10.0 (WIP)
+## v0.10.0
 * New feature: The *auxiliary event* is added automatically if required by the (Intel-) hardware (see the [documentation](docs/sampling.md#sapphire-rapids-and-beyond)).
 * New feature: The *Memory Access Analyzer* allows to describe complex data objects and maps sampled memory addresses in order to report latency and access information (see the [documentation](docs/analyzing-memory-access-patterns)).
 * The number of pages for the sampling buffer is now aligned automatically in case the number is not configured properly, i.e., a power of two plus one page for the header.
 * New feature: Copy sampled data from the mmap-ed perf buffer into application-level buffer whenever the buffer comes close to full (see the [documentation](docs/sampling.md#sample-buffer)). 
 
-## v.0.9.0
+## v0.9.0
 * Removed deprecated warnings about the sampling interface (and the *old* sampling interface).
 * New feature: Access interim results from counters without stopping the counter using [live counters](docs/recording-live-events.md).
 * New feature: Sampling the user stack (see the [documentation](docs/sampling.md#user-stack)).
