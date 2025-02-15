@@ -38,7 +38,7 @@ private:
    * @param error_code Error code raised when calling perf_event_open.
    * @return Error message that can be thrown to inform the user.
    */
-  [[nodiscard]] static std::string create_error_message_from_code(const std::int64_t error_code);
+  [[nodiscard]] static std::string create_error_message_from_code(std::int64_t error_code);
 };
 
 class MmapError final : public std::runtime_error
@@ -290,7 +290,9 @@ class CannotCopySampleBuffer final : public std::runtime_error
 {
 public:
   CannotCopySampleBuffer()
-    : std::runtime_error{ "Cannot copy sample buffer after initialization." }
+    : std::runtime_error{
+      "Cannot copy sample buffer after initialization. Did you try to copy the Sampler including a SampleBuffer?"
+    }
   {
   }
   ~CannotCopySampleBuffer() override = default;

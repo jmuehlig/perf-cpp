@@ -414,7 +414,8 @@ perf::EventCounter::result(const std::uint64_t normalization) const
 
   /// Turn the result of only hardware events into a result containing requested hardware events and metrics (which are
   /// calculated from hardware events).
-  return this->_requested_event_set.result(this->_counter_definitions, CounterResult{ std::move(event_values) }, normalization);
+  return this->_requested_event_set.result(
+    this->_counter_definitions, CounterResult{ std::move(event_values) }, normalization);
 }
 
 void
@@ -601,8 +602,8 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
 
   /// Turn the result of only aggregated hardware events into a result containing requested hardware events and metrics
   /// (which are calculated from hardware events).
-  return reference_event_set.result(reference_event_counter._counter_definitions,
-                                                             CounterResult{ std::move(aggregated_event_values) }, normalization);
+  return reference_event_set.result(
+    reference_event_counter._counter_definitions, CounterResult{ std::move(aggregated_event_values) }, normalization);
 }
 
 bool

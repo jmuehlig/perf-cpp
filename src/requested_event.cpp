@@ -39,7 +39,8 @@ perf::RequestedEventSet::adjust_visibility_if_present(const std::string_view eve
 
 perf::CounterResult
 perf::RequestedEventSet::result(const perf::CounterDefinition& counter_definition,
-                                perf::CounterResult&& hardware_events_result, const std::uint64_t normalization) const
+                                perf::CounterResult&& hardware_events_result,
+                                const std::uint64_t normalization) const
 {
   auto counter_results = std::vector<std::pair<std::string_view, double>>{};
 

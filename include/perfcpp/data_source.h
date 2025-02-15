@@ -422,7 +422,8 @@ public:
   /**
    * @return True, if access was a snoop forward.
    */
-  [[nodiscard]] bool is_snoopx_forward() const noexcept {
+  [[nodiscard]] bool is_snoopx_forward() const noexcept
+  {
 #ifndef PERFCPP_NO_MEM_SNOOPX /// Extended snoop field is supported since Linux 4.14
     return static_cast<bool>(snoopx() & PERF_MEM_SNOOPX_FWD);
 #else
@@ -433,8 +434,10 @@ public:
   /**
    * @return True, if access was a snoop peer.
    */
-  [[nodiscard]] bool is_snoopx_peer() const noexcept {
-#if !defined(PERFCPP_NO_MEM_SNOOPX) && !defined(PERFCPP_NO_MEM_SNOOPX_PEER) /// Peer attribute is supported since Linux 6.1
+  [[nodiscard]] bool is_snoopx_peer() const noexcept
+  {
+#if !defined(PERFCPP_NO_MEM_SNOOPX) &&                                                                                 \
+  !defined(PERFCPP_NO_MEM_SNOOPX_PEER) /// Peer attribute is supported since Linux 6.1
     return static_cast<bool>(snoopx() & PERF_MEM_SNOOPX_PEER);
 #else
     return 0ULL;

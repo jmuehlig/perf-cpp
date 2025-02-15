@@ -387,7 +387,8 @@ public:
     }
 
     /**
-     * Manage to include latency information into samples. This is a wrapper for weight (until Linux 5.12) and weight_struct (since Linux 5.13)
+     * Manage to include latency information into samples. This is a wrapper for weight (until Linux 5.12) and
+     * weight_struct (since Linux 5.13)
      *
      * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#memory-access-latency
      *

@@ -89,7 +89,8 @@ template<Operator OP>
 class BinaryExpression final : public MetricExpressionInterface
 {
 public:
-  BinaryExpression(std::unique_ptr<MetricExpressionInterface>&& left, std::unique_ptr<MetricExpressionInterface>&& right)
+  BinaryExpression(std::unique_ptr<MetricExpressionInterface>&& left,
+                   std::unique_ptr<MetricExpressionInterface>&& right)
     : _left(std::move(left))
     , _right(std::move(right))
   {
