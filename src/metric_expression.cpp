@@ -19,11 +19,15 @@ perf::Token::to_string() const
           return "*";
         case Operator::Divide:
           return "/";
+        default:
+          return "<unknown operator>";
       }
     case Type::LeftParenthesis:
       return "(";
     case Type::RightParenthesis:
       return ")";
+    default:
+      return "<unknown token>";
   }
 }
 
