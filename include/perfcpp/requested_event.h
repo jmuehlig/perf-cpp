@@ -47,11 +47,13 @@ public:
     TimeEvent
   };
 
-  RequestedEvent(const std::string_view name,
+  RequestedEvent(const std::optional<std::string_view> pmu_name,
+                 const std::string_view event_name,
                  const bool is_shown_in_results,
                  const Type type,
                  const std::optional<ScheduledHardwareCounterGroup> scheduled_group) noexcept
-    : _name(name)
+    : _pmu_name(pmu_name)
+    , _event_name(event_name)
     , _is_shown_in_results(is_shown_in_results)
     , _type(type)
     , _scheduled_hardware_counter_group(scheduled_group)
@@ -60,7 +62,8 @@ public:
 
   ~RequestedEvent() = default;
 
-  [[nodiscard]] std::string_view name() const noexcept { return _name; }
+  [[nodiscard]] std::optional<std::string_view> pmu_name() const noexcept { return _pmu_name; }
+  [[nodiscard]] std::string_view event_name() const noexcept { return _event_name; }
   [[nodiscard]] bool is_hardware_event() const noexcept { return _type == Type::HardwareEvent; }
   [[nodiscard]] bool is_metric() const noexcept { return _type == Type::Metric; }
   [[nodiscard]] bool is_time_event() const noexcept { return _type == Type::TimeEvent; }
@@ -73,8 +76,11 @@ public:
   void is_shown_in_results(const bool is_shown_in_results) noexcept { _is_shown_in_results = is_shown_in_results; }
 
 private:
+  /// Name of the PMU for hardware events. May be nullopt for metrics and time events.
+  std::optional<std::string_view> _pmu_name;
+
   /// Name of the event (references a string in the CounterDefinition).
-  std::string_view _name;
+  std::string_view _event_name;
 
   /// Indicates that the event is included into results. Some events are "only" requested by metrics and are only
   /// needed for calculating them but are not requested by the user.
@@ -106,13 +112,15 @@ public:
    * The event will be interpreted as a hardware event (since it is scheduled to a group) and marked as shown in
    * results.
    *
+   * @param pmu_name Name of the PMU.
    * @param event_name Name of the event.
    * @param in_group_position Position of the event within the group.
    * @return True, if the event was added. False, if the event was already in the event set.
    */
-  bool add(const std::string_view event_name, const std::uint8_t in_group_position)
+  bool add(const std::string_view pmu_name, const std::string_view event_name, const std::uint8_t in_group_position)
   {
-    return add(event_name,
+    return add(pmu_name,
+               event_name,
                true,
                RequestedEvent::Type::HardwareEvent,
                RequestedEvent::ScheduledHardwareCounterGroup{ in_group_position });
@@ -124,21 +132,42 @@ public:
    * change to true. Since the event is scheduled to a hardware counter group, the event will be interpreted as a
    * hardware event.
    *
+   * @param pmu_name Name of the PMU.
    * @param event_name Name of the event.
    * @param is_shown_in_results True, if the event should be visible in the results.
    * @param group_id Id of the group the event was scheduled to.
    * @param in_group_position Position of the event within the group.
    * @return True, if the event was added. False, if the event was already in the event set.
    */
-  bool add(const std::string_view event_name,
+  bool add(const std::string_view pmu_name,
+           const std::string_view event_name,
            const bool is_shown_in_results,
            const std::uint8_t group_id,
            const std::uint8_t in_group_position)
   {
-    return add(event_name,
+    return add(pmu_name,
+               event_name,
                is_shown_in_results,
                RequestedEvent::Type::HardwareEvent,
                RequestedEvent::ScheduledHardwareCounterGroup{ group_id, in_group_position });
+  }
+
+  /**
+   * Appends an event to the event set, if not present.
+   * The event will be interpreted as a metric (since it is not scheduled to any hardware counter group).
+   *
+   * @param pmu_name Name of the PMU.
+   * @param event_name Name of the event.
+   * @param type Type of the event (e.g., metric or time)
+   * @param is_shown_in_results True, if the event should be visible in the results.
+   * @return True, if the event was added. False, if the event was already in the event set.
+   */
+  bool add(std::optional<std::string_view> pmu_name,
+           const std::string_view event_name,
+           const RequestedEvent::Type type,
+           const bool is_shown_in_results)
+  {
+    return add(pmu_name, event_name, is_shown_in_results, type, std::nullopt);
   }
 
   /**
@@ -152,18 +181,21 @@ public:
    */
   bool add(const std::string_view event_name, const RequestedEvent::Type type, const bool is_shown_in_results)
   {
-    return add(event_name, is_shown_in_results, type, std::nullopt);
+    return add(std::nullopt, event_name, is_shown_in_results, type, std::nullopt);
   }
 
   /**
    * Checks if the event is present in the requested set. If so, set the visibility.
    * Otherwise, return false, indicating that the event needs to be added.
    *
+   * @param pmu_name Name of the PMU.
    * @param event_name Name of the event.
    * @param is_shown_in_results The visibility of the event.
    * @return True, if the event is present.
    */
-  [[nodiscard]] bool adjust_visibility_if_present(std::string_view event_name, bool is_shown_in_results);
+  [[nodiscard]] bool adjust_visibility_if_present(std::optional<std::string_view> pmu_name,
+                                                  std::string_view event_name,
+                                                  bool is_shown_in_results);
 
   /**
    * Constructs a CounterResult for a given CounterResult that uses hardware events only.
@@ -206,6 +238,7 @@ private:
    * If present and the event was marked as hidden for the results, but is_shown_in_results is true, the visibility will
    * change to true.
    *
+   * @param pmu_name Name of the PMU.
    * @param event_name Name of the event.
    * @param is_shown_in_results True, if the event should be visible in the results.
    * @param type Type, e.g., hardware event, metric, or time event.
@@ -213,7 +246,8 @@ private:
    * hardware event).
    * @return True, if the event was added. False, if the event was already in the event set.
    */
-  bool add(std::string_view event_name,
+  bool add(std::optional<std::string_view> pmu_name,
+           std::string_view event_name,
            bool is_shown_in_results,
            RequestedEvent::Type type,
            std::optional<RequestedEvent::ScheduledHardwareCounterGroup> scheduled_group);

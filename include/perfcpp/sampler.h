@@ -692,13 +692,15 @@ private:
   class SampleCounter
   {
   public:
-    explicit SampleCounter(Group&& group)
+    SampleCounter(Group&& group, const bool has_auxiliary_counter)
       : _group(std::move(group))
+      , _has_auxiliary_counter(has_auxiliary_counter)
     {
     }
-    SampleCounter(Group&& group, RequestedEventSet&& requested_events)
+    SampleCounter(Group&& group, RequestedEventSet&& requested_events, const bool has_auxiliary_counter)
       : _group(std::move(group))
       , _requested_events(std::move(requested_events))
+      , _has_auxiliary_counter(has_auxiliary_counter)
     {
     }
     SampleCounter(SampleCounter&& other) noexcept = default;
@@ -709,6 +711,7 @@ private:
     [[nodiscard]] const Group& group() const noexcept { return _group; }
     [[nodiscard]] RequestedEventSet& requested_events() noexcept { return _requested_events; }
     [[nodiscard]] const RequestedEventSet& requested_events() const noexcept { return _requested_events; }
+    [[nodiscard]] bool has_auxiliary_counter() const noexcept { return _has_auxiliary_counter; }
 
   private:
     /// Group including the leader that is responsible for sampling.
@@ -716,25 +719,36 @@ private:
 
     /// List of scheduled events if counter values are sampled.
     RequestedEventSet _requested_events;
+
+    /// Indicates if this counter includes an auxiliary counter that is needed for some Intel architectures.
+    bool _has_auxiliary_counter;
   };
 
   /**
    * Transforms a list of trigger events into a single SampleCounter that includes a group of hardware events.
    *
-   * @param triggers List of triggers to transform.
-   *
+   * @param pmu_name Name of the PMU.
+   * @param trigger_group List of triggers to transform.
    * @return Sample counter, consisting of a group of trigger event(s).
    */
   [[nodiscard]] SampleCounter transform_trigger_to_sample_counter(
+    std::string_view pmu_name,
     const std::vector<std::tuple<std::string_view, std::optional<Precision>, std::optional<PeriodOrFrequency>>>&
-      triggers) const;
+      trigger_group) const;
 
   /**
-   * Adds an auxiliary counter as the first counter, if the first counter is a mem-loads counter and the underlying
-   * hardware needs it.
-   * @param trigger List of triggers where the auxiliary event should be added.
+   * Checks if the mem-loads-aux auxiliary counter is needed by the trigger group, which is true for some Intel
+   * architectures (e.g., Sapphire Rapids).
+   *
+   * @param pmu_name Name of the PMU.
+   * @param trigger_group List of triggers.
+   * @return Pair of bool, the first indicates if the auxiliary counter is needed, the second indicates that the counter
+   * is already included in the trigger group.
    */
-  void add_auxiliary_counter_if_needed(std::vector<Trigger>& trigger) const;
+  [[nodiscard]] std::pair<bool, bool> is_auxiliary_event_needed_and_already_included(
+    std::string_view pmu_name,
+    const std::vector<std::tuple<std::string_view, std::optional<Precision>, std::optional<PeriodOrFrequency>>>&
+      trigger_group) const;
 
   /**
    * Reads the sample_id struct from the data located at sample_ptr into the provided sample.
@@ -1319,5 +1333,27 @@ public:
   {
     return left.time().value() < right.time().value();
   }
+};
+
+/**
+ * Compares the given counter with a counter descriptor, i.e., a 3-tuple of PMU name, event name, and event
+ * configuration.
+ */
+class CounterComparator
+{
+public:
+  explicit CounterComparator(const Counter& counter) noexcept
+    : _counter(counter)
+  {
+  }
+  ~CounterComparator() noexcept = default;
+
+  [[nodiscard]] bool operator()(const std::tuple<std::string_view, std::string_view, CounterConfig>& event_descriptor)
+  {
+    return _counter == std::get<2>(event_descriptor);
+  }
+
+private:
+  const Counter& _counter;
 };
 }

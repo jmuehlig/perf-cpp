@@ -5,9 +5,11 @@
 #include "time_event.h"
 #include <algorithm>
 #include <cstdint>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 
 namespace perf {
@@ -34,13 +36,53 @@ public:
    *
    * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/counters.md
    *
+   * @param pmu_name Name of the PMU.
+   * @param event_name Name of the event.
+   * @param type Type of the event.
+   * @param event_id Id of the event.
+   */
+  void add(std::string&& pmu_name, std::string&& event_name, const std::uint32_t type, const std::uint64_t event_id)
+  {
+    add(std::move(pmu_name), std::move(event_name), CounterConfig{ type, event_id });
+  }
+
+  /**
+   * Adds a RAW event with the given name and configuration.
+   *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/counters.md
+   *
+   * @param pmu_name Name of the PMU.
+   * @param event_name Name of the event.
+   * @param event_id Id of the event.
+   */
+  void add(std::string&& pmu_name, std::string&& event_name, const std::uint64_t event_id)
+  {
+    add(std::move(pmu_name), std::move(event_name), CounterConfig{ PERF_TYPE_RAW, event_id });
+  }
+
+  /**
+   * Adds an event with the given name and configuration.
+   *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/counters.md
+   *
+   * @param pmu_name Name of the PMU.
+   * @param event_name Name of the event.
+   * @param config Config of the event.
+   */
+  void add(std::string&& pmu_name, std::string&& event_name, CounterConfig config);
+
+  /**
+   * Adds an event with the given name and configuration.
+   *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/counters.md
+   *
    * @param name Name of the event.
    * @param type Type of the event.
    * @param event_id Id of the event.
    */
   void add(std::string&& name, const std::uint32_t type, const std::uint64_t event_id)
   {
-    add(std::move(name), CounterConfig{ type, event_id });
+    add("cpu", std::move(name), type, event_id);
   }
 
   /**
@@ -51,10 +93,7 @@ public:
    * @param name Name of the event.
    * @param event_id Id of the event.
    */
-  void add(std::string&& name, const std::uint64_t event_id)
-  {
-    add(std::move(name), CounterConfig{ PERF_TYPE_RAW, event_id });
-  }
+  void add(std::string&& name, const std::uint64_t event_id) { add("cpu", std::move(name), event_id); }
 
   /**
    * Adds an event with the given name and configuration.
@@ -63,10 +102,7 @@ public:
    *
    * @param config Config of the event.
    */
-  void add(std::string&& name, CounterConfig config)
-  {
-    _hardware_counter_configurations.insert(std::make_pair(std::move(name), config));
-  }
+  void add(std::string&& name, CounterConfig config) { add("cpu", std::move(name), config); }
 
   /**
    * Adds a metric with the given name.
@@ -115,35 +151,64 @@ public:
   }
 
   /**
-   * Checks if a specific counter is registered and returns the name and the config.
+   * Returns a list of counter configurations with the requested name.
    *
    * @param name Name of the queried counter.
-   * @return Name and config of the counter, std::nullopt of the counter does not exist.
+   * @return A list of 3-tuples (name of the PMU, name of the event, event configuration). The list may be empty, when
+   * that event does not exist.
    */
-  [[nodiscard]] std::optional<std::pair<std::string_view, CounterConfig>> counter(std::string&& name) const noexcept
+  [[nodiscard]] std::vector<std::tuple<std::string_view, std::string_view, CounterConfig>> counter(
+    std::string&& name) const noexcept
   {
     return counter(name);
   }
 
   /**
-   * Checks if a specific counter is registered and returns the name and the config.
+   * Returns a list of counter configurations with the requested name.
    *
    * @param name Name of the queried counter.
-   * @return Name and config of the counter, std::nullopt of the counter does not exist.
+   * @return A list of 3-tuples (name of the PMU, name of the event, event configuration). The list may be empty, when
+   * that event does not exist.
    */
-  [[nodiscard]] std::optional<std::pair<std::string_view, CounterConfig>> counter(
+  [[nodiscard]] std::vector<std::tuple<std::string_view, std::string_view, CounterConfig>> counter(
     const std::string& name) const noexcept;
 
   /**
-   * Checks if a specific counter is registered and returns the name and the config.
+   * Returns a list of counter configurations with the requested name.
    *
    * @param name Name of the queried counter.
-   * @return Name and config of the counter, std::nullopt of the counter does not exist.
+   * @return A list of 3-tuples (name of the PMU, name of the event, event configuration). The list may be empty, when
+   * that event does not exist.
    */
-  [[nodiscard]] std::optional<std::pair<std::string_view, CounterConfig>> counter(
+  [[nodiscard]] std::vector<std::tuple<std::string_view, std::string_view, CounterConfig>> counter(
     const std::string_view name) const noexcept
   {
     return counter(std::string{ name });
+  }
+
+  /**
+   * Returns the counter configurations with the requested event name for a specified PMU.
+   *
+   * @param pmu_name Name of the PMU.
+   * @param event_name Name of the event.
+   * @return Tuple of PMU name, event name, and event configuration.
+   */
+  [[nodiscard]] std::optional<std::tuple<std::string_view, std::string_view, CounterConfig>> counter(
+    const std::string& pmu_name,
+    const std::string& event_name) const noexcept;
+
+  /**
+   * Returns the counter configurations with the requested event name for a specified PMU.
+   *
+   * @param pmu_name Name of the PMU.
+   * @param event_name Name of the event.
+   * @return Tuple of PMU name, event name, and event configuration.
+   */
+  [[nodiscard]] std::optional<std::tuple<std::string_view, std::string_view, CounterConfig>> counter(
+    const std::string_view pmu_name,
+    const std::string_view event_name) const noexcept
+  {
+    return counter(std::string{ pmu_name }, std::string{ event_name });
   }
 
   /**
@@ -263,8 +328,8 @@ public:
   [[nodiscard]] std::vector<std::string> names() const
   {
     auto names = std::vector<std::string>{};
-    std::transform(_hardware_counter_configurations.begin(),
-                   _hardware_counter_configurations.end(),
+    std::transform(_performance_monitoring_unit_events.begin(),
+                   _performance_monitoring_unit_events.end(),
                    std::back_inserter(names),
                    [](const auto& config) { return config.first; });
     return names;
@@ -277,8 +342,9 @@ public:
   void read_counter_configuration(const std::string& csv_filename);
 
 private:
-  /// List of added counter configurations.
-  std::unordered_map<std::string, CounterConfig> _hardware_counter_configurations;
+  /// List of added counter configurations for different PMUs. Each PMU can have multiple counters; but different PMUs
+  /// can have the same counter name with different configurations.
+  std::unordered_map<std::string, std::unordered_map<std::string, CounterConfig>> _performance_monitoring_unit_events;
 
   /// List of added metrics.
   std::unordered_map<std::string, std::unique_ptr<Metric>> _metrics;
@@ -287,23 +353,62 @@ private:
   std::unordered_map<std::string, std::unique_ptr<TimeEvent>> _time_events;
 
   /**
-   * Add all generalized counters to the counter config.
+   * Adds all counters specified as constants by the perf subsystem in the linux perf header.
    */
-  void initialize_generalized_counters();
+  void add_general_events_from_perf_subsystem();
+
+  /**
+   * Scans the given path for events and adds the found ones.
+   * All events that are already specified (e.g., by the perf subsystem constant) will NOT be replaced.
+   *
+   * @param pmu_name Name of the PMU the events belong to.
+   * @param path Path of the event descriptors.
+   */
+  void add_events_from_descriptor_files(std::string&& pmu_name, std::string&& path);
 
   /**
    * If the system is an AMD, read IBS counters, if supported.
    */
-  void initialize_amd_ibs_counters();
-
-  /**
-   * If the system is an Intel, read some PEBS counters, if supported.
-   */
-  void initialize_intel_pebs_counters();
+  void add_amd_ibs_events();
 
   /**
    * Initializes time events.
    */
-  void initialize_time_events();
+  void add_virtual_time_events();
+
+  /**
+   * Add pre-defined metrics.
+   */
+  void add_metrics();
+
+  /**
+   * Parses an event file descriptor (typically located somewhere in the /sys/bus/event_source/.. directory).
+   * Typically, event file descriptors contain the event code, umask, and some additional data (e.g., ldlat for load
+   * latency).
+   *
+   * @param path Path of the file descriptor.
+   * @return A pair of configuration code and (optional) additional information, like load latency. When the descriptor
+   * could not be parsed, nullopt will be returned.
+   */
+  [[nodiscard]] static std::optional<std::pair<std::uint64_t, std::optional<std::uint64_t>>>
+  parse_event_file_descriptor_config(const std::filesystem::path& path);
+
+  /**
+   * Tries to read the type from the provided file.
+   *
+   * @param path Path of the type file.
+   * @return Integer representation of type.
+   */
+  [[nodiscard]] static std::optional<std::uint32_t> parse_event_file_descriptor_type(std::filesystem::path&& path);
+
+  /**
+   * Tries to read a format file and returns the id of the config and the number of bits.
+   * Some formats have multiple entries.
+   *
+   * @param path Path of the format file.
+   * @return List of pairs (config id, bits).
+   */
+  [[nodiscard]] static std::vector<std::pair<std::uint8_t, std::pair<std::uint8_t, std::optional<std::uint8_t>>>>
+  parse_event_file_descriptor_format(std::filesystem::path&& path);
 };
 }

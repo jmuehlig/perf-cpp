@@ -237,28 +237,36 @@ private:
    * the given event into a given result vector. The result vector can be used to schedule the events, based on the user
    * request.
    *
-   * @param event_name Name of the event to add.
+   * @param name Name of the event to add.
    * @param result_vector List of information about the event. If the event is a single hardware event, the list will
    * have one entry. If the event is a metric, the list will have multiple entries.
    */
-  void unfold(const std::string& event_name,
-              std::vector<std::tuple<std::string_view, RequestedEvent::Type, std::optional<CounterConfig>, bool>>&
-                result_vector) const;
+  void unfold(const std::string& name,
+              std::vector<std::tuple<std::optional<std::string_view>,
+                                     std::string_view,
+                                     RequestedEvent::Type,
+                                     std::optional<CounterConfig>,
+                                     bool>>& result_vector) const;
 
   /**
    * Adds the provided event to the given result vector.
    * If the event is already in the result vector, only the visibility (is_shown_in_results) will be adjusted.
    *
+   * @param pmu_name Name of the PMU.
    * @param event_name Name of the event.
    * @param counter_config Configuration of the counter.
    * @param is_shown_in_results Visibility.
    * @param result_vector Result vector to add the results.
    */
-  static void add(
-    std::string_view event_name,
-    const CounterConfig& counter_config,
-    bool is_shown_in_results,
-    std::vector<std::tuple<std::string_view, RequestedEvent::Type, std::optional<CounterConfig>, bool>>& result_vector);
+  static void add(std::string_view pmu_name,
+                  std::string_view event_name,
+                  const CounterConfig& counter_config,
+                  bool is_shown_in_results,
+                  std::vector<std::tuple<std::optional<std::string_view>,
+                                         std::string_view,
+                                         RequestedEvent::Type,
+                                         std::optional<CounterConfig>,
+                                         bool>>& result_vector);
 
   /**
    * Schedules the given events based on the request into hardware groups and places the event names in the
@@ -268,19 +276,24 @@ private:
    * @param events List of events to schedule.
    * @param schedule Request of the user.
    */
-  void schedule(
-    std::vector<std::tuple<std::string_view, RequestedEvent::Type, std::optional<CounterConfig>, bool>>&& events,
-    Schedule schedule);
+  void schedule(std::vector<std::tuple<std::optional<std::string_view>,
+                                       std::string_view,
+                                       RequestedEvent::Type,
+                                       std::optional<CounterConfig>,
+                                       bool>>&& events,
+                Schedule schedule);
 
   /**
    * Try to append the given event to any hardware counter.
    *
+   * @param pmu_name Name of the PMU.
    * @param event_name Name of the event.
    * @param counter_config Configuration of the event.
    * @param is_shown_in_results Visibility.
    * @return True, if the event could be appended to any hardware counter. False, otherwise.
    */
-  [[nodiscard]] bool append_to_any_hardware_counter(std::string_view event_name,
+  [[nodiscard]] bool append_to_any_hardware_counter(std::string_view pmu_name,
+                                                    std::string_view event_name,
                                                     const CounterConfig& counter_config,
                                                     bool is_shown_in_results);
 };

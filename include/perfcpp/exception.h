@@ -146,6 +146,16 @@ public:
     : std::runtime_error(std::string{ "Cannot find an event with name '" }.append(event_name).append("'."))
   {
   }
+
+  CannotFindEventError(const std::string_view pmu_name, const std::string_view event_name)
+    : std::runtime_error(std::string{ "Cannot find an event with name '" }
+                           .append(event_name)
+                           .append("' for the PMU '")
+                           .append(pmu_name)
+                           .append("'."))
+  {
+  }
+
   ~CannotFindEventError() override = default;
 };
 
@@ -227,6 +237,17 @@ public:
   {
   }
   ~CannotStartEmptySamplerError() override = default;
+};
+
+class AuxiliaryEventForSamplingNotFoundError final : public std::runtime_error
+{
+public:
+  AuxiliaryEventForSamplingNotFoundError()
+    : std::runtime_error("The underlying hardware requires an auxiliary counter for sampling memory loads but the "
+                         "auxiliary event cannot be found.")
+  {
+  }
+  ~AuxiliaryEventForSamplingNotFoundError() override = default;
 };
 
 class DataTypeAlreadyRegisteredError final : public std::runtime_error

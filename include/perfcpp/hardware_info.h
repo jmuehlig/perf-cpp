@@ -1,10 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <optional>
-#include <string>
-#include <utility>
-#include <vector>
 #if defined(__x86_64__) || defined(__i386__)
 #include <cpuid.h>
 #endif
@@ -29,22 +25,6 @@ public:
    * @return True, if the underlying Intel processor requires an aux counter for memory sampling.
    */
   [[nodiscard]] static bool is_intel_aux_counter_required();
-
-  /**
-   * @return The id of Intel's PEBS "mem-loads-aux" event.
-   */
-  [[nodiscard]] static std::optional<std::uint64_t> intel_pebs_mem_loads_aux_event_id();
-
-  /**
-   * @return The id of Intel's PEBS "mem-loads" event plus latency config (if available).
-   */
-  [[nodiscard]] static std::pair<std::optional<std::uint64_t>, std::optional<std::uint64_t>>
-  intel_pebs_mem_loads_event_id();
-
-  /**
-   * @return The id of Intel's PEBS "mem-stores" event.
-   */
-  [[nodiscard]] static std::optional<std::uint64_t> intel_pebs_mem_stores_event_id();
 
   /**
    * @return True, if the underlying hardware is an AMD processor.
@@ -87,66 +67,8 @@ public:
   }
 
   /**
-   * @return The config type for IBS execution counter, if IBS is supported by the underlying hardware.
-   */
-  [[nodiscard]] static std::optional<std::uint32_t> amd_ibs_op_type();
-
-  /**
-   * @return The config type for IBS fetch counter, if IBS is supported by the underlying hardware.
-   */
-  [[nodiscard]] static std::optional<std::uint32_t> amd_ibs_fetch_type();
-
-  /**
-   * @return The bit format of IBS execution counter, if IBS is supported by the underlying hardware.
-   */
-  [[nodiscard]] static std::optional<std::uint8_t> amd_ibs_op_bit();
-
-  /**
-   * @return The bit format of IBS execution counter with l3miss filter, if IBS is supported by the underlying hardware.
-   */
-  [[nodiscard]] static std::optional<std::uint8_t> amd_ibs_op_l3miss_bit();
-
-  /**
-   * @return The bit format of IBS fetch counter, if IBS is supported by the underlying hardware.
-   */
-  [[nodiscard]] static std::optional<std::uint8_t> amd_ibs_fetch_bit();
-
-  /**
-   * @return The bit format of IBS fetch counter with l3miss filter, if IBS is supported by the underlying hardware.
-   */
-  [[nodiscard]] static std::optional<std::uint8_t> amd_ibs_fetch_l3miss_bit();
-
-  /**
    * @return The page size of memory of the underlying machine.
    */
   [[nodiscard]] static std::uint64_t memory_page_size();
-
-private:
-  /**
-   * Tries to read the type from the provided file.
-   *
-   * @param path Path to the file.
-   * @return Integer representation of type.
-   */
-  [[nodiscard]] static std::optional<std::uint32_t> parse_type_from_file(std::string&& path);
-
-  /**
-   * Tries to read event and umask from the provided file.
-   *
-   * @param path Path to the file.
-   * @return Pair of (Integer representation of event and umask, further configuration).
-   */
-  [[nodiscard]] static std::pair<std::optional<std::uint64_t>, std::optional<std::uint64_t>>
-  parse_event_config_from_file(std::string&& path);
-
-  /**
-   * Tries to read a format file and returns the id of the config and the number of bits.
-   * Some formats have multiple entries.
-   *
-   * @param path
-   * @return List of pairs (config id, bits).
-   */
-  [[nodiscard]] static std::vector<std::pair<std::uint8_t, std::pair<std::uint8_t, std::optional<std::uint8_t>>>>
-  parse_format(std::string&& path);
 };
 }
