@@ -492,14 +492,29 @@ perf::Sampler::read_sample_event(perf::SampleBuffer::Entry entry, const SampleCo
   }
 
   if (this->_values.is_set(PERF_SAMPLE_WEIGHT)) {
-    sample.weight(perf::Weight{ static_cast<std::uint32_t>(entry.read<std::uint64_t>()) });
+    auto weight = static_cast<std::uint32_t>(entry.read<std::uint64_t>());
+    sample.weight(perf::Weight{ weight });
+    sample.latency(perf::Latency{ weight });
   }
 
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
                                         /// Linux 5.12
   if (this->_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT)) {
     const auto weight = entry.read<perf_sample_weight>();
+
+    /// Provide the weight as it is delivered by the perf subsystem.
     sample.weight(perf::Weight{ weight.var1_dw, weight.var2_w, weight.var3_w });
+
+    /// Parse the weight into latency information, depending on the underlying hardware.
+    if (HardwareInfo::is_intel()) {
+      if (HardwareInfo::is_intel_12th_generation_or_newer()) {
+        sample.latency(perf::Latency{ weight.var1_dw, weight.var2_w });
+      } else {
+        sample.latency(perf::Latency{ weight.var1_dw });
+      }
+    } else if (HardwareInfo::is_amd()) {
+      sample.latency(perf::Latency{ weight.var1_dw, weight.var2_w });
+    }
   }
 #endif
 

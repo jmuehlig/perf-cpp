@@ -97,7 +97,7 @@ main()
         data_source = "local RAM";
       }
 
-      const auto latency = sample.latency().value_or(perf::Weight{});
+      const auto latency = sample.latency().value_or(perf::Latency{});
 
       std::cout << "Time = " << sample.time().value() << " | Logical Mem Address = 0x" << std::hex
                 << sample.logical_memory_address().value() << std::dec

@@ -3,6 +3,7 @@
 #include "branch.h"
 #include "counter_result.h"
 #include "data_source.h"
+#include "latency.h"
 #include "registers.h"
 #include "transaction.h"
 #include "weight.h"
@@ -151,6 +152,7 @@ public:
   void data_src(const DataSource data_src) noexcept { _data_src = data_src; }
   void transaction_abort(const TransactionAbort transaction_abort) noexcept { _transaction_abort = transaction_abort; }
   void weight(const Weight weight) noexcept { _weight = weight; }
+  void latency(const Latency latency) noexcept { _latency = latency; }
   void branches(std::vector<Branch>&& branches) noexcept { _branches = std::move(branches); }
   void user_registers_abi(const ABI abi) noexcept { _user_registers_abi = abi; }
   void user_registers(std::vector<std::uint64_t>&& user_registers) noexcept
@@ -299,18 +301,18 @@ public:
   [[nodiscard]] std::optional<TransactionAbort> transaction_abort() const noexcept { return _transaction_abort; }
 
   /*
-   * Retrieves the weight value representing the cost or impact of the sample.
+   * Retrieves the original weight value representing the cost or impact of the sample.
    *
    * @return An optional containing the weight if available.
    */
   [[nodiscard]] std::optional<Weight> weight() const noexcept { return _weight; }
 
   /*
-   * Retrieves the weight value representing the cost or impact of the sample.
+   * Retrieves the latency information, derived from the weight provided by the perf subsystem.
    *
-   * @return An optional containing the weight if available.
+   * @return An optional containing the latency if available.
    */
-  [[nodiscard]] std::optional<Weight> latency() const noexcept { return _weight; }
+  [[nodiscard]] std::optional<Latency> latency() const noexcept { return _latency; }
 
   /*
    * Retrieves the branches recorded in the sample.
@@ -476,6 +478,7 @@ private:
   std::optional<DataSource> _data_src{ std::nullopt };
   std::optional<TransactionAbort> _transaction_abort{ std::nullopt };
   std::optional<Weight> _weight{ std::nullopt };
+  std::optional<Latency> _latency{ std::nullopt };
   std::optional<std::vector<Branch>> _branches{ std::nullopt };
   std::optional<ABI> _user_registers_abi{ std::nullopt };
   std::optional<std::vector<std::uint64_t>> _user_registers{ std::nullopt };

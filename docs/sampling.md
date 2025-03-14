@@ -411,19 +411,21 @@ Memory sampling can be tricky; refer to the [specifics of the underlying hardwar
 &rarr; [See code example](../examples/address_sampling.cpp)
 
 ### Memory Access Latency
-The weight indicates how costly the event was (basically the latency).
-Since Linux Kernel version `5.12`, the Kernel might generate more information than only a single value, which is used to differentiate between **memory-** (from cache towards memory) and **instruction latency**.
+The *perf subsystem* reports the weight, which indicates how costly the event was (basically the latency).
+The actual result depends on the underlying hardware:
+* Intel PEBS can report two latency values: The *instruction latency* (including TLB latency, cache latency, and retirement latency) and (from 12th generation) the *cache latency*.
+* AMD IBS can report two latency values: The *uop retirement latency* (from tagging the uop to retiring) and the *data cache miss latency* (from L1d miss to the data arrives at the core).
 
-The perf subsystem reports the latency through the `weight` field (and from Kernel `5.12` via the `weight_struct` field for more information).
-Although *perf-cpp* supports both fields, for more simplicity, you can use the `latency` methods; *perf-cpp* will then check and use the matching variant based on the underlying kernel version.
 
-* Request by either
-  * `sampler.values().latency(true)` (should be preferred)
-  * **or** `sampler.values().weight(true);` or `sampler.values().weight_struct(true);` (**the latter only from Kernel `5.12`**)
-* Read from the results by `sample_record.latency().value();` (or equally `sample_record.weight().value();`), which returns a `perf::Weight` class, which has the following attributes:
-  * `sample_record.latency().value().cache_latency()` returns the cache latency of the sampled data address.
-  * `sample_record.latency().value().instruction_retirement_latency()` returns the latency of retiring the instruction (including the cache access) **but** only for `sampler.values().weight_struct(true)`. To the best of our knowledge, this feature is only supported by new Intel generations.
-  * `sample_record.latency().value().var3()` returns "other information" (not specified by perf) **but** only for `sampler.values().weight_struct(true)`.
+* Request the weight / latency information
+  * Until Linux Kernel version `5.12`, only the instruction/uop retirement latency can be requested by `sampler.values().weight(true)`.
+  * From Linux Kernel version `5.12`, both values can be requested via `sampler.values().weight_struct(true)`.
+  * **For simplification**, *perf-cpp* allows to request whatever works via `sampler.values().latency(true)`; this will either use `weight_struct()` whenever possible; `weight()` otherwise.
+* Read from the results
+  * The weight reported by the *perf subsystem* can be accessed via `sample_record.weight()` (regardless of whether `weight_struct` or `weight` was requested).
+  * **In both cases**, a *perf::Latency*  object can be accessed via `sample_record.latency()`, which will interpret the weight information based on the underlying hardware:
+    * `sample_record.latency().value().instruction_retirement_latency()` reports the *instruction* (PEBS) or *uop* (IBS) retirement latency.
+    * `sample_record.latency().value().cache_latency()` reports the cache latency (PEBS; from 12th generation) or data cache miss latency (IBS)
 
 &rarr; [See code example](../examples/address_sampling.cpp)
 

@@ -173,39 +173,40 @@ perf::analyzer::MemoryAccessResult::to_string() const
 
     /// Create the data type table.
     auto table = Table{ 2U,
-                        std::vector<Table::Alignment>{
-                          Table::Alignment::Right,
-                          Table::Alignment::Left,
-                          Table::Alignment::Right,
-                          Table::Alignment::Right,
-                          Table::Alignment::Right,
-                          Table::Alignment::Right,
-                          Table::Alignment::Right,
-                          Table::Alignment::Right,
-                          Table::Alignment::Right,
-                          Table::Alignment::Right,
-                          Table::Alignment::Right,
-                          Table::Alignment::Right,
-                          Table::Alignment::Right,
-                          Table::Alignment::Right,
-                          Table::Alignment::Right,
-                          Table::Alignment::Right,
-                        } };
+                        std::vector<Table::Alignment>{ Table::Alignment::Right,
+                                                       Table::Alignment::Left,
+                                                       Table::Alignment::Right,
+                                                       Table::Alignment::Right,
+                                                       Table::Alignment::Right,
+                                                       Table::Alignment::Right,
+                                                       Table::Alignment::Right,
+                                                       Table::Alignment::Right,
+                                                       Table::Alignment::Right,
+                                                       Table::Alignment::Right,
+                                                       Table::Alignment::Right,
+                                                       Table::Alignment::Right,
+                                                       Table::Alignment::Right,
+                                                       Table::Alignment::Right,
+                                                       Table::Alignment::Right,
+                                                       Table::Alignment::Right,
+                                                       Table::Alignment::Right,
+                                                       Table::Alignment::Right } };
     table.reserve(data_type.members().size());
 
     /// Create table headers.
     auto header_groups = Table::Row{ 8U };
-    header_groups << Table::Column{"", 3U} << Table::Column{"loads", 2U} << Table::Column{"cache hits", 4U} << Table::Column{"RAM hits", 2U,} << Table::Column{"TLB", 3U} << Table::Column{"stores", 2U};
+    header_groups << Table::Column{"", 3U} << Table::Column{"loads", 3U} << Table::Column{"cache hits", 4U} << Table::Column{"RAM hits", 2U,} << Table::Column{"TLB", 3U} << Table::Column{"stores", 3U};
     table.add(std::move(header_groups));
 
     auto header = Table::Row{ 24U };
-    header << Table::Column{ "", 2U } << " samples" << "count" << "latency" << "L1d" << "LFB" << "L2" << "L3" << "local"
-           << "remote" << "L1 hits" << "L2 hits" << "misses" << "count" << "latency";
+    header << Table::Column{ "", 2U } << " samples" << "count" << "cache lat." << "instr. lat." << "L1d" << "LFB"
+           << "L2" << "L3" << "local" << "remote" << "L1 hits" << "L2 hits" << "misses" << "count" << "cache lat."
+           << "instr. lat";
     table.add(std::move(header));
 
     /// Add column separators.
     table.column_separators(
-      { '\0', '\0', '\0', '|', '\0', '|', '\0', '\0', '\0', '|', '\0', '|', '\0', '\0', '|', '\0' });
+      { '\0', '\0', '\0', '|', '\0', '\0', '|', '\0', '\0', '\0', '|', '\0', '|', '\0', '\0', '|', '\0', '\0' });
 
     /// Add member attributes to table.
     for (const auto& member : data_type.members()) {
@@ -218,10 +219,12 @@ perf::analyzer::MemoryAccessResult::to_string() const
       auto row = Table::Row{ 24U };
       auto member_offset = std::to_string(member.offset()).append(": ");
       auto member_name = std::string{ member.name() }.append(" (").append(std::to_string(member.size())).append("B)");
-      row << member_offset << member_name << member.samples().size() << statistics.loads() << statistics.load_latency()
-          << statistics.l1_hits() << statistics.lfb_hits() << statistics.l2_hits() << statistics.l3_hits()
-          << statistics.local_ram_hits() << statistics.remote_ram_hits() << statistics.dtlb_hits()
-          << statistics.stlb_hits() << statistics.stlb_misses() << statistics.stores() << statistics.store_latency();
+      row << member_offset << member_name << member.samples().size() << statistics.loads()
+          << statistics.load_cache_latency() << statistics.load_instruction_latency() << statistics.l1_hits()
+          << statistics.lfb_hits() << statistics.l2_hits() << statistics.l3_hits() << statistics.local_ram_hits()
+          << statistics.remote_ram_hits() << statistics.dtlb_hits() << statistics.stlb_hits()
+          << statistics.stlb_misses() << statistics.stores() << statistics.store_cache_latency()
+          << statistics.store_instruction_latency();
 
       table.add(std::move(row));
 
@@ -278,13 +281,16 @@ perf::analyzer::MemoryAccessResult::to_json() const
       }
       stream << "{" << "\"name\":" << "\"" << member.name() << "\"," << "\"offset\":" << member.offset() << ","
              << "\"size\":" << member.size() << "," << "\"samples\":" << member.samples().size() << ","
-             << "\"loads\":" << statistics.loads() << "," << "\"average load latency\":" << statistics.load_latency()
-             << "," << "\"L1d hits\":" << statistics.l1_hits() << "," << "\"LFB hits\":" << statistics.lfb_hits() << ","
+             << "\"loads\":" << statistics.loads() << ","
+             << "\"average load cache latency\":" << statistics.load_cache_latency() << ","
+             << "\"average load instruction latency\":" << statistics.load_instruction_latency() << ","
+             << "\"L1d hits\":" << statistics.l1_hits() << "," << "\"LFB hits\":" << statistics.lfb_hits() << ","
              << "\"L2 hits\":" << statistics.l2_hits() << "," << "\"L3 hits\":" << statistics.l3_hits() << ","
              << "\"L4 hits\":" << statistics.l4_hits() << "," << "\"local RAM hits\":" << statistics.local_ram_hits()
              << "," << "\"remote RAM hits\":" << statistics.remote_ram_hits() << ","
              << "\"stores\":" << statistics.stores() << ","
-             << "\"average store latency\":" << statistics.store_latency() << ","
+             << "\"average store cache latency\":" << statistics.store_cache_latency() << ","
+             << "\"average store instruction latency\":" << statistics.store_instruction_latency() << ","
              << "\"dTLB hits\":" << statistics.dtlb_hits() << "," << "\"sTLB hits\":" << statistics.stlb_hits() << ","
              << "\"sTLB misses\":" << statistics.stlb_misses() << "}";
     }
@@ -305,9 +311,10 @@ perf::analyzer::MemoryAccessResult::to_csv(const std::string& data_type_name,
 
   if (print_header) {
     stream << "name" << delimiter << "offset" << delimiter << "size" << delimiter << "samples" << delimiter << "loads"
-           << delimiter << "average load latency" << delimiter << "L1d hits" << delimiter << "LFB hits" << delimiter
-           << "L2 hits" << delimiter << "L3 hits" << delimiter << "L4 hits" << delimiter << "local RAM hits"
-           << delimiter << "remote RAM hits" << delimiter << "stores" << delimiter << "average store latency"
+           << delimiter << "average load cache latency" << delimiter << "average load instruction latency" << delimiter
+           << "L1d hits" << delimiter << "LFB hits" << delimiter << "L2 hits" << delimiter << "L3 hits" << delimiter
+           << "L4 hits" << delimiter << "local RAM hits" << delimiter << "remote RAM hits" << delimiter << "stores"
+           << delimiter << "average store cache latency" << delimiter << "average store instruction latency"
            << delimiter << "dTLB hits" << delimiter << "sTLB hits" << delimiter << "sTLB misses" << '\n';
   }
 
@@ -324,12 +331,14 @@ perf::analyzer::MemoryAccessResult::to_csv(const std::string& data_type_name,
                                               [](auto& current, const auto& sample) { return current += sample; });
 
       stream << member.name() << delimiter << member.offset() << delimiter << member.size() << delimiter
-             << member.samples().size() << delimiter << statistics.loads() << delimiter << statistics.load_latency()
-             << delimiter << statistics.l1_hits() << delimiter << statistics.lfb_hits() << delimiter
-             << statistics.l2_hits() << delimiter << statistics.l3_hits() << delimiter << statistics.l4_hits()
-             << delimiter << statistics.local_ram_hits() << delimiter << statistics.remote_ram_hits() << delimiter
-             << statistics.stores() << delimiter << statistics.store_latency() << delimiter << statistics.dtlb_hits()
-             << delimiter << statistics.stlb_hits() << delimiter << statistics.stlb_misses() << '\n';
+             << member.samples().size() << delimiter << statistics.loads() << delimiter
+             << statistics.load_cache_latency() << delimiter << statistics.load_instruction_latency() << delimiter
+             << statistics.l1_hits() << delimiter << statistics.lfb_hits() << delimiter << statistics.l2_hits()
+             << delimiter << statistics.l3_hits() << delimiter << statistics.l4_hits() << delimiter
+             << statistics.local_ram_hits() << delimiter << statistics.remote_ram_hits() << delimiter
+             << statistics.stores() << delimiter << statistics.store_cache_latency() << delimiter
+             << statistics.store_instruction_latency() << delimiter << statistics.dtlb_hits() << delimiter
+             << statistics.stlb_hits() << delimiter << statistics.stlb_misses() << '\n';
     }
   }
 

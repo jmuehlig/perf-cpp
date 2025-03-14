@@ -21,8 +21,8 @@ public:
   {
   }
 
-  explicit Weight(const std::uint32_t cache_latency) noexcept
-    : _var1(cache_latency)
+  explicit Weight(const std::uint32_t latency) noexcept
+    : _var1(latency)
   {
   }
 
@@ -33,14 +33,32 @@ public:
    * this refers to the latency from L1d until data is written to the memory subsystem. The latency does not include TLB
    * lookups.
    */
-  [[nodiscard]] std::uint32_t cache_latency() const noexcept { return _var1; }
+  [[deprecated("Weight::cache_latency() will be removed from version v0.12, please use Sample::latency() "
+               "instead.")]] [[nodiscard]] std::uint32_t
+  cache_latency() const noexcept
+  {
+    return _var1;
+  }
 
   /**
    * @return The latency from dispatch until retirement of a load instruction, including TLB lookups.
    */
-  [[nodiscard]] std::uint32_t instruction_retirement_latency() const noexcept { return _var2; }
+  [[deprecated("Weight::instruction_retirement_latency() will be removed from version v0.12, please use "
+               "Sample::latency() instead.")]] [[nodiscard]] std::uint32_t
+  instruction_retirement_latency() const noexcept
+  {
+    return _var2;
+  }
 
-  [[nodiscard]] std::uint32_t latency() const noexcept { return _var1; }
+  [[deprecated(
+    "Weight::latency() will be removed from version v0.12, please use Sample::latency() instead.")]] [[nodiscard]] std::
+    uint32_t
+    latency() const noexcept
+  {
+    return _var1;
+  }
+
+  [[nodiscard]] std::uint32_t var1() const noexcept { return _var1; }
   [[nodiscard]] std::uint32_t var2() const noexcept { return _var2; }
   [[nodiscard]] std::uint32_t var3() const noexcept { return _var3; }
 

@@ -48,14 +48,22 @@ private:
     ~MemberStatistic() noexcept = default;
 
     [[nodiscard]] std::uint64_t loads() const noexcept { return _count_loads; }
-    [[nodiscard]] std::uint64_t load_latency() const noexcept
+    [[nodiscard]] std::uint64_t load_cache_latency() const noexcept
     {
-      return _count_loads > 0ULL ? _sum_load_latency / _count_loads : 0ULL;
+      return _count_loads > 0ULL ? _sum_load_cache_latency / _count_loads : 0ULL;
+    }
+    [[nodiscard]] std::uint64_t load_instruction_latency() const noexcept
+    {
+      return _count_loads > 0ULL ? _sum_load_instruction_latency / _count_loads : 0ULL;
     }
     [[nodiscard]] std::uint64_t stores() const noexcept { return _count_stores; }
-    [[nodiscard]] std::uint64_t store_latency() const noexcept
+    [[nodiscard]] std::uint64_t store_cache_latency() const noexcept
     {
-      return _count_stores > 0ULL ? _sum_store_latency / _count_stores : 0ULL;
+      return _count_stores > 0ULL ? _sum_store_cache_latency / _count_stores : 0ULL;
+    }
+    [[nodiscard]] std::uint64_t store_instruction_latency() const noexcept
+    {
+      return _count_stores > 0ULL ? _sum_store_instruction_latency / _count_stores : 0ULL;
     }
     [[nodiscard]] std::uint64_t l1_hits() const noexcept { return _count_l1_hits; }
     [[nodiscard]] std::uint64_t lfb_hits() const noexcept { return _count_lfb_hits; }
@@ -80,12 +88,16 @@ private:
       }
 
       const auto data_src = sample.data_src().value();
-      const auto weight = sample.weight().value();
+      const auto latency = sample.latency().value();
 
       _count_loads += static_cast<std::uint64_t>(data_src.is_load());
-      _sum_load_latency += (static_cast<std::uint64_t>(data_src.is_load()) * weight.cache_latency());
+      _sum_load_cache_latency += (static_cast<std::uint64_t>(data_src.is_load()) * latency.cache_latency());
+      _sum_load_instruction_latency +=
+        (static_cast<std::uint64_t>(data_src.is_load()) * latency.instruction_retirement_latency());
       _count_stores += static_cast<std::uint64_t>(data_src.is_store());
-      _sum_store_latency += (static_cast<std::uint64_t>(data_src.is_store()) * weight.cache_latency());
+      _sum_store_cache_latency += (static_cast<std::uint64_t>(data_src.is_store()) * latency.cache_latency());
+      _sum_store_instruction_latency +=
+        (static_cast<std::uint64_t>(data_src.is_store()) * latency.instruction_retirement_latency());
       _count_l1_hits += static_cast<std::uint64_t>(data_src.is_mem_l1());
       _count_lfb_hits += static_cast<std::uint64_t>(data_src.is_mem_lfb());
       _count_l2_hits += static_cast<std::uint64_t>(data_src.is_mem_l2());
@@ -106,9 +118,11 @@ private:
 
   private:
     std::uint64_t _count_loads{ 0ULL };
-    std::uint64_t _sum_load_latency{ 0ULL };
+    std::uint64_t _sum_load_cache_latency{ 0ULL };
+    std::uint64_t _sum_load_instruction_latency{ 0ULL };
     std::uint64_t _count_stores{ 0ULL };
-    std::uint64_t _sum_store_latency{ 0ULL };
+    std::uint64_t _sum_store_cache_latency{ 0ULL };
+    std::uint64_t _sum_store_instruction_latency{ 0ULL };
     std::uint64_t _count_l1_hits{ 0ULL };
     std::uint64_t _count_lfb_hits{ 0ULL };
     std::uint64_t _count_l2_hits{ 0ULL };
