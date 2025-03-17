@@ -41,21 +41,20 @@ perf::HardwareInfo::is_intel_12th_generation_or_newer()
       // Check the family.
       const auto family_id = (eax >> 8) & 0xF;
       const auto extended_family_id = (eax >> 20) & 0xFF;
-      const auto display_family = family_id + extended_family_id;
 
       /// Families < 6 are older than Alder Lake (12th generation); families > 6 are newer (and do not exist up to now).
-      if (display_family != 6U) {
+      if (const auto display_family = family_id + extended_family_id; display_family != 6U) {
         HardwareInfo::_is_intel_12th_generation_or_newer_cache = display_family > 6U;
       }
 
-      /// For family 6, check the model: models > 0x97 (Alder Lake) are newer or equal to Alder Lake.
+      /// For family 6, check the model.
       else {
 
         const auto model = (eax >> 4) & 0xF;
         const auto extended_model = (eax >> 16) & 0xF;
 
         const auto display_model = (extended_model << 4) + model;
-        HardwareInfo::_is_intel_12th_generation_or_newer_cache = display_model >= /* Alder Lake */ 0x97;
+        HardwareInfo::_is_intel_12th_generation_or_newer_cache = display_model >= 143U;
       }
     }
   }
