@@ -588,7 +588,8 @@ perf::Sampler::read_sample_event(perf::SampleBuffer::Entry entry, const SampleCo
 
   /// Enrich AMD IBS samples with information that is not accessible through the perf_event_open interface by
   /// interpreting the raw data, if enabled.
-  if (this->_values.is_set(PERF_SAMPLE_RAW) && sample.raw_data().has_value() && HardwareInfo::is_amd() && (sample_counter.has_amd_op_pmu_counter() || sample_counter.has_amd_fetch_pmu_counter())) {
+  if (this->_values.is_set(PERF_SAMPLE_RAW) && sample.raw_data().has_value() && HardwareInfo::is_amd() &&
+      (sample_counter.has_amd_op_pmu_counter() || sample_counter.has_amd_fetch_pmu_counter())) {
     Sampler::enrich_ibs_sample_from_raw_data(sample_counter.has_amd_fetch_pmu_counter(), sample);
   }
 
@@ -875,7 +876,8 @@ perf::Sampler::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, perf::Sa
         sample.instruction_execution().type(InstructionExecution::InstructionType::SoftwarePrefetch);
       } else if (execution_parser.is_return_operation()) {
         sample.instruction_execution().type(InstructionExecution::InstructionType::Return);
-      } else if (execution_parser.is_branch_taken_operation() || execution_parser.is_branch_mispredicted_operation() || execution_parser.is_branch_retired_operation() || execution_parser.is_branch_fuse()) {
+      } else if (execution_parser.is_branch_taken_operation() || execution_parser.is_branch_mispredicted_operation() ||
+                 execution_parser.is_branch_retired_operation() || execution_parser.is_branch_fuse()) {
         sample.instruction_execution().type(InstructionExecution::InstructionType::Branch);
 
         /// If the instruction is a branch, set the branch type.

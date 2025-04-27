@@ -198,8 +198,9 @@ perf::analyzer::MemoryAccessResult::to_string() const
     table.add(std::move(header_groups));
 
     auto header = Table::Row{ 24U };
-    header << Table::Column{ "", 2U } << " samples" << "count" << (HardwareInfo::is_amd() ? "cache miss lat." : "cache lat.") << "instr. lat." << "L1d" << "LFB"
-           << "L2" << "L3" << "local" << "remote" << "L1 hits" << "L2 hits" << "misses" << "count" << "cache lat."
+    header << Table::Column{ "", 2U } << " samples" << "count"
+           << (HardwareInfo::is_amd() ? "cache miss lat." : "cache lat.") << "instr. lat." << "L1d" << "LFB" << "L2"
+           << "L3" << "local" << "remote" << "L1 hits" << "L2 hits" << "misses" << "count" << "cache lat."
            << "instr. lat";
     table.add(std::move(header));
 

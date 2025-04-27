@@ -103,8 +103,7 @@ main()
     std::cout << "Time = " << sample.metadata().timestamp().value_or(0U) << " | Logical Mem Address = 0x" << std::hex
               << sample.data_access().logical_memory_address().value() << std::dec
               << " | Latency (cache, instruction) = " << cache_latency << ", " << instruction_latency << " | Is Load = "
-              << (sample.instruction_execution().type().value_or(
-                    perf::InstructionExecution::InstructionType::Return) ==
+              << (sample.instruction_execution().type().value_or(perf::InstructionExecution::InstructionType::Return) ==
                   perf::InstructionExecution::InstructionType::MemoryLoad)
               << " | Data Source = " << data_source << "\n";
   }

@@ -17,7 +17,8 @@ public:
     SoftwarePrefetch
   };
 
-  enum class BranchType : std::uint8_t {
+  enum class BranchType : std::uint8_t
+  {
     Taken,
     Retired,
     Mispredicted,

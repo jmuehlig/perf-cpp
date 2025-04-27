@@ -36,8 +36,7 @@ main()
 
   /// Setup which data will be included into samples (timestamp and stack of branches).
   sampler.values().time(true).branch_stack(
-    { perf::BranchType::User,
-      perf::BranchType::Conditional }) /// Only sample conditional branches in user-mode.
+    { perf::BranchType::User, perf::BranchType::Conditional }) /// Only sample conditional branches in user-mode.
     ;
 
   /// Create random access benchmark.

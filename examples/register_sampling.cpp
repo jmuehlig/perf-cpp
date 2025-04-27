@@ -23,10 +23,10 @@ main()
   sampler.trigger("cycles");
   sampler.values()
     .time(true)
-    .user_registers(perf::Registers{
-      { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 } })
-    .kernel_registers(perf::Registers{
-      { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 } })
+    .user_registers(
+      perf::Registers{ { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 } })
+    .kernel_registers(
+      perf::Registers{ { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 } })
     .cpu_id(true);
 
   /// Create random access benchmark.
@@ -76,8 +76,8 @@ main()
 
       if (sample.user_registers().has_value()) {
         const auto& user_registers = sample.user_registers().value();
-        std::cout << " | User Registers = IP(" << user_registers.value(perf::Registers::x86::IP).value_or(0)
-                  << "), DI(" << user_registers.value(perf::Registers::x86::DI).value_or(0) << "), R10("
+        std::cout << " | User Registers = IP(" << user_registers.value(perf::Registers::x86::IP).value_or(0) << "), DI("
+                  << user_registers.value(perf::Registers::x86::DI).value_or(0) << "), R10("
                   << user_registers.value(perf::Registers::x86::R10).value_or(0) << ")";
       }
 

@@ -101,8 +101,7 @@ main()
       if (sample.instruction_execution().type().has_value()) {
         if (sample.instruction_execution().type() == perf::InstructionExecution::InstructionType::MemoryLoad) {
           type = "Load";
-        } else if (sample.instruction_execution().type() ==
-                   perf::InstructionExecution::InstructionType::MemoryStore) {
+        } else if (sample.instruction_execution().type() == perf::InstructionExecution::InstructionType::MemoryStore) {
           type = "Store";
         }
       }
