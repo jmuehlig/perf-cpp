@@ -1,0 +1,500 @@
+#pragma once
+
+#include <cstdint>
+#include <optional>
+#include <vector>
+
+namespace perf {
+class InstructionExecution
+{
+public:
+  enum class InstructionType : std::uint8_t
+  {
+    Return,
+    Branch,
+    MemoryLoad,
+    MemoryStore,
+    SoftwarePrefetch
+  };
+
+  enum class BranchType : std::uint8_t {
+    Taken,
+    Retired,
+    Mispredicted,
+    Fuse
+  };
+
+  class Latency
+  {
+  public:
+    /**
+     * Set the uop tag to retirement latency.
+     * @param uop_tag_to_retirement Uop tag to retirement latency.
+     */
+    void uop_tag_to_retirement(const std::uint32_t uop_tag_to_retirement) noexcept
+    {
+      _uop_tag_to_retirement = uop_tag_to_retirement;
+    }
+
+    /**
+     * Set the uop completion to retirement latency.
+     * @param uop_completion_to_retirement Uop completion to retirement latency.
+     */
+    void uop_completion_to_retirement(const std::uint32_t uop_completion_to_retirement) noexcept
+    {
+      _uop_completion_to_retirement = uop_completion_to_retirement;
+    }
+
+    /**
+     * Set the instruction retirement latency.
+     * @param instruction_retirement Instruction retirement latency.
+     */
+    void instruction_retirement(const std::uint32_t instruction_retirement) noexcept
+    {
+      _instruction_retirement = instruction_retirement;
+    }
+
+    /**
+     * Set the fetch latency.
+     * @param fetch Fetch latency.
+     */
+    void fetch(const std::uint32_t fetch) noexcept { _fetch = fetch; }
+
+    /**
+     * @return Uop tag to retirement latency, if available. std::nullopt otherwise.
+     */
+    [[nodiscard]] std::optional<std::uint32_t> uop_tag_to_retirement() const noexcept { return _uop_tag_to_retirement; }
+
+    /**
+     * @return Uop completion to retirement latency, if available. std::nullopt otherwise.
+     */
+    [[nodiscard]] std::optional<std::uint32_t> uop_completion_to_retirement() const noexcept
+    {
+      return _uop_completion_to_retirement;
+    }
+
+    /**
+     * @return Uop tag to completion latency, if available. std::nullopt otherwise.
+     */
+    [[nodiscard]] std::optional<std::uint32_t> uop_tag_to_completion() const noexcept
+    {
+      if (_uop_tag_to_retirement.has_value() && _uop_completion_to_retirement.has_value()) {
+        return _uop_tag_to_retirement.value() - _uop_completion_to_retirement.value();
+      }
+
+      return std::nullopt;
+    }
+
+    /**
+     * @return Instruction retirement latency, if available. std::nullopt otherwise.
+     */
+    [[nodiscard]] std::optional<std::uint32_t> instruction_retirement() const noexcept
+    {
+      return _instruction_retirement;
+    }
+
+    /**
+     * @return Fetch latency, if available. std::nullopt otherwise.
+     */
+    [[nodiscard]] std::optional<std::uint32_t> fetch() const noexcept { return _fetch; }
+
+  private:
+    std::optional<std::uint32_t> _uop_tag_to_retirement{ std::nullopt };
+    std::optional<std::uint32_t> _uop_completion_to_retirement{ std::nullopt };
+    std::optional<std::uint32_t> _instruction_retirement{ std::nullopt };
+    std::optional<std::uint32_t> _fetch{ std::nullopt };
+  };
+
+  class TLB
+  {
+  public:
+    /**
+     * Set whether there was a TLB miss.
+     * @param is_miss TLB miss indicator.
+     */
+    void is_miss(const bool is_miss) noexcept { _is_miss = is_miss; }
+
+    /**
+     * Set the page size.
+     * @param page_size Page size.
+     */
+    void page_size(const std::uint64_t page_size) noexcept { _page_size = page_size; }
+
+    /**
+     * @return TLB miss indicator, if available. std::nullopt otherwise.
+     */
+    [[nodiscard]] std::optional<bool> is_miss() const noexcept { return _is_miss; }
+
+    /**
+     * @return Page size, if available. std::nullopt otherwise.
+     */
+    [[nodiscard]] std::optional<std::uint64_t> page_size() const noexcept { return _page_size; }
+
+  private:
+    std::optional<bool> _is_miss{ std::nullopt };
+    std::optional<std::uint64_t> _page_size{ std::nullopt };
+  };
+
+  class Fetch
+  {
+  public:
+    /**
+     * Set whether there was an instruction cache miss.
+     * @param is_l1_cache_miss Cache miss indicator.
+     */
+    void is_l1_cache_miss(const bool is_l1_cache_miss) noexcept { _is_l1_cache_miss = is_l1_cache_miss; }
+
+    /**
+     * Set whether there was an L2 cache miss.
+     * @param is_l2_cache_miss Cache miss indicator.
+     */
+    void is_l2_cache_miss(const bool is_l2_cache_miss) noexcept { _is_l2_cache_miss = is_l2_cache_miss; }
+
+    /**
+     * Set whether there was an L3 cache miss.
+     * @param is_l3_cache_miss Cache miss indicator.
+     */
+    void is_l3_cache_miss(const bool is_l3_cache_miss) noexcept { _is_l3_cache_miss = is_l3_cache_miss; }
+
+    /**
+     * Set whether the fetch is completed.
+     * @param is_completed Completion indicator.
+     */
+    void is_complete(const bool is_completed) noexcept { _is_complete = is_completed; }
+
+    /**
+     * Set whether the fetch is valid.
+     * @param is_valid Validity indicator.
+     */
+    void is_valid(const bool is_valid) noexcept { _is_valid = is_valid; }
+
+    /**
+     * @return Indicates whether the instruction fetch missed the L1i cache, if available. std::nullopt otherwise.
+     */
+    [[nodiscard]] std::optional<bool> is_l1_cache_miss() const noexcept { return _is_l1_cache_miss; }
+
+    /**
+     * @return Indicates whether the instruction fetch missed the L2 cache, if available. std::nullopt otherwise.
+     */
+    [[nodiscard]] std::optional<bool> is_l2_cache_miss() const noexcept { return _is_l2_cache_miss; }
+
+    /**
+     * @return Indicates whether the instruction fetch missed the L3 cache, if available. std::nullopt otherwise.
+     */
+    [[nodiscard]] std::optional<bool> is_l3_cache_miss() const noexcept { return _is_l3_cache_miss; }
+
+    /**
+     * @return Completion indicator, if available. std::nullopt otherwise.
+     */
+    [[nodiscard]] std::optional<bool> is_complete() const noexcept { return _is_complete; }
+
+    /**
+     * @return Validity indicator, if available. std::nullopt otherwise.
+     */
+    [[nodiscard]] std::optional<bool> is_valid() const noexcept { return _is_valid; }
+
+  private:
+    std::optional<bool> _is_l1_cache_miss{ std::nullopt };
+    std::optional<bool> _is_l2_cache_miss{ std::nullopt };
+    std::optional<bool> _is_l3_cache_miss{ std::nullopt };
+    std::optional<bool> _is_complete{ std::nullopt };
+    std::optional<bool> _is_valid{ std::nullopt };
+  };
+
+  class HardwareTransactionAbort
+  {
+  public:
+    /**
+     * Set whether this is an elision transaction.
+     * @param is_elision_transaction Elision transaction indicator.
+     */
+    void is_elision_transaction(const bool is_elision_transaction) noexcept
+    {
+      _is_elision_transaction = is_elision_transaction;
+    }
+
+    /**
+     * Set whether this is a generic transaction.
+     * @param is_generic_transaction Generic transaction indicator.
+     */
+    void is_generic_transaction(const bool is_generic_transaction) noexcept
+    {
+      _is_generic_transaction = is_generic_transaction;
+    }
+
+    /**
+     * Set whether this is a synchronous abort.
+     * @param is_synchronous_abort Synchronous abort indicator.
+     */
+    void is_synchronous_abort(const bool is_synchronous_abort) noexcept
+    {
+      _is_synchronous_abort = is_synchronous_abort;
+    }
+
+    /**
+     * Set whether this is retryable.
+     * @param is_retryable Retryable indicator.
+     */
+    void is_retryable(const bool is_retryable) noexcept { _is_retryable = is_retryable; }
+
+    /**
+     * Set whether this is an abort due to memory conflict.
+     * @param is_abort_due_to_memory_conflict Memory conflict abort indicator.
+     */
+    void is_abort_due_to_memory_conflict(const bool is_abort_due_to_memory_conflict) noexcept
+    {
+      _is_abort_due_to_memory_conflict = is_abort_due_to_memory_conflict;
+    }
+
+    /**
+     * Set whether this is an abort due to write capacity conflict.
+     * @param is_abort_due_to_write_capacity_conflict Write capacity conflict abort indicator.
+     */
+    void is_abort_due_to_write_capacity_conflict(const bool is_abort_due_to_write_capacity_conflict) noexcept
+    {
+      _is_abort_due_to_write_capacity_conflict = is_abort_due_to_write_capacity_conflict;
+    }
+
+    /**
+     * Set whether this is an abort due to read capacity conflict.
+     * @param is_abort_due_to_read_capacity_conflict Read capacity conflict abort indicator.
+     */
+    void is_abort_due_to_read_capacity_conflict(const bool is_abort_due_to_read_capacity_conflict) noexcept
+    {
+      _is_abort_due_to_read_capacity_conflict = is_abort_due_to_read_capacity_conflict;
+    }
+
+    /**
+     * Set the user specified abort code.
+     * @param user_code User specified abort code.
+     */
+    void user_specified_code(const std::uint32_t user_code) noexcept { _user_specified_code = user_code; }
+
+    /**
+     * @return Elision transaction indicator.
+     */
+    [[nodiscard]] bool is_elision_transaction() const noexcept { return _is_elision_transaction; }
+
+    /**
+     * @return Generic transaction indicator.
+     */
+    [[nodiscard]] bool is_generic_transaction() const noexcept { return _is_generic_transaction; }
+
+    /**
+     * @return Synchronous abort indicator.
+     */
+    [[nodiscard]] bool is_synchronous_abort() const noexcept { return _is_synchronous_abort; }
+
+    /**
+     * @return Retryable indicator.
+     */
+    [[nodiscard]] bool is_retryable() const noexcept { return _is_retryable; }
+
+    /**
+     * @return Memory conflict abort indicator.
+     */
+    [[nodiscard]] bool is_abort_due_to_memory_conflict() const noexcept { return _is_abort_due_to_memory_conflict; }
+
+    /**
+     * @return Write capacity conflict abort indicator.
+     */
+    [[nodiscard]] bool is_abort_due_to_write_capacity_conflict() const noexcept
+    {
+      return _is_abort_due_to_write_capacity_conflict;
+    }
+
+    /**
+     * @return Read capacity conflict abort indicator.
+     */
+    [[nodiscard]] bool is_abort_due_to_read_capacity_conflict() const noexcept
+    {
+      return _is_abort_due_to_read_capacity_conflict;
+    }
+
+    /**
+     * @return User specified abort code.
+     */
+    [[nodiscard]] std::uint32_t user_specified_code() const noexcept { return _user_specified_code; }
+
+  private:
+    bool _is_elision_transaction;
+    bool _is_generic_transaction;
+    bool _is_synchronous_abort;
+    bool _is_retryable;
+    bool _is_abort_due_to_memory_conflict;
+    bool _is_abort_due_to_write_capacity_conflict;
+    bool _is_abort_due_to_read_capacity_conflict;
+    std::uint32_t _user_specified_code;
+  };
+
+  /**
+   * Set the instruction type.
+   * @param type Instruction type.
+   */
+  void type(const InstructionType type) noexcept { _type = type; }
+
+  /**
+   * Set the logical instruction address.
+   * @param logical_instruction_address Logical instruction address.
+   */
+  void logical_instruction_address(const std::uintptr_t logical_instruction_address) noexcept
+  {
+    _logical_instruction_address = logical_instruction_address;
+  }
+
+  /**
+   * Set the physical instruction address.
+   * @param physical_instruction_address Physical instruction address.
+   */
+  void physical_instruction_address(const std::uintptr_t physical_instruction_address) noexcept
+  {
+    _physical_instruction_address = physical_instruction_address;
+  }
+
+  /**
+   * Set whether the instruction address is exact.
+   * @param is_instruction_address_exact Instruction address exactness indicator.
+   */
+  void is_instruction_address_exact(const bool is_instruction_address_exact) noexcept
+  {
+    _is_instruction_address_exact = is_instruction_address_exact;
+  }
+
+  /**
+   * Set whether the instruction is locked.
+   * @param is_locked Lock indicator.
+   */
+  void is_locked(const bool is_locked) noexcept { _is_locked = is_locked; }
+
+  /**
+   * Set the latency information.
+   * @param latency Latency object.
+   */
+  void latency(const Latency& latency) noexcept { _latency = latency; }
+
+  /**
+   * Set the TLB information.
+   * @param tlb TLB object.
+   */
+  void tlb(const TLB& tlb) noexcept { _tlb = tlb; }
+
+  /**
+   * Set the fetch information.
+   * @param fetch Fetch object.
+   */
+  void fetch(const Fetch& fetch) noexcept { _fetch = fetch; }
+
+  /**
+   * Set the branch type if the instruction is a branch.
+   * @param branch_type Branch type.
+   */
+  void branch_type(const BranchType branch_type) noexcept { _branch_type = branch_type; }
+
+  /**
+   * Set the hardware transaction abort information.
+   * @param hardware_transaction_abort Hardware transaction abort object.
+   */
+  void hardware_transaction_abort(HardwareTransactionAbort hardware_transaction_abort) noexcept
+  {
+    _hardware_transaction_abort = hardware_transaction_abort;
+  }
+
+  /**
+   * Set the call chain.
+   * @param callchain Vector of call chain addresses.
+   */
+  void callchain(std::vector<std::uintptr_t>&& callchain) noexcept { _callchain = std::move(callchain); }
+
+  /**
+   * @return Instruction type, if available. std::nullopt otherwise.
+   */
+  [[nodiscard]] std::optional<InstructionType> type() const noexcept { return _type; }
+
+  /**
+   * @return Logical instruction address, if available. std::nullopt otherwise.
+   */
+  [[nodiscard]] std::optional<std::uintptr_t> logical_instruction_address() const noexcept
+  {
+    return _logical_instruction_address;
+  }
+
+  /**
+   * @return Physical instruction address, if available. std::nullopt otherwise.
+   */
+  [[nodiscard]] std::optional<std::uintptr_t> physical_instruction_address() const noexcept
+  {
+    return _physical_instruction_address;
+  }
+
+  /**
+   * @return Instruction address exactness indicator.
+   */
+  [[nodiscard]] bool is_instruction_address_exact() const noexcept { return _is_instruction_address_exact; }
+
+  /**
+   * @return Lock indicator, if available. std::nullopt otherwise.
+   */
+  [[nodiscard]] std::optional<bool> is_locked() const noexcept { return _is_locked; }
+
+  /**
+   * @return Latency object.
+   */
+  [[nodiscard]] const Latency& latency() const noexcept { return _latency; }
+
+  /**
+   * @return Latency object reference for modification.
+   */
+  [[nodiscard]] Latency& latency() noexcept { return _latency; }
+
+  /**
+   * @return TLB object.
+   */
+  [[nodiscard]] const TLB& tlb() const noexcept { return _tlb; }
+
+  /**
+   * @return TLB object reference for modification.
+   */
+  [[nodiscard]] TLB& tlb() noexcept { return _tlb; }
+
+  /**
+   * @return Fetch object.
+   */
+  [[nodiscard]] const Fetch& fetch() const noexcept { return _fetch; }
+
+  /**
+   * @return Fetch object reference for modification.
+   */
+  [[nodiscard]] Fetch& fetch() noexcept { return _fetch; }
+
+  /**
+   * @return Branch type, if the instruction was a branch.
+   */
+  [[nodiscard]] std::optional<BranchType> branch_type() noexcept { return _branch_type; }
+
+  /**
+   * @return Hardware transaction abort information, if available. std::nullopt otherwise.
+   */
+  [[nodiscard]] const std::optional<HardwareTransactionAbort>& hardware_transaction_abort() const noexcept
+  {
+    return _hardware_transaction_abort;
+  }
+
+  /**
+   * @return Call chain, if available. std::nullopt otherwise.
+   */
+  [[nodiscard]] std::optional<std::vector<std::uintptr_t>> callchain() const noexcept { return _callchain; }
+
+private:
+  std::optional<InstructionType> _type{ std::nullopt };
+  std::optional<std::uintptr_t> _logical_instruction_address{ std::nullopt };
+  std::optional<std::uintptr_t> _physical_instruction_address{ std::nullopt };
+  bool _is_instruction_address_exact{ false };
+  std::optional<bool> _is_locked{ std::nullopt };
+  Latency _latency;
+  TLB _tlb;
+  Fetch _fetch;
+  std::optional<BranchType> _branch_type;
+  std::optional<HardwareTransactionAbort> _hardware_transaction_abort{ std::nullopt };
+  std::optional<std::vector<std::uintptr_t>> _callchain{ std::nullopt };
+};
+}

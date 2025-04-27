@@ -308,22 +308,22 @@ perf::SampleBuffer::align_number_of_buffer_pages(std::uint64_t number_of_buffer_
   return number_of_buffer_pages;
 }
 
-perf::Sample::Mode
+std::optional<perf::Metadata::Mode>
 perf::SampleBuffer::Entry::mode() const noexcept
 {
   const auto misc = this->_header->misc;
 
   if (static_cast<bool>(misc & PERF_RECORD_MISC_KERNEL)) {
-    return Sample::Mode::Kernel;
+    return Metadata::Mode::Kernel;
   } else if (static_cast<bool>(misc & PERF_RECORD_MISC_USER)) {
-    return Sample::Mode::User;
+    return Metadata::Mode::User;
   } else if (static_cast<bool>(misc & PERF_RECORD_MISC_HYPERVISOR)) {
-    return Sample::Mode::Hypervisor;
+    return Metadata::Mode::Hypervisor;
   } else if (static_cast<bool>(misc & PERF_RECORD_MISC_GUEST_KERNEL)) {
-    return Sample::Mode::GuestKernel;
+    return Metadata::Mode::GuestKernel;
   } else if (static_cast<bool>(misc & PERF_RECORD_MISC_GUEST_USER)) {
-    return Sample::Mode::GuestUser;
+    return Metadata::Mode::GuestUser;
   }
 
-  return Sample::Mode::Unknown;
+  return std::nullopt;
 }

@@ -80,7 +80,7 @@ main()
 
   /// Add up the results so that the compiler does not get the idea of
   /// optimizing away the accesses.
-  auto value = std::accumulate(thread_local_results.begin(), thread_local_results.end(), 0U);
+  auto value = std::accumulate(thread_local_results.begin(), thread_local_results.end(), 0UL);
   asm volatile("" : "+r,m"(value) : : "memory");
 
   /// Get the result (normalized per cache line).

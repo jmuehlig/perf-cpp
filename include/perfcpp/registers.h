@@ -2,6 +2,9 @@
 
 #include <bitset>
 #include <cstdint>
+#include <optional>
+#include <unordered_map>
+#include <variant>
 #include <vector>
 
 namespace perf {
@@ -14,7 +17,7 @@ enum class ABI : std::uint8_t
 class Registers
 {
 public:
-  enum class x86
+  enum class x86 : std::uint8_t
   {
     AX,
     BX,
@@ -59,7 +62,7 @@ public:
     XMM15 = 62
   };
 
-  enum class arm
+  enum class arm : std::uint8_t
   {
     R0,
     R1,
@@ -80,7 +83,7 @@ public:
     MAX
   };
 
-  enum class arm64
+  enum class arm64 : std::uint8_t
   {
     X0,
     X1,
@@ -119,7 +122,7 @@ public:
     VG = 46
   };
 
-  enum class riscv
+  enum class riscv : std::uint8_t
   {
     PC,
     RA,
@@ -155,43 +158,116 @@ public:
     T6
   };
 
+  using registers_t = std::variant<std::vector<x86>, std::vector<arm>, std::vector<arm64>, std::vector<riscv>>;
+
   Registers() noexcept = default;
 
+  Registers(Registers&&) noexcept = default;
+  Registers(const Registers&) = default;
+
+  Registers& operator=(Registers&&) noexcept = default;
+  Registers& operator=(const Registers&) = default;
+
   explicit Registers(std::vector<x86>&& registers) noexcept
+    : _registers(std::move(registers))
   {
-    for (const auto reg : registers) {
-      _mask |= static_cast<std::uint64_t>(1U) << static_cast<std::uint64_t>(reg);
-    }
   }
 
   explicit Registers(std::vector<arm>&& registers) noexcept
+    : _registers(std::move(registers))
   {
-    for (const auto reg : registers) {
-      _mask |= static_cast<std::uint64_t>(1U) << static_cast<std::uint64_t>(reg);
-    }
   }
 
   explicit Registers(std::vector<arm64>&& registers) noexcept
+    : _registers(std::move(registers))
   {
-    for (const auto reg : registers) {
-      _mask |= static_cast<std::uint64_t>(1U) << static_cast<std::uint64_t>(reg);
-    }
   }
 
   explicit Registers(std::vector<riscv>&& registers) noexcept
+    : _registers(std::move(registers))
   {
-    for (const auto reg : registers) {
-      _mask |= static_cast<std::uint64_t>(1U) << static_cast<std::uint64_t>(reg);
-    }
   }
 
   ~Registers() noexcept = default;
 
-  [[nodiscard]] std::uint64_t mask() const noexcept { return _mask; }
+  [[nodiscard]] std::uint64_t mask() const noexcept
+  {
+    return std::visit(
+      [](const auto& registers) {
+        auto mask = 0ULL;
+        for (const auto reg : registers) {
+          mask |= static_cast<std::uint64_t>(1U) << static_cast<std::uint64_t>(reg);
+        }
+        return mask;
+      },
+      _registers);
+  }
 
-  [[nodiscard]] std::uint64_t size() const noexcept { return std::bitset<64>{ _mask }.count(); }
+  [[nodiscard]] std::uint64_t size() const noexcept
+  {
+    return std::visit([](const auto& registers) { return registers.size(); }, _registers);
+  }
+
+  [[nodiscard]] bool empty() const noexcept
+  {
+    return std::visit([](const auto& registers) { return registers.empty(); }, _registers);
+  }
+
+  [[nodiscard]] const registers_t& registers() const noexcept { return _registers; }
 
 private:
-  std::uint64_t _mask{ 0U };
+  registers_t _registers;
+};
+
+class RegisterValues
+{
+public:
+  RegisterValues(const ABI abi, std::unordered_map<std::uint8_t, std::int64_t>&& register_values) noexcept
+    : _abi(abi)
+    , _values(std::move(register_values))
+  {
+  }
+
+  explicit RegisterValues(const ABI abi)
+    : _abi(abi)
+  {
+  }
+
+  ~RegisterValues() = default;
+
+  [[nodiscard]] ABI abi() const noexcept { return _abi; }
+
+  [[nodiscard]] std::optional<std::int64_t> value(const Registers::x86 reg) const noexcept
+  {
+    return value(static_cast<std::uint8_t>(reg));
+  }
+
+  [[nodiscard]] std::optional<std::int64_t> value(const Registers::arm reg) const noexcept
+  {
+    return value(static_cast<std::uint8_t>(reg));
+  }
+
+  [[nodiscard]] std::optional<std::int64_t> value(const Registers::arm64 reg) const noexcept
+  {
+    return value(static_cast<std::uint8_t>(reg));
+  }
+
+  [[nodiscard]] std::optional<std::int64_t> value(const Registers::riscv reg) const noexcept
+  {
+    return value(static_cast<std::uint8_t>(reg));
+  }
+
+private:
+  ABI _abi;
+  std::unordered_map<std::uint8_t, std::int64_t> _values;
+
+  [[nodiscard]] std::optional<std::int64_t> value(const std::uint8_t reg) const noexcept
+  {
+    if (const auto value = _values.find(reg); value != _values.end()) {
+      return value->second;
+    }
+
+    return std::nullopt;
+  }
 };
 }

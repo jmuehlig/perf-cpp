@@ -23,10 +23,10 @@ main()
   sampler.trigger("cycles");
   sampler.values()
     .time(true)
-    .user_registers(
-      perf::Registers{ { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 } })
-    .kernel_registers(
-      perf::Registers{ { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 } })
+    .user_registers(perf::Registers{
+      { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 } })
+    .kernel_registers(perf::Registers{
+      { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 } })
     .cpu_id(true);
 
   /// Create random access benchmark.
@@ -67,21 +67,25 @@ main()
 
     /// Since we recorded the time, period, the instruction pointer, and the CPU
     /// id, we can only read these values.
-    if (sample.time().has_value() && (sample.user_registers().has_value() || sample.kernel_registers().has_value()) &&
-        sample.cpu_id().has_value()) {
+    if (sample.metadata().timestamp().has_value() &&
+        (sample.user_registers().has_value() || sample.kernel_registers().has_value()) &&
+        sample.metadata().cpu_id().has_value()) {
 
-      std::cout << "Time = " << sample.time().value() << " | CPU ID = " << sample.cpu_id().value();
+      std::cout << "Time = " << sample.metadata().timestamp().value()
+                << " | CPU ID = " << sample.metadata().cpu_id().value();
 
       if (sample.user_registers().has_value()) {
         const auto& user_registers = sample.user_registers().value();
-        std::cout << " | User Registers = IP(" << user_registers[0U] << "), DI(" << user_registers[1U] << "), R10("
-                  << user_registers[2U] << ")";
+        std::cout << " | User Registers = IP(" << user_registers.value(perf::Registers::x86::IP).value_or(0)
+                  << "), DI(" << user_registers.value(perf::Registers::x86::DI).value_or(0) << "), R10("
+                  << user_registers.value(perf::Registers::x86::R10).value_or(0) << ")";
       }
 
       if (sample.kernel_registers().has_value()) {
         const auto& kernel_registers = sample.kernel_registers().value();
-        std::cout << " | Kernel Registers = IP(" << kernel_registers[0U] << "), DI(" << kernel_registers[1U]
-                  << "), R10(" << kernel_registers[2U] << ")";
+        std::cout << " | Kernel Registers = IP(" << kernel_registers.value(perf::Registers::x86::IP).value_or(0)
+                  << "), DI(" << kernel_registers.value(perf::Registers::x86::DI).value_or(0) << "), R10("
+                  << kernel_registers.value(perf::Registers::x86::R10).value_or(0) << ")";
       }
 
       std::cout << "\n";

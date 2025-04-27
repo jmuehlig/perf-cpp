@@ -103,15 +103,21 @@ public:
   class Entry
   {
   public:
-    explicit Entry(std::uintptr_t iterator) noexcept
+    explicit Entry(const std::uintptr_t iterator) noexcept
       : _header(reinterpret_cast<perf_event_header*>(iterator))
       , _data(std::uintptr_t(_header + 1U))
     {
     }
 
+    Entry(Entry&& other) noexcept
+      : _header(std::exchange(other._header, nullptr))
+      , _data(std::exchange(other._data, 0ULL))
+    {
+    }
+
     ~Entry() noexcept = default;
 
-    [[nodiscard]] Sample::Mode mode() const noexcept;
+    [[nodiscard]] std::optional<Metadata::Mode> mode() const noexcept;
     [[nodiscard]] std::uint16_t size() const noexcept { return _header->size; }
 
     template<typename T>

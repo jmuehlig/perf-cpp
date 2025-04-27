@@ -82,34 +82,40 @@ main()
 
     /// Since we recorded the time, period, the instruction pointer, and the CPU
     /// id, we can only read these values.
-    if (sample.time().has_value() && sample.logical_memory_address().has_value() && sample.data_src().has_value()) {
+    if (sample.metadata().timestamp().has_value() && sample.data_access().logical_memory_address().has_value() &&
+        sample.data_access().source().has_value()) {
       auto data_source = "N/A";
-      if (sample.data_src()->is_mem_l1()) {
+      if (sample.data_access().source()->is_l1d_hit()) {
         data_source = "L1d";
-      } else if (sample.data_src()->is_mem_lfb()) {
+      } else if (sample.data_access().source()->is_mhb_hit().value_or(false)) {
         data_source = "LFB/MAB";
-      } else if (sample.data_src()->is_mem_l2()) {
+      } else if (sample.data_access().source()->is_l2_hit()) {
         data_source = "L2";
-      } else if (sample.data_src()->is_mem_l3()) {
+      } else if (sample.data_access().source()->is_l3_hit()) {
         data_source = "L3";
-      } else if (sample.data_src()->is_mem_local_ram()) {
-        data_source = "local RAM";
+      } else if (sample.data_access().source()->is_memory_hit()) {
+        data_source = "RAM";
       }
 
       auto type = "N/A";
-      if (sample.data_src()->is_load()) {
-        type = "Load";
-      } else if (sample.data_src()->is_store()) {
-        type = "Store";
+      if (sample.instruction_execution().type().has_value()) {
+        if (sample.instruction_execution().type() == perf::InstructionExecution::InstructionType::MemoryLoad) {
+          type = "Load";
+        } else if (sample.instruction_execution().type() ==
+                   perf::InstructionExecution::InstructionType::MemoryStore) {
+          type = "Store";
+        }
       }
 
-      const auto latency = sample.latency().value_or(perf::Latency{});
+      const auto instruction_latency = sample.instruction_execution().latency().instruction_retirement().value_or(
+        sample.instruction_execution().latency().uop_tag_to_retirement().value_or(0U));
+      const auto cache_latency =
+        sample.data_access().latency().data_access().value_or(sample.data_access().latency().cache_miss().value_or(0U));
 
-      std::cout << "Time = " << sample.time().value() << " | Logical Mem Address = 0x" << std::hex
-                << sample.logical_memory_address().value() << std::dec
-                << " | Latency (cache, instruction) = " << latency.cache_latency() << ", "
-                << latency.instruction_retirement_latency() << " | Type = " << type
-                << " | Data Source = " << data_source << "\n";
+      std::cout << "Time = " << sample.metadata().timestamp().value() << " | Logical Mem Address = 0x" << std::hex
+                << sample.data_access().logical_memory_address().value() << std::dec
+                << " | Latency (cache, instruction) = " << cache_latency << ", " << instruction_latency
+                << " | Type = " << type << " | Data Source = " << data_source << "\n";
     } else if (sample.count_loss().has_value()) {
       std::cout << "Loss = " << sample.count_loss().value() << "\n";
     }

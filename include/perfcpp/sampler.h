@@ -212,10 +212,10 @@ public:
      * @param registers List of registers to include.
      * @return The Values instance.
      */
-    Values& user_registers(Registers registers) noexcept
+    Values& user_registers(Registers&& registers) noexcept
     {
-      _user_registers = registers;
-      set(PERF_SAMPLE_REGS_USER, _user_registers.size() > 0U);
+      _user_registers = std::move(registers);
+      set(PERF_SAMPLE_REGS_USER, !_user_registers.empty());
       return *this;
     }
 
@@ -283,10 +283,10 @@ public:
      * @param registers List of registers to include.
      * @return The Values instance.
      */
-    Values& kernel_registers(Registers registers) noexcept
+    Values& kernel_registers(Registers&& registers) noexcept
     {
-      _kernel_registers = registers;
-      set(PERF_SAMPLE_REGS_INTR, _kernel_registers.size() > 0U);
+      _kernel_registers = std::move(registers);
+      set(PERF_SAMPLE_REGS_INTR, !_kernel_registers.empty());
       return *this;
     }
 
@@ -439,8 +439,8 @@ public:
       return static_cast<bool>(_mask & perf_field);
     }
 
-    [[nodiscard]] Registers user_registers() const noexcept { return _user_registers; }
-    [[nodiscard]] Registers kernel_registers() const noexcept { return _kernel_registers; }
+    [[nodiscard]] const Registers& user_registers() const noexcept { return _user_registers; }
+    [[nodiscard]] const Registers& kernel_registers() const noexcept { return _kernel_registers; }
     [[nodiscard]] std::uint32_t max_user_stack() const noexcept { return _max_user_stack; }
     [[nodiscard]] const std::vector<std::string>& counters() const noexcept { return _counter_names; }
     [[nodiscard]] std::uint64_t branch_mask() const noexcept { return _branch_mask; }
@@ -692,15 +692,26 @@ private:
   class SampleCounter
   {
   public:
-    SampleCounter(Group&& group, const bool has_auxiliary_counter)
+    SampleCounter(Group&& group,
+                  const bool has_intel_auxiliary_counter,
+                  const bool has_amd_fetch_pmu_counter,
+                  const bool has_amd_op_pmu_counter)
       : _group(std::move(group))
-      , _has_auxiliary_counter(has_auxiliary_counter)
+      , _has_intel_auxiliary_counter(has_intel_auxiliary_counter)
+      , _has_amd_ibs_fetch_pmu(has_amd_fetch_pmu_counter)
+      , _has_amd_ibs_op_pmu(has_amd_op_pmu_counter)
     {
     }
-    SampleCounter(Group&& group, RequestedEventSet&& requested_events, const bool has_auxiliary_counter)
+    SampleCounter(Group&& group,
+                  RequestedEventSet&& requested_events,
+                  const bool has_auxiliary_counter,
+                  const bool has_amd_fetch_pmu_counter,
+                  const bool has_amd_op_pmu_counter)
       : _group(std::move(group))
       , _requested_events(std::move(requested_events))
-      , _has_auxiliary_counter(has_auxiliary_counter)
+      , _has_intel_auxiliary_counter(has_auxiliary_counter)
+      , _has_amd_ibs_fetch_pmu(has_amd_fetch_pmu_counter)
+      , _has_amd_ibs_op_pmu(has_amd_op_pmu_counter)
     {
     }
     SampleCounter(SampleCounter&& other) noexcept = default;
@@ -711,7 +722,9 @@ private:
     [[nodiscard]] const Group& group() const noexcept { return _group; }
     [[nodiscard]] RequestedEventSet& requested_events() noexcept { return _requested_events; }
     [[nodiscard]] const RequestedEventSet& requested_events() const noexcept { return _requested_events; }
-    [[nodiscard]] bool has_auxiliary_counter() const noexcept { return _has_auxiliary_counter; }
+    [[nodiscard]] bool has_intel_auxiliary_counter() const noexcept { return _has_intel_auxiliary_counter; }
+    [[nodiscard]] bool has_amd_fetch_pmu_counter() const noexcept { return _has_amd_ibs_fetch_pmu; }
+    [[nodiscard]] bool has_amd_op_pmu_counter() const noexcept { return _has_amd_ibs_op_pmu; }
 
   private:
     /// Group including the leader that is responsible for sampling.
@@ -721,7 +734,15 @@ private:
     RequestedEventSet _requested_events;
 
     /// Indicates if this counter includes an auxiliary counter that is needed for some Intel architectures.
-    bool _has_auxiliary_counter;
+    bool _has_intel_auxiliary_counter{ false };
+
+    /// Indicates if the sampler uses the IbsFetch PMU by AMD's Instruction Based Sampling; this information is used for
+    /// parsing raw data.
+    bool _has_amd_ibs_fetch_pmu{ false };
+
+    /// Indicates if the sampler uses the IbsOp PMU by AMD's Instruction Based Sampling; this information is used for
+    /// parsing raw data.
+    bool _has_amd_ibs_op_pmu{ false };
   };
 
   /**
@@ -770,12 +791,9 @@ private:
    * Reads registers from the current buffer entry.
    *
    * @param entry Current position at the buffer.
-   * @param count_registers Number of registers requested.
-   * @return Pair of ABI and list of registers (if any).
+   * @return Registers.
    */
-  [[nodiscard]] static std::pair<ABI, std::optional<std::vector<std::uint64_t>>> read_registers(
-    SampleBuffer::Entry& entry,
-    std::uint64_t count_registers);
+  [[nodiscard]] static RegisterValues read_registers(SampleBuffer::Entry& entry, const Registers& registers);
 
   /**
    * Reads hardware events from the current buffer entry.
@@ -804,12 +822,41 @@ private:
   [[nodiscard]] static std::optional<std::vector<Branch>> read_branch_stack(SampleBuffer::Entry& entry);
 
   /**
+   * Reads the data source field and translates it into an instruction type, the source, and lock information.
+   *
+   * @param source Data source field.
+   * @return 3-tuple (instruction type, data source, (is l1 tlb hit bit, is l2 tlb hit bit), is locked bit)
+   */
+  [[nodiscard]] static std::tuple<std::optional<InstructionExecution::InstructionType>,
+                                  DataAccess::Source,
+                                  std::optional<std::pair<bool, bool>>,
+                                  std::optional<bool>>
+  read_data_access_source(std::uint64_t source);
+
+  /**
+   * Reads the hardware transaction abort from the current buffer entry.
+   *
+   * @param entry Current position at the buffer.
+   * @return Hardware transaction abort.
+   */
+  [[nodiscard]] static InstructionExecution::HardwareTransactionAbort read_hardware_transaction_abort(
+    std::uint64_t abort);
+
+  /**
+   * Enriches the given sample with information that is present in the IBS raw data but cannot be accessed by the perf subsystem interface.
+   *
+   * @param is_ibs_fetch Flag if the sample PMU is ibs_fetch (ibs_op otherwise).
+   * @param sample The sample to enrich; needs to contain raw data.
+   */
+  static void enrich_ibs_sample_from_raw_data(bool is_ibs_fetch, Sample& sample);
+
+  /**
    * Translates the current entry from the user-level buffer into a lost sample.
    *
    * @param entry Entry of the user-level buffer.
    * @return Sample containing the loss.
    */
-  [[nodiscard]] perf::Sample read_loss_event(SampleBuffer::Entry entry) const noexcept;
+  [[nodiscard]] perf::Sample read_loss_event(SampleBuffer::Entry&& entry) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a context switch sample.
@@ -817,7 +864,7 @@ private:
    * @param entry Entry of the user-level buffer.
    * @return Sample containing the context switch.
    */
-  [[nodiscard]] perf::Sample read_context_switch_event(SampleBuffer::Entry entry) const noexcept;
+  [[nodiscard]] perf::Sample read_context_switch_event(SampleBuffer::Entry&& entry) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a cgroup sample.
@@ -825,7 +872,7 @@ private:
    * @param entry Entry of the user-level buffer.
    * @return Sample containing the cgroup.
    */
-  [[nodiscard]] static perf::Sample read_cgroup_event(SampleBuffer::Entry entry);
+  [[nodiscard]] static perf::Sample read_cgroup_event(SampleBuffer::Entry&& entry);
 
   /**
    * Translates the current entry from the user-level buffer into a throttle or un-throttle sample.
@@ -833,7 +880,7 @@ private:
    * @param entry Entry of the user-level buffer.
    * @return Sample containing the throttle.
    */
-  [[nodiscard]] perf::Sample read_throttle_event(SampleBuffer::Entry entry) const noexcept;
+  [[nodiscard]] perf::Sample read_throttle_event(SampleBuffer::Entry&& entry) const noexcept;
 
   const CounterDefinition& _counter_definitions;
 
@@ -1331,7 +1378,15 @@ class SampleTimestampComparator
 public:
   bool operator()(const Sample& left, const Sample& right) const noexcept
   {
-    return left.time().value() < right.time().value();
+    if (!left.metadata().timestamp().has_value()) {
+      return right.metadata().timestamp().has_value();
+    }
+
+    if (!right.metadata().timestamp().has_value()) {
+      return false;
+    }
+
+    return left.metadata().timestamp().value() < right.metadata().timestamp().value();
   }
 };
 

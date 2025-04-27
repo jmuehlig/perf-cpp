@@ -61,7 +61,8 @@ main()
   samples.erase(std::remove_if(samples.begin(),
                                samples.end(),
                                [](const auto& sample) {
-                                 return !sample.cpu_id().has_value() || !sample.time().has_value() ||
+                                 return !sample.metadata().cpu_id().has_value() ||
+                                        !sample.metadata().timestamp().has_value() ||
                                         !sample.context_switch().has_value();
                                }),
                 samples.end());
@@ -74,7 +75,8 @@ main()
   for (auto index = 0U; index < count_show_samples; ++index) {
     const auto& sample = samples[index];
 
-    std::cout << "Time = " << sample.time().value() << " | CPU ID = " << sample.cpu_id().value()
+    std::cout << "Time = " << sample.metadata().timestamp().value()
+              << " | CPU ID = " << sample.metadata().cpu_id().value()
               << " | is in = " << sample.context_switch().value().is_in()
               << " | is preempt = " << sample.context_switch().value().is_preempt() << "\n";
   }

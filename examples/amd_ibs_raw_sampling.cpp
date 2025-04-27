@@ -72,9 +72,9 @@ main()
     /// https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/24593.pdf (from page
     /// 428).
 
-    if (sample.raw().has_value() && sample.instruction_pointer().has_value()) {
+    if (sample.raw_data().has_value() && sample.instruction_execution().logical_instruction_address().has_value()) {
       const auto* registers =
-        reinterpret_cast<const std::uint64_t*>(sample.raw().value().data() + /* 4 byte offset */ 4);
+        reinterpret_cast<const std::uint64_t*>(sample.raw_data().value().data() + /* 4 byte offset */ 4);
 
       // const auto ibs_execution_control_reg = registers[0U]; /// IBS Execution Control Register (see page 429 in the
       // referenced AMD manual)
@@ -87,17 +87,18 @@ main()
       const auto ibs_linear_addr_reg =
         registers[5]; // IBS Data Cache Linear Address Register (see page 434 in the referenced AMD manual)
 
-      std::cout << "Raw (" << sample.raw().value().size() << " bytes): IP (from raw) = 0x" << std::hex << ibs_rip_reg
-                << std::dec;
+      std::cout << "Raw (" << sample.raw_data().value().size() << " bytes): IP (from raw) = 0x" << std::hex
+                << ibs_rip_reg << std::dec;
       if ((ibs_data3_reg & 1U << 17)) { /// Check if the address is valid
         std::cout << " ; Addr (from raw) = 0x" << std::hex << ibs_linear_addr_reg << std::dec;
       } else {
         std::cout << " ; Addr (from raw) not valid";
       }
 
-      std::cout << " | IP (from perf) = 0x" << std::hex << sample.instruction_pointer().value() << std::dec;
-      std::cout << " | Addr (from perf) = 0x" << std::hex << sample.logical_memory_address().value_or(0) << std::dec
-                << "\n";
+      std::cout << " | IP (from perf) = 0x" << std::hex
+                << sample.instruction_execution().logical_instruction_address().value() << std::dec;
+      std::cout << " | Addr (from perf) = 0x" << std::hex << sample.data_access().logical_memory_address().value_or(0)
+                << std::dec << "\n";
     }
   }
   std::cout << std::flush;

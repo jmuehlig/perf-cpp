@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <list>
 #include <perfcpp/analyzer/data_type.h>
+#include <perfcpp/hardware_info.h>
 #include <perfcpp/sample.h>
 #include <set>
 #include <string>
@@ -66,7 +67,7 @@ private:
       return _count_stores > 0ULL ? _sum_store_instruction_latency / _count_stores : 0ULL;
     }
     [[nodiscard]] std::uint64_t l1_hits() const noexcept { return _count_l1_hits; }
-    [[nodiscard]] std::uint64_t lfb_hits() const noexcept { return _count_lfb_hits; }
+    [[nodiscard]] std::uint64_t lfb_hits() const noexcept { return _count_mhb_hits; }
     [[nodiscard]] std::uint64_t l2_hits() const noexcept { return _count_l2_hits; }
     [[nodiscard]] std::uint64_t l3_hits() const noexcept { return _count_l3_hits; }
     [[nodiscard]] std::uint64_t l4_hits() const noexcept { return _count_l4_hits; }
@@ -83,36 +84,56 @@ private:
 
     MemberStatistic& operator+=(const Sample& sample) noexcept
     {
-      if (!sample.data_src().has_value() || !sample.weight().has_value()) {
+      if (!sample.data_access().source().has_value()) {
         return *this;
       }
 
-      const auto data_src = sample.data_src().value();
-      const auto latency = sample.latency().value();
+      const auto data_src = sample.data_access().source().value();
 
-      _count_loads += static_cast<std::uint64_t>(data_src.is_load());
-      _sum_load_cache_latency += (static_cast<std::uint64_t>(data_src.is_load()) * latency.cache_latency());
-      _sum_load_instruction_latency +=
-        (static_cast<std::uint64_t>(data_src.is_load()) * latency.instruction_retirement_latency());
-      _count_stores += static_cast<std::uint64_t>(data_src.is_store());
-      _sum_store_cache_latency += (static_cast<std::uint64_t>(data_src.is_store()) * latency.cache_latency());
-      _sum_store_instruction_latency +=
-        (static_cast<std::uint64_t>(data_src.is_store()) * latency.instruction_retirement_latency());
-      _count_l1_hits += static_cast<std::uint64_t>(data_src.is_mem_l1());
-      _count_lfb_hits += static_cast<std::uint64_t>(data_src.is_mem_lfb());
-      _count_l2_hits += static_cast<std::uint64_t>(data_src.is_mem_l2());
-      _count_l3_hits += static_cast<std::uint64_t>(data_src.is_mem_l3());
-      _count_l4_hits += static_cast<std::uint64_t>(data_src.is_mem_l4());
-      _count_local_ram_hits += static_cast<std::uint64_t>(data_src.is_mem_local_ram());
-      _count_remote_ram_hits += static_cast<std::uint64_t>(data_src.is_mem_remote_ram());
-      _dtlb_hits += static_cast<std::uint64_t>(data_src.is_tlb_l1_hit());
-      _stlb_hits += static_cast<std::uint64_t>(data_src.is_tlb_l2_hit());
-      _stlb_misses += static_cast<std::uint64_t>(data_src.is_tlb_miss());
-      _snoop_hits += static_cast<std::uint64_t>(data_src.is_snoop_hit());
-      _snoop_misses += static_cast<std::uint64_t>(data_src.is_snoop_miss());
-      _snoop_hits_modified += static_cast<std::uint64_t>(data_src.is_snoop_hit_modified());
-      _snoop_forward += static_cast<std::uint64_t>(data_src.is_snoopx_forward());
-      _snoop_peer += static_cast<std::uint64_t>(data_src.is_snoopx_peer());
+      /// Instruction type and latency.
+      if (const auto instruction_type = sample.instruction_execution().type(); instruction_type.has_value()) {
+        const auto is_load = instruction_type.value() == InstructionExecution::InstructionType::MemoryLoad;
+        const auto is_store = instruction_type.value() == InstructionExecution::InstructionType::MemoryStore;
+
+        _count_loads += static_cast<std::uint64_t>(is_load);
+        _count_stores += static_cast<std::uint64_t>(is_store);
+
+        if (is_load) {
+          _count_l1_hits += static_cast<std::uint64_t>(data_src.is_l1d_hit());
+          _count_mhb_hits += static_cast<std::uint64_t>(data_src.is_mhb_hit().value_or(false));
+          _count_l2_hits += static_cast<std::uint64_t>(data_src.is_l2_hit());
+          _count_l3_hits += static_cast<std::uint64_t>(data_src.is_l3_hit());
+          _count_l4_hits += static_cast<std::uint64_t>(data_src.is_l4_hit());
+          _count_local_ram_hits += static_cast<std::uint64_t>(data_src.is_memory_hit() && !data_src.is_remote());
+          _count_remote_ram_hits += static_cast<std::uint64_t>(data_src.is_memory_hit() && data_src.is_remote());
+
+          if (HardwareInfo::is_intel()) {
+            _sum_load_cache_latency += sample.data_access().latency().data_access().value_or(0U);
+            _sum_load_instruction_latency +=
+              sample.instruction_execution().latency().instruction_retirement().value_or(0U);
+          } else if (HardwareInfo::is_amd()) {
+            _sum_load_cache_latency += sample.data_access().latency().cache_miss().value_or(0U);
+            _sum_load_instruction_latency +=
+              sample.instruction_execution().latency().uop_tag_to_completion().value_or(0U);
+          }
+        } else if (is_store) {
+          if (HardwareInfo::is_intel()) {
+            _sum_store_cache_latency += sample.data_access().latency().data_access().value_or(0U);
+            _sum_store_instruction_latency +=
+              sample.instruction_execution().latency().instruction_retirement().value_or(0U);
+          } else if (HardwareInfo::is_amd()) {
+            _sum_store_cache_latency += sample.data_access().latency().cache_miss().value_or(0U);
+            _sum_store_instruction_latency +=
+              sample.instruction_execution().latency().uop_tag_to_completion().value_or(0U);
+          }
+        }
+
+        _dtlb_hits += static_cast<std::uint64_t>(sample.data_access().tlb().is_l1_hit().value_or(false));
+        _stlb_hits += static_cast<std::uint64_t>(sample.data_access().tlb().is_l2_hit().value_or(false));
+        _stlb_misses += static_cast<std::uint64_t>(!sample.data_access().tlb().is_l1_hit().value_or(true) &&
+                                                   !sample.data_access().tlb().is_l2_hit().value_or(true));
+      }
+
       return *this;
     }
 
@@ -124,7 +145,7 @@ private:
     std::uint64_t _sum_store_cache_latency{ 0ULL };
     std::uint64_t _sum_store_instruction_latency{ 0ULL };
     std::uint64_t _count_l1_hits{ 0ULL };
-    std::uint64_t _count_lfb_hits{ 0ULL };
+    std::uint64_t _count_mhb_hits{ 0ULL };
     std::uint64_t _count_l2_hits{ 0ULL };
     std::uint64_t _count_l3_hits{ 0ULL };
     std::uint64_t _count_l4_hits{ 0ULL };

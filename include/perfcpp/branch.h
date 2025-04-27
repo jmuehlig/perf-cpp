@@ -1,6 +1,6 @@
 #pragma once
 
-#include "feature.h"
+#include "perfcpp/feature.h"
 #include <cstdint>
 #include <linux/perf_event.h>
 

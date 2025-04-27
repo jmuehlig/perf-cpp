@@ -36,7 +36,8 @@ main()
 
   /// Setup which data will be included into samples (timestamp and stack of branches).
   sampler.values().time(true).branch_stack(
-    { perf::BranchType::User, perf::BranchType::Conditional }) /// Only sample conditional branches in user-mode.
+    { perf::BranchType::User,
+      perf::BranchType::Conditional }) /// Only sample conditional branches in user-mode.
     ;
 
   /// Create random access benchmark.
@@ -78,12 +79,12 @@ main()
 
     /// Since we recorded the time, period, the instruction pointer, and the CPU
     /// id, we can only read these values.
-    if (sample.time().has_value() && sample.branches().has_value()) {
-      std::cout << "Time = " << sample.time().value() << "\n";
-      for (const auto& branch : sample.branches().value()) {
-        std::cout << "\tpredicted correct = " << branch.is_predicted() << " | from instruction "
-                  << branch.instruction_pointer_from() << " | to instruction " << branch.instruction_pointer_to()
-                  << "\n";
+    if (sample.metadata().timestamp().has_value() && sample.branch_stack().has_value()) {
+      std::cout << "Time = " << sample.metadata().timestamp().value() << "\n";
+      for (const auto& branch : sample.branch_stack().value()) {
+        std::cout << "\tpredicted correct = " << branch.is_predicted() << " | from instruction 0x" << std::hex
+                  << branch.instruction_pointer_from() << std::dec << " | to instruction 0x" << std::hex
+                  << branch.instruction_pointer_to() << std::dec << "\n";
       }
     }
   }

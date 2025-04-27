@@ -95,9 +95,8 @@ perf::analyzer::MemoryAccess::map(const std::vector<Sample>& samples)
 
   /// Scan the samples and annotate each sample to the member of a data type instance the sample may belong to.
   for (const auto& sample : samples) {
-    const auto memory_address = sample.logical_memory_address().value_or(0ULL);
-
-    if (memory_address > 0ULL) {
+    if (const auto memory_address = sample.data_access().logical_memory_address().value_or(0ULL);
+        memory_address > 0ULL) {
 
       /// For every sampled address, find the potentially linked data type instance.
       auto data_type_instance = std::lower_bound(
@@ -199,7 +198,7 @@ perf::analyzer::MemoryAccessResult::to_string() const
     table.add(std::move(header_groups));
 
     auto header = Table::Row{ 24U };
-    header << Table::Column{ "", 2U } << " samples" << "count" << "cache lat." << "instr. lat." << "L1d" << "LFB"
+    header << Table::Column{ "", 2U } << " samples" << "count" << (HardwareInfo::is_amd() ? "cache miss lat." : "cache lat.") << "instr. lat." << "L1d" << "LFB"
            << "L2" << "L3" << "local" << "remote" << "L1 hits" << "L2 hits" << "misses" << "count" << "cache lat."
            << "instr. lat";
     table.add(std::move(header));
