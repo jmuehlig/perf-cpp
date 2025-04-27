@@ -760,7 +760,9 @@ perf::Sampler::read_data_access_source(const std::uint64_t source)
   const auto remote = perf_mem_data_src{ source }.mem_remote;
   data_access_source.is_remote(remote & PERF_MEM_REMOTE_REMOTE);
 #else /// Use lvl before Linux 4.14
+#ifndef PERFCPP_NO_MEM_LVLNUM /// If PERFCPP_NO_MEM_LVLNUM is defined, we do not need to create another perf_lvl object.
   const auto perf_lvl = perf_mem_data_src{ source }.mem_lvl;
+#endif
   data_access_source.is_remote((perf_lvl & PERF_MEM_LVL_REM_RAM1) || (perf_lvl & PERF_MEM_LVL_REM_RAM2) ||
                                (perf_lvl & PERF_MEM_LVL_REM_CCE1) || (perf_lvl & PERF_MEM_LVL_REM_CCE2));
 #endif
