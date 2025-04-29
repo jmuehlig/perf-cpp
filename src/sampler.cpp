@@ -414,14 +414,14 @@ perf::Sampler::read_sample_event(perf::SampleBuffer::Entry entry, const SampleCo
 {
   auto sample = Sample{};
   sample.metadata().mode(entry.mode());
-  sample.instruction_execution().is_instruction_address_exact(entry.is_exact_ip());
+  sample.instruction_execution().is_instruction_pointer_exact(entry.is_exact_ip());
 
   if (this->_values.is_set(PERF_SAMPLE_IDENTIFIER)) {
     sample.metadata().sample_id(entry.read<std::uint64_t>());
   }
 
   if (this->_values.is_set(PERF_SAMPLE_IP)) {
-    sample.instruction_execution().logical_instruction_address(entry.read<std::uintptr_t>());
+    sample.instruction_execution().logical_instruction_pointer(entry.read<std::uintptr_t>());
   }
 
   if (this->_values.is_set(PERF_SAMPLE_TID)) {
@@ -576,13 +576,13 @@ perf::Sampler::read_sample_event(perf::SampleBuffer::Entry entry, const SampleCo
 
 #ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE /// Sampling the data page size is supported since Linux 5.11
   if (this->_values.is_set(PERF_SAMPLE_DATA_PAGE_SIZE)) {
-    sample.data_access().tlb().l1_page_size(entry.read<std::uint64_t>());
+    sample.data_access().page_size(entry.read<std::uint64_t>());
   }
 #endif
 
 #ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE /// Sampling the code page size is supported since Linux 5.11
   if (this->_values.is_set(PERF_SAMPLE_CODE_PAGE_SIZE)) {
-    sample.instruction_execution().tlb().page_size(entry.read<std::uint64_t>());
+    sample.instruction_execution().page_size(entry.read<std::uint64_t>());
   }
 #endif
 
@@ -859,20 +859,46 @@ perf::Sampler::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, perf::Sa
     sample.instruction_execution().fetch().is_l2_cache_miss(fetch_parser.is_l3_miss());
     sample.instruction_execution().fetch().is_l3_cache_miss(fetch_parser.is_l3_miss());
 
+    sample.instruction_execution().tlb().is_l1_miss(fetch_parser.is_l1_tlb_miss());
+    sample.instruction_execution().tlb().is_l2_miss(fetch_parser.is_l2_tlb_miss());
+
     /// Physical instruction address.
-    sample.instruction_execution().physical_instruction_address(fetch_parser.physical_instruction_address());
+    sample.instruction_execution().physical_instruction_pointer(fetch_parser.physical_instruction_address());
   }
 
   /// .. or execution events.
   else {
     auto execution_parser = IBSExecutionParser{ sample.raw_data().value() };
 
-    /// Set execution latency.
+    /// Execution latency.
     sample.instruction_execution().latency().uop_completion_to_retirement(
       execution_parser.completion_to_retire_latency());
     sample.instruction_execution().latency().uop_tag_to_retirement(execution_parser.tag_to_retire_latency());
 
-    /// Set type of the instruction (prefetch, return, or branch)
+    /// TLB latency.
+    sample.data_access().latency().dtlb_refill(execution_parser.tlb_refill_latency());
+
+    /// TLB page size.
+    if (!execution_parser.is_l1_data_tlb_miss()) {
+      if (execution_parser.is_l1_data_tlb_hit_1g()) {
+        sample.data_access().tlb().l1_page_size(1024ULL * 1024ULL * 1024ULL);
+      } else if (execution_parser.is_l1_data_tlb_hit_2m()) {
+        sample.data_access().tlb().l1_page_size(1024ULL * 1024ULL * 2ULL);
+      } else {
+        sample.data_access().tlb().l1_page_size(1024ULL * 4ULL);
+      }
+    }
+    if (!execution_parser.is_l2_data_tlb_miss()) {
+      if (execution_parser.is_l2_data_tlb_hit_1g()) {
+        sample.data_access().tlb().l2_page_size(1024ULL * 1024ULL * 1024ULL);
+      } else if (execution_parser.is_l2_data_tlb_hit_2m()) {
+        sample.data_access().tlb().l2_page_size(1024ULL * 1024ULL * 2ULL);
+      } else {
+        sample.data_access().tlb().l2_page_size(1024ULL * 4ULL);
+      }
+    }
+
+    /// Type of the instruction (prefetch, return, or branch) and type of the branch–if it is one.
     if (!sample.instruction_execution().type().has_value()) {
       if (execution_parser.is_software_prefetch()) {
         sample.instruction_execution().type(InstructionExecution::InstructionType::SoftwarePrefetch);
@@ -895,7 +921,7 @@ perf::Sampler::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, perf::Sa
       }
     }
 
-    /// Data access information.
+    /// Source information.
     if (sample.data_access().source().has_value()) {
       sample.data_access().source()->num_mhb_slots_allocated(execution_parser.num_open_mem_requests());
       sample.data_access().source()->is_mhb_hit(execution_parser.is_data_cache_miss_no_mab_allocation());
@@ -907,9 +933,6 @@ perf::Sampler::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, perf::Sa
         sample.data_access().source()->access_width(std::uint8_t(1U << (access_width - 1U)));
       }
     }
-
-    /// TLB latency.
-    sample.data_access().latency().dtlb_refill(execution_parser.tlb_refill_latency());
   }
 }
 

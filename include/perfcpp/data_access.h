@@ -17,12 +17,6 @@ public:
     void is_l1d_hit(const bool is_l1d_hit) noexcept { _is_l1d_hit = is_l1d_hit; }
 
     /**
-     * Set whether MHB is allocated.
-     * @param is_mhb_allocated MHB allocation indicator.
-     */
-    void is_mhb_allocated(const bool is_mhb_allocated) noexcept { _is_mhb_allocated = is_mhb_allocated; }
-
-    /**
      * Set whether MHB is hit.
      * @param is_mhb_hit MHB hit indicator.
      */
@@ -108,11 +102,6 @@ public:
      * @return L1 data cache hit indicator.
      */
     [[nodiscard]] bool is_l1d_hit() const noexcept { return _is_l1d_hit; }
-
-    /**
-     * @return MHB allocation indicator, if available. std::nullopt otherwise.
-     */
-    [[nodiscard]] std::optional<bool> is_mhb_allocated() const noexcept { return _is_mhb_allocated; }
 
     /**
      * @return MHB hit indicator, if available. std::nullopt otherwise.
@@ -220,7 +209,6 @@ public:
 
   private:
     bool _is_l1d_hit{ false };
-    std::optional<bool> _is_mhb_allocated{ std::nullopt };
     std::optional<bool> _is_mhb_hit{ std::nullopt };
     std::optional<std::uint8_t> _num_mhb_slots_allocated{ std::nullopt };
     bool _is_l2_hit{ false };
@@ -342,6 +330,13 @@ public:
 
   void source(const Source source) noexcept { _source.emplace(source); }
 
+  /**
+   * Set page size of the data.
+   *
+   * @param page_size Page size of the data.
+   */
+  void page_size(const std::uint64_t page_size) noexcept { _data_page_site = page_size; }
+
   [[nodiscard]] std::optional<std::uintptr_t> logical_memory_address() const noexcept
   {
     return _logical_memory_address;
@@ -360,11 +355,17 @@ public:
   [[nodiscard]] const Latency& latency() const noexcept { return _latency; }
   [[nodiscard]] Latency& latency() noexcept { return _latency; }
 
+  /**
+     * @return Size of the data page, if available. std::nullopt otherwise.
+   */
+  [[nodiscard]] std::optional<std::uint64_t> page_size() const noexcept { return _data_page_site; }
+
 private:
   std::optional<std::uintptr_t> _logical_memory_address;
   std::optional<std::uintptr_t> _physical_memory_address;
   std::optional<Source> _source;
   TLB _tlb;
   Latency _latency;
+  std::optional<std::uint64_t> _data_page_site{std::nullopt};
 };
 }

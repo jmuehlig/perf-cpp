@@ -33,7 +33,6 @@ The examples will be built to `build/examples/bin/`.
 * [counter_sampling.cpp](counter_sampling.cpp) shows how to include values of further hardware performance counters into samples.
 * [branch_sampling.cpp](branch_sampling.cpp) exemplifies sampling for last branch records and their prediction success.
 * [register_sampling.cpp](register_sampling.cpp) provides an example on how to include values of specific registers into samples.
-* [amd_ibs_raw_sampling.cpp](amd_ibs_raw_sampling.cpp) shows how to include raw data, using AMD IBS as an example, and how to interpret that data.
 * [context_switch_sampling.cpp](context_switch_sampling.cpp) provides an example that samples context switches on a single thread.
 * [multi_event_sampling.cpp](multi_event_sampling.cpp) exemplifies how to use multiple events as a trigger using Intel counters as an example.
 * [multi_thread_sampling.cpp)](multi_thread_sampling.cpp) explains how to sample data on multiple threads at the same time.

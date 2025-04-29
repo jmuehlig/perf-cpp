@@ -317,6 +317,8 @@ public:
     {
 #ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR /// Sampling for physical memory address is supported since Linux 4.13
       set(PERF_SAMPLE_PHYS_ADDR, include);
+#else
+      throw SamplingFeatureIsNotSupported{"physical memory address", "4.13"};
 #endif
       return *this;
     }
@@ -333,6 +335,8 @@ public:
     {
 #ifndef PERFCPP_NO_SAMPLE_CGROUP /// Sampling cgroup is supported since Linux 5.7
       set(PERF_SAMPLE_CGROUP, include);
+#else
+      throw SamplingFeatureIsNotSupported{"cgroup", "5.7"};
 #endif
       return *this;
     }
@@ -349,6 +353,8 @@ public:
     {
 #ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE /// Sampling the data page size is supported since Linux 5.11
       set(PERF_SAMPLE_DATA_PAGE_SIZE, include);
+#else
+      throw SamplingFeatureIsNotSupported{"data page size", "5.11"};
 #endif
       return *this;
     }
@@ -365,6 +371,8 @@ public:
     {
 #ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE /// Sampling the code page size is supported since Linux 5.11
       set(PERF_SAMPLE_CODE_PAGE_SIZE, include);
+#else
+      throw SamplingFeatureIsNotSupported{"code page size", "5.11"};
 #endif
       return *this;
     }
@@ -382,6 +390,8 @@ public:
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
                                         /// Linux 5.12
       set(PERF_SAMPLE_WEIGHT_STRUCT, include);
+#else
+      throw SamplingFeatureIsNotSupported{"weight struct", "5.12"};
 #endif
       return *this;
     }

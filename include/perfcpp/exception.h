@@ -239,6 +239,16 @@ public:
   ~CannotStartEmptySamplerError() override = default;
 };
 
+class SamplingFeatureIsNotSupported final : public std::runtime_error
+{
+public:
+  SamplingFeatureIsNotSupported(const std::string_view feature_name, const std::string_view linux_kernel_version) : std::runtime_error(std::string{"Sampling "}.append(feature_name).append(" is only supported from Linux ").append(linux_kernel_version).append(".")) {
+
+  }
+
+  ~SamplingFeatureIsNotSupported() override = default;
+};
+
 class AuxiliaryEventForSamplingNotFoundError final : public std::runtime_error
 {
 public:

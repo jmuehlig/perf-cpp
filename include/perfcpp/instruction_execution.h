@@ -110,30 +110,29 @@ public:
   {
   public:
     /**
-     * Set whether there was a TLB miss.
-     * @param is_miss TLB miss indicator.
+     * Set whether there was a iTLB miss.
+     * @param is_l1_miss TLB miss indicator.
      */
-    void is_miss(const bool is_miss) noexcept { _is_miss = is_miss; }
+    void is_l1_miss(const bool is_l1_miss) noexcept { _is_l1_miss = is_l1_miss; }
 
     /**
-     * Set the page size.
-     * @param page_size Page size.
+     * Set whether there was a sTLB miss.
+     * @param is_l2_miss TLB miss indicator.
      */
-    void page_size(const std::uint64_t page_size) noexcept { _page_size = page_size; }
+    void is_l2_miss(const bool is_l2_miss) noexcept { _is_l2_miss = is_l2_miss; }
 
     /**
-     * @return TLB miss indicator, if available. std::nullopt otherwise.
+     * @return True, if the fetch was an iTLB miss, if available. std::nullopt otherwise.
      */
-    [[nodiscard]] std::optional<bool> is_miss() const noexcept { return _is_miss; }
+    [[nodiscard]] std::optional<bool> is_l1_miss() const noexcept { return _is_l1_miss; }
 
     /**
-     * @return Page size, if available. std::nullopt otherwise.
+     * @return True, if the fetch was an sTLB miss, if available. std::nullopt otherwise.
      */
-    [[nodiscard]] std::optional<std::uint64_t> page_size() const noexcept { return _page_size; }
-
+    [[nodiscard]] std::optional<bool> is_l2_miss() const noexcept { return _is_l2_miss; }
   private:
-    std::optional<bool> _is_miss{ std::nullopt };
-    std::optional<std::uint64_t> _page_size{ std::nullopt };
+    std::optional<bool> _is_l1_miss{ std::nullopt };
+    std::optional<bool> _is_l2_miss{ std::nullopt };
   };
 
   class Fetch
@@ -335,30 +334,30 @@ public:
   void type(const InstructionType type) noexcept { _type = type; }
 
   /**
-   * Set the logical instruction address.
-   * @param logical_instruction_address Logical instruction address.
+   * Set the logical instruction pointer.
+   * @param logical_instruction_pointer Logical instruction pointer.
    */
-  void logical_instruction_address(const std::uintptr_t logical_instruction_address) noexcept
+  void logical_instruction_pointer(const std::uintptr_t logical_instruction_pointer) noexcept
   {
-    _logical_instruction_address = logical_instruction_address;
+    _logical_instruction_pointer = logical_instruction_pointer;
   }
 
   /**
-   * Set the physical instruction address.
-   * @param physical_instruction_address Physical instruction address.
+   * Set the physical instruction pointer.
+   * @param physical_instruction_pointer Physical instruction pointer.
    */
-  void physical_instruction_address(const std::uintptr_t physical_instruction_address) noexcept
+  void physical_instruction_pointer(const std::uintptr_t physical_instruction_pointer) noexcept
   {
-    _physical_instruction_address = physical_instruction_address;
+    _physical_instruction_pointer = physical_instruction_pointer;
   }
 
   /**
-   * Set whether the instruction address is exact.
-   * @param is_instruction_address_exact Instruction address exactness indicator.
+   * Set whether the instruction pointer is exact.
+   * @param is_instruction_pointer_exact Instruction pointer exactness indicator.
    */
-  void is_instruction_address_exact(const bool is_instruction_address_exact) noexcept
+  void is_instruction_pointer_exact(const bool is_instruction_pointer_exact) noexcept
   {
-    _is_instruction_address_exact = is_instruction_address_exact;
+    _is_instruction_pointer_exact = is_instruction_pointer_exact;
   }
 
   /**
@@ -407,30 +406,36 @@ public:
   void callchain(std::vector<std::uintptr_t>&& callchain) noexcept { _callchain = std::move(callchain); }
 
   /**
+     * Set the page size.
+     * @param page_size Page size.
+   */
+  void page_size(const std::uint64_t page_size) noexcept { _page_size = page_size; }
+
+  /**
    * @return Instruction type, if available. std::nullopt otherwise.
    */
   [[nodiscard]] std::optional<InstructionType> type() const noexcept { return _type; }
 
   /**
-   * @return Logical instruction address, if available. std::nullopt otherwise.
+   * @return Logical instruction pointer, if available. std::nullopt otherwise.
    */
-  [[nodiscard]] std::optional<std::uintptr_t> logical_instruction_address() const noexcept
+  [[nodiscard]] std::optional<std::uintptr_t> logical_instruction_pointer() const noexcept
   {
-    return _logical_instruction_address;
+    return _logical_instruction_pointer;
   }
 
   /**
-   * @return Physical instruction address, if available. std::nullopt otherwise.
+   * @return Physical instruction pointer, if available. std::nullopt otherwise.
    */
-  [[nodiscard]] std::optional<std::uintptr_t> physical_instruction_address() const noexcept
+  [[nodiscard]] std::optional<std::uintptr_t> physical_instruction_pointer() const noexcept
   {
-    return _physical_instruction_address;
+    return _physical_instruction_pointer;
   }
 
   /**
-   * @return Instruction address exactness indicator.
+   * @return Instruction pointer exactness indicator.
    */
-  [[nodiscard]] bool is_instruction_address_exact() const noexcept { return _is_instruction_address_exact; }
+  [[nodiscard]] bool is_instruction_pointer_exact() const noexcept { return _is_instruction_pointer_exact; }
 
   /**
    * @return Lock indicator, if available. std::nullopt otherwise.
@@ -485,11 +490,16 @@ public:
    */
   [[nodiscard]] std::optional<std::vector<std::uintptr_t>> callchain() const noexcept { return _callchain; }
 
+  /**
+   * @return Page size, if available. std::nullopt otherwise.
+   */
+  [[nodiscard]] std::optional<std::uint64_t> page_size() const noexcept { return _page_size; }
+
 private:
   std::optional<InstructionType> _type{ std::nullopt };
-  std::optional<std::uintptr_t> _logical_instruction_address{ std::nullopt };
-  std::optional<std::uintptr_t> _physical_instruction_address{ std::nullopt };
-  bool _is_instruction_address_exact{ false };
+  std::optional<std::uintptr_t> _logical_instruction_pointer{ std::nullopt };
+  std::optional<std::uintptr_t> _physical_instruction_pointer{ std::nullopt };
+  bool _is_instruction_pointer_exact{ false };
   std::optional<bool> _is_locked{ std::nullopt };
   Latency _latency;
   TLB _tlb;
@@ -497,5 +507,6 @@ private:
   std::optional<BranchType> _branch_type;
   std::optional<HardwareTransactionAbort> _hardware_transaction_abort{ std::nullopt };
   std::optional<std::vector<std::uintptr_t>> _callchain{ std::nullopt };
+  std::optional<std::uint64_t> _page_size{ std::nullopt };
 };
 }

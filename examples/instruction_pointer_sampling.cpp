@@ -62,13 +62,13 @@ main()
     /// Since we recorded the time, period, the instruction pointer, and the CPU
     /// id, we can only read these values.
     if (sample.metadata().timestamp().has_value() && sample.metadata().period().has_value() &&
-        sample.instruction_execution().logical_instruction_address().has_value() &&
+        sample.instruction_execution().logical_instruction_pointer().has_value() &&
         sample.metadata().cpu_id().has_value()) {
       std::cout << "Time = " << sample.metadata().timestamp().value()
                 << " | Period = " << sample.metadata().period().value() << " | Instruction Pointer = 0x" << std::hex
-                << sample.instruction_execution().logical_instruction_address().value() << std::dec
+                << sample.instruction_execution().logical_instruction_pointer().value() << std::dec
                 << " | CPU ID = " << sample.metadata().cpu_id().value() << " | "
-                << (sample.instruction_execution().is_instruction_address_exact() ? "exact" : "not exact") << "\n";
+                << (sample.instruction_execution().logical_instruction_pointer() ? "exact" : "not exact") << "\n";
     }
   }
   std::cout << std::flush;
