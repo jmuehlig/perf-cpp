@@ -99,11 +99,11 @@ sampler.stop();
 
 /// Print the samples to the console
 const auto samples = sampler.result();
-for (const auto& sample_record : samples)
+for (const auto& record : samples)
 {
-    const auto time = sample_record.time().value();
-    const auto cpu_id = sample_record.cpu_id().value();
-    const auto instruction = sample_record.instruction_pointer().value();
+    const auto time = record.metadata().timestmap().value();
+    const auto cpu_id = record.metadata().cpu_id().value();
+    const auto instruction = record.instruction_execution().instruction_pointer().value();
     
     std::cout 
         << "Time = " << time << " | CPU = " << cpu_id

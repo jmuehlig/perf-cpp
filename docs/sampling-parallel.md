@@ -74,13 +74,15 @@ After the threads complete execution, collate and analyze the data:
 auto result = sampler.result(/* sort samples by time*/ true);
 
 /// Print the samples
-for (const auto& sample_record : result)
+for (const auto& record : result)
 {
-    if (sample_record.time().has_value() && sample_record.thread_id().has_value())
+    const auto timestamp = record.metadata().timestamp();
+    const auto thread_id = record.metadata().thread_id();
+    if (timestamp.has_value() && thread_id.has_value())
     {
         std::cout 
-            << "Time = " << sample_record.time().value() 
-            << " | Thread ID = " << sample_record.thread_id().value() << std::endl;
+            << "Time = " << timestamp.value() 
+            << " | Thread ID = " << thread_id.value() << std::endl;
     }
 }
 ```
@@ -175,14 +177,14 @@ Access and print the collected data:
 auto result = sampler.result(/* sort samples by time*/ true);
 
 /// Print the samples
-for (const auto& sample_record : result)
+for (const auto& record : result)
 {
-    if (sample_record.time().has_value() && sample_record.cpu_id().has_value() && sample_record.thread_id().has_value())
+    if (record.time().has_value() && record.cpu_id().has_value() && record.thread_id().has_value())
     {
         std::cout 
-            << "Time = " << sample_record.time().value() 
-            << " | CPU ID = " << sample_record.cpu_id().value()
-            << " | Thread ID = " << sample_record.thread_id().value() << std::endl;
+            << "Time = " << record.time().value() 
+            << " | CPU ID = " << record.cpu_id().value()
+            << " | Thread ID = " << record.thread_id().value() << std::endl;
     }
 }
 ```

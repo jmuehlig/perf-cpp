@@ -261,12 +261,12 @@ public:
     [[nodiscard]] std::optional<bool> is_l2_hit() const noexcept { return _is_l2_hit; }
 
     /**
-     * @return L1 TLB page size, if available. std::nullopt otherwise.
+     * @return L1 TLB page size (in bytes), if available. std::nullopt otherwise.
      */
     [[nodiscard]] std::optional<std::uint64_t> l1_page_size() const noexcept { return _l1_page_size; }
 
     /**
-     * @return L2 TLB page size, if available. std::nullopt otherwise.
+     * @return L2 TLB page size (in bytes), if available. std::nullopt otherwise.
      */
     [[nodiscard]] std::optional<std::uint64_t> l2_page_size() const noexcept { return _l2_page_size; }
 

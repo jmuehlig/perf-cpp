@@ -470,7 +470,7 @@ perf::Sampler::read_sample_event(perf::SampleBuffer::Entry entry, const SampleCo
 
     /// Read the raw data.
     const auto* raw_sample_data = entry.read<std::byte>(raw_data_size);
-    sample.raw_data(std::vector<std::byte>{ raw_sample_data, raw_sample_data + raw_data_size });
+    sample.raw(std::vector<std::byte>{ raw_sample_data, raw_sample_data + raw_data_size });
   }
 
   if (this->_values.is_set(PERF_SAMPLE_BRANCH_STACK)) {
@@ -588,7 +588,7 @@ perf::Sampler::read_sample_event(perf::SampleBuffer::Entry entry, const SampleCo
 
   /// Enrich AMD IBS samples with information that is not accessible through the perf_event_open interface by
   /// interpreting the raw data, if enabled.
-  if (this->_values.is_set(PERF_SAMPLE_RAW) && sample.raw_data().has_value() && HardwareInfo::is_amd() &&
+  if (this->_values.is_set(PERF_SAMPLE_RAW) && sample.raw().has_value() && HardwareInfo::is_amd() &&
       (sample_counter.has_amd_op_pmu_counter() || sample_counter.has_amd_fetch_pmu_counter())) {
     Sampler::enrich_ibs_sample_from_raw_data(sample_counter.has_amd_fetch_pmu_counter(), sample);
   }
@@ -847,20 +847,33 @@ perf::Sampler::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, perf::Sa
 {
   /// Fetch events...
   if (is_ibs_fetch) {
-    auto fetch_parser = IBSFetchParser{ sample.raw_data().value() };
+    auto fetch_parser = IBSFetchParser{ sample.raw().value() };
 
     /// Fetch latency.
     sample.instruction_execution().latency().fetch(fetch_parser.latency());
 
     /// Fetch information.
-    sample.instruction_execution().fetch().is_valid(fetch_parser.is_valid());
-    sample.instruction_execution().fetch().is_complete(fetch_parser.is_complete());
-    sample.instruction_execution().fetch().is_l1_cache_miss(fetch_parser.is_instruction_cache_miss());
-    sample.instruction_execution().fetch().is_l2_cache_miss(fetch_parser.is_l3_miss());
-    sample.instruction_execution().fetch().is_l3_cache_miss(fetch_parser.is_l3_miss());
+    sample.instruction_execution().fetch(InstructionExecution::Fetch{fetch_parser.is_valid(), fetch_parser.is_complete()});
 
-    sample.instruction_execution().tlb().is_l1_miss(fetch_parser.is_l1_tlb_miss());
-    sample.instruction_execution().tlb().is_l2_miss(fetch_parser.is_l2_tlb_miss());
+    /// Instruction cache.
+    sample.instruction_execution().cache(InstructionExecution::Cache{
+                                           fetch_parser.is_instruction_cache_miss(),
+                                           fetch_parser.is_l2_miss(),
+                                           fetch_parser.is_l3_miss()
+                                         });
+
+    /// Instruction TLB.
+    auto l1_tlb_size = std::optional<std::uint64_t>{std::nullopt};
+    if (fetch_parser.is_physical_instruction_address_valid()) {
+      if (fetch_parser.l1_tlb_page_size() == 0U) {
+        l1_tlb_size = 4ULL * 1024ULL;
+      } else if (fetch_parser.l1_tlb_page_size() == 1U) {
+        l1_tlb_size = 2ULL * 1024ULL * 1024ULL;
+      } else if (fetch_parser.l1_tlb_page_size() == 2U) {
+        l1_tlb_size = 1024ULL * 1024ULL * 1024ULL;
+      }
+    }
+    sample.instruction_execution().tlb(InstructionExecution::TLB{fetch_parser.is_l1_tlb_miss(), l1_tlb_size, fetch_parser.is_l2_tlb_miss()});
 
     /// Physical instruction address.
     sample.instruction_execution().physical_instruction_pointer(fetch_parser.physical_instruction_address());
@@ -868,7 +881,7 @@ perf::Sampler::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, perf::Sa
 
   /// .. or execution events.
   else {
-    auto execution_parser = IBSExecutionParser{ sample.raw_data().value() };
+    auto execution_parser = IBSExecutionParser{ sample.raw().value() };
 
     /// Execution latency.
     sample.instruction_execution().latency().uop_completion_to_retirement(

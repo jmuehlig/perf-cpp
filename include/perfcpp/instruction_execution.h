@@ -109,96 +109,61 @@ public:
   class TLB
   {
   public:
-    /**
-     * Set whether there was a iTLB miss.
-     * @param is_l1_miss TLB miss indicator.
-     */
-    void is_l1_miss(const bool is_l1_miss) noexcept { _is_l1_miss = is_l1_miss; }
+    TLB(const bool is_l1_miss, const std::optional<std::uint64_t> l1_page_size, const bool is_l2_miss) noexcept : _is_l1_miss(is_l1_miss), _l1_page_size(l1_page_size), _is_l2_miss(is_l2_miss) { }
+    ~TLB() noexcept = default;
 
     /**
-     * Set whether there was a sTLB miss.
-     * @param is_l2_miss TLB miss indicator.
+     * @return True, if the fetch was an iTLB miss.
      */
-    void is_l2_miss(const bool is_l2_miss) noexcept { _is_l2_miss = is_l2_miss; }
+    [[nodiscard]] bool is_l1_miss() const noexcept { return _is_l1_miss; }
 
     /**
-     * @return True, if the fetch was an iTLB miss, if available. std::nullopt otherwise.
+     * @return Size of the iTLB page (in bytes), if available.
      */
-    [[nodiscard]] std::optional<bool> is_l1_miss() const noexcept { return _is_l1_miss; }
+    [[nodiscard]] std::optional<std::uint64_t> is_l1_page_size() const noexcept { return _l1_page_size; }
 
     /**
-     * @return True, if the fetch was an sTLB miss, if available. std::nullopt otherwise.
+     * @return True, if the fetch was an sTLB miss.
      */
-    [[nodiscard]] std::optional<bool> is_l2_miss() const noexcept { return _is_l2_miss; }
+    [[nodiscard]] bool is_l2_miss() const noexcept { return _is_l2_miss; }
   private:
-    std::optional<bool> _is_l1_miss{ std::nullopt };
-    std::optional<bool> _is_l2_miss{ std::nullopt };
+    bool _is_l1_miss;
+    std::optional<std::uint64_t> _l1_page_size;
+    bool _is_l2_miss;
+  };
+
+  class Cache
+  {
+  public:
+    Cache(const bool is_l1_miss, const bool is_l2_miss, const bool is_l3_miss) noexcept : _is_l1_miss(is_l1_miss), _is_l2_miss(is_l2_miss), _is_l3_miss(is_l3_miss) { }
+    ~Cache() noexcept = default;
+
+    [[nodiscard]] bool is_l1_miss() const noexcept { return _is_l1_miss; }
+
+    [[nodiscard]] bool is_l2_miss() const noexcept { return _is_l2_miss; }
+
+    [[nodiscard]] bool is_l3_miss() const noexcept { return _is_l3_miss; }
+
+  private:
+    bool _is_l1_miss;
+    bool _is_l2_miss;
+    bool _is_l3_miss;
   };
 
   class Fetch
   {
   public:
-    /**
-     * Set whether there was an instruction cache miss.
-     * @param is_l1_cache_miss Cache miss indicator.
-     */
-    void is_l1_cache_miss(const bool is_l1_cache_miss) noexcept { _is_l1_cache_miss = is_l1_cache_miss; }
+    Fetch(const bool is_complete, const bool is_valid) noexcept : _is_complete(is_complete), _is_valid(is_valid) { }
+    ~Fetch() noexcept = default;
 
-    /**
-     * Set whether there was an L2 cache miss.
-     * @param is_l2_cache_miss Cache miss indicator.
-     */
-    void is_l2_cache_miss(const bool is_l2_cache_miss) noexcept { _is_l2_cache_miss = is_l2_cache_miss; }
 
-    /**
-     * Set whether there was an L3 cache miss.
-     * @param is_l3_cache_miss Cache miss indicator.
-     */
-    void is_l3_cache_miss(const bool is_l3_cache_miss) noexcept { _is_l3_cache_miss = is_l3_cache_miss; }
+    [[nodiscard]] bool is_complete() const noexcept { return _is_complete; }
 
-    /**
-     * Set whether the fetch is completed.
-     * @param is_completed Completion indicator.
-     */
-    void is_complete(const bool is_completed) noexcept { _is_complete = is_completed; }
-
-    /**
-     * Set whether the fetch is valid.
-     * @param is_valid Validity indicator.
-     */
-    void is_valid(const bool is_valid) noexcept { _is_valid = is_valid; }
-
-    /**
-     * @return Indicates whether the instruction fetch missed the L1i cache, if available. std::nullopt otherwise.
-     */
-    [[nodiscard]] std::optional<bool> is_l1_cache_miss() const noexcept { return _is_l1_cache_miss; }
-
-    /**
-     * @return Indicates whether the instruction fetch missed the L2 cache, if available. std::nullopt otherwise.
-     */
-    [[nodiscard]] std::optional<bool> is_l2_cache_miss() const noexcept { return _is_l2_cache_miss; }
-
-    /**
-     * @return Indicates whether the instruction fetch missed the L3 cache, if available. std::nullopt otherwise.
-     */
-    [[nodiscard]] std::optional<bool> is_l3_cache_miss() const noexcept { return _is_l3_cache_miss; }
-
-    /**
-     * @return Completion indicator, if available. std::nullopt otherwise.
-     */
-    [[nodiscard]] std::optional<bool> is_complete() const noexcept { return _is_complete; }
-
-    /**
-     * @return Validity indicator, if available. std::nullopt otherwise.
-     */
-    [[nodiscard]] std::optional<bool> is_valid() const noexcept { return _is_valid; }
+    [[nodiscard]] bool is_valid() const noexcept { return _is_valid; }
 
   private:
-    std::optional<bool> _is_l1_cache_miss{ std::nullopt };
-    std::optional<bool> _is_l2_cache_miss{ std::nullopt };
-    std::optional<bool> _is_l3_cache_miss{ std::nullopt };
-    std::optional<bool> _is_complete{ std::nullopt };
-    std::optional<bool> _is_valid{ std::nullopt };
+    bool _is_complete;
+    bool _is_valid;
   };
 
   class HardwareTransactionAbort
@@ -373,16 +338,22 @@ public:
   void latency(const Latency& latency) noexcept { _latency = latency; }
 
   /**
+   * Set the cache information.
+   * @param cache Cache object.
+   */
+  void cache(Cache&& cache) noexcept { _cache = cache; }
+
+  /**
    * Set the TLB information.
    * @param tlb TLB object.
    */
-  void tlb(const TLB& tlb) noexcept { _tlb = tlb; }
+  void tlb(TLB &&tlb) noexcept { _tlb = tlb; }
 
   /**
    * Set the fetch information.
    * @param fetch Fetch object.
    */
-  void fetch(const Fetch& fetch) noexcept { _fetch = fetch; }
+  void fetch(Fetch&& fetch) noexcept { _fetch = fetch; }
 
   /**
    * Set the branch type if the instruction is a branch.
@@ -443,6 +414,11 @@ public:
   [[nodiscard]] std::optional<bool> is_locked() const noexcept { return _is_locked; }
 
   /**
+   * @return Cache object.
+   */
+  [[nodiscard]] const std::optional<Cache>& cache() const noexcept { return _cache; }
+
+  /**
    * @return Latency object.
    */
   [[nodiscard]] const Latency& latency() const noexcept { return _latency; }
@@ -455,22 +431,12 @@ public:
   /**
    * @return TLB object.
    */
-  [[nodiscard]] const TLB& tlb() const noexcept { return _tlb; }
-
-  /**
-   * @return TLB object reference for modification.
-   */
-  [[nodiscard]] TLB& tlb() noexcept { return _tlb; }
+  [[nodiscard]] const std::optional<TLB>& tlb() const noexcept { return _tlb; }
 
   /**
    * @return Fetch object.
    */
-  [[nodiscard]] const Fetch& fetch() const noexcept { return _fetch; }
-
-  /**
-   * @return Fetch object reference for modification.
-   */
-  [[nodiscard]] Fetch& fetch() noexcept { return _fetch; }
+  [[nodiscard]] const std::optional<Fetch>& fetch() const noexcept { return _fetch; }
 
   /**
    * @return Branch type, if the instruction was a branch.
@@ -488,7 +454,7 @@ public:
   /**
    * @return Call chain, if available. std::nullopt otherwise.
    */
-  [[nodiscard]] std::optional<std::vector<std::uintptr_t>> callchain() const noexcept { return _callchain; }
+  [[nodiscard]] const std::optional<std::vector<std::uintptr_t>>& callchain() const noexcept { return _callchain; }
 
   /**
    * @return Page size, if available. std::nullopt otherwise.
@@ -501,9 +467,10 @@ private:
   std::optional<std::uintptr_t> _physical_instruction_pointer{ std::nullopt };
   bool _is_instruction_pointer_exact{ false };
   std::optional<bool> _is_locked{ std::nullopt };
+  std::optional<Cache> _cache;
   Latency _latency;
-  TLB _tlb;
-  Fetch _fetch;
+  std::optional<TLB> _tlb;
+  std::optional<Fetch> _fetch;
   std::optional<BranchType> _branch_type;
   std::optional<HardwareTransactionAbort> _hardware_transaction_abort{ std::nullopt };
   std::optional<std::vector<std::uintptr_t>> _callchain{ std::nullopt };

@@ -220,6 +220,58 @@ public:
     }
 
     /**
+     * Manage to include user-level registers into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-user-level
+     *
+     * @param registers List of registers to include.
+     * @return The Values instance.
+     */
+    Values& user_registers(std::vector<Registers::arm>&& registers) noexcept
+    {
+      return user_registers(Registers{std::move(registers)});
+    }
+
+    /**
+     * Manage to include user-level registers into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-user-level
+     *
+     * @param registers List of registers to include.
+     * @return The Values instance.
+     */
+    Values& user_registers(std::vector<Registers::arm64>&& registers) noexcept
+    {
+      return user_registers(Registers{std::move(registers)});
+    }
+
+    /**
+     * Manage to include user-level registers into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-user-level
+     *
+     * @param registers List of registers to include.
+     * @return The Values instance.
+     */
+    Values& user_registers(std::vector<Registers::x86>&& registers) noexcept
+    {
+      return user_registers(Registers{std::move(registers)});
+    }
+
+    /**
+     * Manage to include user-level registers into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-user-level
+     *
+     * @param registers List of registers to include.
+     * @return The Values instance.
+     */
+    Values& user_registers(std::vector<Registers::riscv>&& registers) noexcept
+    {
+      return user_registers(Registers{std::move(registers)});
+    }
+
+    /**
      * Manage to include latency information into samples.
      *
      * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#memory-access-latency
@@ -255,7 +307,21 @@ public:
      * @param include True, if transaction aborts should be included.
      * @return The Values instance.
      */
-    Values& transaction_abort(const bool include) noexcept
+    [[deprecated("Will be removed from v0.12, use hardware_transaction_abort() instead.")]] Values& transaction_abort(const bool include) noexcept
+    {
+      set(PERF_SAMPLE_TRANSACTION, include);
+      return *this;
+    }
+
+    /**
+     * Manage to include hardware transaction abort reasons into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#transaction-abort
+     *
+     * @param include True, if hardware transaction aborts should be included.
+     * @return The Values instance.
+     */
+    Values& hardware_transaction_abort(const bool include) noexcept
     {
       set(PERF_SAMPLE_TRANSACTION, include);
       return *this;
@@ -288,6 +354,58 @@ public:
       _kernel_registers = std::move(registers);
       set(PERF_SAMPLE_REGS_INTR, !_kernel_registers.empty());
       return *this;
+    }
+
+    /**
+     * Manage to include kernel-level registers into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-kernel-level
+     *
+     * @param registers List of registers to include.
+     * @return The Values instance.
+     */
+    Values& kernel_registers(std::vector<Registers::arm>&& registers) noexcept
+    {
+      return kernel_registers(Registers{std::move(registers)});
+    }
+
+    /**
+     * Manage to include kernel-level registers into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-kernel-level
+     *
+     * @param registers List of registers to include.
+     * @return The Values instance.
+     */
+    Values& kernel_registers(std::vector<Registers::arm64>&& registers) noexcept
+    {
+      return kernel_registers(Registers{std::move(registers)});
+    }
+
+    /**
+     * Manage to include kernel-level registers into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-kernel-level
+     *
+     * @param registers List of registers to include.
+     * @return The Values instance.
+     */
+    Values& kernel_registers(std::vector<Registers::x86>&& registers) noexcept
+    {
+      return kernel_registers(Registers{std::move(registers)});
+    }
+
+    /**
+     * Manage to include kernel-level registers into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-kernel-level
+     *
+     * @param registers List of registers to include.
+     * @return The Values instance.
+     */
+    Values& kernel_registers(std::vector<Registers::riscv>&& registers) noexcept
+    {
+      return kernel_registers(Registers{std::move(registers)});
     }
 
     /**

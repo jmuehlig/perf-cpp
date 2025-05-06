@@ -20,18 +20,22 @@ For specific information about sampling in parallel settings (i.e., sampling mul
 - [Trigger](#trigger)
 - [Precision](#precision)
 - [Period / Frequency](#period--frequency)
-- [Sample Buffer](#sample-buffer)
-- [What can be Recorded and how to Access the Data?](#what-can-be-recorded-and-how-to-access-the-data)
+- [What can be Recorded and How to Access the Data?](#what-can-be-recorded-and-how-to-access-the-data)
   - [Metadata](#metadata)
   - [Instruction Execution](#instruction-execution)
+  - [Data Access](#data-access)
+  - [Counter Values](#counter-values)
+  - [Branch Stack](#branch-stack)
+  - [User Stack](#user-stack)
+  - [Registers](#registers)
   - [Context Switches](#context-switches)
   - [CGroup](#cgroup)
-  - [Throttle and Unthrottle Events](#throttle-and-unthrottle-events)
-- [Sample mode](#sample-mode)
+  - [Throttle and Unthrottle](#throttle-and-unthrottle)
 - [Lost Samples](#lost-samples)
 - [Specific Notes for different CPU Vendors](#specific-notes-for-different-cpu-vendors)
-  - [Intel (PEBS)](#intel-pebs)
+  - [Intel (Processor Event Based Sampling)](#intel-processor-event-based-sampling)
   - [AMD (Instruction Based Sampling)](#amd-instruction-based-sampling)
+- [Sample Buffer](#sample-buffer)
 - [Troubleshooting Counter Configurations](#troubleshooting-counter-configurations)
 ---
 
@@ -93,10 +97,10 @@ Given the capability to select specific data elements for sampling, each data po
 ```cpp
 const auto result = sampler.result();
 
-for (const auto& sample_record : result)
+for (const auto& record : result)
 {
-    const auto timestamp = sample_record.metadata().timestamp();
-    const auto instruction = sample_record.instruction_execution().logical_instruction_pointer();
+    const auto timestamp = record.metadata().timestamp();
+    const auto instruction = record.instruction_execution().logical_instruction_pointer();
     if (timestamp.has_value() && instruction.has_value())
     {
         std::cout 
@@ -212,25 +216,6 @@ auto sampler = perf::Sampler{ counter_definitions, sample_config };
 sampler.trigger("cycles");
 ```
 
-## Sample Buffer
-The hardware transfers collected samples into an mmap-ed [ring buffer](https://docs.kernel.org/userspace-api/perf_ring_buffer.html). 
-You can configure the size of this buffer using the `SampleConfig` class as demonstrated below:
-
-```cpp
-auto sample_config = perf::SampleConfig{};
-sample_config.buffer_pages(4096U); // This sets the buffer to 16MB (4096 pages x 4kB per page).
-
-auto sampler = perf::Sampler{ counter_definitions, sample_config };
-```
-
-Because the ring buffer has a finite size, it needs to be drained before it becomes full. 
-*perf-cpp* handles this automatically, though copying the data can be expensive.
-Choosing the right buffer size involves balancing memory usage against the cost of frequent data copying. 
-By default, the buffer is set to `16`MB. 
-
-> [!NOTE]
-> The number of buffer pages must be a power of two; any non-power-of-two value will be rounded up accordingly.
-
 ## What can be Recorded and how to Access the Data?
 Prior to activation, the sampler must be configured to specify the data to be recorded. For instance:
 
@@ -244,9 +229,9 @@ This specific configuration captures both the *timestamp* and *instruction point
 Upon completing the sampling and [retrieving the sampling results](#retrieving-samples), the recorded fields can be accessed as follows:
 
 ```cpp
-for (const auto& sample_record : sampler.results()) {
-    const auto timestamp = sample_record.metadata().timestamp();
-    const auto instruction = sample_record.instruction_execution().logical_instruction_pointer();
+for (const auto& record : sampler.results()) {
+    const auto timestamp = record.metadata().timestamp();
+    const auto instruction = record.instruction_execution().logical_instruction_pointer();
 }
 ```
 
@@ -254,181 +239,272 @@ See the information below to learn *what* information the sampler can record and
 
 ---
 
-### Metadata
-Recorded metadata can be accessed via `sample_record.metadata()` and contains the following information.
-Note that all fields of `sample_record.metadata()` are `std::optional`.
+> [!NOTE]
+> A `record` in the following denotes to one record from the `sampler.results()` list.
 
-| Name           | Description                                                                                                 | How to record?                      | How to access?                          | Type                   |
-|----------------|-------------------------------------------------------------------------------------------------------------|-------------------------------------|-----------------------------------------|------------------------|
-| **Mode**       | The mode in which the sample was recorded (`Kernel`, `User`, `Hypervisor`, `GuestKernel`, or `GuestUser`).  | Always recorded                     | `sample_record.metadata().mode()`       | `perf::Metadata::Mode` |
-| **Sample ID**  | Unique ID for the sample's group leader.                                                                    | `sampler.values().sample_id(true)`  | `sample_record.metadata().sample_id()`  | `std::uint64_t`        |
-| **Stream ID**  | Unique ID for the sample's event.                                                                           | `sampler.values().stream_id(true)`  | `sample_record.metadata().stream_id()`  | `std::uint64_t`        |
-| **Timestamp**  | Timestamp of the sample.                                                                                    | `sampler.values().timestamp(true)`  | `sample_record.metadata().timestamp()`  | `std::uint64_t`        |
-| **Period**     | Period of the sample.                                                                                       | `sampler.values().period(true)`     | `sample_record.metadata().period()`     | `std::uint64_t`        |
-| **CPU ID**     | ID of the CPU core the sample was recorded on.                                                              | `sampler.values().cpu_id(true)`     | `sample_record.metadata().cpu_id()`     | `std::uint32_t`        |
-| **Process ID** | ID of the process the sample was recorded in.                                                               | `sampler.values().process_id(true)` | `sample_record.metadata().process_id()` | `std::uint32_t`        |
-| **Thread ID**  | ID of the thread the sample was recorded in.                                                                | `sampler.values().thread_id(true)`  | `sample_record.metadata().thread_id()`  | `std::uint34_t`        |
+
+### Metadata
+Recorded metadata can be accessed via `record.metadata()` and contains the following information.
+Note that all fields of `record.metadata()` are `std::optional`.
+
+| Name           | Description                                                                                                 | How to record?                      | How to access?                   | Type                                  |
+|----------------|-------------------------------------------------------------------------------------------------------------|-------------------------------------|----------------------------------|---------------------------------------|
+| **Mode**       | The mode in which the sample was recorded (`Kernel`, `User`, `Hypervisor`, `GuestKernel`, or `GuestUser`).  | Always recorded                     | `record.metadata().mode()`       | `std::optional<perf::Metadata::Mode>` |
+| **Sample ID**  | Unique ID for the sample's group leader.                                                                    | `sampler.values().sample_id(true)`  | `record.metadata().sample_id()`  | `std::optional<std::uint64_t>`        |
+| **Stream ID**  | Unique ID for the sample's event.                                                                           | `sampler.values().stream_id(true)`  | `record.metadata().stream_id()`  | `std::optional<std::uint64_t>`        |
+| **Timestamp**  | Timestamp of the sample.                                                                                    | `sampler.values().timestamp(true)`  | `record.metadata().timestamp()`  | `std::optional<std::uint64_t>`        |
+| **Period**     | Period of the sample.                                                                                       | `sampler.values().period(true)`     | `record.metadata().period()`     | `std::optional<std::uint64_t>`        |
+| **CPU ID**     | ID of the CPU core the sample was recorded on.                                                              | `sampler.values().cpu_id(true)`     | `record.metadata().cpu_id()`     | `std::optional<std::uint32_t>`        |
+| **Process ID** | ID of the process the sample was recorded in.                                                               | `sampler.values().process_id(true)` | `record.metadata().process_id()` | `std::optional<std::uint32_t>`        |
+| **Thread ID**  | ID of the thread the sample was recorded in.                                                                | `sampler.values().thread_id(true)`  | `record.metadata().thread_id()`  | `std::optional<std::uint34_t>`        |
 
 ### Instruction Execution
-Information about the instruction execution can be accessed via `sample_record.instruction_execution()` and contain the following information.
+Information about the instruction execution can be accessed via `record.instruction_execution()` and contain the following information.
 
-| Name                             | Description                                                                                                             | How to record?                                                                                                                                          | How to access?                                                         | Type                                                   |
-|----------------------------------|-------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------|--------------------------------------------------------|
-| **Instruction Type**             | Type of the sampled instruction (`Return`, `Branch`, `MemoryLoad`, `MemoryStore`, or `SoftwarePrefetch`).               | `sampler.values().data_src(true)` for `Memory*` types and `sampler.values().raw(true)` for others (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu)) | `sample_record.instruction_execution().type()`                         | `perf::InstructionExecution::InstructionType`          |
-| **Logical Instruction Pointer**  | Logical pointer of the sampled instruction.                                                                             | `sampler.values().instruction_pointer(true)`                                                                                                            | `sample_record.instruction_execution().logical_instruction_pointer()`  | `std::uintptr_t`                                       |
-| **Physical Instruction Pointer** | Physical pointer of the sampled instruction.                                                                            | `sampler.values().raw(true)` (works only with [**AMD's IBS Fetch PMU**](#ibs-fetch-pmu))                                                                | `sample_record.instruction_execution().physical_instruction_pointer()` | `std::uintptr_t`                                       |
-| **Is Instruction Pointer Exact** | Indicates if the sampled instruction pointer is exact, i.e., the sampled information belong to the sampled instruction. | Always recorded with instruction pointer.                                                                                                               | `sample_record.instruction_execution().is_instruction_pointer_exact()` | `bool`                                                 |
-| **Is Locked**                    | Indicates if the sampled instruction was a locked operation.                                                            | `sampler.values().data_src(true)`                                                                                                                       | `sample_record.instruction_execution().is_locked()`                    | `bool`                                                 |
-| **Branch Type**                  | Information about the branch, if the sampled instruction is a branch (`Taken`, `Retired`, `Mispredicted`, `Fuse`).      | `sampler.values().raw(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu))                                                                      | `sample_record.instruction_execution().branch_type()`                  | `perf::InstructionExecution::BranchType`               |
-| **Callchain**                    | Callchain of the sampled instruction.                                                                                   | `sampler.values().callchain(true)` (you can also use an `std::uint32_t` to dictate the maximum callchain)                                               | `sample_record.instruction_execution().callchain()`                    | `std::vector<std::uintptr_t>`                          |
-| **Code Page Size**               | Page size of the instruction pointer.                                                                                   | `sampler.values().data_page_size(true)`                                                                                                                 | `sample_record.instruction_execution().data_page_size()`               | `std::uintptr_t`                                       |
-| **Latency**                      | Latency information of the execution and the instruction fetch.                                                         | [See details below](#instruction-latency)                                                                                                               | `sample_record.instruction_execution().latency()`                      | `perf::InstructionExecution::Latency`                  |
-| **TLB**                          | TLB information of the execution.                                                                                       | [See details below](#instruction-tlb)                                                                                                                   | `sample_record.instruction_execution().tlb()`                          | `perf::InstructionExecution::TLB`                      |
-| **Fetch**                        | Information about the instruction fetch.                                                                                | [See details below](#instruction-fetch)                                                                                                                 | `sample_record.instruction_execution().fetch()`                        | `perf::InstructionExecution::Fetch`                    |
-| **Hardware Transaction Abort**   | Information about hardware transactional memory aborts.                                                                 | [See details below](#hardware-transaction-abort)                                                                                                        | `sample_record.instruction_execution().hardware_transaction_abort()`   | `perf::InstructionExecution::HardwareTransactionAbort` |
+| Name                             | Description                                                                                                             | How to record?                                                                                                                                          | How to access?                                                  | Type                                                                  |
+|----------------------------------|-------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|-----------------------------------------------------------------------|
+| **Instruction Type**             | Type of the sampled instruction (`Return`, `Branch`, `MemoryLoad`, `MemoryStore`, or `SoftwarePrefetch`).               | `sampler.values().data_src(true)` for `Memory*` types and `sampler.values().raw(true)` for others (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu)) | `record.instruction_execution().type()`                         | `std::optional<perf::InstructionExecution::InstructionType>`          |
+| **Logical Instruction Pointer**  | Logical pointer of the sampled instruction.                                                                             | `sampler.values().instruction_pointer(true)`                                                                                                            | `record.instruction_execution().logical_instruction_pointer()`  | `std::optional<std::uintptr_t>`                                       |
+| **Physical Instruction Pointer** | Physical pointer of the sampled instruction.                                                                            | `sampler.values().raw(true)` (works only with [**AMD's IBS Fetch PMU**](#ibs-fetch-pmu))                                                                | `record.instruction_execution().physical_instruction_pointer()` | `std::optional<std::uintptr_t>`                                       |
+| **Is Instruction Pointer Exact** | Indicates if the sampled instruction pointer is exact, i.e., the sampled information belong to the sampled instruction. | Always recorded with instruction pointer.                                                                                                               | `record.instruction_execution().is_instruction_pointer_exact()` | `bool`                                                                |
+| **Is Locked**                    | Indicates if the sampled instruction was a locked operation.                                                            | `sampler.values().data_src(true)`                                                                                                                       | `record.instruction_execution().is_locked()`                    | `std::optional<bool>`                                                 |
+| **Branch Type**                  | Information about the branch, if the sampled instruction is a branch (`Taken`, `Retired`, `Mispredicted`, `Fuse`).      | `sampler.values().raw(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu))                                                                      | `record.instruction_execution().branch_type()`                  | `std::optional<perf::InstructionExecution::BranchType>`               |
+| **Callchain**                    | Callchain of the sampled instruction.                                                                                   | `sampler.values().callchain(true)` (you can also use an `std::uint32_t` to dictate the maximum callchain)                                               | `record.instruction_execution().callchain()`                    | `std::optional<std::vector<std::uintptr_t>>`                          |
+| **Code Page Size**               | Page size of the instruction pointer.                                                                                   | `sampler.values().code_page_size(true)`                                                                                                                 | `record.instruction_execution().page_size()`                    | `std::optional<std::uint64_t>`                                        |
+| **Latency**                      | Latency information of the execution and the instruction fetch.                                                         | [See details below](#instruction-latency)                                                                                                               | `record.instruction_execution().latency()`                      | `perf::InstructionExecution::Latency`                                 |
+| **Cache**                        | Cache information of instruction fetch.                                                                                 | [See details below](#instruction-cache)                                                                                                                 | `record.instruction_execution().cache()`                        | `std::optional<perf::InstructionExecution::Cache>`                    |
+| **TLB**                          | TLB information of the execution.                                                                                       | [See details below](#instruction-tlb)                                                                                                                   | `record.instruction_execution().tlb()`                          | `std::optional<perf::InstructionExecution::TLB>`                      |
+| **Fetch**                        | Information about the instruction fetch.                                                                                | [See details below](#instruction-fetch)                                                                                                                 | `record.instruction_execution().fetch()`                        | `std::optional<perf::InstructionExecution::Fetch>`                    |
+| **Hardware Transaction Abort**   | Information about hardware transactional memory aborts.                                                                 | [See details below](#hardware-transaction-abort)                                                                                                        | `record.instruction_execution().hardware_transaction_abort()`   | `std::optional<perf::InstructionExecution::HardwareTransactionAbort>` |
+
+**Example:** [`examples/instruction_pointer_sampling.cpp`](../examples/instruction_pointer_sampling.cpp)
 
 #### Instruction Latency
 Latency information regarding the execution of an instruction (or micro-op on AMD).
 
-| Name                             | Description                                                                                     | How to record?                                                                           | How to access?                                                                   | Type            |
-|----------------------------------|-------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|-----------------|
-| **Instruction Retirement**       | Latency for executing the entire instruction (including TLB access, cache/memory access, etc.). | `sampler.values().latency(true)` (works only with **Intel PEBS**)                        | `sample_record.instruction_execution().latency().instruction_retirement()`       | `std::uint32_t` |
-| **uOp Tag-to-Retirement**        | Cycles of the tagged uOp from tagging to retirement.                                            | `sampler.values().latency(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu))   | `sample_record.instruction_execution().latency().uop_tag_to_retirement()`        | `std::uint32_t` |
-| **uOp Completion-to-Retirement** | Cycles of the tagged uOp from completion to retirement.                                         | `sampler.values().raw(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu))       | `sample_record.instruction_execution().latency().uop_completion_to_retirement()` | `std::uint32_t` |
-| **uOp Tag-to-Completion**        | Cycles of the tagged uOp from tagging to completion.                                            | `sampler.values().raw(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu))       | `sample_record.instruction_execution().latency().uop_tag_to_completion()`        | `std::uint32_t` |
-| **Fetch**                        | Instruction fetch latency from initiating the fetch to delivering to the core.                  | `sampler.values().raw(true)` (works only with [**AMD's IBS Fetch PMU**](#ibs-fetch-pmu)) | `sample_record.instruction_execution().latency().fetch()`                        | `std::uint32_t` |
+| Name                             | Description                                                                                     | How to record?                                                                           | How to access?                                                            | Type                           |
+|----------------------------------|-------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|---------------------------------------------------------------------------|--------------------------------|
+| **Instruction Retirement**       | Latency for executing the entire instruction (including TLB access, cache/memory access, etc.). | `sampler.values().latency(true)` (works only with **Intel PEBS**)                        | `record.instruction_execution().latency().instruction_retirement()`       | `std::optional<std::uint32_t>` |
+| **uOp Tag-to-Retirement**        | Cycles of the tagged uOp from tagging to retirement.                                            | `sampler.values().latency(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu))   | `record.instruction_execution().latency().uop_tag_to_retirement()`        | `std::optional<std::uint32_t>` |
+| **uOp Completion-to-Retirement** | Cycles of the tagged uOp from completion to retirement.                                         | `sampler.values().raw(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu))       | `record.instruction_execution().latency().uop_completion_to_retirement()` | `std::optional<std::uint32_t>` |
+| **uOp Tag-to-Completion**        | Cycles of the tagged uOp from tagging to completion.                                            | `sampler.values().raw(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu))       | `record.instruction_execution().latency().uop_tag_to_completion()`        | `std::optional<std::uint32_t>` |
+| **Fetch**                        | Instruction fetch latency from initiating the fetch to delivering to the core.                  | `sampler.values().raw(true)` (works only with [**AMD's IBS Fetch PMU**](#ibs-fetch-pmu)) | `record.instruction_execution().latency().fetch()`                        | `std::optional<std::uint32_t>` |
+
+#### Instruction Cache
+Information regarding micro-op fetch.
+This is only available on [**AMD's IBS Fetch PMU**](#ibs-fetch-pmu).
+
+**Note** that `record.instruction_execution().cache()` will return an `std::optional`.
+
+| Name                  | Description                                              | How to record?               | How to access?                                               | Type            |
+|-----------------------|----------------------------------------------------------|------------------------------|--------------------------------------------------------------|-----------------|
+| **L1 Cache Miss**     | Indicates if the instruction fetch missed the L1i cache. | `sampler.values().raw(true)` | `record.instruction_execution().cache()->is_l1_cache_miss()` | `bool`          |
+| **L2 Cache Miss**     | Indicates if the instruction fetch missed the L2 cache.  | `sampler.values().raw(true)` | `record.instruction_execution().cache()->is_l2_cache_miss()` | `bool`          |
+| **L3 Cache Miss**     | Indicates if the instruction fetch missed the L3 cache.  | `sampler.values().raw(true)` | `record.instruction_execution().cache()->is_l3_cache_miss()` | `bool`          |
 
 #### Instruction TLB
 TLB information of the micro-op fetch.
 This is only available on [**AMD's IBS Fetch PMU**](#ibs-fetch-pmu).
 
-| Name              | Description                                         | How to record?                | How to access?                                                   | Type            |
-|-------------------|-----------------------------------------------------|-------------------------------|------------------------------------------------------------------|-----------------|
-| **L1 Cache Miss** | Indicates if the instruction fetch missed the iTLB. | `sampler.values().raw(true)`  | `sample_record.instruction_execution().tlb().is_l1_cache_miss()` | `bool`          |
-| **L2 Cache Miss** | Indicates if the instruction fetch missed the STLB. | `sampler.values().raw(true)`  | `sample_record.instruction_execution().tlb().is_l2_cache_miss()` | `bool`          |
+**Note** that `record.instruction_execution().tlb()` will return an `std::optional`.
 
+| Name              | Description                                         | How to record?                | How to access?                                        | Type            |
+|-------------------|-----------------------------------------------------|-------------------------------|-------------------------------------------------------|-----------------|
+| **L1 Cache Miss** | Indicates if the instruction fetch missed the iTLB. | `sampler.values().raw(true)`  | `record.instruction_execution().tlb().is_l1_miss()`   | `bool`          |
+| **L2 Cache Miss** | Indicates if the instruction fetch missed the STLB. | `sampler.values().raw(true)`  | `record.instruction_execution().tlb().is_l2_miss()`   | `bool`          |
+| **L1 Page Size**  | Size of the translation in the iTLB.                | `sampler.values().raw(true)`  | `record.instruction_execution().tlb().l1_page_size()` | `std::uint64_t` |
 
 #### Instruction Fetch
 Information regarding micro-op fetch.
 This is only available on [**AMD's IBS Fetch PMU**](#ibs-fetch-pmu).
 
-| Name                  | Description                                              | How to record?               | How to access?                                                     | Type            |
-|-----------------------|----------------------------------------------------------|------------------------------|--------------------------------------------------------------------|-----------------|
-| **L1 Cache Miss**     | Indicates if the instruction fetch missed the L1i cache. | `sampler.values().raw(true)` | `sample_record.instruction_execution().fetch().is_l1_cache_miss()` | `bool`          |
-| **L2 Cache Miss**     | Indicates if the instruction fetch missed the L2 cache.  | `sampler.values().raw(true)` | `sample_record.instruction_execution().fetch().is_l2_cache_miss()` | `bool`          |
-| **L3 Cache Miss**     | Indicates if the instruction fetch missed the L3 cache.  | `sampler.values().raw(true)` | `sample_record.instruction_execution().fetch().is_l3_cache_miss()` | `bool`          |
-| **Is Fetch Complete** | Indicates if the instruction fetch is complete.          | `sampler.values().raw(true)` | `sample_record.instruction_execution().fetch().is_complete()`      | `bool`          |
-| **Is Fetch Valid**    | Indicates if the instruction fetch is valid.             | `sampler.values().raw(true)` | `sample_record.instruction_execution().fetch().is_valid()`         | `bool`          |
+**Note** that `record.instruction_execution().fetch()` will return an `std::optional`.
+
+| Name                  | Description                                              | How to record?               | How to access?                                          | Type            |
+|-----------------------|----------------------------------------------------------|------------------------------|---------------------------------------------------------|-----------------|
+| **Is Fetch Complete** | Indicates if the instruction fetch is complete.          | `sampler.values().raw(true)` | `record.instruction_execution().fetch()->is_complete()` | `bool`          |
+| **Is Fetch Valid**    | Indicates if the instruction fetch is valid.             | `sampler.values().raw(true)` | `record.instruction_execution().fetch()->is_valid()`    | `bool`          |
 
 #### Hardware Transaction Abort
 Information regarding aborts of hardware-transactional memory instructions.
 This is only available on **Intel PEBS**.
 
-| Name                                  | Description                                                    | How to record?                             | How to access?                                                                                                 | Type            |
-|---------------------------------------|----------------------------------------------------------------|--------------------------------------------|----------------------------------------------------------------------------------------------------------------|-----------------|
-| **Is Elision Transaction**            | Indicates if the abort comes from an elision type transaction. | `sampler.values().transaction_abort(true)` | `sample_record.instruction_execution().hardware_transaction_abort().is_elision_transaction()`                  | `bool`          |
-| **Is Generic Transaction**            | Indicates if the abort comes from a generic transaction.       | `sampler.values().transaction_abort(true)` | `sample_record.instruction_execution().hardware_transaction_abort().is_generic_transaction()`                  | `bool`          |
-| **Is Synchronous Transaction**        | Indicates if the abort comes from a synchronous transaction.   | `sampler.values().transaction_abort(true)` | `sample_record.instruction_execution().hardware_transaction_abort().is_synchronous_abort()`                    | `bool`          |
-| **Is Retryable**                      | Indicates if the aborted transaction is retryable.             | `sampler.values().transaction_abort(true)` | `sample_record.instruction_execution().hardware_transaction_abort().is_retryable()`                            | `bool`          |
-| **Is Due to Memory Conflict**         | Indicates if the abort is due to a memory conflict.            | `sampler.values().transaction_abort(true)` | `sample_record.instruction_execution().hardware_transaction_abort().is_abort_due_to_memory_conflict()`         | `bool`          |
-| **Is Due to Write Capacity Conflict** | Indicates if the abort is due to a write capacity conflict.    | `sampler.values().transaction_abort(true)` | `sample_record.instruction_execution().hardware_transaction_abort().is_abort_due_to_write_capacity_conflict()` | `bool`          |
-| **Is Due to Read Capacity Conflict**  | Indicates if the abort is due to a read capacity conflict.     | `sampler.values().transaction_abort(true)` | `sample_record.instruction_execution().hardware_transaction_abort().is_abort_due_to_read_capacity_conflict()`  | `bool`          |
-| **User Specified Code**               | The user-specific code provided for the abort (if any).        | `sampler.values().transaction_abort(true)` | `sample_record.instruction_execution().hardware_transaction_abort().user_specified_code()`                     | `std::uint32_t` |
+**Note** that `record.instruction_execution().hardware_transaction_abort()` will return an `std::optional`.
+
+| Name                                  | Description                                                    | How to record?                                      | How to access?                                                                                           | Type            |
+|---------------------------------------|----------------------------------------------------------------|-----------------------------------------------------|----------------------------------------------------------------------------------------------------------|-----------------|
+| **Is Elision Transaction**            | Indicates if the abort comes from an elision type transaction. | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_elision_transaction()`                  | `bool`          |
+| **Is Generic Transaction**            | Indicates if the abort comes from a generic transaction.       | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_generic_transaction()`                  | `bool`          |
+| **Is Synchronous Transaction**        | Indicates if the abort comes from a synchronous transaction.   | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_synchronous_abort()`                    | `bool`          |
+| **Is Retryable**                      | Indicates if the aborted transaction is retryable.             | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_retryable()`                            | `bool`          |
+| **Is Due to Memory Conflict**         | Indicates if the abort is due to a memory conflict.            | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_abort_due_to_memory_conflict()`         | `bool`          |
+| **Is Due to Write Capacity Conflict** | Indicates if the abort is due to a write capacity conflict.    | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_abort_due_to_write_capacity_conflict()` | `bool`          |
+| **Is Due to Read Capacity Conflict**  | Indicates if the abort is due to a read capacity conflict.     | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_abort_due_to_read_capacity_conflict()`  | `bool`          |
+| **User Specified Code**               | The user-specific code provided for the abort (if any).        | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->user_specified_code()`                     | `std::uint32_t` |
 
 ### Data Access
+**TODO**
 
 ### Counter Values
+Record hardware performance events (like `cycles`, `L1-dcache-loads`, ...) and metrics at the time when the sample was recorded.
+See the documentations for [recording events](recording.md) and [metrics](metrics.md) for details about events and metrics in general.
+
+| Name               | Description                 | How to record?                                                                                                         | How to access?              | Type                                                                            |
+|--------------------|-----------------------------|------------------------------------------------------------------------------------------------------------------------|-----------------------------|---------------------------------------------------------------------------------|
+| **Counter Values** | Values of specified events. | `sampler.values().counter({"cycles", "instructions", "cycles-per-instruction"})` (the specified counters are examples) | `record.counter_result()`   | `perf::CounterResult` (see the [recording events](recording.md) documentation). |
+
+**Example:** [`examples/counter_sampling.cpp`](../examples/counter_sampling.cpp)
 
 ### Branch Stack
+Record the current branch stack.
+
+| Name             | Description                      | How to record?                                                                                                 | How to access?          | Type                                       |
+|------------------|----------------------------------|----------------------------------------------------------------------------------------------------------------|-------------------------|--------------------------------------------|
+| **Branch Stack** | Current branch stack of the CPU. | `sampler.values().branch_stack({perf::BranchType::Call, perf::BranchType::Conditional})` (see full list below) | `record.branch_stack()` | `std::optional<std::vector<perf::Branch>>` |
+
+#### Branch Types to Record
+Possible branch types that can be requested (combinations are possible):
+- `perf::BranchType::Any`
+- `perf::BranchType::User`
+- `perf::BranchType::Kernel`
+- `perf::BranchType::HyperVisor`
+- `perf::BranchType::Call` (from Linux `4.4.0`)
+- `perf::BranchType::DirectCall` (from Linux `4.4.0`)
+- `perf::BranchType::IndirectCall`
+- `perf::BranchType::Return`
+- `perf::BranchType::IndirectJump` (from Linux `4.2.0`)
+- `perf::BranchType::Conditional`
+- `perf::BranchType::TransactionalMemoryAbort`
+- `perf::BranchType::InTransaction`
+- `perf::BranchType::NotInTransaction`
+
+#### Branch
+Branches in the Branch Stack contain the following information.
+
+| Name                         | Description                                                  | How to access?                                            | Type             |
+|------------------------------|--------------------------------------------------------------|-----------------------------------------------------------|------------------|
+| **Instruction Pointer From** | Instruction pointer where the branch started.                | `record.branch_stack()->at(i).instruction_pointer_from()` | `std::uintptr_t` |
+| **Instruction Pointer To**   | Instruction pointer where the branch ended.                  | `record.branch_stack()->at(i).instruction_pointer_to()`   | `std::uintptr_t` |
+| **Is Mispredicted**          | Indication if the branch was mispredicted.                   | `record.branch_stack()->at(i).is_mispredicted()`          | `bool`           |
+| **Is Predicted**             | Indication if the branch was predicted correctly.            | `record.branch_stack()->at(i).is_predicted()`             | `bool`           |
+| **Is In Transaction**        | Indication if the branch was in a hardware transaction.      | `record.branch_stack()->at(i).is_in_transaction()`        | `bool`           |
+| **Is Transaction Abort**     | Indication if the branch was a hardware transaction abort.   | `record.branch_stack()->at(i).is_transaction_abort()`     | `bool`           |
+| **Cycles**                   | Number of cycles of the branch (not supported by every PMU). | `record.branch_stack()->at(i).cycles()`                   | `std::uint64_t`  |
+
+**Example:** [`examples/branch_sampling.cpp`](../examples/branch_sampling.cpp)
 
 ### User Stack
+Record the current user-level stack.
 
-### User Registers
+| Name           | Description                   | How to record?                                                                    | How to access?        | Type                                    |
+|----------------|-------------------------------|-----------------------------------------------------------------------------------|-----------------------|-----------------------------------------|
+| **User Stack** | Data of the user-level stack. | `sampler.values().user_stack(64)` (`64` denotes to the number of bytes to record) | `record.user_stack()` | `std::optional<std::vector<std::byte>>` |
 
-### Kernel Registers
+### Registers
+Record register values on the ABI.
 
----
+| Name                 | Description                                                    | How to record?                                                                                                               | How to access?                        | Type                   |
+|----------------------|----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|------------------------|
+| **User Registers**   | User-level register values at the time the sample was taken.   | `sampler.values().user_registers({perf::Registers::x86::AX, perf::Registers::x86::R10})` (specific registers are examples)   | [See details below](#register-values) | `perf::RegisterValues` |
+| **Kernel Registers** | Kernel-level register values at the time the sample was taken. | `sampler.values().kernel_registers({perf::Registers::x86::AX, perf::Registers::x86::R10})` (specific registers are examples) | [See details below](#register-values) | `perf::RegisterValues` |
+
+#### Register Values
+User- and kernel register values can be accessed via `record.user_registers()` and `record.kernel_registers()` respectively.
+Both can be queried as follows. Although the examples only query the user registers, kernel registers can be accessed the same way, replacing `record.user_registers()` by `record.kernel_registers()`.
+
+**Note** that `record.user_registers()` and `record.kernel_registers()` will return an `std::optional`.
+
+| Name               | Description                   | How to access?                                                                               | Type                          |
+|--------------------|-------------------------------|----------------------------------------------------------------------------------------------|-------------------------------|
+| **Register Value** | Value of a specific register. | `record.user_registers()->value(perf::Registers::x86::AX)` (specific register is an example) | `std::optional<std::int64_t>` |
+| **ABI**            | ABI of the registers.         | `record.user_registers()->abi()`                                                             | `perf::ABI`                   |
+
+**Example:** [`examples/register_sampling.cpp`](../examples/register_sampling.cpp)
+
+### Raw Data
+Records the raw data of the underlying PMU.
+This can be, for example, used to parse data manually to access data that is not included into the interface.
+*perf-cpp* makes use of this to reveal [AMD IBS](#amd-instruction-based-sampling) records that are not accessible through the [*perf_event_open*](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) interface.
+
+| Name         | Description                     | How to record?              | How to access? | Type                                    |
+|--------------|---------------------------------|-----------------------------|----------------|-----------------------------------------|
+| **Raw Data** | Raw data of the underlying PMU. | `sampler.values().raw(true)` | `record.raw()` | `std::optional<std::vector<std::byte>>` |
+
 
 ### Context Switches
-Occurrence of context switches.
-Sampling context switches requires a Linux Kernel version of `4.3` or higher.
-* Request by `sampler.values().context_switch(true);`
-* Read from the results by `sample_record.context_switch().value();` (if `sample_record.context_switch().has_value();`), which returns a `perf::ContextSwitch` object. The context switch contains
-  * a flag if the process was switched in or out (`context_switch.is_in()` or `context_switch.is_out()`),
-  * a flag of the process was preempted (`context_switch.is_preempt()`) (**only** from Linux Kernel `4.17`),
-  * the id of the in or out process, if sampling cpu-wide (`context_switch.process_id()`),
-  * and the id of the in or out thread, if sampling cpu-wide (`context_switch.thread_id()`).
-  * In addition, the following data will be set in a sample:
-    * `sample_record.process_id()` and `sample_record.thread_id()`, if `sampler.thread_id(true)` was specified,
-    * `sample_record.timestamp()`, if `sampler.time(true)` was specified,
-    * `sample_record.stream_id()`, if `sampler.stream_id(true)` was specified,
-    * `sample_record.cpu_id()`, if `sampler.cpu_id(true)` was specified, and
-    * `sample_record.id()`, if `sampler.identifier(true)` was specified.
+Record the occurrence of context switches (requires a Linux Kernel version of `4.3` or higher).
+Recorded context switch information can be accessed via `record.context_switch()` and contains the following information.
 
-&rarr; [See code example](../examples/context_switch_sampling.cpp)
+**Note** that `record.context_switch()` will return an `std::optional`.
+
+| Name              | Description                                                                | How to record?                          | How to access?                          | Type                           |
+|-------------------|----------------------------------------------------------------------------|-----------------------------------------|-----------------------------------------|--------------------------------|
+| **Is Switch In**  | Flag indicating whether the process was switched in.                       | `sampler.values().context_switch(true)` | `record.context_switch()->is_in()`      | `bool`                         |
+| **Is Switch Out** | Flag indicating whether the process was switched out.                      | `sampler.values().context_switch(true)` | `record.context_switch()->is_out()`     | `bool`                         |
+| **Is Preempt**    | Flag indicating whether the process was preempted.                         | `sampler.values().context_switch(true)` | `record.context_switch()->is_preempt()` | `bool`                         |
+| **Thread ID**     | ID of the thread that was switched in or out (only in CPU wide sampling).  | `sampler.values().context_switch(true)` | `record.context_switch()->thread_id()`  | `std::optional<std::uint32_t>` |
+| **Process ID**    | ID of the process that was switched in or out (only in CPU wide sampling). | `sampler.values().context_switch(true)` | `record.context_switch()->process_id()` | `std::optional<std::uint32_t>` |
+
+Additionally, the following [metadata](#metadata) will be included, if recorded accordingly:
+- Timestamp,
+- Stream ID,
+- CPU ID,
+- and Sample ID
+
+**Example:** [`examples/context_switch_sampling.cpp`](../examples/context_switch_sampling.cpp)
 
 ### CGroup
 Sampling cgroups requires a Linux Kernel version of `5.7` or higher.
 
-* Request by `sampler.values().cgroup(true);`
-* CGroup IDs are included into samples and can be read by `sample_record.cgroup_id().value();` 
-* Whenever new cgroups are created or activated, the sample can include a `perf::CGroup` item, containing the ID of the created/activated cgroup (`sample_record.cgroup().value().id();`), which matches one of the `cgroup_id()`s of the sample. `perf::CGroup` also contains a path, which can be accessed by `sample_record.cgroup().value().path();`.
-* In addition, the following data will be set in a sample:
-  * `sample_record.process_id()` and `sample_record.thread_id()`, if `sampler.thread_id(true)` was specified,
-  * `sample_record.timestamp()`, if `sampler.time(true)` was specified,
-  * `sample_record.stream_id()`, if `sampler.stream_id(true)` was specified,
-  * `sample_record.cpu_id()`, if `sampler.cpu_id(true)` was specified, and
-  * `sample_record.id()`, if `sampler.identifier(true)` was specified.
+**Note** that `record.cgroup()` will return an `std::optional`.
 
-### Throttle and Unthrottle Events
-* Request by `sampler.values().throttle(true);`
-* Throttle events are included into samples and can be read by `sample_record.throttle().value();`, which returns an optional `perf::Throttle` object. The throttle object contains a flag indicating
-  * that it was a throttle event (`sample_record.throttle().value().is_throttle();`)
-  * or it was an unthrottle event (`sample_record.throttle().value().is_unthrottle();`). Only one of both will return `true`.
-* In addition, the following data will be set in a sample:
-  * `sample_record.process_id()` and `sample_record.thread_id()`, if `sampler.thread_id(true)` was specified,
-  * `sample_record.timestamp()`, if `sampler.time(true)` was specified,
-  * `sample_record.stream_id()`, if `sampler.stream_id(true)` was specified,
-  * `sample_record.cpu_id()`, if `sampler.cpu_id(true)` was specified, and
-  * `sample_record.id()`, if `sampler.identifier(true)` was specified.
+| Name                | Description                         | How to record?                  | How to access?            | Type                           |
+|---------------------|-------------------------------------|---------------------------------|---------------------------|--------------------------------|
+| **CGroup ID**       | ID of a cgroup a sample belongs to. | `sampler.values().cgroup(true)` | `record.cgroup_id()`      | `std::optional<std::uint64_t>` |
+| **New GGroup ID**   | ID of a newly added cgroup.         | `sampler.values().cgroup(true)` | `record.cgroup()->id()`   | `std::uint64_t`                |
+| **New GGroup Path** | Path of a newly added cgroup.       | `sampler.values().cgroup(true)` | `record.cgroup()->path()` | `std::string`                  |
 
-## Sample mode
-Each sample is recorded in one of the following modes:
-* `perf::Sample::Mode::Unknown`
-* `perf::Sample::Mode::Kernel`
-* `perf::Sample::Mode::User`
-* `perf::Sample::Mode::Hypervisor`
-* `perf::Sample::Mode::GuestKernel`
-* `perf::Sample::Mode::GuestUser`
+Additionally, the following [metadata](#metadata) will be included into `perf::CGroup` (accessible by `record.cgroup()`), if recorded accordingly:
+- Timestamp,
+- Process ID,
+- Thread ID,
+- Stream ID,
+- CPU ID,
+- and Sample ID
 
-You can check the mode via `sample_record.mode()`, for example:
-```cpp
-for (const auto& sample_record : result)
-{
-  if (sample_record.mode() == perf::Sample::Mode::Kernel)
-  {
-    std::cout << "Sample in Kernel" << std::endl;      
-  }
-  else if (sample_record.mode() == perf::Sample::Mode::User)
-  {
-    std::cout << "Sample in User" << std::endl;      
-  }
-}
-```
+### Throttle and Unthrottle
+**Note** that `record.throttle()` will return an `std::optional`.
 
-## Lost Samples
-Sample records may be lost, for example, if the buffer is full or the CPU is heavily loaded. 
-Such losses are documented and reported through `sample_record.count_loss()`, which returns `std::nullopt` for regular samples and an integer for the number of samples lost, as reported by the perf subsystem.
+| Name              | Description                                       | How to record?                    | How to access?                       | Type   |
+|-------------------|---------------------------------------------------|-----------------------------------|--------------------------------------|--------|
+| **Is Throttle**   | Indicates that the event was a throttle event.    | `sampler.values().throttle(true)` | `record.throttle()->is_throttle()`   | `bool` |
+| **Is Unthrottle** | Indicates that the event was an unthrottle event. | `sampler.values().throttle(true)` | `record.throttle()->is_unthrottle()` | `bool` |
 
-In addition, the following data will be set in a sample:
-* `sample_record.process_id()` and `sample_record.thread_id()`, if `sampler.thread_id(true)` was specified,
-* `sample_record.timestamp()`, if `sampler.time(true)` was specified,
-* `sample_record.stream_id()`, if `sampler.stream_id(true)` was specified,
-* `sample_record.cpu_id()`, if `sampler.cpu_id(true)` was specified, and
-* `sample_record.id()`, if `sampler.identifier(true)` was specified.
+Additionally, the following [metadata](#metadata) will be included into `perf::CGroup` (accessible by `record.cgroup()`), if recorded accordingly:
+- Timestamp,
+- Process ID,
+- Thread ID,
+- Stream ID,
+- CPU ID,
+- and Sample ID
+
+### Lost Samples
+Sample records may be lost, for example, if the buffer is full or the CPU is under heavy pressure.
+
+| Name                  | Description            | How to record?  | How to access?        | Type                           |
+|-----------------------|------------------------|-----------------|-----------------------|--------------------------------|
+| **Count Loss Events** | Number of loss events. | Always recorded | `record.count_loss()` | `std::optional<std::uint64_t>` |
+
+Additionally, the following [metadata](#metadata) will be included into `perf::CGroup` (accessible by `record.cgroup()`), if recorded accordingly:
+- Timestamp,
+- Process ID,
+- Thread ID,
+- Stream ID,
+- CPU ID,
+- and Sample ID
 
 ## Specific Notes for different CPU Vendors
-### Intel (PEBS)
+### Intel (Processor Event Based Sampling)
 Especially for sampling memory addresses, latency, and data source, the perf subsystem needs specific events as triggers.
 On Intel, the `perf list` command reports these triggers as "*Supports address when precise*".
 
@@ -511,6 +587,26 @@ The *IBS Fetch PMU* offers information on instruction fetch, including data such
 
 
 ---
+
+## Sample Buffer
+The hardware transfers collected samples into an mmap-ed [ring buffer](https://docs.kernel.org/userspace-api/perf_ring_buffer.html).
+You can configure the size of this buffer using the `SampleConfig` class as demonstrated below:
+
+```cpp
+auto sample_config = perf::SampleConfig{};
+sample_config.buffer_pages(4096U); // This sets the buffer to 16MB (4096 pages x 4kB per page).
+
+auto sampler = perf::Sampler{ counter_definitions, sample_config };
+```
+
+Because the ring buffer has a finite size, it needs to be drained before it becomes full.
+*perf-cpp* handles this automatically, though copying the data can be expensive.
+Choosing the right buffer size involves balancing memory usage against the cost of frequent data copying.
+By default, the buffer is set to `16`MB.
+
+> [!NOTE]
+> The number of buffer pages must be a power of two; any non-power-of-two value will be rounded up accordingly.
+
 
 ## Troubleshooting Counter Configurations
 Debugging and configuring hardware counters can sometimes be complex, as settings (e.g., the precision – `precise_ip`) may need to be adjusted for different machines.
