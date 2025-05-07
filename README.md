@@ -101,12 +101,12 @@ sampler.stop();
 const auto samples = sampler.result();
 for (const auto& record : samples)
 {
-    const auto time = record.metadata().timestmap().value();
+    const auto timestamp = record.metadata().timestmap().value();
     const auto cpu_id = record.metadata().cpu_id().value();
     const auto instruction = record.instruction_execution().instruction_pointer().value();
     
     std::cout 
-        << "Time = " << time << " | CPU = " << cpu_id
+        << "Time = " << timestamp << " | CPU = " << cpu_id
         << " | Instruction = 0x" << std::hex << instruction << std::dec
         << std::endl;
 }

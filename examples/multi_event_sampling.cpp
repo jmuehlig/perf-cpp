@@ -85,7 +85,7 @@ main()
     if (sample.metadata().timestamp().has_value() && sample.data_access().logical_memory_address().has_value() &&
         sample.data_access().source().has_value()) {
       auto data_source = "N/A";
-      if (sample.data_access().source()->is_l1d_hit()) {
+      if (sample.data_access().source()->is_l1_hit()) {
         data_source = "L1d";
       } else if (sample.data_access().source()->is_mhb_hit().value_or(false)) {
         data_source = "LFB/MAB";

@@ -99,7 +99,7 @@ private:
         _count_stores += static_cast<std::uint64_t>(is_store);
 
         if (is_load) {
-          _count_l1_hits += static_cast<std::uint64_t>(data_src.is_l1d_hit());
+          _count_l1_hits += static_cast<std::uint64_t>(data_src.is_l1_hit());
           _count_mhb_hits += static_cast<std::uint64_t>(data_src.is_mhb_hit().value_or(false));
           _count_l2_hits += static_cast<std::uint64_t>(data_src.is_l2_hit());
           _count_l3_hits += static_cast<std::uint64_t>(data_src.is_l3_hit());

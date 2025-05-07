@@ -12,9 +12,9 @@ public:
   public:
     /**
      * Set whether L1 data cache is hit.
-     * @param is_l1d_hit L1 data cache hit indicator.
+     * @param is_l1_hit L1 data cache hit indicator.
      */
-    void is_l1d_hit(const bool is_l1d_hit) noexcept { _is_l1d_hit = is_l1d_hit; }
+    void is_l1_hit(const bool is_l1_hit) noexcept { _is_l1_hit = is_l1_hit; }
 
     /**
      * Set whether MHB is hit.
@@ -88,7 +88,7 @@ public:
     /**
      * @return L1 data cache hit indicator.
      */
-    [[nodiscard]] bool is_l1d_hit() const noexcept { return _is_l1d_hit; }
+    [[nodiscard]] bool is_l1_hit() const noexcept { return _is_l1_hit; }
 
     /**
      * @return MHB hit indicator, if available. std::nullopt otherwise.
@@ -185,7 +185,7 @@ public:
     [[nodiscard]] std::optional<bool> is_write_combine_memory() const noexcept { return _is_write_combine_memory; }
 
   private:
-    bool _is_l1d_hit{ false };
+    bool _is_l1_hit{ false };
     std::optional<bool> _is_mhb_hit{ std::nullopt };
     std::optional<std::uint8_t> _num_mhb_slots_allocated{ std::nullopt };
     bool _is_l2_hit{ false };

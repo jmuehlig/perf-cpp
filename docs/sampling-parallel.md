@@ -179,12 +179,15 @@ auto result = sampler.result(/* sort samples by time*/ true);
 /// Print the samples
 for (const auto& record : result)
 {
-    if (record.time().has_value() && record.cpu_id().has_value() && record.thread_id().has_value())
+    const auto timestamp = record.metadata().timestamp();
+    const auto cpu_id = record.metadata().cpu_id();
+    const auto thread_id = record.metadata().thread_id();
+    if (timestamp.has_value() && cpu_id.has_value() && thread_id.has_value())
     {
         std::cout 
-            << "Time = " << record.time().value() 
-            << " | CPU ID = " << record.cpu_id().value()
-            << " | Thread ID = " << record.thread_id().value() << std::endl;
+            << "Time = " << timestamp.value() 
+            << " | CPU ID = " << cpu_id.value()
+            << " | Thread ID = " << thread_id.value() << std::endl;
     }
 }
 ```

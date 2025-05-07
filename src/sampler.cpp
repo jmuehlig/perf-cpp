@@ -737,7 +737,7 @@ perf::Sampler::read_data_access_source(const std::uint64_t source)
   /// Cache or RAM hit.
 #ifndef PERFCPP_NO_MEM_LVLNUM /// lvl_num field is supported since Linux 6.1
   const auto perf_lvl_num = perf_mem_data_src{ source }.mem_lvl_num;
-  data_access_source.is_l1d_hit(perf_lvl_num == PERF_MEM_LVLNUM_L1);
+  data_access_source.is_l1_hit(perf_lvl_num == PERF_MEM_LVLNUM_L1);
   data_access_source.is_l2_hit(perf_lvl_num == PERF_MEM_LVLNUM_L2);
   data_access_source.is_l3_hit(perf_lvl_num == PERF_MEM_LVLNUM_L3);
   data_access_source.is_l4_hit(perf_lvl_num == PERF_MEM_LVLNUM_L4);
