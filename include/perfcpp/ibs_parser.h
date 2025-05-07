@@ -27,7 +27,10 @@ public:
   [[nodiscard]] bool is_l3_miss() const noexcept { return _fetch_data->_fetch_control.is_fetch_l3_miss; }
   [[nodiscard]] bool is_l1_tlb_miss() const noexcept { return _fetch_data->_fetch_control.is_l1_tlb_miss; }
   [[nodiscard]] bool is_l2_tlb_miss() const noexcept { return _fetch_data->_fetch_control.is_l2_tlb_miss; }
-  [[nodiscard]] std::uint8_t l1_tlb_page_size() const noexcept { return std::uint8_t(_fetch_data->_fetch_control.l1_tlb_page_size); }
+  [[nodiscard]] std::uint8_t l1_tlb_page_size() const noexcept
+  {
+    return std::uint8_t(_fetch_data->_fetch_control.l1_tlb_page_size);
+  }
   [[nodiscard]] bool is_complete() const noexcept { return _fetch_data->_fetch_control.is_fetch_complete; }
   [[nodiscard]] std::uint16_t latency() const noexcept { return _fetch_data->_fetch_control.fetch_latency; }
 
@@ -42,7 +45,10 @@ public:
            static_cast<std::uint64_t>(_fetch_data->_fetch_control.is_physical_address_valid);
   }
 
-  [[nodiscard]] bool is_physical_instruction_address_valid() const noexcept { return _fetch_data->_fetch_control.is_physical_address_valid; }
+  [[nodiscard]] bool is_physical_instruction_address_valid() const noexcept
+  {
+    return _fetch_data->_fetch_control.is_physical_address_valid;
+  }
 
 private:
   struct FetchControl

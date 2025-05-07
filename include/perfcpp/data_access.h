@@ -86,19 +86,6 @@ public:
     }
 
     /**
-     * Set whether there is a misalignment penalty.
-     * @param is_misalign_penalty Misalignment penalty indicator.
-     */
-    void is_misalign_penalty(const bool is_misalign_penalty) noexcept { _is_misalign_penalty = is_misalign_penalty; }
-
-    /**
-     * Set the width of the access.
-     *
-     * @param access_width Width of the access.
-     */
-    void access_width(std::uint8_t access_width) noexcept { _access_width = access_width; }
-
-    /**
      * @return L1 data cache hit indicator.
      */
     [[nodiscard]] bool is_l1d_hit() const noexcept { return _is_l1d_hit; }
@@ -197,16 +184,6 @@ public:
      */
     [[nodiscard]] std::optional<bool> is_write_combine_memory() const noexcept { return _is_write_combine_memory; }
 
-    /**
-     * @return Misalignment penalty indicator, if available. std::nullopt otherwise.
-     */
-    [[nodiscard]] std::optional<bool> is_misalign_penalty() const noexcept { return _is_misalign_penalty; }
-
-    /**
-     * @return Width of the access in bytes, if available. std::nullopt otherwise.
-     */
-    [[nodiscard]] std::optional<std::uint8_t> access_width() const noexcept { return _access_width; }
-
   private:
     bool _is_l1d_hit{ false };
     std::optional<bool> _is_mhb_hit{ std::nullopt };
@@ -219,8 +196,6 @@ public:
     std::optional<std::uint8_t> _remote_hops{ std::nullopt };
     std::optional<bool> _is_uncachable_memory{ std::nullopt };
     std::optional<bool> _is_write_combine_memory{ std::nullopt };
-    std::optional<bool> _is_misalign_penalty{ std::nullopt };
-    std::optional<std::uint8_t> _access_width{ std::nullopt };
   };
 
   class TLB
@@ -328,7 +303,20 @@ public:
     _physical_memory_address = physical_memory_address;
   }
 
-  void source(const Source source) noexcept { _source.emplace(source); }
+  void source(Source source) noexcept { _source.emplace(source); }
+
+  /**
+   * Set whether there is a misalignment penalty.
+   * @param is_misalign_penalty Misalignment penalty indicator.
+   */
+  void is_misalign_penalty(const bool is_misalign_penalty) noexcept { _is_misalign_penalty = is_misalign_penalty; }
+
+  /**
+   * Set the width of the access.
+   *
+   * @param access_width Width of the access.
+   */
+  void access_width(std::uint8_t access_width) noexcept { _access_width = access_width; }
 
   /**
    * Set page size of the data.
@@ -356,7 +344,17 @@ public:
   [[nodiscard]] Latency& latency() noexcept { return _latency; }
 
   /**
-     * @return Size of the data page, if available. std::nullopt otherwise.
+   * @return Misalignment penalty indicator, if available. std::nullopt otherwise.
+   */
+  [[nodiscard]] std::optional<bool> is_misalign_penalty() const noexcept { return _is_misalign_penalty; }
+
+  /**
+   * @return Width of the access in bytes, if available. std::nullopt otherwise.
+   */
+  [[nodiscard]] std::optional<std::uint8_t> access_width() const noexcept { return _access_width; }
+
+  /**
+   * @return Size of the data page, if available. std::nullopt otherwise.
    */
   [[nodiscard]] std::optional<std::uint64_t> page_size() const noexcept { return _data_page_site; }
 
@@ -366,6 +364,8 @@ private:
   std::optional<Source> _source;
   TLB _tlb;
   Latency _latency;
-  std::optional<std::uint64_t> _data_page_site{std::nullopt};
+  std::optional<bool> _is_misalign_penalty{ std::nullopt };
+  std::optional<std::uint8_t> _access_width{ std::nullopt };
+  std::optional<std::uint64_t> _data_page_site{ std::nullopt };
 };
 }

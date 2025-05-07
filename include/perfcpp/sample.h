@@ -6,10 +6,10 @@
 #include "counter_result.h"
 #include "data_access.h"
 #include "instruction_execution.h"
+#include "latency.h"
 #include "metadata.h"
 #include "registers.h"
 #include "throttle.h"
-#include "latency.h"
 #include "weight.h"
 #include <cstdint>
 #include <linux/perf_event.h>
@@ -190,56 +190,92 @@ public:
    *
    * @return The sample mode.
    */
-  [[deprecated("Will be removed in v0.12. Use metadata().mode() instead.")]] [[nodiscard]] Metadata::Mode mode() const noexcept { return _metadata.mode().value_or(Metadata::Mode::Unknown); }
+  [[deprecated("Will be removed in v0.12. Use metadata().mode() instead.")]] [[nodiscard]] Metadata::Mode mode()
+    const noexcept
+  {
+    return _metadata.mode().value_or(Metadata::Mode::Unknown);
+  }
 
   /*
    * Retrieves the unique identifier for the sample.
    *
    * @return An optional containing the sample ID if available.
    */
-  [[deprecated("Will be removed in v0.12. Use metadata().sample_id() instead.")]] [[nodiscard]] std::optional<std::uint64_t> sample_id() const noexcept { return _metadata.sample_id(); }
+  [[deprecated(
+    "Will be removed in v0.12. Use metadata().sample_id() instead.")]] [[nodiscard]] std::optional<std::uint64_t>
+  sample_id() const noexcept
+  {
+    return _metadata.sample_id();
+  }
 
   /*
    * Retrieves the instruction pointer at the time the sample was recorded.
    *
    * @return An optional containing the instruction pointer address if available.
    */
-  [[deprecated("Will be removed in v0.12. Use instruction_execution().logical_instruction_pointer() instead.")]] [[nodiscard]] std::optional<std::uintptr_t> instruction_pointer() const noexcept { return _instruction_execution.logical_instruction_pointer(); }
+  [[deprecated("Will be removed in v0.12. Use instruction_execution().logical_instruction_pointer() "
+               "instead.")]] [[nodiscard]] std::optional<std::uintptr_t>
+  instruction_pointer() const noexcept
+  {
+    return _instruction_execution.logical_instruction_pointer();
+  }
 
   /*
    * Retrieves the process ID associated with the sample.
    *
    * @return An optional containing the process ID if available.
    */
-  [[deprecated("Will be removed in v0.12. Use metadata().process_id() instead.")]] [[nodiscard]] std::optional<std::uint32_t> process_id() const noexcept { return _metadata.process_id(); }
+  [[deprecated(
+    "Will be removed in v0.12. Use metadata().process_id() instead.")]] [[nodiscard]] std::optional<std::uint32_t>
+  process_id() const noexcept
+  {
+    return _metadata.process_id();
+  }
 
   /*
    * Retrieves the thread ID associated with the sample.
    *
    * @return An optional containing the thread ID if available.
    */
-  [[deprecated("Will be removed in v0.12. Use metadata().thread_id() instead.")]] [[nodiscard]] std::optional<std::uint32_t> thread_id() const noexcept { return _metadata.thread_id(); }
+  [[deprecated(
+    "Will be removed in v0.12. Use metadata().thread_id() instead.")]] [[nodiscard]] std::optional<std::uint32_t>
+  thread_id() const noexcept
+  {
+    return _metadata.thread_id();
+  }
 
   /*
    * Retrieves the timestamp when the sample was taken.
    *
    * @return An optional containing the timestamp if available.
    */
-  [[deprecated("Will be removed in v0.12. Use metadata().timestamp() instead.")]] [[nodiscard]] std::optional<std::uint64_t> time() const noexcept { return _metadata.timestamp(); }
+  [[deprecated(
+    "Will be removed in v0.12. Use metadata().timestamp() instead.")]] [[nodiscard]] std::optional<std::uint64_t>
+  time() const noexcept
+  {
+    return _metadata.timestamp();
+  }
 
   /*
    * Retrieves the stream id.
    *
    * @return An optional containing the stream id if available.
    */
-  [[deprecated("Will be removed in v0.12. Use metadata().stream_id() instead.")]] [[nodiscard]] std::optional<std::uint64_t> stream_id() const noexcept { return _metadata.stream_id(); }
+  [[deprecated(
+    "Will be removed in v0.12. Use metadata().stream_id() instead.")]] [[nodiscard]] std::optional<std::uint64_t>
+  stream_id() const noexcept
+  {
+    return _metadata.stream_id();
+  }
 
   /*
    * Retrieves the logical (virtual) memory address relevant to the sample.
    *
    * @return An optional containing the logical memory address if available.
    */
-  [[deprecated("Will be removed in v0.12. Use data_access().logical_memory_address() instead.")]] [[nodiscard]] std::optional<std::uintptr_t> logical_memory_address() const noexcept
+  [[deprecated("Will be removed in v0.12. Use data_access().logical_memory_address() instead.")]] [[nodiscard]] std::
+    optional<std::uintptr_t>
+    logical_memory_address() const noexcept
   {
     return _data_access.logical_memory_address();
   }
@@ -249,7 +285,9 @@ public:
    *
    * @return An optional containing the physical memory address if available.
    */
-  [[deprecated("Will be removed in v0.12. Use data_access().physical_memory_address() instead.")]] [[nodiscard]] std::optional<std::uintptr_t> physical_memory_address() const noexcept
+  [[deprecated("Will be removed in v0.12. Use data_access().physical_memory_address() instead.")]] [[nodiscard]] std::
+    optional<std::uintptr_t>
+    physical_memory_address() const noexcept
   {
     return _data_access.physical_memory_address();
   }
@@ -259,25 +297,40 @@ public:
    *
    * @return An optional containing the perf_event ID if available.
    */
-  [[deprecated("Will be removed in v0.12. Use metadata().sample_id() instead.")]] [[nodiscard]] std::optional<std::uint64_t> id() const noexcept { return _metadata.sample_id(); }
+  [[deprecated(
+    "Will be removed in v0.12. Use metadata().sample_id() instead.")]] [[nodiscard]] std::optional<std::uint64_t>
+  id() const noexcept
+  {
+    return _metadata.sample_id();
+  }
 
   /*
    * Retrieves the CPU ID where the sample was collected.
    *
    * @return An optional containing the CPU ID if available.
    */
-  [[deprecated("Will be removed in v0.12. Use metadata().cpu_id() instead.")]] [[nodiscard]] std::optional<std::uint32_t> cpu_id() const noexcept { return _metadata.cpu_id(); }
+  [[deprecated(
+    "Will be removed in v0.12. Use metadata().cpu_id() instead.")]] [[nodiscard]] std::optional<std::uint32_t>
+  cpu_id() const noexcept
+  {
+    return _metadata.cpu_id();
+  }
 
   /*
    * Retrieves the period value indicating the number of events that have occurred.
    *
    * @return An optional containing the period value if available.
    */
-  [[deprecated("Will be removed in v0.12. Use metadata().period() instead.")]] [[nodiscard]] std::optional<std::uint64_t> period() const noexcept { return _metadata.period(); }
+  [[deprecated(
+    "Will be removed in v0.12. Use metadata().period() instead.")]] [[nodiscard]] std::optional<std::uint64_t>
+  period() const noexcept
+  {
+    return _metadata.period();
+  }
 
   /*
    * TODO
-   * 
+   *
    * Retrieves the data source information of the sample.
    *
    * @return An optional containing the data source if available.
@@ -289,31 +342,38 @@ public:
    *
    * @return An optional containing the transaction abort if available.
    */
-  [[deprecated("Will be removed in v0.12. Use instruction_execution().hardware_transaction_abort() instead.")]] [[nodiscard]] std::optional<InstructionExecution::HardwareTransactionAbort> transaction_abort() const noexcept { return _instruction_execution.hardware_transaction_abort(); }
+  [[deprecated(
+    "Will be removed in v0.12. Use instruction_execution().hardware_transaction_abort() instead.")]] [[nodiscard]] std::
+    optional<InstructionExecution::HardwareTransactionAbort>
+    transaction_abort() const noexcept
+  {
+    return _instruction_execution.hardware_transaction_abort();
+  }
 
   /*
    * Retrieves the original weight value representing the cost or impact of the sample.
    *
    * @return An optional containing the weight if available.
    */
-  [[deprecated("Will be removed in v0.12. Use instruction_execution().latency() and data_access().latency() instead.")]] [[nodiscard]] std::optional<Weight> weight() const noexcept {
+  [[deprecated("Will be removed in v0.12. Use instruction_execution().latency() and data_access().latency() "
+               "instead.")]] [[nodiscard]] std::optional<Weight>
+  weight() const noexcept
+  {
     auto cache_latency = _data_access.latency().data_access();
     if (!cache_latency.has_value()) {
       cache_latency = _data_access.latency().cache_miss();
     }
-
 
     auto instruction_retirement_latency = _instruction_execution.latency().instruction_retirement();
     if (!instruction_retirement_latency.has_value()) {
       instruction_retirement_latency = _instruction_execution.latency().uop_tag_to_retirement();
     }
 
-
     if (!instruction_retirement_latency.has_value() && !cache_latency.has_value()) {
       return std::nullopt;
     }
 
-    return Weight{cache_latency.value_or(0U), instruction_retirement_latency.value_or(0U), 0U};
+    return Weight{ cache_latency.value_or(0U), instruction_retirement_latency.value_or(0U), 0U };
   }
 
   /*
@@ -321,7 +381,10 @@ public:
    *
    * @return An optional containing the latency if available.
    */
-  [[deprecated("Will be removed in v0.12. Use instruction_execution().latency() and data_access().latency() instead.")]] [[nodiscard]] std::optional<Latency> latency() const noexcept {
+  [[deprecated("Will be removed in v0.12. Use instruction_execution().latency() and data_access().latency() "
+               "instead.")]] [[nodiscard]] std::optional<Latency>
+  latency() const noexcept
+  {
     auto instruction_retirement_latency = _instruction_execution.latency().instruction_retirement();
     if (!instruction_retirement_latency.has_value()) {
       instruction_retirement_latency = _instruction_execution.latency().uop_tag_to_retirement();
@@ -336,7 +399,7 @@ public:
       return std::nullopt;
     }
 
-    return Latency{instruction_retirement_latency.value_or(0U), cache_latency.value_or(0U)};
+    return Latency{ instruction_retirement_latency.value_or(0U), cache_latency.value_or(0U) };
   }
 
   /*
@@ -344,56 +407,95 @@ public:
    *
    * @return An optional vector of branches if available.
    */
-  [[deprecated("Will be removed in v0.12. Use branch_stack() instead.")]] [[nodiscard]] const std::optional<std::vector<Branch>>& branches() const noexcept { return branch_stack(); }
+  [[deprecated(
+    "Will be removed in v0.12. Use branch_stack() instead.")]] [[nodiscard]] const std::optional<std::vector<Branch>>&
+  branches() const noexcept
+  {
+    return branch_stack();
+  }
 
   /*
    * Retrieves the branches recorded in the sample (modifiable).
    *
    * @return An optional vector of branches if available.
    */
-  [[deprecated("Will be removed in v0.12. Use branch_stack() instead.")]] [[nodiscard]] std::optional<std::vector<Branch>>& branches() noexcept { return _branch_stack; }
+  [[deprecated(
+    "Will be removed in v0.12. Use branch_stack() instead.")]] [[nodiscard]] std::optional<std::vector<Branch>>&
+  branches() noexcept
+  {
+    return _branch_stack;
+  }
 
   /*
    * Retrieves the ABI of the user-space registers.
    *
    * @return An optional containing the user registers ABI if available.
    */
-  [[deprecated("Will be removed in v0.12. Use user_registers().abi() instead.")]] [[nodiscard]] std::optional<ABI> user_registers_abi() const noexcept { return _user_registers.has_value() ? std::make_optional(_user_registers.value().abi()) : std::nullopt; }
+  [[deprecated("Will be removed in v0.12. Use user_registers().abi() instead.")]] [[nodiscard]] std::optional<ABI>
+  user_registers_abi() const noexcept
+  {
+    return _user_registers.has_value() ? std::make_optional(_user_registers.value().abi()) : std::nullopt;
+  }
 
   /*
    * Retrieves the ABI of the kernel-space registers.
    *
    * @return An optional containing the kernel registers ABI if available.
    */
-  [[deprecated("Will be removed in v0.12. Use kernel_registers().abi() instead.")]] [[nodiscard]] std::optional<ABI> kernel_registers_abi() const noexcept { return _kernel_registers.has_value() ? std::make_optional(_kernel_registers.value().abi()) : std::nullopt;; }
+  [[deprecated("Will be removed in v0.12. Use kernel_registers().abi() instead.")]] [[nodiscard]] std::optional<ABI>
+  kernel_registers_abi() const noexcept
+  {
+    return _kernel_registers.has_value() ? std::make_optional(_kernel_registers.value().abi()) : std::nullopt;
+    ;
+  }
 
   /*
    * Retrieves the call chain (stack backtrace) captured in the sample (modifiable).
    *
    * @return An optional vector of instruction pointers if available.
    */
-  [[deprecated("Will be removed in v0.12. Use instruction_execution().callchain() instead.")]] [[nodiscard]] const std::optional<std::vector<std::uintptr_t>>& callchain() noexcept { return _instruction_execution.callchain(); }
+  [[deprecated("Will be removed in v0.12. Use instruction_execution().callchain() instead.")]] [[nodiscard]] const std::
+    optional<std::vector<std::uintptr_t>>&
+    callchain() noexcept
+  {
+    return _instruction_execution.callchain();
+  }
 
   /*
    * Retrieves the data page size at the time of the sample.
    *
    * @return An optional containing the data page size if available.
    */
-  [[deprecated("Will be removed in v0.12. Use data_access().page_size() instead.")]] [[nodiscard]] std::optional<std::uint64_t> data_page_size() const noexcept { return _data_access.page_size(); }
+  [[deprecated(
+    "Will be removed in v0.12. Use data_access().page_size() instead.")]] [[nodiscard]] std::optional<std::uint64_t>
+  data_page_size() const noexcept
+  {
+    return _data_access.page_size();
+  }
 
   /*
    * Retrieves the code page size at the time of the sample.
    *
    * @return An optional containing the code page size if available.
    */
-  [[deprecated("Will be removed in v0.12. Use instruction_execution().page_size() instead.")]] [[nodiscard]] std::optional<std::uint64_t> code_page_size() const noexcept { return _instruction_execution.page_size(); }
+  [[deprecated("Will be removed in v0.12. Use instruction_execution().page_size() instead.")]] [[nodiscard]] std::
+    optional<std::uint64_t>
+    code_page_size() const noexcept
+  {
+    return _instruction_execution.page_size();
+  }
 
   /*
    * Indicates whether the instruction pointer in the sample is exact.
    *
    * @return True if the instruction pointer is exact; otherwise, false.
    */
-  [[deprecated("Will be removed in v0.12. Use instruction_execution().is_instruction_pointer_exact() instead.")]] [[nodiscard]] bool is_exact_ip() const noexcept { return _instruction_execution.is_instruction_pointer_exact(); }
+  [[deprecated("Will be removed in v0.12. Use instruction_execution().is_instruction_pointer_exact() "
+               "instead.")]] [[nodiscard]] bool
+  is_exact_ip() const noexcept
+  {
+    return _instruction_execution.is_instruction_pointer_exact();
+  }
 
 private:
   Metadata _metadata;

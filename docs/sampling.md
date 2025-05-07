@@ -282,13 +282,13 @@ Information about the instruction execution can be accessed via `record.instruct
 #### Instruction Latency
 Latency information regarding the execution of an instruction (or micro-op on AMD).
 
-| Name                             | Description                                                                                     | How to record?                                                                           | How to access?                                                            | Type                           |
-|----------------------------------|-------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|---------------------------------------------------------------------------|--------------------------------|
-| **Instruction Retirement**       | Latency for executing the entire instruction (including TLB access, cache/memory access, etc.). | `sampler.values().latency(true)` (works only with **Intel PEBS**)                        | `record.instruction_execution().latency().instruction_retirement()`       | `std::optional<std::uint32_t>` |
-| **uOp Tag-to-Retirement**        | Cycles of the tagged uOp from tagging to retirement.                                            | `sampler.values().latency(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu))   | `record.instruction_execution().latency().uop_tag_to_retirement()`        | `std::optional<std::uint32_t>` |
-| **uOp Completion-to-Retirement** | Cycles of the tagged uOp from completion to retirement.                                         | `sampler.values().raw(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu))       | `record.instruction_execution().latency().uop_completion_to_retirement()` | `std::optional<std::uint32_t>` |
-| **uOp Tag-to-Completion**        | Cycles of the tagged uOp from tagging to completion.                                            | `sampler.values().raw(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu))       | `record.instruction_execution().latency().uop_tag_to_completion()`        | `std::optional<std::uint32_t>` |
-| **Fetch**                        | Instruction fetch latency from initiating the fetch to delivering to the core.                  | `sampler.values().raw(true)` (works only with [**AMD's IBS Fetch PMU**](#ibs-fetch-pmu)) | `record.instruction_execution().latency().fetch()`                        | `std::optional<std::uint32_t>` |
+| Name                             | Description                                                                                                 | How to record?                                                                           | How to access?                                                            | Type                           |
+|----------------------------------|-------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|---------------------------------------------------------------------------|--------------------------------|
+| **Instruction Retirement**       | Latency (in cycles) for executing the entire instruction (including TLB access, cache/memory access, etc.). | `sampler.values().latency(true)` (works only with **Intel PEBS**)                        | `record.instruction_execution().latency().instruction_retirement()`       | `std::optional<std::uint32_t>` |
+| **uOp Tag-to-Retirement**        | Cycles of the tagged uOp from tagging to retirement.                                                        | `sampler.values().latency(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu))   | `record.instruction_execution().latency().uop_tag_to_retirement()`        | `std::optional<std::uint32_t>` |
+| **uOp Completion-to-Retirement** | Cycles of the tagged uOp from completion to retirement.                                                     | `sampler.values().raw(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu))       | `record.instruction_execution().latency().uop_completion_to_retirement()` | `std::optional<std::uint32_t>` |
+| **uOp Tag-to-Completion**        | Cycles of the tagged uOp from tagging to completion.                                                        | `sampler.values().raw(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu))       | `record.instruction_execution().latency().uop_tag_to_completion()`        | `std::optional<std::uint32_t>` |
+| **Fetch**                        | Instruction fetch latency (in cycles) from initiating the fetch to delivering to the core.                  | `sampler.values().raw(true)` (works only with [**AMD's IBS Fetch PMU**](#ibs-fetch-pmu)) | `record.instruction_execution().latency().fetch()`                        | `std::optional<std::uint32_t>` |
 
 #### Instruction Cache
 Information regarding micro-op fetch.
@@ -343,7 +343,45 @@ This is only available on **Intel PEBS**.
 | **User Specified Code**               | The user-specific code provided for the abort (if any).        | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->user_specified_code()`                     | `std::uint32_t` |
 
 ### Data Access
-**TODO**
+Information about the data (memory, cache, TLB) access can be queried via `record.data_access()` and contain the following information.
+
+| Name                        | Description                                   | How to record?                                                                     | How to access?                                   | Type                                      |
+|-----------------------------|-----------------------------------------------|------------------------------------------------------------------------------------|--------------------------------------------------|-------------------------------------------|
+| **Logical Memory Address**  | Logical address of the accessed memory.       | `sampler.values().logical_memory_address(true)`                                    | `record.data_access().logical_memory_address()`  | `std::optional<std::uintptr_t>`           |
+| **Physical Memory Address** | Physical address of the accessed memory.      | `sampler.values().physical_memory_address(true)`                                   | `record.data_access().physical_memory_address()` | `std::optional<std::uintptr_t>`           |
+| **Source**                  | Information about the source (cache, memory). | [See details below](#data-source)                                                  | `record.data_access().source()`                  | `std::optional<perf::DataAccess::Source>` |
+| **Latency**                 | Latency information of the data access.       | [See details below](#data-latency)                                                 | `record.data_access().latency()`                 | `perf::DataAccess::Latency`               |
+| **TLB**                     | TLB information of the data access.           | [See details below](#data-tlb)                                                     | `record.data_access().tlb()`                     | `perf::DataAccess::TLB`                   |
+| **Is Misalign Penalty**     | Indicates if the access was misaligned.       | `sampler.values().raw(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu)) | `record.data_access().is_misaligned_penalty()`   | `std::optional<bool>`                     |
+| **Access Width**            | Size of the accessed data.                    | `sampler.values().raw(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu)) | `record.data_access().access_width()`            | `std::optional<std::uint8_t>`             |
+| **Code Page Size**          | Page size of the instruction pointer.         | `sampler.values().code_page_size(true)`                                            | `record.data_access().page_size()`               | `std::optional<std::uint64_t>`            |
+
+**Example:** [`examples/address_sampling.cpp`](../examples/address_sampling.cpp)
+
+#### Data Source
+
+#### Data Latency
+Latency information regarding a data access.
+
+| Name            | Description                                        | How to record?                                                                         | How to access?                                 | Type                           |
+|-----------------|----------------------------------------------------|----------------------------------------------------------------------------------------|------------------------------------------------|--------------------------------|
+| **Data Access** | Latency (in cycles) of a data access.              | `sampler.values().latency(true)` (works only with **Intel PEBS**)                      | `record.data_access().latency().data_access()` | `std::optional<std::uint32_t>` |
+| **Cache Miss**  | Latency (in cycles) of an L1d cache miss.          | `sampler.values().latency(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu)) | `record.data_access().latency().cache_miss()`  | `std::optional<std::uint32_t>` |
+| **dTLB Refill** | Latency (in cycles) of a dTLB miss and its refill. | `sampler.values().raw(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu))     | `record.data_access().latency().dtlb_refill()` | `std::optional<std::uint32_t>` |
+
+#### Data TLB
+Information about the dTLB and STLB access.
+
+| Name             | Description                                   | How to record?                                                                     | How to access?                              | Type                           |
+|------------------|-----------------------------------------------|------------------------------------------------------------------------------------|---------------------------------------------|--------------------------------|
+| **Is L1 Hit**    | Indicates whether the access was a dTLB hit.  | `sampler.values().data_source(true)`                                               | `record.data_access().tlb().is_l1_hit()`    | `std::optional<bool>`          |
+| **Is L2 Hit**    | Indicates whether the access was an STLB hit. | `sampler.values().data_source(true)`                                               | `record.data_access().tlb().is_l2_hit()`    | `std::optional<bool>`          |
+| **L1 Page Size** | Page size of the dTLB hit.                    | `sampler.values().raw(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu)) | `record.data_access().tlb().l1_page_size()` | `std::optional<std::uint64_t>` |
+| **L2 Page Size** | Page size of the STLB hit.                    | `sampler.values().raw(true)` (works only with [**AMD's IBS Op PMU**](#ibs-op-pmu)) | `record.data_access().tlb().l2_page_size()` | `std::optional<std::uint64_t>` |
+
+> [!NOTE]
+> Intel PEBS cannot distinguish between L1 and L2 TLB hits. 
+> If the access hit any TLB, both (L1 Hit and L2 Hit) will be true on Intel hardware.
 
 ### Counter Values
 Record hardware performance events (like `cycles`, `L1-dcache-loads`, ...) and metrics at the time when the sample was recorded.
@@ -426,8 +464,8 @@ Records the raw data of the underlying PMU.
 This can be, for example, used to parse data manually to access data that is not included into the interface.
 *perf-cpp* makes use of this to reveal [AMD IBS](#amd-instruction-based-sampling) records that are not accessible through the [*perf_event_open*](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) interface.
 
-| Name         | Description                     | How to record?              | How to access? | Type                                    |
-|--------------|---------------------------------|-----------------------------|----------------|-----------------------------------------|
+| Name         | Description                     | How to record?               | How to access? | Type                                    |
+|--------------|---------------------------------|------------------------------|----------------|-----------------------------------------|
 | **Raw Data** | Raw data of the underlying PMU. | `sampler.values().raw(true)` | `record.raw()` | `std::optional<std::vector<std::byte>>` |
 
 

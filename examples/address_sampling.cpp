@@ -31,7 +31,7 @@ main()
 
   /// Setup which data will be included into samples (timestamp, virtual memory address, data source like L1d or RAM,
   /// and latency).
-  sampler.values().time(true).logical_memory_address(true).data_src(true).latency(true);
+  sampler.values().time(true).logical_memory_address(true).data_source(true).latency(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,

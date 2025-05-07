@@ -229,7 +229,7 @@ public:
      */
     Values& user_registers(std::vector<Registers::arm>&& registers) noexcept
     {
-      return user_registers(Registers{std::move(registers)});
+      return user_registers(Registers{ std::move(registers) });
     }
 
     /**
@@ -242,7 +242,7 @@ public:
      */
     Values& user_registers(std::vector<Registers::arm64>&& registers) noexcept
     {
-      return user_registers(Registers{std::move(registers)});
+      return user_registers(Registers{ std::move(registers) });
     }
 
     /**
@@ -255,7 +255,7 @@ public:
      */
     Values& user_registers(std::vector<Registers::x86>&& registers) noexcept
     {
-      return user_registers(Registers{std::move(registers)});
+      return user_registers(Registers{ std::move(registers) });
     }
 
     /**
@@ -268,7 +268,7 @@ public:
      */
     Values& user_registers(std::vector<Registers::riscv>&& registers) noexcept
     {
-      return user_registers(Registers{std::move(registers)});
+      return user_registers(Registers{ std::move(registers) });
     }
 
     /**
@@ -293,7 +293,21 @@ public:
      * @param include True, if the data source should be included.
      * @return The Values instance.
      */
-    Values& data_src(const bool include) noexcept
+    [[deprecated("Will be removed from v0.12. Use data_source(true) instead.")]] Values& data_src(
+      const bool include) noexcept
+    {
+      return data_source(include);
+    }
+
+    /**
+     * Manage to include the data source for memory addresses into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#data-source-of-a-memory-load
+     *
+     * @param include True, if the data source should be included.
+     * @return The Values instance.
+     */
+    Values& data_source(const bool include) noexcept
     {
       set(PERF_SAMPLE_DATA_SRC, include);
       return *this;
@@ -307,7 +321,8 @@ public:
      * @param include True, if transaction aborts should be included.
      * @return The Values instance.
      */
-    [[deprecated("Will be removed from v0.12, use hardware_transaction_abort() instead.")]] Values& transaction_abort(const bool include) noexcept
+    [[deprecated("Will be removed from v0.12, use hardware_transaction_abort() instead.")]] Values& transaction_abort(
+      const bool include) noexcept
     {
       set(PERF_SAMPLE_TRANSACTION, include);
       return *this;
@@ -366,7 +381,7 @@ public:
      */
     Values& kernel_registers(std::vector<Registers::arm>&& registers) noexcept
     {
-      return kernel_registers(Registers{std::move(registers)});
+      return kernel_registers(Registers{ std::move(registers) });
     }
 
     /**
@@ -379,7 +394,7 @@ public:
      */
     Values& kernel_registers(std::vector<Registers::arm64>&& registers) noexcept
     {
-      return kernel_registers(Registers{std::move(registers)});
+      return kernel_registers(Registers{ std::move(registers) });
     }
 
     /**
@@ -392,7 +407,7 @@ public:
      */
     Values& kernel_registers(std::vector<Registers::x86>&& registers) noexcept
     {
-      return kernel_registers(Registers{std::move(registers)});
+      return kernel_registers(Registers{ std::move(registers) });
     }
 
     /**
@@ -405,7 +420,7 @@ public:
      */
     Values& kernel_registers(std::vector<Registers::riscv>&& registers) noexcept
     {
-      return kernel_registers(Registers{std::move(registers)});
+      return kernel_registers(Registers{ std::move(registers) });
     }
 
     /**
@@ -436,7 +451,7 @@ public:
 #ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR /// Sampling for physical memory address is supported since Linux 4.13
       set(PERF_SAMPLE_PHYS_ADDR, include);
 #else
-      throw SamplingFeatureIsNotSupported{"physical memory address", "4.13"};
+      throw SamplingFeatureIsNotSupported{ "physical memory address", "4.13" };
 #endif
       return *this;
     }
@@ -454,7 +469,7 @@ public:
 #ifndef PERFCPP_NO_SAMPLE_CGROUP /// Sampling cgroup is supported since Linux 5.7
       set(PERF_SAMPLE_CGROUP, include);
 #else
-      throw SamplingFeatureIsNotSupported{"cgroup", "5.7"};
+      throw SamplingFeatureIsNotSupported{ "cgroup", "5.7" };
 #endif
       return *this;
     }
@@ -472,7 +487,7 @@ public:
 #ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE /// Sampling the data page size is supported since Linux 5.11
       set(PERF_SAMPLE_DATA_PAGE_SIZE, include);
 #else
-      throw SamplingFeatureIsNotSupported{"data page size", "5.11"};
+      throw SamplingFeatureIsNotSupported{ "data page size", "5.11" };
 #endif
       return *this;
     }
@@ -490,7 +505,7 @@ public:
 #ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE /// Sampling the code page size is supported since Linux 5.11
       set(PERF_SAMPLE_CODE_PAGE_SIZE, include);
 #else
-      throw SamplingFeatureIsNotSupported{"code page size", "5.11"};
+      throw SamplingFeatureIsNotSupported{ "code page size", "5.11" };
 #endif
       return *this;
     }
@@ -509,7 +524,7 @@ public:
                                         /// Linux 5.12
       set(PERF_SAMPLE_WEIGHT_STRUCT, include);
 #else
-      throw SamplingFeatureIsNotSupported{"weight struct", "5.12"};
+      throw SamplingFeatureIsNotSupported{ "weight struct", "5.12" };
 #endif
       return *this;
     }

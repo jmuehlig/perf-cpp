@@ -109,7 +109,12 @@ public:
   class TLB
   {
   public:
-    TLB(const bool is_l1_miss, const std::optional<std::uint64_t> l1_page_size, const bool is_l2_miss) noexcept : _is_l1_miss(is_l1_miss), _l1_page_size(l1_page_size), _is_l2_miss(is_l2_miss) { }
+    TLB(const bool is_l1_miss, const std::optional<std::uint64_t> l1_page_size, const bool is_l2_miss) noexcept
+      : _is_l1_miss(is_l1_miss)
+      , _l1_page_size(l1_page_size)
+      , _is_l2_miss(is_l2_miss)
+    {
+    }
     ~TLB() noexcept = default;
 
     /**
@@ -126,6 +131,7 @@ public:
      * @return True, if the fetch was an sTLB miss.
      */
     [[nodiscard]] bool is_l2_miss() const noexcept { return _is_l2_miss; }
+
   private:
     bool _is_l1_miss;
     std::optional<std::uint64_t> _l1_page_size;
@@ -135,7 +141,12 @@ public:
   class Cache
   {
   public:
-    Cache(const bool is_l1_miss, const bool is_l2_miss, const bool is_l3_miss) noexcept : _is_l1_miss(is_l1_miss), _is_l2_miss(is_l2_miss), _is_l3_miss(is_l3_miss) { }
+    Cache(const bool is_l1_miss, const bool is_l2_miss, const bool is_l3_miss) noexcept
+      : _is_l1_miss(is_l1_miss)
+      , _is_l2_miss(is_l2_miss)
+      , _is_l3_miss(is_l3_miss)
+    {
+    }
     ~Cache() noexcept = default;
 
     [[nodiscard]] bool is_l1_miss() const noexcept { return _is_l1_miss; }
@@ -153,9 +164,12 @@ public:
   class Fetch
   {
   public:
-    Fetch(const bool is_complete, const bool is_valid) noexcept : _is_complete(is_complete), _is_valid(is_valid) { }
+    Fetch(const bool is_complete, const bool is_valid) noexcept
+      : _is_complete(is_complete)
+      , _is_valid(is_valid)
+    {
+    }
     ~Fetch() noexcept = default;
-
 
     [[nodiscard]] bool is_complete() const noexcept { return _is_complete; }
 
@@ -347,7 +361,7 @@ public:
    * Set the TLB information.
    * @param tlb TLB object.
    */
-  void tlb(TLB &&tlb) noexcept { _tlb = tlb; }
+  void tlb(TLB&& tlb) noexcept { _tlb = tlb; }
 
   /**
    * Set the fetch information.
@@ -377,8 +391,8 @@ public:
   void callchain(std::vector<std::uintptr_t>&& callchain) noexcept { _callchain = std::move(callchain); }
 
   /**
-     * Set the page size.
-     * @param page_size Page size.
+   * Set the page size.
+   * @param page_size Page size.
    */
   void page_size(const std::uint64_t page_size) noexcept { _page_size = page_size; }
 

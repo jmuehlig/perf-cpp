@@ -759,7 +759,7 @@ perf::Sampler::read_data_access_source(const std::uint64_t source)
 #ifndef PERFCPP_NO_MEM_REMOTE // Remote field is supported since Linux 4.14
   const auto remote = perf_mem_data_src{ source }.mem_remote;
   data_access_source.is_remote(remote & PERF_MEM_REMOTE_REMOTE);
-#else /// Use lvl before Linux 4.14
+#else                         /// Use lvl before Linux 4.14
 #ifndef PERFCPP_NO_MEM_LVLNUM /// If PERFCPP_NO_MEM_LVLNUM is defined, we do not need to create another perf_lvl object.
   const auto perf_lvl = perf_mem_data_src{ source }.mem_lvl;
 #endif
@@ -853,17 +853,15 @@ perf::Sampler::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, perf::Sa
     sample.instruction_execution().latency().fetch(fetch_parser.latency());
 
     /// Fetch information.
-    sample.instruction_execution().fetch(InstructionExecution::Fetch{fetch_parser.is_valid(), fetch_parser.is_complete()});
+    sample.instruction_execution().fetch(
+      InstructionExecution::Fetch{ fetch_parser.is_valid(), fetch_parser.is_complete() });
 
     /// Instruction cache.
     sample.instruction_execution().cache(InstructionExecution::Cache{
-                                           fetch_parser.is_instruction_cache_miss(),
-                                           fetch_parser.is_l2_miss(),
-                                           fetch_parser.is_l3_miss()
-                                         });
+      fetch_parser.is_instruction_cache_miss(), fetch_parser.is_l2_miss(), fetch_parser.is_l3_miss() });
 
     /// Instruction TLB.
-    auto l1_tlb_size = std::optional<std::uint64_t>{std::nullopt};
+    auto l1_tlb_size = std::optional<std::uint64_t>{ std::nullopt };
     if (fetch_parser.is_physical_instruction_address_valid()) {
       if (fetch_parser.l1_tlb_page_size() == 0U) {
         l1_tlb_size = 4ULL * 1024ULL;
@@ -873,7 +871,8 @@ perf::Sampler::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, perf::Sa
         l1_tlb_size = 1024ULL * 1024ULL * 1024ULL;
       }
     }
-    sample.instruction_execution().tlb(InstructionExecution::TLB{fetch_parser.is_l1_tlb_miss(), l1_tlb_size, fetch_parser.is_l2_tlb_miss()});
+    sample.instruction_execution().tlb(
+      InstructionExecution::TLB{ fetch_parser.is_l1_tlb_miss(), l1_tlb_size, fetch_parser.is_l2_tlb_miss() });
 
     /// Physical instruction address.
     sample.instruction_execution().physical_instruction_pointer(fetch_parser.physical_instruction_address());
@@ -938,12 +937,12 @@ perf::Sampler::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, perf::Sa
     if (sample.data_access().source().has_value()) {
       sample.data_access().source()->num_mhb_slots_allocated(execution_parser.num_open_mem_requests());
       sample.data_access().source()->is_mhb_hit(execution_parser.is_data_cache_miss_no_mab_allocation());
-      sample.data_access().source()->is_misalign_penalty(execution_parser.is_data_cache_misaligned_access());
       sample.data_access().source()->is_write_combine_memory(execution_parser.is_data_cache_write_combine_access());
+      sample.data_access().is_misalign_penalty(execution_parser.is_data_cache_misaligned_access());
 
       /// Translate memory width into number of bytes.
       if (const auto access_width = execution_parser.access_mem_width(); access_width > 0U && access_width <= 7U) {
-        sample.data_access().source()->access_width(std::uint8_t(1U << (access_width - 1U)));
+        sample.data_access().access_width(std::uint8_t(1U << (access_width - 1U)));
       }
     }
   }
