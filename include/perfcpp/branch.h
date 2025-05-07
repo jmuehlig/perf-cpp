@@ -2,6 +2,7 @@
 
 #include "perfcpp/feature.h"
 #include <cstdint>
+#include <optional>
 #include <linux/perf_event.h>
 
 namespace perf {
@@ -46,7 +47,7 @@ public:
          const bool is_predicted,
          const bool is_in_transaction,
          const bool is_transaction_abort,
-         const std::uint16_t cycles)
+         const std::optional<std::uint16_t> cycles)
     : _instruction_pointer_from(instruction_pointer_from)
     , _instruction_pointer_to(instruction_pointer_to)
     , _is_mispredicted(is_mispredicted)
@@ -90,7 +91,7 @@ public:
   /**
    * @return The number of cycles of the branch (zero if not supported on the underlying hardware).
    */
-  [[nodiscard]] std::uint16_t cycles() const noexcept { return _cycles; }
+  [[nodiscard]] std::optional<std::uint16_t> cycles() const noexcept { return _cycles; }
 
 private:
   std::uintptr_t _instruction_pointer_from;
@@ -99,6 +100,6 @@ private:
   bool _is_predicted;
   bool _is_in_transaction;
   bool _is_transaction_abort;
-  std::uint16_t _cycles;
+  std::optional<std::uint16_t> _cycles;
 };
 }

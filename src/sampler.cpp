@@ -708,7 +708,7 @@ perf::Sampler::read_branch_stack(perf::SampleBuffer::Entry& entry)
 #else
     const auto cycles = 0ULL;
 #endif
-    branches.emplace_back(branch.from, branch.to, branch.mispred, branch.predicted, branch.in_tx, branch.abort, cycles);
+    branches.emplace_back(branch.from, branch.to, branch.mispred, branch.predicted, branch.in_tx, branch.abort, cycles > 0ULL ? std::make_optional(cycles) : std::nullopt);
   }
 
   return branches;

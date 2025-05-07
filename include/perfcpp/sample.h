@@ -25,7 +25,7 @@ public:
    *
    * @param counter_result Counter values.
    */
-  void counter_result(CounterResult&& counter_result) noexcept { _counter_result.emplace(std::move(counter_result)); }
+  void counter(CounterResult&& counter_result) noexcept { _counter_result.emplace(std::move(counter_result)); }
 
   /**
    * Set the branch stack.
@@ -133,7 +133,7 @@ public:
   /**
    * @return Counter result.
    */
-  [[nodiscard]] const std::optional<CounterResult>& counter_result() const noexcept { return _counter_result; }
+  [[nodiscard]] const std::optional<CounterResult>& counter() const noexcept { return _counter_result; }
 
   /**
    * @return Optional branch stack.
