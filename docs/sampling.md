@@ -521,7 +521,7 @@ Sampling cgroups requires a Linux Kernel version of `5.7` or higher.
 | **New GGroup ID**   | ID of a newly added cgroup.         | `sampler.values().cgroup(true)` | `record.cgroup()->id()`   | `std::uint64_t`                |
 | **New GGroup Path** | Path of a newly added cgroup.       | `sampler.values().cgroup(true)` | `record.cgroup()->path()` | `std::string`                  |
 
-Additionally, the following [metadata](#metadata) will be included into `perf::CGroup` (accessible by `record.cgroup()`), if recorded accordingly:
+Additionally, the following [metadata](#metadata) will be included, if recorded accordingly:
 - Timestamp,
 - Process ID,
 - Thread ID,
@@ -537,7 +537,7 @@ Additionally, the following [metadata](#metadata) will be included into `perf::C
 | **Is Throttle**   | Indicates that the event was a throttle event.    | `sampler.values().throttle(true)` | `record.throttle()->is_throttle()`   | `bool` |
 | **Is Unthrottle** | Indicates that the event was an unthrottle event. | `sampler.values().throttle(true)` | `record.throttle()->is_unthrottle()` | `bool` |
 
-Additionally, the following [metadata](#metadata) will be included into `perf::CGroup` (accessible by `record.cgroup()`), if recorded accordingly:
+Additionally, the following [metadata](#metadata) will be included, if recorded accordingly:
 - Timestamp,
 - Process ID,
 - Thread ID,
