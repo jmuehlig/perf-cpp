@@ -11,6 +11,7 @@ namespace perf {
 class DataAccess
 {
 public:
+
   /**
    * Encodes where in the memory/cache hierarchy a data access was resolved.
    * This includes hits at various cache levels, memory, and properties of remote accesses.
