@@ -453,7 +453,7 @@ perf::Sampler::read_sample_event(perf::SampleBuffer::Entry entry, const SampleCo
   if (this->_values.is_set(PERF_SAMPLE_READ)) {
     auto counter_result = Sampler::read_hardware_events(entry, sample_counter);
     if (counter_result.has_value()) {
-      sample.counter_result(std::move(counter_result.value()));
+      sample.counter(std::move(counter_result.value()));
     }
   }
 
