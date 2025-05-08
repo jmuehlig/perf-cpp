@@ -10,11 +10,9 @@ class InstructionExecution
 public:
   enum class InstructionType : std::uint8_t
   {
-    Return,
+    DataAccess,
     Branch,
-    MemoryLoad,
-    MemoryStore,
-    SoftwarePrefetch
+    Return
   };
 
   enum class BranchType : std::uint8_t

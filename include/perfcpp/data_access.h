@@ -11,6 +11,12 @@ namespace perf {
 class DataAccess
 {
 public:
+  enum AccessType : std::uint8_t
+  {
+    Load,
+    Store,
+    SoftwarePrefetch
+  };
 
   /**
    * Encodes where in the memory/cache hierarchy a data access was resolved.
@@ -298,6 +304,72 @@ public:
   };
 
   /**
+   * Represents the outcome of a cache snoop operation in a coherence protocol.
+   */
+  class Snoop
+  {
+  public:
+    /**
+     * Set whether the snoop was a hit.
+     * @param is_hit True if the snoop found a matching cache line.
+     */
+    void is_hit(const bool is_hit) noexcept { _is_hit = is_hit; }
+
+    /**
+     * Set whether the snoop hit a modified (dirty) cache line.
+     * @param is_hit_modified True if the snoop found a modified copy.
+     */
+    void is_hit_modified(const bool is_hit_modified) noexcept { _is_hit_modified = is_hit_modified; }
+
+    /**
+     * Set whether the line was forwarded to the requester.
+     * @param is_forward True if a cache line was forwarded as part of the response.
+     */
+    void is_forward(const bool is_forward) noexcept { _is_forward = is_forward; }
+
+    /**
+     * Set whether the line was transferred from another peer.
+     * @param is_transfer_from_peer True if data was transferred from a peer cache.
+     */
+    void is_transfer_from_peer(const bool is_transfer_from_peer) noexcept
+    {
+      _is_transfer_from_peer = is_transfer_from_peer;
+    }
+
+    /**
+     * @return True if the snoop hit a matching cache line.
+     */
+    [[nodiscard]] std::optional<bool> is_hit() const noexcept { return _is_hit; }
+
+    /**
+     * @return True if the snoop hit a modified (dirty) cache line.
+     */
+    [[nodiscard]] std::optional<bool> is_hit_modified() const noexcept { return _is_hit_modified; }
+
+    /**
+     * @return True if the cache line was forwarded to the requester.
+     */
+    [[nodiscard]] std::optional<bool> is_forward() const noexcept { return _is_forward; }
+
+    /**
+     * @return True if the cache line was transferred from a peer cache.
+     */
+    [[nodiscard]] std::optional<bool> is_transfer_from_peer() const noexcept { return _is_transfer_from_peer; }
+
+  private:
+    std::optional<bool> _is_hit{ std::nullopt };
+    std::optional<bool> _is_hit_modified{ std::nullopt };
+    std::optional<bool> _is_forward{ std::nullopt };
+    std::optional<bool> _is_transfer_from_peer{ std::nullopt };
+  };
+
+  /**
+   * Set the type of the access.
+   * @param access_type Type of the access.
+   */
+  void type(const AccessType access_type) noexcept { _access_type = access_type; }
+
+  /**
    * Set the logical memory address of the access.
    * @param logical_memory_address Virtual/logical memory address.
    */
@@ -322,6 +394,12 @@ public:
   void source(Source source) noexcept { _source.emplace(source); }
 
   /**
+   * Set the snoop characteristics of the data access.
+   * @param snoop Populated Snoop instance.
+   */
+  void snoop(Snoop snoop) noexcept { _snoop.emplace(snoop); }
+
+  /**
    * Set whether the access incurred a misalignment penalty.
    * @param is_misalign_penalty True if misaligned access penalized.
    */
@@ -338,6 +416,35 @@ public:
    * @param page_size Page size in bytes.
    */
   void page_size(const std::uint64_t page_size) noexcept { _data_page_site = page_size; }
+
+  /**
+   * @return Type of the access.
+   */
+  [[nodiscard]] std::optional<AccessType> type() const noexcept { return _access_type; }
+
+  /**
+   * @return True, if the access is a load.
+   */
+  [[nodiscard]] bool is_load() const noexcept
+  {
+    return _access_type.has_value() && _access_type.value() == AccessType::Load;
+  }
+
+  /**
+   * @return True, if the access is a store.
+   */
+  [[nodiscard]] bool is_store() const noexcept
+  {
+    return _access_type.has_value() && _access_type.value() == AccessType::Store;
+  }
+
+  /**
+   * @return True, if the access is a software prefetch.
+   */
+  [[nodiscard]] bool is_software_prefetch() const noexcept
+  {
+    return _access_type.has_value() && _access_type.value() == AccessType::SoftwarePrefetch;
+  }
 
   /**
    * @return Logical (virtual) address accessed.
@@ -386,6 +493,11 @@ public:
   [[nodiscard]] Latency& latency() noexcept { return _latency; }
 
   /**
+   * @return Snoop information associated with this access.
+   */
+  [[nodiscard]] const std::optional<Snoop>& snoop() noexcept { return _snoop; }
+
+  /**
    * @return True if a misalignment penalty was incurred.
    */
   [[nodiscard]] std::optional<bool> is_misalign_penalty() const noexcept { return _is_misalign_penalty; }
@@ -401,11 +513,13 @@ public:
   [[nodiscard]] std::optional<std::uint64_t> page_size() const noexcept { return _data_page_site; }
 
 private:
+  std::optional<AccessType> _access_type;
   std::optional<std::uintptr_t> _logical_memory_address;
   std::optional<std::uintptr_t> _physical_memory_address;
   std::optional<Source> _source;
   TLB _tlb;
   Latency _latency;
+  std::optional<Snoop> _snoop{ std::nullopt };
   std::optional<bool> _is_misalign_penalty{ std::nullopt };
   std::optional<std::uint8_t> _access_width{ std::nullopt };
   std::optional<std::uint64_t> _data_page_site{ std::nullopt };

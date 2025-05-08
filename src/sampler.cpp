@@ -530,16 +530,21 @@ perf::Sampler::read_sample_event(perf::SampleBuffer::Entry entry, const SampleCo
 
   if (this->_values.is_set(PERF_SAMPLE_DATA_SRC)) {
     /// Read source value from perf.
-    const auto [instruction_type, data_source, tlb, is_locked] =
+    const auto [access_type, data_source, snoop, tlb, is_locked] =
       Sampler::read_data_access_source(entry.read<std::uint64_t>());
 
     /// Set memory instruction type, if not already set.
-    if (!sample.instruction_execution().type().has_value() && instruction_type.has_value()) {
-      sample.instruction_execution().type(instruction_type.value());
+    if (!sample.instruction_execution().type().has_value() && access_type.has_value()) {
+      sample.instruction_execution().type(InstructionExecution::InstructionType::DataAccess);
     }
 
     /// Set data source.
     sample.data_access().source(data_source);
+
+    /// Set snoop.
+    if (snoop.has_value()) {
+      sample.data_access().snoop(snoop.value());
+    }
 
     /// Set TLB hit.
     if (tlb.has_value()) {
@@ -720,21 +725,23 @@ perf::Sampler::read_branch_stack(perf::SampleBuffer::Entry& entry)
   return branches;
 }
 
-std::tuple<std::optional<perf::InstructionExecution::InstructionType>,
+std::tuple<std::optional<perf::DataAccess::AccessType>,
            perf::DataAccess::Source,
+           std::optional<perf::DataAccess::Snoop>,
            std::optional<std::pair<bool, bool>>,
            std::optional<bool>>
 perf::Sampler::read_data_access_source(const std::uint64_t source)
 {
+  const auto perf_data_source = perf_mem_data_src{ source };
+
   /// Read memory instruction type.
-  const auto mem_operation = perf_mem_data_src{ source }.mem_op;
-  auto memory_instruction_type = std::optional<InstructionExecution::InstructionType>{ std::nullopt };
-  if (mem_operation & PERF_MEM_OP_LOAD) {
-    memory_instruction_type = InstructionExecution::InstructionType::MemoryLoad;
-  } else if (mem_operation & PERF_MEM_OP_STORE) {
-    memory_instruction_type = InstructionExecution::InstructionType::MemoryStore;
-  } else if (mem_operation & PERF_MEM_OP_PFETCH) {
-    memory_instruction_type = InstructionExecution::InstructionType::SoftwarePrefetch;
+  auto access_type = std::optional<DataAccess::AccessType>{ std::nullopt };
+  if (perf_data_source.mem_op & PERF_MEM_OP_LOAD) {
+    access_type = DataAccess::AccessType::Load;
+  } else if (perf_data_source.mem_op & PERF_MEM_OP_STORE) {
+    access_type = DataAccess::AccessType::Store;
+  } else if (perf_data_source.mem_op & PERF_MEM_OP_PFETCH) {
+    access_type = DataAccess::AccessType::SoftwarePrefetch;
   }
 
   /// Translate into Source object.
@@ -742,73 +749,90 @@ perf::Sampler::read_data_access_source(const std::uint64_t source)
 
   /// Cache or RAM hit.
 #ifndef PERFCPP_NO_MEM_LVLNUM /// lvl_num field is supported since Linux 6.1
-  const auto perf_lvl_num = perf_mem_data_src{ source }.mem_lvl_num;
-  data_access_source.is_l1_hit(perf_lvl_num == PERF_MEM_LVLNUM_L1);
-  data_access_source.is_l2_hit(perf_lvl_num == PERF_MEM_LVLNUM_L2);
-  data_access_source.is_l3_hit(perf_lvl_num == PERF_MEM_LVLNUM_L3);
-  data_access_source.is_l4_hit(perf_lvl_num == PERF_MEM_LVLNUM_L4);
-  data_access_source.is_memory_hit(perf_lvl_num == PERF_MEM_LVLNUM_RAM);
-  data_access_source.is_mhb_hit(perf_lvl_num == PERF_MEM_LVLNUM_LFB);
-  data_access_source.is_uncachable_memory(perf_lvl_num == PERF_MEM_LVLNUM_UNC);
+  data_access_source.is_l1_hit(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_L1);
+  data_access_source.is_l2_hit(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_L2);
+  data_access_source.is_l3_hit(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_L3);
+  data_access_source.is_l4_hit(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_L4);
+  data_access_source.is_memory_hit(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_RAM);
+  data_access_source.is_mhb_hit(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_LFB);
+  data_access_source.is_uncachable_memory(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_UNC);
 #else /// Use lvl before Linux 6.1
-  const auto perf_lvl = perf_mem_data_src{ source }.mem_lvl;
-  data_access_source.is_l1d_hit((perf_lvl & PERF_MEM_LVL_L1) && (perf_lvl & PERF_MEM_LVL_HIT));
-  data_access_source.is_l2_hit((perf_lvl & PERF_MEM_LVL_L2) && (perf_lvl & PERF_MEM_LVL_HIT));
-  data_access_source.is_l3_hit((perf_lvl & PERF_MEM_LVL_L3) && (perf_lvl & PERF_MEM_LVL_HIT));
-  data_access_source.is_memory_hit((perf_lvl & PERF_MEM_LVL_LOC_RAM) || (perf_lvl & PERF_MEM_LVL_REM_RAM1) ||
-                                   (perf_lvl & PERF_MEM_LVL_REM_RAM2));
-  data_access_source.is_mhb_hit((perf_lvl & PERF_MEM_LVL_LFB) && (perf_lvl & PERF_MEM_LVL_HIT));
-  data_access_source.is_uncachable_memory(perf_lvl & PERF_MEM_LVL_UNC);
+  data_access_source.is_l1d_hit((perf_data_source.mem_lvl & PERF_MEM_LVL_L1) &&
+                                (perf_data_source.mem_lvl & PERF_MEM_LVL_HIT));
+  data_access_source.is_l2_hit((perf_data_source.mem_lvl & PERF_MEM_LVL_L2) &&
+                               (perf_data_source.mem_lvl & PERF_MEM_LVL_HIT));
+  data_access_source.is_l3_hit((perf_data_source.mem_lvl & PERF_MEM_LVL_L3) &&
+                               (perf_data_source.mem_lvl & PERF_MEM_LVL_HIT));
+  data_access_source.is_memory_hit((perf_data_source.mem_lvl & PERF_MEM_LVL_LOC_RAM) ||
+                                   (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM1) ||
+                                   (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM2));
+  data_access_source.is_mhb_hit((perf_data_source.mem_lvl & PERF_MEM_LVL_LFB) &&
+                                (perf_data_source.mem_lvl & PERF_MEM_LVL_HIT));
+  data_access_source.is_uncachable_memory(perf_data_source.mem_lvl & PERF_MEM_LVL_UNC);
 #endif
 
   /// Remote.
 #ifndef PERFCPP_NO_MEM_REMOTE // Remote field is supported since Linux 4.14
-  const auto remote = perf_mem_data_src{ source }.mem_remote;
-  data_access_source.is_remote(remote & PERF_MEM_REMOTE_REMOTE);
-#else                         /// Use lvl before Linux 4.14
-#ifndef PERFCPP_NO_MEM_LVLNUM /// If PERFCPP_NO_MEM_LVLNUM is defined, we do not need to create another perf_lvl object.
-  const auto perf_lvl = perf_mem_data_src{ source }.mem_lvl;
-#endif
-  data_access_source.is_remote((perf_lvl & PERF_MEM_LVL_REM_RAM1) || (perf_lvl & PERF_MEM_LVL_REM_RAM2) ||
-                               (perf_lvl & PERF_MEM_LVL_REM_CCE1) || (perf_lvl & PERF_MEM_LVL_REM_CCE2));
+  data_access_source.is_remote(perf_data_source.mem_remote & PERF_MEM_REMOTE_REMOTE);
+#else /// Use lvl before Linux 4.14
+  data_access_source.is_remote(
+    (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM1) || (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM2) ||
+    (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE1) || (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE2));
 #endif
 
   /// Remote hops.
   if (data_access_source.is_remote()) {
     auto hops = std::optional<std::uint8_t>{ std::nullopt };
 #ifndef PERFCPP_NO_MEM_HOPS_0 /// Remote Hops were introduced in Linux 5.16
-    const auto perf_hops = perf_mem_data_src{ source }.mem_hops;
-    if (perf_hops == PERF_MEM_HOPS_0) {
+    if (perf_data_source.mem_hops == PERF_MEM_HOPS_0) {
       hops = 0U;
     }
 
 #ifndef PERFCPP_NO_MEM_HOPS_1_3 /// Remote Hops 1-3 were introduced in Linux 5.17
-    if (perf_hops == PERF_MEM_HOPS_1) {
+    if (perf_data_source.mem_hops == PERF_MEM_HOPS_1) {
       hops = 1U;
-    } else if (perf_hops == PERF_MEM_HOPS_2) {
+    } else if (perf_data_source.mem_hops == PERF_MEM_HOPS_2) {
       hops = 2U;
-    } else if (perf_hops == PERF_MEM_HOPS_3) {
+    } else if (perf_data_source.mem_hops == PERF_MEM_HOPS_3) {
       hops = 3U;
     }
 #else /// Use LVL_REM before 5.17
-    const auto perf_lvl = perf_mem_data_src{ source }.mem_lvl;
-    if ((perf_lvl & PERF_MEM_LVL_REM_RAM1) || (perf_lvl & PERF_MEM_LVL_REM_CCE1)) {
+    if ((perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM1) || (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE1)) {
       hops = 1U;
-    } else if ((perf_lvl & PERF_MEM_LVL_REM_RAM2) || (perf_lvl & PERF_MEM_LVL_REM_CCE2)) {
+    } else if ((perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM2) ||
+               (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE2)) {
       hops = 2U;
     }
 #endif
 #else /// Use LVL_REM before 5.16
-    const auto perf_lvl = perf_mem_data_src{ source }.mem_lvl;
-    if ((perf_lvl & PERF_MEM_LVL_REM_RAM1) || (perf_lvl & PERF_MEM_LVL_REM_CCE1)) {
+    if ((perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM1) || (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE1)) {
       hops = 1U;
-    } else if ((perf_lvl & PERF_MEM_LVL_REM_RAM2) || (perf_lvl & PERF_MEM_LVL_REM_CCE2)) {
+    } else if ((perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM2) ||
+               (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE2)) {
       hops = 2U;
     }
 #endif
 
     if (hops.has_value()) {
       data_access_source.remote_hops(hops.value());
+    }
+  }
+
+  /// Snoop.
+  auto snoop = std::optional<DataAccess::Snoop>{ std::nullopt };
+  if (perf_data_source.mem_snoop > 0 && !(perf_data_source.mem_snoop & PERF_MEM_SNOOP_NA) &&
+      !(perf_data_source.mem_snoop & PERF_MEM_SNOOP_NONE)) {
+    snoop = DataAccess::Snoop{};
+    if (perf_data_source.mem_snoop & PERF_MEM_SNOOP_HIT) {
+      snoop->is_hit(true);
+      snoop->is_hit_modified(perf_data_source.mem_snoop & PERF_MEM_SNOOP_HITM);
+    } else if (perf_data_source.mem_snoop & PERF_MEM_SNOOP_MISS) {
+      snoop->is_hit(false);
+    }
+
+    if (perf_data_source.mem_snoopx > 0) {
+      snoop->is_forward(perf_data_source.mem_snoopx & PERF_MEM_SNOOPX_PEER);
+      snoop->is_transfer_from_peer(perf_data_source.mem_snoopx & PERF_MEM_SNOOPX_PEER);
     }
   }
 
@@ -828,7 +852,7 @@ perf::Sampler::read_data_access_source(const std::uint64_t source)
     is_locked = perf_lock & PERF_MEM_LOCK_LOCKED;
   }
 
-  return std::make_tuple(memory_instruction_type, data_access_source, tlb, is_locked);
+  return std::make_tuple(access_type, data_access_source, snoop, tlb, is_locked);
 }
 
 perf::InstructionExecution::HardwareTransactionAbort
@@ -919,7 +943,7 @@ perf::Sampler::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, perf::Sa
     /// Type of the instruction (prefetch, return, or branch) and type of the branch–if it is one.
     if (!sample.instruction_execution().type().has_value()) {
       if (execution_parser.is_software_prefetch()) {
-        sample.instruction_execution().type(InstructionExecution::InstructionType::SoftwarePrefetch);
+        sample.data_access().type(DataAccess::AccessType::SoftwarePrefetch);
       } else if (execution_parser.is_return_operation()) {
         sample.instruction_execution().type(InstructionExecution::InstructionType::Return);
       } else if (execution_parser.is_branch_taken_operation() || execution_parser.is_branch_mispredicted_operation() ||

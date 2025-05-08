@@ -101,6 +101,10 @@ perf::SampleBuffer::buffer_ranges() const
 
   /// Add the mmap-ed buffer.
   if (this->_mmap_ringbuffer != nullptr) {
+    asm volatile("" ::: "memory");
+    const auto tail = this->_mmap_ringbuffer->data_tail;
+    const auto head = this->_mmap_ringbuffer->data_head;
+
     /// Read size and start position.
 #ifndef PERFCPP_NO_MMAP_DATA_SIZE /// The "data_size" attribute was added in Linux 4.1.
     const auto data_size = this->_mmap_ringbuffer->data_size;
@@ -110,13 +114,18 @@ perf::SampleBuffer::buffer_ranges() const
     const auto data_start = std::uintptr_t(this->_mmap_ringbuffer) + HardwareInfo::memory_page_size();
 
     /// Align head and tail to the data size in case one or both are wrapped.
-    const auto head_aligned = this->_mmap_ringbuffer->data_head % data_size;
-    const auto tail_aligned = this->_mmap_ringbuffer->data_tail % data_size;
+    const auto begin = head % data_size;
+    const auto end = tail % data_size;
+
+    /// If the buffer is empty, we are done.
+    if (begin == end) {
+      return iterators;
+    }
 
     /// When the tail is behind the head, we can read the samples straightforward.
-    if (tail_aligned < head_aligned) {
-      const auto start = data_start + tail_aligned;
-      const auto size = head_aligned - tail_aligned;
+    if (end < begin) {
+      const auto start = data_start + end;
+      const auto size = begin - end;
 
       iterators.emplace_back(start, start + size);
     }
@@ -125,12 +134,12 @@ perf::SampleBuffer::buffer_ranges() const
     /// from start to head.
     else {
       /// 1st: Add an iterator from tail to buffer end.
-      const auto tail_rest_size = data_size - tail_aligned;
-      const auto start_tail = data_start + tail_aligned;
+      const auto tail_rest_size = data_size - end;
+      const auto start_tail = data_start + end;
       iterators.emplace_back(start_tail, start_tail + tail_rest_size);
 
       /// 2nd: Add an iterator from data start to head.
-      iterators.emplace_back(data_start, head_aligned);
+      iterators.emplace_back(data_start, begin);
     }
   }
 
@@ -223,9 +232,11 @@ perf::SampleBuffer::copy_perf_ringbuffer_into_application_buffer()
 
   /// Read positions and size of the ringbuffer. Head and tail are offsets of data_start (allocated buffer + offset for
   /// metadata).
-  const auto data_start = std::uintptr_t(this->_mmap_ringbuffer) + HardwareInfo::memory_page_size();
-  const auto head = __atomic_load_n(&this->_mmap_ringbuffer->data_head, __ATOMIC_ACQUIRE);
+  asm volatile("" ::: "memory");
   const auto tail = this->_mmap_ringbuffer->data_tail;
+  const auto head = __atomic_load_n(&this->_mmap_ringbuffer->data_head, __ATOMIC_ACQUIRE);
+
+  const auto data_start = std::uintptr_t(this->_mmap_ringbuffer) + HardwareInfo::memory_page_size();
 #ifndef PERFCPP_NO_MMAP_DATA_SIZE /// The "data_size" attribute was added in Linux 4.1.
   const auto data_size = this->_mmap_ringbuffer->data_size;
 #else
@@ -234,11 +245,11 @@ perf::SampleBuffer::copy_perf_ringbuffer_into_application_buffer()
 
   /// Align head and tail to the data size in case one or both are wrapped. Note: Both aligned values are offsets of
   /// data_start.
-  const auto head_aligned = head % data_size;
-  const auto tail_aligned = tail % data_size;
+  const auto begin = head % data_size;
+  const auto end = tail % data_size;
 
   /// Check if there is anything to read and cancel if not.
-  if (head_aligned == tail_aligned) {
+  if (begin == end) {
     return;
   }
 
@@ -246,13 +257,13 @@ perf::SampleBuffer::copy_perf_ringbuffer_into_application_buffer()
   auto buffer = std::vector<std::byte>{};
 
   /// When the tail is behind the head, we can read straightforward.
-  if (tail_aligned < head_aligned) {
+  if (end < begin) {
     /// Allocate space for the data in the buffer.
-    const auto size = head_aligned - tail_aligned;
+    const auto size = begin - end;
     buffer.resize(size);
 
     /// Copy the data from the tail into the buffer.
-    const auto start = data_start + tail_aligned;
+    const auto start = data_start + end;
     std::memcpy(buffer.data(), reinterpret_cast<std::byte*>(start), size);
   }
 
@@ -260,16 +271,16 @@ perf::SampleBuffer::copy_perf_ringbuffer_into_application_buffer()
   /// start to head.
   else {
     /// Allocate space for the data in the buffer.
-    const auto tail_rest_size = data_size - tail_aligned;
-    const auto size = tail_rest_size + head_aligned;
+    const auto tail_rest_size = data_size - end;
+    const auto size = tail_rest_size + begin;
     buffer.resize(size);
 
     /// Copy the first part: from tail to end.
-    const auto start_tail = data_start + tail_aligned;
+    const auto start_tail = data_start + end;
     std::memcpy(buffer.data(), reinterpret_cast<std::byte*>(start_tail), tail_rest_size);
 
     /// Copy the second part: from start to head.
-    std::memcpy(buffer.data() + tail_rest_size, reinterpret_cast<std::byte*>(data_start), head_aligned);
+    std::memcpy(buffer.data() + tail_rest_size, reinterpret_cast<std::byte*>(data_start), begin);
   }
 
   // Update the data_tail to the current head, marking the data as consumed.

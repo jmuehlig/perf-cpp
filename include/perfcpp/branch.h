@@ -2,8 +2,8 @@
 
 #include "perfcpp/feature.h"
 #include <cstdint>
-#include <optional>
 #include <linux/perf_event.h>
+#include <optional>
 
 namespace perf {
 enum BranchType : std::uint64_t

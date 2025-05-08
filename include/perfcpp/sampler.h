@@ -979,13 +979,15 @@ private:
   [[nodiscard]] static std::optional<std::vector<Branch>> read_branch_stack(SampleBuffer::Entry& entry);
 
   /**
-   * Reads the data source field and translates it into an instruction type, the source, and lock information.
+   * Reads the data source field and translates it into an instruction type, the source, snoop information, tlb
+   * information, and lock information.
    *
    * @param source Data source field.
-   * @return 3-tuple (instruction type, data source, (is l1 tlb hit bit, is l2 tlb hit bit), is locked bit)
+   * @return 3-tuple (instruction type, data source, snoop, (is l1 tlb hit bit, is l2 tlb hit bit), is locked bit)
    */
-  [[nodiscard]] static std::tuple<std::optional<InstructionExecution::InstructionType>,
+  [[nodiscard]] static std::tuple<std::optional<DataAccess::AccessType>,
                                   DataAccess::Source,
+                                  std::optional<DataAccess::Snoop>,
                                   std::optional<std::pair<bool, bool>>,
                                   std::optional<bool>>
   read_data_access_source(std::uint64_t source);

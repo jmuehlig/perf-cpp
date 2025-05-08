@@ -92,13 +92,11 @@ private:
 
       /// Instruction type and latency.
       if (const auto instruction_type = sample.instruction_execution().type(); instruction_type.has_value()) {
-        const auto is_load = instruction_type.value() == InstructionExecution::InstructionType::MemoryLoad;
-        const auto is_store = instruction_type.value() == InstructionExecution::InstructionType::MemoryStore;
 
-        _count_loads += static_cast<std::uint64_t>(is_load);
-        _count_stores += static_cast<std::uint64_t>(is_store);
+        _count_loads += static_cast<std::uint64_t>(sample.data_access().is_load());
+        _count_stores += static_cast<std::uint64_t>(sample.data_access().is_store());
 
-        if (is_load) {
+        if (sample.data_access().is_load()) {
           _count_l1_hits += static_cast<std::uint64_t>(data_src.is_l1_hit());
           _count_mhb_hits += static_cast<std::uint64_t>(data_src.is_mhb_hit().value_or(false));
           _count_l2_hits += static_cast<std::uint64_t>(data_src.is_l2_hit());
@@ -116,7 +114,7 @@ private:
             _sum_load_instruction_latency +=
               sample.instruction_execution().latency().uop_tag_to_completion().value_or(0U);
           }
-        } else if (is_store) {
+        } else if (sample.data_access().is_store()) {
           if (HardwareInfo::is_intel()) {
             _sum_store_cache_latency += sample.data_access().latency().data_access().value_or(0U);
             _sum_store_instruction_latency +=

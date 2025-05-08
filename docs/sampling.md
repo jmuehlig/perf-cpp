@@ -268,21 +268,21 @@ All metadata fields are returned as `std::optional`.
 Instruction-level information is accessible via `record.instruction_execution()`.  
 All fields are returned as `std::optional`, unless otherwise noted.
 
-| Name                             | Description                                                                                                                       | How to record?                                                                                                                           | How to access?                                                  | Type                                                                  |
-|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|-----------------------------------------------------------------------|
-| **Instruction Type**             | Indicates the type of the sampled instruction (`Return`, `Branch`, `MemoryLoad`, `MemoryStore`, or `SoftwarePrefetch`).           | `sampler.values().data_src(true)` for `Memory*` types; `sampler.values().raw(true)` for others (only on [**AMD's Op PMU**](#ibs-op-pmu)) | `record.instruction_execution().type()`                         | `std::optional<perf::InstructionExecution::InstructionType>`          |
-| **Logical Instruction Pointer**  | Captures the logical address of the sampled instruction.                                                                          | `sampler.values().instruction_pointer(true)`                                                                                             | `record.instruction_execution().logical_instruction_pointer()`  | `std::optional<std::uintptr_t>`                                       |
-| **Physical Instruction Pointer** | Captures the physical address of the sampled instruction ([**AMD's Fetch PMU**](#ibs-fetch-pmu) only).                            | `sampler.values().raw(true)`                                                                                                             | `record.instruction_execution().physical_instruction_pointer()` | `std::optional<std::uintptr_t>`                                       |
-| **Is Instruction Pointer Exact** | Indicates whether the recorded instruction pointer exactly corresponds to the sampled instruction.                                | `sampler.values().instruction_pointer(true)`                                                                                             | `record.instruction_execution().is_instruction_pointer_exact()` | `bool`                                                                |
-| **Is Locked**                    | Indicates whether the sampled instruction was a locked operation.                                                                 | `sampler.values().data_src(true)`                                                                                                        | `record.instruction_execution().is_locked()`                    | `std::optional<bool>`                                                 |
-| **Branch Type**                  | Indicates the type of branch, if applicable (`Taken`, `Retired`, `Mispredicted`, `Fuse`) ([**AMD's Op PMU**](#ibs-op-pmu) only) . | `sampler.values().raw(true)`                                                                                                             | `record.instruction_execution().branch_type()`                  | `std::optional<perf::InstructionExecution::BranchType>`               |
-| **Callchain**                    | Captures the callchain of the sampled instruction.                                                                                | `sampler.values().callchain(true)` or specify a `std::uint32_t` limit for maximum depth                                                  | `record.instruction_execution().callchain()`                    | `std::optional<std::vector<std::uintptr_t>>`                          |
-| **Code Page Size**               | Indicates the page size of the instruction pointer (from Linux `5.11`).                                                           | `sampler.values().code_page_size(true)`                                                                                                  | `record.instruction_execution().page_size()`                    | `std::optional<std::uint64_t>`                                        |
-| **Latency**                      | Captures latency information of instruction execution and fetch.                                                                  | [See details below](#instruction-latency)                                                                                                | `record.instruction_execution().latency()`                      | `perf::InstructionExecution::Latency`                                 |
-| **Cache**                        | Captures cache-related information from the instruction fetch stage.                                                              | [See details below](#instruction-cache)                                                                                                  | `record.instruction_execution().cache()`                        | `std::optional<perf::InstructionExecution::Cache>`                    |
-| **TLB**                          | Captures TLB information.                                                                                                         | [See details below](#instruction-tlb)                                                                                                    | `record.instruction_execution().tlb()`                          | `std::optional<perf::InstructionExecution::TLB>`                      |
-| **Fetch**                        | Captures instruction fetch-specific information.                                                                                  | [See details below](#instruction-fetch)                                                                                                  | `record.instruction_execution().fetch()`                        | `std::optional<perf::InstructionExecution::Fetch>`                    |
-| **Hardware Transaction Abort**   | Provides information on transactional memory aborts.                                                                              | [See details below](#hardware-transaction-abort)                                                                                         | `record.instruction_execution().hardware_transaction_abort()`   | `std::optional<perf::InstructionExecution::HardwareTransactionAbort>` |
+| Name                             | Description                                                                                                                        | How to record?                                                                              | How to access?                                                  | Type                                                                  |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|-----------------------------------------------------------------|-----------------------------------------------------------------------|
+| **Instruction Type**             | The type of the sampled instruction (`Return`, `Branch`, or `DataAccess`) (the first two only on [**AMD's Op PMU**](#ibs-op-pmu)). | `sampler.values().data_src(true)` for `DataAccess`; `sampler.values().raw(true)` for others | `record.instruction_execution().type()`                         | `std::optional<perf::InstructionExecution::InstructionType>`          |
+| **Logical Instruction Pointer**  | The logical address of the sampled instruction.                                                                                    | `sampler.values().instruction_pointer(true)`                                                | `record.instruction_execution().logical_instruction_pointer()`  | `std::optional<std::uintptr_t>`                                       |
+| **Physical Instruction Pointer** | The physical address of the sampled instruction ([**AMD's Fetch PMU**](#ibs-fetch-pmu) only).                                      | `sampler.values().raw(true)`                                                                | `record.instruction_execution().physical_instruction_pointer()` | `std::optional<std::uintptr_t>`                                       |
+| **Is Instruction Pointer Exact** | Indicates that the recorded instruction pointer exactly corresponds to the sampled instruction.                                    | `sampler.values().instruction_pointer(true)`                                                | `record.instruction_execution().is_instruction_pointer_exact()` | `bool`                                                                |
+| **Is Locked**                    | Indicates that the sampled instruction was a locked operation.                                                                     | `sampler.values().data_src(true)`                                                           | `record.instruction_execution().is_locked()`                    | `std::optional<bool>`                                                 |
+| **Branch Type**                  | The type of branch, if applicable (`Taken`, `Retired`, `Mispredicted`, `Fuse`) ([**AMD's Op PMU**](#ibs-op-pmu) only) .            | `sampler.values().raw(true)`                                                                | `record.instruction_execution().branch_type()`                  | `std::optional<perf::InstructionExecution::BranchType>`               |
+| **Callchain**                    | The callchain of the sampled instruction.                                                                                          | `sampler.values().callchain(true)` or a `std::uint32_t` for maximum depth                   | `record.instruction_execution().callchain()`                    | `std::optional<std::vector<std::uintptr_t>>`                          |
+| **Code Page Size**               | Indicates the page size of the instruction pointer (from Linux `5.11`).                                                            | `sampler.values().code_page_size(true)`                                                     | `record.instruction_execution().page_size()`                    | `std::optional<std::uint64_t>`                                        |
+| **Latency**                      | Captures latency information of instruction execution and fetch.                                                                   | [See details below](#instruction-latency)                                                   | `record.instruction_execution().latency()`                      | `perf::InstructionExecution::Latency`                                 |
+| **Cache**                        | Captures cache-related information from the instruction fetch stage.                                                               | [See details below](#instruction-cache)                                                     | `record.instruction_execution().cache()`                        | `std::optional<perf::InstructionExecution::Cache>`                    |
+| **TLB**                          | Captures TLB information.                                                                                                          | [See details below](#instruction-tlb)                                                       | `record.instruction_execution().tlb()`                          | `std::optional<perf::InstructionExecution::TLB>`                      |
+| **Fetch**                        | Captures instruction fetch-specific information.                                                                                   | [See details below](#instruction-fetch)                                                     | `record.instruction_execution().fetch()`                        | `std::optional<perf::InstructionExecution::Fetch>`                    |
+| **Hardware Transaction Abort**   | Provides information on transactional memory aborts.                                                                               | [See details below](#hardware-transaction-abort)                                            | `record.instruction_execution().hardware_transaction_abort()`   | `std::optional<perf::InstructionExecution::HardwareTransactionAbort>` |
 
 **Example:** [`examples/instruction_pointer_sampling.cpp`](../examples/instruction_pointer_sampling.cpp)
 
@@ -303,64 +303,68 @@ Provides cache-related information about instruction fetches.
 This is available only on [**AMD's Fetch PMU**](#ibs-fetch-pmu).  
 Note that `record.instruction_execution().cache()` returns an `std::optional`.
 
-| Name              | Description                                                              | How to record?               | How to access?                                               | Type   |
-|-------------------|--------------------------------------------------------------------------|------------------------------|--------------------------------------------------------------|--------|
-| **L1 Cache Miss** | Indicates whether the instruction fetch missed the L1 instruction cache. | `sampler.values().raw(true)` | `record.instruction_execution().cache()->is_l1_cache_miss()` | `bool` |
-| **L2 Cache Miss** | Indicates whether the instruction fetch missed the L2 cache.             | `sampler.values().raw(true)` | `record.instruction_execution().cache()->is_l2_cache_miss()` | `bool` |
-| **L3 Cache Miss** | Indicates whether the instruction fetch missed the L3 cache.             | `sampler.values().raw(true)` | `record.instruction_execution().cache()->is_l3_cache_miss()` | `bool` |
+| Name              | Description                                                           | How to record?               | How to access?                                               | Type   |
+|-------------------|-----------------------------------------------------------------------|------------------------------|--------------------------------------------------------------|--------|
+| **L1 Cache Miss** | Indicates that the instruction fetch missed the L1 instruction cache. | `sampler.values().raw(true)` | `record.instruction_execution().cache()->is_l1_cache_miss()` | `bool` |
+| **L2 Cache Miss** | Indicates that the instruction fetch missed the L2 cache.             | `sampler.values().raw(true)` | `record.instruction_execution().cache()->is_l2_cache_miss()` | `bool` |
+| **L3 Cache Miss** | Indicates that the instruction fetch missed the L3 cache.             | `sampler.values().raw(true)` | `record.instruction_execution().cache()->is_l3_cache_miss()` | `bool` |
 
 #### Instruction TLB
 Provides TLB information related to instruction fetch.  
 This is available only on [**AMD's Fetch PMU**](#ibs-fetch-pmu).  
 Note that `record.instruction_execution().tlb()` returns an `std::optional`.
 
-| Name              | Description                                                                   | How to record?               | How to access?                                         | Type            |
-|-------------------|-------------------------------------------------------------------------------|------------------------------|--------------------------------------------------------|-----------------|
-| **L1 Cache Miss** | Indicates whether the instruction fetch missed the L1 instruction TLB (iTLB). | `sampler.values().raw(true)` | `record.instruction_execution().tlb()->is_l1_miss()`   | `bool`          |
-| **L2 Cache Miss** | Indicates whether the instruction fetch missed the second-level TLB (STLB).   | `sampler.values().raw(true)` | `record.instruction_execution().tlb()->is_l2_miss()`   | `bool`          |
-| **L1 Page Size**  | Indicates the page size used in the L1 instruction TLB.                       | `sampler.values().raw(true)` | `record.instruction_execution().tlb()->l1_page_size()` | `std::uint64_t` |
+| Name              | Description                                                                | How to record?               | How to access?                                         | Type            |
+|-------------------|----------------------------------------------------------------------------|------------------------------|--------------------------------------------------------|-----------------|
+| **L1 Cache Miss** | Indicates that the instruction fetch missed the L1 instruction TLB (iTLB). | `sampler.values().raw(true)` | `record.instruction_execution().tlb()->is_l1_miss()`   | `bool`          |
+| **L2 Cache Miss** | Indicates that the instruction fetch missed the second-level TLB (STLB).   | `sampler.values().raw(true)` | `record.instruction_execution().tlb()->is_l2_miss()`   | `bool`          |
+| **L1 Page Size**  | The page size used in the L1 instruction TLB.                              | `sampler.values().raw(true)` | `record.instruction_execution().tlb()->l1_page_size()` | `std::uint64_t` |
 
 #### Instruction Fetch
 Provides details about instruction fetch behavior during micro-op execution.  
 This is available only on [**AMD's Fetch PMU**](#ibs-fetch-pmu).  
 Note that `record.instruction_execution().fetch()` returns an `std::optional`.
 
-| Name                  | Description                                                   | How to record?               | How to access?                                          | Type   |
-|-----------------------|---------------------------------------------------------------|------------------------------|---------------------------------------------------------|--------|
-| **Is Fetch Complete** | Indicates whether the instruction fetch process completed.    | `sampler.values().raw(true)` | `record.instruction_execution().fetch()->is_complete()` | `bool` |
-| **Is Fetch Valid**    | Indicates whether the instruction fetch is considered valid.  | `sampler.values().raw(true)` | `record.instruction_execution().fetch()->is_valid()`    | `bool` |
+| Name                  | Description                                                 | How to record?               | How to access?                                          | Type   |
+|-----------------------|-------------------------------------------------------------|------------------------------|---------------------------------------------------------|--------|
+| **Is Fetch Complete** | Indicates that the instruction fetch process completed.     | `sampler.values().raw(true)` | `record.instruction_execution().fetch()->is_complete()` | `bool` |
+| **Is Fetch Valid**    | Indicates that the instruction fetch is considered valid.   | `sampler.values().raw(true)` | `record.instruction_execution().fetch()->is_valid()`    | `bool` |
 
 #### Hardware Transaction Abort
 Provides information about hardware transactional memory aborts.  
 This is available only on **Intel**.  
 Note that `record.instruction_execution().hardware_transaction_abort()` returns an `std::optional`.
 
-| Name                                  | Description                                                                 | How to record?                                      | How to access?                                                                                     | Type            |
-|---------------------------------------|-----------------------------------------------------------------------------|-----------------------------------------------------|----------------------------------------------------------------------------------------------------|-----------------|
-| **Is Elision Transaction**            | Indicates whether the abort originated from an elision-type transaction.    | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_elision_transaction()`            | `bool`          |
-| **Is Generic Transaction**            | Indicates whether the abort originated from a generic hardware transaction. | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_generic_transaction()`            | `bool`          |
-| **Is Synchronous Transaction**        | Indicates whether the abort occurred due to a synchronous condition.        | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_synchronous_abort()`              | `bool`          |
-| **Is Retryable**                      | Indicates whether the transaction can be retried after the abort.           | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_retryable()`                      | `bool`          |
-| **Is Due to Memory Conflict**         | Indicates whether the abort was caused by a memory conflict.                | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_due_to_memory_conflict()`         | `bool`          |
-| **Is Due to Write Capacity Conflict** | Indicates whether the abort was caused by a write capacity conflict.        | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_due_to_write_capacity_conflict()` | `bool`          |
-| **Is Due to Read Capacity Conflict**  | Indicates whether the abort was caused by a read capacity conflict.         | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_due_to_read_capacity_conflict()`  | `bool`          |
-| **User Specified Code**               | User-specified code associated with the abort, if provided.                 | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->user_specified_code()`               | `std::uint32_t` |
+| Name                                  | Description                                                               | How to record?                                      | How to access?                                                                                     | Type            |
+|---------------------------------------|---------------------------------------------------------------------------|-----------------------------------------------------|----------------------------------------------------------------------------------------------------|-----------------|
+| **Is Elision Transaction**            | Indicates that the abort originated from an elision-type transaction.     | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_elision_transaction()`            | `bool`          |
+| **Is Generic Transaction**            | Indicates that the abort originated from a generic hardware transaction.  | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_generic_transaction()`            | `bool`          |
+| **Is Synchronous Transaction**        | Indicates that the abort occurred due to a synchronous condition.         | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_synchronous_abort()`              | `bool`          |
+| **Is Retryable**                      | Indicates that the transaction can be retried after the abort.            | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_retryable()`                      | `bool`          |
+| **Is Due to Memory Conflict**         | Indicates that the abort was caused by a memory conflict.                 | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_due_to_memory_conflict()`         | `bool`          |
+| **Is Due to Write Capacity Conflict** | Indicates that the abort was caused by a write capacity conflict.         | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_due_to_write_capacity_conflict()` | `bool`          |
+| **Is Due to Read Capacity Conflict**  | Indicates that the abort was caused by a read capacity conflict.          | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->is_due_to_read_capacity_conflict()`  | `bool`          |
+| **User Specified Code**               | User-specified code associated with the abort, if provided.               | `sampler.values().hardware_transaction_abort(true)` | `record.instruction_execution().hardware_transaction_abort()->user_specified_code()`               | `std::uint32_t` |
 
 ### Data Access
 Provides information about memory, cache, and TLB behavior during data access.  
 All fields can be accessed via `record.data_access()`.  
 Note that most fields are returned as `std::optional`.
 
-| Name                        | Description                                                                                          | How to record?                                   | How to access?                                   | Type                                      |
-|-----------------------------|------------------------------------------------------------------------------------------------------|--------------------------------------------------|--------------------------------------------------|-------------------------------------------|
-| **Logical Memory Address**  | The logical address of the accessed memory.                                                          | `sampler.values().logical_memory_address(true)`  | `record.data_access().logical_memory_address()`  | `std::optional<std::uintptr_t>`           |
-| **Physical Memory Address** | The physical address of the accessed memory (from Linux `4.13`).                                     | `sampler.values().physical_memory_address(true)` | `record.data_access().physical_memory_address()` | `std::optional<std::uintptr_t>`           |
-| **Source**                  | Provides information about the memory or cache source of the access.                                 | [See details below](#data-source)                | `record.data_access().source()`                  | `std::optional<perf::DataAccess::Source>` |
-| **Latency**                 | Provides latency details for the data access.                                                        | [See details below](#data-latency)               | `record.data_access().latency()`                 | `perf::DataAccess::Latency`               |
-| **TLB**                     | Provides TLB-related information for the access.                                                     | [See details below](#data-tlb)                   | `record.data_access().tlb()`                     | `perf::DataAccess::TLB`                   |
-| **Is Misalign Penalty**     | Indicates whether the access incurred a misalignment penalty ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().raw(true)`                     | `record.data_access().is_misaligned_penalty()`   | `std::optional<bool>`                     |
-| **Access Width**            | The size (in bytes) of the accessed data ([**AMD's Op PMU**](#ibs-op-pmu) only).                     | `sampler.values().raw(true)`                     | `record.data_access().access_width()`            | `std::optional<std::uint8_t>`             |
-| **Data Page Size**          | The page size of the instruction pointer (from Linux `5.11`).                                        | `sampler.values().data_page_size(true)`          | `record.data_access().page_size()`               | `std::optional<std::uint64_t>`            |
+| Name                        | Description                                                                                       | How to record?                                   | How to access?                                   | Type                                      |
+|-----------------------------|---------------------------------------------------------------------------------------------------|--------------------------------------------------|--------------------------------------------------|-------------------------------------------|
+| **Is load**                 | Indicates that the access was a load operation.                                                   | `sampler.values().data_src(true)`                | `record.data_access().is_load()`                 | `bool`                                    |
+| **Is Store**                | Indicates that the access was a store operation.                                                  | `sampler.values().data_src(true)`                | `record.data_access().is_store()`                | `bool`                                    |
+| **Is Software Prefetch**    | Indicates that the access was a software prefetch ([**AMD's Op PMU**](#ibs-op-pmu) only).         | `sampler.values().raw(true)`                     | `record.data_access().is_software_prefetch()`    | `bool`                                    |
+| **Logical Memory Address**  | The logical address of the accessed memory.                                                       | `sampler.values().logical_memory_address(true)`  | `record.data_access().logical_memory_address()`  | `std::optional<std::uintptr_t>`           |
+| **Physical Memory Address** | The physical address of the accessed memory (from Linux `4.13`).                                  | `sampler.values().physical_memory_address(true)` | `record.data_access().physical_memory_address()` | `std::optional<std::uintptr_t>`           |
+| **Source**                  | Provides information about the memory or cache source of the access.                              | [See details below](#data-source)                | `record.data_access().source()`                  | `std::optional<perf::DataAccess::Source>` |
+| **Latency**                 | Provides latency details for the data access.                                                     | [See details below](#data-latency)               | `record.data_access().latency()`                 | `perf::DataAccess::Latency`               |
+| **TLB**                     | Provides TLB-related information for the access.                                                  | [See details below](#data-tlb)                   | `record.data_access().tlb()`                     | `perf::DataAccess::TLB`                   |
+| **Snoop**                   | Provides Snoop-related information for the access.                                                | [See details below](#data-snoop)                 | `record.data_access().snoop()`                   | `std::optional<perf::DataAccess::Snoop>`  |
+| **Is Misalign Penalty**     | Indicates that the access incurred a misalignment penalty ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().raw(true)`                     | `record.data_access().is_misaligned_penalty()`   | `std::optional<bool>`                     |
+| **Access Width**            | The size (in bytes) of the accessed data ([**AMD's Op PMU**](#ibs-op-pmu) only).                  | `sampler.values().raw(true)`                     | `record.data_access().access_width()`            | `std::optional<std::uint8_t>`             |
+| **Data Page Size**          | The page size of the instruction pointer (from Linux `5.11`).                                     | `sampler.values().data_page_size(true)`          | `record.data_access().page_size()`               | `std::optional<std::uint64_t>`            |
 
 **Example:** [`examples/address_sampling.cpp`](../examples/address_sampling.cpp)
 
@@ -371,29 +375,29 @@ Note that `record.data_access().source()` returns an `std::optional`.
 
 | Name                              | Description                                                                                             | How to record?                       | How to access?                                                 | Type                          |
 |-----------------------------------|---------------------------------------------------------------------------------------------------------|--------------------------------------|----------------------------------------------------------------|-------------------------------|
-| **Is L1 Hit**                     | Indicates whether the access hit the L1 data cache (L1d).                                               | `sampler.values().data_access(true)` | `record.data_access().source()->is_l1_hit()`                   | `bool`                        |
-| **Is MHB Hit**                    | Indicates whether the access hit the LFB (Intel) or MAB (AMD).                                          | `sampler.values().data_access(true)` | `record.data_access().source()->is_mhb_hit()`                  | `std::optional<bool>`         |
+| **Is L1 Hit**                     | Indicates that the access hit the L1 data cache (L1d).                                                  | `sampler.values().data_access(true)` | `record.data_access().source()->is_l1_hit()`                   | `bool`                        |
+| **Is MHB Hit**                    | Indicates that the access hit the LFB (Intel) or MAB (AMD).                                             | `sampler.values().data_access(true)` | `record.data_access().source()->is_mhb_hit()`                  | `std::optional<bool>`         |
 | **Number of Allocated MHB Slots** | The number of MAB (AMD) slots allocated at the time of sampling ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().raw(true)`         | `record.data_access().source()->num_mhb_slots_allocated()`     | `std::optional<std::uint8_t>` |
-| **Is L2 Hit**                     | Indicates whether the access hit the L2 cache.                                                          | `sampler.values().data_access(true)` | `record.data_access().source()->is_l2_hit()`                   | `bool`                        |
-| **Is L3 Hit**                     | Indicates whether the access hit the L3 cache.                                                          | `sampler.values().data_access(true)` | `record.data_access().source()->is_l3_hit()`                   | `bool`                        |
-| **Is Memory Hit**                 | Indicates whether the access missed all caches and was served from memory.                              | `sampler.values().data_access(true)` | `record.data_access().source()->is_memory_hit()`               | `bool`                        |
-| **Is Remote**                     | Indicates whether the access was served by a remote core or node (cache or memory).                     | `sampler.values().data_access(true)` | `record.data_access().source()->is_remote()`                   | `bool`                        |
-| **Is Same Node Remote Core**      | Indicates whether the access was served by another core on the same node.                               | `sampler.values().data_access(true)` | `record.data_access().source()->is_same_node_remote_core()`    | `std::optional<bool>`         |
-| **Is Same Socket Remote Node**    | Indicates whether the access was served by another node on the same socket.                             | `sampler.values().data_access(true)` | `record.data_access().source()->is_same_socket_remote_node()`  | `std::optional<bool>`         |
-| **Is Same Board Remote Socket**   | Indicates whether the access was served by another socket on the same board.                            | `sampler.values().data_access(true)` | `record.data_access().source()->is_same_board_remote_socket()` | `std::optional<bool>`         |
-| **Is Remote Board**               | Indicates whether the access was served by another board.                                               | `sampler.values().data_access(true)` | `record.data_access().source()->is_remote_board()`             | `std::optional<bool>`         |
-| **Is Uncachable Memory**          | Indicates whether the access targeted uncachable memory.                                                | `sampler.values().data_access(true)` | `record.data_access().source()->is_uncachable_memory()`        | `std::optional<bool>`         |
-| **Is Write Combine Memory**       | Indicates whether the access targeted write-combine memory.                                             | `sampler.values().data_access(true)` | `record.data_access().source()->is_write_combine()`            | `std::optional<bool>`         |
+| **Is L2 Hit**                     | Indicates that the access hit the L2 cache.                                                             | `sampler.values().data_access(true)` | `record.data_access().source()->is_l2_hit()`                   | `bool`                        |
+| **Is L3 Hit**                     | Indicates that the access hit the L3 cache.                                                             | `sampler.values().data_access(true)` | `record.data_access().source()->is_l3_hit()`                   | `bool`                        |
+| **Is Memory Hit**                 | Indicates that the access missed all caches and was served from memory.                                 | `sampler.values().data_access(true)` | `record.data_access().source()->is_memory_hit()`               | `bool`                        |
+| **Is Remote**                     | Indicates that the access was served by a remote core or node (cache or memory).                        | `sampler.values().data_access(true)` | `record.data_access().source()->is_remote()`                   | `bool`                        |
+| **Is Same Node Remote Core**      | Indicates that the access was served by another core on the same node.                                  | `sampler.values().data_access(true)` | `record.data_access().source()->is_same_node_remote_core()`    | `std::optional<bool>`         |
+| **Is Same Socket Remote Node**    | Indicates that the access was served by another node on the same socket.                                | `sampler.values().data_access(true)` | `record.data_access().source()->is_same_socket_remote_node()`  | `std::optional<bool>`         |
+| **Is Same Board Remote Socket**   | Indicates that the access was served by another socket on the same board.                               | `sampler.values().data_access(true)` | `record.data_access().source()->is_same_board_remote_socket()` | `std::optional<bool>`         |
+| **Is Remote Board**               | Indicates that the access was served by another board.                                                  | `sampler.values().data_access(true)` | `record.data_access().source()->is_remote_board()`             | `std::optional<bool>`         |
+| **Is Uncachable Memory**          | Indicates that the access targeted uncachable memory.                                                   | `sampler.values().data_access(true)` | `record.data_access().source()->is_uncachable_memory()`        | `std::optional<bool>`         |
+| **Is Write Combine Memory**       | Indicates that the access targeted write-combine memory.                                                | `sampler.values().data_access(true)` | `record.data_access().source()->is_write_combine()`            | `std::optional<bool>`         |
 
 #### Data Latency
 Provides latency measurements associated with data access operations.  
 All fields are returned as `std::optional`.
 
-| Name            | Description                                                                                                       | How to record?                   | How to access?                                 | Type                           |
-|-----------------|-------------------------------------------------------------------------------------------------------------------|----------------------------------|------------------------------------------------|--------------------------------|
-| **Data Access** | Indicates the latency (in cycles) for completing the data access (**Intel** only).                                | `sampler.values().latency(true)` | `record.data_access().latency().data_access()` | `std::optional<std::uint32_t>` |
-| **Cache Miss**  | Indicates the latency (in cycles) caused by an L1d cache miss ([**AMD's Op PMU**](#ibs-op-pmu) only).             | `sampler.values().latency(true)` | `record.data_access().latency().cache_miss()`  | `std::optional<std::uint32_t>` |
-| **dTLB Refill** | Indicates the latency (in cycles) for refilling the data TLB after a miss ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().raw(true)`     | `record.data_access().latency().dtlb_refill()` | `std::optional<std::uint32_t>` |
+| Name            | Description                                                                                             | How to record?                   | How to access?                                 | Type                           |
+|-----------------|---------------------------------------------------------------------------------------------------------|----------------------------------|------------------------------------------------|--------------------------------|
+| **Data Access** | The latency (in cycles) for completing the data access (**Intel** only).                                | `sampler.values().latency(true)` | `record.data_access().latency().data_access()` | `std::optional<std::uint32_t>` |
+| **Cache Miss**  | The latency (in cycles) caused by an L1d cache miss ([**AMD's Op PMU**](#ibs-op-pmu) only).             | `sampler.values().latency(true)` | `record.data_access().latency().cache_miss()`  | `std::optional<std::uint32_t>` |
+| **dTLB Refill** | The latency (in cycles) for refilling the data TLB after a miss ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().raw(true)`     | `record.data_access().latency().dtlb_refill()` | `std::optional<std::uint32_t>` |
 
 #### Data TLB
 Provides information about dTLB and STLB access behavior.  
@@ -401,14 +405,25 @@ All fields are returned as `std::optional`.
 
 | Name             | Description                                                                                           | How to record?                       | How to access?                              | Type                           |
 |------------------|-------------------------------------------------------------------------------------------------------|--------------------------------------|---------------------------------------------|--------------------------------|
-| **Is L1 Hit**    | Indicates whether the data access hit the L1 data TLB (dTLB).                                         | `sampler.values().data_source(true)` | `record.data_access().tlb().is_l1_hit()`    | `std::optional<bool>`          |
-| **Is L2 Hit**    | Indicates whether the data access hit the second-level TLB (STLB).                                    | `sampler.values().data_source(true)` | `record.data_access().tlb().is_l2_hit()`    | `std::optional<bool>`          |
+| **Is L1 Hit**    | Indicates that the data access hit the L1 data TLB (dTLB).                                            | `sampler.values().data_source(true)` | `record.data_access().tlb().is_l1_hit()`    | `std::optional<bool>`          |
+| **Is L2 Hit**    | Indicates that the data access hit the second-level TLB (STLB).                                       | `sampler.values().data_source(true)` | `record.data_access().tlb().is_l2_hit()`    | `std::optional<bool>`          |
 | **L1 Page Size** | The page size of the translation associated with the dTLB hit ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().raw(true)`         | `record.data_access().tlb().l1_page_size()` | `std::optional<std::uint64_t>` |
 | **L2 Page Size** | The page size of the translation associated with the STLB hit ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().raw(true)`         | `record.data_access().tlb().l2_page_size()` | `std::optional<std::uint64_t>` |
 
 > [!NOTE]  
 > **Intel** systems do not distinguish between L1 and L2 TLB hits.  
 > If a TLB hit occurs, both `is_l1_hit()` and `is_l2_hit()` will return `true`.
+
+#### Data Snoop
+Provides information about snooping access behavior.  
+All fields are returned as `std::optional`.
+
+| Name                      | Description                                                                 | How to record?                       | How to access?                                          | Type                  |
+|---------------------------|-----------------------------------------------------------------------------|--------------------------------------|---------------------------------------------------------|-----------------------|
+| **Is Hit**                | Indicates that the data access is a snoop hit (`true`) or a miss (`false`). | `sampler.values().data_source(true)` | `record.data_access().snoop()->is_hit()`                | `std::optional<bool>` |
+| **Is Hit Modified**       | `True` if the hit cache line is dirty.                                      | `sampler.values().data_source(true)` | `record.data_access().snoop()->is_hit_modified()`       | `std::optional<bool>` |
+| **Is Forward**            | Indicates that the cache line is forwarded.                                 | `sampler.values().data_source(true)` | `record.data_access().snoop()->is_fardwarded()`         | `std::optional<bool>` |
+| **Is Transfer from Peer** | Indicates that the cache line is transferred from another node.             | `sampler.values().data_source(true)` | `record.data_access().snoop()->is_transfer_from_peer()` | `std::optional<bool>` |
 
 ### Counter Values
 Records hardware performance event values (e.g., `cycles`, `L1-dcache-loads`, etc.) and derived metrics at the time each sample is taken.  
@@ -449,15 +464,15 @@ You can configure which types of branches to record. The following types are sup
 #### Branch
 Each entry in the branch stack contains the following information:
 
-| Name                         | Description                                                          | How to access?                                            | Type                           |
-|------------------------------|----------------------------------------------------------------------|-----------------------------------------------------------|--------------------------------|
-| **Instruction Pointer From** | The instruction pointer where the branch originated.                 | `record.branch_stack()->at(i).instruction_pointer_from()` | `std::uintptr_t`               |
-| **Instruction Pointer To**   | The instruction pointer where the branch target landed.              | `record.branch_stack()->at(i).instruction_pointer_to()`   | `std::uintptr_t`               |
-| **Is Mispredicted**          | Indicates whether the branch was mispredicted.                       | `record.branch_stack()->at(i).is_mispredicted()`          | `bool`                         |
-| **Is Predicted**             | Indicates whether the branch was predicted correctly.                | `record.branch_stack()->at(i).is_predicted()`             | `bool`                         |
-| **Is In Transaction**        | Indicates whether the branch occurred during a hardware transaction. | `record.branch_stack()->at(i).is_in_transaction()`        | `bool`                         |
-| **Is Transaction Abort**     | Indicates whether the branch aborted a hardware transaction.         | `record.branch_stack()->at(i).is_transaction_abort()`     | `bool`                         |
-| **Cycles**                   | The number of cycles for the branch (if supported).                  | `record.branch_stack()->at(i).cycles()`                   | `std::optional<std::uint64_t>` |
+| Name                         | Description                                                       | How to access?                                            | Type                           |
+|------------------------------|-------------------------------------------------------------------|-----------------------------------------------------------|--------------------------------|
+| **Instruction Pointer From** | The instruction pointer where the branch originated.              | `record.branch_stack()->at(i).instruction_pointer_from()` | `std::uintptr_t`               |
+| **Instruction Pointer To**   | The instruction pointer where the branch target landed.           | `record.branch_stack()->at(i).instruction_pointer_to()`   | `std::uintptr_t`               |
+| **Is Mispredicted**          | Indicates that the branch was mispredicted.                       | `record.branch_stack()->at(i).is_mispredicted()`          | `bool`                         |
+| **Is Predicted**             | Indicates that the branch was predicted correctly.                | `record.branch_stack()->at(i).is_predicted()`             | `bool`                         |
+| **Is In Transaction**        | Indicates that the branch occurred during a hardware transaction. | `record.branch_stack()->at(i).is_in_transaction()`        | `bool`                         |
+| **Is Transaction Abort**     | Indicates that the branch aborted a hardware transaction.         | `record.branch_stack()->at(i).is_transaction_abort()`     | `bool`                         |
+| **Cycles**                   | The number of cycles for the branch (if supported).               | `record.branch_stack()->at(i).cycles()`                   | `std::optional<std::uint64_t>` |
 
 **Example:** [`examples/branch_sampling.cpp`](../examples/branch_sampling.cpp)
 
@@ -474,10 +489,10 @@ Captures register values at the time of sampling, based on the system's ABI.
 Both user-space and kernel-space registers can be recorded.  
 Note that `record.user_registers()` and `record.kernel_registers()` return an `std::optional`.
 
-| Name                 | Description                                                             | How to record?                                                                                                          | How to access?                        | Type                   |
-|----------------------|-------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|---------------------------------------|------------------------|
-| **User Registers**   | Records user-level register values at the time the sample was taken.    | `sampler.values().user_registers({perf::Registers::x86::AX, perf::Registers::x86::R10})` (example registers shown)      | [See details below](#register-values) | `perf::RegisterValues` |
-| **Kernel Registers** | Records kernel-level register values at the time the sample was taken.  | `sampler.values().kernel_registers({perf::Registers::x86::AX, perf::Registers::x86::R10})` (example registers shown)    | [See details below](#register-values) | `perf::RegisterValues` |
+| Name                 | Description                                                    | How to record?                                                                                                          | How to access?                        | Type                   |
+|----------------------|----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|---------------------------------------|------------------------|
+| **User Registers**   | User-level register values at the time the sample was taken.   | `sampler.values().user_registers({perf::Registers::x86::AX, perf::Registers::x86::R10})` (example registers shown)      | [See details below](#register-values) | `perf::RegisterValues` |
+| **Kernel Registers** | Kernel-level register values at the time the sample was taken. | `sampler.values().kernel_registers({perf::Registers::x86::AX, perf::Registers::x86::R10})` (example registers shown)    | [See details below](#register-values) | `perf::RegisterValues` |
 
 #### Register Values
 Register values (user or kernel) can be accessed via `record.user_registers()` or `record.kernel_registers()`.  
@@ -495,9 +510,9 @@ Captures the raw data output from the underlying Performance Monitoring Unit.
 This can be used to manually parse additional information not exposed through the standard *perf-cpp* interface.  
 For example, *perf-cpp* uses raw data to expose [AMD IBS](#amd-instruction-based-sampling) records that are otherwise inaccessible via the [*perf_event_open*](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) system call.
 
-| Name         | Description                                           | How to record?               | How to access? | Type                                    |
-|--------------|-------------------------------------------------------|------------------------------|----------------|-----------------------------------------|
-| **Raw Data** | Records the raw PMU output for manual inspection.     | `sampler.values().raw(true)` | `record.raw()` | `std::optional<std::vector<std::byte>>` |
+| Name         | Description                               | How to record?               | How to access? | Type                                    |
+|--------------|-------------------------------------------|------------------------------|----------------|-----------------------------------------|
+| **Raw Data** | The raw PMU output for manual inspection. | `sampler.values().raw(true)` | `record.raw()` | `std::optional<std::vector<std::byte>>` |
 
 ### Context Switches
 Captures context switch events, including switch-in, switch-out, and preemption information.  
@@ -506,9 +521,9 @@ Note that `record.context_switch()` returns an `std::optional`.
 
 | Name              | Description                                                         | How to record?                          | How to access?                          | Type                           |
 |-------------------|---------------------------------------------------------------------|-----------------------------------------|-----------------------------------------|--------------------------------|
-| **Is Switch In**  | Indicates whether the process was switched in.                      | `sampler.values().context_switch(true)` | `record.context_switch()->is_in()`      | `bool`                         |
-| **Is Switch Out** | Indicates whether the process was switched out.                     | `sampler.values().context_switch(true)` | `record.context_switch()->is_out()`     | `bool`                         |
-| **Is Preempt**    | Indicates whether the process was preempted.                        | `sampler.values().context_switch(true)` | `record.context_switch()->is_preempt()` | `bool`                         |
+| **Is Switch In**  | Indicates that the process was switched in.                         | `sampler.values().context_switch(true)` | `record.context_switch()->is_in()`      | `bool`                         |
+| **Is Switch Out** | Indicates that the process was switched out.                        | `sampler.values().context_switch(true)` | `record.context_switch()->is_out()`     | `bool`                         |
+| **Is Preempt**    | Indicates that the process was preempted.                           | `sampler.values().context_switch(true)` | `record.context_switch()->is_preempt()` | `bool`                         |
 | **Thread ID**     | The thread ID involved in the switch (available in CPU-wide mode).  | `sampler.values().context_switch(true)` | `record.context_switch()->thread_id()`  | `std::optional<std::uint32_t>` |
 | **Process ID**    | The process ID involved in the switch (available in CPU-wide mode). | `sampler.values().context_switch(true)` | `record.context_switch()->process_id()` | `std::optional<std::uint32_t>` |
 
@@ -543,10 +558,10 @@ If recorded, the following [metadata fields](#metadata) will also be included:
 Captures events where sampling was throttled or unthrottled by the kernel.  
 Note that `record.throttle()` returns an `std::optional`.
 
-| Name              | Description                                                      | How to record?                    | How to access?                       | Type   |
-|-------------------|------------------------------------------------------------------|-----------------------------------|--------------------------------------|--------|
-| **Is Throttle**   | Indicates whether the sample corresponds to a throttle event.    | `sampler.values().throttle(true)` | `record.throttle()->is_throttle()`   | `bool` |
-| **Is Unthrottle** | Indicates whether the sample corresponds to an unthrottle event. | `sampler.values().throttle(true)` | `record.throttle()->is_unthrottle()` | `bool` |
+| Name              | Description                                                   | How to record?                    | How to access?                       | Type   |
+|-------------------|---------------------------------------------------------------|-----------------------------------|--------------------------------------|--------|
+| **Is Throttle**   | Indicates that the sample corresponds to a throttle event.    | `sampler.values().throttle(true)` | `record.throttle()->is_throttle()`   | `bool` |
+| **Is Unthrottle** | Indicates that the sample corresponds to an unthrottle event. | `sampler.values().throttle(true)` | `record.throttle()->is_unthrottle()` | `bool` |
 
 If recorded, the following [metadata fields](#metadata) will also be included:
 - Timestamp
