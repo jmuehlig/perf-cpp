@@ -1,41 +1,16 @@
 # perf-cpp: Effortless Hardware Performance Monitoring for C++ Applications
 ***perf-cpp*** enables access to **Performance Monitoring Units** and **Performance Counters** directly from C++ applications. 
-Built around Linux's powerful [*perf subsystem*](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), *perf-cpp* provides a developer-friendly, uniform interface that streamlines counting and sampling hardware events––without the complexity of low-level APIs.
+Built around Linux's powerful [*perf subsystem*](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), *perf-cpp* provides a developer-friendly, uniform interface that streamlines counting and sampling hardware events–without the complexity of low-level APIs.
 
 ## Why use perf-cpp?
-Integrate accurate performance metrics into specific parts of the application, excluding irrelevant code paths like benchmark-setup. 
-*perf-cpp* extends the standard perf subsystem's capabilities, such as leveraging AMD IBS and Intel PEBS features to expose rich, CPU-specific data unavailable through the standard `perf_event_open` interface.
+Integrate accurate performance measurements, e.g., *hardware counter statistics* and *sampling*, into the applications–measuring only desired execution and excluding irrelevant code paths like, for example, benchmark-setup. 
+*perf-cpp* extends the standard [*perf subsystem*'s](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) capabilities, such as leveraging AMD IBS and Intel PEBS features to expose rich, CPU-specific data unavailable through the standard `perf_event_open` interface.
 
 ### Key Features
 * **[Count Hardware Events using Performance Counters](docs/recording.md)**: Record performance statistics (comparable to `perf stat`) directly in your application and control *what* and *when*. Additionally, **[measure metrics](docs/metrics.md)** like *cycles per instruction* and **[access events in realtime](docs/recording-live-events.md)**.
 * **[Record Samples using a Uniform Interface](docs/sampling.md)**: Utilize a straightforward sampling mechanism across various PMUs, capturing critical profiling data such as *instruction pointers* and *memory addresses* (similar to `perf [mem] record`).
 * **[Customizable Event Configuration](docs/counters.md)**: Mix built-in events (e.g., *cycles*, *instructions*, *cache-misses*, ...) with CPU-specific ones.
 * **[Practical Examples](examples/README.md) and [Documentation](docs/README.md)**: Quickly get started with ready-to-use examples demonstrating diverse, real-world applications.
-
-## Building
-*perf-cpp* is designed as a library that can be linked to your application.
-
-```bash
-# Clone the repository
-git clone https://github.com/jmuehlig/perf-cpp.git
-
-# Switch to the repository folder
-cd perf-cpp
-
-# Optional: Switch to the latest stable version
-git checkout v0.10.0
-
-# Build the library (in build/)
-# Note: -DBUILD_EXAMPLES=1 is optional and only needed if you want to build the examples
-cmake . -B build -DBUILD_EXAMPLES=1
-cmake --build build
-
-# Optional: Build examples (in build/examples/bin)
-cmake --build build --target examples
-```
-
-> [!NOTE]
-> Further information and detailed building instructions (e.g., how to integrate into *CMake* projects) are available in the **[Building Guide](docs/build.md)**.
 
 ## Usage Examples
 ### Record Hardware Event Statistics
@@ -53,7 +28,7 @@ event_counter.add({"seconds", "instructions", "cycles", "cache-misses"});
 
 /// Run the workload
 event_counter.start();
-code_to_profile(); /// <-- Code that will be profiled
+code_to_profile(); /// <-- Records statistics for this function
 event_counter.stop();
 
 /// Print the result to the console
@@ -97,7 +72,7 @@ sampler.values()
 
 /// Run the workload
 sampler.start();
-code_to_profile(); /// <-- Code that will be profiled
+code_to_profile(); /// <-- Records samples for this function
 sampler.stop();
 
 /// Print the samples to the console
@@ -133,6 +108,30 @@ We include a comprehensive collection of examples demonstrating the advanced cap
 > [!TIP]
 > All code examples are available in the [examples/](examples) folder.
 
+## Building
+*perf-cpp* is designed as a library that can be linked to your application.
+
+```bash
+# Clone the repository
+git clone https://github.com/jmuehlig/perf-cpp.git
+
+# Switch to the repository folder
+cd perf-cpp
+
+# Optional: Switch to the latest stable version
+git checkout v0.10.0
+
+# Build the library (in build/)
+# Note: -DBUILD_EXAMPLES=1 is optional and only needed if you want to build the examples
+cmake . -B build -DBUILD_EXAMPLES=1
+cmake --build build
+
+# Optional: Build examples (in build/examples/bin)
+cmake --build build --target examples
+```
+
+> [!NOTE]
+> Further information and detailed building instructions (e.g., how to integrate into *CMake* projects) are available in the **[Building Guide](docs/build.md)**.
 
 ## Further Reading
 * **[Full Documentation](docs/README.md)**: Explore detailed guides on every feature of *perf-cpp*.
