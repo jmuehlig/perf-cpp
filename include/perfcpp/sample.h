@@ -5,6 +5,7 @@
 #include "context_switch.h"
 #include "counter_result.h"
 #include "data_access.h"
+#include "data_source.h"
 #include "instruction_execution.h"
 #include "latency.h"
 #include "metadata.h"
@@ -344,21 +345,21 @@ public:
                "instead.")]] [[nodiscard]] std::optional<Latency>
   latency() const noexcept
   {
-    auto instruction_retirement_latency = _instruction_execution.latency().instruction_retirement();
-    if (!instruction_retirement_latency.has_value()) {
-      instruction_retirement_latency = _instruction_execution.latency().uop_tag_to_retirement();
-    }
-
     auto cache_latency = _data_access.latency().data_access();
     if (!cache_latency.has_value()) {
       cache_latency = _data_access.latency().cache_miss();
+    }
+
+    auto instruction_retirement_latency = _instruction_execution.latency().instruction_retirement();
+    if (!instruction_retirement_latency.has_value()) {
+      instruction_retirement_latency = _instruction_execution.latency().uop_tag_to_retirement();
     }
 
     if (!instruction_retirement_latency.has_value() && !cache_latency.has_value()) {
       return std::nullopt;
     }
 
-    return Latency{ instruction_retirement_latency.value_or(0U), cache_latency.value_or(0U) };
+    return Latency{ cache_latency.value_or(0U), instruction_retirement_latency.value_or(0U) };
   }
 
   /*
@@ -440,6 +441,17 @@ public:
     return _instruction_execution.is_instruction_pointer_exact();
   }
 
+  /*
+   * @return True if the instruction pointer is exact; otherwise, false.
+   */
+  [[deprecated("Will be removed in v0.12. Use data_access() instead.")]] [[nodiscard]] std::optional<DataSource>
+  data_src() const noexcept
+  {
+    return _data_source;
+  }
+
+  void data_src(const DataSource data_source) noexcept { _data_source = data_source; }
+
 private:
   Metadata _metadata;
   InstructionExecution _instruction_execution;
@@ -455,5 +467,6 @@ private:
   std::optional<Throttle> _throttle{ std::nullopt };
   std::optional<std::vector<std::byte>> _raw{ std::nullopt };
   std::optional<std::uint64_t> _count_loss{ std::nullopt };
+  std::optional<DataSource> _data_source{ std::nullopt };
 };
 }

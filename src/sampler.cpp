@@ -529,13 +529,16 @@ perf::Sampler::read_sample_event(perf::SampleBuffer::Entry entry, const SampleCo
 #endif
 
   if (this->_values.is_set(PERF_SAMPLE_DATA_SRC)) {
+    const auto perf_data_source = entry.read<std::uint64_t>();
     /// Read source value from perf.
-    const auto [access_type, data_source, snoop, tlb, is_locked] =
-      Sampler::read_data_access_source(entry.read<std::uint64_t>());
+    const auto [access_type, data_source, snoop, tlb, is_locked] = Sampler::read_data_access_source(perf_data_source);
 
-    /// Set memory instruction type, if not already set.
-    if (!sample.instruction_execution().type().has_value() && access_type.has_value()) {
-      sample.instruction_execution().type(InstructionExecution::InstructionType::DataAccess);
+    /// Set access type and memory instruction type, if not already set.
+    if (access_type.has_value()) {
+      if (!sample.instruction_execution().type().has_value()) {
+        sample.instruction_execution().type(InstructionExecution::InstructionType::DataAccess);
+      }
+      sample.data_access().type(access_type.value());
     }
 
     /// Set data source.
@@ -556,6 +559,9 @@ perf::Sampler::read_sample_event(perf::SampleBuffer::Entry entry, const SampleCo
     if (is_locked.has_value()) {
       sample.instruction_execution().is_locked(is_locked.value());
     }
+
+    /// Set the data src for compatibility.
+    sample.data_src(DataSource{ perf_data_source });
   }
 
   if (this->_values.is_set(PERF_SAMPLE_TRANSACTION)) {
