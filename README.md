@@ -1,13 +1,16 @@
-# perf-cpp: Access Performance Counters from C++ Applications
-*perf-cpp* provides **direct access to hardware performance counters** from your C++ application.
-The library allows for precise event-counting and sampling of specific code segments and to link sampled data (e.g., memory addresses) with application-specific details (e.g., class instances).
+# perf-cpp: Effortless Hardware Performance Monitoring for C++ Applications
+***perf-cpp*** enables access to **Performance Monitoring Units** and **Performance Counters** directly from C++ applications. 
+Built around Linux's powerful [*perf subsystem*](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), *perf-cpp* provides a developer-friendly, uniform interface that streamlines counting and sampling hardware events––without the complexity of low-level APIs.
 
-## Key Features
-* **[Count Hardware Events](docs/recording.md)**: Seamlessly embed performance statistics (similar to `perf stat`) into your app and profile specific code segments instead of the entire application. *perf-cpp* also supports **[Metrics](docs/metrics.md)** (e.g., *cycles per instruction*) and accessing **[Statistics in Realtime](docs/recording-live-events.md)**.
-* **[Record Samples](docs/sampling.md)**: Periodically capture profiling data–such as instruction pointers and memory accesses–directly from your application (similar to `perf [mem] record`).
-* **[Customizable Event Configuration](docs/counters.md)**: Mix built-in events (e.g., *cycles*, *instructions*, *cache-misses*) with CPU-specific ones.
-* **[Practical Examples](examples/README.md)**: Jumpstart your implementation with the diverse collection of examples that demonstrate practical applications of the library.
+## Why use perf-cpp?
+Integrate accurate performance metrics into specific parts of the application, excluding irrelevant code paths like benchmark-setup. 
+*perf-cpp* extends the standard perf subsystem's capabilities, such as leveraging AMD IBS and Intel PEBS features to expose rich, CPU-specific data unavailable through the standard `perf_event_open` interface.
 
+### Key Features
+* **[Count Hardware Events using Performance Counters](docs/recording.md)**: Record performance statistics (comparable to `perf stat`) directly in your application and control *what* and *when*. Additionally, **[measure metrics](docs/metrics.md)** like *cycles per instruction* and **[access events in realtime](docs/recording-live-events.md)**.
+* **[Record Samples using a Uniform Interface](docs/sampling.md)**: Utilize a straightforward sampling mechanism across various PMUs, capturing critical profiling data such as *instruction pointers* and *memory addresses* (similar to `perf [mem] record`).
+* **[Customizable Event Configuration](docs/counters.md)**: Mix built-in events (e.g., *cycles*, *instructions*, *cache-misses*, ...) with CPU-specific ones.
+* **[Practical Examples](examples/README.md) and [Documentation](docs/README.md)**: Quickly get started with ready-to-use examples demonstrating diverse, real-world applications.
 
 ## Building
 *perf-cpp* is designed as a library that can be linked to your application.
@@ -50,7 +53,7 @@ event_counter.add({"seconds", "instructions", "cycles", "cache-misses"});
 
 /// Run the workload
 event_counter.start();
-your_workload(); /// <-- Your code to profile
+code_to_profile(); /// <-- Code that will be profiled
 event_counter.stop();
 
 /// Print the result to the console
@@ -86,15 +89,15 @@ auto sampler = perf::Sampler{ counters };
 /// Specify when a sample is recorded: every 4000th cycle
 sampler.trigger("cycles", perf::Period{4000U});
 
-/// Specify what metadata is included into a sample: time, CPU ID, instruction
+/// Specify what data is included into a sample: time, CPU ID, instruction
 sampler.values()
-    .time(true)
+    .timestamp(true)
     .cpu_id(true)
     .instruction_pointer(true);
 
 /// Run the workload
 sampler.start();
-your_workload(); /// <-- Your code to profile
+code_to_profile(); /// <-- Code that will be profiled
 sampler.stop();
 
 /// Print the samples to the console

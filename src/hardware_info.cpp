@@ -74,7 +74,7 @@ perf::HardwareInfo::is_amd_ibs_supported() noexcept
     if (is_amd()) {
       std::uint32_t eax, ebx, ecx, edx;
 
-      if (__get_cpuid_count(0x80000001, 0, &eax, &ebx, &ecx, &edx)) {
+      if (__get_cpuid_count(0x80000001, 0, &eax, &ebx, &ecx, &edx) > 0) {
         perf::HardwareInfo::_is_amd_ibs_supported_cache = static_cast<bool>(ecx & (std::uint32_t(1U) << 10));
       } else {
         perf::HardwareInfo::_is_amd_ibs_supported_cache = false;
@@ -98,7 +98,7 @@ perf::HardwareInfo::is_ibs_l3_filter_supported() noexcept
     if (is_amd_ibs_supported()) {
       std::uint32_t eax, ebx, ecx, edx;
 
-      if (__get_cpuid_count(0x8000001b, 0, &eax, &ebx, &ecx, &edx)) {
+      if (__get_cpuid_count(0x8000001b, 0, &eax, &ebx, &ecx, &edx) > 0) {
         perf::HardwareInfo::_is_ibs_l3_filter_supported_cache = static_cast<bool>(eax & (std::uint32_t(1U) << 11));
       } else {
         perf::HardwareInfo::_is_ibs_l3_filter_supported_cache = false;
