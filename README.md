@@ -6,7 +6,7 @@ Built around Linux's powerful [*perf subsystem*](https://man7.org/linux/man-page
 It can be integrated into the application to measure only desired execution paths and exclude parts of the application irrelevant to profiling.
 The key features include:
 
-* **[Count Hardware Events](docs/recording.md)**: Record performance statistics (comparable to `perf stat`) directly in your application and control *what* and *when*. Additionally, [measure metrics](docs/metrics.md)like *cycles per instruction* and [read event counters in realtime](docs/recording-live-events.md).
+* **[Count Hardware Events](docs/recording.md)**: Record performance statistics (comparable to `perf stat`) directly in your application and control *what* and *when*. Additionally, [measure metrics](docs/metrics.md) like *cycles per instruction* and [read event counters in realtime](docs/recording-live-events.md).
 * **[Record Samples](docs/sampling.md)**: Leverage sampling the mechanism across to capture critical profiling data such as *instruction pointers* and *memory addresses* (similar to `perf [mem] record`).
 * **[Specify Hardware Events](docs/counters.md)**: Mix built-in events (e.g., *cycles*, *instructions*, *cache-misses*, ...) with events specific to the underlying hardware.
 * **[Practical Examples](examples/README.md)** and **[Detailed Documentation](#explore-the-documentation)**: Quickly get started with ready-to-use examples demonstrating diverse, real-world applications.
