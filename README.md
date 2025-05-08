@@ -1,18 +1,19 @@
 # perf-cpp: Effortless Hardware Performance Monitoring for C++ Applications
-***perf-cpp*** enables access to **Performance Monitoring Units** and **Performance Counters** directly from C++ applications. 
-Built around Linux's powerful [*perf subsystem*](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), *perf-cpp* provides a developer-friendly, uniform interface that streamlines counting and sampling hardware events–without the complexity of low-level APIs.
+**perf-cpp** enables access to *Performance Monitoring Units* and *Performance Counters* directly from C++ applications. 
 
-## Why use perf-cpp?
-Integrate accurate performance measurements, e.g., *hardware counter statistics* and *sampling*, into the applications–measuring only desired execution and excluding irrelevant code paths like, for example, benchmark-setup. 
+## About
+Built around Linux's powerful [*perf subsystem*](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), **perf-cpp** provides a uniform interface that streamlines *counting* and *sampling* hardware events–without the complexity of low-level APIs.
+It can be integrated into the application to measure only desired execution paths and exclude parts of the application irrelevant to profiling.
+The key features include:
+
+* **[Count Hardware Events](docs/recording.md)**: Record performance statistics (comparable to `perf stat`) directly in your application and control *what* and *when*. Additionally, [measure metrics](docs/metrics.md)like *cycles per instruction* and [read event counters in realtime](docs/recording-live-events.md).
+* **[Record Samples](docs/sampling.md)**: Leverage sampling the mechanism across to capture critical profiling data such as *instruction pointers* and *memory addresses* (similar to `perf [mem] record`).
+* **[Specify Hardware Events](docs/counters.md)**: Mix built-in events (e.g., *cycles*, *instructions*, *cache-misses*, ...) with events specific to the underlying hardware.
+* **[Practical Examples](examples/README.md)** and **[Detailed Documentation](#explore-the-documentation)**: Quickly get started with ready-to-use examples demonstrating diverse, real-world applications.
+
 *perf-cpp* extends the standard [*perf subsystem*'s](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) capabilities, such as leveraging AMD IBS and Intel PEBS features to expose rich, CPU-specific data unavailable through the standard `perf_event_open` interface.
 
-### Key Features
-* **[Count Hardware Events using Performance Counters](docs/recording.md)**: Record performance statistics (comparable to `perf stat`) directly in your application and control *what* and *when*. Additionally, **[measure metrics](docs/metrics.md)** like *cycles per instruction* and **[access events in realtime](docs/recording-live-events.md)**.
-* **[Record Samples using a Uniform Interface](docs/sampling.md)**: Utilize a straightforward sampling mechanism across various PMUs, capturing critical profiling data such as *instruction pointers* and *memory addresses* (similar to `perf [mem] record`).
-* **[Customizable Event Configuration](docs/counters.md)**: Mix built-in events (e.g., *cycles*, *instructions*, *cache-misses*, ...) with CPU-specific ones.
-* **[Practical Examples](examples/README.md) and [Documentation](docs/README.md)**: Quickly get started with ready-to-use examples demonstrating diverse, real-world applications.
-
-## Usage Examples
+## Examples
 ### Record Hardware Event Statistics
 Recording hardware event statistics operates much like `perf stat`: it quantifies critical events—such as executed *instructions*, CPU *cycles*, and *cache misses*–throughout a code segment's execution.
 
@@ -133,8 +134,21 @@ cmake --build build --target examples
 > [!NOTE]
 > Further information and detailed building instructions (e.g., how to integrate into *CMake* projects) are available in the **[Building Guide](docs/build.md)**.
 
+## Explore the Documentation
+* [**Building**](docs/build.md): Integrate *perf-cpp* seamlessly into your C++ projects.
+* **Counting Performance Events**
+    * [**Basics**](docs/recording.md): Master recording hardware event statistics directly within your application.
+    * [**Parallel and Multithreaded**](docs/recording-parallel.md): Learn how to monitor events across threads and CPU cores.
+    * [**Metrics**](docs/metrics.md):  Learn how to combine hardware events into meaningful metrics for clearer performance insights.
+    * [**Live Access**](docs/recording-live-events.md): See how events can be accessed without stopping the recording, ideal for profiling tight loops and small functions.
+* **Recording Samples**
+    * [**Basics**](docs/sampling.md): Understand sampling mechanisms, which data to record, and how to access the results.
+    * [**Parallel and Multithreaded**](docs/sampling-parallel.md): Learn how to record samples in multithreaded workloads.
+    * [**Analyzing Memory Access Patterns**](docs/analyzing-memory-access-patterns.md): See how to link memory sampling data to specific data objects to profile detailed memory access characteristics.
+* [**Built-in and Hardware-specific Events**](docs/counters.md): Discover built-in events and learn how to define new ones tailored to your hardware.
+* [**Perf Paranoid**](docs/perf-paranoid.md): Learn how to configure perf permissions.
+
 ## Further Reading
-* **[Full Documentation](docs/README.md)**: Explore detailed guides on every feature of *perf-cpp*.
 * **[Examples](examples/README.md)**: Learn how to set up different features from code-examples.
 * **[Changelog](CHANGELOG.md)**: Stay updated with the latest changes and improvements.
 
