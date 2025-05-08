@@ -22,35 +22,30 @@ class Sample
 public:
   /**
    * Set the list of events and values for the sample.
-   *
    * @param counter_result Counter values.
    */
   void counter(CounterResult&& counter_result) noexcept { _counter_result.emplace(std::move(counter_result)); }
 
   /**
    * Set the branch stack.
-   *
    * @param branch_stack Branch stack to set.
    */
   void branch_stack(std::vector<Branch>&& branch_stack) noexcept { _branch_stack.emplace(std::move(branch_stack)); }
 
   /**
    * Set the user stack.
-   *
    * @param user_stack User stack to set.
    */
   void user_stack(std::vector<std::byte>&& user_stack) noexcept { _user_stack.emplace(std::move(user_stack)); }
 
   /**
    * Set the user registers.
-   *
    * @param user_registers User registers to set.
    */
   void user_registers(RegisterValues&& user_registers) noexcept { _user_registers.emplace(std::move(user_registers)); }
 
   /**
    * Set the kernel registers.
-   *
    * @param kernel_registers User registers to set.
    */
   void kernel_registers(RegisterValues&& kernel_registers) noexcept
@@ -60,42 +55,36 @@ public:
 
   /**
    * Set the cgroup ID.
-   *
    * @param cgroup_id CGroup ID to set.
    */
   void cgroup_id(const std::uint64_t cgroup_id) noexcept { _cgroup_id.emplace(cgroup_id); }
 
   /**
    * Set the cgroup details.
-   *
    * @param cgroup CGroup details to set.
    */
   void cgroup(CGroup&& cgroup) noexcept { _cgroup.emplace(std::move(cgroup)); }
 
   /**
    * Set the context switch details.
-   *
    * @param context_switch Context switch details to set.
    */
   void context_switch(ContextSwitch&& context_switch) noexcept { _context_switch.emplace(context_switch); }
 
   /**
    * Set the throttle details.
-   *
    * @param throttle Throttle details to set.
    */
   void throttle(Throttle&& throttle) noexcept { _throttle.emplace(throttle); }
 
   /**
    * Set the raw data.
-   *
    * @param raw Raw data to set.
    */
   void raw(std::vector<std::byte>&& raw) noexcept { _raw.emplace(std::move(raw)); }
 
   /**
    * Set the count loss.
-   *
    * @param count_loss Count loss to set.
    */
   void count_loss(const std::uint64_t count_loss) noexcept { _count_loss.emplace(count_loss); }
@@ -186,8 +175,6 @@ public:
   [[nodiscard]] std::optional<std::uint64_t> count_loss() const noexcept { return _count_loss; }
 
   /*
-   * Returns the mode in which the sample was taken (e.g., Kernel, User, Hypervisor).
-   *
    * @return The sample mode.
    */
   [[deprecated("Will be removed in v0.12. Use metadata().mode() instead.")]] [[nodiscard]] Metadata::Mode mode()
@@ -197,8 +184,6 @@ public:
   }
 
   /*
-   * Retrieves the unique identifier for the sample.
-   *
    * @return An optional containing the sample ID if available.
    */
   [[deprecated(
@@ -209,8 +194,6 @@ public:
   }
 
   /*
-   * Retrieves the instruction pointer at the time the sample was recorded.
-   *
    * @return An optional containing the instruction pointer address if available.
    */
   [[deprecated("Will be removed in v0.12. Use instruction_execution().logical_instruction_pointer() "
@@ -221,8 +204,6 @@ public:
   }
 
   /*
-   * Retrieves the process ID associated with the sample.
-   *
    * @return An optional containing the process ID if available.
    */
   [[deprecated(
@@ -233,8 +214,6 @@ public:
   }
 
   /*
-   * Retrieves the thread ID associated with the sample.
-   *
    * @return An optional containing the thread ID if available.
    */
   [[deprecated(
@@ -245,8 +224,6 @@ public:
   }
 
   /*
-   * Retrieves the timestamp when the sample was taken.
-   *
    * @return An optional containing the timestamp if available.
    */
   [[deprecated(
@@ -257,8 +234,6 @@ public:
   }
 
   /*
-   * Retrieves the stream id.
-   *
    * @return An optional containing the stream id if available.
    */
   [[deprecated(
@@ -269,8 +244,6 @@ public:
   }
 
   /*
-   * Retrieves the logical (virtual) memory address relevant to the sample.
-   *
    * @return An optional containing the logical memory address if available.
    */
   [[deprecated("Will be removed in v0.12. Use data_access().logical_memory_address() instead.")]] [[nodiscard]] std::
@@ -281,8 +254,6 @@ public:
   }
 
   /*
-   * Retrieves the physical memory address relevant to the sample.
-   *
    * @return An optional containing the physical memory address if available.
    */
   [[deprecated("Will be removed in v0.12. Use data_access().physical_memory_address() instead.")]] [[nodiscard]] std::
@@ -293,8 +264,6 @@ public:
   }
 
   /*
-   * Retrieves the unique ID of the perf_event that generated the sample.
-   *
    * @return An optional containing the perf_event ID if available.
    */
   [[deprecated(
@@ -305,8 +274,6 @@ public:
   }
 
   /*
-   * Retrieves the CPU ID where the sample was collected.
-   *
    * @return An optional containing the CPU ID if available.
    */
   [[deprecated(
@@ -317,8 +284,6 @@ public:
   }
 
   /*
-   * Retrieves the period value indicating the number of events that have occurred.
-   *
    * @return An optional containing the period value if available.
    */
   [[deprecated(
@@ -338,8 +303,6 @@ public:
   //[[nodiscard]] std::optional<DataSource> data_src() const noexcept { return _data_src; }
 
   /*
-   * Retrieves the transaction abort of the sample.
-   *
    * @return An optional containing the transaction abort if available.
    */
   [[deprecated(
@@ -351,8 +314,6 @@ public:
   }
 
   /*
-   * Retrieves the original weight value representing the cost or impact of the sample.
-   *
    * @return An optional containing the weight if available.
    */
   [[deprecated("Will be removed in v0.12. Use instruction_execution().latency() and data_access().latency() "
@@ -377,8 +338,6 @@ public:
   }
 
   /*
-   * Retrieves the latency information, derived from the weight provided by the perf subsystem.
-   *
    * @return An optional containing the latency if available.
    */
   [[deprecated("Will be removed in v0.12. Use instruction_execution().latency() and data_access().latency() "
@@ -403,8 +362,6 @@ public:
   }
 
   /*
-   * Retrieves the branches recorded in the sample.
-   *
    * @return An optional vector of branches if available.
    */
   [[deprecated(
@@ -415,8 +372,6 @@ public:
   }
 
   /*
-   * Retrieves the branches recorded in the sample (modifiable).
-   *
    * @return An optional vector of branches if available.
    */
   [[deprecated(
@@ -427,8 +382,6 @@ public:
   }
 
   /*
-   * Retrieves the ABI of the user-space registers.
-   *
    * @return An optional containing the user registers ABI if available.
    */
   [[deprecated("Will be removed in v0.12. Use user_registers().abi() instead.")]] [[nodiscard]] std::optional<ABI>
@@ -438,8 +391,6 @@ public:
   }
 
   /*
-   * Retrieves the ABI of the kernel-space registers.
-   *
    * @return An optional containing the kernel registers ABI if available.
    */
   [[deprecated("Will be removed in v0.12. Use kernel_registers().abi() instead.")]] [[nodiscard]] std::optional<ABI>
@@ -450,8 +401,6 @@ public:
   }
 
   /*
-   * Retrieves the call chain (stack backtrace) captured in the sample (modifiable).
-   *
    * @return An optional vector of instruction pointers if available.
    */
   [[deprecated("Will be removed in v0.12. Use instruction_execution().callchain() instead.")]] [[nodiscard]] const std::
@@ -462,8 +411,6 @@ public:
   }
 
   /*
-   * Retrieves the data page size at the time of the sample.
-   *
    * @return An optional containing the data page size if available.
    */
   [[deprecated(
@@ -474,8 +421,6 @@ public:
   }
 
   /*
-   * Retrieves the code page size at the time of the sample.
-   *
    * @return An optional containing the code page size if available.
    */
   [[deprecated("Will be removed in v0.12. Use instruction_execution().page_size() instead.")]] [[nodiscard]] std::
@@ -486,8 +431,6 @@ public:
   }
 
   /*
-   * Indicates whether the instruction pointer in the sample is exact.
-   *
    * @return True if the instruction pointer is exact; otherwise, false.
    */
   [[deprecated("Will be removed in v0.12. Use instruction_execution().is_instruction_pointer_exact() "

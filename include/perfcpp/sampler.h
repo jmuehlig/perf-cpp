@@ -607,17 +607,16 @@ public:
     void set(const std::uint64_t perf_field, const bool is_enabled) noexcept
     {
       if (is_enabled) {
-        enable(perf_field);
+        _mask |= perf_field;
       } else {
-        disable(perf_field);
+        _mask &= ~perf_field;
       }
     }
-
-    void enable(const std::uint64_t perf_field) noexcept { _mask |= perf_field; }
-
-    void disable(const std::uint64_t perf_field) noexcept { _mask &= ~perf_field; }
   };
 
+  /**
+   * Represents a trigger condition for initiating a sampling event.
+   */
   class Trigger
   {
   public:
@@ -625,26 +624,41 @@ public:
       : _name(std::move(name))
     {
     }
+
     Trigger(std::string&& name, const Precision precision) noexcept
       : _name(std::move(name))
       , _precision(precision)
     {
     }
+
     Trigger(std::string&& name, const PeriodOrFrequency period_or_frequency) noexcept
       : _name(std::move(name))
       , _period_or_frequency(period_or_frequency)
     {
     }
+
     Trigger(std::string&& name, const Precision precision, const PeriodOrFrequency period_or_frequency) noexcept
       : _name(std::move(name))
       , _precision(precision)
       , _period_or_frequency(period_or_frequency)
     {
     }
+
     ~Trigger() = default;
 
+    /**
+     * @return The name that identifies the trigger event.
+     */
     [[nodiscard]] const std::string& name() const noexcept { return _name; }
+
+    /**
+     * @return The precision level associated with the sampling trigger, if set.
+     */
     [[nodiscard]] std::optional<Precision> precision() const noexcept { return _precision; }
+
+    /**
+     * @return The configured period or frequency for sampling, if set.
+     */
     [[nodiscard]] std::optional<PeriodOrFrequency> period_or_frequency() const noexcept { return _period_or_frequency; }
 
   private:

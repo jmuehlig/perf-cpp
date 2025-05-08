@@ -708,7 +708,13 @@ perf::Sampler::read_branch_stack(perf::SampleBuffer::Entry& entry)
 #else
     const auto cycles = 0ULL;
 #endif
-    branches.emplace_back(branch.from, branch.to, branch.mispred, branch.predicted, branch.in_tx, branch.abort, cycles > 0ULL ? std::make_optional(cycles) : std::nullopt);
+    branches.emplace_back(branch.from,
+                          branch.to,
+                          branch.mispred,
+                          branch.predicted,
+                          branch.in_tx,
+                          branch.abort,
+                          cycles > 0ULL ? std::make_optional(cycles) : std::nullopt);
   }
 
   return branches;
@@ -834,9 +840,9 @@ perf::Sampler::read_hardware_transaction_abort(const std::uint64_t abort)
   hardware_transaction_abort.is_generic_transaction(abort & PERF_TXN_TRANSACTION);
   hardware_transaction_abort.is_synchronous_abort(abort & PERF_TXN_SYNC);
   hardware_transaction_abort.is_retryable(abort & PERF_TXN_RETRY);
-  hardware_transaction_abort.is_abort_due_to_memory_conflict(abort & PERF_TXN_CONFLICT);
-  hardware_transaction_abort.is_abort_due_to_write_capacity_conflict(abort & PERF_TXN_CAPACITY_WRITE);
-  hardware_transaction_abort.is_abort_due_to_read_capacity_conflict(abort & PERF_TXN_CAPACITY_READ);
+  hardware_transaction_abort.is_due_to_memory_conflict(abort & PERF_TXN_CONFLICT);
+  hardware_transaction_abort.is_due_to_write_capacity_conflict(abort & PERF_TXN_CAPACITY_WRITE);
+  hardware_transaction_abort.is_due_to_read_capacity_conflict(abort & PERF_TXN_CAPACITY_READ);
   hardware_transaction_abort.user_specified_code((abort >> PERF_TXN_ABORT_SHIFT) & PERF_TXN_ABORT_MASK);
 
   return hardware_transaction_abort;

@@ -4,27 +4,35 @@
 #include <optional>
 
 namespace perf {
+
+/**
+ * Captures sampled characteristics of a data memory access.
+ */
 class DataAccess
 {
 public:
+  /**
+   * Encodes where in the memory/cache hierarchy a data access was resolved.
+   * This includes hits at various cache levels, memory, and properties of remote accesses.
+   */
   class Source
   {
   public:
     /**
-     * Set whether L1 data cache is hit.
-     * @param is_l1_hit L1 data cache hit indicator.
+     * Set whether the access hit in L1 cache.
+     * @param is_l1_hit True if access hit in L1 cache.
      */
     void is_l1_hit(const bool is_l1_hit) noexcept { _is_l1_hit = is_l1_hit; }
 
     /**
-     * Set whether MHB is hit.
-     * @param is_mhb_hit MHB hit indicator.
+     * Set whether the access hit in the Memory Hierarchy Buffer (MHB).
+     * @param is_mhb_hit True if MHB was hit.
      */
     void is_mhb_hit(const bool is_mhb_hit) noexcept { _is_mhb_hit = is_mhb_hit; }
 
     /**
      * Set the number of MHB slots allocated.
-     * @param num_mhb_slots_allocated Number of MHB slots allocated.
+     * @param num_mhb_slots_allocated Number of slots used by MHB.
      */
     void num_mhb_slots_allocated(const std::uint8_t num_mhb_slots_allocated) noexcept
     {
@@ -32,44 +40,44 @@ public:
     }
 
     /**
-     * Set whether L2 cache is hit.
-     * @param is_l2_hit L2 cache hit indicator.
+     * Set whether the access hit in L2 cache.
+     * @param is_l2_hit True if access hit in L2 cache.
      */
     void is_l2_hit(const bool is_l2_hit) noexcept { _is_l2_hit = is_l2_hit; }
 
     /**
-     * Set whether L3 cache is hit.
-     * @param is_l3_hit L3 cache hit indicator.
+     * Set whether the access hit in L3 cache.
+     * @param is_l3_hit True if access hit in L3 cache.
      */
     void is_l3_hit(const bool is_l3_hit) noexcept { _is_l3_hit = is_l3_hit; }
 
     /**
-     * Set whether L4 cache is hit.
-     * @param is_l4_hit L4 cache hit indicator.
+     * Set whether the access hit in L4 cache.
+     * @param is_l4_hit True if access hit in L4 cache.
      */
     void is_l4_hit(const bool is_l4_hit) noexcept { _is_l4_hit = is_l4_hit; }
 
     /**
-     * Set whether memory is hit.
-     * @param is_memory_hit Memory hit indicator.
+     * Set whether the access hit in main memory.
+     * @param is_memory_hit True if access hit DRAM.
      */
     void is_memory_hit(const bool is_memory_hit) noexcept { _is_memory_hit = is_memory_hit; }
 
     /**
-     * Set whether the source is remote.
-     * @param is_remote Remote source indicator.
+     * Set whether the accessed memory is located remotely.
+     * @param is_remote True if remote node was accessed.
      */
     void is_remote(const bool is_remote) noexcept { _is_remote = is_remote; }
 
     /**
-     * Set the number of remote hops.
-     * @param remote_hops Number of remote hops.
+     * Set the number of hops required to reach remote memory.
+     * @param remote_hops Number of interconnect hops to memory.
      */
     void remote_hops(const std::uint8_t remote_hops) noexcept { _remote_hops = remote_hops; }
 
     /**
-     * Set whether the memory is uncachable.
-     * @param is_uncachable_memory Uncachable memory indicator.
+     * Set whether the accessed memory is marked as uncachable.
+     * @param is_uncachable_memory True if memory is uncachable.
      */
     void is_uncachable_memory(const bool is_uncachable_memory) noexcept
     {
@@ -77,8 +85,8 @@ public:
     }
 
     /**
-     * Set whether the memory is write-combine.
-     * @param is_write_combine_memory Write-combine memory indicator.
+     * Set whether the accessed memory is write-combine.
+     * @param is_write_combine_memory True if memory uses write-combine policy.
      */
     void is_write_combine_memory(const bool is_write_combine_memory) noexcept
     {
@@ -86,17 +94,17 @@ public:
     }
 
     /**
-     * @return L1 data cache hit indicator.
+     * @return True if access hit L1 cache.
      */
     [[nodiscard]] bool is_l1_hit() const noexcept { return _is_l1_hit; }
 
     /**
-     * @return MHB hit indicator, if available. std::nullopt otherwise.
+     * @return True if access hit the MHB (if available).
      */
     [[nodiscard]] std::optional<bool> is_mhb_hit() const noexcept { return _is_mhb_hit; }
 
     /**
-     * @return Number of MHB slots allocated, if available. std::nullopt otherwise.
+     * @return Number of MHB slots used, if applicable.
      */
     [[nodiscard]] std::optional<std::uint8_t> num_mhb_slots_allocated() const noexcept
     {
@@ -104,83 +112,69 @@ public:
     }
 
     /**
-     * @return L2 cache hit indicator.
+     * @return True if access hit L2 cache.
      */
     [[nodiscard]] bool is_l2_hit() const noexcept { return _is_l2_hit; }
 
     /**
-     * @return L3 cache hit indicator.
+     * @return True if access hit L3 cache.
      */
     [[nodiscard]] bool is_l3_hit() const noexcept { return _is_l3_hit; }
 
     /**
-     * @return L4 cache hit indicator.
+     * @return True if access hit L4 cache.
      */
     [[nodiscard]] bool is_l4_hit() const noexcept { return _is_l4_hit; }
 
     /**
-     * @return Memory hit indicator.
+     * @return True if access hit main memory.
      */
     [[nodiscard]] bool is_memory_hit() const noexcept { return _is_memory_hit; }
 
     /**
-     * @return Remote source indicator.
+     * @return True if accessed memory was remote.
      */
     [[nodiscard]] bool is_remote() const noexcept { return _is_remote; }
 
     /**
-     * @return True, if the access was on the same node but a remote core.
+     * @return True if the access was to a core on the same node.
      */
     [[nodiscard]] std::optional<bool> is_same_node_remote_core() const noexcept
     {
-      if (!_remote_hops.has_value()) {
-        return std::nullopt;
-      }
-
-      return _remote_hops.value() == 0U;
+      return _remote_hops.has_value() ? std::make_optional(_remote_hops.value() == 0U) : std::nullopt;
     }
 
     /**
-     * @return True, if the access was on the same socket but a remote node.
+     * @return True if the access was to another node on the same socket.
      */
     [[nodiscard]] std::optional<bool> is_same_socket_remote_node() const noexcept
     {
-      if (!_remote_hops.has_value()) {
-        return std::nullopt;
-      }
-
-      return _remote_hops.value() == 1U;
+      return _remote_hops.has_value() ? std::make_optional(_remote_hops.value() == 1U) : std::nullopt;
     }
 
     /**
-     * @return True, if the access was on the same board but a remote socket.
+     * @return True if the access was to another socket on the same board.
      */
     [[nodiscard]] std::optional<bool> is_same_board_remote_socket() const noexcept
     {
-      if (!_remote_hops.has_value()) {
-        return std::nullopt;
-      }
-      return _remote_hops.value() == 2U;
+      return _remote_hops.has_value() ? std::make_optional(_remote_hops.value() == 2U) : std::nullopt;
     }
 
     /**
-     * @return True, if the access was on a remote board.
+     * @return True if the access was to a remote board.
      */
     [[nodiscard]] std::optional<bool> is_remote_board() const noexcept
     {
-      if (!_remote_hops.has_value()) {
-        return std::nullopt;
-      }
-      return _remote_hops.value() == 3U;
+      return _remote_hops.has_value() ? std::make_optional(_remote_hops.value() == 3U) : std::nullopt;
     }
 
     /**
-     * @return Uncachable memory indicator, if available. std::nullopt otherwise.
+     * @return True if memory is uncachable.
      */
     [[nodiscard]] std::optional<bool> is_uncachable_memory() const noexcept { return _is_uncachable_memory; }
 
     /**
-     * @return Write-combine memory indicator, if available. std::nullopt otherwise.
+     * @return True if memory uses write-combine policy.
      */
     [[nodiscard]] std::optional<bool> is_write_combine_memory() const noexcept { return _is_write_combine_memory; }
 
@@ -198,50 +192,54 @@ public:
     std::optional<bool> _is_write_combine_memory{ std::nullopt };
   };
 
+  /**
+   * Describes the TLB resolution for a data access.
+   * Contains hit results and page sizes for L1 and L2 TLBs.
+   */
   class TLB
   {
   public:
     /**
-     * Set whether L1 TLB is hit.
-     * @param is_l1_hit L1 TLB hit indicator.
+     * Set whether L1 TLB resolved the access.
+     * @param is_l1_hit True if L1 TLB hit.
      */
     void is_l1_hit(const bool is_l1_hit) noexcept { _is_l1_hit = is_l1_hit; }
 
     /**
-     * Set whether L2 TLB is hit.
-     * @param is_l2_hit L2 TLB hit indicator.
+     * Set whether L2 TLB resolved the access.
+     * @param is_l2_hit True if L2 TLB hit.
      */
     void is_l2_hit(const bool is_l2_hit) noexcept { _is_l2_hit = is_l2_hit; }
 
     /**
-     * Set L1 TLB page size.
-     * @param l1_page_size L1 TLB page size.
+     * Set the page size resolved by L1 TLB.
+     * @param l1_page_size Page size in bytes.
      */
     void l1_page_size(const std::uint64_t l1_page_size) noexcept { _l1_page_size = l1_page_size; }
 
     /**
-     * Set L2 TLB page size.
-     * @param l2_page_size L2 TLB page size.
+     * Set the page size resolved by L2 TLB.
+     * @param l2_page_size Page size in bytes.
      */
     void l2_page_size(const std::uint64_t l2_page_size) noexcept { _l2_page_size = l2_page_size; }
 
     /**
-     * @return L1 TLB hit indicator, if available. std::nullopt otherwise.
+     * @return True if L1 TLB resolved the access.
      */
     [[nodiscard]] std::optional<bool> is_l1_hit() const noexcept { return _is_l1_hit; }
 
     /**
-     * @return L2 TLB hit indicator, if available. std::nullopt otherwise.
+     * @return True if L2 TLB resolved the access.
      */
     [[nodiscard]] std::optional<bool> is_l2_hit() const noexcept { return _is_l2_hit; }
 
     /**
-     * @return L1 TLB page size (in bytes), if available. std::nullopt otherwise.
+     * @return Page size resolved by L1 TLB.
      */
     [[nodiscard]] std::optional<std::uint64_t> l1_page_size() const noexcept { return _l1_page_size; }
 
     /**
-     * @return L2 TLB page size (in bytes), if available. std::nullopt otherwise.
+     * @return Page size resolved by L2 TLB.
      */
     [[nodiscard]] std::optional<std::uint64_t> l2_page_size() const noexcept { return _l2_page_size; }
 
@@ -252,39 +250,43 @@ public:
     std::optional<std::uint64_t> _l2_page_size{ std::nullopt };
   };
 
+  /**
+   * Describes latency values associated with the memory access path, including
+   * time to access data, refill the TLB, or handle cache misses.
+   */
   class Latency
   {
   public:
     /**
-     * Set the data access latency.
-     * @param data_access Data access latency.
+     * Set total latency for accessing data.
+     * @param data_access Latency in cycles.
      */
     void data_access(const std::uint32_t data_access) noexcept { _data_access = data_access; }
 
     /**
-     * Set the cache miss latency.
-     * @param cache_miss Cache miss latency.
+     * Set latency specifically caused by a cache miss.
+     * @param cache_miss Latency in cycles.
      */
     void cache_miss(const std::uint32_t cache_miss) noexcept { _cache_miss = cache_miss; }
 
     /**
-     * Set the DTLB refill latency.
-     * @param dtlb_refill DTLB refill latency.
+     * Set latency due to DTLB refill.
+     * @param dtlb_refill Latency in cycles.
      */
     void dtlb_refill(const std::uint32_t dtlb_refill) noexcept { _dtlb_refill = dtlb_refill; }
 
     /**
-     * @return Data access latency, if available. std::nullopt otherwise.
+     * @return Latency of the data access in cycles.
      */
     [[nodiscard]] std::optional<std::uint32_t> data_access() const noexcept { return _data_access; }
 
     /**
-     * @return Cache miss latency, if available. std::nullopt otherwise.
+     * @return Latency attributed to a cache miss.
      */
     [[nodiscard]] std::optional<std::uint32_t> cache_miss() const noexcept { return _cache_miss; }
 
     /**
-     * @return DTLB refill latency, if available. std::nullopt otherwise.
+     * @return Latency from a DTLB refill operation.
      */
     [[nodiscard]] std::optional<std::uint32_t> dtlb_refill() const noexcept { return _dtlb_refill; }
 
@@ -294,67 +296,106 @@ public:
     std::optional<std::uint32_t> _dtlb_refill{ std::nullopt };
   };
 
+  /**
+   * Set the logical memory address of the access.
+   * @param logical_memory_address Virtual/logical memory address.
+   */
   void logical_memory_address(const std::uintptr_t logical_memory_address) noexcept
   {
     _logical_memory_address = logical_memory_address;
   }
+
+  /**
+   * Set the physical memory address of the access.
+   * @param physical_memory_address Physical address resolved.
+   */
   void physical_memory_address(const std::uintptr_t physical_memory_address) noexcept
   {
     _physical_memory_address = physical_memory_address;
   }
 
+  /**
+   * Set the source characteristics of the data access.
+   * @param source Populated Source instance.
+   */
   void source(Source source) noexcept { _source.emplace(source); }
 
   /**
-   * Set whether there is a misalignment penalty.
-   * @param is_misalign_penalty Misalignment penalty indicator.
+   * Set whether the access incurred a misalignment penalty.
+   * @param is_misalign_penalty True if misaligned access penalized.
    */
   void is_misalign_penalty(const bool is_misalign_penalty) noexcept { _is_misalign_penalty = is_misalign_penalty; }
 
   /**
-   * Set the width of the access.
-   *
-   * @param access_width Width of the access.
+   * Set the byte-width of the access.
+   * @param access_width Size of access in bytes.
    */
   void access_width(std::uint8_t access_width) noexcept { _access_width = access_width; }
 
   /**
-   * Set page size of the data.
-   *
-   * @param page_size Page size of the data.
+   * Set the page size backing the accessed memory.
+   * @param page_size Page size in bytes.
    */
   void page_size(const std::uint64_t page_size) noexcept { _data_page_site = page_size; }
 
+  /**
+   * @return Logical (virtual) address accessed.
+   */
   [[nodiscard]] std::optional<std::uintptr_t> logical_memory_address() const noexcept
   {
     return _logical_memory_address;
   }
+
+  /**
+   * @return Physical address accessed.
+   */
   [[nodiscard]] std::optional<std::uintptr_t> physical_memory_address() const noexcept
   {
     return _physical_memory_address;
   }
 
+  /**
+   * @return Source information for where the access was resolved.
+   */
   [[nodiscard]] const std::optional<Source>& source() const noexcept { return _source; }
+
+  /**
+   * @return Source information for where the access was resolved.
+   */
   [[nodiscard]] std::optional<Source>& source() noexcept { return _source; }
 
+  /**
+   * @return TLB resolution state for this access.
+   */
   [[nodiscard]] const TLB& tlb() const noexcept { return _tlb; }
+
+  /**
+   * @return TLB resolution state for this access.
+   */
   [[nodiscard]] TLB& tlb() noexcept { return _tlb; }
 
+  /**
+   * @return Latency values associated with this access.
+   */
   [[nodiscard]] const Latency& latency() const noexcept { return _latency; }
+
+  /**
+   * @return Latency values associated with this access.
+   */
   [[nodiscard]] Latency& latency() noexcept { return _latency; }
 
   /**
-   * @return Misalignment penalty indicator, if available. std::nullopt otherwise.
+   * @return True if a misalignment penalty was incurred.
    */
   [[nodiscard]] std::optional<bool> is_misalign_penalty() const noexcept { return _is_misalign_penalty; }
 
   /**
-   * @return Width of the access in bytes, if available. std::nullopt otherwise.
+   * @return Width of the data access in bytes.
    */
   [[nodiscard]] std::optional<std::uint8_t> access_width() const noexcept { return _access_width; }
 
   /**
-   * @return Size of the data page, if available. std::nullopt otherwise.
+   * @return Backing memory page size.
    */
   [[nodiscard]] std::optional<std::uint64_t> page_size() const noexcept { return _data_page_site; }
 
@@ -368,4 +409,5 @@ private:
   std::optional<std::uint8_t> _access_width{ std::nullopt };
   std::optional<std::uint64_t> _data_page_site{ std::nullopt };
 };
-}
+
+} // namespace perf

@@ -138,6 +138,9 @@ public:
     bool _is_l2_miss;
   };
 
+  /**
+   * Represents the instruction cache miss state across the memory hierarchy (L1, L2, L3).
+   */
   class Cache
   {
   public:
@@ -147,12 +150,22 @@ public:
       , _is_l3_miss(is_l3_miss)
     {
     }
+
     ~Cache() noexcept = default;
 
+    /**
+     * @return True, if the fetch was an iTLB miss in L1 cache.
+     */
     [[nodiscard]] bool is_l1_miss() const noexcept { return _is_l1_miss; }
 
+    /**
+     * @return True, if the access missed in L2 cache.
+     */
     [[nodiscard]] bool is_l2_miss() const noexcept { return _is_l2_miss; }
 
+    /**
+     * @return True, if the access missed in L3 cache.
+     */
     [[nodiscard]] bool is_l3_miss() const noexcept { return _is_l3_miss; }
 
   private:
@@ -161,6 +174,9 @@ public:
     bool _is_l3_miss;
   };
 
+  /**
+   * Represents the state of an instruction fetch operation in the CPU pipeline.
+   */
   class Fetch
   {
   public:
@@ -169,10 +185,17 @@ public:
       , _is_valid(is_valid)
     {
     }
+
     ~Fetch() noexcept = default;
 
+    /**
+     * @return True, if the fetch operation has completed.
+     */
     [[nodiscard]] bool is_complete() const noexcept { return _is_complete; }
 
+    /**
+     * @return True, if the sampled fetch entry is valid.
+     */
     [[nodiscard]] bool is_valid() const noexcept { return _is_valid; }
 
   private:
@@ -218,29 +241,29 @@ public:
 
     /**
      * Set whether this is an abort due to memory conflict.
-     * @param is_abort_due_to_memory_conflict Memory conflict abort indicator.
+     * @param is_due_to_memory_conflict Memory conflict abort indicator.
      */
-    void is_abort_due_to_memory_conflict(const bool is_abort_due_to_memory_conflict) noexcept
+    void is_due_to_memory_conflict(const bool is_due_to_memory_conflict) noexcept
     {
-      _is_abort_due_to_memory_conflict = is_abort_due_to_memory_conflict;
+      _is_due_to_memory_conflict = is_due_to_memory_conflict;
     }
 
     /**
      * Set whether this is an abort due to write capacity conflict.
-     * @param is_abort_due_to_write_capacity_conflict Write capacity conflict abort indicator.
+     * @param is_due_to_write_capacity_conflict Write capacity conflict abort indicator.
      */
-    void is_abort_due_to_write_capacity_conflict(const bool is_abort_due_to_write_capacity_conflict) noexcept
+    void is_due_to_write_capacity_conflict(const bool is_due_to_write_capacity_conflict) noexcept
     {
-      _is_abort_due_to_write_capacity_conflict = is_abort_due_to_write_capacity_conflict;
+      _is_due_to_write_capacity_conflict = is_due_to_write_capacity_conflict;
     }
 
     /**
      * Set whether this is an abort due to read capacity conflict.
-     * @param is_abort_due_to_read_capacity_conflict Read capacity conflict abort indicator.
+     * @param is_due_to_read_capacity_conflict Read capacity conflict abort indicator.
      */
-    void is_abort_due_to_read_capacity_conflict(const bool is_abort_due_to_read_capacity_conflict) noexcept
+    void is_due_to_read_capacity_conflict(const bool is_due_to_read_capacity_conflict) noexcept
     {
-      _is_abort_due_to_read_capacity_conflict = is_abort_due_to_read_capacity_conflict;
+      _is_due_to_read_capacity_conflict = is_due_to_read_capacity_conflict;
     }
 
     /**
@@ -272,23 +295,17 @@ public:
     /**
      * @return Memory conflict abort indicator.
      */
-    [[nodiscard]] bool is_abort_due_to_memory_conflict() const noexcept { return _is_abort_due_to_memory_conflict; }
+    [[nodiscard]] bool is_due_to_memory_conflict() const noexcept { return _is_due_to_memory_conflict; }
 
     /**
      * @return Write capacity conflict abort indicator.
      */
-    [[nodiscard]] bool is_abort_due_to_write_capacity_conflict() const noexcept
-    {
-      return _is_abort_due_to_write_capacity_conflict;
-    }
+    [[nodiscard]] bool is_due_to_write_capacity_conflict() const noexcept { return _is_due_to_write_capacity_conflict; }
 
     /**
      * @return Read capacity conflict abort indicator.
      */
-    [[nodiscard]] bool is_abort_due_to_read_capacity_conflict() const noexcept
-    {
-      return _is_abort_due_to_read_capacity_conflict;
-    }
+    [[nodiscard]] bool is_due_to_read_capacity_conflict() const noexcept { return _is_due_to_read_capacity_conflict; }
 
     /**
      * @return User specified abort code.
@@ -300,9 +317,9 @@ public:
     bool _is_generic_transaction;
     bool _is_synchronous_abort;
     bool _is_retryable;
-    bool _is_abort_due_to_memory_conflict;
-    bool _is_abort_due_to_write_capacity_conflict;
-    bool _is_abort_due_to_read_capacity_conflict;
+    bool _is_due_to_memory_conflict;
+    bool _is_due_to_write_capacity_conflict;
+    bool _is_due_to_read_capacity_conflict;
     std::uint32_t _user_specified_code;
   };
 

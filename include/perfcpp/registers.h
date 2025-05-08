@@ -219,6 +219,9 @@ private:
   registers_t _registers;
 };
 
+/**
+ * Represents sampled values of general-purpose registers for a specific architecture.
+ */
 class RegisterValues
 {
 public:
@@ -235,23 +238,38 @@ public:
 
   ~RegisterValues() = default;
 
+  /**
+   * @return The ABI for which these register values are valid.
+   */
   [[nodiscard]] ABI abi() const noexcept { return _abi; }
 
+  /**
+   * @return The value of the specified x86 register, if available.
+   */
   [[nodiscard]] std::optional<std::int64_t> value(const Registers::x86 reg) const noexcept
   {
     return value(static_cast<std::uint8_t>(reg));
   }
 
+  /**
+   * @return The value of the specified ARM register, if available.
+   */
   [[nodiscard]] std::optional<std::int64_t> value(const Registers::arm reg) const noexcept
   {
     return value(static_cast<std::uint8_t>(reg));
   }
 
+  /**
+   * @return The value of the specified ARM64 (AArch64) register, if available.
+   */
   [[nodiscard]] std::optional<std::int64_t> value(const Registers::arm64 reg) const noexcept
   {
     return value(static_cast<std::uint8_t>(reg));
   }
 
+  /**
+   * @return The value of the specified RISC-V register, if available.
+   */
   [[nodiscard]] std::optional<std::int64_t> value(const Registers::riscv reg) const noexcept
   {
     return value(static_cast<std::uint8_t>(reg));
@@ -261,6 +279,9 @@ private:
   ABI _abi;
   std::unordered_map<std::uint8_t, std::int64_t> _values;
 
+  /**
+   * @return The value of the register identified by its numeric encoding, if available.
+   */
   [[nodiscard]] std::optional<std::int64_t> value(const std::uint8_t reg) const noexcept
   {
     if (const auto value = _values.find(reg); value != _values.end()) {
@@ -270,4 +291,5 @@ private:
     return std::nullopt;
   }
 };
+
 }
