@@ -441,6 +441,11 @@ public:
     return _instruction_execution.is_instruction_pointer_exact();
   }
 
+  /**
+   * @return Optional raw data.
+   */
+  [[deprecated("Will be removed in v0.12. Use raw() instead.")]] [[nodiscard]] const std::optional<std::vector<std::byte>>& raw_data() const noexcept { return _raw; }
+
   /*
    * @return True if the instruction pointer is exact; otherwise, false.
    */

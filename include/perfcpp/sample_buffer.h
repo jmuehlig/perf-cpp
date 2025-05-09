@@ -85,7 +85,7 @@ private:
    * Copies the data from the mmap-ed ringbuffer into an application-level buffer in order to free up some space in the
    * ringbuffer for future samples.
    */
-  void copy_perf_ringbuffer_into_application_buffer();
+  [[nodiscard]] static std::optional<std::vector<std::byte>> copy_perf_ringbuffer(perf_event_mmap_page* ringbuffer);
 
   /**
    * Aligns the number of buffer pages to a number that is a power of two plus one for the header.

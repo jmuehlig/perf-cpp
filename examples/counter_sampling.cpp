@@ -71,22 +71,22 @@ main()
 
     /// Since we recorded the time, period, the instruction pointer, and the CPU
     /// id, we can only read these values.
-    if (sample.metadata().timestamp().has_value() && sample.counter_result().has_value()) {
+    if (sample.metadata().timestamp().has_value() && sample.counter().has_value()) {
       if (last_counter_result.has_value()) {
         std::cout << "Time = " << sample.metadata().timestamp().value() << " | cycles (diff) = "
-                  << sample.counter_result()->get("cycles").value_or(.0) -
+                  << sample.counter()->get("cycles").value_or(.0) -
                        last_counter_result->get("cycles").value_or(.0)
                   << " | L1-dcache-loads (diff) = "
-                  << sample.counter_result()->get("L1-dcache-loads").value_or(.0) -
+                  << sample.counter()->get("L1-dcache-loads").value_or(.0) -
                        last_counter_result->get("L1-dcache-loads").value_or(.0)
                   << " | L1-dcache-load-misses (diff) = "
-                  << sample.counter_result()->get("L1-dcache-load-misses").value_or(.0) -
+                  << sample.counter()->get("L1-dcache-load-misses").value_or(.0) -
                        last_counter_result->get("L1-dcache-load-misses").value_or(.0)
-                  << " | L1d-misses-per-load = " << sample.counter_result()->get("L1d-misses-per-load").value_or(.0)
+                  << " | L1d-misses-per-load = " << sample.counter()->get("L1d-misses-per-load").value_or(.0)
                   << "\n";
       }
 
-      last_counter_result = sample.counter_result();
+      last_counter_result = sample.counter();
     }
   }
   std::cout << std::flush;

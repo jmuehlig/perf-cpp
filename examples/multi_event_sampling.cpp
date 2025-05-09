@@ -99,9 +99,9 @@ main()
 
       auto type = "N/A";
       if (sample.instruction_execution().type().has_value()) {
-        if (sample.instruction_execution().type() == perf::InstructionExecution::InstructionType::MemoryLoad) {
+        if (sample.data_access().is_load()) {
           type = "Load";
-        } else if (sample.instruction_execution().type() == perf::InstructionExecution::InstructionType::MemoryStore) {
+        } else if (sample.data_access().is_store()) {
           type = "Store";
         }
       }

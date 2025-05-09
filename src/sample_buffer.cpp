@@ -101,9 +101,11 @@ perf::SampleBuffer::buffer_ranges() const
 
   /// Add the mmap-ed buffer.
   if (this->_mmap_ringbuffer != nullptr) {
-    asm volatile("" ::: "memory");
+
     const auto tail = this->_mmap_ringbuffer->data_tail;
     const auto head = this->_mmap_ringbuffer->data_head;
+
+    asm volatile("" ::: "memory");
 
     /// Read size and start position.
 #ifndef PERFCPP_NO_MMAP_DATA_SIZE /// The "data_size" attribute was added in Linux 4.1.
@@ -212,7 +214,10 @@ perf::SampleBuffer::poll_for_ringbuffer_overflow(const std::int32_t perf_file_de
       /// buffer.
       if (FD_ISSET(perf_file_descriptor, &file_descriptor_set)) {
         if (this->_mmap_ringbuffer != nullptr) {
-          this->copy_perf_ringbuffer_into_application_buffer();
+          /// Copy the ringbuffer and append to application buffer if any data available.
+          if (auto buffer = SampleBuffer::copy_perf_ringbuffer(this->_mmap_ringbuffer); buffer.has_value()) {
+            this->_application_buffers.push_back(std::move(buffer.value()));
+          }
         } else {
           /// Cancel when the ringbuffer is deallocated.
           return;
@@ -224,21 +229,22 @@ perf::SampleBuffer::poll_for_ringbuffer_overflow(const std::int32_t perf_file_de
   } while (true);
 }
 
-void
-perf::SampleBuffer::copy_perf_ringbuffer_into_application_buffer()
+std::optional<std::vector<std::byte>>
+perf::SampleBuffer::copy_perf_ringbuffer(perf_event_mmap_page* ringbuffer)
 {
   /// Fore more information about the perf ring buffer see:
   /// https://docs.kernel.org/userspace-api/perf_ring_buffer.html
 
   /// Read positions and size of the ringbuffer. Head and tail are offsets of data_start (allocated buffer + offset for
   /// metadata).
-  asm volatile("" ::: "memory");
-  const auto tail = this->_mmap_ringbuffer->data_tail;
-  const auto head = __atomic_load_n(&this->_mmap_ringbuffer->data_head, __ATOMIC_ACQUIRE);
 
-  const auto data_start = std::uintptr_t(this->_mmap_ringbuffer) + HardwareInfo::memory_page_size();
+  const auto tail = ringbuffer->data_tail;
+  const auto head = __atomic_load_n(&ringbuffer->data_head, __ATOMIC_ACQUIRE);
+  asm volatile("" ::: "memory");
+
+  const auto data_start = std::uintptr_t(ringbuffer) + HardwareInfo::memory_page_size();
 #ifndef PERFCPP_NO_MMAP_DATA_SIZE /// The "data_size" attribute was added in Linux 4.1.
-  const auto data_size = this->_mmap_ringbuffer->data_size;
+  const auto data_size = ringbuffer->data_size;
 #else
   const auto data_size = (this->_count_pages - 1U) * HardwareInfo::memory_page_size();
 #endif
@@ -250,7 +256,7 @@ perf::SampleBuffer::copy_perf_ringbuffer_into_application_buffer()
 
   /// Check if there is anything to read and cancel if not.
   if (begin == end) {
-    return;
+    return std::nullopt;
   }
 
   /// Application-level buffer where the data from the ringbuffer is copied to.
@@ -284,10 +290,11 @@ perf::SampleBuffer::copy_perf_ringbuffer_into_application_buffer()
   }
 
   // Update the data_tail to the current head, marking the data as consumed.
-  __atomic_store_n(&this->_mmap_ringbuffer->data_tail, head, __ATOMIC_RELEASE);
+  __sync_synchronize();
+  __atomic_store_n(&ringbuffer->data_tail, head, __ATOMIC_RELEASE);
 
   /// Add the buffer to the list of buffers.
-  this->_application_buffers.push_back(std::move(buffer));
+  return buffer;
 }
 
 std::uint64_t

@@ -35,7 +35,7 @@ main()
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
-                                                   /* create benchmark of 1024 MB */ 1024U };
+                                                   /* create benchmark of 1024 MB */ 2048U };
 
   /// Start sampling.
   try {
@@ -103,8 +103,7 @@ main()
     std::cout << "Time = " << sample.metadata().timestamp().value_or(0U) << " | Logical Mem Address = 0x" << std::hex
               << sample.data_access().logical_memory_address().value() << std::dec
               << " | Latency (cache, instruction) = " << cache_latency << ", " << instruction_latency << " | Is Load = "
-              << (sample.instruction_execution().type().value_or(perf::InstructionExecution::InstructionType::Return) ==
-                  perf::InstructionExecution::InstructionType::MemoryLoad)
+              << sample.data_access().is_load()
               << " | Data Source = " << data_source << "\n";
   }
   std::cout << std::flush;

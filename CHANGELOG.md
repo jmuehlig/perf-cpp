@@ -1,5 +1,9 @@
 # *perf-cpp*: Changelog
 
+## v0.11.0 (in progress)
+* Re-invented the sampling interface: Different parts of sampling are now split in the `perf::Sample` (e.g., `Metadata`, `InstructionExecution`, `DataAccess`, etc.). With this interface, *perf-cpp* can reveal more information than provided by the `perf_event_open` interface (see the [documentation](docs/sampling.md#what-can-be-recorded-and-how-to-access-the-data)). One consequence of this is that different latency information (`cache-access` on Intel vs `cache-miss` on AMD) are now explicitly accessible.
+* Support for heterogeneous Performance Monitoring Units (e.g., `cpu_core` and `cpu_atom`).
+
 ## v0.10.0
 * New feature: The *auxiliary event* is added automatically if required by the (Intel-) hardware (see the [documentation](docs/sampling.md#sapphire-rapids-and-beyond)).
 * New feature: The *Memory Access Analyzer* allows to describe complex data objects and maps sampled memory addresses in order to report latency and access information (see the [documentation](docs/analyzing-memory-access-patterns)).
@@ -11,7 +15,7 @@
 * New feature: Access interim results from counters without stopping the counter using [live counters](docs/recording-live-events.md).
 * New feature: Sampling the user stack (see the [documentation](docs/sampling.md#user-stack)).
 * New feature: Create custom metrics using expressions, e.g., `"instructions/cycles"` (see the [documentation](docs/metrics.md#using-formulas)).
-* New feature: Use [metric](docs/metrics.md) when sampling [counter values](docs/sampling.md#performance-counter-values).
+* New feature: Use [metric](docs/metrics.md) when sampling [counter values](docs/sampling.md#counter-values).
 * New feature: Control scheduling of events to *physical* hardware counters (see the [documentation](docs/recording.md#control-scheduling-of-events-to-hardware-counters)).
 * New feature: Added time events (e.g., `seconds`, `milliseconds`, etc.) as *virtual* counters (see the [documentation](docs/counters.md#built-in-events)).
 
@@ -31,12 +35,12 @@
 * New feature: Define period or frequency along with trigger events when sampling (see [documentation](docs/sampling.md#period--frequency)).
 * New feature: `cgroup` sampling (see [documentation](docs/sampling.md#cgroup)).
 * New feature: Sampling for context switches (see [documentation](docs/sampling.md#context-switches)).
-* New feature: Sampling for throttle events (see [documentation](docs/sampling.md#throttle-and-unthrottle-events)).
-* New feature: Sampling for raw values (see [documentation](docs/sampling.md#raw-values)).
-* New feature: Sampling for transaction aborts (see [documentation](docs/sampling.md#transaction-abort)).
+* New feature: Sampling for throttle events (see [documentation](docs/sampling.md#throttle-and-unthrottle)).
+* New feature: Sampling for raw values (see [documentation](docs/sampling.md#raw-data)).
+* New feature: Sampling for transaction aborts (see [documentation](docs/sampling.md#hardware-transaction-abort)).
 * New feature: Print results from `perf::EventCounter` as a table using `perf::CounterResult::to_string()`.
 * Automatically discover AMD Instruction Based Sampling (IBS) PMUs when running on AMD hardware ([see documentation](docs/sampling.md#amd-instruction-based-sampling)).
-* Automatically discover Intel Processor Event Based Sampling (PEBS) memory events when running on Intel hardware ([see documentation](docs/sampling.md#intel-pebs)).
+* Automatically discover Intel Processor Event Based Sampling (PEBS) memory events when running on Intel hardware ([see documentation](docs/sampling.md#intel-processor-event-based-sampling)).
 * Enable Intel PEBS by default (used interrupt-based sampling so far, if not specified otherwise in `perf::SampleConfig::precise_ip()`).
 * Support Linux Kernel down to `4.0` – Kernels no longer need to be specified via compiler defines.
 * Close sampler automatically (i.e., free all buffers and close counters) when destructing.
