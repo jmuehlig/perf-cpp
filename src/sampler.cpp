@@ -828,7 +828,7 @@ perf::Sampler::read_data_access_source(const std::uint64_t source)
   auto snoop = std::optional<DataAccess::Snoop>{ std::nullopt };
   if (perf_data_source.mem_snoop > 0 && !(perf_data_source.mem_snoop & PERF_MEM_SNOOP_NA) &&
       !(perf_data_source.mem_snoop & PERF_MEM_SNOOP_NONE)) {
-    snoop = DataAccess::Snoop{};
+    snoop.emplace(DataAccess::Snoop{});
     if (perf_data_source.mem_snoop & PERF_MEM_SNOOP_HIT) {
       snoop->is_hit(true);
       snoop->is_hit_modified(perf_data_source.mem_snoop & PERF_MEM_SNOOP_HITM);
@@ -836,10 +836,14 @@ perf::Sampler::read_data_access_source(const std::uint64_t source)
       snoop->is_hit(false);
     }
 
+#ifndef PERFCPP_NO_MEM_SNOOPX /// Snoopx was introduced in Linux 4.14.0
     if (perf_data_source.mem_snoopx > 0) {
+#ifndef PERFCPP_NO_MEM_SNOOPX_PEER  /// Snoopx Peer was introduced in Linux 6.1.0
       snoop->is_forward(perf_data_source.mem_snoopx & PERF_MEM_SNOOPX_PEER);
+#endif
       snoop->is_transfer_from_peer(perf_data_source.mem_snoopx & PERF_MEM_SNOOPX_PEER);
     }
+#endif
   }
 
   /// TLB.

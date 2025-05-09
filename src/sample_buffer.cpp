@@ -56,9 +56,10 @@ perf::SampleBuffer::SampleBuffer(const std::int32_t file_descriptor, std::uint64
 
     /// Create the handle thread.
     this->_poll_and_handle_ringbuffer_overflow_thread = std::thread(&SampleBuffer::poll_for_ringbuffer_overflow,
-                                                                    this,
                                                                     file_descriptor,
-                                                                    this->_cancel_thread_event_file_descriptor.value());
+                                                                    this->_cancel_thread_event_file_descriptor.value(),
+                                                                    this->_mmap_ringbuffer,
+                                                                    std::ref(this->_application_buffers));
   }
 }
 
@@ -189,8 +190,7 @@ perf::SampleBuffer::read_live() const noexcept
 }
 
 void
-perf::SampleBuffer::poll_for_ringbuffer_overflow(const std::int32_t perf_file_descriptor,
-                                                 const std::int32_t cancel_file_descriptor)
+perf::SampleBuffer::poll_for_ringbuffer_overflow(std::int32_t perf_file_descriptor, std::int32_t cancel_file_descriptor, perf_event_mmap_page* ringbuffer, std::vector<std::vector<std::byte>>& output_buffer)
 {
   do {
     /// Initialize the file descriptor set.
@@ -213,14 +213,9 @@ perf::SampleBuffer::poll_for_ringbuffer_overflow(const std::int32_t perf_file_de
       /// If the "normal" perf file descriptor is set, drain the buffer by copying the data into an application-level
       /// buffer.
       if (FD_ISSET(perf_file_descriptor, &file_descriptor_set)) {
-        if (this->_mmap_ringbuffer != nullptr) {
-          /// Copy the ringbuffer and append to application buffer if any data available.
-          if (auto buffer = SampleBuffer::copy_perf_ringbuffer(this->_mmap_ringbuffer); buffer.has_value()) {
-            this->_application_buffers.push_back(std::move(buffer.value()));
-          }
-        } else {
-          /// Cancel when the ringbuffer is deallocated.
-          return;
+        /// Copy the ringbuffer and append to application buffer if any data available.
+        if (auto buffer = SampleBuffer::copy_perf_ringbuffer(ringbuffer); buffer.has_value()) {
+          output_buffer.push_back(std::move(buffer.value()));
         }
       }
     } else if (ret == -1) {

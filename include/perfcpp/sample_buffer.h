@@ -61,8 +61,10 @@ public:
    *
    * @param perf_file_descriptor File descriptor of the mmap-ed buffer.
    * @param cancel_file_descriptor File descriptor for canceling the thread when closing the buffer.
+   * @param ringbuffer Ringbuffer to read the data from.
+   * @param output_buffer Buffer to write the data to.
    */
-  void poll_for_ringbuffer_overflow(std::int32_t perf_file_descriptor, std::int32_t cancel_file_descriptor);
+  static void poll_for_ringbuffer_overflow(std::int32_t perf_file_descriptor, std::int32_t cancel_file_descriptor, perf_event_mmap_page* ringbuffer, std::vector<std::vector<std::byte>>& output_buffer);
 
 private:
   /// Header of the mmap-ed buffer.
