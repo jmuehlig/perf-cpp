@@ -953,6 +953,7 @@ perf::Sampler::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, perf::Sa
 
     /// Type of the instruction (prefetch, return, or branch) and type of the branch–if it is one.
     if (execution_parser.is_software_prefetch()) {
+      sample.instruction_execution().type(InstructionExecution::InstructionType::DataAccess);
       sample.data_access().type(DataAccess::AccessType::SoftwarePrefetch);
     } else if (execution_parser.is_return_operation()) {
       sample.instruction_execution().type(InstructionExecution::InstructionType::Return);

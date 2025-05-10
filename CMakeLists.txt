@@ -6,8 +6,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -W
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g3")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -DNDEBUG")
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type (default Release)" FORCE)
+    set(CMAKE_BUILD_TYPE "Release")
 endif()
+message("Building Mode = ${CMAKE_BUILD_TYPE}")
 
 # Include include/ folder.
 include_directories(include/)
@@ -18,6 +19,9 @@ include_directories(include/)
 option(BUILD_EXAMPLES "Build examples in examples/ directory." OFF)
 option(BUILD_LIB_SHARED "Build the library as a shared library (default is static)." OFF)
 option(BUILD_TESTS "Build the unit tests." OFF)
+
+message("Building Examples = ${BUILD_EXAMPLES}")
+message("Building as Shared Library = ${BUILD_EXAMPLES}")
 
 #############################################################
 #   perf-cpp library definition                             #
