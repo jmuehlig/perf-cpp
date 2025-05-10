@@ -1,8 +1,8 @@
 # *perf-cpp*: Changelog
 
 ## v0.11.0 (in progress)
-* Re-invented the sampling interface: Different parts of sampling are now split in the `perf::Sample` (e.g., `Metadata`, `InstructionExecution`, `DataAccess`, etc.). With this interface, *perf-cpp* can reveal more information than provided by the `perf_event_open` interface (see the [documentation](docs/sampling.md#what-can-be-recorded-and-how-to-access-the-data)). One consequence of this is that different latency information (`cache-access` on Intel vs `cache-miss` on AMD) are now explicitly accessible.
-* Support for heterogeneous Performance Monitoring Units (e.g., `cpu_core` and `cpu_atom`).
+* Redesign of the sampling interface: Different parts of sampling are now split in the `perf::Sample` (e.g., `Metadata`, `InstructionExecution`, `DataAccess`, etc.). With this interface, *perf-cpp* can reveal more (AMD IBS-related) information than provided by the `perf_event_open` interface (see the [documentation](docs/sampling.md#what-can-be-recorded-and-how-to-access-the-data)). One consequence of this is that different latency information (`cache-access` on Intel vs `cache-miss` on AMD) are now explicitly accessible.
+* Support for heterogeneous Performance Monitoring Units (e.g., `cpu_core` and `cpu_atom`) to record samples on (Intel) architectures with heterogeneous CPU cores.
 
 ## v0.10.0
 * New feature: The *auxiliary event* is added automatically if required by the (Intel-) hardware (see the [documentation](docs/sampling.md#sapphire-rapids-and-beyond)).
