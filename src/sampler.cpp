@@ -334,19 +334,20 @@ perf::Sampler::is_auxiliary_event_needed_and_already_included(
 }
 
 std::vector<perf::Sample>
-perf::Sampler::result(const bool sort_by_time) const
+perf::Sampler::result(const bool sort_by_time)
 {
   auto result = std::vector<Sample>{};
   result.reserve(2048U);
 
-  for (const auto& sample_counter : this->_sample_counter) {
+  for (auto& sample_counter : this->_sample_counter) {
 
     /// Get all buffers: the current mmap-ed ringbuffer and the application-level buffers used to copy the ringbuffer to
-    const auto buffer_ranges = sample_counter.group().sample_buffer_ranges();
+    const auto buffer_ranges = sample_counter.group().sample_buffer_data();
 
     /// Read samples from all the buffers (mmap-ed perf buffer and application-level buffers).
-    for (const auto& [start, end] : buffer_ranges) {
-      auto iterator = start;
+    for (const auto& buffer : buffer_ranges) {
+      auto iterator = std::uintptr_t(buffer.data());
+      const auto end = iterator + buffer.size();
 
       /// Scan over all samples stored in the user-level buffer.
       while (iterator < end) {
@@ -763,8 +764,8 @@ perf::Sampler::read_data_access_source(const std::uint64_t source)
   data_access_source.is_mhb_hit(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_LFB);
   data_access_source.is_uncachable_memory(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_UNC);
 #else /// Use lvl before Linux 6.1
-  data_access_source.is_l1d_hit((perf_data_source.mem_lvl & PERF_MEM_LVL_L1) &&
-                                (perf_data_source.mem_lvl & PERF_MEM_LVL_HIT));
+  data_access_source.is_l1_hit((perf_data_source.mem_lvl & PERF_MEM_LVL_L1) &&
+                               (perf_data_source.mem_lvl & PERF_MEM_LVL_HIT));
   data_access_source.is_l2_hit((perf_data_source.mem_lvl & PERF_MEM_LVL_L2) &&
                                (perf_data_source.mem_lvl & PERF_MEM_LVL_HIT));
   data_access_source.is_l3_hit((perf_data_source.mem_lvl & PERF_MEM_LVL_L3) &&
@@ -838,7 +839,7 @@ perf::Sampler::read_data_access_source(const std::uint64_t source)
 
 #ifndef PERFCPP_NO_MEM_SNOOPX /// Snoopx was introduced in Linux 4.14.0
     if (perf_data_source.mem_snoopx > 0) {
-#ifndef PERFCPP_NO_MEM_SNOOPX_PEER  /// Snoopx Peer was introduced in Linux 6.1.0
+#ifndef PERFCPP_NO_MEM_SNOOPX_PEER /// Snoopx Peer was introduced in Linux 6.1.0
       snoop->is_forward(perf_data_source.mem_snoopx & PERF_MEM_SNOOPX_PEER);
 #endif
       snoop->is_transfer_from_peer(perf_data_source.mem_snoopx & PERF_MEM_SNOOPX_PEER);
@@ -1072,7 +1073,7 @@ perf::Sampler::SampleCounter::~SampleCounter()
 }
 
 std::vector<perf::Sample>
-perf::MultiSamplerBase::result(const std::vector<Sampler>& samplers, const bool is_sort_by_time)
+perf::MultiSamplerBase::result(std::vector<Sampler>& samplers, const bool is_sort_by_time)
 {
   if (!samplers.empty()) {
     auto result = samplers.front().result();

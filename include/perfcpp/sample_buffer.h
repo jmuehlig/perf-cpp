@@ -6,11 +6,52 @@
 #include <cstdint>
 #include <linux/perf_event.h>
 #include <memory>
+#include <mutex>
 #include <thread>
 #include <utility>
 #include <vector>
 
 namespace perf {
+class MmapBuffer
+{
+public:
+  MmapBuffer() noexcept = default;
+  MmapBuffer(std::int32_t file_descriptor, bool is_write, std::uint64_t count_pages);
+  ~MmapBuffer();
+
+  MmapBuffer(MmapBuffer&& other) noexcept
+    : _header(std::exchange(other._header, nullptr))
+    , _count_pages(std::exchange(other._count_pages, 0ULL))
+  {
+  }
+
+  MmapBuffer& operator=(MmapBuffer&& other) noexcept
+  {
+    _header = std::exchange(other._header, nullptr);
+    _count_pages = std::exchange(other._count_pages, 0ULL);
+    return *this;
+  }
+
+  [[nodiscard]] std::uint32_t lock() const noexcept { return _header->lock; }
+
+  [[nodiscard]] std::uint32_t index() const noexcept { return _header->index; }
+
+  [[nodiscard]] std::int64_t offset() const noexcept { return _header->offset; }
+
+  /**
+   * Copies the data from the buffer and updates the tail to mark it as read.
+   *
+   * @return Data copied from the buffer.
+   */
+  [[nodiscard]] std::vector<std::byte> copy_data() noexcept;
+
+  [[nodiscard]] explicit operator bool() const noexcept { return _header != nullptr; }
+
+private:
+  perf_event_mmap_page* _header{ nullptr };
+  std::uint64_t _count_pages{ 0ULL };
+};
+
 /**
  * The SampleBuffer manages the mmap-ed ringbuffer to store samples and handles overflows, i.e., the buffer is drained
  * and copied to a separate application-level buffer.
@@ -21,9 +62,8 @@ public:
   SampleBuffer(std::int32_t file_descriptor, std::uint64_t number_of_buffer_pages);
 
   SampleBuffer(SampleBuffer&& other) noexcept
-    : _mmap_ringbuffer(std::exchange(other._mmap_ringbuffer, nullptr))
-    , _count_pages(std::exchange(other._count_pages, 0U))
-    , _application_buffers(std::move(other._application_buffers))
+    : _mmap_buffer(std::move(other._mmap_buffer))
+    , _sample_buffers(std::move(other._sample_buffers))
     , _poll_and_handle_ringbuffer_overflow_thread(
         std::exchange(other._poll_and_handle_ringbuffer_overflow_thread, std::nullopt))
     , _cancel_thread_event_file_descriptor(std::exchange(other._cancel_thread_event_file_descriptor, std::nullopt))
@@ -35,7 +75,7 @@ public:
    */
   SampleBuffer(const SampleBuffer& other)
   {
-    if (other._mmap_ringbuffer != nullptr) {
+    if (static_cast<bool>(other._mmap_buffer)) {
       throw CannotCopySampleBuffer{};
     }
   }
@@ -43,10 +83,9 @@ public:
   ~SampleBuffer();
 
   /**
-   * @return A list of (start,end) tuples for various buffers, i.e., the mmap-ed ringbuffer and all application-level
-   * buffers where data was copied to whenever the mmap-ed buffer was near to overflowing.
+   * @return The entire sample data, including current buffer.
    */
-  [[nodiscard]] std::vector<std::pair<std::uintptr_t, std::uintptr_t>> buffer_ranges() const;
+  [[nodiscard]] std::vector<std::vector<std::byte>> consume_sample_data();
 
   /**
    * Reads the counter "live" without stopping via the "rdpmc" instruction.
@@ -61,20 +100,18 @@ public:
    *
    * @param perf_file_descriptor File descriptor of the mmap-ed buffer.
    * @param cancel_file_descriptor File descriptor for canceling the thread when closing the buffer.
-   * @param ringbuffer Ringbuffer to read the data from.
-   * @param output_buffer Buffer to write the data to.
    */
-  static void poll_for_ringbuffer_overflow(std::int32_t perf_file_descriptor, std::int32_t cancel_file_descriptor, perf_event_mmap_page* ringbuffer, std::vector<std::vector<std::byte>>& output_buffer);
+  void poll_and_handle_ringbuffer_overflow(std::int32_t perf_file_descriptor, std::int32_t cancel_file_descriptor);
 
 private:
-  /// Header of the mmap-ed buffer.
-  perf_event_mmap_page* _mmap_ringbuffer{ nullptr };
+  MmapBuffer _mmap_buffer;
 
-  /// Number of pages allocated via mmap.
-  std::uint64_t _count_pages{ 0U };
+  /// Mutex for accessing the sample buffers and copying the current mmap-ed buffer. Both are accessed by the overflow
+  /// handling buffer and the thread consuming the results.
+  std::mutex _buffers_mutex;
 
   /// Separate buffer to copy data to when the mmap-ed buffer is near to full.
-  std::vector<std::vector<std::byte>> _application_buffers;
+  std::vector<std::vector<std::byte>> _sample_buffers;
 
   /// Thread that is notified when the buffer is near to full and copies the data into a separated application-level
   /// buffer.
@@ -82,12 +119,6 @@ private:
 
   /// File descriptor used to cancel the ::select call the poll_and_handle thread is blocked by.
   std::optional<std::int32_t> _cancel_thread_event_file_descriptor{ std::nullopt };
-
-  /**
-   * Copies the data from the mmap-ed ringbuffer into an application-level buffer in order to free up some space in the
-   * ringbuffer for future samples.
-   */
-  [[nodiscard]] static std::optional<std::vector<std::byte>> copy_perf_ringbuffer(perf_event_mmap_page* ringbuffer);
 
   /**
    * Aligns the number of buffer pages to a number that is a power of two plus one for the header.

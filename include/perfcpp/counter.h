@@ -138,7 +138,7 @@ public:
   /**
    * @return The sample buffer that manages the mmap-ed buffer for storing samples and/or live events.
    */
-  [[nodiscard]] const std::optional<SampleBuffer>& user_level_buffer() const noexcept { return _sample_buffer; }
+  [[nodiscard]] std::optional<SampleBuffer>& user_level_buffer() noexcept { return _sample_buffer; }
 
   /**
    * @return A string representing all configurations of this counter.

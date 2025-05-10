@@ -446,7 +446,7 @@ public:
      * @param include True, if the physical memory address should be included.
      * @return The Values instance.
      */
-    Values& physical_memory_address([[maybe_unused]] const bool include) noexcept
+    Values& physical_memory_address([[maybe_unused]] const bool include)
     {
 #ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR /// Sampling for physical memory address is supported since Linux 4.13
       set(PERF_SAMPLE_PHYS_ADDR, include);
@@ -464,7 +464,7 @@ public:
      * @param include True, if the cgroup should be included.
      * @return The Values instance.
      */
-    Values& cgroup([[maybe_unused]] const bool include) noexcept
+    Values& cgroup([[maybe_unused]] const bool include)
     {
 #ifndef PERFCPP_NO_SAMPLE_CGROUP /// Sampling cgroup is supported since Linux 5.7
       set(PERF_SAMPLE_CGROUP, include);
@@ -482,7 +482,7 @@ public:
      * @param include True, if the data page size should be included.
      * @return The Values instance.
      */
-    Values& data_page_size([[maybe_unused]] const bool include) noexcept
+    Values& data_page_size([[maybe_unused]] const bool include)
     {
 #ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE /// Sampling the data page size is supported since Linux 5.11
       set(PERF_SAMPLE_DATA_PAGE_SIZE, include);
@@ -500,7 +500,7 @@ public:
      * @param include True, if the code page size should be included.
      * @return The Values instance.
      */
-    Values& code_page_size([[maybe_unused]] const bool include) noexcept
+    Values& code_page_size([[maybe_unused]] const bool include)
     {
 #ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE /// Sampling the code page size is supported since Linux 5.11
       set(PERF_SAMPLE_CODE_PAGE_SIZE, include);
@@ -518,7 +518,7 @@ public:
      * @param include True, if latency information should be included.
      * @return The Values instance.
      */
-    Values& weight_struct([[maybe_unused]] const bool include) noexcept
+    Values& weight_struct([[maybe_unused]] const bool include)
     {
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
                                         /// Linux 5.12
@@ -838,7 +838,7 @@ public:
   /**
    * @return List of sampled events after closing the sampler.
    */
-  [[nodiscard]] std::vector<Sample> result(bool sort_by_time = true) const;
+  [[nodiscard]] std::vector<Sample> result(bool sort_by_time = true);
 
 private:
   /**
@@ -1101,10 +1101,7 @@ public:
   /**
    * @return List of sampled events after stopping the sampler.
    */
-  [[nodiscard]] std::vector<Sample> result(const bool sort_by_time = true) const
-  {
-    return result(samplers(), sort_by_time);
-  }
+  [[nodiscard]] std::vector<Sample> result(const bool sort_by_time = true) { return result(samplers(), sort_by_time); }
 
 protected:
   explicit MultiSamplerBase(SampleConfig config)
@@ -1130,7 +1127,7 @@ protected:
    *
    * @return Single list of results from all incoming samplers.
    */
-  [[nodiscard]] static std::vector<Sample> result(const std::vector<Sampler>& sampler, bool is_sort_by_time);
+  [[nodiscard]] static std::vector<Sample> result(std::vector<Sampler>& sampler, bool is_sort_by_time);
 
   /**
    * Initializes the given trigger(s) for the given list of samplers.

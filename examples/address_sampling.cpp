@@ -35,7 +35,7 @@ main()
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
-                                                   /* create benchmark of 1024 MB */ 2048U };
+                                                   /* create benchmark of 1024 MB */ 1024U };
 
   /// Start sampling.
   try {

@@ -165,7 +165,7 @@ public:
   /**
    * @return User-level buffer of the first counter (if not nullptr) or the second counter.
    */
-  [[nodiscard]] std::vector<std::pair<std::uintptr_t, std::uintptr_t>> sample_buffer_ranges() const;
+  [[nodiscard]] std::vector<std::vector<std::byte>> sample_buffer_data();
 
 private:
   /// List of all the group members.

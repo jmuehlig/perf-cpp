@@ -179,15 +179,15 @@ perf::Group::value_for_id(const CounterValues<Group::MAX_MEMBERS>& counter_value
   return std::nullopt;
 }
 
-std::vector<std::pair<std::uintptr_t, std::uintptr_t>>
-perf::Group::sample_buffer_ranges() const
+std::vector<std::vector<std::byte>>
+perf::Group::sample_buffer_data()
 {
   /// Check the first two members. Normally, the first member will control the sample buffer; however, on some Intel
   /// architectures, an auxiliary counter is needed before the "real" counter, i.e., the "real" counter is the second
   /// one.
   for (auto member_id = 0U; member_id < std::min(_members.size(), 2UL); ++member_id) {
     if (_members[member_id].user_level_buffer().has_value()) {
-      return _members[member_id].user_level_buffer()->buffer_ranges();
+      return _members[member_id].user_level_buffer()->consume_sample_data();
     }
   }
 

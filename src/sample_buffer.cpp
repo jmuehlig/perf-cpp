@@ -10,6 +10,107 @@
 #include <x86intrin.h>
 #endif
 
+perf::MmapBuffer::MmapBuffer(const std::int32_t file_descriptor, const bool is_write, std::uint64_t count_pages)
+  : _count_pages(count_pages)
+{
+  /// Open the mapped buffer; use write mode if needed because a separate thread will copy data into application-level
+  /// buffers.
+  const auto prod_flag = PROT_READ | (static_cast<decltype(PROT_WRITE)>(is_write) * PROT_WRITE);
+  this->_header = reinterpret_cast<perf_event_mmap_page*>(::mmap(nullptr,
+                                                                 count_pages * HardwareInfo::memory_page_size(),
+                                                                 prod_flag,
+                                                                 MAP_SHARED,
+                                                                 static_cast<std::int32_t>(file_descriptor),
+                                                                 0));
+
+  /// Notify the caller if buffer-allocation via ::mmap() failed.
+  if (this->_header == MAP_FAILED) {
+    throw MmapError{ errno };
+  } else if (this->_header == nullptr) {
+    throw MmapNullError{};
+  }
+}
+
+perf::MmapBuffer::~MmapBuffer()
+{
+  /// Close/un-map the mmap-ed buffer and set number of pages to zero, if any.
+  if (auto* const user_level_buffer = std::exchange(this->_header, nullptr); user_level_buffer != nullptr) {
+    if (const auto user_level_buffer_pages = std::exchange(this->_count_pages, 0ULL); user_level_buffer_pages > 0ULL) {
+      ::munmap(user_level_buffer, user_level_buffer_pages * HardwareInfo::memory_page_size());
+    }
+  }
+}
+
+std::vector<std::byte>
+perf::MmapBuffer::copy_data() noexcept
+{
+  /// Fore more information about the perf ring buffer see:
+  /// https://docs.kernel.org/userspace-api/perf_ring_buffer.html
+
+  /// Read positions and size of the ringbuffer. Head and tail are offsets of data_start (allocated buffer + offset for
+  /// metadata).
+
+  const auto tail = this->_header->data_tail;
+  const auto head = __atomic_load_n(&this->_header->data_head, __ATOMIC_ACQUIRE);
+  asm volatile("" ::: "memory");
+
+  const auto data_start = std::uintptr_t(this->_header) + HardwareInfo::memory_page_size();
+#ifndef PERFCPP_NO_MMAP_DATA_SIZE /// The "data_size" attribute was added in Linux 4.1.
+  const auto data_size = this->_header->data_size;
+#else
+  const auto data_size = (this->_count_pages - 1U) * HardwareInfo::memory_page_size();
+#endif
+
+  /// Align head and tail to the data size in case one or both are wrapped. Note: Both aligned values are offsets of
+  /// data_start.
+  const auto begin = head % data_size;
+  const auto end = tail % data_size;
+
+  /// Check if there is anything to read and cancel if not.
+  if (begin == end) {
+    return {};
+  }
+
+  /// When the tail is behind the head, we can read straightforward.
+  if (end < begin) {
+    /// Allocate space for the data in the buffer.
+    const auto size = begin - end;
+    auto buffer = std::vector<std::byte>{size};
+
+    /// Copy the data from the tail into the buffer.
+    const auto start = data_start + end;
+    std::memcpy(buffer.data(), reinterpret_cast<std::byte*>(start), size);
+
+    // Update the data_tail to the current head, marking the data as consumed.
+    __sync_synchronize();
+    __atomic_store_n(&this->_header->data_tail, head, __ATOMIC_RELEASE);
+
+    return buffer;
+  }
+
+  /// When the ringbuffer wrapped inbetween, we need to copy the first part from tail to end and the second part from
+  /// start to head.
+  else {
+    /// Allocate space for the data in the buffer.
+    const auto tail_rest_size = data_size - end;
+    const auto size = tail_rest_size + begin;
+    auto buffer = std::vector<std::byte>{size};
+
+    /// Copy the first part: from tail to end.
+    const auto start_tail = data_start + end;
+    std::memcpy(buffer.data(), reinterpret_cast<std::byte*>(start_tail), tail_rest_size);
+
+    /// Copy the second part: from start to head.
+    std::memcpy(buffer.data() + tail_rest_size, reinterpret_cast<std::byte*>(data_start), begin);
+
+    // Update the data_tail to the current head, marking the data as consumed.
+    __sync_synchronize();
+    __atomic_store_n(&this->_header->data_tail, head, __ATOMIC_RELEASE);
+
+    return buffer;
+  }
+}
+
 perf::SampleBuffer::SampleBuffer(const std::int32_t file_descriptor, std::uint64_t number_of_buffer_pages)
 {
   /// Align the number of buffer pages to hold a power of two + one for the header.
@@ -19,27 +120,8 @@ perf::SampleBuffer::SampleBuffer(const std::int32_t file_descriptor, std::uint64
   /// pages are requested as two pages are allocated for live events which do not require draining the buffer.
   const auto is_use_buffer_overflow_handling = number_of_buffer_pages > 2ULL;
 
-  /// Open the mapped buffer; use write mode if needed because a separate thread will copy data into application-level
-  /// buffers.
-  const auto prod_flag = PROT_READ | (is_use_buffer_overflow_handling ? PROT_WRITE : 0x0);
-  this->_mmap_ringbuffer =
-    reinterpret_cast<perf_event_mmap_page*>(::mmap(nullptr,
-                                                   number_of_buffer_pages * HardwareInfo::memory_page_size(),
-                                                   prod_flag,
-                                                   MAP_SHARED,
-                                                   static_cast<std::int32_t>(file_descriptor),
-                                                   0));
-
-  /// Notify the caller if buffer-allocation via ::mmap() failed.
-  if (this->_mmap_ringbuffer == MAP_FAILED) {
-    throw MmapError{ errno };
-  } else if (this->_mmap_ringbuffer == nullptr) {
-    throw MmapNullError{};
-  }
-
-  /// If the ringbuffer was opened successfully, remember the number of pages in order to unmap when closing the
-  /// counter.
-  this->_count_pages = number_of_buffer_pages;
+  /// Open the MMap Buffer.
+  this->_mmap_buffer = MmapBuffer{ file_descriptor, is_use_buffer_overflow_handling, number_of_buffer_pages };
 
   /// Create a thread that copies data from the mmap-ed buffer into a application-level buffer whenever the buffer is
   /// near to overflow. This is only needed when overflowing is handled (which is not true for small buffers of two
@@ -51,15 +133,14 @@ perf::SampleBuffer::SampleBuffer(const std::int32_t file_descriptor, std::uint64
       throw CannotCreateEventFileDescriptor{ file_descriptor };
     }
 
-    /// Allocate some space for application-level buffers.
-    this->_application_buffers.reserve(32U);
+    /// Allocate some space for sample buffers.
+    this->_sample_buffers.reserve(32U);
 
     /// Create the handle thread.
-    this->_poll_and_handle_ringbuffer_overflow_thread = std::thread(&SampleBuffer::poll_for_ringbuffer_overflow,
+    this->_poll_and_handle_ringbuffer_overflow_thread = std::thread(&SampleBuffer::poll_and_handle_ringbuffer_overflow,
+                                                                    this,
                                                                     file_descriptor,
-                                                                    this->_cancel_thread_event_file_descriptor.value(),
-                                                                    this->_mmap_ringbuffer,
-                                                                    std::ref(this->_application_buffers));
+                                                                    this->_cancel_thread_event_file_descriptor.value());
   }
 }
 
@@ -79,74 +160,26 @@ perf::SampleBuffer::~SampleBuffer()
     /// Close the cancel file descriptor.
     ::close(cancel_file_descriptor.value());
   }
-
-  /// Close/un-map the mmap-ed buffer and set number of pages to zero, if any.
-  if (auto* const user_level_buffer = std::exchange(this->_mmap_ringbuffer, nullptr); user_level_buffer != nullptr) {
-    if (const auto user_level_buffer_pages = std::exchange(this->_count_pages, 0ULL); user_level_buffer_pages > 0ULL) {
-      ::munmap(user_level_buffer, user_level_buffer_pages * HardwareInfo::memory_page_size());
-    }
-  }
 }
 
-std::vector<std::pair<std::uintptr_t, std::uintptr_t>>
-perf::SampleBuffer::buffer_ranges() const
+std::vector<std::vector<std::byte>>
+perf::SampleBuffer::consume_sample_data()
 {
-  /// List of (start, end) pointers for different buffers (application-level and mmap-ed ringbuffer).
-  auto iterators = std::vector<std::pair<std::uintptr_t, std::uintptr_t>>{};
-  iterators.reserve(this->_application_buffers.size() + /* space for mmap iterators */ 2U);
+  /// Lock the sample buffers vector. The thread polling for buffer overflows might copy data at the moment (or wants to
+  /// do so while we are reading the data),
+  auto lock_guard = std::lock_guard(this->_buffers_mutex);
 
-  /// Add the data from the buffers containing the data whenever the mmap-ed buffer was near to overflowing.
-  for (const auto& buffer : this->_application_buffers) {
-    iterators.emplace_back(std::uintptr_t(buffer.data()), std::uintptr_t(buffer.data() + buffer.size()) - 1U);
+  /// Move all the data out.
+  auto sample_buffers = std::move(this->_sample_buffers);
+  this->_sample_buffers = std::vector<std::vector<std::byte>>{};
+  this->_sample_buffers.reserve(32U);
+
+  /// Copy the current mmap buffer into the buffer that will be consumed.
+  if (auto buffer = this->_mmap_buffer.copy_data(); !buffer.empty()) {
+    sample_buffers.push_back(std::move(buffer));
   }
 
-  /// Add the mmap-ed buffer.
-  if (this->_mmap_ringbuffer != nullptr) {
-
-    const auto tail = this->_mmap_ringbuffer->data_tail;
-    const auto head = this->_mmap_ringbuffer->data_head;
-
-    asm volatile("" ::: "memory");
-
-    /// Read size and start position.
-#ifndef PERFCPP_NO_MMAP_DATA_SIZE /// The "data_size" attribute was added in Linux 4.1.
-    const auto data_size = this->_mmap_ringbuffer->data_size;
-#else
-    const auto data_size = (this->_count_pages - 1U) * HardwareInfo::memory_page_size();
-#endif
-    const auto data_start = std::uintptr_t(this->_mmap_ringbuffer) + HardwareInfo::memory_page_size();
-
-    /// Align head and tail to the data size in case one or both are wrapped.
-    const auto begin = head % data_size;
-    const auto end = tail % data_size;
-
-    /// If the buffer is empty, we are done.
-    if (begin == end) {
-      return iterators;
-    }
-
-    /// When the tail is behind the head, we can read the samples straightforward.
-    if (end < begin) {
-      const auto start = data_start + end;
-      const auto size = begin - end;
-
-      iterators.emplace_back(start, start + size);
-    }
-
-    /// When the ringbuffer wrapped inbetween, we need to access the first part from tail to end and the second part
-    /// from start to head.
-    else {
-      /// 1st: Add an iterator from tail to buffer end.
-      const auto tail_rest_size = data_size - end;
-      const auto start_tail = data_start + end;
-      iterators.emplace_back(start_tail, start_tail + tail_rest_size);
-
-      /// 2nd: Add an iterator from data start to head.
-      iterators.emplace_back(data_start, begin);
-    }
-  }
-
-  return iterators;
+  return sample_buffers;
 }
 
 std::uint64_t
@@ -161,13 +194,13 @@ perf::SampleBuffer::read_live() const noexcept
   std::uint32_t lock;
 
   do {
-    lock = this->_mmap_ringbuffer->lock;
+    lock = this->_mmap_buffer.lock();
 
     /// Memory fence.
     asm volatile("" ::: "memory");
 
     /// Read the hardware counter identifier.
-    const auto index = this->_mmap_ringbuffer->index;
+    const auto index = this->_mmap_buffer.index();
 
     /// Verify that "rdpmc" is allowed.
     if (index == 0U) {
@@ -175,13 +208,13 @@ perf::SampleBuffer::read_live() const noexcept
     }
 
     /// Offset that must be added to the value.
-    const auto offset = this->_mmap_ringbuffer->offset;
+    const auto offset = this->_mmap_buffer.offset();
 
     /// Read the value.
     value = std::uint64_t(std::int64_t(_rdpmc(index - 1U)) + offset);
 
     asm volatile("" ::: "memory");
-  } while (this->_mmap_ringbuffer->lock != lock);
+  } while (this->_mmap_buffer.lock() != lock);
 
   return value;
 #else
@@ -190,7 +223,8 @@ perf::SampleBuffer::read_live() const noexcept
 }
 
 void
-perf::SampleBuffer::poll_for_ringbuffer_overflow(std::int32_t perf_file_descriptor, std::int32_t cancel_file_descriptor, perf_event_mmap_page* ringbuffer, std::vector<std::vector<std::byte>>& output_buffer)
+perf::SampleBuffer::poll_and_handle_ringbuffer_overflow(std::int32_t perf_file_descriptor,
+                                                        std::int32_t cancel_file_descriptor)
 {
   do {
     /// Initialize the file descriptor set.
@@ -213,83 +247,18 @@ perf::SampleBuffer::poll_for_ringbuffer_overflow(std::int32_t perf_file_descript
       /// If the "normal" perf file descriptor is set, drain the buffer by copying the data into an application-level
       /// buffer.
       if (FD_ISSET(perf_file_descriptor, &file_descriptor_set)) {
-        /// Copy the ringbuffer and append to application buffer if any data available.
-        if (auto buffer = SampleBuffer::copy_perf_ringbuffer(ringbuffer); buffer.has_value()) {
-          output_buffer.push_back(std::move(buffer.value()));
+        /// Lock the sample buffers.
+        auto lock_guard = std::lock_guard(this->_buffers_mutex);
+
+        /// Copy the ringbuffer and append to sample buffers if any data available.
+        if (auto buffer = this->_mmap_buffer.copy_data(); !buffer.empty()) {
+          this->_sample_buffers.push_back(std::move(buffer));
         }
       }
     } else if (ret == -1) {
       return;
     }
   } while (true);
-}
-
-std::optional<std::vector<std::byte>>
-perf::SampleBuffer::copy_perf_ringbuffer(perf_event_mmap_page* ringbuffer)
-{
-  /// Fore more information about the perf ring buffer see:
-  /// https://docs.kernel.org/userspace-api/perf_ring_buffer.html
-
-  /// Read positions and size of the ringbuffer. Head and tail are offsets of data_start (allocated buffer + offset for
-  /// metadata).
-
-  const auto tail = ringbuffer->data_tail;
-  const auto head = __atomic_load_n(&ringbuffer->data_head, __ATOMIC_ACQUIRE);
-  asm volatile("" ::: "memory");
-
-  const auto data_start = std::uintptr_t(ringbuffer) + HardwareInfo::memory_page_size();
-#ifndef PERFCPP_NO_MMAP_DATA_SIZE /// The "data_size" attribute was added in Linux 4.1.
-  const auto data_size = ringbuffer->data_size;
-#else
-  const auto data_size = (this->_count_pages - 1U) * HardwareInfo::memory_page_size();
-#endif
-
-  /// Align head and tail to the data size in case one or both are wrapped. Note: Both aligned values are offsets of
-  /// data_start.
-  const auto begin = head % data_size;
-  const auto end = tail % data_size;
-
-  /// Check if there is anything to read and cancel if not.
-  if (begin == end) {
-    return std::nullopt;
-  }
-
-  /// Application-level buffer where the data from the ringbuffer is copied to.
-  auto buffer = std::vector<std::byte>{};
-
-  /// When the tail is behind the head, we can read straightforward.
-  if (end < begin) {
-    /// Allocate space for the data in the buffer.
-    const auto size = begin - end;
-    buffer.resize(size);
-
-    /// Copy the data from the tail into the buffer.
-    const auto start = data_start + end;
-    std::memcpy(buffer.data(), reinterpret_cast<std::byte*>(start), size);
-  }
-
-  /// When the ringbuffer wrapped inbetween, we need to copy the first part from tail to end and the second part from
-  /// start to head.
-  else {
-    /// Allocate space for the data in the buffer.
-    const auto tail_rest_size = data_size - end;
-    const auto size = tail_rest_size + begin;
-    buffer.resize(size);
-
-    /// Copy the first part: from tail to end.
-    const auto start_tail = data_start + end;
-    std::memcpy(buffer.data(), reinterpret_cast<std::byte*>(start_tail), tail_rest_size);
-
-    /// Copy the second part: from start to head.
-    std::memcpy(buffer.data() + tail_rest_size, reinterpret_cast<std::byte*>(data_start), begin);
-  }
-
-  // Update the data_tail to the current head, marking the data as consumed.
-  __sync_synchronize();
-  __atomic_store_n(&ringbuffer->data_tail, head, __ATOMIC_RELEASE);
-
-  /// Add the buffer to the list of buffers.
-  return buffer;
 }
 
 std::uint64_t
