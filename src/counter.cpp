@@ -281,68 +281,49 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
   if (this->_event_attribute.sample_type > 0U) {
     stream << "        sample_type: ";
 
-    auto is_print_delimiter =
-      Counter::print_type_to_stream(stream, this->_event_attribute.sample_type, PERF_SAMPLE_IP, "IP", true);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_TID, "TID", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_TIME, "TIME", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_ADDR, "ADDR", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_READ, "READ", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_CALLCHAIN, "CALLCHAIN", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_CPU, "CPU", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_PERIOD, "PERIOD", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_STREAM_ID, "STREAM_ID", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_RAW, "RAW", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_BRANCH_STACK, "BRANCH_STACK", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_REGS_USER, "REGS_USER", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_STACK_USER, "REGS_USER", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_STACK_USER, "STACK_USER", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_WEIGHT, "WEIGHT", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_DATA_SRC, "DATA_SRC", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_IDENTIFIER, "IDENTIFIER", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_REGS_INTR, "REGS_INTR", is_print_delimiter);
+    Counter::print_type_to_stream(stream,
+                                  this->_event_attribute.sample_type,
+                                  { { PERF_SAMPLE_IP, "IP" },
+                                    { PERF_SAMPLE_TID, "TID" },
+                                    { PERF_SAMPLE_TIME, "TIME" },
+                                    { PERF_SAMPLE_ADDR, "ADDR" },
+                                    { PERF_SAMPLE_READ, "READ" },
+                                    { PERF_SAMPLE_CALLCHAIN, "CALLCHAIN" },
+                                    { PERF_SAMPLE_CPU, "CPU" },
+                                    { PERF_SAMPLE_PERIOD, "PERIOD" },
+                                    { PERF_SAMPLE_STREAM_ID, "STREAM_ID" },
+                                    { PERF_SAMPLE_RAW, "RAW" },
+                                    { PERF_SAMPLE_BRANCH_STACK, "BRANCH_STACK" },
+                                    { PERF_SAMPLE_REGS_USER, "REGS_USER" },
+                                    { PERF_SAMPLE_STACK_USER, "STACK_USER" },
+                                    { PERF_SAMPLE_WEIGHT, "WEIGHT" },
+                                    { PERF_SAMPLE_DATA_SRC, "DATA_SRC" },
+                                    { PERF_SAMPLE_IDENTIFIER, "IDENTIFIER" },
+                                    { PERF_SAMPLE_REGS_INTR, "REGS_INTR" }
 #ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR /// Sampling for physical address is supported since Linux 4.13
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_PHYS_ADDR, "PHYS_ADDR", is_print_delimiter);
+                                    ,
+                                    { PERF_SAMPLE_PHYS_ADDR, "PHYS_ADDR" }
 #endif
-
 #ifndef PERFCPP_NO_SAMPLE_CGROUP /// Sampling for cgroup is supported since Linux 5.7
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_CGROUP, "CGROUP", is_print_delimiter);
+                                    ,
+                                    { PERF_SAMPLE_CGROUP, "CGROUP" }
 #endif
 
 #ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE /// Sampling for data page size is supported since Linux 5.11
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_DATA_PAGE_SIZE, "DATA_PAGE_SIZE", is_print_delimiter);
+                                    ,
+                                    { PERF_SAMPLE_DATA_PAGE_SIZE, "DATA_PAGE_SIZE" }
 #endif
 
 #ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE /// Sampling for code page size is supported since Linux 5.11
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_CODE_PAGE_SIZE, "PAGE_SIZE", is_print_delimiter);
+                                    ,
+                                    { PERF_SAMPLE_CODE_PAGE_SIZE, "PAGE_SIZE" }
 #endif
 
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling for weight struct is supported since Linux 5.12
-    Counter::print_type_to_stream(
-      stream, this->_event_attribute.sample_type, PERF_SAMPLE_WEIGHT_STRUCT, "WEIGHT_STRUCT", is_print_delimiter);
+                                    ,
+                                    { PERF_SAMPLE_WEIGHT_STRUCT, "WEIGHT_STRUCT" }
 #endif
-
-    stream << "\n";
+                                  });
   }
 
   /// Frequency or Period
@@ -367,79 +348,42 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
   /// Read format
   if (this->_event_attribute.read_format > 0U) {
     stream << "        read_format: ";
-
-    auto is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.read_format, PERF_FORMAT_TOTAL_TIME_ENABLED, "TOTAL_TIME_ENABLED", true);
-    is_print_delimiter = Counter::print_type_to_stream(stream,
-                                                       this->_event_attribute.read_format,
-                                                       PERF_FORMAT_TOTAL_TIME_RUNNING,
-                                                       "TOTAL_TIME_RUNNING",
-                                                       is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.read_format, PERF_FORMAT_ID, "ID", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.read_format, PERF_FORMAT_GROUP, "GROUP", is_print_delimiter);
+    Counter::print_type_to_stream(stream,
+                                  this->_event_attribute.sample_type,
+                                  { { PERF_FORMAT_TOTAL_TIME_ENABLED, "TOTAL_TIME_ENABLED" },
+                                    { PERF_FORMAT_TOTAL_TIME_RUNNING, "TOTAL_TIME_RUNNING" },
+                                    { PERF_FORMAT_ID, "ID" },
+                                    { PERF_FORMAT_GROUP, "GROUP" }
 #ifndef PERFCPP_NO_FORMAT_LOST /// Reading lost values is supported since Linux 6.0
-    Counter::print_type_to_stream(
-      stream, this->_event_attribute.read_format, PERF_FORMAT_LOST, "LOST", is_print_delimiter);
+                                    ,
+                                    { PERF_FORMAT_LOST, "LOST" }
 #endif
-
-    stream << "\n";
+                                  });
   }
 
   /// Branch type
   if (this->_event_attribute.branch_sample_type > 0U) {
     stream << "        branch_sample_type: ";
-
-    auto is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_USER, "BRANCH_USER", true);
-    is_print_delimiter = Counter::print_type_to_stream(stream,
-                                                       this->_event_attribute.branch_sample_type,
-                                                       PERF_SAMPLE_BRANCH_KERNEL,
-                                                       "BRANCH_KERNEL",
-                                                       is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_HV, "BRANCH_HV", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_ANY, "BRANCH_ANY", is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(stream,
-                                                       this->_event_attribute.branch_sample_type,
-                                                       PERF_SAMPLE_BRANCH_ANY_CALL,
-                                                       "BRANCH_ANY_CALL",
-                                                       is_print_delimiter);
+    Counter::print_type_to_stream(stream,
+                                  this->_event_attribute.sample_type,
+                                  { { PERF_SAMPLE_BRANCH_USER, "BRANCH_USER" },
+                                    { PERF_SAMPLE_BRANCH_KERNEL, "BRANCH_KERNEL" },
+                                    { PERF_SAMPLE_BRANCH_HV, "BRANCH_HV" },
+                                    { PERF_SAMPLE_BRANCH_ANY, "BRANCH_ANY" },
+                                    { PERF_SAMPLE_BRANCH_ANY_CALL, "BRANCH_ANY_CALL" },
 #ifndef PERFCPP_NO_SAMPLE_BRANCH_CALL /// Branch type "call" is supported since Linux 4.4
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_CALL, "BRANCH_CALL", is_print_delimiter);
+                                    { PERF_SAMPLE_BRANCH_CALL, "BRANCH_CALL" },
 #endif
-    is_print_delimiter = Counter::print_type_to_stream(stream,
-                                                       this->_event_attribute.branch_sample_type,
-                                                       PERF_SAMPLE_BRANCH_IND_CALL,
-                                                       "BRANCH_IND_CALL",
-                                                       is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(stream,
-                                                       this->_event_attribute.branch_sample_type,
-                                                       PERF_SAMPLE_BRANCH_ANY_RETURN,
-                                                       "BRANCH_ANY_RETURN",
-                                                       is_print_delimiter);
+                                    { PERF_SAMPLE_BRANCH_IND_CALL, "BRANCH_IND_CALL" },
+                                    { PERF_SAMPLE_BRANCH_ANY_RETURN, "BRANCH_ANY_RETURN" },
 #ifndef PERFCPP_NO_SAMPLE_BRANCH_IND_JUMP /// Branch type "indirect jump" is supported since Linux 4.2
-    is_print_delimiter = Counter::print_type_to_stream(stream,
-                                                       this->_event_attribute.branch_sample_type,
-                                                       PERF_SAMPLE_BRANCH_IND_JUMP,
-                                                       "BRANCH_IND_JUMP",
-                                                       is_print_delimiter);
+                                    { PERF_SAMPLE_BRANCH_IND_JUMP, "BRANCH_IND_JUMP" },
 #endif
-    is_print_delimiter = Counter::print_type_to_stream(stream,
-                                                       this->_event_attribute.branch_sample_type,
-                                                       PERF_SAMPLE_BRANCH_ABORT_TX,
-                                                       "BRANCH_ABORT_TX",
-                                                       is_print_delimiter);
-    is_print_delimiter = Counter::print_type_to_stream(
-      stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_IN_TX, "BRANCH_IN_TX", is_print_delimiter);
-    Counter::print_type_to_stream(
-      stream, this->_event_attribute.branch_sample_type, PERF_SAMPLE_BRANCH_NO_TX, "BRANCH_NO_TX", is_print_delimiter);
-
-    stream << "\n";
+                                    { PERF_SAMPLE_BRANCH_ABORT_TX, "BRANCH_ABORT_TX" },
+                                    { PERF_SAMPLE_BRANCH_IN_TX, "BRANCH_IN_TX" },
+                                    { PERF_SAMPLE_BRANCH_NO_TX, "BRANCH_NO_TX" } });
   }
+
 #ifndef PERFCPP_NO_SAMPLE_MAX_STACK /// Max sample stack is supported since Linux 4.8
   if (this->_event_attribute.sample_max_stack > 0U) {
     stream << "        sample_max_stack: " << this->_event_attribute.sample_max_stack << "\n";
@@ -495,21 +439,22 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
   return stream.str();
 }
 
-bool
+void
 perf::Counter::print_type_to_stream(std::stringstream& stream,
                                     const std::uint64_t mask,
-                                    const std::uint64_t type,
-                                    std::string&& name,
-                                    const bool is_need_print_delimiter)
+                                    std::initializer_list<std::pair<std::uint64_t, std::string_view>>&& types)
 {
-  if (mask & type) {
-    if (!is_need_print_delimiter) {
-      stream << " | ";
-    }
+  auto is_first = true;
 
-    stream << name;
-    return false;
+  for (const auto& [type, name] : types) {
+    if (mask & type) {
+      if (!std::exchange(is_first, false)) {
+        stream << " | ";
+      }
+
+      stream << name;
+    }
   }
 
-  return is_need_print_delimiter;
+  stream << "\n";
 }

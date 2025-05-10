@@ -208,16 +208,10 @@ private:
    *
    * @param stream Stream to print the name of the type on.
    * @param mask Given mask to check if the type is set.
-   * @param type Type to test in the mask.
-   * @param name Name to print if the type is set.
-   * @param is_need_print_delimiter Flag if this is the first printed name. If false, a delimiter is printed in front of
-   * the name.
-   * @return True, if this was the first printed type.
+   * @param types List of (type,name) tuples to test in the mask.
    */
-  static bool print_type_to_stream(std::stringstream& stream,
+  static void print_type_to_stream(std::stringstream& stream,
                                    std::uint64_t mask,
-                                   std::uint64_t type,
-                                   std::string&& name,
-                                   bool is_need_print_delimiter);
+                                   std::initializer_list<std::pair<std::uint64_t, std::string_view>>&& types);
 };
 }
