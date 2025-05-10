@@ -3,55 +3,14 @@
 #include "exception.h"
 #include "feature.h"
 #include "sample.h"
+#include "mmap_buffer.h"
 #include <cstdint>
-#include <linux/perf_event.h>
-#include <memory>
 #include <mutex>
 #include <thread>
 #include <utility>
 #include <vector>
 
 namespace perf {
-class MmapBuffer
-{
-public:
-  MmapBuffer() noexcept = default;
-  MmapBuffer(std::int32_t file_descriptor, bool is_write, std::uint64_t count_pages);
-  ~MmapBuffer();
-
-  MmapBuffer(MmapBuffer&& other) noexcept
-    : _header(std::exchange(other._header, nullptr))
-    , _count_pages(std::exchange(other._count_pages, 0ULL))
-  {
-  }
-
-  MmapBuffer& operator=(MmapBuffer&& other) noexcept
-  {
-    _header = std::exchange(other._header, nullptr);
-    _count_pages = std::exchange(other._count_pages, 0ULL);
-    return *this;
-  }
-
-  [[nodiscard]] std::uint32_t lock() const noexcept { return _header->lock; }
-
-  [[nodiscard]] std::uint32_t index() const noexcept { return _header->index; }
-
-  [[nodiscard]] std::int64_t offset() const noexcept { return _header->offset; }
-
-  /**
-   * Copies the data from the buffer and updates the tail to mark it as read.
-   *
-   * @return Data copied from the buffer.
-   */
-  [[nodiscard]] std::vector<std::byte> copy_data() noexcept;
-
-  [[nodiscard]] explicit operator bool() const noexcept { return _header != nullptr; }
-
-private:
-  perf_event_mmap_page* _header{ nullptr };
-  std::uint64_t _count_pages{ 0ULL };
-};
-
 /**
  * The SampleBuffer manages the mmap-ed ringbuffer to store samples and handles overflows, i.e., the buffer is drained
  * and copied to a separate application-level buffer.
@@ -93,7 +52,7 @@ public:
    *
    * @return The current value of the counter.
    */
-  [[nodiscard]] std::uint64_t read_live() const noexcept;
+  [[nodiscard]] std::uint64_t read_live() const noexcept { return _mmap_buffer.read_performance_monitoring_counter(); }
 
   /**
    * Polls on the given file descriptor in order to drain the mmap-ed buffer.

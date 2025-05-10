@@ -35,6 +35,7 @@ set(PERF_CPP_SRC
     src/sampler.cpp
     src/sample_buffer.cpp
     src/table.cpp
+    src/mmap_buffer.cpp
     src/analyzer/memory_access.cpp
 )
 if (BUILD_LIB_SHARED)

@@ -180,7 +180,7 @@ perf::Group::value_for_id(const CounterValues<Group::MAX_MEMBERS>& counter_value
 }
 
 std::vector<std::vector<std::byte>>
-perf::Group::sample_buffer_data()
+perf::Group::consume_samples()
 {
   /// Check the first two members. Normally, the first member will control the sample buffer; however, on some Intel
   /// architectures, an auxiliary counter is needed before the "real" counter, i.e., the "real" counter is the second

@@ -342,7 +342,7 @@ perf::Sampler::result(const bool sort_by_time)
   for (auto& sample_counter : this->_sample_counter) {
 
     /// Get all buffers: the current mmap-ed ringbuffer and the application-level buffers used to copy the ringbuffer to
-    const auto buffer_ranges = sample_counter.group().sample_buffer_data();
+    const auto buffer_ranges = sample_counter.group().consume_samples();
 
     /// Read samples from all the buffers (mmap-ed perf buffer and application-level buffers).
     for (const auto& buffer : buffer_ranges) {
@@ -952,25 +952,23 @@ perf::Sampler::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, perf::Sa
     }
 
     /// Type of the instruction (prefetch, return, or branch) and type of the branch–if it is one.
-    if (!sample.instruction_execution().type().has_value()) {
-      if (execution_parser.is_software_prefetch()) {
-        sample.data_access().type(DataAccess::AccessType::SoftwarePrefetch);
-      } else if (execution_parser.is_return_operation()) {
-        sample.instruction_execution().type(InstructionExecution::InstructionType::Return);
-      } else if (execution_parser.is_branch_taken_operation() || execution_parser.is_branch_mispredicted_operation() ||
-                 execution_parser.is_branch_retired_operation() || execution_parser.is_branch_fuse()) {
-        sample.instruction_execution().type(InstructionExecution::InstructionType::Branch);
+    if (execution_parser.is_software_prefetch()) {
+      sample.data_access().type(DataAccess::AccessType::SoftwarePrefetch);
+    } else if (execution_parser.is_return_operation()) {
+      sample.instruction_execution().type(InstructionExecution::InstructionType::Return);
+    } else if (execution_parser.is_branch_taken_operation() || execution_parser.is_branch_mispredicted_operation() ||
+               execution_parser.is_branch_retired_operation() || execution_parser.is_branch_fuse()) {
+      sample.instruction_execution().type(InstructionExecution::InstructionType::Branch);
 
-        /// If the instruction is a branch, set the branch type.
-        if (execution_parser.is_branch_taken_operation()) {
-          sample.instruction_execution().branch_type(InstructionExecution::BranchType::Taken);
-        } else if (execution_parser.is_branch_mispredicted_operation()) {
-          sample.instruction_execution().branch_type(InstructionExecution::BranchType::Mispredicted);
-        } else if (execution_parser.is_branch_retired_operation()) {
-          sample.instruction_execution().branch_type(InstructionExecution::BranchType::Retired);
-        } else if (execution_parser.is_branch_fuse()) {
-          sample.instruction_execution().branch_type(InstructionExecution::BranchType::Fuse);
-        }
+      /// If the instruction is a branch, set the branch type.
+      if (execution_parser.is_branch_taken_operation()) {
+        sample.instruction_execution().branch_type(InstructionExecution::BranchType::Taken);
+      } else if (execution_parser.is_branch_mispredicted_operation()) {
+        sample.instruction_execution().branch_type(InstructionExecution::BranchType::Mispredicted);
+      } else if (execution_parser.is_branch_retired_operation()) {
+        sample.instruction_execution().branch_type(InstructionExecution::BranchType::Retired);
+      } else if (execution_parser.is_branch_fuse()) {
+        sample.instruction_execution().branch_type(InstructionExecution::BranchType::Fuse);
       }
     }
 
