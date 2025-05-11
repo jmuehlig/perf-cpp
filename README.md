@@ -1,7 +1,5 @@
 # perf-cpp: Effortless Hardware Performance Monitoring for C++ Applications
-<p style="text-align:center">
-  [Examples](#examples) | [How to Build](#building) | [Documentation](#documentation) | [System Requirements](#system-requirements)
-</p>
+[Examples](#examples) | [How to Build](#building) | [Documentation](#documentation) | [System Requirements](#system-requirements)
 
 **perf-cpp** enables access to *Performance Monitoring Units* and *Performance Counters* directly from C++ applications. 
 
