@@ -225,6 +225,17 @@ TEST_CASE("calculating", "[BranchMissRatio]")
 
 TEST_CASE("calculating", "[FormulaMetric]")
 {
+  SECTION("parsing")
+  {
+    REQUIRE_THROWS(perf::FormulaMetric{ "test", "('event-a'+'event-b'" });
+    REQUIRE_THROWS(perf::FormulaMetric{ "test", "(('event-a'+'event-b')" });
+    REQUIRE_THROWS(perf::FormulaMetric{ "test", "'event-a'+'event-b" });
+    REQUIRE_THROWS(perf::FormulaMetric{ "test", "('event-a'+'event-b)" });
+    REQUIRE_THROWS(perf::FormulaMetric{ "test", "()'event-a'+'event-b)" });
+
+    REQUIRE_NOTHROW(perf::FormulaMetric{ "test", "('event-a'+'event-b')" });
+  }
+
   auto formula_metric = perf::FormulaMetric{ "any-formula", "('event-a'*'event-b')/2+13.37+'event-c'" };
 
   SECTION("empty result")

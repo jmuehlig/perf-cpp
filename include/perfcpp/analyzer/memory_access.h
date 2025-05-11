@@ -45,42 +45,76 @@ private:
   class MemberStatistic
   {
   public:
+    class Group
+    {
+    public:
+      Group() noexcept = default;
+      ~Group() noexcept = default;
+
+      [[nodiscard]] std::uint64_t count() const noexcept { return _count; }
+      [[nodiscard]] std::uint64_t cache_latency() const noexcept { return _count > 0U ? _cache_latency / _count : 0U; }
+      [[nodiscard]] std::uint64_t instr_latency() const noexcept { return _count > 0U ? _instr_latency / _count : 0U; }
+      [[nodiscard]] std::uint64_t dtlb_latency() const noexcept { return _count > 0U ? _dtlb_latency / _count : 0U; }
+      [[nodiscard]] std::uint64_t count_l1_hits() const noexcept { return _count_l1_hits; }
+      [[nodiscard]] std::uint64_t count_mhb_hits() const noexcept { return _count_mhb_hits; }
+      [[nodiscard]] std::uint64_t count_l2_hits() const noexcept { return _count_l2_hits; }
+      [[nodiscard]] std::uint64_t count_l3_hits() const noexcept { return _count_l3_hits; }
+      [[nodiscard]] std::uint64_t count_local_ram_hits() const noexcept { return _count_local_ram_hits; }
+      [[nodiscard]] std::uint64_t count_remote_ram_hits() const noexcept { return _count_remote_ram_hits; }
+      [[nodiscard]] std::uint64_t dtlb_hits() const noexcept { return _dtlb_hits; }
+      [[nodiscard]] std::uint64_t stlb_hits() const noexcept { return _stlb_hits; }
+      [[nodiscard]] std::uint64_t stlb_misses() const noexcept { return _stlb_misses; }
+
+      Group& operator+=(const Sample& sample) noexcept
+      {
+        const auto data_src = sample.data_access().source().value();
+        ++_count;
+
+        /// Instruction type and latency.
+        _count_l1_hits += static_cast<std::uint64_t>(data_src.is_l1_hit());
+        _count_mhb_hits += static_cast<std::uint64_t>(data_src.is_mhb_hit().value_or(false));
+        _count_l2_hits += static_cast<std::uint64_t>(data_src.is_l2_hit());
+        _count_l3_hits += static_cast<std::uint64_t>(data_src.is_l3_hit());
+        _count_local_ram_hits += static_cast<std::uint64_t>(data_src.is_memory_hit() && !data_src.is_remote());
+        _count_remote_ram_hits += static_cast<std::uint64_t>(data_src.is_memory_hit() && data_src.is_remote());
+
+        if (HardwareInfo::is_intel()) {
+          _cache_latency += sample.data_access().latency().cache_access().value_or(0U);
+          _instr_latency +=
+            sample.instruction_execution().latency().instruction_retirement().value_or(0U);
+        } else if (HardwareInfo::is_amd()) {
+          _cache_latency += sample.data_access().latency().cache_miss().value_or(0U);
+          _instr_latency +=
+            sample.instruction_execution().latency().uop_tag_to_completion().value_or(0U);
+          _dtlb_latency += sample.data_access().latency().dtlb_refill().value_or(0U);
+        }
+
+        _dtlb_hits += static_cast<std::uint64_t>(sample.data_access().tlb().is_l1_hit().value_or(false));
+        _stlb_hits += static_cast<std::uint64_t>(sample.data_access().tlb().is_l2_hit().value_or(false));
+        _stlb_misses += static_cast<std::uint64_t>(!sample.data_access().tlb().is_l1_hit().value_or(true) &&
+                                                   !sample.data_access().tlb().is_l2_hit().value_or(true));
+
+      return *this;
+    }
+
+    private:
+      std::uint64_t _count{ 0ULL };
+      std::uint64_t _cache_latency{ 0ULL };
+      std::uint64_t _instr_latency{ 0ULL };
+      std::uint64_t _dtlb_latency{ 0ULL };
+      std::uint64_t _count_l1_hits{ 0ULL };
+      std::uint64_t _count_mhb_hits{ 0ULL };
+      std::uint64_t _count_l2_hits{ 0ULL };
+      std::uint64_t _count_l3_hits{ 0ULL };
+      std::uint64_t _count_local_ram_hits{ 0ULL };
+      std::uint64_t _count_remote_ram_hits{ 0ULL };
+      std::uint64_t _dtlb_hits{ 0ULL };
+      std::uint64_t _stlb_hits{ 0ULL };
+      std::uint64_t _stlb_misses{ 0ULL };
+    };
+
     MemberStatistic() noexcept = default;
     ~MemberStatistic() noexcept = default;
-
-    [[nodiscard]] std::uint64_t loads() const noexcept { return _count_loads; }
-    [[nodiscard]] std::uint64_t load_cache_latency() const noexcept
-    {
-      return _count_loads > 0ULL ? _sum_load_cache_latency / _count_loads : 0ULL;
-    }
-    [[nodiscard]] std::uint64_t load_instruction_latency() const noexcept
-    {
-      return _count_loads > 0ULL ? _sum_load_instruction_latency / _count_loads : 0ULL;
-    }
-    [[nodiscard]] std::uint64_t stores() const noexcept { return _count_stores; }
-    [[nodiscard]] std::uint64_t store_cache_latency() const noexcept
-    {
-      return _count_stores > 0ULL ? _sum_store_cache_latency / _count_stores : 0ULL;
-    }
-    [[nodiscard]] std::uint64_t store_instruction_latency() const noexcept
-    {
-      return _count_stores > 0ULL ? _sum_store_instruction_latency / _count_stores : 0ULL;
-    }
-    [[nodiscard]] std::uint64_t l1_hits() const noexcept { return _count_l1_hits; }
-    [[nodiscard]] std::uint64_t lfb_hits() const noexcept { return _count_mhb_hits; }
-    [[nodiscard]] std::uint64_t l2_hits() const noexcept { return _count_l2_hits; }
-    [[nodiscard]] std::uint64_t l3_hits() const noexcept { return _count_l3_hits; }
-    [[nodiscard]] std::uint64_t l4_hits() const noexcept { return _count_l4_hits; }
-    [[nodiscard]] std::uint64_t local_ram_hits() const noexcept { return _count_local_ram_hits; }
-    [[nodiscard]] std::uint64_t remote_ram_hits() const noexcept { return _count_remote_ram_hits; }
-    [[nodiscard]] std::uint64_t dtlb_hits() const noexcept { return _dtlb_hits; }
-    [[nodiscard]] std::uint64_t stlb_hits() const noexcept { return _stlb_hits; }
-    [[nodiscard]] std::uint64_t stlb_misses() const noexcept { return _stlb_misses; }
-    [[nodiscard]] std::uint64_t snoop_hits() const noexcept { return _snoop_hits; }
-    [[nodiscard]] std::uint64_t snoop_misses() const noexcept { return _snoop_misses; }
-    [[nodiscard]] std::uint64_t snoop_misses_modified() const noexcept { return _snoop_hits_modified; }
-    [[nodiscard]] std::uint64_t snoop_forward() const noexcept { return _snoop_forward; }
-    [[nodiscard]] std::uint64_t snoop_peer() const noexcept { return _snoop_peer; }
 
     MemberStatistic& operator+=(const Sample& sample) noexcept
     {
@@ -88,75 +122,32 @@ private:
         return *this;
       }
 
-      const auto data_src = sample.data_access().source().value();
+      if (!sample.data_access().type().has_value()) {
+        return *this;
+      }
 
-      /// Instruction type and latency.
-      if (const auto instruction_type = sample.instruction_execution().type(); instruction_type.has_value()) {
-
-        _count_loads += static_cast<std::uint64_t>(sample.data_access().is_load());
-        _count_stores += static_cast<std::uint64_t>(sample.data_access().is_store());
-
-        if (sample.data_access().is_load()) {
-          _count_l1_hits += static_cast<std::uint64_t>(data_src.is_l1_hit());
-          _count_mhb_hits += static_cast<std::uint64_t>(data_src.is_mhb_hit().value_or(false));
-          _count_l2_hits += static_cast<std::uint64_t>(data_src.is_l2_hit());
-          _count_l3_hits += static_cast<std::uint64_t>(data_src.is_l3_hit());
-          _count_l4_hits += static_cast<std::uint64_t>(data_src.is_l4_hit());
-          _count_local_ram_hits += static_cast<std::uint64_t>(data_src.is_memory_hit() && !data_src.is_remote());
-          _count_remote_ram_hits += static_cast<std::uint64_t>(data_src.is_memory_hit() && data_src.is_remote());
-
-          if (HardwareInfo::is_intel()) {
-            _sum_load_cache_latency += sample.data_access().latency().data_access().value_or(0U);
-            _sum_load_instruction_latency +=
-              sample.instruction_execution().latency().instruction_retirement().value_or(0U);
-          } else if (HardwareInfo::is_amd()) {
-            _sum_load_cache_latency += sample.data_access().latency().cache_miss().value_or(0U);
-            _sum_load_instruction_latency +=
-              sample.instruction_execution().latency().uop_tag_to_completion().value_or(0U);
-          }
-        } else if (sample.data_access().is_store()) {
-          if (HardwareInfo::is_intel()) {
-            _sum_store_cache_latency += sample.data_access().latency().data_access().value_or(0U);
-            _sum_store_instruction_latency +=
-              sample.instruction_execution().latency().instruction_retirement().value_or(0U);
-          } else if (HardwareInfo::is_amd()) {
-            _sum_store_cache_latency += sample.data_access().latency().cache_miss().value_or(0U);
-            _sum_store_instruction_latency +=
-              sample.instruction_execution().latency().uop_tag_to_completion().value_or(0U);
-          }
-        }
-
-        _dtlb_hits += static_cast<std::uint64_t>(sample.data_access().tlb().is_l1_hit().value_or(false));
-        _stlb_hits += static_cast<std::uint64_t>(sample.data_access().tlb().is_l2_hit().value_or(false));
-        _stlb_misses += static_cast<std::uint64_t>(!sample.data_access().tlb().is_l1_hit().value_or(true) &&
-                                                   !sample.data_access().tlb().is_l2_hit().value_or(true));
+      if (sample.data_access().is_load()) {
+        _loads += sample;
+      } else if (sample.data_access().is_software_prefetch()) {
+        _software_prefetches += sample;
+      } else if (sample.data_access().is_store()) {
+        _stores += sample;
       }
 
       return *this;
     }
 
+    [[nodiscard]] const Group& loads() const noexcept { return _loads; }
+    [[nodiscard]] const Group& software_prefetches() const noexcept { return _software_prefetches; }
+    [[nodiscard]] const Group& stores() const noexcept { return _stores; }
+
+    [[nodiscard]] bool has_software_prefetch() const noexcept { return _software_prefetches.count() > 0U; }
+    [[nodiscard]] bool has_stores() const noexcept { return _stores.count() > 0U; }
+
   private:
-    std::uint64_t _count_loads{ 0ULL };
-    std::uint64_t _sum_load_cache_latency{ 0ULL };
-    std::uint64_t _sum_load_instruction_latency{ 0ULL };
-    std::uint64_t _count_stores{ 0ULL };
-    std::uint64_t _sum_store_cache_latency{ 0ULL };
-    std::uint64_t _sum_store_instruction_latency{ 0ULL };
-    std::uint64_t _count_l1_hits{ 0ULL };
-    std::uint64_t _count_mhb_hits{ 0ULL };
-    std::uint64_t _count_l2_hits{ 0ULL };
-    std::uint64_t _count_l3_hits{ 0ULL };
-    std::uint64_t _count_l4_hits{ 0ULL };
-    std::uint64_t _count_local_ram_hits{ 0ULL };
-    std::uint64_t _count_remote_ram_hits{ 0ULL };
-    std::uint64_t _dtlb_hits{ 0ULL };
-    std::uint64_t _stlb_hits{ 0ULL };
-    std::uint64_t _stlb_misses{ 0ULL };
-    std::uint64_t _snoop_hits{ 0ULL };
-    std::uint64_t _snoop_misses{ 0ULL };
-    std::uint64_t _snoop_hits_modified{ 0ULL };
-    std::uint64_t _snoop_forward{ 0ULL };
-    std::uint64_t _snoop_peer{ 0ULL };
+    Group _loads;
+    Group _software_prefetches;
+    Group _stores;
   };
 };
 

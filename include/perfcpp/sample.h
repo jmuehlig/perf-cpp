@@ -247,7 +247,7 @@ public:
   /*
    * @return An optional containing the logical memory address if available.
    */
-  [[deprecated("Will be removed in v0.12. Use data_access().logical_memory_address() instead.")]] [[nodiscard]] std::
+  [[deprecated("Will be removed in v0.12. Use cache_access().logical_memory_address() instead.")]] [[nodiscard]] std::
     optional<std::uintptr_t>
     logical_memory_address() const noexcept
   {
@@ -257,7 +257,7 @@ public:
   /*
    * @return An optional containing the physical memory address if available.
    */
-  [[deprecated("Will be removed in v0.12. Use data_access().physical_memory_address() instead.")]] [[nodiscard]] std::
+  [[deprecated("Will be removed in v0.12. Use cache_access().physical_memory_address() instead.")]] [[nodiscard]] std::
     optional<std::uintptr_t>
     physical_memory_address() const noexcept
   {
@@ -317,11 +317,11 @@ public:
   /*
    * @return An optional containing the weight if available.
    */
-  [[deprecated("Will be removed in v0.12. Use instruction_execution().latency() and data_access().latency() "
+  [[deprecated("Will be removed in v0.12. Use instruction_execution().latency() and cache_access().latency() "
                "instead.")]] [[nodiscard]] std::optional<Weight>
   weight() const noexcept
   {
-    auto cache_latency = _data_access.latency().data_access();
+    auto cache_latency = _data_access.latency().cache_access();
     if (!cache_latency.has_value()) {
       cache_latency = _data_access.latency().cache_miss();
     }
@@ -341,11 +341,11 @@ public:
   /*
    * @return An optional containing the latency if available.
    */
-  [[deprecated("Will be removed in v0.12. Use instruction_execution().latency() and data_access().latency() "
+  [[deprecated("Will be removed in v0.12. Use instruction_execution().latency() and cache_access().latency() "
                "instead.")]] [[nodiscard]] std::optional<Latency>
   latency() const noexcept
   {
-    auto cache_latency = _data_access.latency().data_access();
+    auto cache_latency = _data_access.latency().cache_access();
     if (!cache_latency.has_value()) {
       cache_latency = _data_access.latency().cache_miss();
     }
@@ -415,7 +415,7 @@ public:
    * @return An optional containing the data page size if available.
    */
   [[deprecated(
-    "Will be removed in v0.12. Use data_access().page_size() instead.")]] [[nodiscard]] std::optional<std::uint64_t>
+    "Will be removed in v0.12. Use cache_access().page_size() instead.")]] [[nodiscard]] std::optional<std::uint64_t>
   data_page_size() const noexcept
   {
     return _data_access.page_size();
@@ -454,7 +454,7 @@ public:
   /*
    * @return True if the instruction pointer is exact; otherwise, false.
    */
-  [[deprecated("Will be removed in v0.12. Use data_access() instead.")]] [[nodiscard]] std::optional<DataSource>
+  [[deprecated("Will be removed in v0.12. Use cache_access() instead.")]] [[nodiscard]] std::optional<DataSource>
   data_src() const noexcept
   {
     return _data_source;

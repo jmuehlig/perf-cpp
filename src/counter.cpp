@@ -87,10 +87,8 @@ perf::Counter::open(const perf::Config& config,
   /// The group leader additionally records the running time.
   if (is_read_format) {
     this->_event_attribute.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
-
-    if (is_group_leader) {
-      this->_event_attribute.read_format |= PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING;
-    }
+    this->_event_attribute.read_format |=
+      static_cast<std::uint64_t>(is_group_leader) * (PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING);
   }
 
   /// Transform the CPU id to the format expected by the perf subsystem – which is -1 for any CPU (but perf-cpp uses an

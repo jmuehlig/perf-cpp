@@ -351,7 +351,7 @@ Provides information about memory, cache, and TLB behavior during data access.
 All fields can be accessed via `record.data_access()`.  
 Note that most fields are returned as `std::optional`.
 
-> [!NOTE]
+> [!IMPORTANT]
 > Sampling for memory accesses (memory address, cache information, etc.) is only supported using [**AMD's IBS Op PMU**](#ibs-op-pmu) and [**Intel PEBS `mem-load`/`mem-store` events**](#intel-processor-event-based-sampling).
 
 | Name                        | Description                                                                                       | How to record?                                   | How to access?                                   | Type                                      |
@@ -395,11 +395,11 @@ Note that `record.data_access().source()` returns an `std::optional`.
 Provides latency measurements associated with data access operations.  
 All fields are returned as `std::optional`.
 
-| Name            | Description                                                                                             | How to record?                   | How to access?                                 | Type                           |
-|-----------------|---------------------------------------------------------------------------------------------------------|----------------------------------|------------------------------------------------|--------------------------------|
-| **Data Access** | The latency (in cycles) for completing the data access (**Intel** only).                                | `sampler.values().latency(true)` | `record.data_access().latency().data_access()` | `std::optional<std::uint32_t>` |
-| **Cache Miss**  | The latency (in cycles) caused by an L1d cache miss ([**AMD's Op PMU**](#ibs-op-pmu) only).             | `sampler.values().latency(true)` | `record.data_access().latency().cache_miss()`  | `std::optional<std::uint32_t>` |
-| **dTLB Refill** | The latency (in cycles) for refilling the data TLB after a miss ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().raw(true)`     | `record.data_access().latency().dtlb_refill()` | `std::optional<std::uint32_t>` |
+| Name             | Description                                                                                                                          | How to record?                   | How to access?                                  | Type                           |
+|------------------|--------------------------------------------------------------------------------------------------------------------------------------|----------------------------------|-------------------------------------------------|--------------------------------|
+| **Cache Access** | The latency (in cycles) for completing the data access ([**Intel** `mem-load`](#intel-processor-event-based-sampling) trigger only). | `sampler.values().latency(true)` | `record.data_access().latency().cache_access()` | `std::optional<std::uint32_t>` |
+| **Cache Miss**   | The latency (in cycles) caused by an L1d cache miss ([**AMD's Op PMU**](#ibs-op-pmu) only).                                          | `sampler.values().latency(true)` | `record.data_access().latency().cache_miss()`   | `std::optional<std::uint32_t>` |
+| **dTLB Refill**  | The latency (in cycles) for refilling the data TLB after a miss ([**AMD's Op PMU**](#ibs-op-pmu) only).                              | `sampler.values().raw(true)`     | `record.data_access().latency().dtlb_refill()`  | `std::optional<std::uint32_t>` |
 
 #### Data TLB
 Provides information about dTLB and STLB access behavior.  
@@ -412,7 +412,7 @@ All fields are returned as `std::optional`.
 | **L1 Page Size** | The page size of the translation associated with the dTLB hit ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().raw(true)`         | `record.data_access().tlb().l1_page_size()` | `std::optional<std::uint64_t>` |
 | **L2 Page Size** | The page size of the translation associated with the STLB hit ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().raw(true)`         | `record.data_access().tlb().l2_page_size()` | `std::optional<std::uint64_t>` |
 
-> [!NOTE]  
+> [!IMPORTANT]  
 > **Intel** systems do not distinguish between L1 and L2 TLB hits.  
 > If a TLB hit occurs, both `is_l1_hit()` and `is_l2_hit()` will return `true`.
 

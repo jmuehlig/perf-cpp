@@ -498,7 +498,7 @@ perf::Sampler::read_sample_event(perf::SampleBuffer::Entry entry, const SampleCo
     if (HardwareInfo::is_intel()) {
       /// Intel reports the instruction latency before th 12th generation–and cache access latency from that.
       if (HardwareInfo::is_intel_12th_generation_or_newer()) {
-        sample.data_access().latency().data_access(weight);
+        sample.data_access().latency().cache_access(weight);
       } else {
         sample.instruction_execution().latency().instruction_retirement(weight);
       }
@@ -516,7 +516,7 @@ perf::Sampler::read_sample_event(perf::SampleBuffer::Entry entry, const SampleCo
     /// Parse the weight into latency information, depending on the underlying hardware.
     if (HardwareInfo::is_intel()) {
       if (HardwareInfo::is_intel_12th_generation_or_newer()) {
-        sample.data_access().latency().data_access(weight.var1_dw);
+        sample.data_access().latency().cache_access(weight.var1_dw);
         sample.instruction_execution().latency().instruction_retirement(weight.var2_w);
       } else {
         sample.instruction_execution().latency().instruction_retirement(weight.var1_dw);
@@ -540,6 +540,21 @@ perf::Sampler::read_sample_event(perf::SampleBuffer::Entry entry, const SampleCo
         sample.instruction_execution().type(InstructionExecution::InstructionType::DataAccess);
       }
       sample.data_access().type(access_type.value());
+
+      /// On Intel hardware, store instructions do only provide instruction latency, not cache access latency.
+      /// However, when parsing the latency information, we do not know if the instruction was a store.
+      /// Consequently, we fix it here: If the instruction was a store, we move the cache latency information towards
+      /// the instruction latency.
+      if (HardwareInfo::is_intel() && access_type.value() == DataAccess::AccessType::Store &&
+          sample.data_access().latency().cache_access().has_value() &&
+          !sample.instruction_execution().latency().instruction_retirement().has_value()) {
+        /// Set instruction latency to data access latency.
+        sample.instruction_execution().latency().instruction_retirement(
+          sample.data_access().latency().cache_access().value());
+
+        /// Remove cache access latency.
+        sample.data_access().latency().cache_access(std::nullopt);
+      }
     }
 
     /// Set data source.

@@ -266,9 +266,15 @@ public:
   public:
     /**
      * Set total latency for accessing data.
-     * @param data_access Latency in cycles.
+     * @param cache_access Latency in cycles.
      */
-    void data_access(const std::uint32_t data_access) noexcept { _data_access = data_access; }
+    void cache_access(const std::uint32_t cache_access) noexcept { _cache_access = cache_access; }
+
+    /**
+     * Set total latency for accessing data.
+     * @param cache_access Latency in cycles.
+     */
+    void cache_access(const std::optional<std::uint32_t> cache_access) noexcept { _cache_access = cache_access; }
 
     /**
      * Set latency specifically caused by a cache miss.
@@ -285,7 +291,7 @@ public:
     /**
      * @return Latency of the data access in cycles.
      */
-    [[nodiscard]] std::optional<std::uint32_t> data_access() const noexcept { return _data_access; }
+    [[nodiscard]] std::optional<std::uint32_t> cache_access() const noexcept { return _cache_access; }
 
     /**
      * @return Latency attributed to a cache miss.
@@ -298,7 +304,7 @@ public:
     [[nodiscard]] std::optional<std::uint32_t> dtlb_refill() const noexcept { return _dtlb_refill; }
 
   private:
-    std::optional<std::uint32_t> _data_access{ std::nullopt };
+    std::optional<std::uint32_t> _cache_access{ std::nullopt };
     std::optional<std::uint32_t> _cache_miss{ std::nullopt };
     std::optional<std::uint32_t> _dtlb_refill{ std::nullopt };
   };
