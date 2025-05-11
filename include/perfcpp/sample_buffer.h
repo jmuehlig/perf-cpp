@@ -2,8 +2,8 @@
 
 #include "exception.h"
 #include "feature.h"
-#include "sample.h"
 #include "mmap_buffer.h"
+#include "sample.h"
 #include <cstdint>
 #include <mutex>
 #include <thread>
@@ -18,7 +18,7 @@ namespace perf {
 class SampleBuffer
 {
 public:
-  SampleBuffer(std::int32_t file_descriptor, std::uint64_t number_of_buffer_pages);
+  SampleBuffer(std::int32_t file_descriptor, std::uint64_t count_buffer_pages);
 
   SampleBuffer(SampleBuffer&& other) noexcept
     : _mmap_buffer(std::move(other._mmap_buffer))

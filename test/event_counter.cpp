@@ -44,7 +44,7 @@ TEST_CASE("counting", "[EventCounter]")
     config.max_groups(2U);
     auto event_counter = perf::EventCounter{ counter_definition, config };
 
-    event_counter.add(std::vector<std::string>{"instructions", "cycles"});
+    event_counter.add(std::vector<std::string>{ "instructions", "cycles" });
 
     event_counter.start();
     execute_workload();
@@ -64,7 +64,7 @@ TEST_CASE("counting", "[EventCounter]")
     config.max_groups(2U);
     auto event_counter = perf::EventCounter{ counter_definition, config };
 
-    REQUIRE_THROWS(event_counter.add({"instructions", "cycles", "branches"}));
+    REQUIRE_THROWS(event_counter.add({ "instructions", "cycles", "branches" }));
   }
 
   SECTION("same hardware counter")
@@ -72,7 +72,7 @@ TEST_CASE("counting", "[EventCounter]")
     auto counter_definition = perf::CounterDefinition{};
     auto event_counter = perf::EventCounter{ counter_definition };
 
-    event_counter.add(std::vector<std::string>{"instructions", "cycles"}, perf::EventCounter::Schedule::Group);
+    event_counter.add(std::vector<std::string>{ "instructions", "cycles" }, perf::EventCounter::Schedule::Group);
 
     event_counter.start();
     execute_workload();
@@ -89,7 +89,7 @@ TEST_CASE("counting", "[EventCounter]")
     auto counter_definition = perf::CounterDefinition{};
     auto event_counter = perf::EventCounter{ counter_definition };
 
-    event_counter.add(std::vector<std::string>{"instructions", "cycles"}, perf::EventCounter::Schedule::Separate);
+    event_counter.add(std::vector<std::string>{ "instructions", "cycles" }, perf::EventCounter::Schedule::Separate);
 
     event_counter.start();
     execute_workload();

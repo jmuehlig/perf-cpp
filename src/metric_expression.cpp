@@ -11,13 +11,13 @@ perf::Token::to_string() const
       return std::string{ "identifier(" }.append(_text.value()).append(")");
     case Type::Operator:
       switch (this->_operator.value()) {
-        case Operator::Plus:
+        case MetricOperator::Plus:
           return "+";
-        case Operator::Minus:
+        case MetricOperator::Minus:
           return "-";
-        case Operator::Times:
+        case MetricOperator::Times:
           return "*";
-        case Operator::Divide:
+        case MetricOperator::Divide:
           return "/";
         default:
           return "<unknown operator>";
@@ -53,7 +53,9 @@ perf::Tokenizer::tokenize() const
     /// Check if the next character is a constant number (obviously a digit indicates a number – and so does a ".").
     /// If so, return a number token.
     if (std::isdigit(current_char) || current_char == '.') {
-      output_queue.push(Tokenizer::read_constant(position));
+      auto [constant_token, new_position] = Tokenizer::read_constant(position);
+      output_queue.push(std::move(constant_token));
+      position = new_position;
       continue;
     }
 
@@ -61,7 +63,9 @@ perf::Tokenizer::tokenize() const
     /// Additionally, identifiers can start with single quotes to escape, for example, - operators as part of the
     /// identifier (e.g., the hardware counter "L1-cache-miss"). If so, return an identifier token.
     if (std::isalpha(current_char) || current_char == '\'') {
-      output_queue.push(Tokenizer::read_identifier(position));
+      auto [identifier_token, new_position] = Tokenizer::read_identifier(position);
+      output_queue.push(std::move(identifier_token));
+      position = new_position;
       continue;
     }
 
@@ -104,11 +108,9 @@ perf::Tokenizer::tokenize() const
   return output_queue;
 }
 
-perf::Token
-perf::Tokenizer::read_constant(std::size_t& position) const
+std::pair<perf::Token, std::size_t>
+perf::Tokenizer::read_constant(const std::size_t begin) const
 {
-  const auto begin = position;
-
   /// We know that the current character (this->_position) is a digit; otherwise, this function wouldn't have been
   /// called.
   auto count = 1ULL;
@@ -124,24 +126,26 @@ perf::Tokenizer::read_constant(std::size_t& position) const
     ++count;
   }
 
-  position += count;
-  return Token{ std::stod(_input.substr(begin, count)) };
+  return std::make_pair(Token{ std::stod(_input.substr(begin, count)) }, begin + count);
 }
 
-perf::Token
-perf::Tokenizer::read_identifier(std::size_t& position) const
+std::pair<perf::Token, std::size_t>
+perf::Tokenizer::read_identifier(std::size_t begin) const
 {
-  const auto begin = position;
-
   /// We know that the current character (this->_position) is alphabetical; otherwise, this function wouldn't have been
   /// called.
   auto count = 1ULL;
 
   /// If the identifier starts with a single quote, we scan until we find the "ending" single quote.
-  const auto starts_with_single_quote = this->_input[begin] == '\'';
-  if (starts_with_single_quote) {
+  const auto is_start_with_quote = this->_input[begin] == '\'';
+  if (is_start_with_quote) {
     while ((begin + count) < this->_input.size() && this->_input[begin + count] != '\'') {
       ++count;
+    }
+
+    /// If we reached the end of the string, the quote was never closed.
+    if ((begin + count) == this->_input.size()) {
+      throw CannotParseExpressionError{ this->_input, "Open quote was never closed" };
     }
   }
   /// Otherwise, we read all characters that are alphabetical or numerical(e.g., L2Cache).
@@ -152,11 +156,12 @@ perf::Tokenizer::read_identifier(std::size_t& position) const
   }
 
   /// Increase the position by the number of scanned chars; skip the closing single quite if given.
-  position += count + static_cast<std::uint64_t>(starts_with_single_quote);
+  const auto new_position = begin + count + static_cast<std::uint64_t>(is_start_with_quote);
 
   /// Return the identifier; remove single quotes if given.
-  return Token{ this->_input.substr(begin + static_cast<std::uint64_t>(starts_with_single_quote),
-                                    count - static_cast<std::uint64_t>(starts_with_single_quote)) };
+  auto token = Token{ this->_input.substr(begin + static_cast<std::uint64_t>(is_start_with_quote),
+                                          count - static_cast<std::uint64_t>(is_start_with_quote)) };
+  return std::make_pair(std::move(token), new_position);
 }
 
 perf::Token
@@ -165,17 +170,17 @@ perf::Tokenizer::read_operator(const char current_char) const
   /// Translate the given char into an operator, if it is one.
   switch (current_char) {
     case '+':
-      return Token{ Operator::Plus };
+      return Token{ MetricOperator::Plus };
     case '-':
-      return Token{ Operator::Minus };
+      return Token{ MetricOperator::Minus };
     case '*':
-      return Token{ Operator::Times };
+      return Token{ MetricOperator::Times };
     case '/':
-      return Token{ Operator::Divide };
+      return Token{ MetricOperator::Divide };
 
       /// We could not tokenize a number, a sequence of chars. or an operator. This is an error.
     default:
-      throw CannotParseExpressionError{ this->_input };
+      throw CannotParseExpressionError{ this->_input, "Unknown operator token" };
   }
 }
 
@@ -212,22 +217,22 @@ perf::ExpressionBuilder::build(std::string&& expression)
       expression_stack.pop();
 
       /// Create the binary expression.
-      switch (token.operator_().value()) {
-        case Operator::Plus:
-          expression_stack.push(std::make_unique<BinaryExpression<Operator::Plus>>(std::move(left_expression),
-                                                                                   std::move(right_expression)));
+      switch (token.op().value()) {
+        case MetricOperator::Plus:
+          expression_stack.push(std::make_unique<BinaryExpression<MetricOperator::Plus>>(std::move(left_expression),
+                                                                                         std::move(right_expression)));
           break;
-        case Operator::Minus:
-          expression_stack.push(std::make_unique<BinaryExpression<Operator::Minus>>(std::move(left_expression),
-                                                                                    std::move(right_expression)));
+        case MetricOperator::Minus:
+          expression_stack.push(std::make_unique<BinaryExpression<MetricOperator::Minus>>(std::move(left_expression),
+                                                                                          std::move(right_expression)));
           break;
-        case Operator::Times:
-          expression_stack.push(std::make_unique<BinaryExpression<Operator::Times>>(std::move(left_expression),
-                                                                                    std::move(right_expression)));
+        case MetricOperator::Times:
+          expression_stack.push(std::make_unique<BinaryExpression<MetricOperator::Times>>(std::move(left_expression),
+                                                                                          std::move(right_expression)));
           break;
-        case Operator::Divide:
-          expression_stack.push(std::make_unique<BinaryExpression<Operator::Divide>>(std::move(left_expression),
-                                                                                     std::move(right_expression)));
+        case MetricOperator::Divide:
+          expression_stack.push(std::make_unique<BinaryExpression<MetricOperator::Divide>>(
+            std::move(left_expression), std::move(right_expression)));
           break;
       }
     }

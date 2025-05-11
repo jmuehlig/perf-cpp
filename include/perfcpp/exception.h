@@ -295,6 +295,12 @@ public:
   {
   }
 
+  CannotParseExpressionError(const std::string_view input, const std::string_view reason)
+    : std::runtime_error(
+        std::string{ "Cannot parse expression from '" }.append(input).append("': ").append(reason).append("."))
+  {
+  }
+
   ~CannotParseExpressionError() override = default;
 };
 

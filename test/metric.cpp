@@ -225,7 +225,7 @@ TEST_CASE("calculating", "[BranchMissRatio]")
 
 TEST_CASE("calculating", "[FormulaMetric]")
 {
-  auto formula_metric = perf::FormulaMetric{ "any-formula", "('event-a'*'event-b')/2+13.37" };
+  auto formula_metric = perf::FormulaMetric{ "any-formula", "('event-a'*'event-b')/2+13.37+'event-c'" };
 
   SECTION("empty result")
   {
@@ -242,8 +242,11 @@ TEST_CASE("calculating", "[FormulaMetric]")
 
   SECTION("calculation")
   {
-    auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
-      std::make_pair("event-a", 10U), std::make_pair("event-b", 20U), std::make_pair("some-other-event", 500U) } };
+    auto counter_result =
+      perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{ std::make_pair("event-a", 10U),
+                                                                             std::make_pair("event-b", 20U),
+                                                                             std::make_pair("some-other-event", 500U),
+                                                                             std::make_pair("event-c", 0U) } };
     REQUIRE(formula_metric.calculate(counter_result).has_value());
     REQUIRE(formula_metric.calculate(counter_result).value() == 113.37);
   }

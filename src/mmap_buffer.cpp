@@ -1,8 +1,8 @@
-#include <perfcpp/mmap_buffer.h>
 #include <cstring>
-#include <sys/mman.h>
 #include <perfcpp/exception.h>
 #include <perfcpp/hardware_info.h>
+#include <perfcpp/mmap_buffer.h>
+#include <sys/mman.h>
 
 #if defined(__x86_64__) || defined(__i386__)
 #include <x86intrin.h>

@@ -1,10 +1,10 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
+#include <linux/perf_event.h>
 #include <utility>
 #include <vector>
-#include <cstddef>
-#include <linux/perf_event.h>
 
 namespace perf {
 class MmapBuffer

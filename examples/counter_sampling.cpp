@@ -74,16 +74,14 @@ main()
     if (sample.metadata().timestamp().has_value() && sample.counter().has_value()) {
       if (last_counter_result.has_value()) {
         std::cout << "Time = " << sample.metadata().timestamp().value() << " | cycles (diff) = "
-                  << sample.counter()->get("cycles").value_or(.0) -
-                       last_counter_result->get("cycles").value_or(.0)
+                  << sample.counter()->get("cycles").value_or(.0) - last_counter_result->get("cycles").value_or(.0)
                   << " | L1-dcache-loads (diff) = "
                   << sample.counter()->get("L1-dcache-loads").value_or(.0) -
                        last_counter_result->get("L1-dcache-loads").value_or(.0)
                   << " | L1-dcache-load-misses (diff) = "
                   << sample.counter()->get("L1-dcache-load-misses").value_or(.0) -
                        last_counter_result->get("L1-dcache-load-misses").value_or(.0)
-                  << " | L1d-misses-per-load = " << sample.counter()->get("L1d-misses-per-load").value_or(.0)
-                  << "\n";
+                  << " | L1d-misses-per-load = " << sample.counter()->get("L1d-misses-per-load").value_or(.0) << "\n";
       }
 
       last_counter_result = sample.counter();

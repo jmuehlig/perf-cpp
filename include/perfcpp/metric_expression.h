@@ -17,7 +17,7 @@ namespace perf {
 /**
  * Representation of the supported operators.
  */
-enum class Operator
+enum class MetricOperator
 {
   Plus,
   Minus,
@@ -26,7 +26,7 @@ enum class Operator
 };
 
 /**
- * The interface vor all evaluable metric expressions.
+ * The interface for all evaluable metric expressions.
  */
 class MetricExpressionInterface
 {
@@ -116,7 +116,7 @@ private:
 /**
  * Implementation of binary expressions (+,-,*,/).
  */
-template<Operator OP>
+template<MetricOperator OP>
 class BinaryExpression final : public MetricExpressionInterface
 {
 public:
@@ -140,19 +140,19 @@ public:
     if (const auto left = this->_left->evaluate(result); left.has_value()) {
       if (const auto right = this->_right->evaluate(result); right.has_value()) {
 
-        if constexpr (OP == Operator::Plus) {
+        if constexpr (OP == MetricOperator::Plus) {
           return left.value() + right.value();
         }
 
-        if constexpr (OP == Operator::Minus) {
+        if constexpr (OP == MetricOperator::Minus) {
           return left.value() - right.value();
         }
 
-        if constexpr (OP == Operator::Times) {
+        if constexpr (OP == MetricOperator::Times) {
           return left.value() * right.value();
         }
 
-        if constexpr (OP == Operator::Divide) {
+        if constexpr (OP == MetricOperator::Divide) {
           if (right.value() > .0) {
             return left.value() / right.value();
           }
@@ -197,7 +197,7 @@ public:
   Token(Token&&) noexcept = default;
   Token(const Token&) = default;
 
-  explicit Token(const Operator operator_)
+  explicit Token(const MetricOperator operator_)
     : _type(Type::Operator)
     , _operator(operator_)
   {
@@ -239,7 +239,7 @@ public:
   /**
    * @return The operator (e.g., + or -) if the token is an operator.
    */
-  [[nodiscard]] std::optional<Operator> operator_() const noexcept { return _operator; }
+  [[nodiscard]] std::optional<MetricOperator> op() const noexcept { return _operator; }
 
   /**
    * @return A text representation of this token.
@@ -250,7 +250,7 @@ private:
   Type _type;
   std::optional<std::string> _text{ std::nullopt };
   std::optional<double> _number{ std::nullopt };
-  std::optional<Operator> _operator{ std::nullopt };
+  std::optional<MetricOperator> _operator{ std::nullopt };
 };
 
 /**
@@ -279,18 +279,18 @@ private:
   /**
    * Reads a constant number (e.g., 13.37) from the input string, starting at the given position.
    *
-   * @param position Position within the input string.
-   * @return A token containing the constant.
+   * @param begin Position within the input string.
+   * @return A tuple (token containing the constant, new position).
    */
-  [[nodiscard]] Token read_constant(std::size_t& position) const;
+  [[nodiscard]] std::pair<Token, std::size_t> read_constant(std::size_t begin) const;
 
   /**
    * Reads an identifier (e.g., a hardware counter name) from the input string, starting at the given position.
    *
-   * @param position Position within the input string.
-   * @return A token containing the identifier.
+   * @param begin Position within the input string.
+   * @return A tuple (token containing the identifier, new position).
    */
-  [[nodiscard]] Token read_identifier(std::size_t& position) const;
+  [[nodiscard]] std::pair<Token, std::size_t> read_identifier(std::size_t begin) const;
 
   /**
    * Reads an operator (e.g., +) from the given char.
@@ -310,10 +310,10 @@ private:
    */
   [[nodiscard]] static bool has_greater_precedence(const Token& left_operator, const Token& right_operator) noexcept
   {
-    const auto left_precedence = precedence(left_operator.operator_().value());
-    const auto right_precedence = precedence(right_operator.operator_().value());
+    const auto left_precedence = precedence(left_operator.op().value());
+    const auto right_precedence = precedence(right_operator.op().value());
 
-    return (is_left_associative(right_operator.operator_().value()) && right_precedence <= left_precedence) ||
+    return (is_left_associative(right_operator.op().value()) && right_precedence <= left_precedence) ||
            (right_precedence < left_precedence);
   }
 
@@ -323,14 +323,14 @@ private:
    * @param operator_ Operator.
    * @return Precedence of the operator.
    */
-  [[nodiscard]] static std::uint8_t precedence(const Operator operator_) noexcept
+  [[nodiscard]] static std::uint8_t precedence(const MetricOperator operator_) noexcept
   {
     switch (operator_) {
-      case Operator::Plus:
-      case Operator::Minus:
+      case MetricOperator::Plus:
+      case MetricOperator::Minus:
         return 4U;
-      case Operator::Times:
-      case Operator::Divide:
+      case MetricOperator::Times:
+      case MetricOperator::Divide:
         return 8U;
     }
 
@@ -343,13 +343,13 @@ private:
    * @param operator_ Operator to test.
    * @return True, if left associative.
    */
-  [[nodiscard]] static std::uint8_t is_left_associative(const Operator operator_) noexcept
+  [[nodiscard]] static bool is_left_associative(const MetricOperator operator_) noexcept
   {
     switch (operator_) {
-      case Operator::Plus:
-      case Operator::Minus:
-      case Operator::Times:
-      case Operator::Divide:
+      case MetricOperator::Plus:
+      case MetricOperator::Minus:
+      case MetricOperator::Times:
+      case MetricOperator::Divide:
         return true;
       default:
         return false;
@@ -367,6 +367,7 @@ private:
     return std::isalnum(char_) || char_ == '_' || char_ == '.';
   }
 
+  /// The expression to tokenize.
   const std::string _input;
 };
 

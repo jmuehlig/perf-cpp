@@ -137,7 +137,7 @@ perf::Group::read(CounterValues<MAX_MEMBERS>& values) const noexcept
 }
 
 bool
-perf::Group::add(perf::CounterConfig counter)
+perf::Group::add(const perf::CounterConfig counter)
 {
   this->_members.emplace_back(counter);
   return true;
@@ -170,9 +170,9 @@ std::optional<std::uint64_t>
 perf::Group::value_for_id(const CounterValues<Group::MAX_MEMBERS>& counter_values, const std::uint64_t id) noexcept
 {
   /// Check the Id the counters to find the matching one.
-  for (auto i = 0U; i < counter_values.count_members; ++i) {
-    if (counter_values.values[i].id == id) {
-      return counter_values.values[i].value;
+  for (auto member_index = 0ULL; member_index < counter_values.count_members; ++member_index) {
+    if (counter_values.values[member_index].id == id) {
+      return counter_values.values[member_index].value;
     }
   }
 
@@ -185,9 +185,9 @@ perf::Group::consume_samples()
   /// Check the first two members. Normally, the first member will control the sample buffer; however, on some Intel
   /// architectures, an auxiliary counter is needed before the "real" counter, i.e., the "real" counter is the second
   /// one.
-  for (auto member_id = 0U; member_id < std::min(_members.size(), 2UL); ++member_id) {
-    if (_members[member_id].user_level_buffer().has_value()) {
-      return _members[member_id].user_level_buffer()->consume_sample_data();
+  for (auto member_index = 0UL; member_index < std::min(_members.size(), 2UL); ++member_index) {
+    if (_members[member_index].user_level_buffer().has_value()) {
+      return _members[member_index].user_level_buffer()->consume_sample_data();
     }
   }
 

@@ -4,25 +4,25 @@
 #include <sys/eventfd.h>
 #include <unistd.h>
 
-perf::SampleBuffer::SampleBuffer(const std::int32_t file_descriptor, std::uint64_t number_of_buffer_pages)
+perf::SampleBuffer::SampleBuffer(const std::int32_t file_descriptor, std::uint64_t count_buffer_pages)
 {
   /// Align the number of buffer pages to hold a power of two + one for the header.
-  number_of_buffer_pages = SampleBuffer::align_number_of_buffer_pages(number_of_buffer_pages);
+  count_buffer_pages = SampleBuffer::align_number_of_buffer_pages(count_buffer_pages);
 
   /// We only make use of buffer overflow handling (copy the data to an application-level buffer) when more than two
   /// pages are requested as two pages are allocated for live events which do not require draining the buffer.
-  const auto is_use_buffer_overflow_handling = number_of_buffer_pages > 2ULL;
+  const auto is_need_overflow_handling = count_buffer_pages > 2ULL;
 
   /// Open the MMap Buffer.
-  this->_mmap_buffer = MmapBuffer{ file_descriptor, is_use_buffer_overflow_handling, number_of_buffer_pages };
+  this->_mmap_buffer = MmapBuffer{ file_descriptor, is_need_overflow_handling, count_buffer_pages };
 
   /// Create a thread that copies data from the mmap-ed buffer into a application-level buffer whenever the buffer is
   /// near to overflow. This is only needed when overflowing is handled (which is not true for small buffers of two
   /// pages used for live counters).
-  if (is_use_buffer_overflow_handling) {
+  if (is_need_overflow_handling) {
     /// Create an event file descriptor to cancel the thread when closing the sample buffer.
     this->_cancel_thread_event_file_descriptor = ::eventfd(0, 0);
-    if (this->_cancel_thread_event_file_descriptor.value() == -1) {
+    if (this->_cancel_thread_event_file_descriptor.value() < 0) {
       throw CannotCreateEventFileDescriptor{ file_descriptor };
     }
 
