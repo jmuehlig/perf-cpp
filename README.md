@@ -9,7 +9,7 @@ The key features include:
 * **[Count Hardware Events](docs/recording.md)**: Record performance statistics (comparable to `perf stat`) directly in your application and control *what* and *when*. Additionally, [measure metrics](docs/metrics.md) like *cycles per instruction* and [read event counters in realtime](docs/recording-live-events.md).
 * **[Record Samples](docs/sampling.md)**: Leverage sampling the mechanism across to capture critical profiling data such as *instruction pointers* and *memory addresses* (similar to `perf [mem] record`).
 * **[Specify Hardware Events](docs/counters.md)**: Mix built-in events (e.g., *cycles*, *instructions*, *cache-misses*, ...) with events specific to the underlying hardware.
-* **[Practical Examples](examples/README.md)** and **[Detailed Documentation](#explore-the-documentation)**: Quickly get started with ready-to-use examples demonstrating diverse, real-world applications.
+* **[Practical Examples](examples/README.md)** and **[Detailed Documentation](#documentation)**: Quickly get started with ready-to-use examples demonstrating diverse, real-world applications.
 
 **perf-cpp** extends the standard [*perf subsystem*'s](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) capabilities, such as leveraging AMD IBS features to expose rich, CPU-specific data unavailable through the standard `perf_event_open` interface.
 
