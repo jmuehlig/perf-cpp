@@ -351,6 +351,9 @@ Provides information about memory, cache, and TLB behavior during data access.
 All fields can be accessed via `record.data_access()`.  
 Note that most fields are returned as `std::optional`.
 
+> [!NOTE]
+> Sampling for memory accesses (memory address, cache information, etc.) is only supported using [**AMD's IBS Op PMU**](#ibs-op-pmu) and [**Intel PEBS `mem-load`/`mem-store` events**](#intel-processor-event-based-sampling).
+
 | Name                        | Description                                                                                       | How to record?                                   | How to access?                                   | Type                                      |
 |-----------------------------|---------------------------------------------------------------------------------------------------|--------------------------------------------------|--------------------------------------------------|-------------------------------------------|
 | **Is load**                 | Indicates that the access was a load operation.                                                   | `sampler.values().data_src(true)`                | `record.data_access().is_load()`                 | `bool`                                    |
@@ -369,7 +372,6 @@ Note that most fields are returned as `std::optional`.
 **Example:** [`examples/address_sampling.cpp`](../examples/address_sampling.cpp)
 
 #### Data Source
-
 Provides detailed information about the memory or cache source involved in a data access.  
 Note that `record.data_access().source()` returns an `std::optional`.
 
