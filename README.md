@@ -11,7 +11,7 @@ The key features include:
 * **[Specify Hardware Events](docs/counters.md)**: Mix built-in events (e.g., *cycles*, *instructions*, *cache-misses*, ...) with events specific to the underlying hardware.
 * **[Practical Examples](examples/README.md)** and **[Detailed Documentation](#explore-the-documentation)**: Quickly get started with ready-to-use examples demonstrating diverse, real-world applications.
 
-**perf-cpp** extends the standard [*perf subsystem*'s](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) capabilities, such as leveraging AMD IBS and Intel PEBS features to expose rich, CPU-specific data unavailable through the standard `perf_event_open` interface.
+**perf-cpp** extends the standard [*perf subsystem*'s](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) capabilities, such as leveraging AMD IBS features to expose rich, CPU-specific data unavailable through the standard `perf_event_open` interface.
 
 ## Examples
 ### Record Hardware Event Statistics
@@ -120,7 +120,7 @@ git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
 
 # Optional: Switch to the latest stable version
-git checkout v0.10.0
+git checkout v0.11-dev
 
 # Build the library (in build/)
 # Note: -DBUILD_EXAMPLES=1 is optional and only needed if you want to build the examples
@@ -134,7 +134,7 @@ cmake --build build --target examples
 > [!NOTE]
 > Further information and detailed building instructions (e.g., how to integrate into *CMake* projects) are available in the **[Building Guide](docs/build.md)**.
 
-## Explore the Documentation
+## Documentation
 * [**Building**](docs/build.md): Integrate *perf-cpp* seamlessly into your C++ projects.
 * **Counting Performance Events**
     * [**Basics**](docs/recording.md): Master recording hardware event statistics directly within your application.
