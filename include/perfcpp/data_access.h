@@ -283,6 +283,12 @@ public:
     void cache_miss(const std::uint32_t cache_miss) noexcept { _cache_miss = cache_miss; }
 
     /**
+     * Set latency specifically caused by a cache miss.
+     * @param cache_miss Latency in cycles.
+     */
+    void cache_miss(const std::optional<std::uint32_t> cache_miss) noexcept { _cache_miss = cache_miss; }
+
+    /**
      * Set latency due to DTLB refill.
      * @param dtlb_refill Latency in cycles.
      */

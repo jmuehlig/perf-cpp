@@ -162,126 +162,158 @@ perf::analyzer::MemoryAccess::add_empty_attributes(perf::analyzer::DataType& dat
 std::string
 perf::analyzer::MemoryAccessResult::to_string() const
 {
+  /// Checks if any sample mapped to the data type is of a specific data access type.
+  auto has_any_access_type = [](const DataType& data_type, const DataAccess::AccessType type) {
+    return std::find_if(data_type.members().begin(), data_type.members().end(), [type](const auto& member) {
+             return std::find_if(member.samples().begin(), member.samples().end(), [type](const auto& sample) {
+                      return sample.data_access().type().has_value() && sample.data_access().type().value() == type;
+                    }) != member.samples().end();
+           }) != data_type.members().end();
+  };
+
   auto data_types = std::vector<std::tuple<std::string, std::size_t, Table, std::size_t>>{};
 
   for (const auto& data_type : this->_data_types) {
+    if (data_type.members().empty()) {
+      continue;
+    }
+
     auto name = data_type.name();
+
+    const auto has_load = has_any_access_type(data_type, DataAccess::AccessType::Load);
+    const auto has_software_prefetch = has_any_access_type(data_type, DataAccess::AccessType::SoftwarePrefetch);
+    const auto has_store = has_any_access_type(data_type, DataAccess::AccessType::Store);
 
     auto count_samples = 0ULL;
 
     /// Create the data type table.
-    auto alignment = std::vector<Table::Alignment>(27U + static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 6U,
-                                                   Table::Alignment::Right);
-    alignment[1U] = Table::Alignment::Left;
-
-    auto table = Table{ 2U, std::move(alignment) };
+    auto table = Table{ 2U };
     table.reserve(data_type.members().size() + 3U);
 
     /// Access type headers.
-    auto access_type_headers = Table::Row{ 4U };
-    access_type_headers << Table::Column{ "", 3U }
-                        << Table::Column{ "loads",
-                                          std::uint8_t(11U + static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 2U) }
-                        << Table::Column{ "software prefetches",
-                                          std::uint8_t(11U + static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 2U) }
-                        << Table::Column{ "stores",
-                                          std::uint8_t(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 2U) };
+    auto access_type_headers = std::vector<Table::Header>{ Table::Header{ "", 3U, false } };
+    auto category_headers = std::vector<Table::Header>{ Table::Header{ "", 3U, false } };
+    auto row_headers = std::vector<Table::Header>{ Table::Header{ "" },
+                                                   Table::Header{ "", Table::Alignment::Left },
+                                                   Table::Header{ "samples" } };
+
+    if (has_load) {
+      access_type_headers.emplace_back("loads",
+                                       10U + static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 4U +
+                                         static_cast<std::uint8_t>(HardwareInfo::is_intel()),
+                                       true);
+
+      category_headers.emplace_back("", 1U, true);
+      category_headers.emplace_back(
+        "latency", std::uint8_t(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())), true);
+      category_headers.emplace_back(
+        "cache hits", std::uint8_t(3U + static_cast<std::uint8_t>(HardwareInfo::is_intel())), true);
+      if (HardwareInfo::is_amd()) {
+        category_headers.emplace_back("MAB", 2U, true);
+      }
+      category_headers.emplace_back("RAM hits", 2U, true);
+      category_headers.emplace_back("TLB", std::uint8_t(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())), true);
+
+      row_headers.emplace_back("count");
+      row_headers.emplace_back("cache");
+      if (HardwareInfo::is_amd()) {
+        row_headers.emplace_back("uOp");
+        row_headers.emplace_back("dTLB");
+      } else {
+        row_headers.emplace_back("instr.");
+      }
+
+      row_headers.emplace_back("L1d");
+      if (HardwareInfo::is_intel()) {
+        row_headers.emplace_back("LFB");
+      }
+      row_headers.emplace_back("L2");
+      row_headers.emplace_back("L3");
+
+      if (HardwareInfo::is_amd()) {
+        row_headers.emplace_back("alloc.");
+        row_headers.emplace_back("avg.");
+      }
+
+      row_headers.emplace_back("local");
+      row_headers.emplace_back("remote");
+
+      if (HardwareInfo::is_amd()) {
+        row_headers.emplace_back("dTLB");
+        row_headers.emplace_back("STLB");
+      } else {
+        row_headers.emplace_back("hit");
+      }
+      row_headers.emplace_back("miss");
+    }
+
+    if (has_software_prefetch) {
+      access_type_headers.emplace_back("software prefetches",
+                                       10U + static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 3U +
+                                         static_cast<std::uint8_t>(HardwareInfo::is_intel()),
+                                       true);
+
+      category_headers.emplace_back("", 1U, true);
+      category_headers.emplace_back("latency", 2U, true);
+      category_headers.emplace_back(
+        "cache hits", std::uint8_t(3U + static_cast<std::uint8_t>(HardwareInfo::is_intel())), true);
+      if (HardwareInfo::is_amd()) {
+        category_headers.emplace_back("MAB", 2U, true);
+      }
+      category_headers.emplace_back("RAM hits", 2U, true);
+      category_headers.emplace_back("TLB", std::uint8_t(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())), true);
+
+      row_headers.emplace_back("count");
+      if (HardwareInfo::is_amd()) {
+        row_headers.emplace_back("uOp");
+        row_headers.emplace_back("dTLB");
+      } else {
+        row_headers.emplace_back("cache");
+        row_headers.emplace_back("instr.");
+      }
+
+      row_headers.emplace_back("L1d");
+      if (HardwareInfo::is_intel()) {
+        row_headers.emplace_back("LFB");
+      }
+      row_headers.emplace_back("L2");
+      row_headers.emplace_back("L3");
+
+      if (HardwareInfo::is_amd()) {
+        row_headers.emplace_back("alloc.");
+        row_headers.emplace_back("avg.");
+      }
+
+      row_headers.emplace_back("local");
+      row_headers.emplace_back("remote");
+
+      if (HardwareInfo::is_amd()) {
+        row_headers.emplace_back("dTLB");
+        row_headers.emplace_back("STLB");
+      } else {
+        row_headers.emplace_back("hit");
+      }
+      row_headers.emplace_back("miss");
+    }
+
+    if (has_store) {
+      access_type_headers.emplace_back("stores", 2U + static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 1U, true);
+
+      category_headers.emplace_back("", 1U, true);
+      category_headers.emplace_back("latency", 1U + static_cast<std::uint8_t>(HardwareInfo::is_amd()), true);
+
+      row_headers.emplace_back("count");
+      if (HardwareInfo::is_amd()) {
+        row_headers.emplace_back("uOp");
+        row_headers.emplace_back("dTLB");
+      } else {
+        row_headers.emplace_back("instr.");
+      }
+    }
+
     table.add(std::move(access_type_headers));
-
-    /// Category headers.
-    auto group_headers = Table::Row{ 13U };
-    group_headers
-      << Table::Column{ "", 3U } /// Loads
-      << "" << Table::Column{ "latency", std::uint8_t(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())) }
-      << Table::Column{ "cache hits", 4U } << Table::Column{ "RAM hits", 2U }
-      << Table::Column{ "TLB", std::uint8_t(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())) }
-      /// Software prefetches
-      << "" << Table::Column{ "latency", std::uint8_t(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())) }
-      << Table::Column{ "cache hits", 4U } << Table::Column{ "RAM hits", 2U }
-      << Table::Column{ "TLB", std::uint8_t(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())) } /// Stores
-      << "" << Table::Column{ "latency", std::uint8_t(1U + static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 2U) };
-    table.add(std::move(group_headers));
-
-    /// Last headers.
-    auto header = Table::Row{ 27U + static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 6U };
-
-    /// Offset, name, and samples.
-    header << Table::Column{ "", 2U } << "samples";
-
-    /// Loads
-    header << "count";
-
-    /// Latency
-    if (HardwareInfo::is_amd()) {
-      header << "cache" << "uOp" << "dTLB";
-    } else {
-      header << "cache" << "instr.";
-    }
-
-    /// Cache
-    header << "L1d" << (HardwareInfo::is_amd() ? "MAB" : "LFB") << "L2" << "L3";
-
-    /// RAM
-    header << "local" << "remote";
-
-    /// TLB
-    if (HardwareInfo::is_amd()) {
-      header << "dTLB" << "STLB" << "miss";
-    } else {
-      header << "hit" << "miss";
-    }
-
-    /// Software prefetches
-    header << "count";
-
-    /// Latency
-    if (HardwareInfo::is_amd()) {
-      header << "cache" << "uOp" << "dTLB";
-    } else {
-      header << "cache" << "instr.";
-    }
-
-    /// Cache
-    header << "L1d" << (HardwareInfo::is_amd() ? "MAB" : "LFB") << "L2" << "L3";
-
-    /// RAM
-    header << "local" << "remote";
-
-    /// TLB
-    if (HardwareInfo::is_amd()) {
-      header << "dTLB" << "STLB" << "miss";
-    } else {
-      header << "hit" << "miss";
-    }
-
-    /// Stores
-    header << "count";
-
-    /// Latency
-    if (HardwareInfo::is_amd()) {
-      header << "cache" << "uOp" << "dTLB miss";
-    } else {
-      header << "instr.";
-    }
-    table.add(std::move(header));
-
-    /// Add column separators.
-    auto separators = std::vector<char>(29U + static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 4U, '\0');
-    separators[2U] = '|';
-    separators[3U] = '|';
-    separators[4U] = '|';
-    separators[6U + static_cast<std::size_t>(HardwareInfo::is_amd())] = '|';
-    separators[10U + static_cast<std::size_t>(HardwareInfo::is_amd())] = '|';
-    separators[12U + static_cast<std::size_t>(HardwareInfo::is_amd())] = '|';
-    separators[14U + static_cast<std::size_t>(HardwareInfo::is_amd()) * 2U] = '|';
-    separators[15U + static_cast<std::size_t>(HardwareInfo::is_amd()) * 2U] = '|';
-    separators[17U + static_cast<std::size_t>(HardwareInfo::is_amd()) * 3U] = '|';
-    separators[21U + static_cast<std::size_t>(HardwareInfo::is_amd()) * 3U] = '|';
-    separators[23U + static_cast<std::size_t>(HardwareInfo::is_amd()) * 3U] = '|';
-    separators[25U + static_cast<std::size_t>(HardwareInfo::is_amd()) * 4U] = '|';
-    separators[26U + static_cast<std::size_t>(HardwareInfo::is_amd()) * 4U] = '|';
-    separators[27U + static_cast<std::size_t>(HardwareInfo::is_amd()) * 6U] = '|';
-    table.column_separators(std::move(separators));
+    table.add(std::move(category_headers));
+    table.add(std::move(row_headers));
 
     /// Add member attributes to table.
     for (const auto& member : data_type.members()) {
@@ -291,44 +323,70 @@ perf::analyzer::MemoryAccessResult::to_string() const
                                               MemberStatistic{},
                                               [](auto& current, const auto& sample) { return current += sample; });
 
-      auto row = Table::Row{ 29U + static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 4U };
+      auto row = Table::Row{};
       auto member_offset = std::to_string(member.offset()).append(": ");
       auto member_name = std::string{ member.name() }.append(" (").append(std::to_string(member.size())).append("B)");
       row << member_offset << member_name << member.samples().size();
 
       /// Loads
-      row << statistics.loads().count() << statistics.loads().cache_latency() << statistics.loads().instr_latency();
-      if (HardwareInfo::is_amd()) {
-        row << statistics.loads().dtlb_latency();
+      if (has_load) {
+        row << statistics.loads().count() << statistics.loads().average_cache_latency()
+            << statistics.loads().average_instruction_latency();
+        if (HardwareInfo::is_amd()) {
+          row << statistics.loads().average_dtlb_latency();
+        }
+        row << statistics.loads().count_l1_hits();
+        if (HardwareInfo::is_intel()) {
+          row << statistics.loads().count_mhb_hits();
+        }
+        row << statistics.loads().count_l2_hits() << statistics.loads().count_l3_hits();
+        if (HardwareInfo::is_amd()) {
+          row << statistics.loads().count_mhb_hits() << statistics.loads().average_alloc_mab_entries();
+        }
+        row << statistics.loads().count_local_ram_hits() << statistics.loads().count_remote_ram_hits()
+            << statistics.loads().dtlb_hits();
+        if (HardwareInfo::is_amd()) {
+          row << statistics.loads().stlb_hits();
+        }
+        row << statistics.loads().stlb_misses();
       }
-      row << statistics.loads().count_l1_hits() << statistics.loads().count_mhb_hits()
-          << statistics.loads().count_l2_hits() << statistics.loads().count_l3_hits()
-          << statistics.loads().count_local_ram_hits() << statistics.loads().count_remote_ram_hits()
-          << statistics.loads().dtlb_hits() << statistics.loads().stlb_hits() << statistics.loads().stlb_misses();
 
       /// Software Prefetches
-      row << statistics.software_prefetches().count() << statistics.software_prefetches().cache_latency()
-          << statistics.software_prefetches().instr_latency();
-      if (HardwareInfo::is_amd()) {
-        row << statistics.software_prefetches().dtlb_latency();
+      if (has_software_prefetch) {
+        row << statistics.software_prefetches().count();
+        if (HardwareInfo::is_amd()) {
+          row << statistics.software_prefetches().average_instruction_latency()
+              << statistics.software_prefetches().average_dtlb_latency();
+        } else {
+          row << statistics.software_prefetches().average_cache_latency()
+              << statistics.software_prefetches().average_instruction_latency();
+        }
+        row << statistics.software_prefetches().count_l1_hits();
+        if (HardwareInfo::is_intel()) {
+          row << statistics.software_prefetches().count_mhb_hits();
+        }
+        row << statistics.software_prefetches().count_l2_hits() << statistics.software_prefetches().count_l3_hits();
+        if (HardwareInfo::is_amd()) {
+          row << statistics.software_prefetches().count_mhb_hits()
+              << statistics.software_prefetches().average_alloc_mab_entries();
+        }
+        row << statistics.software_prefetches().count_local_ram_hits()
+            << statistics.software_prefetches().count_remote_ram_hits() << statistics.software_prefetches().dtlb_hits();
+        if (HardwareInfo::is_amd()) {
+          row << statistics.software_prefetches().stlb_hits();
+        }
+        row << statistics.software_prefetches().stlb_misses();
       }
-      row << statistics.software_prefetches().count_l1_hits() << statistics.software_prefetches().count_mhb_hits()
-          << statistics.software_prefetches().count_l2_hits() << statistics.software_prefetches().count_l3_hits()
-          << statistics.software_prefetches().count_local_ram_hits()
-          << statistics.software_prefetches().count_remote_ram_hits() << statistics.software_prefetches().dtlb_hits()
-          << statistics.software_prefetches().stlb_hits() << statistics.software_prefetches().stlb_misses();
 
       /// Stores
-      row << statistics.stores().count();
-      if (HardwareInfo::is_amd()) {
-        row << statistics.stores().cache_latency() << statistics.stores().instr_latency()
-            << statistics.stores().dtlb_latency();
-      } else {
-        row << statistics.stores().instr_latency();
+      if (has_store) {
+        row << statistics.stores().count() << statistics.stores().average_instruction_latency();
+        if (HardwareInfo::is_amd()) {
+          row << statistics.stores().average_dtlb_latency();
+        }
       }
 
       table.add(std::move(row));
-
       count_samples += member.samples().size();
     }
 
@@ -388,10 +446,11 @@ perf::analyzer::MemoryAccessResult::to_json() const
       stream << "\"loads\": {" << "\"count\":" << statistics.loads().count() << ','
 
              << "\"latency\":{" << (HardwareInfo::is_amd() ? "\"cache-miss\":" : "\"cache\":")
-             << statistics.loads().cache_latency() << ',' << (HardwareInfo::is_amd() ? "\"uop\":" : "\"instruction\":")
-             << statistics.loads().instr_latency();
+             << statistics.loads().average_cache_latency() << ','
+             << (HardwareInfo::is_amd() ? "\"uop\":" : "\"instruction\":")
+             << statistics.loads().average_instruction_latency();
       if (HardwareInfo::is_amd()) {
-        stream << ",\"dtlb\":" << statistics.loads().dtlb_latency();
+        stream << ",\"dtlb\":" << statistics.loads().average_dtlb_latency();
       }
       stream << "}," << "\"cache-hits\":{" << "\"l1d\":" << statistics.loads().count_l1_hits() << ','
              << "\"l2\":" << statistics.loads().count_l2_hits() << ','
@@ -409,11 +468,11 @@ perf::analyzer::MemoryAccessResult::to_json() const
       stream << "\"software-prefetches\": {" << "\"count\":" << statistics.software_prefetches().count() << ','
 
              << "\"latency\":{" << (HardwareInfo::is_amd() ? "\"cache-miss\":" : "\"cache\":")
-             << statistics.software_prefetches().cache_latency() << ','
+             << statistics.software_prefetches().average_cache_latency() << ','
              << (HardwareInfo::is_amd() ? "\"uop\":" : "\"instruction\":")
-             << statistics.software_prefetches().instr_latency();
+             << statistics.software_prefetches().average_instruction_latency();
       if (HardwareInfo::is_amd()) {
-        stream << ",\"dtlb\":" << statistics.software_prefetches().dtlb_latency();
+        stream << ",\"dtlb\":" << statistics.software_prefetches().average_dtlb_latency();
       }
       stream << "}," << "\"cache-hits\":{" << "\"l1d\":" << statistics.software_prefetches().count_l1_hits() << ','
              << "\"l2\":" << statistics.software_prefetches().count_l2_hits() << ','
@@ -431,10 +490,10 @@ perf::analyzer::MemoryAccessResult::to_json() const
       stream << "\"stores\": {" << "\"count\":" << statistics.software_prefetches().count() << ','
 
              << "\"latency\":{" << (HardwareInfo::is_amd() ? "\"uop\":" : "\"instruction\":")
-             << statistics.software_prefetches().instr_latency();
+             << statistics.software_prefetches().average_instruction_latency();
       if (HardwareInfo::is_amd()) {
-        stream << ",\"cache\":" << statistics.software_prefetches().cache_latency()
-               << ",\"dtlb\":" << statistics.software_prefetches().dtlb_latency();
+        stream << ",\"cache\":" << statistics.software_prefetches().average_cache_latency()
+               << ",\"dtlb\":" << statistics.software_prefetches().average_dtlb_latency();
       }
       stream << "}" << "}" << "}";
     }
@@ -541,10 +600,10 @@ perf::analyzer::MemoryAccessResult::to_csv(const std::string& data_type_name,
 
       /* loads */
       cell(statistics.loads().count());
-      cell(statistics.loads().cache_latency());
-      cell(statistics.loads().instr_latency());
+      cell(statistics.loads().average_cache_latency());
+      cell(statistics.loads().average_instruction_latency());
       if (HardwareInfo::is_amd()) {
-        cell(statistics.loads().dtlb_latency());
+        cell(statistics.loads().average_dtlb_latency());
       }
       cell(statistics.loads().count_l1_hits());
       cell(statistics.loads().count_l2_hits());
@@ -558,10 +617,10 @@ perf::analyzer::MemoryAccessResult::to_csv(const std::string& data_type_name,
 
       /* software prefetches */
       cell(statistics.software_prefetches().count());
-      cell(statistics.software_prefetches().cache_latency());
-      cell(statistics.software_prefetches().instr_latency());
+      cell(statistics.software_prefetches().average_cache_latency());
+      cell(statistics.software_prefetches().average_instruction_latency());
       if (HardwareInfo::is_amd()) {
-        cell(statistics.software_prefetches().dtlb_latency());
+        cell(statistics.software_prefetches().average_dtlb_latency());
       }
       cell(statistics.software_prefetches().count_l1_hits());
       cell(statistics.software_prefetches().count_l2_hits());
@@ -575,10 +634,10 @@ perf::analyzer::MemoryAccessResult::to_csv(const std::string& data_type_name,
 
       /* stores */
       cell(statistics.stores().count());
-      cell(statistics.stores().instr_latency());
+      cell(statistics.stores().average_instruction_latency());
       if (HardwareInfo::is_amd()) {
-        cell(statistics.stores().cache_latency());
-        cell(statistics.stores().dtlb_latency());
+        cell(statistics.stores().average_cache_latency());
+        cell(statistics.stores().average_dtlb_latency());
       }
 
       stream << '\n';

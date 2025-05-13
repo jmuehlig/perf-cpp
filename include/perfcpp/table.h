@@ -8,49 +8,51 @@ namespace perf {
 class Table
 {
 public:
-  class Column
+  enum class Alignment : std::uint8_t
+  {
+    Left,
+    Center,
+    Right
+  };
+
+  class Header
   {
   public:
-    explicit Column(std::string&& content) noexcept
-      : _content(std::move(content))
+    Header(std::string&& text, const std::uint8_t span, const bool has_separator) noexcept
+      : _text(std::move(text))
+      , _span(span)
+      , _has_separator(has_separator)
     {
     }
-    explicit Column(const std::string& content)
-      : _content(content)
+    explicit Header(std::string&& text,
+                    const Alignment alignment = Alignment::Right,
+                    const bool has_separator = false) noexcept
+      : _text(std::move(text))
+      , _alignment(alignment)
+      , _has_separator(has_separator)
     {
     }
-    Column(std::string&& content, const std::uint8_t span) noexcept
-      : _span(span)
-      , _content(std::move(content))
-    {
-    }
-    Column(const std::string& content, const std::uint8_t span)
-      : _span(span)
-      , _content(content)
-    {
-    }
+    ~Header() = default;
 
+    [[nodiscard]] const std::string& text() const noexcept { return _text; }
+    [[nodiscard]] Alignment alignment() const noexcept { return _alignment; }
     [[nodiscard]] std::uint8_t span() const noexcept { return _span; }
-    [[nodiscard]] const std::string& content() const noexcept { return _content; }
+    [[nodiscard]] bool has_separator() const noexcept { return _has_separator; }
 
   private:
+    std::string _text;
+    Alignment _alignment{ Alignment::Left };
     std::uint8_t _span{ 1U };
-    std::string _content;
+    bool _has_separator;
   };
 
   class Row
   {
   public:
-    Row() = default;
-    explicit Row(const std::size_t reserve_columns) { _columns.reserve(reserve_columns); }
+    Row() { _columns.reserve(32U); }
     ~Row() = default;
 
-    void add(Column&& column) { _columns.push_back(std::move(column)); }
-    Row& operator<<(Column&& column)
-    {
-      _columns.push_back(std::move(column));
-      return *this;
-    }
+    void add(std::string&& column) { _columns.push_back(std::move(column)); }
 
     Row& operator<<(std::string&& column)
     {
@@ -60,7 +62,7 @@ public:
 
     Row& operator<<(const std::string& column)
     {
-      _columns.emplace_back(std::string{ column });
+      _columns.emplace_back(column);
       return *this;
     }
 
@@ -100,32 +102,16 @@ public:
       return *this;
     }
 
-    [[nodiscard]] const std::vector<Column>& columns() const noexcept { return _columns; }
-    [[nodiscard]] std::vector<Column>& columns() noexcept { return _columns; }
+    [[nodiscard]] const std::vector<std::string>& columns() const noexcept { return _columns; }
+    [[nodiscard]] std::vector<std::string>& columns() noexcept { return _columns; }
 
   private:
-    std::vector<Column> _columns;
-  };
-
-  enum class Alignment : std::uint8_t
-  {
-    Left,
-    Center,
-    Right
+    std::vector<std::string> _columns;
   };
 
   Table() = default;
-  explicit Table(std::vector<Alignment>&& column_alignments)
-    : _alignments(std::move(column_alignments))
-  {
-  }
   explicit Table(const std::uint64_t offset)
     : _offset(offset)
-  {
-  }
-  Table(const std::uint64_t offset, std::vector<Alignment>&& column_alignments)
-    : _alignments(std::move(column_alignments))
-    , _offset(offset)
   {
   }
   ~Table() = default;
@@ -137,10 +123,10 @@ public:
   void reserve(const std::size_t count_rows) { _rows.reserve(count_rows); }
 
   /**
-   * Set separators for columns.
-   * @param separators List of separators, one for each column.
+   * Adds a header row to the table.
+   * @param header Header row to add.
    */
-  void column_separators(std::vector<char>&& separators) { _column_separators = std::move(separators); }
+  void add(std::vector<Header>&& header_row);
 
   /**
    * Adds the given row to the table.
@@ -154,16 +140,20 @@ public:
   [[nodiscard]] std::string to_string() const;
 
 private:
-  /// Alignment for each column.
-  std::vector<Alignment> _alignments;
+  std::optional<std::uint16_t> _count_columns{ std::nullopt };
 
-  /// Separators for columns.
-  std::vector<char> _column_separators;
+  /// Headers
+  std::vector<std::vector<Header>> _header_row;
 
-  /// Rows.
+  /// Rows
   std::vector<Row> _rows;
 
   /// Offset of each row in number of empty spaces.
   std::uint64_t _offset{ 0U };
+
+  void static print_text_aligned(std::stringstream& stream,
+                                 Alignment alignment,
+                                 const std::string& text,
+                                 std::size_t column_size);
 };
 }

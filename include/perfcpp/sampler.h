@@ -1008,7 +1008,16 @@ private:
    * @param is_ibs_fetch Flag if the sample PMU is ibs_fetch (ibs_op otherwise).
    * @param sample The sample to enrich; needs to contain raw data.
    */
-  static void enrich_ibs_sample_from_raw_data(bool is_ibs_fetch, Sample& sample);
+  void enrich_ibs_sample_from_raw_data(bool is_ibs_fetch, Sample& sample) const noexcept;
+
+  /**
+   * Translates the TLB page size in a number of bytes, based on the options.
+   *
+   * @param is_1g True, if the page is 1GB.
+   * @param is_2m True, if the page is 2MB.
+   * @return The size in bytes.
+   */
+  static std::uint64_t calculate_tlb_page_size(bool is_1g, bool is_2m);
 
   /**
    * Translates the current entry from the user-level buffer into a lost sample.

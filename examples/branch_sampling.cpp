@@ -83,7 +83,12 @@ main()
       for (const auto& branch : sample.branch_stack().value()) {
         std::cout << "\tpredicted correct = " << branch.is_predicted() << " | from instruction 0x" << std::hex
                   << branch.instruction_pointer_from() << std::dec << " | to instruction 0x" << std::hex
-                  << branch.instruction_pointer_to() << std::dec << "\n";
+                  << branch.instruction_pointer_to() << std::dec;
+        if (branch.cycles().has_value()) {
+          std::cout << " | cycles = " << branch.cycles().value();
+        }
+
+        std::cout << "\n";
       }
     }
   }

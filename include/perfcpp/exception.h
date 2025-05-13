@@ -340,4 +340,32 @@ public:
   ~CannotCopySampleBuffer() override = default;
 };
 
+class CannotAddHeaderToTable final : public std::runtime_error
+{
+public:
+  CannotAddHeaderToTable(const std::uint64_t columns, const std::uint64_t expected_columns)
+    : std::runtime_error{ std::string{ "Header does not match the columns. Provided columns is " }
+                            .append(std::to_string(columns))
+                            .append(", expected is ")
+                            .append(std::to_string(expected_columns))
+                            .append(".") }
+  {
+  }
+  ~CannotAddHeaderToTable() override = default;
+};
+
+class CannotAddRowToTable final : public std::runtime_error
+{
+public:
+  CannotAddRowToTable(const std::uint64_t columns, const std::uint64_t expected_columns)
+    : std::runtime_error{ std::string{ "Row does not match the columns. Provided columns is " }
+                            .append(std::to_string(columns))
+                            .append(", expected is ")
+                            .append(std::to_string(expected_columns))
+                            .append(".") }
+  {
+  }
+  ~CannotAddRowToTable() override = default;
+};
+
 }

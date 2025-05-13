@@ -6,6 +6,9 @@
 #include <optional>
 
 namespace perf {
+/**
+ * Branch types that can be filtered when recording branches via sampling.
+ */
 enum BranchType : std::uint64_t
 {
   None = 0ULL,
@@ -38,6 +41,10 @@ enum BranchType : std::uint64_t
   NotInTransaction = PERF_SAMPLE_BRANCH_NO_TX
 };
 
+/**
+ * A Branch represents one branch from the branch stack, including information where the branch started (and in case of
+ * jmp/call where the branch ended), if the branch was predicted correctly, and how long
+ */
 class Branch
 {
 public:
