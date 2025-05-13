@@ -395,11 +395,11 @@ Note that `record.data_source().source()` returns an `std::optional`.
 Provides latency measurements associated with data access operations.  
 All fields are returned as `std::optional`.
 
-| Name             | Description                                                                                                                          | How to record?                   | How to access?                                  | Type                           |
-|------------------|--------------------------------------------------------------------------------------------------------------------------------------|----------------------------------|-------------------------------------------------|--------------------------------|
-| **Cache Access** | The latency (in cycles) for completing the data access ([**Intel** `mem-load`](#intel-processor-event-based-sampling) trigger only). | `sampler.values().latency(true)` | `record.data_source().latency().cache_access()` | `std::optional<std::uint32_t>` |
-| **Cache Miss**   | The latency (in cycles) caused by an L1d cache miss ([**AMD's Op PMU**](#ibs-op-pmu) only).                                          | `sampler.values().latency(true)` | `record.data_source().latency().cache_miss()`   | `std::optional<std::uint32_t>` |
-| **dTLB Refill**  | The latency (in cycles) for refilling the data TLB after a miss ([**AMD's Op PMU**](#ibs-op-pmu) only).                              | `sampler.values().raw(true)`     | `record.data_source().latency().dtlb_refill()`  | `std::optional<std::uint32_t>` |
+| Name             | Description                                                                                                                          | How to record?                             | How to access?                                  | Type                           |
+|------------------|--------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------|-------------------------------------------------|--------------------------------|
+| **Cache Access** | The latency (in cycles) for completing the data access ([**Intel** `mem-load`](#intel-processor-event-based-sampling) trigger only). | `sampler.values().latency(true)`           | `record.data_source().latency().cache_access()` | `std::optional<std::uint32_t>` |
+| **Cache Miss**   | The latency (in cycles) caused by an L1d cache miss ([**AMD's Op PMU**](#ibs-op-pmu) only).                                          | `sampler.values().latency(true)`           | `record.data_source().latency().cache_miss()`   | `std::optional<std::uint32_t>` |
+| **dTLB Refill**  | The latency (in cycles) for refilling the data TLB after a miss ([**AMD's Op PMU**](#ibs-op-pmu) only).                              | `sampler.values().latency(true).raw(true)` | `record.data_source().latency().dtlb_refill()`  | `std::optional<std::uint32_t>` |
 
 #### Data TLB
 Provides information about dTLB and STLB access behavior.  
