@@ -849,7 +849,7 @@ perf::Sampler::read_data_access_source(const std::uint64_t source)
   auto snoop = std::optional<DataAccess::Snoop>{ std::nullopt };
   if (perf_data_source.mem_snoop > 0 && !(perf_data_source.mem_snoop & PERF_MEM_SNOOP_NA) &&
       !(perf_data_source.mem_snoop & PERF_MEM_SNOOP_NONE)) {
-    snoop.emplace(DataAccess::Snoop{});
+    snoop = DataAccess::Snoop{};
     if (perf_data_source.mem_snoop & PERF_MEM_SNOOP_HIT) {
       snoop->is_hit(true);
       snoop->is_hit_modified(perf_data_source.mem_snoop & PERF_MEM_SNOOP_HITM);

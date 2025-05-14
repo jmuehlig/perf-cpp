@@ -58,5 +58,19 @@ private:
   static std::optional<bool> _is_amd_ibs_supported_cache;
   static std::optional<bool> _is_ibs_l3_filter_supported_cache;
   static std::optional<std::uint64_t> _memory_page_size_cache;
+
+  /**
+   * Writes a value into the cache variable and returns the value.
+   *
+   * @param variable Cache variable.
+   * @param value Value to write into the cache variable.
+   * @return The cached value.
+   */
+  template<typename T>
+  [[nodiscard]] static bool cached_value(std::optional<T>& variable, const T value)
+  {
+    variable = value;
+    return value;
+  }
 };
 }
