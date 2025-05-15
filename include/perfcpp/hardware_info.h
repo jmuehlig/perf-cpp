@@ -53,11 +53,11 @@ public:
   [[nodiscard]] static std::uint64_t memory_page_size();
 
 private:
-  static std::optional<bool> _is_intel_aux_counter_required_cache;
-  static std::optional<bool> _is_intel_12th_generation_or_newer_cache;
-  static std::optional<bool> _is_amd_ibs_supported_cache;
-  static std::optional<bool> _is_ibs_l3_filter_supported_cache;
-  static std::optional<std::uint64_t> _memory_page_size_cache;
+  static std::optional<bool> _is_intel_aux_counter_required;
+  static std::optional<bool> _is_intel_12th_generation_or_newer;
+  static std::optional<bool> _is_amd_ibs_supported;
+  static std::optional<bool> _is_ibs_l3_filter_supported;
+  static std::optional<std::uint64_t> _memory_page_size;
 
   /**
    * Writes a value into the cache variable and returns the value.
@@ -67,7 +67,7 @@ private:
    * @return The cached value.
    */
   template<typename T>
-  [[nodiscard]] static bool cached_value(std::optional<T>& variable, const T value)
+  [[nodiscard]] static bool cache_value(std::optional<T>& variable, const T value)
   {
     variable = value;
     return value;

@@ -208,10 +208,10 @@ perf::analyzer::MemoryAccessResult::to_string() const
         "latency", std::uint8_t(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())), true);
       category_headers.emplace_back(
         "cache hits", std::uint8_t(3U + static_cast<std::uint8_t>(HardwareInfo::is_intel())), true);
+      category_headers.emplace_back("RAM hits", 2U, true);
       if (HardwareInfo::is_amd()) {
         category_headers.emplace_back("MAB", 2U, true);
       }
-      category_headers.emplace_back("RAM hits", 2U, true);
       category_headers.emplace_back("TLB", std::uint8_t(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())), true);
 
       row_headers.emplace_back("count");
@@ -230,13 +230,13 @@ perf::analyzer::MemoryAccessResult::to_string() const
       row_headers.emplace_back("L2");
       row_headers.emplace_back("L3");
 
-      if (HardwareInfo::is_amd()) {
-        row_headers.emplace_back("alloc.");
-        row_headers.emplace_back("avg.");
-      }
-
       row_headers.emplace_back("local");
       row_headers.emplace_back("remote");
+
+      if (HardwareInfo::is_amd()) {
+        row_headers.emplace_back("no alloc.");
+        row_headers.emplace_back("slots");
+      }
 
       if (HardwareInfo::is_amd()) {
         row_headers.emplace_back("dTLB");
@@ -257,10 +257,10 @@ perf::analyzer::MemoryAccessResult::to_string() const
       category_headers.emplace_back("latency", 2U, true);
       category_headers.emplace_back(
         "cache hits", std::uint8_t(3U + static_cast<std::uint8_t>(HardwareInfo::is_intel())), true);
+      category_headers.emplace_back("RAM hits", 2U, true);
       if (HardwareInfo::is_amd()) {
         category_headers.emplace_back("MAB", 2U, true);
       }
-      category_headers.emplace_back("RAM hits", 2U, true);
       category_headers.emplace_back("TLB", std::uint8_t(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())), true);
 
       row_headers.emplace_back("count");
@@ -279,13 +279,13 @@ perf::analyzer::MemoryAccessResult::to_string() const
       row_headers.emplace_back("L2");
       row_headers.emplace_back("L3");
 
-      if (HardwareInfo::is_amd()) {
-        row_headers.emplace_back("alloc.");
-        row_headers.emplace_back("avg.");
-      }
-
       row_headers.emplace_back("local");
       row_headers.emplace_back("remote");
+
+      if (HardwareInfo::is_amd()) {
+        row_headers.emplace_back("no alloc.");
+        row_headers.emplace_back("slots");
+      }
 
       if (HardwareInfo::is_amd()) {
         row_headers.emplace_back("dTLB");
@@ -339,12 +339,14 @@ perf::analyzer::MemoryAccessResult::to_string() const
         if (HardwareInfo::is_intel()) {
           row << statistics.loads().count_mhb_hits();
         }
-        row << statistics.loads().count_l2_hits() << statistics.loads().count_l3_hits();
+        row << statistics.loads().count_l2_hits() << statistics.loads().count_l3_hits()
+            << statistics.loads().count_local_ram_hits() << statistics.loads().count_remote_ram_hits();
+
         if (HardwareInfo::is_amd()) {
           row << statistics.loads().count_mhb_hits() << statistics.loads().average_alloc_mab_entries();
         }
-        row << statistics.loads().count_local_ram_hits() << statistics.loads().count_remote_ram_hits()
-            << statistics.loads().dtlb_hits();
+
+        row << statistics.loads().dtlb_hits();
         if (HardwareInfo::is_amd()) {
           row << statistics.loads().stlb_hits();
         }
@@ -365,13 +367,16 @@ perf::analyzer::MemoryAccessResult::to_string() const
         if (HardwareInfo::is_intel()) {
           row << statistics.software_prefetches().count_mhb_hits();
         }
-        row << statistics.software_prefetches().count_l2_hits() << statistics.software_prefetches().count_l3_hits();
+        row << statistics.software_prefetches().count_l2_hits() << statistics.software_prefetches().count_l3_hits()
+            << statistics.software_prefetches().count_local_ram_hits()
+            << statistics.software_prefetches().count_remote_ram_hits();
+
         if (HardwareInfo::is_amd()) {
           row << statistics.software_prefetches().count_mhb_hits()
               << statistics.software_prefetches().average_alloc_mab_entries();
         }
-        row << statistics.software_prefetches().count_local_ram_hits()
-            << statistics.software_prefetches().count_remote_ram_hits() << statistics.software_prefetches().dtlb_hits();
+
+        row << statistics.software_prefetches().dtlb_hits();
         if (HardwareInfo::is_amd()) {
           row << statistics.software_prefetches().stlb_hits();
         }
