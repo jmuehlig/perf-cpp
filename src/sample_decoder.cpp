@@ -628,13 +628,7 @@ perf::SampleDecoder::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, pe
       /// Instruction TLB.
       auto l1_tlb_size = std::optional<std::uint64_t>{ std::nullopt };
       if (fetch_parser.is_physical_instruction_address_valid()) {
-        if (fetch_parser.l1_tlb_page_size() == 0U) {
-          l1_tlb_size = 4ULL * 1024ULL;
-        } else if (fetch_parser.l1_tlb_page_size() == 1U) {
-          l1_tlb_size = 2ULL * 1024ULL * 1024ULL;
-        } else if (fetch_parser.l1_tlb_page_size() == 2U) {
-          l1_tlb_size = 1024ULL * 1024ULL * 1024ULL;
-        }
+        l1_tlb_size = SampleDecoder::calculate_tlb_page_size(fetch_parser.l1_tlb_page_size());
       }
       sample.instruction_execution().tlb(
         InstructionExecution::TLB{ fetch_parser.is_l1_tlb_miss(), l1_tlb_size, fetch_parser.is_l2_tlb_miss() });
@@ -727,6 +721,16 @@ perf::SampleDecoder::calculate_tlb_page_size(const bool is_1g, const bool is_2m)
   }
 
   return 1024ULL * 4ULL;
+}
+
+std::optional<std::uint64_t>
+perf::SampleDecoder::calculate_tlb_page_size(const std::uint8_t code)
+{
+  if (code <= 2U) { /// 0-2 are valid codes.
+    return SampleDecoder::calculate_tlb_page_size(code == 2U, code == 1U);
+  }
+
+  return std::nullopt;
 }
 
 perf::Sample

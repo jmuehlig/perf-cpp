@@ -272,6 +272,14 @@ private:
   static std::uint64_t calculate_tlb_page_size(bool is_1g, bool is_2m);
 
   /**
+   * Translates the TLB page size in a number of bytes, based on the options.
+   *
+   * @param code Code for the TLB page size.
+   * @return The size in bytes.
+   */
+  static std::optional<std::uint64_t> calculate_tlb_page_size(std::uint8_t code);
+
+  /**
    * Translates the current entry from the user-level buffer into a lost sample.
    *
    * @param entry Entry of the user-level buffer.
