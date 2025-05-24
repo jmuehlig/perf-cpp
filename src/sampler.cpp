@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <perfcpp/exception.h>
 #include <perfcpp/hardware_info.h>
-#include <perfcpp/ibs_parser.h>
+#include <perfcpp/ibs_decoder.h>
 #include <perfcpp/sample_decoder.h>
 #include <perfcpp/sampler.h>
 #include <stdexcept>

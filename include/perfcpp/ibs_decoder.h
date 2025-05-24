@@ -7,15 +7,15 @@ namespace perf {
  * Implements mechanisms to parse raw data collected by the fetch PMU based on AMD's Instruction Based Sampling.
  * Some of these information provided by IBS are not accessible through the perf_event_open interface.
  */
-class IBSFetchParser
+class IBSFetchDecoder
 {
 public:
-  explicit IBSFetchParser(const std::vector<std::byte>& raw_data) noexcept
+  explicit IBSFetchDecoder(const std::vector<std::byte>& raw_data) noexcept
   {
     _fetch_data = reinterpret_cast<const FetchData*>(raw_data.data() + /* 4 byte offset */ 4U);
   }
 
-  ~IBSFetchParser() noexcept = default;
+  ~IBSFetchDecoder() noexcept = default;
 
   [[nodiscard]] bool is_valid() const noexcept { return _fetch_data->_fetch_control.is_fetch_valid; }
   [[nodiscard]] bool is_op_cache_miss() const noexcept { return _fetch_data->_fetch_control.is_fetch_op_cache_miss; }
@@ -78,15 +78,15 @@ private:
  * Implements mechanisms to parse raw data collected by the execution PMU based on AMD's Instruction Based Sampling.
  * Some of these information provided by IBS are not accessible through the perf_event_open interface.
  */
-class IBSExecutionParser
+class IBSExecutionDecoder
 {
 public:
-  explicit IBSExecutionParser(const std::vector<std::byte>& raw_data) noexcept
+  explicit IBSExecutionDecoder(const std::vector<std::byte>& raw_data) noexcept
   {
     _execution_data = reinterpret_cast<const ExecutionData*>(raw_data.data() + /* 4 byte offset */ 4U);
   }
 
-  ~IBSExecutionParser() noexcept = default;
+  ~IBSExecutionDecoder() noexcept = default;
 
   [[nodiscard]] std::uint16_t completion_to_retire_latency() const noexcept
   {

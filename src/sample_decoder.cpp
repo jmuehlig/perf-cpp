@@ -1,5 +1,5 @@
 #include <perfcpp/hardware_info.h>
-#include <perfcpp/ibs_parser.h>
+#include <perfcpp/ibs_decoder.h>
 #include <perfcpp/sample_decoder.h>
 
 std::optional<perf::Metadata::Mode>
@@ -609,7 +609,7 @@ perf::SampleDecoder::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, pe
 {
   /// Fetch events...
   if (is_ibs_fetch) {
-    auto fetch_parser = IBSFetchParser{ sample.raw().value() };
+    auto fetch_parser = IBSFetchDecoder{ sample.raw().value() };
 
     if (this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT) || this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT)) {
       /// Fetch latency.
@@ -646,7 +646,7 @@ perf::SampleDecoder::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, pe
 
   /// .. or execution events.
   else {
-    auto execution_parser = IBSExecutionParser{ sample.raw().value() };
+    auto execution_parser = IBSExecutionDecoder{ sample.raw().value() };
 
     if (this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT) || this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT)) {
       /// Execution latency.
