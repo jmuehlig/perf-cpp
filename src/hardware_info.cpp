@@ -2,6 +2,9 @@
 #include <filesystem>
 #include <perfcpp/hardware_info.h>
 #include <unistd.h>
+#if defined(__x86_64__) || defined(__i386__)
+#include <cpuid.h>
+#endif
 
 /// Cache variable to remember if Intel's auxiliary counter is required for sampling.
 std::optional<bool> perf::HardwareInfo::_is_intel_aux_counter_required{ std::nullopt };
@@ -30,10 +33,10 @@ perf::HardwareInfo::is_intel_aux_counter_required()
     return HardwareInfo::cache_value(HardwareInfo::_is_intel_aux_counter_required, false);
   }
 
+  const auto is_aux_counter_required = std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu/events/mem-loads-aux")) ||
+                                       std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu_core/events/mem-loads-aux"));
   return HardwareInfo::cache_value(
-    HardwareInfo::_is_intel_aux_counter_required,
-    std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu/events/mem-loads-aux")) ||
-      std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu_core/events/mem-loads-aux")));
+    HardwareInfo::_is_intel_aux_counter_required, is_aux_counter_required);
 }
 
 bool
@@ -50,7 +53,9 @@ perf::HardwareInfo::is_intel_12th_generation_or_newer()
 
   // Get processor family/model information
   std::uint32_t eax, ebx, ecx, edx;
-  __get_cpuid(1, &eax, &ebx, &ecx, &edx);
+  if (__get_cpuid(1, &eax, &ebx, &ecx, &edx) == 0) {
+    return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer, false);
+  }
 
   // Check the family.
   const auto family_id = (eax >> 8) & 0xF;
@@ -112,8 +117,8 @@ perf::HardwareInfo::is_ibs_l3_filter_supported() noexcept
 
   std::uint32_t eax, ebx, ecx, edx;
   if (__get_cpuid_count(0x8000001b, 0, &eax, &ebx, &ecx, &edx) > 0) {
-    return HardwareInfo::cache_value(HardwareInfo::_is_ibs_l3_filter_supported,
-                                     static_cast<bool>(eax & (std::uint32_t(1U) << 11)));
+    const auto is_ibs_l3_filter_supported = static_cast<bool>(eax & (std::uint32_t(1U) << 11));
+    return HardwareInfo::cache_value(HardwareInfo::_is_ibs_l3_filter_supported, is_ibs_l3_filter_supported);
   }
 
   return HardwareInfo::cache_value(HardwareInfo::_is_ibs_l3_filter_supported, false);
@@ -129,6 +134,6 @@ perf::HardwareInfo::memory_page_size()
     return HardwareInfo::_memory_page_size.value();
   }
 
-  return HardwareInfo::cache_value(HardwareInfo::_memory_page_size,
-                                   std::uint64_t(std::max(0L, ::sysconf(_SC_PAGESIZE))));
+  const auto memory_page_size = std::uint64_t(std::max(0L, ::sysconf(_SC_PAGESIZE)));
+  return HardwareInfo::cache_value(HardwareInfo::_memory_page_size, memory_page_size);
 }

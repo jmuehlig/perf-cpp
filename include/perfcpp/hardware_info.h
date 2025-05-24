@@ -67,7 +67,7 @@ private:
    * @return The cached value.
    */
   template<typename T>
-  [[nodiscard]] static bool cache_value(std::optional<T>& variable, const T value)
+  [[nodiscard]] static T cache_value(std::optional<T>& variable, const T value)
   {
     variable = value;
     return value;
