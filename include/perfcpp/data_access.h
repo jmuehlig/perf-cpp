@@ -321,6 +321,9 @@ public:
   class Snoop
   {
   public:
+    Snoop() noexcept = default;
+    ~Snoop() noexcept = default;
+
     /**
      * Set whether the snoop was a hit.
      * @param is_hit True if the snoop found a matching cache line.

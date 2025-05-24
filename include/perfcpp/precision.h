@@ -12,9 +12,20 @@ namespace perf {
  */
 enum Precision : std::uint8_t
 {
+  /// The recorded instruction pointer may land anywhere within a broad, implementation-defined window around the real
+  /// instruction.
   AllowArbitrarySkid = 0U,
+
+  /// The recorded instruction pointer must have a constant, repeatable skid offset (still non-zero) so the displacement
+  /// is predictable even if not exact.
   MustHaveConstantSkid = 1U,
+
+  /// Request–but do not insist on—zero skid, asking the PMU for exact instruction pointer attribution while allowing
+  /// fallback on CPUs that cannot guarantee it.
   RequestZeroSkid = 2U,
+
+  /// Require zero skid: the sample instruction pointer must be the exact triggering instruction; if the hardware cannot
+  /// provide this, perf-cpp will lower the precision.
   MustHaveZeroSkid = 3U,
 };
 }

@@ -47,7 +47,6 @@ perf::SampleBuffer::~SampleBuffer()
     /// Wait for the thread to return.
     if (this->_poll_and_handle_ringbuffer_overflow_thread.has_value()) {
       this->_poll_and_handle_ringbuffer_overflow_thread->join();
-      this->_poll_and_handle_ringbuffer_overflow_thread.reset();
     }
 
     /// Close the cancel file descriptor.
@@ -141,24 +140,4 @@ perf::SampleBuffer::align_number_of_buffer_pages(std::uint64_t number_of_buffer_
 
   /// The number is already a power of two plus one; everything is correct configured.
   return number_of_buffer_pages;
-}
-
-std::optional<perf::Metadata::Mode>
-perf::SampleBuffer::Entry::mode() const noexcept
-{
-  const auto misc = this->_header->misc;
-
-  if (static_cast<bool>(misc & PERF_RECORD_MISC_KERNEL)) {
-    return Metadata::Mode::Kernel;
-  } else if (static_cast<bool>(misc & PERF_RECORD_MISC_USER)) {
-    return Metadata::Mode::User;
-  } else if (static_cast<bool>(misc & PERF_RECORD_MISC_HYPERVISOR)) {
-    return Metadata::Mode::Hypervisor;
-  } else if (static_cast<bool>(misc & PERF_RECORD_MISC_GUEST_KERNEL)) {
-    return Metadata::Mode::GuestKernel;
-  } else if (static_cast<bool>(misc & PERF_RECORD_MISC_GUEST_USER)) {
-    return Metadata::Mode::GuestUser;
-  }
-
-  return std::nullopt;
 }

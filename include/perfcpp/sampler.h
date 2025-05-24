@@ -582,6 +582,8 @@ public:
       return static_cast<bool>(_mask & perf_field);
     }
 
+    [[nodiscard]] bool is_include_throttle() const noexcept { return _is_include_throttle; }
+
     [[nodiscard]] const Registers& user_registers() const noexcept { return _user_registers; }
     [[nodiscard]] const Registers& kernel_registers() const noexcept { return _kernel_registers; }
     [[nodiscard]] std::uint32_t max_user_stack() const noexcept { return _max_user_stack; }
@@ -927,129 +929,6 @@ private:
     std::string_view pmu_name,
     const std::vector<std::tuple<std::string_view, std::optional<Precision>, std::optional<PeriodOrFrequency>>>&
       trigger_group) const;
-
-  /**
-   * Reads the sample_id struct from the data located at sample_ptr into the provided sample.
-   *
-   * @param sample Sample to read the data into.
-   */
-  void read_sample_id_all(SampleBuffer::Entry& entry, Sample& sample) const noexcept;
-
-  /**
-   * Translates the current entry from the user-level buffer into a "normal" sample.
-   *
-   * @param entry Entry of the user-level buffer.
-   * @param sample_counter The SampleCounter the entry is linked to in order to get the recorded counters (if any).
-   * @return Sample.
-   */
-  [[nodiscard]] perf::Sample read_sample_event(SampleBuffer::Entry entry, const SampleCounter& sample_counter) const;
-
-  /**
-   * Reads registers from the current buffer entry.
-   *
-   * @param entry Current position at the buffer.
-   * @return Registers.
-   */
-  [[nodiscard]] static RegisterValues read_registers(SampleBuffer::Entry& entry, const Registers& registers);
-
-  /**
-   * Reads hardware events from the current buffer entry.
-   *
-   * @param entry Current position at the buffer.
-   * @param sample_counter The current sample counter including the counter group and counter names.
-   * @return Event values
-   */
-  [[nodiscard]] std::optional<CounterResult> read_hardware_events(SampleBuffer::Entry& entry,
-                                                                  const SampleCounter& sample_counter) const;
-
-  /**
-   * Reads the callchain from the current buffer entry.
-   *
-   * @param entry Current position at the buffer.
-   * @return List of instruction pointers (the callchain).
-   */
-  [[nodiscard]] static std::optional<std::vector<std::uintptr_t>> read_callchain(SampleBuffer::Entry& entry);
-
-  /**
-   * Reads the branch stack from the current buffer entry.
-   *
-   * @param entry Current position at the buffer.
-   * @return Branch stack.
-   */
-  [[nodiscard]] static std::optional<std::vector<Branch>> read_branch_stack(SampleBuffer::Entry& entry);
-
-  /**
-   * Reads the data source field and translates it into an instruction type, the source, snoop information, tlb
-   * information, and lock information.
-   *
-   * @param source Data source field.
-   * @return 3-tuple (instruction type, data source, snoop, (is l1 tlb hit bit, is l2 tlb hit bit), is locked bit)
-   */
-  [[nodiscard]] static std::tuple<std::optional<DataAccess::AccessType>,
-                                  DataAccess::Source,
-                                  std::optional<DataAccess::Snoop>,
-                                  std::optional<std::pair<bool, bool>>,
-                                  std::optional<bool>>
-  read_data_access_source(std::uint64_t source);
-
-  /**
-   * Reads the hardware transaction abort from the current buffer entry.
-   *
-   * @param entry Current position at the buffer.
-   * @return Hardware transaction abort.
-   */
-  [[nodiscard]] static InstructionExecution::HardwareTransactionAbort read_hardware_transaction_abort(
-    std::uint64_t abort);
-
-  /**
-   * Enriches the given sample with information that is present in the IBS raw data but cannot be accessed by the perf
-   * subsystem interface.
-   *
-   * @param is_ibs_fetch Flag if the sample PMU is ibs_fetch (ibs_op otherwise).
-   * @param sample The sample to enrich; needs to contain raw data.
-   */
-  void enrich_ibs_sample_from_raw_data(bool is_ibs_fetch, Sample& sample) const noexcept;
-
-  /**
-   * Translates the TLB page size in a number of bytes, based on the options.
-   *
-   * @param is_1g True, if the page is 1GB.
-   * @param is_2m True, if the page is 2MB.
-   * @return The size in bytes.
-   */
-  static std::uint64_t calculate_tlb_page_size(bool is_1g, bool is_2m);
-
-  /**
-   * Translates the current entry from the user-level buffer into a lost sample.
-   *
-   * @param entry Entry of the user-level buffer.
-   * @return Sample containing the loss.
-   */
-  [[nodiscard]] perf::Sample read_loss_event(SampleBuffer::Entry&& entry) const noexcept;
-
-  /**
-   * Translates the current entry from the user-level buffer into a context switch sample.
-   *
-   * @param entry Entry of the user-level buffer.
-   * @return Sample containing the context switch.
-   */
-  [[nodiscard]] perf::Sample read_context_switch_event(SampleBuffer::Entry&& entry) const noexcept;
-
-  /**
-   * Translates the current entry from the user-level buffer into a cgroup sample.
-   *
-   * @param entry Entry of the user-level buffer.
-   * @return Sample containing the cgroup.
-   */
-  [[nodiscard]] static perf::Sample read_cgroup_event(SampleBuffer::Entry&& entry);
-
-  /**
-   * Translates the current entry from the user-level buffer into a throttle or un-throttle sample.
-   *
-   * @param entry Entry of the user-level buffer.
-   * @return Sample containing the throttle.
-   */
-  [[nodiscard]] perf::Sample read_throttle_event(SampleBuffer::Entry&& entry) const noexcept;
 
   const CounterDefinition& _counter_definitions;
 

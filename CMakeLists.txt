@@ -20,8 +20,9 @@ option(BUILD_EXAMPLES "Build examples in examples/ directory." OFF)
 option(BUILD_LIB_SHARED "Build the library as a shared library (default is static)." OFF)
 option(BUILD_TESTS "Build the unit tests." OFF)
 
-message("Building Examples = ${BUILD_EXAMPLES}")
-message("Building as Shared Library = ${BUILD_EXAMPLES}")
+message("Building as Shared Library = ${BUILD_LIB_SHARED}")
+message("Building Examples          = ${BUILD_EXAMPLES}")
+message("Building Tests             = ${BUILD_TESTS}")
 
 #############################################################
 #   perf-cpp library definition                             #
@@ -38,6 +39,7 @@ set(PERF_CPP_SRC
     src/requested_event.cpp
     src/sampler.cpp
     src/sample_buffer.cpp
+    src/sample_decoder.cpp
     src/table.cpp
     src/mmap_buffer.cpp
     src/analyzer/memory_access.cpp
