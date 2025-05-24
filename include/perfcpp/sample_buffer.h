@@ -23,8 +23,7 @@ public:
   SampleBuffer(SampleBuffer&& other) noexcept
     : _mmap_buffer(std::move(other._mmap_buffer))
     , _sample_buffers(std::move(other._sample_buffers))
-    , _poll_and_handle_ringbuffer_overflow_thread(
-        std::exchange(other._poll_and_handle_ringbuffer_overflow_thread, std::nullopt))
+    , _poll_and_handle_ringbuffer_overflow_thread(std::move(other._poll_and_handle_ringbuffer_overflow_thread))
     , _cancel_thread_event_file_descriptor(std::exchange(other._cancel_thread_event_file_descriptor, std::nullopt))
   {
   }

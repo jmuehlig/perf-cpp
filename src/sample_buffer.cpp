@@ -88,9 +88,9 @@ perf::SampleBuffer::poll_and_handle_ringbuffer_overflow(const std::int32_t perf_
     const auto max_file_descriptor = std::max(perf_file_descriptor, cancel_file_descriptor) + 1;
 
     /// Block and wait for the perf file descriptor or the event file descriptor to notify.
-    const auto ret = ::select(max_file_descriptor, &file_descriptor_set, nullptr, nullptr, nullptr);
+    const auto select = ::select(max_file_descriptor, &file_descriptor_set, nullptr, nullptr, nullptr);
 
-    if (ret > 0) {
+    if (select > 0) {
       /// If the cancel file descriptor is set, exit the loop and consequently the thread.
       if (FD_ISSET(cancel_file_descriptor, &file_descriptor_set)) {
         return;
@@ -107,7 +107,7 @@ perf::SampleBuffer::poll_and_handle_ringbuffer_overflow(const std::int32_t perf_
           this->_sample_buffers.push_back(std::move(buffer));
         }
       }
-    } else if (ret == -1) {
+    } else if (select == -1) {
       return;
     }
   } while (true);
