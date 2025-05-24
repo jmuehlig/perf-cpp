@@ -33,10 +33,10 @@ perf::HardwareInfo::is_intel_aux_counter_required()
     return HardwareInfo::cache_value(HardwareInfo::_is_intel_aux_counter_required, false);
   }
 
-  const auto is_aux_counter_required = std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu/events/mem-loads-aux")) ||
-                                       std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu_core/events/mem-loads-aux"));
-  return HardwareInfo::cache_value(
-    HardwareInfo::_is_intel_aux_counter_required, is_aux_counter_required);
+  const auto is_aux_counter_required =
+    std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu/events/mem-loads-aux")) ||
+    std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu_core/events/mem-loads-aux"));
+  return HardwareInfo::cache_value(HardwareInfo::_is_intel_aux_counter_required, is_aux_counter_required);
 }
 
 bool
