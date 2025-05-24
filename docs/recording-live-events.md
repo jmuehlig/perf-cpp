@@ -121,4 +121,4 @@ const auto result = event_counter.result();
 std::cout << result.to_string() << std::endl;
 ```
 
-For further information, refer to the [recording basics documentation](recording.md).
+For further information, refer to the [recording basics documentation](recording.md) and the [code example](../examples/live_events.cpp).
