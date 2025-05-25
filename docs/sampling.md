@@ -55,7 +55,7 @@ sample_config.period(4000U);
 
 auto sampler = perf::Sampler{ counter_definitions, sample_config };
 sampler.trigger("cycles");
-sampler.values().time(true).instruction_pointer(true);
+sampler.values().timestamp(true).instruction_pointer(true);
 ```
 
 > [!IMPORTANT]
@@ -500,10 +500,10 @@ Note that `record.user_registers()` and `record.kernel_registers()` return an `s
 Register values (user or kernel) can be accessed via `record.user_registers()` or `record.kernel_registers()`.  
 The following fields are available:
 
-| Name               | Description                                      | How to access?                                                                               | Type                          |
-|--------------------|--------------------------------------------------|----------------------------------------------------------------------------------------------|-------------------------------|
-| **Register Value** | The value of a specific register.                | `record.user_registers()->value(perf::Registers::x86::AX)` (example register)                | `std::optional<std::int64_t>` |
-| **ABI**            | The ABI used when capturing the register values. | `record.user_registers()->abi()`                                                             | `perf::ABI`                   |
+| Name               | Description                                      | How to access?                                                              | Type                          |
+|--------------------|--------------------------------------------------|-----------------------------------------------------------------------------|-------------------------------|
+| **Register Value** | The value of a specific register.                | `record.user_registers()->get(perf::Registers::x86::AX)` (example register) | `std::optional<std::int64_t>` |
+| **ABI**            | The ABI used when capturing the register values. | `record.user_registers()->abi()`                                            | `perf::ABI`                   |
 
 **Example:** [`examples/register_sampling.cpp`](../examples/register_sampling.cpp)
 

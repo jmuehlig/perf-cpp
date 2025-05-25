@@ -78,15 +78,15 @@ private:
  * Implements mechanisms to parse raw data collected by the execution PMU based on AMD's Instruction Based Sampling.
  * Some of these information provided by IBS are not accessible through the perf_event_open interface.
  */
-class IBSExecutionDecoder
+class IBSOpDecoder
 {
 public:
-  explicit IBSExecutionDecoder(const std::vector<std::byte>& raw_data) noexcept
+  explicit IBSOpDecoder(const std::vector<std::byte>& raw_data) noexcept
   {
     _execution_data = reinterpret_cast<const ExecutionData*>(raw_data.data() + /* 4 byte offset */ 4U);
   }
 
-  ~IBSExecutionDecoder() noexcept = default;
+  ~IBSOpDecoder() noexcept = default;
 
   [[nodiscard]] std::uint16_t completion_to_retire_latency() const noexcept
   {

@@ -318,9 +318,12 @@ perf::SampleDecoder::read_sample_event(perf::SampleDecoder::SampleIterator&& ent
 
   /// Enrich AMD IBS samples with information that is not accessible through the perf_event_open interface by
   /// interpreting the raw data, if enabled.
-  if (this->_sampler_values.is_set(PERF_SAMPLE_RAW) && sample.raw().has_value() && HardwareInfo::is_amd() &&
-      (has_amd_ibs_op_pmu || has_amd_ibs_fetch_pmu)) {
-    this->enrich_ibs_sample_from_raw_data(has_amd_ibs_fetch_pmu, sample);
+  if (this->_sampler_values.is_set(PERF_SAMPLE_RAW) && sample.raw().has_value() && HardwareInfo::is_amd()) {
+    if (has_amd_ibs_fetch_pmu) {
+      this->enrich_sample_with_ibs_fetch_data_from_raw(sample);
+    } else if (has_amd_ibs_op_pmu) {
+      this->enrich_sample_with_ibs_op_data_from_raw(sample);
+    }
   }
 
   return sample;
@@ -356,7 +359,7 @@ perf::SampleDecoder::read_registers(perf::SampleDecoder::SampleIterator& entry, 
     },
     registers.registers());
 
-  return RegisterValues{ abi, std::move(register_values) };
+  return RegisterValues{ abi, std::move(register_values), registers };
 }
 
 std::optional<perf::CounterResult>
@@ -605,105 +608,106 @@ perf::SampleDecoder::read_hardware_transaction_abort(const std::uint64_t abort)
 }
 
 void
-perf::SampleDecoder::enrich_ibs_sample_from_raw_data(const bool is_ibs_fetch, perf::Sample& sample) const noexcept
+perf::SampleDecoder::enrich_sample_with_ibs_fetch_data_from_raw(perf::Sample& sample) const noexcept
 {
-  /// Fetch events...
-  if (is_ibs_fetch) {
-    auto fetch_parser = IBSFetchDecoder{ sample.raw().value() };
+  auto ibs_fetch_decoder = IBSFetchDecoder{ sample.raw().value() };
 
-    if (this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT) || this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT)) {
-      /// Fetch latency.
-      sample.instruction_execution().latency().fetch(fetch_parser.latency());
-    }
-
-    if (this->_sampler_values.is_set(PERF_SAMPLE_IP)) {
-      /// Fetch information.
-      sample.instruction_execution().fetch(
-        InstructionExecution::Fetch{ fetch_parser.is_valid(), fetch_parser.is_complete() });
-
-      /// Instruction cache.
-      sample.instruction_execution().cache(InstructionExecution::Cache{
-        fetch_parser.is_instruction_cache_miss(), fetch_parser.is_l2_miss(), fetch_parser.is_l3_miss() });
-
-      /// Instruction TLB.
-      auto l1_tlb_size = std::optional<std::uint64_t>{ std::nullopt };
-      if (fetch_parser.is_physical_instruction_address_valid()) {
-        l1_tlb_size = SampleDecoder::calculate_tlb_page_size(fetch_parser.l1_tlb_page_size());
-      }
-      sample.instruction_execution().tlb(
-        InstructionExecution::TLB{ fetch_parser.is_l1_tlb_miss(), l1_tlb_size, fetch_parser.is_l2_tlb_miss() });
-
-      /// Physical instruction address.
-      sample.instruction_execution().physical_instruction_pointer(fetch_parser.physical_instruction_address());
-    }
+  if (this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT) || this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT)) {
+    /// Fetch latency.
+    sample.instruction_execution().latency().fetch(ibs_fetch_decoder.latency());
   }
 
-  /// .. or execution events.
-  else {
-    auto execution_parser = IBSExecutionDecoder{ sample.raw().value() };
+  if (this->_sampler_values.is_set(PERF_SAMPLE_IP)) {
+    /// Fetch information.
+    sample.instruction_execution().fetch(
+      InstructionExecution::Fetch{ ibs_fetch_decoder.is_valid(), ibs_fetch_decoder.is_complete() });
 
-    if (this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT) || this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT)) {
-      /// Execution latency.
-      sample.instruction_execution().latency().uop_completion_to_retirement(
-        execution_parser.completion_to_retire_latency());
-      sample.instruction_execution().latency().uop_tag_to_retirement(execution_parser.tag_to_retire_latency());
+    /// Instruction cache.
+    sample.instruction_execution().cache(InstructionExecution::Cache{
+      ibs_fetch_decoder.is_instruction_cache_miss(), ibs_fetch_decoder.is_l2_miss(), ibs_fetch_decoder.is_l3_miss() });
 
-      /// TLB latency.
-      sample.data_access().latency().dtlb_refill(execution_parser.tlb_refill_latency());
+    /// Instruction TLB.
+    auto l1_tlb_size = std::optional<std::uint64_t>{ std::nullopt };
+    if (ibs_fetch_decoder.is_physical_instruction_address_valid()) {
+      l1_tlb_size = SampleDecoder::calculate_tlb_page_size(ibs_fetch_decoder.l1_tlb_page_size());
     }
+    sample.instruction_execution().tlb(
+      InstructionExecution::TLB{ ibs_fetch_decoder.is_l1_tlb_miss(), l1_tlb_size, ibs_fetch_decoder.is_l2_tlb_miss() });
 
+    /// Physical instruction address.
+    sample.instruction_execution().physical_instruction_pointer(ibs_fetch_decoder.physical_instruction_address());
+  }
+}
+
+void
+perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(perf::Sample& sample) const noexcept
+{
+  auto ibs_op_decoder = IBSOpDecoder{ sample.raw().value() };
+
+  if (this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT) || this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT)) {
+    /// Execution latency.
+    sample.instruction_execution().latency().uop_completion_to_retirement(
+      ibs_op_decoder.completion_to_retire_latency());
+    sample.instruction_execution().latency().uop_tag_to_retirement(ibs_op_decoder.tag_to_retire_latency());
+
+    /// TLB latency.
+    sample.data_access().latency().dtlb_refill(ibs_op_decoder.tlb_refill_latency());
+  }
+
+  if (this->_sampler_values.is_set(PERF_SAMPLE_DATA_SRC)) {
     /// TLB page size.
-    if (!execution_parser.is_l1_data_tlb_miss()) {
+    if (!ibs_op_decoder.is_l1_data_tlb_miss()) {
       sample.data_access().tlb().l1_page_size(SampleDecoder::calculate_tlb_page_size(
-        execution_parser.is_l1_data_tlb_hit_1g(), execution_parser.is_l1_data_tlb_hit_2m()));
+        ibs_op_decoder.is_l1_data_tlb_hit_1g(), ibs_op_decoder.is_l1_data_tlb_hit_2m()));
     }
-    if (!execution_parser.is_l2_data_tlb_miss()) {
+    if (!ibs_op_decoder.is_l2_data_tlb_miss()) {
       sample.data_access().tlb().l2_page_size(SampleDecoder::calculate_tlb_page_size(
-        execution_parser.is_l2_data_tlb_hit_1g(), execution_parser.is_l2_data_tlb_hit_2m()));
+        ibs_op_decoder.is_l2_data_tlb_hit_1g(), ibs_op_decoder.is_l2_data_tlb_hit_2m()));
     }
 
     /// Type of the instruction (prefetch, return, or branch) and type of the branch–if it is one.
-    if (this->_sampler_values.is_set(PERF_SAMPLE_DATA_SRC)) {
-      if (execution_parser.is_software_prefetch()) {
-        sample.instruction_execution().type(InstructionExecution::InstructionType::DataAccess);
-        sample.data_access().type(DataAccess::AccessType::SoftwarePrefetch);
+    if (ibs_op_decoder.is_software_prefetch()) {
+      sample.instruction_execution().type(InstructionExecution::InstructionType::DataAccess);
+      sample.data_access().type(DataAccess::AccessType::SoftwarePrefetch);
 
-        /// For software prefetches, the cache miss latency is not valid; hence, remove it.
-        sample.data_access().latency().cache_miss(std::nullopt);
-      } else if (execution_parser.is_return_operation()) {
-        sample.instruction_execution().type(InstructionExecution::InstructionType::Return);
-      } else if (execution_parser.is_branch_taken_operation() || execution_parser.is_branch_mispredicted_operation() ||
-                 execution_parser.is_branch_retired_operation() || execution_parser.is_branch_fuse()) {
-        sample.instruction_execution().type(InstructionExecution::InstructionType::Branch);
+      /// For software prefetches, the cache miss latency is not valid; hence, remove it.
+      sample.data_access().latency().cache_miss(std::nullopt);
+    } else if (ibs_op_decoder.is_return_operation()) {
+      sample.instruction_execution().type(InstructionExecution::InstructionType::Return);
+    } else if (ibs_op_decoder.is_branch_taken_operation() || ibs_op_decoder.is_branch_mispredicted_operation() ||
+               ibs_op_decoder.is_branch_retired_operation() || ibs_op_decoder.is_branch_fuse()) {
+      sample.instruction_execution().type(InstructionExecution::InstructionType::Branch);
 
-        /// If the instruction is a branch, set the branch type.
-        if (execution_parser.is_branch_taken_operation()) {
-          sample.instruction_execution().branch_type(InstructionExecution::BranchType::Taken);
-        } else if (execution_parser.is_branch_mispredicted_operation()) {
-          sample.instruction_execution().branch_type(InstructionExecution::BranchType::Mispredicted);
-        } else if (execution_parser.is_branch_retired_operation()) {
-          sample.instruction_execution().branch_type(InstructionExecution::BranchType::Retired);
-        } else if (execution_parser.is_branch_fuse()) {
-          sample.instruction_execution().branch_type(InstructionExecution::BranchType::Fuse);
-        }
+      /// If the instruction is a branch, set the branch type.
+      if (ibs_op_decoder.is_branch_taken_operation()) {
+        sample.instruction_execution().branch_type(InstructionExecution::BranchType::Taken);
+      } else if (ibs_op_decoder.is_branch_mispredicted_operation()) {
+        sample.instruction_execution().branch_type(InstructionExecution::BranchType::Mispredicted);
+      } else if (ibs_op_decoder.is_branch_retired_operation()) {
+        sample.instruction_execution().branch_type(InstructionExecution::BranchType::Retired);
+      } else if (ibs_op_decoder.is_branch_fuse()) {
+        sample.instruction_execution().branch_type(InstructionExecution::BranchType::Fuse);
+      }
+    }
+
+    /// Source information.
+    if (sample.data_access().source().has_value()) {
+      if (ibs_op_decoder.is_data_cache_miss()) {
+        sample.data_access().source()->num_mhb_slots_allocated(ibs_op_decoder.num_open_mem_requests());
+        sample.data_access().source()->is_mhb_hit(ibs_op_decoder.is_data_cache_miss_no_mab_allocation());
       }
 
-      /// Source information.
-      if (sample.data_access().source().has_value()) {
-        if (execution_parser.is_data_cache_miss()) {
-          sample.data_access().source()->num_mhb_slots_allocated(execution_parser.num_open_mem_requests());
-          sample.data_access().source()->is_mhb_hit(execution_parser.is_data_cache_miss_no_mab_allocation());
-        }
+      /// Write-combine memory access.
+      if (ibs_op_decoder.is_load_operation() || ibs_op_decoder.is_store_operation()) {
+        sample.data_access().source()->is_write_combine_memory(ibs_op_decoder.is_data_cache_write_combine_access());
+      }
 
-        if (execution_parser.is_load_operation() || execution_parser.is_store_operation()) {
-          sample.data_access().source()->is_write_combine_memory(execution_parser.is_data_cache_write_combine_access());
-        }
-        sample.data_access().is_misalign_penalty(execution_parser.is_data_cache_misaligned_access());
+      /// Misalgin penalty.
+      sample.data_access().is_misalign_penalty(ibs_op_decoder.is_data_cache_misaligned_access());
 
-        /// Translate memory width into number of bytes.
-        if (const auto access_width = execution_parser.access_mem_width(); access_width > 0U && access_width <= 7U) {
-          sample.data_access().access_width(std::uint8_t(1U << (access_width - 1U)));
-        }
+      /// Translate memory width into number of bytes.
+      if (const auto access_width = ibs_op_decoder.access_mem_width(); access_width > 0U && access_width <= 7U) {
+        sample.data_access().access_width(std::uint8_t(1U << (access_width - 1U)));
       }
     }
   }

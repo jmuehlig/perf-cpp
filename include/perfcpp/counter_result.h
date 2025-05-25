@@ -34,6 +34,10 @@ public:
    */
   [[nodiscard]] std::optional<double> get(std::string_view name) const noexcept;
 
+  [[nodiscard]] std::optional<double> operator[](const std::string_view name) const noexcept {
+    return get(name);
+  }
+
   [[nodiscard]] iterator begin() { return _results.begin(); }
   [[nodiscard]] iterator end() { return _results.end(); }
   [[nodiscard]] const_iterator begin() const { return _results.begin(); }

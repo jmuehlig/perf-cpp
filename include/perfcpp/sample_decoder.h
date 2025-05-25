@@ -254,13 +254,20 @@ private:
     std::uint64_t abort);
 
   /**
-   * Enriches the given sample with information that is present in the IBS raw data but cannot be accessed by the perf
-   * subsystem interface.
+   * Enriches the given sample with information that is present in the IBS Fetch PMU raw data but cannot be accessed by
+   * the perf subsystem interface.
    *
-   * @param is_ibs_fetch Flag if the sample PMU is ibs_fetch (ibs_op otherwise).
-   * @param sample The sample to enrich; needs to contain raw data.
+   * @param sample Sample to enrich, containing the raw data.
    */
-  void enrich_ibs_sample_from_raw_data(bool is_ibs_fetch, Sample& sample) const noexcept;
+  void enrich_sample_with_ibs_fetch_data_from_raw(Sample& sample) const noexcept;
+
+  /**
+   * Enriches the given sample with information that is present in the IBS Op PMU raw data but cannot be accessed by the
+   * perf subsystem interface.
+   *
+   * @param sample Sample to enrich, containing the raw data.
+   */
+  void enrich_sample_with_ibs_op_data_from_raw(Sample& sample) const noexcept;
 
   /**
    * Translates the TLB page size in a number of bytes, based on the options.

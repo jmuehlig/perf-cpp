@@ -76,16 +76,16 @@ main()
 
       if (sample.user_registers().has_value()) {
         const auto& user_registers = sample.user_registers().value();
-        std::cout << " | User Registers = IP(" << user_registers.value(perf::Registers::x86::IP).value_or(0) << "), DI("
-                  << user_registers.value(perf::Registers::x86::DI).value_or(0) << "), R10("
-                  << user_registers.value(perf::Registers::x86::R10).value_or(0) << ")";
+        std::cout << " | User Registers = IP(" << user_registers.get(perf::Registers::x86::IP).value_or(0) << "), DI("
+                  << user_registers.get(perf::Registers::x86::DI).value_or(0) << "), R10("
+                  << user_registers.get(perf::Registers::x86::R10).value_or(0) << ")";
       }
 
       if (sample.kernel_registers().has_value()) {
         const auto& kernel_registers = sample.kernel_registers().value();
-        std::cout << " | Kernel Registers = IP(" << kernel_registers.value(perf::Registers::x86::IP).value_or(0)
-                  << "), DI(" << kernel_registers.value(perf::Registers::x86::DI).value_or(0) << "), R10("
-                  << kernel_registers.value(perf::Registers::x86::R10).value_or(0) << ")";
+        std::cout << " | Kernel Registers = IP(" << kernel_registers.get(perf::Registers::x86::IP).value_or(0)
+                  << "), DI(" << kernel_registers.get(perf::Registers::x86::DI).value_or(0) << "), R10("
+                  << kernel_registers.get(perf::Registers::x86::R10).value_or(0) << ")";
       }
 
       std::cout << "\n";

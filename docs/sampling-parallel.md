@@ -40,7 +40,7 @@ auto sampler = perf::MultiThreadSampler{
 };
 
 sampler.trigger("cycles");
-sampler.values().time(true).thread_id(true);
+sampler.values().timestamp(true).thread_id(true);
 ```
 
 ### Starting and Stopping Sampler in Threads
@@ -129,7 +129,7 @@ auto sampler = perf::MultiCoreSampler{
 };
 
 sampler.trigger("cycles");
-sampler.values().time(true).cpu_id(true).thread_id(true);
+sampler.values().timestamp(true).cpu_id(true).thread_id(true);
 ```
 
 ### Sampler Initialization *(optional)*
