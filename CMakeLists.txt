@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -DNDEBUG")
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif()
-message("Building Mode = ${CMAKE_BUILD_TYPE}")
+message("Building Mode              = ${CMAKE_BUILD_TYPE}")
 
 # Include include/ folder.
 include_directories(include/)

@@ -47,6 +47,7 @@ perf::RequestedEventSet::result(const perf::CounterDefinition& counter_definitio
                                 const std::uint64_t normalization) const
 {
   auto counter_results = std::vector<std::pair<std::string_view, double>>{};
+  counter_results.reserve(this->_requested_events.size());
 
   /// Add all the events that are requested as visible in the results.
   for (const auto& requested_event : this->_requested_events) {

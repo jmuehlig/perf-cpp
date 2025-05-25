@@ -33,7 +33,7 @@ perf::CounterDefinition::CounterDefinition()
   /// AMD's Instruction Based Sampling differs in configuration (and utilization) from Intel PEBS with specific PMUs for
   /// sampling. Whenever an AMD CPU is detected, IBS PMUs will be added.
   if (HardwareInfo::is_amd_ibs_supported()) {
-    this->add_amd_ibs_events();
+    this->add_amd_ibs_fetch_events();
   }
 
   /// Add time events, i.e., virtual counters to include time measurements.
@@ -227,13 +227,42 @@ perf::CounterDefinition::add_events_from_descriptor_files(std::string&& pmu_name
 }
 
 void
-perf::CounterDefinition::add_amd_ibs_events()
+perf::CounterDefinition::add_amd_ibs_fetch_events()
 {
   if (HardwareInfo::is_amd_ibs_supported()) {
-    /// Check if the hardware supports filtering samples that miss the L3 cache.
-    const auto is_support_l3miss_filter = HardwareInfo::is_ibs_l3_filter_supported();
+    if (const auto ibs_fetch_type =
+          CounterDefinition::parse_event_file_descriptor_type("/sys/bus/event_source/devices/ibs_fetch/type");
+        ibs_fetch_type.has_value()) {
+      if (const auto ibs_fetch_bit_format = CounterDefinition::parse_event_file_descriptor_format(
+            "/sys/bus/event_source/devices/ibs_fetch/format/rand_en");
+          ibs_fetch_bit_format.size() == 1UL) {
+        const auto ibs_fetch_bit = std::get<0U>(std::get<1U>(ibs_fetch_bit_format.front()));
 
-    /// Add ibs_op PMU.
+        /// Event that is triggered by cycles.
+        this->add("ibs_fetch", "ibs_fetch", CounterConfig{ ibs_fetch_type.value(), 1ULL << ibs_fetch_bit });
+
+        if (HardwareInfo::is_ibs_l3_filter_supported()) {
+          if (const auto ibs_fetch_l3miss_bit_format = CounterDefinition::parse_event_file_descriptor_format(
+                "/sys/bus/event_source/devices/ibs_fetch/format/l3missonly");
+              ibs_fetch_l3miss_bit_format.size() == 1UL) {
+            const auto ibs_fetch_l3miss_bit = std::get<0U>(std::get<1U>(ibs_fetch_l3miss_bit_format.front()));
+
+            /// Event that is triggered by cycles and applies the L3 miss filter.
+            this->add(
+              "ibs_fetch",
+              "ibs_fetch_l3missonly",
+              CounterConfig{ ibs_fetch_type.value(), (1ULL << ibs_fetch_bit) | (1ULL << ibs_fetch_l3miss_bit) });
+          }
+        }
+      }
+    }
+  }
+}
+
+void
+perf::CounterDefinition::add_amd_ibs_op_events()
+{
+  if (HardwareInfo::is_amd_ibs_supported()) {
     if (const auto ibs_op_type =
           CounterDefinition::parse_event_file_descriptor_type("/sys/bus/event_source/devices/ibs_op/type");
         ibs_op_type.has_value()) {
@@ -253,7 +282,7 @@ perf::CounterDefinition::add_amd_ibs_events()
       }
 
       /// Cycle and uops events with L3 miss filter.
-      if (is_support_l3miss_filter) {
+      if (HardwareInfo::is_ibs_l3_filter_supported()) {
         if (const auto ibs_op_l3miss_bit_format = CounterDefinition::parse_event_file_descriptor_format(
               "/sys/bus/event_source/devices/ibs_op/format/l3missonly");
             ibs_op_l3miss_bit_format.size() == 1UL) {
@@ -268,34 +297,6 @@ perf::CounterDefinition::add_amd_ibs_events()
               "ibs_op",
               "ibs_op_uops_l3missonly",
               CounterConfig{ ibs_op_type.value(), (1ULL << ibs_op_uops_bit.value()) | (1ULL << ibs_op_l3miss_bit) });
-          }
-        }
-      }
-    }
-
-    /// Add the ibs_fetch PMU.
-    if (const auto ibs_fetch_type =
-          CounterDefinition::parse_event_file_descriptor_type("/sys/bus/event_source/devices/ibs_fetch/type");
-        ibs_fetch_type.has_value()) {
-      if (const auto ibs_fetch_bit_format = CounterDefinition::parse_event_file_descriptor_format(
-            "/sys/bus/event_source/devices/ibs_fetch/format/rand_en");
-          ibs_fetch_bit_format.size() == 1UL) {
-        const auto ibs_fetch_bit = std::get<0U>(std::get<1U>(ibs_fetch_bit_format.front()));
-
-        /// Event that is triggered by cycles.
-        this->add("ibs_fetch", "ibs_fetch", CounterConfig{ ibs_fetch_type.value(), 1ULL << ibs_fetch_bit });
-
-        if (is_support_l3miss_filter) {
-          if (const auto ibs_fetch_l3miss_bit_format = CounterDefinition::parse_event_file_descriptor_format(
-                "/sys/bus/event_source/devices/ibs_fetch/format/l3missonly");
-              ibs_fetch_l3miss_bit_format.size() == 1UL) {
-            const auto ibs_fetch_l3miss_bit = std::get<0U>(std::get<1U>(ibs_fetch_l3miss_bit_format.front()));
-
-            /// Event that is triggered by cycles and applies the L3 miss filter.
-            this->add(
-              "ibs_fetch",
-              "ibs_fetch_l3missonly",
-              CounterConfig{ ibs_fetch_type.value(), (1ULL << ibs_fetch_bit) | (1ULL << ibs_fetch_l3miss_bit) });
           }
         }
       }
@@ -331,6 +332,16 @@ perf::CounterDefinition::add_metrics()
   this->add(std::make_unique<BranchMissRatio>());
 }
 
+std::uint64_t
+perf::CounterDefinition::config_string_to_unsigned_ling(const std::string& config)
+{
+  if (config.rfind("0x", 0ULL) == 0ULL) {
+    return std::stoull(config.substr(2ULL), nullptr, 16);
+  }
+
+  return std::stoull(config, nullptr, 0);
+}
+
 void
 perf::CounterDefinition::read_counter_configuration(const std::string& csv_filename)
 {
@@ -348,39 +359,29 @@ perf::CounterDefinition::read_counter_configuration(const std::string& csv_filen
     auto line_stream = std::istringstream{ line };
 
     std::string name;
-    std::uint64_t config;
-    auto extended_config = 0ULL;
-    auto type = std::uint32_t{ PERF_TYPE_RAW };
 
     /// Read name.
     if (std::getline(line_stream, name, ','); !name.empty()) {
 
+      std::uint64_t config;
+      auto extended_config = 0ULL;
+      auto type = std::uint32_t{ PERF_TYPE_RAW };
+
       /// Read config-field and translate into integer.
-      std::string config_str;
-      if (std::getline(line_stream, config_str, ',')) {
-        if (config_str.rfind("0x", 0ULL) == 0ULL) {
-          config = std::stoull(config_str.substr(2ULL), nullptr, 16);
-        } else {
-          config = std::stoull(config_str, nullptr, 0);
-        }
+      if (std::string config_str; std::getline(line_stream, config_str, ',')) {
+
+        /// Translate config into number.
+        config = CounterDefinition::config_string_to_unsigned_ling(config_str);
 
         /// Read extended config-field and translate into integer.
-        std::string extended_config_str;
-        if (std::getline(line_stream, extended_config_str, ',')) {
-          if (extended_config_str.rfind("0x", 0ULL) == 0ULL) {
-            extended_config = std::stoull(extended_config_str.substr(2ULL), nullptr, 16);
-          } else {
-            extended_config = std::stoull(extended_config_str, nullptr, 0);
-          }
+        if (std::string extended_config_str; std::getline(line_stream, extended_config_str, ',')) {
+          /// Translate extended config into number.
+          extended_config = CounterDefinition::config_string_to_unsigned_ling(extended_config_str);
 
           /// Read type-field and translate into integer.
-          std::string type_str;
-          if (std::getline(line_stream, type_str, ',')) {
-            if (type_str.rfind("0x", 0ULL) == 0ULL) {
-              type = std::uint32_t(std::stoul(type_str.substr(2ULL), nullptr, 16));
-            } else {
-              type = std::uint32_t(std::stoul(extended_config_str, nullptr, 0));
-            }
+          if (std::string type_str; std::getline(line_stream, type_str, ',')) {
+            /// Translate type into number.
+            type = std::uint32_t(CounterDefinition::config_string_to_unsigned_ling(type_str));
           }
         }
 
@@ -399,60 +400,61 @@ perf::CounterDefinition::parse_event_file_descriptor_config(const std::filesyste
     std::string line;
     std::getline(event_stream, line);
 
-    if (!line.empty()) {
-      /// The line should look like "event=0xcd,umask=0x1[,ldlat=3]".
+    if (line.empty()) {
+      return std::nullopt;
+    }
 
-      auto event = std::optional<std::string>{ std::nullopt };
-      auto umask = std::optional<std::string>{ std::nullopt };
-      auto ldlat = std::optional<std::string>{ std::nullopt };
+    /// The line should look like "event=0xcd,umask=0x1[,ldlat=3]".
+    auto event = std::optional<std::string>{ std::nullopt };
+    auto umask = std::optional<std::string>{ std::nullopt };
+    auto ldlat = std::optional<std::string>{ std::nullopt };
 
-      auto token_stream = std::stringstream{ line };
-      std::string token;
+    auto token_stream = std::stringstream{ line };
+    std::string token;
 
-      /// Process every token where tokens are separated by ','.
-      while (std::getline(token_stream, token, ',')) {
+    /// Process every token where tokens are separated by ','.
+    while (std::getline(token_stream, token, ',')) {
 
-        /// Locate eq-char.
-        const auto pos = token.find('=');
-        if (pos == std::string::npos) {
-          continue;
-        }
-
-        auto key = token.substr(0ULL, pos);
-        auto value = token.substr(pos + 1ULL);
-
-        /// Remove possible whitespace
-        key.erase(std::remove_if(key.begin(), key.end(), ::isspace), key.end());
-        value.erase(std::remove_if(value.begin(), value.end(), ::isspace), value.end());
-
-        /// Convert key to lowercase for case-insensitivity
-        std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-
-        /// Remove the values "0x" prefix.
-        if (value.rfind("0x", 0ULL) == 0ULL) {
-          value = value.substr(2ULL);
-        }
-
-        if (key == "event") {
-          event = std::move(value);
-        } else if (key == "umask") {
-          umask = std::move(value);
-        } else if (key == "ldlat") {
-          ldlat = std::move(value);
-        }
+      /// Locate eq-char.
+      const auto pos = token.find('=');
+      if (pos == std::string::npos) {
+        continue;
       }
 
-      /// Combine event and umask to a single event id.
-      if (event.has_value() && umask.has_value()) {
-        const auto event_configuration =
-          std::stoull(/* combine <umask><event> */ umask.value().append(event.value()), nullptr, 16);
+      auto key = token.substr(0ULL, pos);
+      auto value = token.substr(pos + 1ULL);
 
-        if (ldlat.has_value()) {
-          return std::make_pair(event_configuration, std::stoull(ldlat.value()));
-        }
+      /// Remove possible whitespace
+      key.erase(std::remove_if(key.begin(), key.end(), ::isspace), key.end());
+      value.erase(std::remove_if(value.begin(), value.end(), ::isspace), value.end());
 
-        return std::make_pair(event_configuration, std::nullopt);
+      /// Convert key to lowercase for case-insensitivity
+      std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+
+      /// Remove the values "0x" prefix.
+      if (value.rfind("0x", 0ULL) == 0ULL) {
+        value = value.substr(2ULL);
       }
+
+      if (key == "event") {
+        event = std::move(value);
+      } else if (key == "umask") {
+        umask = std::move(value);
+      } else if (key == "ldlat") {
+        ldlat = std::move(value);
+      }
+    }
+
+    /// Combine event and umask to a single event id.
+    if (event.has_value() && umask.has_value()) {
+      const auto event_configuration =
+        std::stoull(/* combine <umask><event> */ umask.value().append(event.value()), nullptr, 16);
+
+      if (ldlat.has_value()) {
+        return std::make_pair(event_configuration, std::stoull(ldlat.value()));
+      }
+
+      return std::make_pair(event_configuration, std::nullopt);
     }
   }
 

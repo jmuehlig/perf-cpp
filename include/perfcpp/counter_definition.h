@@ -341,6 +341,13 @@ public:
    */
   void read_counter_configuration(const std::string& csv_filename);
 
+  /**
+   * Translates a config string (hexadecimal or decimal) to a number.
+   * @param config Config string.
+   * @return Number.
+   */
+  [[nodiscard]] static std::uint64_t config_string_to_unsigned_ling(const std::string& config);
+
 private:
   /// List of added counter configurations for different PMUs. Each PMU can have multiple counters; but different PMUs
   /// can have the same counter name with different configurations.
@@ -367,9 +374,14 @@ private:
   void add_events_from_descriptor_files(std::string&& pmu_name, std::string&& path);
 
   /**
-   * If the system is an AMD, read IBS counters, if supported.
+   * If the system is an AMD, read IBS Fetch PMU, if supported.
    */
-  void add_amd_ibs_events();
+  void add_amd_ibs_fetch_events();
+
+  /**
+   * If the system is an AMD, read IBS Op PMU, if supported.
+   */
+  void add_amd_ibs_op_events();
 
   /**
    * Initializes time events.
