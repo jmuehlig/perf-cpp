@@ -225,7 +225,9 @@ private:
 class RegisterValues
 {
 public:
-  RegisterValues(const ABI abi, std::unordered_map<std::uint8_t, std::int64_t>&& register_values, Registers registers) noexcept
+  RegisterValues(const ABI abi,
+                 std::unordered_map<std::uint8_t, std::int64_t>&& register_values,
+                 Registers registers) noexcept
     : _abi(abi)
     , _values(std::move(register_values))
     , _registers(std::move(registers))
@@ -276,29 +278,38 @@ public:
     return get(static_cast<std::uint8_t>(reg));
   }
 
-  [[nodiscard]] std::optional<std::int64_t> operator[](const Registers::x86 reg) const noexcept {
+  [[nodiscard]] std::optional<std::int64_t> operator[](const Registers::x86 reg) const noexcept
+  {
     return get(static_cast<std::uint8_t>(reg));
   }
 
-  [[nodiscard]] std::optional<std::int64_t> operator[](const Registers::arm reg) const noexcept {
+  [[nodiscard]] std::optional<std::int64_t> operator[](const Registers::arm reg) const noexcept
+  {
     return get(static_cast<std::uint8_t>(reg));
   }
 
-  [[nodiscard]] std::optional<std::int64_t> operator[](const Registers::arm64 reg) const noexcept {
+  [[nodiscard]] std::optional<std::int64_t> operator[](const Registers::arm64 reg) const noexcept
+  {
     return get(static_cast<std::uint8_t>(reg));
   }
 
-  [[nodiscard]] std::optional<std::int64_t> operator[](const Registers::riscv reg) const noexcept {
+  [[nodiscard]] std::optional<std::int64_t> operator[](const Registers::riscv reg) const noexcept
+  {
     return get(static_cast<std::uint8_t>(reg));
   }
 
-  [[deprecated("Will be removed in v0.12. Use [] operator with specific perf::Registers::x86|arm|arm64|riscv value instead of index.")]] [[nodiscard]] std::int64_t operator[](const std::size_t reg_id) const noexcept {
-      return std::visit([this, reg_id](const auto& registers) -> std::int64_t {
+  [[deprecated("Will be removed in v0.12. Use [] operator with specific perf::Registers::x86|arm|arm64|riscv value "
+               "instead of index.")]] [[nodiscard]] std::int64_t
+  operator[](const std::size_t reg_id) const noexcept
+  {
+    return std::visit(
+      [this, reg_id](const auto& registers) -> std::int64_t {
         if (reg_id < registers.size()) {
           return this->get(registers[reg_id]).value_or(0LL);
         }
         return 0LL;
-      }, _registers.registers());
+      },
+      _registers.registers());
   }
 
 private:
