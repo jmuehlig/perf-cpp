@@ -100,7 +100,7 @@ main()
 
     if (perf::HardwareInfo::is_intel()) {
       instruction_latency = sample.instruction_execution().latency().instruction_retirement().value_or(0U);
-      cache_latency = sample.data_access().latency().cache_miss().value_or(0U);
+      cache_latency = sample.data_access().latency().cache_access().value_or(0U);
     } else if (perf::HardwareInfo::is_amd()) {
       instruction_latency = sample.instruction_execution().latency().uop_tag_to_retirement().value_or(0U);
       cache_latency = sample.data_access().latency().cache_miss().value_or(0U);
