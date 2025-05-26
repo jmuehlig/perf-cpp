@@ -13,7 +13,7 @@ The key features include:
 * **[Specify Hardware Events](docs/counters.md)**: Mix built-in events (e.g., *cycles*, *instructions*, *cache-misses*, ...) with events specific to the underlying hardware.
 * **[Practical Examples](examples/README.md)** and **[Detailed Documentation](#documentation)**: Quickly get started with ready-to-use examples demonstrating diverse, real-world applications.
 
-**perf-cpp** extends the standard [*perf subsystem*'s](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) capabilities, such as leveraging AMD IBS features to expose rich, CPU-specific data unavailable through the standard `perf_event_open` interface.
+**perf-cpp** extends the standard [*perf subsystem*'s](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) capabilities, such as leveraging AMD IBS features to expose rich, CPU-specific data unavailable through the `perf_event_open` interface.
 
 ## Examples
 ### Record Hardware Event Statistics
@@ -122,7 +122,7 @@ git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
 
 # Optional: Switch to the latest stable version
-git checkout v0.11-dev
+git checkout v0.11.0
 
 # Build the library (in build/)
 # Note: -DBUILD_EXAMPLES=1   can be used to compile examples

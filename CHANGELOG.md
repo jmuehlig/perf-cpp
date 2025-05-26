@@ -1,6 +1,6 @@
 # *perf-cpp*: Changelog
 
-## v0.11.0 (in progress)
+## v0.11.0
 This version rolls out a redesigned sampling API. 
 Recorded data are now grouped into dedicated sub-structures (such as `Metadata`, `InstructionExecution`, and `DataAccess`) inside `perf::Sample` (see the [documentation](docs/sampling.md#what-can-be-recorded-and-how-to-access-the-data)).
 
