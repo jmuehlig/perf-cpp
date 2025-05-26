@@ -242,7 +242,41 @@ private:
                                   std::optional<DataAccess::Snoop>,
                                   std::optional<std::pair<bool, bool>>,
                                   std::optional<bool>>
-  read_data_access_source(std::uint64_t source);
+  read_data_access_information(std::uint64_t source);
+
+  /**
+   * Reads the access type and translates it into an AccessType.
+   *
+   * @param op_code Operation code provided by the perf subsystem.
+   * @return Translated access type.
+   */
+  [[nodiscard]] static std::optional<DataAccess::AccessType> read_data_access_type(std::uint64_t op_code) noexcept;
+
+  /**
+   * Reads the access source and translates it into a Source.
+   *
+   * @param memory_level_code Memory access code provided by the perf subsystem.
+   * @return Translated source.
+   */
+  [[nodiscard]] static DataAccess::Source read_data_access_source(std::uint64_t memory_level_code) noexcept;
+
+  /**
+   * Reads the snoop information and translates it into a data access Snoop.
+   *
+   * @param snoop_code Snoop code provided by the perf subsystem.
+   * @param snoopx_code Extended snoop code provided by the perf subsystem.
+   * @return Translated snoop object.
+   */
+  [[nodiscard]] static std::optional<DataAccess::Snoop> read_data_access_snoop(std::uint64_t snoop_code,
+                                                                               std::uint64_t snoopx_code) noexcept;
+
+  /**
+   * Read the TLB information and translates into a pair (dTLB hit, STLB hit).
+   *
+   * @param tlb_code TLB code provided by the perf subsystem.
+   * @return Translated pair (dTLB hit, STLB hit).
+   */
+  [[nodiscard]] static std::optional<std::pair<bool, bool>> read_data_access_tlb(std::uint64_t tlb_code) noexcept;
 
   /**
    * Reads the hardware transaction abort from the current buffer entry.

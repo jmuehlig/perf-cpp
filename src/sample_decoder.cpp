@@ -230,7 +230,7 @@ perf::SampleDecoder::read_sample_event(perf::SampleDecoder::SampleIterator&& ent
     const auto perf_data_source = entry.read<std::uint64_t>();
     /// Read source value from perf.
     const auto [access_type, data_source, snoop, tlb, is_locked] =
-      SampleDecoder::read_data_access_source(perf_data_source);
+      SampleDecoder::read_data_access_information(perf_data_source);
 
     /// Set access type and memory instruction type, if not already set.
     if (access_type.has_value()) {
@@ -239,24 +239,26 @@ perf::SampleDecoder::read_sample_event(perf::SampleDecoder::SampleIterator&& ent
       }
       sample.data_access().type(access_type.value());
 
-      /// For store operations, the cache miss latency is not valid; hence, remove it.
       if (access_type.value() == DataAccess::AccessType::Store) {
-        sample.data_access().latency().cache_miss(std::nullopt);
-      }
+        if (HardwareInfo::is_amd()) {
+          /// For store operations, the cache miss latency is not valid; hence, remove it.
+          sample.data_access().latency().cache_miss(std::nullopt);
+        }
 
-      /// On Intel hardware, store instructions do only provide instruction latency, not cache access latency.
-      /// However, when parsing the latency information, we do not know if the instruction was a store.
-      /// Consequently, we fix it here: If the instruction was a store, we move the cache latency information towards
-      /// the instruction latency.
-      if (HardwareInfo::is_intel() && access_type.value() == DataAccess::AccessType::Store &&
-          sample.data_access().latency().cache_access().has_value() &&
-          !sample.instruction_execution().latency().instruction_retirement().has_value()) {
-        /// Set instruction latency to data access latency.
-        sample.instruction_execution().latency().instruction_retirement(
-          sample.data_access().latency().cache_access().value());
+        else if (HardwareInfo::is_intel() && sample.data_access().latency().cache_access().has_value() &&
+                 !sample.instruction_execution().latency().instruction_retirement().has_value()) {
+          /// On Intel hardware, store instructions do only provide instruction latency, not cache access latency.
+          /// However, when parsing the latency information, we do not know if the instruction was a store.
+          /// Consequently, we fix it here: If the instruction was a store, we move the cache latency information
+          /// towards the instruction latency.
 
-        /// Remove cache access latency.
-        sample.data_access().latency().cache_access(std::nullopt);
+          /// Set instruction latency to data access latency.
+          sample.instruction_execution().latency().instruction_retirement(
+            sample.data_access().latency().cache_access().value());
+
+          /// Remove cache access latency.
+          sample.data_access().latency().cache_access(std::nullopt);
+        }
       }
     }
 
@@ -455,53 +457,113 @@ perf::SampleDecoder::read_branch_stack(perf::SampleDecoder::SampleIterator& entr
   return branches;
 }
 
-std::tuple<std::optional<perf::DataAccess::AccessType>,
-           perf::DataAccess::Source,
-           std::optional<perf::DataAccess::Snoop>,
-           std::optional<std::pair<bool, bool>>,
-           std::optional<bool>>
-perf::SampleDecoder::read_data_access_source(const std::uint64_t source)
+std::optional<perf::DataAccess::AccessType>
+perf::SampleDecoder::read_data_access_type(const std::uint64_t op_code) noexcept
 {
-  const auto perf_data_source = perf_mem_data_src{ source };
-
-  /// Read memory instruction type.
-  auto access_type = std::optional<DataAccess::AccessType>{ std::nullopt };
-  if (perf_data_source.mem_op & PERF_MEM_OP_LOAD) {
-    access_type = DataAccess::AccessType::Load;
-  } else if (perf_data_source.mem_op & PERF_MEM_OP_STORE) {
-    access_type = DataAccess::AccessType::Store;
-  } else if (perf_data_source.mem_op & PERF_MEM_OP_PFETCH) {
-    access_type = DataAccess::AccessType::SoftwarePrefetch;
+  if (op_code & PERF_MEM_OP_LOAD) {
+    return DataAccess::AccessType::Load;
   }
 
+  if (op_code & PERF_MEM_OP_STORE) {
+    return DataAccess::AccessType::Store;
+  }
+
+  if (op_code & PERF_MEM_OP_PFETCH) {
+    return DataAccess::AccessType::SoftwarePrefetch;
+  }
+
+  return std::nullopt;
+}
+
+perf::DataAccess::Source
+perf::SampleDecoder::read_data_access_source(const std::uint64_t memory_level_code) noexcept
+{
   /// Translate into Source object.
   auto data_access_source = DataAccess::Source{};
 
   /// Cache or RAM hit.
 #ifndef PERFCPP_NO_MEM_LVLNUM /// lvl_num field is supported since Linux 6.1
-  data_access_source.is_l1_hit(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_L1);
-  data_access_source.is_l2_hit(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_L2);
-  data_access_source.is_l3_hit(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_L3);
-  data_access_source.is_l4_hit(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_L4);
-  data_access_source.is_memory_hit(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_RAM);
-  data_access_source.is_mhb_hit(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_LFB);
-  data_access_source.is_uncachable_memory(perf_data_source.mem_lvl_num == PERF_MEM_LVLNUM_UNC);
+  data_access_source.is_l1_hit(memory_level_code == PERF_MEM_LVLNUM_L1);
+  data_access_source.is_l2_hit(memory_level_code == PERF_MEM_LVLNUM_L2);
+  data_access_source.is_l3_hit(memory_level_code == PERF_MEM_LVLNUM_L3);
+  data_access_source.is_l4_hit(memory_level_code == PERF_MEM_LVLNUM_L4);
+  data_access_source.is_memory_hit(memory_level_code == PERF_MEM_LVLNUM_RAM);
+  data_access_source.is_mhb_hit(memory_level_code == PERF_MEM_LVLNUM_LFB);
+  data_access_source.is_uncachable_memory(memory_level_code == PERF_MEM_LVLNUM_UNC);
 #else /// Use lvl before Linux 6.1
-  data_access_source.is_l1_hit((perf_data_source.mem_lvl & PERF_MEM_LVL_L1) &&
-                               (perf_data_source.mem_lvl & PERF_MEM_LVL_HIT));
-  data_access_source.is_l2_hit((perf_data_source.mem_lvl & PERF_MEM_LVL_L2) &&
-                               (perf_data_source.mem_lvl & PERF_MEM_LVL_HIT));
-  data_access_source.is_l3_hit((perf_data_source.mem_lvl & PERF_MEM_LVL_L3) &&
-                               (perf_data_source.mem_lvl & PERF_MEM_LVL_HIT));
-  data_access_source.is_memory_hit((perf_data_source.mem_lvl & PERF_MEM_LVL_LOC_RAM) ||
-                                   (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM1) ||
-                                   (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM2));
-  data_access_source.is_mhb_hit((perf_data_source.mem_lvl & PERF_MEM_LVL_LFB) &&
-                                (perf_data_source.mem_lvl & PERF_MEM_LVL_HIT));
-  data_access_source.is_uncachable_memory(perf_data_source.mem_lvl & PERF_MEM_LVL_UNC);
+  data_access_source.is_l1_hit((memory_level_code & PERF_MEM_LVL_L1) && (memory_level_code & PERF_MEM_LVL_HIT));
+  data_access_source.is_l2_hit((memory_level_code & PERF_MEM_LVL_L2) && (memory_level_code & PERF_MEM_LVL_HIT));
+  data_access_source.is_l3_hit((memory_level_code & PERF_MEM_LVL_L3) && (memory_level_code & PERF_MEM_LVL_HIT));
+  data_access_source.is_memory_hit((memory_level_code & PERF_MEM_LVL_LOC_RAM) ||
+                                   (memory_level_code & PERF_MEM_LVL_REM_RAM1) ||
+                                   (memory_level_code & PERF_MEM_LVL_REM_RAM2));
+  data_access_source.is_mhb_hit((memory_level_code & PERF_MEM_LVL_LFB) && (memory_level_code & PERF_MEM_LVL_HIT));
+  data_access_source.is_uncachable_memory(memory_level_code & PERF_MEM_LVL_UNC);
 #endif
 
-  /// Remote.
+  return data_access_source;
+}
+
+std::optional<perf::DataAccess::Snoop>
+perf::SampleDecoder::read_data_access_snoop(const std::uint64_t snoop_code, const std::uint64_t snoopx_code) noexcept
+{
+  if (snoop_code > 0 && !(snoop_code & PERF_MEM_SNOOP_NA) && !(snoop_code & PERF_MEM_SNOOP_NONE)) {
+    auto snoop = DataAccess::Snoop{};
+
+    if (snoop_code & PERF_MEM_SNOOP_HIT) {
+      snoop.is_hit(true);
+      snoop.is_hit_modified(snoop_code & PERF_MEM_SNOOP_HITM);
+    } else if (snoop_code & PERF_MEM_SNOOP_MISS) {
+      snoop.is_hit(false);
+    }
+
+#ifndef PERFCPP_NO_MEM_SNOOPX /// Snoopx was introduced in Linux 4.14.0
+    if (snoopx_code > 0) {
+#ifndef PERFCPP_NO_MEM_SNOOPX_PEER /// Snoopx Peer was introduced in Linux 6.1.0
+      snoop.is_forward(snoopx_code & PERF_MEM_SNOOPX_PEER);
+#endif
+      snoop.is_transfer_from_peer(snoopx_code & PERF_MEM_SNOOPX_PEER);
+    }
+#endif
+
+    return snoop;
+  }
+
+  return std::nullopt;
+}
+
+std::optional<std::pair<bool, bool>>
+perf::SampleDecoder::read_data_access_tlb(const std::uint64_t tlb_code) noexcept
+{
+  if (!(tlb_code & PERF_MEM_TLB_NA)) {
+    const auto is_l1_tbl_hit = (tlb_code & PERF_MEM_TLB_L1) && (tlb_code & PERF_MEM_TLB_HIT);
+    const auto is_l2_tbl_hit = (tlb_code & PERF_MEM_TLB_L2) && (tlb_code & PERF_MEM_TLB_HIT);
+    return std::make_pair(is_l1_tbl_hit, is_l2_tbl_hit);
+  }
+
+  return std::nullopt;
+}
+
+std::tuple<std::optional<perf::DataAccess::AccessType>,
+           perf::DataAccess::Source,
+           std::optional<perf::DataAccess::Snoop>,
+           std::optional<std::pair<bool, bool>>,
+           std::optional<bool>>
+perf::SampleDecoder::read_data_access_information(const std::uint64_t source)
+{
+  const auto perf_data_source = perf_mem_data_src{ source };
+
+  /// Read memory instruction type.
+  auto access_type = SampleDecoder::read_data_access_type(perf_data_source.mem_op);
+
+  /// Translate into Source object.
+#ifndef PERFCPP_NO_MEM_LVLNUM /// lvl_num field is supported since Linux 6.1
+  auto data_access_source = SampleDecoder::read_data_access_source(perf_data_source.mem_lvl_num);
+#else /// Use lvl before Linux 6.1
+  auto data_access_source = SampleDecoder::read_data_access_source(perf_data_source.mem_lvl);
+#endif
+
+  /// Set the remote flag, depending on the available information.
 #ifndef PERFCPP_NO_MEM_REMOTE // Remote field is supported since Linux 4.14
   data_access_source.is_remote(perf_data_source.mem_remote & PERF_MEM_REMOTE_REMOTE);
 #else /// Use lvl before Linux 4.14
@@ -549,36 +611,14 @@ perf::SampleDecoder::read_data_access_source(const std::uint64_t source)
   }
 
   /// Snoop.
-  auto snoop = std::optional<DataAccess::Snoop>{ std::nullopt };
-  if (perf_data_source.mem_snoop > 0 && !(perf_data_source.mem_snoop & PERF_MEM_SNOOP_NA) &&
-      !(perf_data_source.mem_snoop & PERF_MEM_SNOOP_NONE)) {
-    snoop.emplace();
-
-    if (perf_data_source.mem_snoop & PERF_MEM_SNOOP_HIT) {
-      snoop->is_hit(true);
-      snoop->is_hit_modified(perf_data_source.mem_snoop & PERF_MEM_SNOOP_HITM);
-    } else if (perf_data_source.mem_snoop & PERF_MEM_SNOOP_MISS) {
-      snoop->is_hit(false);
-    }
-
 #ifndef PERFCPP_NO_MEM_SNOOPX /// Snoopx was introduced in Linux 4.14.0
-    if (perf_data_source.mem_snoopx > 0) {
-#ifndef PERFCPP_NO_MEM_SNOOPX_PEER /// Snoopx Peer was introduced in Linux 6.1.0
-      snoop->is_forward(perf_data_source.mem_snoopx & PERF_MEM_SNOOPX_PEER);
+  const auto snoop = SampleDecoder::read_data_access_snoop(perf_data_source.mem_snoop, perf_data_source.mem_snoopx);
+#else
+  const auto snoop = SampleDecoder::read_data_access_snoop(perf_data_source.mem_snoop, 0ULL);
 #endif
-      snoop->is_transfer_from_peer(perf_data_source.mem_snoopx & PERF_MEM_SNOOPX_PEER);
-    }
-#endif
-  }
 
   /// TLB.
-  const auto perf_tlb = perf_mem_data_src{ source }.mem_dtlb;
-  auto tlb = std::optional<std::pair<bool, bool>>{ std::nullopt };
-  if (!(perf_tlb & PERF_MEM_TLB_NA)) {
-    const auto is_l1_tbl_hit = (perf_tlb & PERF_MEM_TLB_L1) && (perf_tlb & PERF_MEM_TLB_HIT);
-    const auto is_l2_tbl_hit = (perf_tlb & PERF_MEM_TLB_L2) && (perf_tlb & PERF_MEM_TLB_HIT);
-    tlb = std::make_pair(is_l1_tbl_hit, is_l2_tbl_hit);
-  }
+  const auto tlb = SampleDecoder::read_data_access_tlb(perf_mem_data_src{ source }.mem_dtlb);
 
   /// Locked.
   const auto perf_lock = perf_mem_data_src{ source }.mem_lock;
