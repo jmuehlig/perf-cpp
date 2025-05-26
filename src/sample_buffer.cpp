@@ -2,7 +2,9 @@
 #include <perfcpp/hardware_info.h>
 #include <perfcpp/sample_buffer.h>
 #include <sys/eventfd.h>
+#include <sys/select.h>
 #include <unistd.h>
+
 
 perf::SampleBuffer::SampleBuffer(const std::int32_t file_descriptor, std::uint64_t count_buffer_pages)
 {
