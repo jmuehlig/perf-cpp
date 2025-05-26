@@ -293,38 +293,9 @@ public:
      * @param include True, if the data source should be included.
      * @return The Values instance.
      */
-    [[deprecated("Will be removed from v0.12. Use data_source(true) instead.")]] Values& data_src(
-      const bool include) noexcept
-    {
-      return data_source(include);
-    }
-
-    /**
-     * Manage to include the data source for memory addresses into samples.
-     *
-     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#data-source-of-a-memory-load
-     *
-     * @param include True, if the data source should be included.
-     * @return The Values instance.
-     */
     Values& data_source(const bool include) noexcept
     {
       set(PERF_SAMPLE_DATA_SRC, include);
-      return *this;
-    }
-
-    /**
-     * Manage to include transaction abort reasons into samples.
-     *
-     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#transaction-abort
-     *
-     * @param include True, if transaction aborts should be included.
-     * @return The Values instance.
-     */
-    [[deprecated("Will be removed from v0.12, use hardware_transaction_abort() instead.")]] Values& transaction_abort(
-      const bool include) noexcept
-    {
-      set(PERF_SAMPLE_TRANSACTION, include);
       return *this;
     }
 

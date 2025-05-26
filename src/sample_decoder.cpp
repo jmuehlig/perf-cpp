@@ -281,9 +281,6 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
     if (is_locked.has_value()) {
       sample.instruction_execution().is_locked(is_locked.value());
     }
-
-    /// Set the data src for compatibility.
-    sample.data_src(DataSource{ perf_data_source });
   }
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_TRANSACTION)) {
@@ -362,7 +359,7 @@ perf::SampleDecoder::decode_registers(SampleIterator& entry, const Registers& re
     },
     registers.registers());
 
-  return RegisterValues{ abi, std::move(register_values), registers };
+  return RegisterValues{ abi, std::move(register_values) };
 }
 
 std::optional<perf::CounterResult>
