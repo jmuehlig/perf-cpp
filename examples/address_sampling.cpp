@@ -95,10 +95,16 @@ main()
       data_source = "RAM";
     }
 
-    const auto instruction_latency = sample.instruction_execution().latency().instruction_retirement().value_or(
-      sample.instruction_execution().latency().uop_tag_to_retirement().value_or(0U));
-    const auto cache_latency =
-      sample.data_access().latency().cache_miss().value_or(sample.data_access().latency().cache_miss().value_or(0U));
+    auto instruction_latency = 0ULL;
+    auto cache_latency = 0ULL;
+
+    if (perf::HardwareInfo::is_intel()) {
+      instruction_latency = sample.instruction_execution().latency().instruction_retirement().value_or(0U);
+      cache_latency = sample.data_access().latency().cache_miss().value_or(0U);
+    } else if (perf::HardwareInfo::is_amd()) {
+      instruction_latency = sample.instruction_execution().latency().uop_tag_to_retirement().value_or(0U);
+      cache_latency = sample.data_access().latency().cache_miss().value_or(0U);
+    }
 
     std::cout << "Time = " << sample.metadata().timestamp().value_or(0U) << " | Logical Mem Address = 0x" << std::hex
               << sample.data_access().logical_memory_address().value() << std::dec
