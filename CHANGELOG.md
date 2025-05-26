@@ -1,8 +1,15 @@
 # *perf-cpp*: Changelog
 
 ## v0.11.0 (in progress)
-* Redesign of the sampling interface: Different parts of sampling are now split in the `perf::Sample` (e.g., `Metadata`, `InstructionExecution`, `DataAccess`, etc.). With this interface, *perf-cpp* can reveal more (AMD IBS-related) information than provided by the `perf_event_open` interface (see the [documentation](docs/sampling.md#what-can-be-recorded-and-how-to-access-the-data)). One consequence of this is that different latency information (`cache-access` on Intel vs `cache-miss` on AMD) are now explicitly accessible.
-* Support for heterogeneous Performance Monitoring Units (e.g., `cpu_core` and `cpu_atom`) to record samples on (Intel) architectures with heterogeneous CPU cores.
+This version rolls out a redesigned sampling API. 
+Recorded data are now grouped into dedicated sub-structures (such as `Metadata`, `InstructionExecution`, and `DataAccess`) inside `perf::Sample` (see the [documentation](docs/sampling.md#what-can-be-recorded-and-how-to-access-the-data)).
+
+The previous flat API is still available but deprecated and will be removed in `v0.12`.
+
+- **New Sampling Interface**: Work with clearly separated sample sections, exposing additional **AMD IBS** fields that are not surfaced by the `perf_event_open` records.
+- **Explicit Latency Attributes**: Vendor-specific latency signals–*cache-access* on Intel and *cache-miss* on AMD–are now surfaced as distinct fields.
+- **Heterogeneous-core Support**: Sampling can target multiple PMU domains (e.g., *cpu_core* and *cpu_atom*) on hybrid Intel processors.
+
 
 ## v0.10.0
 * New feature: The *auxiliary event* is added automatically if required by the (Intel-) hardware (see the [documentation](docs/sampling.md#sapphire-rapids-and-beyond)).
