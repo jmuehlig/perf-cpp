@@ -34,6 +34,7 @@ perf::CounterDefinition::CounterDefinition()
   /// sampling. Whenever an AMD CPU is detected, IBS PMUs will be added.
   if (HardwareInfo::is_amd_ibs_supported()) {
     this->add_amd_ibs_fetch_events();
+    this->add_amd_ibs_op_events();
   }
 
   /// Add time events, i.e., virtual counters to include time measurements.
