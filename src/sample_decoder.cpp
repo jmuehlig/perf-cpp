@@ -596,7 +596,7 @@ perf::SampleDecoder::decode_data_access_information(std::uint64_t source)
 #ifndef PERFCPP_NO_MEM_LVLNUM /// lvl_num field is supported since Linux 6.1
   auto data_access_source = SampleDecoder::decode_data_access_source(perf_data_source.mem_lvl_num);
 #else /// Use lvl before Linux 6.1
-  auto data_access_source = SampleDecoder::read_data_access_source(perf_data_source.mem_lvl);
+  auto data_access_source = SampleDecoder::decode_data_access_source(perf_data_source.mem_lvl);
 #endif
 
   /// Set the remote flag, depending on the available information.
@@ -616,7 +616,8 @@ perf::SampleDecoder::decode_data_access_information(std::uint64_t source)
 #elif !defined(PERFCPP_NO_MEM_HOPS_0) && defined(PERFCPP_NO_MEM_HOPS_1_3)
     const auto hops = SampleDecoder::read_data_access_remote_hops(perf_data_source.mem_hops, perf_data_source.mem_lvl);
 #else
-    const auto hops = SampleDecoder::read_data_access_remote_hops(/** hops is not used */, perf_data_source.mem_lvl);
+    const auto hops =
+      SampleDecoder::decode_data_access_remote_hops(/** hops is not used */ 0ULL, perf_data_source.mem_lvl);
 #endif
 
     if (hops.has_value()) {
@@ -628,7 +629,7 @@ perf::SampleDecoder::decode_data_access_information(std::uint64_t source)
 #ifndef PERFCPP_NO_MEM_SNOOPX /// Snoopx was introduced in Linux 4.14.0
   const auto snoop = SampleDecoder::decode_data_access_snoop(perf_data_source.mem_snoop, perf_data_source.mem_snoopx);
 #else
-  const auto snoop = SampleDecoder::read_data_access_snoop(perf_data_source.mem_snoop, 0ULL);
+  const auto snoop = SampleDecoder::decode_data_access_snoop(perf_data_source.mem_snoop, 0ULL);
 #endif
 
   /// TLB.
@@ -666,7 +667,11 @@ perf::SampleDecoder::enrich_sample_with_ibs_fetch_data_from_raw(perf::Sample& sa
 {
   auto ibs_fetch_decoder = IBSFetchDecoder{ sample.raw().value() };
 
+#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT
   if (this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT) || this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT)) {
+#else
+  if (this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT)) {
+#endif
     /// Fetch latency.
     sample.instruction_execution().latency().fetch(ibs_fetch_decoder.latency());
   }
@@ -698,7 +703,11 @@ perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(perf::Sample& sampl
 {
   auto ibs_op_decoder = IBSOpDecoder{ sample.raw().value() };
 
+#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT
   if (this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT) || this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT)) {
+#else
+  if (this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT)) {
+#endif
     /// Execution latency.
     sample.instruction_execution().latency().uop_completion_to_retirement(
       ibs_op_decoder.completion_to_retire_latency());
