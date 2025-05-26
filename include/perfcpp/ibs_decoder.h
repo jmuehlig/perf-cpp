@@ -109,6 +109,11 @@ public:
   {
     return _execution_data->_op_data1.is_brn_ret_operation;
   }
+  [[nodiscard]] bool is_branch() const noexcept
+  {
+    return is_branch_taken_operation() || is_branch_mispredicted_operation() || is_branch_retired_operation() ||
+           is_branch_fuse();
+  }
   [[nodiscard]] bool is_branch_fuse() const noexcept { return _execution_data->_op_data1.is_brn_fuse; }
   [[nodiscard]] bool is_microcode() const noexcept { return _execution_data->_op_data1.is_microcode; }
   [[nodiscard]] bool is_remote_node() const noexcept { return _execution_data->_op_data2.is_remote_node; }

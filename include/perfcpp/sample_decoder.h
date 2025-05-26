@@ -176,7 +176,7 @@ private:
    *
    * @param sample Sample to read the data into.
    */
-  void read_sample_id_all(SampleIterator& entry, Sample& sample) const noexcept;
+  void decode_sample_id_all(SampleIterator& entry, Sample& sample) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a "normal" sample.
@@ -188,11 +188,11 @@ private:
    * @param count_hardware_counter Number of recorded hardware counters.
    * @return Sample.
    */
-  [[nodiscard]] perf::Sample read_sample_event(SampleIterator&& entry,
-                                               bool has_amd_ibs_op_pmu,
-                                               bool has_amd_ibs_fetch_pmu,
-                                               const RequestedEventSet& requested_event_set,
-                                               std::size_t count_hardware_counter) const;
+  [[nodiscard]] perf::Sample decode_sample_event(SampleIterator&& entry,
+                                                 bool has_amd_ibs_op_pmu,
+                                                 bool has_amd_ibs_fetch_pmu,
+                                                 const RequestedEventSet& requested_event_set,
+                                                 std::size_t count_hardware_counter) const;
 
   /**
    * Reads registers from the current buffer entry.
@@ -200,7 +200,7 @@ private:
    * @param entry Current position at the buffer.
    * @return Registers.
    */
-  [[nodiscard]] static RegisterValues read_registers(SampleIterator& entry, const Registers& registers);
+  [[nodiscard]] static RegisterValues decode_registers(SampleIterator& entry, const Registers& registers);
 
   /**
    * Reads hardware events from the current buffer entry.
@@ -210,9 +210,10 @@ private:
    * @param count_hardware_counter Number of recorded hardware counters.
    * @return Event values
    */
-  [[nodiscard]] std::optional<CounterResult> read_hardware_events(SampleIterator& entry,
-                                                                  const RequestedEventSet& requested_event_set,
-                                                                  std::size_t count_hardware_counter) const;
+  [[nodiscard]] std::optional<CounterResult> decode_hardware_counter_events(
+    SampleIterator& entry,
+    const RequestedEventSet& requested_event_set,
+    std::size_t count_hardware_counter) const;
 
   /**
    * Reads the callchain from the current buffer entry.
@@ -220,7 +221,7 @@ private:
    * @param entry Current position at the buffer.
    * @return List of instruction pointers (the callchain).
    */
-  [[nodiscard]] static std::optional<std::vector<std::uintptr_t>> read_callchain(SampleIterator& entry);
+  [[nodiscard]] static std::optional<std::vector<std::uintptr_t>> decode_callchain(SampleIterator& entry);
 
   /**
    * Reads the branch stack from the current buffer entry.
@@ -228,7 +229,7 @@ private:
    * @param entry Current position at the buffer.
    * @return Branch stack.
    */
-  [[nodiscard]] static std::optional<std::vector<Branch>> read_branch_stack(SampleIterator& entry);
+  [[nodiscard]] static std::optional<std::vector<Branch>> decode_branch_stack(SampleIterator& entry);
 
   /**
    * Reads the data source field and translates it into an instruction type, the source, snoop information, tlb
@@ -242,7 +243,7 @@ private:
                                   std::optional<DataAccess::Snoop>,
                                   std::optional<std::pair<bool, bool>>,
                                   std::optional<bool>>
-  read_data_access_information(std::uint64_t source);
+  decode_data_access_information(std::uint64_t source);
 
   /**
    * Reads the access type and translates it into an AccessType.
@@ -250,7 +251,7 @@ private:
    * @param op_code Operation code provided by the perf subsystem.
    * @return Translated access type.
    */
-  [[nodiscard]] static std::optional<DataAccess::AccessType> read_data_access_type(std::uint64_t op_code) noexcept;
+  [[nodiscard]] static std::optional<DataAccess::AccessType> decode_data_access_type(std::uint64_t op_code) noexcept;
 
   /**
    * Reads the access source and translates it into a Source.
@@ -258,7 +259,19 @@ private:
    * @param memory_level_code Memory access code provided by the perf subsystem.
    * @return Translated source.
    */
-  [[nodiscard]] static DataAccess::Source read_data_access_source(std::uint64_t memory_level_code) noexcept;
+  [[nodiscard]] static DataAccess::Source decode_data_access_source(std::uint64_t memory_level_code) noexcept;
+
+  /**
+   * Reads the number of (remote) hops and translates it into a single integer.
+   *
+   * @param hops_code Hops provided by the perf subsystem. Unused, when perf provides only the level code.
+   * @param memory_level_code Memory level code provided by the perf subsystem. Unused, when perf provides the hops
+   * code.
+   * @return Number of hops.
+   */
+  [[nodiscard]] static std::optional<std::uint8_t> decode_data_access_remote_hops(
+    [[maybe_unused]] std::uint64_t hops_code,
+    [[maybe_unused]] std::uint64_t memory_level_code) noexcept;
 
   /**
    * Reads the snoop information and translates it into a data access Snoop.
@@ -267,8 +280,8 @@ private:
    * @param snoopx_code Extended snoop code provided by the perf subsystem.
    * @return Translated snoop object.
    */
-  [[nodiscard]] static std::optional<DataAccess::Snoop> read_data_access_snoop(std::uint64_t snoop_code,
-                                                                               std::uint64_t snoopx_code) noexcept;
+  [[nodiscard]] static std::optional<DataAccess::Snoop> decode_data_access_snoop(std::uint64_t snoop_code,
+                                                                                 std::uint64_t snoopx_code) noexcept;
 
   /**
    * Read the TLB information and translates into a pair (dTLB hit, STLB hit).
@@ -276,7 +289,7 @@ private:
    * @param tlb_code TLB code provided by the perf subsystem.
    * @return Translated pair (dTLB hit, STLB hit).
    */
-  [[nodiscard]] static std::optional<std::pair<bool, bool>> read_data_access_tlb(std::uint64_t tlb_code) noexcept;
+  [[nodiscard]] static std::optional<std::pair<bool, bool>> decode_data_access_tlb(std::uint64_t tlb_code) noexcept;
 
   /**
    * Reads the hardware transaction abort from the current buffer entry.
@@ -284,7 +297,7 @@ private:
    * @param entry Current position at the buffer.
    * @return Hardware transaction abort.
    */
-  [[nodiscard]] static InstructionExecution::HardwareTransactionAbort read_hardware_transaction_abort(
+  [[nodiscard]] static InstructionExecution::HardwareTransactionAbort decode_hardware_transaction_abort(
     std::uint64_t abort);
 
   /**
@@ -304,13 +317,22 @@ private:
   void enrich_sample_with_ibs_op_data_from_raw(Sample& sample) const noexcept;
 
   /**
+   * Translates branch information from the decoder into a branch type.
+   *
+   * @param ibs_op_decoder IBS Op Decoder containing the relevant information.
+   * @return Branch type.
+   */
+  [[nodiscard]] static std::optional<InstructionExecution::BranchType> decode_branch_type(
+    const IBSOpDecoder& ibs_op_decoder) noexcept;
+
+  /**
    * Translates the TLB page size in a number of bytes, based on the options.
    *
    * @param is_1g True, if the page is 1GB.
    * @param is_2m True, if the page is 2MB.
    * @return The size in bytes.
    */
-  static std::uint64_t calculate_tlb_page_size(bool is_1g, bool is_2m);
+  [[nodiscard]] static std::uint64_t decode_tlb_page_size(bool is_1g, bool is_2m);
 
   /**
    * Translates the TLB page size in a number of bytes, based on the options.
@@ -318,7 +340,7 @@ private:
    * @param code Code for the TLB page size.
    * @return The size in bytes.
    */
-  static std::optional<std::uint64_t> calculate_tlb_page_size(std::uint8_t code);
+  [[nodiscard]] static std::optional<std::uint64_t> decode_tlb_page_size(std::uint8_t code);
 
   /**
    * Translates the current entry from the user-level buffer into a lost sample.
@@ -326,7 +348,7 @@ private:
    * @param entry Entry of the user-level buffer.
    * @return Sample containing the loss.
    */
-  [[nodiscard]] perf::Sample read_loss_event(SampleIterator&& entry) const noexcept;
+  [[nodiscard]] perf::Sample decode_loss_event(SampleIterator&& entry) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a context switch sample.
@@ -334,7 +356,7 @@ private:
    * @param entry Entry of the user-level buffer.
    * @return Sample containing the context switch.
    */
-  [[nodiscard]] perf::Sample read_context_switch_event(SampleIterator&& entry) const noexcept;
+  [[nodiscard]] perf::Sample decode_context_switch_event(SampleIterator&& entry) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a cgroup sample.
@@ -342,7 +364,7 @@ private:
    * @param entry Entry of the user-level buffer.
    * @return Sample containing the cgroup.
    */
-  [[nodiscard]] static perf::Sample read_cgroup_event(SampleIterator&& entry);
+  [[nodiscard]] static perf::Sample decode_cgroup_event(SampleIterator&& entry);
 
   /**
    * Translates the current entry from the user-level buffer into a throttle or un-throttle sample.
@@ -350,6 +372,6 @@ private:
    * @param entry Entry of the user-level buffer.
    * @return Sample containing the throttle.
    */
-  [[nodiscard]] perf::Sample read_throttle_event(SampleIterator&& entry) const noexcept;
+  [[nodiscard]] perf::Sample decode_throttle_event(SampleIterator&& entry) const noexcept;
 };
 }

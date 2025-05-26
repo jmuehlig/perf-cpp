@@ -55,17 +55,17 @@ perf::SampleDecoder::decode(std::vector<std::vector<std::byte>>&& sample_buffers
       }
 
       if (entry.is_sample_event()) { /// Read "normal" samples.
-        samples.push_back(this->read_sample_event(
+        samples.push_back(this->decode_sample_event(
           std::move(entry), has_amd_ibs_op_pmu, has_amd_ibs_fetch_pmu, requested_event_set, count_hardware_counter));
       } else if (entry.is_loss_event()) { /// Read lost samples.
-        samples.push_back(this->read_loss_event(std::move(entry)));
+        samples.push_back(this->decode_loss_event(std::move(entry)));
       } else if (entry.is_context_switch_event()) { /// Read context switch.
-        samples.push_back(this->read_context_switch_event(std::move(entry)));
+        samples.push_back(this->decode_context_switch_event(std::move(entry)));
       } else if (entry.is_cgroup_event()) { /// Read cgroup samples.
-        samples.push_back(SampleDecoder::read_cgroup_event(std::move(entry)));
+        samples.push_back(SampleDecoder::decode_cgroup_event(std::move(entry)));
       } else if (entry.is_throttle_event() &&
                  this->_sampler_values.is_include_throttle()) { /// Read (un-) throttle samples.
-        samples.push_back(this->read_throttle_event(std::move(entry)));
+        samples.push_back(this->decode_throttle_event(std::move(entry)));
       }
 
       /// Go to the next sample.
@@ -77,7 +77,7 @@ perf::SampleDecoder::decode(std::vector<std::vector<std::byte>>&& sample_buffers
 }
 
 void
-perf::SampleDecoder::read_sample_id_all(perf::SampleDecoder::SampleIterator& entry, Sample& sample) const noexcept
+perf::SampleDecoder::decode_sample_id_all(SampleIterator& entry, Sample& sample) const noexcept
 {
   if (this->_sampler_values.is_set(PERF_SAMPLE_TID)) {
     sample.metadata().process_id(entry.read<std::uint32_t>());
@@ -103,11 +103,11 @@ perf::SampleDecoder::read_sample_id_all(perf::SampleDecoder::SampleIterator& ent
 }
 
 perf::Sample
-perf::SampleDecoder::read_sample_event(perf::SampleDecoder::SampleIterator&& entry,
-                                       const bool has_amd_ibs_op_pmu,
-                                       const bool has_amd_ibs_fetch_pmu,
-                                       const RequestedEventSet& requested_event_set,
-                                       const std::size_t count_hardware_counter) const
+perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
+                                         bool has_amd_ibs_op_pmu,
+                                         bool has_amd_ibs_fetch_pmu,
+                                         const RequestedEventSet& requested_event_set,
+                                         std::size_t count_hardware_counter) const
 
 {
   auto sample = Sample{};
@@ -149,14 +149,15 @@ perf::SampleDecoder::read_sample_event(perf::SampleDecoder::SampleIterator&& ent
   }
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_READ)) {
-    auto counter_result = SampleDecoder::read_hardware_events(entry, requested_event_set, count_hardware_counter);
+    auto counter_result =
+      SampleDecoder::decode_hardware_counter_events(entry, requested_event_set, count_hardware_counter);
     if (counter_result.has_value()) {
       sample.counter(std::move(counter_result.value()));
     }
   }
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_CALLCHAIN)) {
-    auto callchain = SampleDecoder::read_callchain(entry);
+    auto callchain = SampleDecoder::decode_callchain(entry);
     if (callchain.has_value()) {
       sample.instruction_execution().callchain(std::move(callchain.value()));
     }
@@ -172,14 +173,14 @@ perf::SampleDecoder::read_sample_event(perf::SampleDecoder::SampleIterator&& ent
   }
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_BRANCH_STACK)) {
-    auto branch_stack = SampleDecoder::read_branch_stack(entry);
+    auto branch_stack = SampleDecoder::decode_branch_stack(entry);
     if (branch_stack.has_value()) {
       sample.branch_stack(std::move(branch_stack.value()));
     }
   }
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_REGS_USER)) {
-    sample.user_registers(SampleDecoder::read_registers(entry, this->_sampler_values.user_registers()));
+    sample.user_registers(SampleDecoder::decode_registers(entry, this->_sampler_values.user_registers()));
   }
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_STACK_USER)) {
@@ -230,7 +231,7 @@ perf::SampleDecoder::read_sample_event(perf::SampleDecoder::SampleIterator&& ent
     const auto perf_data_source = entry.read<std::uint64_t>();
     /// Read source value from perf.
     const auto [access_type, data_source, snoop, tlb, is_locked] =
-      SampleDecoder::read_data_access_information(perf_data_source);
+      SampleDecoder::decode_data_access_information(perf_data_source);
 
     /// Set access type and memory instruction type, if not already set.
     if (access_type.has_value()) {
@@ -287,11 +288,11 @@ perf::SampleDecoder::read_sample_event(perf::SampleDecoder::SampleIterator&& ent
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_TRANSACTION)) {
     sample.instruction_execution().hardware_transaction_abort(
-      SampleDecoder::read_hardware_transaction_abort(entry.read<std::uint64_t>()));
+      SampleDecoder::decode_hardware_transaction_abort(entry.read<std::uint64_t>()));
   }
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_REGS_INTR)) {
-    sample.kernel_registers(SampleDecoder::read_registers(entry, this->_sampler_values.kernel_registers()));
+    sample.kernel_registers(SampleDecoder::decode_registers(entry, this->_sampler_values.kernel_registers()));
   }
 
 #ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR /// Sampling for physical memory address is supported since Linux 4.13
@@ -332,7 +333,7 @@ perf::SampleDecoder::read_sample_event(perf::SampleDecoder::SampleIterator&& ent
 }
 
 perf::RegisterValues
-perf::SampleDecoder::read_registers(perf::SampleDecoder::SampleIterator& entry, const Registers& registers)
+perf::SampleDecoder::decode_registers(SampleIterator& entry, const Registers& registers)
 {
   /// Read the register ABI.
   const auto abi = static_cast<ABI>(entry.read<std::uint64_t>());
@@ -365,9 +366,9 @@ perf::SampleDecoder::read_registers(perf::SampleDecoder::SampleIterator& entry, 
 }
 
 std::optional<perf::CounterResult>
-perf::SampleDecoder::read_hardware_events(perf::SampleDecoder::SampleIterator& entry,
-                                          const RequestedEventSet& requested_event_set,
-                                          const std::size_t count_hardware_counter) const
+perf::SampleDecoder::decode_hardware_counter_events(SampleIterator& entry,
+                                                    const RequestedEventSet& requested_event_set,
+                                                    std::size_t count_hardware_counter) const
 {
   /// Read the number of counters.
   const auto count_counter_values = entry.read<decltype(CounterValues<Group::MAX_MEMBERS>::count_members)>();
@@ -402,7 +403,7 @@ perf::SampleDecoder::read_hardware_events(perf::SampleDecoder::SampleIterator& e
 }
 
 std::optional<std::vector<std::uintptr_t>>
-perf::SampleDecoder::read_callchain(perf::SampleDecoder::SampleIterator& entry)
+perf::SampleDecoder::decode_callchain(SampleIterator& entry)
 {
   /// Read the size of the callchain.
   const auto callchain_size = entry.read<std::uint64_t>();
@@ -424,7 +425,7 @@ perf::SampleDecoder::read_callchain(perf::SampleDecoder::SampleIterator& entry)
 }
 
 std::optional<std::vector<perf::Branch>>
-perf::SampleDecoder::read_branch_stack(perf::SampleDecoder::SampleIterator& entry)
+perf::SampleDecoder::decode_branch_stack(SampleIterator& entry)
 {
   /// Read the size of the branch stack.
   const auto count_branches = entry.read<std::uint64_t>();
@@ -458,7 +459,7 @@ perf::SampleDecoder::read_branch_stack(perf::SampleDecoder::SampleIterator& entr
 }
 
 std::optional<perf::DataAccess::AccessType>
-perf::SampleDecoder::read_data_access_type(const std::uint64_t op_code) noexcept
+perf::SampleDecoder::decode_data_access_type(std::uint64_t op_code) noexcept
 {
   if (op_code & PERF_MEM_OP_LOAD) {
     return DataAccess::AccessType::Load;
@@ -476,7 +477,7 @@ perf::SampleDecoder::read_data_access_type(const std::uint64_t op_code) noexcept
 }
 
 perf::DataAccess::Source
-perf::SampleDecoder::read_data_access_source(const std::uint64_t memory_level_code) noexcept
+perf::SampleDecoder::decode_data_access_source(std::uint64_t memory_level_code) noexcept
 {
   /// Translate into Source object.
   auto data_access_source = DataAccess::Source{};
@@ -505,7 +506,7 @@ perf::SampleDecoder::read_data_access_source(const std::uint64_t memory_level_co
 }
 
 std::optional<perf::DataAccess::Snoop>
-perf::SampleDecoder::read_data_access_snoop(const std::uint64_t snoop_code, const std::uint64_t snoopx_code) noexcept
+perf::SampleDecoder::decode_data_access_snoop(std::uint64_t snoop_code, std::uint64_t snoopx_code) noexcept
 {
   if (snoop_code > 0 && !(snoop_code & PERF_MEM_SNOOP_NA) && !(snoop_code & PERF_MEM_SNOOP_NONE)) {
     auto snoop = DataAccess::Snoop{};
@@ -533,7 +534,7 @@ perf::SampleDecoder::read_data_access_snoop(const std::uint64_t snoop_code, cons
 }
 
 std::optional<std::pair<bool, bool>>
-perf::SampleDecoder::read_data_access_tlb(const std::uint64_t tlb_code) noexcept
+perf::SampleDecoder::decode_data_access_tlb(std::uint64_t tlb_code) noexcept
 {
   if (!(tlb_code & PERF_MEM_TLB_NA)) {
     const auto is_l1_tbl_hit = (tlb_code & PERF_MEM_TLB_L1) && (tlb_code & PERF_MEM_TLB_HIT);
@@ -544,21 +545,56 @@ perf::SampleDecoder::read_data_access_tlb(const std::uint64_t tlb_code) noexcept
   return std::nullopt;
 }
 
+std::optional<std::uint8_t>
+perf::SampleDecoder::decode_data_access_remote_hops([[maybe_unused]] std::uint64_t hops_code,
+                                                    [[maybe_unused]] std::uint64_t memory_level_code) noexcept
+{
+#ifndef PERFCPP_NO_MEM_HOPS_0 /// Remote Hops were introduced in Linux 5.16
+  if (hops_code == PERF_MEM_HOPS_0) {
+    return 0U;
+  }
+#endif
+
+#ifndef PERFCPP_NO_MEM_HOPS_1_3 /// Remote Hops 1-3 were introduced in Linux 5.17
+  if (hops_code == PERF_MEM_HOPS_1) {
+    return 1U;
+  }
+
+  if (hops_code == PERF_MEM_HOPS_2) {
+    return 2U;
+  }
+
+  if (hops_code == PERF_MEM_HOPS_3) {
+    return 3U;
+  }
+#else /// Use LVL_REM before 5.17
+  if ((memory_level_code & PERF_MEM_LVL_REM_RAM1) || (memory_level_code & PERF_MEM_LVL_REM_CCE1)) {
+    return 1U;
+  }
+
+  if ((memory_level_code & PERF_MEM_LVL_REM_RAM2) || (memory_level_code & PERF_MEM_LVL_REM_CCE2)) {
+    return 2U;
+  }
+#endif
+
+  return std::nullopt;
+}
+
 std::tuple<std::optional<perf::DataAccess::AccessType>,
            perf::DataAccess::Source,
            std::optional<perf::DataAccess::Snoop>,
            std::optional<std::pair<bool, bool>>,
            std::optional<bool>>
-perf::SampleDecoder::read_data_access_information(const std::uint64_t source)
+perf::SampleDecoder::decode_data_access_information(std::uint64_t source)
 {
   const auto perf_data_source = perf_mem_data_src{ source };
 
   /// Read memory instruction type.
-  auto access_type = SampleDecoder::read_data_access_type(perf_data_source.mem_op);
+  auto access_type = SampleDecoder::decode_data_access_type(perf_data_source.mem_op);
 
   /// Translate into Source object.
 #ifndef PERFCPP_NO_MEM_LVLNUM /// lvl_num field is supported since Linux 6.1
-  auto data_access_source = SampleDecoder::read_data_access_source(perf_data_source.mem_lvl_num);
+  auto data_access_source = SampleDecoder::decode_data_access_source(perf_data_source.mem_lvl_num);
 #else /// Use lvl before Linux 6.1
   auto data_access_source = SampleDecoder::read_data_access_source(perf_data_source.mem_lvl);
 #endif
@@ -574,35 +610,13 @@ perf::SampleDecoder::read_data_access_information(const std::uint64_t source)
 
   /// Remote hops.
   if (data_access_source.is_remote()) {
-    auto hops = std::optional<std::uint8_t>{ std::nullopt };
-#ifndef PERFCPP_NO_MEM_HOPS_0 /// Remote Hops were introduced in Linux 5.16
-    if (perf_data_source.mem_hops == PERF_MEM_HOPS_0) {
-      hops = 0U;
-    }
-
-#ifndef PERFCPP_NO_MEM_HOPS_1_3 /// Remote Hops 1-3 were introduced in Linux 5.17
-    if (perf_data_source.mem_hops == PERF_MEM_HOPS_1) {
-      hops = 1U;
-    } else if (perf_data_source.mem_hops == PERF_MEM_HOPS_2) {
-      hops = 2U;
-    } else if (perf_data_source.mem_hops == PERF_MEM_HOPS_3) {
-      hops = 3U;
-    }
-#else /// Use LVL_REM before 5.17
-    if ((perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM1) || (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE1)) {
-      hops = 1U;
-    } else if ((perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM2) ||
-               (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE2)) {
-      hops = 2U;
-    }
-#endif
-#else /// Use LVL_REM before 5.16
-    if ((perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM1) || (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE1)) {
-      hops = 1U;
-    } else if ((perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM2) ||
-               (perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE2)) {
-      hops = 2U;
-    }
+#if !defined(PERFCPP_NO_MEM_HOPS_0) && !defined(PERFCPP_NO_MEM_HOPS_1_3)
+    const auto hops =
+      SampleDecoder::decode_data_access_remote_hops(perf_data_source.mem_hops, /* memory level is not used */ 0ULL);
+#elif !defined(PERFCPP_NO_MEM_HOPS_0) && defined(PERFCPP_NO_MEM_HOPS_1_3)
+    const auto hops = SampleDecoder::read_data_access_remote_hops(perf_data_source.mem_hops, perf_data_source.mem_lvl);
+#else
+    const auto hops = SampleDecoder::read_data_access_remote_hops(/** hops is not used */, perf_data_source.mem_lvl);
 #endif
 
     if (hops.has_value()) {
@@ -612,13 +626,13 @@ perf::SampleDecoder::read_data_access_information(const std::uint64_t source)
 
   /// Snoop.
 #ifndef PERFCPP_NO_MEM_SNOOPX /// Snoopx was introduced in Linux 4.14.0
-  const auto snoop = SampleDecoder::read_data_access_snoop(perf_data_source.mem_snoop, perf_data_source.mem_snoopx);
+  const auto snoop = SampleDecoder::decode_data_access_snoop(perf_data_source.mem_snoop, perf_data_source.mem_snoopx);
 #else
   const auto snoop = SampleDecoder::read_data_access_snoop(perf_data_source.mem_snoop, 0ULL);
 #endif
 
   /// TLB.
-  const auto tlb = SampleDecoder::read_data_access_tlb(perf_mem_data_src{ source }.mem_dtlb);
+  const auto tlb = SampleDecoder::decode_data_access_tlb(perf_mem_data_src{ source }.mem_dtlb);
 
   /// Locked.
   const auto perf_lock = perf_mem_data_src{ source }.mem_lock;
@@ -631,7 +645,7 @@ perf::SampleDecoder::read_data_access_information(const std::uint64_t source)
 }
 
 perf::InstructionExecution::HardwareTransactionAbort
-perf::SampleDecoder::read_hardware_transaction_abort(const std::uint64_t abort)
+perf::SampleDecoder::decode_hardware_transaction_abort(std::uint64_t abort)
 {
   /// Translate into the abort object.
   auto hardware_transaction_abort = InstructionExecution::HardwareTransactionAbort{};
@@ -669,7 +683,7 @@ perf::SampleDecoder::enrich_sample_with_ibs_fetch_data_from_raw(perf::Sample& sa
     /// Instruction TLB.
     auto l1_tlb_size = std::optional<std::uint64_t>{ std::nullopt };
     if (ibs_fetch_decoder.is_physical_instruction_address_valid()) {
-      l1_tlb_size = SampleDecoder::calculate_tlb_page_size(ibs_fetch_decoder.l1_tlb_page_size());
+      l1_tlb_size = SampleDecoder::decode_tlb_page_size(ibs_fetch_decoder.l1_tlb_page_size());
     }
     sample.instruction_execution().tlb(
       InstructionExecution::TLB{ ibs_fetch_decoder.is_l1_tlb_miss(), l1_tlb_size, ibs_fetch_decoder.is_l2_tlb_miss() });
@@ -697,11 +711,11 @@ perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(perf::Sample& sampl
   if (this->_sampler_values.is_set(PERF_SAMPLE_DATA_SRC)) {
     /// TLB page size.
     if (!ibs_op_decoder.is_l1_data_tlb_miss()) {
-      sample.data_access().tlb().l1_page_size(SampleDecoder::calculate_tlb_page_size(
+      sample.data_access().tlb().l1_page_size(SampleDecoder::decode_tlb_page_size(
         ibs_op_decoder.is_l1_data_tlb_hit_1g(), ibs_op_decoder.is_l1_data_tlb_hit_2m()));
     }
     if (!ibs_op_decoder.is_l2_data_tlb_miss()) {
-      sample.data_access().tlb().l2_page_size(SampleDecoder::calculate_tlb_page_size(
+      sample.data_access().tlb().l2_page_size(SampleDecoder::decode_tlb_page_size(
         ibs_op_decoder.is_l2_data_tlb_hit_1g(), ibs_op_decoder.is_l2_data_tlb_hit_2m()));
     }
 
@@ -714,19 +728,13 @@ perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(perf::Sample& sampl
       sample.data_access().latency().cache_miss(std::nullopt);
     } else if (ibs_op_decoder.is_return_operation()) {
       sample.instruction_execution().type(InstructionExecution::InstructionType::Return);
-    } else if (ibs_op_decoder.is_branch_taken_operation() || ibs_op_decoder.is_branch_mispredicted_operation() ||
-               ibs_op_decoder.is_branch_retired_operation() || ibs_op_decoder.is_branch_fuse()) {
+    } else if (ibs_op_decoder.is_branch()) {
       sample.instruction_execution().type(InstructionExecution::InstructionType::Branch);
 
       /// If the instruction is a branch, set the branch type.
-      if (ibs_op_decoder.is_branch_taken_operation()) {
-        sample.instruction_execution().branch_type(InstructionExecution::BranchType::Taken);
-      } else if (ibs_op_decoder.is_branch_mispredicted_operation()) {
-        sample.instruction_execution().branch_type(InstructionExecution::BranchType::Mispredicted);
-      } else if (ibs_op_decoder.is_branch_retired_operation()) {
-        sample.instruction_execution().branch_type(InstructionExecution::BranchType::Retired);
-      } else if (ibs_op_decoder.is_branch_fuse()) {
-        sample.instruction_execution().branch_type(InstructionExecution::BranchType::Fuse);
+      const auto branch_type = SampleDecoder::decode_branch_type(ibs_op_decoder);
+      if (branch_type.has_value()) {
+        sample.instruction_execution().branch_type(branch_type.value());
       }
     }
 
@@ -753,8 +761,30 @@ perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(perf::Sample& sampl
   }
 }
 
+std::optional<perf::InstructionExecution::BranchType>
+perf::SampleDecoder::decode_branch_type(const perf::IBSOpDecoder& ibs_op_decoder) noexcept
+{
+  if (ibs_op_decoder.is_branch_taken_operation()) {
+    return InstructionExecution::BranchType::Taken;
+  }
+
+  if (ibs_op_decoder.is_branch_mispredicted_operation()) {
+    return InstructionExecution::BranchType::Mispredicted;
+  }
+
+  if (ibs_op_decoder.is_branch_retired_operation()) {
+    return InstructionExecution::BranchType::Retired;
+  }
+
+  if (ibs_op_decoder.is_branch_fuse()) {
+    return InstructionExecution::BranchType::Fuse;
+  }
+
+  return std::nullopt;
+}
+
 std::uint64_t
-perf::SampleDecoder::calculate_tlb_page_size(const bool is_1g, const bool is_2m)
+perf::SampleDecoder::decode_tlb_page_size(const bool is_1g, const bool is_2m)
 {
   if (is_1g) {
     return 1024ULL * 1024ULL * 1024ULL;
@@ -768,17 +798,17 @@ perf::SampleDecoder::calculate_tlb_page_size(const bool is_1g, const bool is_2m)
 }
 
 std::optional<std::uint64_t>
-perf::SampleDecoder::calculate_tlb_page_size(const std::uint8_t code)
+perf::SampleDecoder::decode_tlb_page_size(std::uint8_t code)
 {
   if (code <= 2U) { /// 0-2 are valid codes.
-    return SampleDecoder::calculate_tlb_page_size(code == 2U, code == 1U);
+    return SampleDecoder::decode_tlb_page_size(code == 2U, code == 1U);
   }
 
   return std::nullopt;
 }
 
 perf::Sample
-perf::SampleDecoder::read_loss_event(perf::SampleDecoder::SampleIterator&& entry) const noexcept
+perf::SampleDecoder::decode_loss_event(SampleIterator&& entry) const noexcept
 {
   auto sample = Sample{};
   sample.metadata().mode(entry.mode());
@@ -787,13 +817,13 @@ perf::SampleDecoder::read_loss_event(perf::SampleDecoder::SampleIterator&& entry
   sample.count_loss(entry.read<std::uint64_t>());
 
   /// Read sample_id.
-  this->read_sample_id_all(entry, sample);
+  this->decode_sample_id_all(entry, sample);
 
   return sample;
 }
 
 perf::Sample
-perf::SampleDecoder::read_context_switch_event(perf::SampleDecoder::SampleIterator&& entry) const noexcept
+perf::SampleDecoder::decode_context_switch_event(SampleIterator&& entry) const noexcept
 {
   auto sample = Sample{};
   sample.metadata().mode(entry.mode());
@@ -811,7 +841,7 @@ perf::SampleDecoder::read_context_switch_event(perf::SampleDecoder::SampleIterat
   }
 
   /// Read sample_id.
-  this->read_sample_id_all(entry, sample);
+  this->decode_sample_id_all(entry, sample);
 
   sample.context_switch(ContextSwitch{ is_switch_out, is_switch_out_preempt, process_id, thread_id });
 
@@ -819,7 +849,7 @@ perf::SampleDecoder::read_context_switch_event(perf::SampleDecoder::SampleIterat
 }
 
 perf::Sample
-perf::SampleDecoder::read_cgroup_event(perf::SampleDecoder::SampleIterator&& entry)
+perf::SampleDecoder::decode_cgroup_event(SampleIterator&& entry)
 {
   auto sample = Sample{};
   sample.metadata().mode(entry.mode());
@@ -833,7 +863,7 @@ perf::SampleDecoder::read_cgroup_event(perf::SampleDecoder::SampleIterator&& ent
 }
 
 perf::Sample
-perf::SampleDecoder::read_throttle_event(perf::SampleDecoder::SampleIterator&& entry) const noexcept
+perf::SampleDecoder::decode_throttle_event(SampleIterator&& entry) const noexcept
 {
   auto sample = Sample{};
   sample.metadata().mode(entry.mode());
@@ -847,7 +877,7 @@ perf::SampleDecoder::read_throttle_event(perf::SampleDecoder::SampleIterator&& e
   }
 
   /// Read sample_id.
-  this->read_sample_id_all(entry, sample);
+  this->decode_sample_id_all(entry, sample);
 
   sample.throttle(Throttle{ entry.is_throttle() });
 
