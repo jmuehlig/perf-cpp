@@ -12,6 +12,7 @@ class DataGenerator
 {
 public:
   [[nodiscard]] static std::vector<std::uint64_t> generate_unique(std::size_t size);
+
 private:
   [[nodiscard]] static std::vector<std::uint64_t> alphabet(std::size_t size);
 

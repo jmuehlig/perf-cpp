@@ -1,10 +1,10 @@
+#include "access_benchmark.h"
 #include <catch2/catch_test_macros.hpp>
 #include <perfcpp/event_counter.h>
-#include "access_benchmark.h"
 
 TEST_CASE("configuration", "[EventCounter]")
 {
-  auto readonly_benchmark = perf::test::AccessBenchmark{/* is random */ true, 1024U /* MB */};
+  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
   const auto counter_definition = perf::CounterDefinition{};
 
   SECTION("non-existing counter")
@@ -54,7 +54,7 @@ TEST_CASE("configuration", "[EventCounter]")
 
 TEST_CASE("counter scheduling", "[EventCounter]")
 {
-  auto readonly_benchmark = perf::test::AccessBenchmark{/* is random */ true, 1024U /* MB */};
+  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
   const auto counter_definition = perf::CounterDefinition{};
 
   SECTION("same hardware counter")
@@ -92,7 +92,7 @@ TEST_CASE("counter scheduling", "[EventCounter]")
 
 TEST_CASE("counting", "[EventCounter]")
 {
-  auto readonly_benchmark = perf::test::AccessBenchmark{/* is random */ true, 1024U /* MB */};
+  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
   const auto counter_definition = perf::CounterDefinition{};
 
   SECTION("instructions only")
@@ -134,7 +134,7 @@ TEST_CASE("counting", "[EventCounter]")
 
     const auto max_instructions = std::max(result1.get("instructions").value(), result2.get("instructions").value());
     const auto min_instructions = std::min(result1.get("instructions").value(), result2.get("instructions").value());
-    REQUIRE((1. / max_instructions * min_instructions) <  1.1);
+    REQUIRE((1. / max_instructions * min_instructions) < 1.1);
     REQUIRE((1. / max_instructions * min_instructions) > .9);
   }
 
@@ -156,7 +156,7 @@ TEST_CASE("counting", "[EventCounter]")
   SECTION("cache pattern")
   {
     auto event_counter = perf::EventCounter{ counter_definition };
-    event_counter.add({"seconds", "instructions", "cycles", "cache-misses"});
+    event_counter.add({ "seconds", "instructions", "cycles", "cache-misses" });
 
     event_counter.start();
     readonly_benchmark.run();
@@ -168,7 +168,7 @@ TEST_CASE("counting", "[EventCounter]")
     REQUIRE(random_result.get("cycles").has_value());
     REQUIRE(random_result.get("cache-misses").has_value());
 
-    auto readonly_sequential_benchmark = perf::test::AccessBenchmark{/* is random */ false, 1024U /* MB */};
+    auto readonly_sequential_benchmark = perf::test::AccessBenchmark{ /* is random */ false, 1024U /* MB */ };
     event_counter.start();
     readonly_sequential_benchmark.run();
     event_counter.stop();
@@ -187,7 +187,7 @@ TEST_CASE("counting", "[EventCounter]")
   SECTION("time")
   {
     auto event_counter = perf::EventCounter{ counter_definition };
-    event_counter.add(std::vector<std::string>{"seconds", "milliseconds"});
+    event_counter.add(std::vector<std::string>{ "seconds", "milliseconds" });
 
     event_counter.start();
     readonly_benchmark.run();
@@ -198,6 +198,6 @@ TEST_CASE("counting", "[EventCounter]")
     REQUIRE(result.get("milliseconds").has_value());
     REQUIRE_FALSE(result.get("nanoseconds").has_value());
 
-    REQUIRE( (result.get("seconds").value() * 1100.) > (result.get("milliseconds").value()));
+    REQUIRE((result.get("seconds").value() * 1100.) > (result.get("milliseconds").value()));
   }
 }

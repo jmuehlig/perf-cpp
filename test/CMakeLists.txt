@@ -11,6 +11,7 @@ set(PERF_CPP_TEST
         test/counter_definition.cpp
         test/metric.cpp
         test/event_counter.cpp
+        test/sampler.cpp
 )
 
 add_executable(tests ${PERF_CPP_TEST})

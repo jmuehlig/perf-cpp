@@ -37,13 +37,13 @@ TEST_CASE("adding new events and metrics", "[CounterDefinition]")
 
   SECTION("read csv")
   {
-    const auto uops_issued_counter = std::string{"UOPS_ISSUED.CORE_STALL_CYCLES"};
-    const auto mem_load_counter = std::string{"mem-load-lat-3"};
+    const auto uops_issued_counter = std::string{ "UOPS_ISSUED.CORE_STALL_CYCLES" };
+    const auto mem_load_counter = std::string{ "mem-load-lat-3" };
 
     REQUIRE(definition.counter(uops_issued_counter).empty());
     REQUIRE(definition.counter(mem_load_counter).empty());
 
-    const auto definition_with_file = perf::CounterDefinition{"test/counter.csv"};
+    const auto definition_with_file = perf::CounterDefinition{ "test/counter.csv" };
 
     REQUIRE_FALSE(definition_with_file.counter(uops_issued_counter).empty());
     REQUIRE_FALSE(definition_with_file.counter(mem_load_counter).empty());

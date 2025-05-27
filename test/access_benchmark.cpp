@@ -4,8 +4,8 @@
 #include <random>
 
 perf::test::AccessBenchmark::AccessBenchmark(const bool is_random,
-                                                const std::uint64_t access_data_size_in_mb,
-                                                const bool is_write)
+                                             const std::uint64_t access_data_size_in_mb,
+                                             const bool is_write)
 {
   const auto count_cache_lines = (access_data_size_in_mb * 1024U * 1024U) / sizeof(cache_line);
 
