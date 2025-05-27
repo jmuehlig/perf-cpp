@@ -1,36 +1,14 @@
 #include <catch2/catch_test_macros.hpp>
 #include <perfcpp/event_counter.h>
+#include "access_benchmark.h"
 
-void
-execute_workload()
+TEST_CASE("configuration", "[EventCounter]")
 {
-  auto constexpr length = 1000000ULL;
-  auto* data = new std::uint64_t[length];
-  auto sum = 0ULL;
-  for (auto i = 0U; i < length; ++i) {
-    sum += data[i];
-  }
-  delete[] data;
-
-  asm volatile("" : "+r,m"(sum) : : "memory");
-}
-
-TEST_CASE("counting", "[EventCounter]")
-{
-  SECTION("empty counter")
-  {
-    auto counter_definition = perf::CounterDefinition{};
-    auto event_counter = perf::EventCounter{ counter_definition };
-    event_counter.start();
-    execute_workload();
-    event_counter.stop();
-
-    REQUIRE_FALSE(event_counter.result().get("instructions").has_value());
-  }
+  auto readonly_benchmark = perf::test::AccessBenchmark{/* is random */ true, 1024U /* MB */};
+  const auto counter_definition = perf::CounterDefinition{};
 
   SECTION("non-existing counter")
   {
-    auto counter_definition = perf::CounterDefinition{};
     auto event_counter = perf::EventCounter{ counter_definition };
 
     REQUIRE_THROWS(event_counter.add("non-existing"));
@@ -38,7 +16,6 @@ TEST_CASE("counting", "[EventCounter]")
 
   SECTION("limited counters")
   {
-    auto counter_definition = perf::CounterDefinition{};
     auto config = perf::Config{};
     config.max_counters_per_group(1U);
     config.max_groups(2U);
@@ -47,18 +24,15 @@ TEST_CASE("counting", "[EventCounter]")
     event_counter.add(std::vector<std::string>{ "instructions", "cycles" });
 
     event_counter.start();
-    execute_workload();
+    readonly_benchmark.run();
     event_counter.stop();
 
     REQUIRE(event_counter.result().get("cycles").has_value());
     REQUIRE(event_counter.result().get("instructions").has_value());
-    REQUIRE(event_counter.result().get("instructions").value() > 1000000.);
-    REQUIRE(event_counter.result().get("instructions").value() < 6000000.);
   }
 
   SECTION("too many counters")
   {
-    auto counter_definition = perf::CounterDefinition{};
     auto config = perf::Config{};
     config.max_counters_per_group(1U);
     config.max_groups(2U);
@@ -67,79 +41,163 @@ TEST_CASE("counting", "[EventCounter]")
     REQUIRE_THROWS(event_counter.add({ "instructions", "cycles", "branches" }));
   }
 
+  SECTION("empty counter")
+  {
+    auto event_counter = perf::EventCounter{ counter_definition };
+    event_counter.start();
+    readonly_benchmark.run();
+    event_counter.stop();
+
+    REQUIRE_FALSE(event_counter.result().get("instructions").has_value());
+  }
+}
+
+TEST_CASE("counter scheduling", "[EventCounter]")
+{
+  auto readonly_benchmark = perf::test::AccessBenchmark{/* is random */ true, 1024U /* MB */};
+  const auto counter_definition = perf::CounterDefinition{};
+
   SECTION("same hardware counter")
   {
-    auto counter_definition = perf::CounterDefinition{};
     auto event_counter = perf::EventCounter{ counter_definition };
 
     event_counter.add(std::vector<std::string>{ "instructions", "cycles" }, perf::EventCounter::Schedule::Group);
 
     event_counter.start();
-    execute_workload();
+    readonly_benchmark.run();
     event_counter.stop();
 
     REQUIRE(event_counter.result().get("cycles").has_value());
     REQUIRE(event_counter.result().get("instructions").has_value());
-    REQUIRE(event_counter.result().get("instructions").value() > 1000000.);
-    REQUIRE(event_counter.result().get("instructions").value() < 6000000.);
+    REQUIRE(event_counter.result().get("instructions").value() > 100000000.);
+    REQUIRE(event_counter.result().get("instructions").value() < 140000000.);
   }
 
   SECTION("separate hardware counter")
   {
-    auto counter_definition = perf::CounterDefinition{};
     auto event_counter = perf::EventCounter{ counter_definition };
 
     event_counter.add(std::vector<std::string>{ "instructions", "cycles" }, perf::EventCounter::Schedule::Separate);
 
     event_counter.start();
-    execute_workload();
+    readonly_benchmark.run();
     event_counter.stop();
 
     REQUIRE(event_counter.result().get("cycles").has_value());
     REQUIRE(event_counter.result().get("instructions").has_value());
-    REQUIRE(event_counter.result().get("instructions").value() > 1000000.);
-    REQUIRE(event_counter.result().get("instructions").value() < 6000000.);
+    REQUIRE(event_counter.result().get("instructions").value() > 100000000.);
+    REQUIRE(event_counter.result().get("instructions").value() < 140000000.);
   }
+}
+
+TEST_CASE("counting", "[EventCounter]")
+{
+  auto readonly_benchmark = perf::test::AccessBenchmark{/* is random */ true, 1024U /* MB */};
+  const auto counter_definition = perf::CounterDefinition{};
 
   SECTION("instructions only")
   {
-    auto counter_definition = perf::CounterDefinition{};
     auto event_counter = perf::EventCounter{ counter_definition };
     event_counter.add("instructions");
 
     event_counter.start();
-    execute_workload();
+    readonly_benchmark.run();
     event_counter.stop();
 
     REQUIRE_FALSE(event_counter.result().get("cycles").has_value());
     REQUIRE(event_counter.result().get("instructions").has_value());
-    REQUIRE(event_counter.result().get("instructions").value() > 1000000.);
-    REQUIRE(event_counter.result().get("instructions").value() < 6000000.);
+    REQUIRE(event_counter.result().get("instructions").value() > 100000000.);
+    REQUIRE(event_counter.result().get("instructions").value() < 140000000.);
   }
 
   SECTION("re-open")
   {
-    auto counter_definition = perf::CounterDefinition{};
     auto event_counter = perf::EventCounter{ counter_definition };
     event_counter.add("instructions");
 
     event_counter.start();
-    execute_workload();
+    readonly_benchmark.run();
+    event_counter.stop();
+    const auto result1 = event_counter.result();
+
+    REQUIRE_FALSE(result1.get("cycles").has_value());
+    REQUIRE(result1.get("instructions").has_value());
+
+    event_counter.add("cycles");
+    event_counter.start();
+    readonly_benchmark.run();
+    event_counter.stop();
+    const auto result2 = event_counter.result();
+
+    REQUIRE(result2.get("cycles").has_value());
+    REQUIRE(result2.get("instructions").has_value());
+
+    const auto max_instructions = std::max(result1.get("instructions").value(), result2.get("instructions").value());
+    const auto min_instructions = std::min(result1.get("instructions").value(), result2.get("instructions").value());
+    REQUIRE((1. / max_instructions * min_instructions) <  1.1);
+    REQUIRE((1. / max_instructions * min_instructions) > .9);
+  }
+
+  SECTION("instructions only")
+  {
+    auto event_counter = perf::EventCounter{ counter_definition };
+    event_counter.add("instructions");
+
+    event_counter.start();
+    readonly_benchmark.run();
     event_counter.stop();
 
     REQUIRE_FALSE(event_counter.result().get("cycles").has_value());
     REQUIRE(event_counter.result().get("instructions").has_value());
-    REQUIRE(event_counter.result().get("instructions").value() > 1000000.);
-    REQUIRE(event_counter.result().get("instructions").value() < 6000000.);
+    REQUIRE(event_counter.result().get("instructions").value() > 100000000.);
+    REQUIRE(event_counter.result().get("instructions").value() < 140000000.);
+  }
 
-    event_counter.add("cycles");
+  SECTION("cache pattern")
+  {
+    auto event_counter = perf::EventCounter{ counter_definition };
+    event_counter.add({"seconds", "instructions", "cycles", "cache-misses"});
+
     event_counter.start();
-    execute_workload();
+    readonly_benchmark.run();
+    event_counter.stop();
+    const auto random_result = event_counter.result();
+
+    REQUIRE(random_result.get("seconds").has_value());
+    REQUIRE(random_result.get("instructions").has_value());
+    REQUIRE(random_result.get("cycles").has_value());
+    REQUIRE(random_result.get("cache-misses").has_value());
+
+    auto readonly_sequential_benchmark = perf::test::AccessBenchmark{/* is random */ false, 1024U /* MB */};
+    event_counter.start();
+    readonly_sequential_benchmark.run();
+    event_counter.stop();
+    const auto sequential_result = event_counter.result();
+
+    REQUIRE(sequential_result.get("seconds").has_value());
+    REQUIRE(sequential_result.get("instructions").has_value());
+    REQUIRE(sequential_result.get("cycles").has_value());
+    REQUIRE(sequential_result.get("cache-misses").has_value());
+
+    REQUIRE(random_result.get("cache-misses").value() > (sequential_result.get("cache-misses").value() * 2U));
+    REQUIRE(random_result.get("cycles").value() > (sequential_result.get("cycles").value() * 2U));
+    REQUIRE(random_result.get("seconds").value() > (sequential_result.get("seconds").value() * 2U));
+  }
+
+  SECTION("time")
+  {
+    auto event_counter = perf::EventCounter{ counter_definition };
+    event_counter.add(std::vector<std::string>{"seconds", "milliseconds"});
+
+    event_counter.start();
+    readonly_benchmark.run();
     event_counter.stop();
 
-    REQUIRE(event_counter.result().get("cycles").has_value());
-    REQUIRE(event_counter.result().get("instructions").has_value());
-    REQUIRE(event_counter.result().get("instructions").value() > 1000000.);
-    REQUIRE(event_counter.result().get("instructions").value() < 6000000.);
+    const auto result = event_counter.result();
+    REQUIRE(result.get("seconds").has_value());
+    REQUIRE(result.get("milliseconds").has_value());
+    REQUIRE_FALSE(result.get("nanoseconds").has_value());
+
+    REQUIRE( (result.get("seconds").value() * 1100.) > (result.get("milliseconds").value()));
   }
 }
