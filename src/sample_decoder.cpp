@@ -582,7 +582,7 @@ std::tuple<std::optional<perf::DataAccess::AccessType>,
            std::optional<perf::DataAccess::Snoop>,
            std::optional<std::pair<bool, bool>>,
            std::optional<bool>>
-perf::SampleDecoder::decode_data_access_information(std::uint64_t source)
+perf::SampleDecoder::decode_data_access_information(std::uint64_t source) noexcept
 {
   const auto perf_data_source = perf_mem_data_src{ source };
 
@@ -634,16 +634,14 @@ perf::SampleDecoder::decode_data_access_information(std::uint64_t source)
 
   /// Locked.
   const auto perf_lock = perf_mem_data_src{ source }.mem_lock;
-  auto is_locked = std::optional<bool>{ std::nullopt };
-  if (!(perf_lock & PERF_MEM_LOCK_NA)) {
-    is_locked = perf_lock & PERF_MEM_LOCK_LOCKED;
-  }
+  const auto is_locked = !(perf_lock & PERF_MEM_LOCK_NA) ? std::make_optional<bool>(perf_lock & PERF_MEM_LOCK_LOCKED)
+                                                         : std::optional<bool>{ std::nullopt };
 
   return std::make_tuple(access_type, data_access_source, snoop, tlb, is_locked);
 }
 
 perf::InstructionExecution::HardwareTransactionAbort
-perf::SampleDecoder::decode_hardware_transaction_abort(std::uint64_t abort)
+perf::SampleDecoder::decode_hardware_transaction_abort(const std::uint64_t abort) noexcept
 {
   /// Translate into the abort object.
   auto hardware_transaction_abort = InstructionExecution::HardwareTransactionAbort{};
@@ -790,7 +788,7 @@ perf::SampleDecoder::decode_branch_type(const perf::IBSOpDecoder& ibs_op_decoder
 }
 
 std::uint64_t
-perf::SampleDecoder::decode_tlb_page_size(const bool is_1g, const bool is_2m)
+perf::SampleDecoder::decode_tlb_page_size(const bool is_1g, const bool is_2m) noexcept
 {
   if (is_1g) {
     return 1024ULL * 1024ULL * 1024ULL;
@@ -804,7 +802,7 @@ perf::SampleDecoder::decode_tlb_page_size(const bool is_1g, const bool is_2m)
 }
 
 std::optional<std::uint64_t>
-perf::SampleDecoder::decode_tlb_page_size(std::uint8_t code)
+perf::SampleDecoder::decode_tlb_page_size(const std::uint8_t code) noexcept
 {
   if (code <= 2U) { /// 0-2 are valid codes.
     return SampleDecoder::decode_tlb_page_size(code == 2U, code == 1U);

@@ -243,7 +243,7 @@ private:
                                   std::optional<DataAccess::Snoop>,
                                   std::optional<std::pair<bool, bool>>,
                                   std::optional<bool>>
-  decode_data_access_information(std::uint64_t source);
+  decode_data_access_information(std::uint64_t source) noexcept;
 
   /**
    * Reads the access type and translates it into an AccessType.
@@ -298,7 +298,7 @@ private:
    * @return Hardware transaction abort.
    */
   [[nodiscard]] static InstructionExecution::HardwareTransactionAbort decode_hardware_transaction_abort(
-    std::uint64_t abort);
+    std::uint64_t abort) noexcept;
 
   /**
    * Enriches the given sample with information that is present in the IBS Fetch PMU raw data but cannot be accessed by
@@ -332,7 +332,7 @@ private:
    * @param is_2m True, if the page is 2MB.
    * @return The size in bytes.
    */
-  [[nodiscard]] static std::uint64_t decode_tlb_page_size(bool is_1g, bool is_2m);
+  [[nodiscard]] static std::uint64_t decode_tlb_page_size(bool is_1g, bool is_2m) noexcept;
 
   /**
    * Translates the TLB page size in a number of bytes, based on the options.
@@ -340,7 +340,7 @@ private:
    * @param code Code for the TLB page size.
    * @return The size in bytes.
    */
-  [[nodiscard]] static std::optional<std::uint64_t> decode_tlb_page_size(std::uint8_t code);
+  [[nodiscard]] static std::optional<std::uint64_t> decode_tlb_page_size(std::uint8_t code) noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a lost sample.
