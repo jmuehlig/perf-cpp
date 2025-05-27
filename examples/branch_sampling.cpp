@@ -35,7 +35,7 @@ main()
   sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid);
 
   /// Setup which data will be included into samples (timestamp and stack of branches).
-  sampler.values().time(true).branch_stack(
+  sampler.values().timestamp(true).branch_stack(
     { perf::BranchType::User, perf::BranchType::Conditional }) /// Only sample conditional branches in user-mode.
     ;
 

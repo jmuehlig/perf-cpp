@@ -65,7 +65,20 @@ public:
      * @param include True, if the timestamp should be included.
      * @return The Values instance.
      */
-    Values& time(const bool include) noexcept
+    [[deprecated("Will be removed in v0.12. Please use .timestamp().")]] Values& time(const bool include) noexcept
+    {
+      return timestamp(include);
+    }
+
+    /**
+     * Manage to include a timestamp into samples.
+     *
+     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#time
+     *
+     * @param include True, if the timestamp should be included.
+     * @return The Values instance.
+     */
+    Values& timestamp(const bool include) noexcept
     {
       set(PERF_SAMPLE_TIME, include);
       return *this;

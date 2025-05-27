@@ -84,7 +84,7 @@ for (const auto& record : samples)
 {
     const auto timestamp = record.metadata().timestmap().value();
     const auto cpu_id = record.metadata().cpu_id().value();
-    const auto instruction = record.instruction_execution().instruction_pointer().value();
+    const auto instruction = record.instruction_execution().logical_instruction_pointer().value();
     
     std::cout 
         << "Time = " << timestamp << " | CPU = " << cpu_id
