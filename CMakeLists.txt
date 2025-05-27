@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(libperf-cpp VERSION 0.10.0 LANGUAGES CXX)
+project(libperf-cpp VERSION 0.11.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wcast-align -Wunused -Wshadow -Wold-style-cast -Wpointer-arith -Wcast-qual -Wno-missing-braces")

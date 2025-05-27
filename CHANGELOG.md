@@ -1,5 +1,8 @@
 # *perf-cpp*: Changelog
 
+## v0.11.1
+- Unified the behaviour of the `time` and `timestamp` fields in the sampling API, removing discrepancies between the two.
+
 ## v0.11.0
 This version rolls out a redesigned sampling API. 
 Recorded data are now grouped into dedicated sub-structures (such as `Metadata`, `InstructionExecution`, and `DataAccess`) inside `perf::Sample` (see the [documentation](docs/sampling.md#what-can-be-recorded-and-how-to-access-the-data)).

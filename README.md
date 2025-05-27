@@ -122,7 +122,7 @@ git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
 
 # Optional: Switch to the latest stable version
-git checkout v0.11.0
+git checkout v0.11.1
 
 # Build the library (in build/)
 # Note: -DBUILD_EXAMPLES=1   can be used to compile examples
