@@ -27,7 +27,7 @@ main()
   sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid);
 
   /// Setup which data should be included (L1 hit and miss counter, timestamp).
-  sampler.values().counter({ "L1-dcache-loads", "L1-dcache-load-misses", "L1d-misses-per-load" }).time(true);
+  sampler.values().counter({ "L1-dcache-loads", "L1-dcache-load-misses", "L1d-misses-per-load" }).timestamp(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,

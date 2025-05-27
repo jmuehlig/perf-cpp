@@ -25,7 +25,7 @@ main()
   sampler.trigger("cycles", perf::Precision::RequestZeroSkid);
 
   /// Include Timestamp, period, instruction pointer, and CPU number into samples.
-  sampler.values().time(true).cpu_id(true).context_switch(true);
+  sampler.values().timestamp(true).cpu_id(true).context_switch(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,

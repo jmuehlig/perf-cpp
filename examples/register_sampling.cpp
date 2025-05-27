@@ -22,7 +22,7 @@ main()
   auto sampler = perf::Sampler{ counter_definitions, perf_config };
   sampler.trigger("cycles");
   sampler.values()
-    .time(true)
+    .timestamp(true)
     .user_registers(
       perf::Registers{ { perf::Registers::x86::IP, perf::Registers::x86::DI, perf::Registers::x86::R10 } })
     .kernel_registers(
