@@ -368,4 +368,60 @@ public:
   ~CannotAddRowToTable() override = default;
 };
 
+class CannotReadSymbolsForModule final : public std::runtime_error
+{
+public:
+  CannotReadSymbolsForModule(const std::string_view name, const std::string_view path)
+    : std::runtime_error{ std::string{ "Cannot read symbols for module " }
+                            .append(name)
+                            .append(" from path")
+                            .append(path)
+                            .append(".") }
+  {
+  }
+  ~CannotReadSymbolsForModule() override = default;
+};
+
+class CannotReadFstatForModule final : public std::runtime_error
+{
+public:
+  CannotReadFstatForModule(const std::string_view name, const std::string_view path)
+    : std::runtime_error{ std::string{ "Cannot read fstat for module " }
+                            .append(name)
+                            .append(" from path")
+                            .append(path)
+                            .append(".") }
+  {
+  }
+  ~CannotReadFstatForModule() override = default;
+};
+
+class CannotReadElfForModule final : public std::runtime_error
+{
+public:
+  CannotReadElfForModule(const std::string_view name, const std::string_view path)
+    : std::runtime_error{ std::string{ "Cannot read ELF data for module " }
+                            .append(name)
+                            .append(" from path")
+                            .append(path)
+                            .append(".") }
+  {
+  }
+  ~CannotReadElfForModule() override = default;
+};
+
+class CannotVerifyElfMagicForModule final : public std::runtime_error
+{
+public:
+  CannotVerifyElfMagicForModule(const std::string_view name, const std::string_view path)
+    : std::runtime_error{ std::string{ "Cannot verify ELF magic for module " }
+                            .append(name)
+                            .append(" from path")
+                            .append(path)
+                            .append(".") }
+  {
+  }
+  ~CannotVerifyElfMagicForModule() override = default;
+};
+
 }
