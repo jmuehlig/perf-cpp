@@ -65,19 +65,6 @@ public:
      * @param include True, if the timestamp should be included.
      * @return The Values instance.
      */
-    [[deprecated("Will be removed in v0.12. Please use .timestamp().")]] Values& time(const bool include) noexcept
-    {
-      return timestamp(include);
-    }
-
-    /**
-     * Manage to include a timestamp into samples.
-     *
-     * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#time
-     *
-     * @param include True, if the timestamp should be included.
-     * @return The Values instance.
-     */
     Values& timestamp(const bool include) noexcept
     {
       set(PERF_SAMPLE_TIME, include);
@@ -561,41 +548,97 @@ public:
       return *this;
     }
 
-    [[nodiscard]] bool is_set(const std::uint64_t perf_field) const noexcept
+    /**
+     * Tests, if the given perf subsystem field is set for sampling.
+     *
+     * @param perf_subsystem_field Field of the perf subsystem.
+     * @return True, if the flag is included into samples.
+     */
+    [[nodiscard]] bool is_set(const std::uint64_t perf_subsystem_field) const noexcept
     {
-      return static_cast<bool>(_mask & perf_field);
+      return static_cast<bool>(_perf_subsystem_fields_mask & perf_subsystem_field);
     }
 
+    /**
+     * @return True, if throttle samples are requested by the user.
+     */
     [[nodiscard]] bool is_include_throttle() const noexcept { return _is_include_throttle; }
 
+    /**
+     * @return The set of requested user registers to include into the samples.
+     */
     [[nodiscard]] const Registers& user_registers() const noexcept { return _user_registers; }
+
+    /**
+     * @return The set of requested kernel registers to include into the samples.
+     */
     [[nodiscard]] const Registers& kernel_registers() const noexcept { return _kernel_registers; }
+
+    /**
+     * @return The maximal size of the user stack to sample–requested by the user.
+     */
     [[nodiscard]] std::uint32_t max_user_stack() const noexcept { return _max_user_stack; }
+
+    /**
+     * @return List of hardware counter names to sample.
+     */
     [[nodiscard]] const std::vector<std::string>& counters() const noexcept { return _counter_names; }
+
+    /**
+     * @return
+     */
     [[nodiscard]] std::uint64_t branch_mask() const noexcept { return _branch_mask; }
+
+    /**
+     * @return The maximal size of the call stack to sample–requested by the user.
+     */
     [[nodiscard]] std::uint16_t max_call_stack() const noexcept { return _max_call_stack; }
 
-    [[nodiscard]] std::uint64_t get() const noexcept { return _mask; }
+    /**
+     * @return The mask of sample flags, i.e., values to include into the sample.
+     */
+    [[nodiscard]] std::uint64_t get() const noexcept { return _perf_subsystem_fields_mask; }
 
   private:
-    std::uint64_t _mask{ 0ULL };
+    /// Mask for fields to include into samples (as provided by the perf subsystem).
+    std::uint64_t _perf_subsystem_fields_mask{ 0ULL };
+
+    /// List of hardware counters and metrics to include into the sample.
     std::vector<std::string> _counter_names;
+
+    /// List of user registers to include into the sample.
     Registers _user_registers;
+
+    /// List of kernel registers to include into the sample.
     Registers _kernel_registers;
+
+    /// Size of the user stack to include into the sample.
     std::uint32_t _max_user_stack{ 0U };
+
+    /// Mask of branch flags to include into the sample.
     std::uint64_t _branch_mask{ 0ULL };
 
+    /// Size of the call stack to include into the sample.
     std::uint16_t _max_call_stack{ 0U };
 
+    /// Flag if context switches should be included.
     bool _is_include_context_switch{ false };
+
+    /// Flag if throttle events should be included.
     bool _is_include_throttle{ false };
 
-    void set(const std::uint64_t perf_field, const bool is_enabled) noexcept
+    /**
+     * En- or disables a specific perf subsystem field for sampling.
+     *
+     * @param perf_subsystem_field Field to include or exclude.
+     * @param is_enabled Flag, if the field should be included or excluded.
+     */
+    void set(const std::uint64_t perf_subsystem_field, const bool is_enabled) noexcept
     {
       if (is_enabled) {
-        _mask |= perf_field;
+        _perf_subsystem_fields_mask |= perf_subsystem_field;
       } else {
-        _mask &= ~perf_field;
+        _perf_subsystem_fields_mask &= ~perf_subsystem_field;
       }
     }
   };

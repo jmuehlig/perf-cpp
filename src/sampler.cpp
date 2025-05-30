@@ -7,6 +7,12 @@
 #include <stdexcept>
 #include <utility>
 
+perf::Sampler::SampleCounter::~SampleCounter()
+{
+  /// Close the group.
+  this->_group.close();
+}
+
 perf::Sampler&
 perf::Sampler::trigger(std::vector<std::vector<std::string>>&& list_of_trigger_names)
 {
@@ -365,12 +371,6 @@ perf::Sampler::result(const bool sort_by_time)
   return result;
 }
 
-perf::Sampler::SampleCounter::~SampleCounter()
-{
-  /// Close the group.
-  this->_group.close();
-}
-
 std::vector<perf::Sample>
 perf::MultiSamplerBase::result(std::vector<Sampler>& samplers, const bool is_sort_by_time)
 {
@@ -389,6 +389,7 @@ perf::MultiSamplerBase::result(std::vector<Sampler>& samplers, const bool is_sor
       const auto is_time_provided = std::all_of(
         samplers.begin(), samplers.end(), [](const auto& sampler) { return sampler._values.is_set(PERF_SAMPLE_TIME); });
 
+      /// Finally, sort if requested and the samples contain a timestamp.
       if (is_time_provided) {
         std::sort(result.begin(), result.end(), SampleTimestampComparator{});
       }
