@@ -1,6 +1,7 @@
 #include "access_benchmark.h"
 #include <iostream>
 #include <perfcpp/sampler.h>
+#include <perfcpp/symbol_resolver.h>
 
 int
 main()
@@ -52,8 +53,10 @@ main()
   /// Get all the recorded samples.
   const auto samples = sampler.result();
 
+  auto symbol_resolver = perf::SymbolResolver{};
+
   /// Print the first samples.
-  const auto count_show_samples = std::min<std::size_t>(samples.size(), 40U);
+  const auto count_show_samples = std::min<std::size_t>(samples.size(), 400U);
   std::cout << "\nRecorded " << samples.size() << " samples." << std::endl;
   std::cout << "Here are the first " << count_show_samples << " recorded samples:\n" << std::endl;
   for (auto index = 0U; index < count_show_samples; ++index) {
@@ -64,9 +67,16 @@ main()
     if (sample.metadata().timestamp().has_value() && sample.metadata().period().has_value() &&
         sample.instruction_execution().logical_instruction_pointer().has_value() &&
         sample.metadata().cpu_id().has_value()) {
+
+      auto symbol = std::string{"??"};
+      if (auto sym = symbol_resolver.resolve(sample.instruction_execution().logical_instruction_pointer().value()); sym.has_value()) {
+        symbol = sym->to_string();
+      }
+
       std::cout << "Time = " << sample.metadata().timestamp().value()
                 << " | Period = " << sample.metadata().period().value() << " | Instruction Pointer = 0x" << std::hex
                 << sample.instruction_execution().logical_instruction_pointer().value() << std::dec
+                << " | Symbol = " << symbol
                 << " | CPU ID = " << sample.metadata().cpu_id().value() << " | "
                 << (sample.instruction_execution().logical_instruction_pointer() ? "exact" : "not exact") << "\n";
     }
