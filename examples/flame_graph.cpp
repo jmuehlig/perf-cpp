@@ -1,6 +1,5 @@
 #include "access_benchmark.h"
 #include <iostream>
-#include <numeric>
 #include <perfcpp/analyzer/flame_graph_generator.h>
 #include <perfcpp/sampler.h>
 

@@ -1,5 +1,9 @@
 # *perf-cpp*: Changelog
 
+## v0.12 (in progress)
+- **Translating Instruction Pointers into Symbols**: The `perf::SymbolResolver` can now translate instruction pointers into symbols (i.e., function names) (see the [documentation](docs/sampling-symbols-and-flamegraphs.md#translating-instruction-pointers-into-symbols)).
+- **Generating FlameGraphs**: Using the `perf::analyzer::FlameGraphGenerator`, sampling results can now be turned into a format to visualize FlameGraphs understood by tools such as [Brendan Gregg's FlameGraph](https://github.com/brendangregg/FlameGraph), [Speedscope](https://www.speedscope.app/), or [flamegraph.com](https://flamegraph.com/) (see the [documentation](docs/sampling-symbols-and-flamegraphs.md#translating-sampler-results-into-flame-graphs)).
+
 ## v0.11.1
 - Unified the behaviour of the `time` and `timestamp` fields in the sampling API, removing discrepancies between the two.
 
