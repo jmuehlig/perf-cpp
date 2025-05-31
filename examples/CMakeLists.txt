@@ -62,6 +62,11 @@ target_link_libraries(memory-access-analyzer perf-cpp)
 add_executable(live-events EXCLUDE_FROM_ALL examples/live_events.cpp examples/access_benchmark.cpp)
 target_link_libraries(live-events perf-cpp)
 
+## Flame graph
+add_executable(flame-graph EXCLUDE_FROM_ALL examples/flame_graph.cpp examples/access_benchmark.cpp)
+target_compile_options(flame-graph PUBLIC "-g3")
+target_link_libraries(flame-graph perf-cpp)
+
 ## One target for all examples
 add_custom_target(examples)
 add_dependencies(examples
@@ -69,4 +74,4 @@ add_dependencies(examples
         instruction-pointer-sampling counter-sampling branch-sampling
         address-sampling register-sampling multi-thread-sampling multi-cpu-sampling
         multi-event-sampling context-switch-sampling
-        memory-access-analyzer live-events)
+        memory-access-analyzer live-events flame-graph)

@@ -44,6 +44,7 @@ set(PERF_CPP_SRC
     src/mmap_buffer.cpp
     src/symbol_resolver.cpp
     src/analyzer/memory_access.cpp
+    src/analyzer/flame_graph_generator.cpp
 )
 if (BUILD_LIB_SHARED)
     add_library(perf-cpp SHARED ${PERF_CPP_SRC})

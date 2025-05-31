@@ -1,0 +1,68 @@
+#include "access_benchmark.h"
+#include <iostream>
+#include <numeric>
+#include <perfcpp/analyzer/flame_graph_generator.h>
+#include <perfcpp/sampler.h>
+
+int
+main()
+{
+  std::cout << "libperf-cpp example: Record perf samples including time, "
+               "instruction pointer, and cpu id for single-threaded random "
+               "access to an in-memory array."
+            << std::endl;
+
+  /// Initialize counter definitions.
+  /// Note that the perf::CounterDefinition holds all counter names and must be
+  /// alive until the benchmark finishes.
+  const auto counter_definitions = perf::CounterDefinition{};
+
+  auto sampler = perf::Sampler{ counter_definitions };
+
+  /// Event that generates an overflow which is samples.
+  sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 4000U });
+
+  /// Include Timestamp, period, instruction pointer, and CPU number into samples.
+  sampler.values().timestamp(true).instruction_pointer(true).callchain(true);
+
+  /// Start sampling.
+  try {
+    sampler.start();
+  } catch (std::runtime_error& exception) {
+    std::cerr << exception.what() << std::endl;
+    return 1;
+  }
+
+  /// Create random access benchmark.
+  auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
+                                                   /* create benchmark of 512 MB */ 512U };
+
+  /// Execute the benchmark (accessing cache lines in a random order).
+  auto value = 0ULL;
+  for (auto index = 0U; index < benchmark.size(); ++index) {
+    value += benchmark[index].value;
+  }
+  asm volatile(""
+               : "+r,m"(value)
+               :
+               : "memory"); /// We do not want the compiler to optimize away
+                            /// this unused value.
+
+  /// Stop sampling.
+  sampler.stop();
+
+  /// Get all the recorded samples.
+  const auto samples = sampler.result(true);
+
+  /// Translate into frame graph entries.
+  auto flame_graph_generator = perf::analyzer::FlameGraphGenerator{};
+  flame_graph_generator.map(samples, "flamegraphs.txt");
+
+  std::cout << "Wrote samples into flamegraphs.txt" << std::endl;
+
+  /// Close the sampler.
+  /// Note that the sampler can only be closed after reading the samples.
+  sampler.close();
+
+  return 0;
+}

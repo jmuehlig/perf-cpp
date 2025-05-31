@@ -3,8 +3,8 @@
 #include <elf.h>
 #include <fcntl.h>
 #include <fstream>
-#include <perfcpp/symbol_resolver.h>
 #include <perfcpp/exception.h>
+#include <perfcpp/symbol_resolver.h>
 #include <regex>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -103,13 +103,14 @@ perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& mod
 {
   const auto file_descriptor = ::open(module.path().c_str(), O_RDONLY);
   if (file_descriptor < 0) {
-    throw CannotReadSymbolsForModule{module.name(), module.path()};
+    throw CannotReadSymbolsForModule{ module.name(), module.path() };
   }
 
-  struct stat stat_{};
+  struct stat stat_
+  {};
   if (::fstat(file_descriptor, &stat_) < 0) {
     ::close(file_descriptor);
-    throw CannotReadFstatForModule{module.name(), module.path()};
+    throw CannotReadFstatForModule{ module.name(), module.path() };
   }
 
   const auto stat_size = std::size_t(stat_.st_size);
@@ -118,7 +119,7 @@ perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& mod
   auto* elf_data = ::mmap(nullptr, stat_size, PROT_READ, MAP_PRIVATE, file_descriptor, 0);
   if (elf_data == MAP_FAILED) {
     ::close(file_descriptor);
-    throw CannotReadElfForModule{module.name(), module.path()};
+    throw CannotReadElfForModule{ module.name(), module.path() };
   }
 
   auto* ehdr = static_cast<Elf64_Ehdr*>(elf_data);
@@ -127,7 +128,7 @@ perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& mod
   if (std::memcmp(ehdr->e_ident, ELFMAG, SELFMAG) != 0) {
     ::munmap(elf_data, stat_size);
     ::close(file_descriptor);
-    throw CannotVerifyElfMagicForModule{module.name(), module.path()};
+    throw CannotVerifyElfMagicForModule{ module.name(), module.path() };
   }
 
   auto* shdr = reinterpret_cast<Elf64_Shdr*>(static_cast<char*>(elf_data) + ehdr->e_shoff);
@@ -169,7 +170,9 @@ perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& mod
   ::close(file_descriptor);
 
   /// Sort the symbols to enable an upper bound search later.
-  std::sort(symbols.begin(), symbols.end(), [](const Symbol& first, const Symbol& second) { return first.address() < second.address(); });
+  std::sort(symbols.begin(), symbols.end(), [](const Symbol& first, const Symbol& second) {
+    return first.address() < second.address();
+  });
 
   return symbols;
 }
