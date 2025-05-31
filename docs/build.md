@@ -24,8 +24,8 @@ However, the build directory can be any directory of your choice (including `.`)
 git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
 
-# Optional: switch to latest stable version
-git checkout v0.11.1 
+# Optional: switch to this development version
+git checkout v0.12-dev 
 ```
 
 #### Generate the Makefile and Build
@@ -84,7 +84,7 @@ include(ExternalProject)
 ExternalProject_Add(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v0.11.1"
+  GIT_TAG "v0.12-dev"
   PREFIX "lib/perf-cpp"
   INSTALL_COMMAND cmake -E echo ""
 )
@@ -102,7 +102,7 @@ include(FetchContent)
 FetchContent_Declare(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v0.11.1"
+  GIT_TAG "v0.12-dev"
 )
 FetchContent_MakeAvailable(perf-cpp-external)
 ```
