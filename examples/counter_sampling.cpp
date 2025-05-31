@@ -12,7 +12,7 @@ main()
   /// Initialize counter definitions.
   /// Note that the perf::CounterDefinition holds all counter names and must be
   /// alive until the benchmark finishes.
-  cnst auto counter_definitions = perf::CounterDefinition{};
+  auto counter_definitions = perf::CounterDefinition{};
 
   /// Add metric that calculates the L1d miss ratio.
   counter_definitions.add("L1d-misses-per-load", "'L1-dcache-load-misses'/'L1-dcache-loads'");
