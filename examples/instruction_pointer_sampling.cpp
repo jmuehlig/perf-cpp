@@ -14,7 +14,7 @@ main()
   /// Initialize counter definitions.
   /// Note that the perf::CounterDefinition holds all counter names and must be
   /// alive until the benchmark finishes.
-  auto counter_definitions = perf::CounterDefinition{};
+  const auto counter_definitions = perf::CounterDefinition{};
 
   auto sampler = perf::Sampler{ counter_definitions };
 

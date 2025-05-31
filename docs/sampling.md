@@ -48,7 +48,7 @@ During sampling, the hardware captures a specified set of data fields when a con
 In the following example, a timestamp and the current instruction pointer are recorded every 4000th cycle:
 ```cpp
 #include <perfcpp/sampler.h>
-auto counter_definitions = perf::CounterDefinition{};
+const const auto counter_definitions = perf::CounterDefinition{};
 
 auto sample_config = perf::SampleConfig{};
 sample_config.period(4000U);

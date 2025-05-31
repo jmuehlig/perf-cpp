@@ -8,8 +8,7 @@ int
 main()
 {
   std::cout << "libperf-cpp example: Record perf samples including time, "
-               "instruction pointer, and cpu id for single-threaded random "
-               "access to an in-memory array."
+               "instruction pointer, and callchain for flamegraph generation."
             << std::endl;
 
   /// Initialize counter definitions.
@@ -59,6 +58,7 @@ main()
   flame_graph_generator.map(samples, "flamegraphs.txt");
 
   std::cout << "Wrote samples into flamegraphs.txt" << std::endl;
+  std::cout << "You can upload the flamgraphs.txt here: https://flamegraph.com/" << std::endl;
 
   /// Close the sampler.
   /// Note that the sampler can only be closed after reading the samples.

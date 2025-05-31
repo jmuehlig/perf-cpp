@@ -21,7 +21,7 @@ Define the specific events you wish to record using the `perf::EventCounter` cla
 ```cpp
 #include <perfcpp/event_counter.h>
 
-auto counters = perf::CounterDefinition{}; 
+const auto counters = perf::CounterDefinition{}; 
 auto event_counter = perf::EventCounter{counters};
 
 try {
@@ -153,7 +153,7 @@ struct alignas(64U) cache_line { std::int64_t value; };
 int main()
 {
     /// Initialize performance counters.
-    auto counter_definitions = perf::CounterDefinition{};
+    const auto counter_definitions = perf::CounterDefinition{};
     auto event_counter = perf::EventCounter{counter_definitions};
     try {
         event_counter.add({"instructions", "cycles", "branches", "cache-misses", "cycles-per-instruction"});

@@ -44,7 +44,7 @@ If you **cannot modify the paranoid level**, you may still be able to record use
 Use the `perf::Config` class to **disable kernel/hypervisor-level** measurements, which allows profiling under restrictive `perf_event_paranoid` settings (`>= 2`).
 
 ```cpp
-auto counter_definitions = perf::CounterDefinition{};
+const auto counter_definitions = perf::CounterDefinition{};
 
 auto config = perf::Config{};
 config.include_kernel(false);       /// Disable kernel event sampling

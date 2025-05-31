@@ -20,7 +20,7 @@ The `perf::MultiThreadEventCounter` class allows you to copy the measurement on 
 ```cpp
 #include <perfcpp/event_counter.h>
 /// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
-auto counter_definitions = perf::CounterDefinition{};
+const auto counter_definitions = perf::CounterDefinition{};
 
 auto multithread_event_counter = perf::MultiThreadEventCounter{counter_definitions};
 try {
@@ -94,7 +94,7 @@ The `perf::Config` class allows you to inherit the measurement to all child thre
 ### Define inheritance and the counters to record
 ```cpp
 #include <perfcpp/event_counter.h>
-auto counter_definitions = perf::CounterDefinition{};
+const auto counter_definitions = perf::CounterDefinition{};
 
 auto config = perf::Config{};
 config.include_child_threads(true);
@@ -183,7 +183,7 @@ cpus_to_watch.add(1U);
 ```cpp
 #include <perfcpp/event_counter.h>
 /// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
-auto counter_definitions = perf::CounterDefinition{};
+const auto counter_definitions = perf::CounterDefinition{};
 
 auto multi_cpu_event_counter = perf::MultiCoreEventCounter{counter_definitions};
 try {

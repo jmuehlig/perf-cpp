@@ -88,7 +88,7 @@ This method allows for specific configurations.
 Here's how you can add events:
 
 ```cpp
-auto counter_definitions = perf::CounterDefinition{};
+const auto counter_definitions = perf::CounterDefinition{};
 counter_definitions.add(
     /* event name = */ "cycle_activity.stalls_l3_miss", 
     /* event code = */ 0x65306a3
@@ -104,7 +104,7 @@ This method facilitates the bulk addition of events.
 For example:
 
 ```cpp
-auto counter_definition = perf::CounterDefinition{"perf_list.csv"};
+const auto counter_definition = perf::CounterDefinition{"perf_list.csv"};
 ```
 
 The CSV file `events.csv` could look like the following:
@@ -119,7 +119,7 @@ cycle_activity.stalls_l3_miss,0x65306a3
 After defining the new events–whether directly in code or via configuration files–you can incorporate them into your performance measurements as follows:
 
 ```cpp
-auto counter_definitions = perf::CounterDefinition{"perf_list.csv"};
+const auto counter_definitions = perf::CounterDefinition{"perf_list.csv"};
 auto event_counter = perf::EventCounter{counter_definitions};
 event_counter.add({"cycles", "cycle_activity.stalls_l1d_miss"});
 ```

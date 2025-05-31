@@ -15,7 +15,7 @@ main()
   /// Initialize performance counters.
   /// Note that the perf::CounterDefinition holds all counter names and must be
   /// alive until the benchmark finishes.
-  auto counter_definitions = perf::CounterDefinition{};
+  const auto counter_definitions = perf::CounterDefinition{};
 
   /// In this example, we will perform the benchmark multi-threaded and record
   /// all child-threads. If `include_child_threads` is not set to true, we would

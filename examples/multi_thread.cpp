@@ -19,7 +19,7 @@ main()
   /// Initialize performance counters.
   /// Note that the perf::CounterDefinition holds all counter names and must be
   /// alive until the benchmark finishes.
-  auto counter_definitions = perf::CounterDefinition{};
+  const auto counter_definitions = perf::CounterDefinition{};
   auto multithread_event_counter = perf::MultiThreadEventCounter{ counter_definitions, count_threads };
 
   /// Add all the performance counters we want to record.

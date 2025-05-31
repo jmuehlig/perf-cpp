@@ -73,7 +73,7 @@ To collect memory access data, use *perf-cpp*'s [sampling mechanism](sampling.md
 #include <perfcpp/sampler.h>
 #include <perfcpp/analyzer/memory_access.h>
 
-auto counter_definitions = perf::CounterDefinition{};
+const auto counter_definitions = perf::CounterDefinition{};
 auto sampler = perf::Sampler{ counter_definitions };
 
 /// Set trigger that enables memory sampling.

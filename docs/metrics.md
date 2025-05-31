@@ -34,7 +34,7 @@ To employ these metrics, include their names in the `perf::EventCounter` instanc
 Metrics function similarly to hardware events in the  `perf::EventCounter`:
 ```cpp
 #include <perfcpp/event_counter.h>
-auto counter_definitions = perf::CounterDefinition{};
+const auto counter_definitions = perf::CounterDefinition{};
 auto event_counter = perf::EventCounter{counter_definitions};
 
 event_counter.add("cycles-per-instruction");
