@@ -5,6 +5,26 @@
 #include <stdexcept>
 #include <utility>
 
+perf::EventCounter
+perf::EventCounter::copy_from_template(const perf::EventCounter& other)
+{
+  auto copy = EventCounter{
+    other._counter_definitions, other._config, other._requested_event_set, other._requested_live_event_set
+  };
+
+  copy._hardware_event_groups.reserve(other._hardware_event_groups.size());
+  for (const auto& [group, is_open] : other._hardware_event_groups) {
+    copy._hardware_event_groups.emplace_back(Group::copy_from_template(group), is_open);
+  }
+
+  copy._hardware_live_counters.reserve(other._hardware_live_counters.size());
+  for (const auto& live_counter : other._hardware_live_counters) {
+    copy._hardware_live_counters.push_back(Counter::copy_from_template(live_counter));
+  }
+
+  return copy;
+}
+
 perf::EventCounter::~EventCounter()
 {
   this->close();
@@ -334,36 +354,12 @@ perf::EventCounter::open()
   if (const auto is_open = std::exchange(this->_is_opened, true); !is_open) {
     /// Open all groups. If one of them fails, group.open() will throw an exception.
     for (auto& [group, _] : this->_hardware_event_groups) {
-      group.open(this->_config,
-                 /* is read format */ true,
-                 /* has auxiliary counter */ false,
-                 /* buffer pages */ std::nullopt,
-                 /* sample type */ std::nullopt,
-                 /* branch type */ std::nullopt,
-                 /* user registers */ std::nullopt,
-                 /* kernel registers */ std::nullopt,
-                 /* max user stack size */ std::nullopt,
-                 /* max callstack size */ std::nullopt,
-                 /* include context switches */ false,
-                 /* include cgroup */ false);
+      group.open(this->_config);
     }
 
     /// Open all live counters. If one of them fails, counter.open() will throw an exception.
     for (auto& live_counter : this->_hardware_live_counters) {
-      live_counter.open(this->_config,
-                        /* is group leader */ true,
-                        /* is secret group leader */ false,
-                        /* group leader file descriptor */ -1,
-                        /* is read format */ false,
-                        /* buffer pages */ std::make_optional(1ULL),
-                        /* sample type */ std::make_optional(PERF_SAMPLE_READ),
-                        /* branch type */ std::nullopt,
-                        /* user registers */ std::nullopt,
-                        /* kernel registers */ std::nullopt,
-                        /* max user stack size */ std::nullopt,
-                        /* max callstack size */ std::nullopt,
-                        /* include context switches */ false,
-                        /* include cgroup */ false);
+      live_counter.open(this->_config, /* is live counter */ true);
     }
   }
 }
@@ -663,7 +659,7 @@ perf::MultiThreadEventCounter::MultiThreadEventCounter(const perf::CounterDefini
                                                        const perf::Config config)
 {
   this->_thread_local_counter.reserve(num_threads);
-  for (auto i = 0U; i < num_threads; ++i) {
+  for (auto thread_index = 0U; thread_index < num_threads; ++thread_index) {
     this->_thread_local_counter.emplace_back(counter_definition, config);
   }
 }
@@ -672,8 +668,8 @@ perf::MultiThreadEventCounter::MultiThreadEventCounter(perf::EventCounter&& even
                                                        const std::uint16_t num_threads)
 {
   this->_thread_local_counter.reserve(num_threads);
-  for (auto i = 0U; i < num_threads - 1U; ++i) {
-    this->_thread_local_counter.push_back(event_counter);
+  for (auto threa_index = 0U; threa_index < num_threads - 1U; ++threa_index) {
+    this->_thread_local_counter.push_back(EventCounter::copy_from_template(event_counter));
   }
   this->_thread_local_counter.emplace_back(std::move(event_counter));
 }
@@ -701,7 +697,7 @@ perf::MultiProcessEventCounter::MultiProcessEventCounter(perf::EventCounter&& ev
     /// Create one counter for every process: Copy the config for every process and bind the EventCounter to that
     /// process.
     config.process_id(process_ids[i]);
-    auto process_local_counter = perf::EventCounter{ event_counter };
+    auto process_local_counter = EventCounter::copy_from_template(event_counter);
     process_local_counter.config(config);
 
     this->_process_local_counter.emplace_back(std::move(process_local_counter));
@@ -738,7 +734,7 @@ perf::MultiCoreEventCounter::MultiCoreEventCounter(perf::EventCounter&& event_co
 
     /// Create one EventCounter for every CPU core from the list via config.
     config.cpu_id(cpu_ids[i]);
-    auto process_local_counter = perf::EventCounter{ event_counter };
+    auto process_local_counter = EventCounter::copy_from_template(event_counter);
     process_local_counter.config(config);
 
     this->_cpu_local_counter.push_back(std::move(process_local_counter));

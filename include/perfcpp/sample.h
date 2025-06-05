@@ -171,6 +171,7 @@ public:
    * @return Optional count loss.
    */
   [[nodiscard]] std::optional<std::uint64_t> count_loss() const noexcept { return _count_loss; }
+
 private:
   Metadata _metadata;
   InstructionExecution _instruction_execution;

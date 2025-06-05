@@ -11,24 +11,59 @@ namespace perf {
 template<std::size_t S>
 struct CounterValues
 {
-  /// Value and ID delivered by perf.
-  struct value
+public:
+  using time_t = std::uint64_t;
+  using size_t = std::uint64_t;
+
+  class ValueAndIdentifier
   {
-    std::uint64_t value;
-    std::uint64_t id;
+  public:
+    ValueAndIdentifier() noexcept = default;
+    ~ValueAndIdentifier() noexcept = default;
+
+    [[nodiscard]] std::uint64_t value() const noexcept { return _value; }
+    [[nodiscard]] std::uint64_t id() const noexcept { return _id; }
+
+  private:
+    std::uint64_t _value;
+    std::uint64_t _id;
   };
 
+  CounterValues() noexcept = default;
+  ~CounterValues() noexcept = default;
+
+  [[nodiscard]] time_t time_enabled() const noexcept { return _time_enabled; }
+  [[nodiscard]] time_t time_running() const noexcept { return _time_running; }
+
+  /**
+   * Returns the value of the counter with the specified id.
+   *
+   * @param id Id to get the value for.
+   * @return Value of the specified counter, if the id is present.
+   */
+  [[nodiscard]] std::optional<std::uint64_t> value(const std::uint64_t id) const noexcept
+  {
+    for (const auto& value : _values) {
+      if (value.id() == id) {
+        return value.value();
+      }
+    }
+
+    return std::nullopt;
+  }
+
+private:
   /// Number of counters in the following array.
-  std::uint64_t count_members;
+  [[maybe_unused]] size_t _count_members{ 0U };
 
   /// Time the event was enabled.
-  std::uint64_t time_enabled;
+  time_t _time_enabled{ 0U };
 
   /// Time the event was running.
-  std::uint64_t time_running;
+  time_t _time_running{ 0U };
 
   /// Values of the members.
-  std::array<value, S> values;
+  std::array<ValueAndIdentifier, S> _values;
 };
 
 /**
@@ -41,9 +76,16 @@ public:
   /// Number of maximal members per group.
   constexpr static inline auto MAX_MEMBERS = 8U;
 
+  /**
+   * Creates a copy of the given counter with the same counter configuration.
+   *
+   * @param other Group to copy from.
+   * @return Copied group.
+   */
+  [[nodiscard]] static Group copy_from_template(const Group& other);
+
   Group() = default;
   Group(Group&&) noexcept = default;
-  Group(const Group&) = default;
 
   ~Group() = default;
 
@@ -51,40 +93,40 @@ public:
    * Adds the given event to the group.
    *
    * @param counter Event to add.
-   * @return True, if the event could be added.
    */
-  bool add(CounterConfig counter);
+  void add(CounterConfig counter);
+
+  /**
+   * Opens all counters of the group for event counting, configured by the provided config.
+   *
+   * @param config Configuration.
+   */
+  void open(const Config& config);
 
   /**
    * Opens all counters of the group, configured by the provided config.
    *
    * @param config Configuration.
-   * @param is_read_format True, if counters should be read.
    * @param has_auxiliary_event True, if the group has an auxiliary event as a first event.
-   * @param buffer_pages Number of pages allocated for user-level buffer, std::nullopt if counter should not allocated
-   * any pages.
-   * @param sample_type Mask of sampled values, std::nullopt of sampling is disabled.
+   * @param buffer_pages Number of pages allocated for user-level buffer.
+   * @param sample_type Mask of sampled values.
    * @param branch_type Mask of sampled branch types, std::nullopt of sampling is disabled.
    * @param user_registers Mask of sampled user registers, std::nullopt of sampling is disabled.
    * @param kernel_registers Mask of sampled kernel registers, std::nullopt of sampling is disabled.
    * @param max_user_stack_size Maximal size of sampled uer stack, std::nullopt of sampling is disabled.
    * @param max_callstack_size Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
    * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
-   * @param is_include_cgroup True, if cgroups should be sampled, ignored if sampling is disabled.
-   * @return True, if the counters could be opened.
    */
-  bool open(const Config& config,
-            bool is_read_format,
+  void open(const Config& config,
             bool has_auxiliary_event,
-            std::optional<std::uint64_t> buffer_pages,
-            std::optional<std::uint64_t> sample_type,
+            std::uint64_t buffer_pages,
+            std::uint64_t sample_type,
             std::optional<std::uint64_t> branch_type,
             std::optional<std::uint64_t> user_registers,
             std::optional<std::uint64_t> kernel_registers,
             std::optional<std::uint32_t> max_user_stack_size,
             std::optional<std::uint16_t> max_callstack_size,
-            bool is_include_context_switch,
-            bool is_include_cgroup);
+            bool is_include_context_switch);
 
   /**
    * Closes all counters of the group.
@@ -93,10 +135,8 @@ public:
 
   /**
    * Starts monitoring the counters in the group.
-   *
-   * @return True, if the counters could be started.
    */
-  bool start();
+  void start();
 
   /**
    * Enables the group to start monitoring.
@@ -105,10 +145,8 @@ public:
 
   /**
    * Stops monitoring of all counters in the group.
-   *
-   * @return True, if the counters could be stopped.
    */
-  bool stop();
+  void stop();
 
   /**
    * Disables the group to stop monitoring.
@@ -121,7 +159,7 @@ public:
    * @param values Value to read the counters into.
    * @return True, if reading was successful.
    */
-  [[nodiscard]] bool read(CounterValues<MAX_MEMBERS>& values) const noexcept;
+  void read(CounterValues<MAX_MEMBERS>& values);
 
   /**
    * @return Number of counters in the group.
@@ -179,17 +217,5 @@ private:
 
   /// After stopping the group, we calculate the multiplexing correction once from start- and end-values.
   double _multiplexing_correction{ 1. };
-
-  /**
-   * Reads the value of a specific counter (identified by the given ID) from the provided value set.
-   *
-   * @param counter_values Set of counter values.
-   * @param id Identifier of the counter to read.
-   *
-   * @return The value of the specified counter or std::nullopt of the ID was not found.
-   */
-  [[nodiscard]] static std::optional<std::uint64_t> value_for_id(
-    const CounterValues<Group::MAX_MEMBERS>& counter_values,
-    std::uint64_t id) noexcept;
 };
 }

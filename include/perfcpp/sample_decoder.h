@@ -115,7 +115,10 @@ private:
     }
     [[nodiscard]] bool is_throttle() const noexcept { return _header->type == PERF_RECORD_THROTTLE; }
 
-    [[nodiscard]] bool is_exact_ip() const noexcept { return _header->misc & PERF_RECORD_MISC_EXACT_IP; }
+    [[nodiscard]] bool is_instruction_pointer_exact() const noexcept
+    {
+      return _header->misc & PERF_RECORD_MISC_EXACT_IP;
+    }
     [[nodiscard]] bool is_context_switch_out() const noexcept
     {
 #ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3

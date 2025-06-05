@@ -1,5 +1,6 @@
 #pragma once
 
+#include "unique_file_descriptor.h"
 #include <cstddef>
 #include <cstdint>
 #include <linux/perf_event.h>
@@ -11,7 +12,7 @@ class MmapBuffer
 {
 public:
   MmapBuffer() noexcept = default;
-  MmapBuffer(std::int32_t file_descriptor, bool is_write, std::uint64_t count_pages);
+  MmapBuffer(const UniqueFileDescriptor& file_descriptor, bool is_write, std::uint64_t count_pages);
   ~MmapBuffer();
 
   MmapBuffer(MmapBuffer&& other) noexcept

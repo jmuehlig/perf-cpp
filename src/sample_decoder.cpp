@@ -112,7 +112,7 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
 {
   auto sample = Sample{};
   sample.metadata().mode(entry.mode());
-  sample.instruction_execution().is_instruction_pointer_exact(entry.is_exact_ip());
+  sample.instruction_execution().is_instruction_pointer_exact(entry.is_instruction_pointer_exact());
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_IDENTIFIER)) {
     sample.metadata().sample_id(entry.read<std::uint64_t>());
@@ -368,18 +368,19 @@ perf::SampleDecoder::decode_hardware_counter_events(SampleIterator& entry,
                                                     std::size_t count_hardware_counter) const
 {
   /// Read the number of counters.
-  const auto count_counter_values = entry.read<decltype(CounterValues<Group::MAX_MEMBERS>::count_members)>();
+  const auto count_counter_values = entry.read<CounterValues<Group::MAX_MEMBERS>::size_t>();
 
-  /// Time enabled and running for correction.
-  const auto time_enabled = entry.read<decltype(CounterValues<Group::MAX_MEMBERS>::time_enabled)>();
-  const auto time_running = entry.read<decltype(CounterValues<Group::MAX_MEMBERS>::time_running)>();
-  const auto multiplexing_correction = time_running > 0ULL ? double(time_enabled) / double(time_running) : 1.;
-
-  /// Read the counters (if the number matches the number of specified counters).
-  auto* counter_values = entry.read<CounterValues<Group::MAX_MEMBERS>::value>(count_counter_values);
   if (count_counter_values != count_hardware_counter) {
     return std::nullopt;
   }
+
+  /// Time enabled and running for correction.
+  const auto time_enabled = entry.read<CounterValues<Group::MAX_MEMBERS>::time_t>();
+  const auto time_running = entry.read<CounterValues<Group::MAX_MEMBERS>::time_t>();
+  const auto multiplexing_correction = time_running > 0ULL ? double(time_enabled) / double(time_running) : 1.;
+
+  /// Read the counters (if the number matches the number of specified counters).
+  auto* counter_values = entry.read<CounterValues<Group::MAX_MEMBERS>::ValueAndIdentifier>(count_counter_values);
 
   /// Create a list of results with only hardware events – regardless of their visibility in the result. This list will
   /// be used to build a result containing visible events and metrics.
@@ -389,7 +390,7 @@ perf::SampleDecoder::decode_hardware_counter_events(SampleIterator& entry,
     if (requested_event.is_hardware_event()) {
       const auto counter_index = requested_event.scheduled_group()->position();
       /// Counter value (corrected).
-      const auto counter_result = double(counter_values[counter_index].value) * multiplexing_correction;
+      const auto counter_result = double(counter_values[counter_index].value()) * multiplexing_correction;
       hardware_counter_results.emplace_back(requested_event.event_name(), counter_result);
     }
   }

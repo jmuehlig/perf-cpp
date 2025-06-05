@@ -4,6 +4,7 @@
 #include "counter_result.h"
 #include "precision.h"
 #include "sample_buffer.h"
+#include "unique_file_descriptor.h"
 #include <array>
 #include <cstdint>
 #include <linux/perf_event.h>
@@ -57,10 +58,20 @@ private:
 class Counter
 {
 public:
+  /**
+   * Copies a counter only by the configuration, not any state like file descriptor, event attribute, etc.
+   *
+   * @param other Counter to copy from.
+   * @return A copy with the same configuration.
+   */
+  [[nodiscard]] static Counter copy_from_template(const Counter& other) noexcept { return Counter(other._config); }
+
   explicit Counter(CounterConfig config) noexcept
     : _config(config)
   {
   }
+
+  Counter(Counter&&) noexcept = default;
 
   ~Counter();
 
@@ -72,7 +83,83 @@ public:
   /**
    * @return The file descriptor of the counter; -1 if the counter was not opened (successfully).
    */
-  [[nodiscard]] std::int64_t file_descriptor() const noexcept { return _file_descriptor; }
+  [[nodiscard]] const UniqueFileDescriptor& file_descriptor() const noexcept { return _file_descriptor; }
+
+  /**
+   * Opens the counter using via the perf subsystem.
+   * The counter will be configured with the provided parameters.
+   * After successfully open the counter, the counter's file descriptor will be set.
+   * If the counter cannot be opened, it will throw an exception including the error number.
+   *
+   * @param configuration Configuration of the counter.
+   * @param is_live True, if the counter can be read live.
+   */
+  void open(const Config& configuration, bool is_live);
+
+  /**
+   * Opens the counter using via the perf subsystem.
+   * The counter will be configured with the provided parameters.
+   * After successfully open the counter, the counter's file descriptor will be set.
+   * If the counter cannot be opened, it will throw an exception including the error number.
+   *
+   * @param configuration Configuration of the counter.
+   * @param group_leader_file_descriptor File descriptor of the group leader.
+   */
+  void open(const Config& configuration, const UniqueFileDescriptor& group_leader_file_descriptor);
+
+  /**
+   * Opens the counter using via the perf subsystem.
+   * The counter will be configured with the provided parameters.
+   * After successfully open the counter, the counter's file descriptor will be set.
+   * If the counter cannot be opened, it will throw an exception including the error number.
+   *
+   * @param config Configuration.
+   * @param buffer_pages Number of pages allocated for user-level buffer.
+   * @param sample_type Mask of sampled values.
+   * @param branch_type Mask of sampled branch types, std::nullopt of sampling is disabled.
+   * @param user_registers Mask of sampled user registers, std::nullopt of sampling is disabled.
+   * @param kernel_registers Mask of sampled kernel registers, std::nullopt of sampling is disabled.
+   * @param max_user_stack_size Maximal size of sampled user stack, std::nullopt of sampling is disabled.
+   * @param max_callstack_size Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
+   * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
+   */
+  void open(const perf::Config& config,
+            std::uint64_t buffer_pages,
+            std::uint64_t sample_type,
+            std::optional<std::uint64_t> branch_type,
+            std::optional<std::uint64_t> user_registers,
+            std::optional<std::uint64_t> kernel_registers,
+            std::optional<std::uint32_t> max_user_stack_size,
+            std::optional<std::uint16_t> max_callstack_size,
+            bool is_include_context_switch);
+
+  /**
+   * Opens the counter using via the perf subsystem.
+   * The counter will be configured with the provided parameters.
+   * After successfully open the counter, the counter's file descriptor will be set.
+   * If the counter cannot be opened, it will throw an exception including the error number.
+   *
+   * @param config Configuration.
+   * @param buffer_pages Number of pages allocated for user-level buffer.
+   * @param sample_type Mask of sampled values.
+   * @param branch_type Mask of sampled branch types, std::nullopt of sampling is disabled.
+   * @param user_registers Mask of sampled user registers, std::nullopt of sampling is disabled.
+   * @param kernel_registers Mask of sampled kernel registers, std::nullopt of sampling is disabled.
+   * @param max_user_stack_size Maximal size of sampled user stack, std::nullopt of sampling is disabled.
+   * @param max_callstack_size Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
+   * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
+   * @param group_leader_file_descriptor File descriptor of the group leader.
+   */
+  void open(const perf::Config& config,
+            std::uint64_t buffer_pages,
+            std::uint64_t sample_type,
+            std::optional<std::uint64_t> branch_type,
+            std::optional<std::uint64_t> user_registers,
+            std::optional<std::uint64_t> kernel_registers,
+            std::optional<std::uint32_t> max_user_stack_size,
+            std::optional<std::uint16_t> max_callstack_size,
+            bool is_include_context_switch,
+            const UniqueFileDescriptor& group_leader_file_descriptor);
 
   /**
    * Opens the counter using the perf subsystem via the perf_event_open system call.
@@ -95,12 +182,11 @@ public:
    * @param max_user_stack_size Maximal size of sampled user stack, std::nullopt of sampling is disabled.
    * @param max_callstack_size Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
    * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
-   * @param is_include_cgroup True, if cgroups should be sampled, ignored if sampling is disabled.
    */
   void open(const perf::Config& config,
             bool is_group_leader,
             bool is_secret_leader,
-            std::int64_t group_leader_file_descriptor,
+            const UniqueFileDescriptor& group_leader_file_descriptor,
             bool is_read_format,
             std::optional<std::uint64_t> buffer_pages,
             std::optional<std::uint64_t> sample_type,
@@ -109,8 +195,7 @@ public:
             std::optional<std::uint64_t> kernel_registers,
             std::optional<std::uint32_t> max_user_stack_size,
             std::optional<std::uint16_t> max_callstack_size,
-            bool is_include_context_switch,
-            bool is_include_cgroup);
+            bool is_include_context_switch);
 
   /**
    * Closes the counter and resets the file descriptor.
@@ -141,12 +226,18 @@ public:
   [[nodiscard]] std::optional<SampleBuffer>& user_level_buffer() noexcept { return _sample_buffer; }
 
   /**
+   * Prints the configuration of the counter, borrowing the format of Linux perf.
+   *
+   * @param is_group_leader Flag, if the counter is the leader of the group.
+   * @param group_leader_file_descriptor File descriptor of the group leader.
+   * @param process_id Process ID the counter is tied to.
+   * @param cpu_id CPU ID the counter is tied to.
    * @return A string representing all configurations of this counter.
    */
-  [[nodiscard]] std::string to_string(std::optional<bool> is_group_leader = std::nullopt,
-                                      std::optional<std::int64_t> group_leader_file_descriptor = std::nullopt,
-                                      std::optional<pid_t> process_id = std::nullopt,
-                                      std::optional<std::int32_t> cpu_id = std::nullopt) const;
+  [[nodiscard]] std::string to_string(bool is_group_leader,
+                                      const UniqueFileDescriptor& group_leader_file_descriptor,
+                                      std::optional<pid_t> process_id,
+                                      std::optional<std::uint32_t> cpu_id) const;
 
   [[nodiscard]] bool operator==(const CounterConfig& config) const noexcept { return _config == config; }
 
@@ -161,33 +252,86 @@ private:
   std::uint64_t _id{ 0U };
 
   /// The file descriptor as returned by the perf subsystem when opening the counter.
-  std::int64_t _file_descriptor{ -1 };
+  UniqueFileDescriptor _file_descriptor;
 
   /// Buffer used to store samples. The SampleBuffer mmaps a ringbuffer and handles overflows via a separate thread.
   /// Additionally, the SampleBuffer can read live events.
   std::optional<SampleBuffer> _sample_buffer{ std::nullopt };
 
   /**
-   * Sets the frequency flag if the given value is a frequency and updates the appropriate value of the event attribute.
+   * Creates an perf event of the counter.
    *
-   * @param event_attribute Perf event attribute to update.
-   * @param period_or_frequency Frequency or period to set.
+   * @param is_disabled True, if the counter is disabled (mostly true for the events but the first).
+   * @param configuration Configuration to configure.
+   * @return The initialized perf_event_attr.
    */
-  static void set_period_or_frequency(perf_event_attr& event_attribute, const PeriodOrFrequency& period_or_frequency);
+  [[nodiscard]] perf_event_attr create_perf_event_attribute(bool is_disabled,
+                                                            const Config& configuration) const noexcept;
+
+  /**
+   * Creates an perf event of the counter for sampling.
+   *
+   * @param is_disabled  True, if the counter is disabled (mostly true for the events but the first).
+   * @param configuration Configuration to configure.
+   * @param sample_type The sample type to configure.
+   * @param branch_type The branch type to configure.
+   * @param user_registers The user registers to configure.
+   * @param kernel_registers The kernel registers to configure.
+   * @param max_user_stack_size The maximal user stack size to configure.
+   * @param max_callstack_size The maximal call stack size to configure.
+   * @param is_include_context_switch True, if context switches should be included into samples.
+   * @return The initialized perf_event_attr.
+   */
+  [[nodiscard]] perf_event_attr create_perf_event_attribute(
+    bool is_disabled,
+    const Config& configuration,
+    std::uint64_t sample_type,
+    std::optional<std::uint64_t> branch_type,
+    std::optional<std::uint64_t> user_registers,
+    std::optional<std::uint64_t> kernel_registers,
+    std::optional<std::uint32_t> max_user_stack_size,
+    [[maybe_unused]] std::optional<std::uint16_t> max_callstack_size,
+    [[maybe_unused]] bool is_include_context_switch) const noexcept;
+
+  /**
+   * Configures the perf event read format.
+   *
+   * @param is_include_time If true, time is included.
+   */
+  [[nodiscard]] static std::uint64_t create_perf_event_read_format(bool is_include_time) noexcept;
+
+  /**
+   * Reads the counter's id.
+   *
+   * @return Id of the counter's file descriptor.
+   */
+  [[nodiscard]] std::uint64_t read_id() const;
 
   /**
    * Do the "final" perf_event_open system call with the provided parameters.
    *
-   * @param process_id ID of the process to monitor.
-   * @param cpu_id ID of the CPU to monitor.
-   * @param is_group_leader True, if this counter is the group leader.
-   * @param group_leader_file_descriptor File descriptor of the group leader.
-   * @return The file descriptor, which is returned by the system call (-1 in case the call was not successful).
+   * @param configuration Configuration (including process id and CPU core id; the rest is ignored).
+   * @param group_leader_file_descriptor View to the group leader's file descriptor.
+   * @return File descriptor and error code, which is valid when the file descriptor has no value.
    */
-  std::int64_t perf_event_open(pid_t process_id,
-                               std::int32_t cpu_id,
-                               bool is_group_leader,
-                               std::int64_t group_leader_file_descriptor);
+  [[nodiscard]] std::pair<UniqueFileDescriptor, std::int32_t> try_open_via_perf_subsystem(
+    const perf::Config& configuration,
+    FileDescriptorView group_leader_file_descriptor = FileDescriptorView{});
+
+  /**
+   * Opens the perf subsystem event for sampling with the given configuration.
+   * When the perf subsystem reports an error that refers to the precision, the precision will be lowered until success
+   * or reaching zero but the opening call still fails.
+   *
+   * @param configuration Configuration for the perf subsystem, including CPU core id and process id.
+   * @param precise_ip Precision for sampling.
+   * @param group_leader_file_descriptor View to the group leader's file descriptor.
+   * @return File descriptor and error code, which is valid when the file descriptor has no value.
+   */
+  std::pair<UniqueFileDescriptor, std::int32_t> try_open_via_perf_subsystem(
+    const Config& configuration,
+    std::uint8_t precision,
+    FileDescriptorView group_leader_file_descriptor = FileDescriptorView{});
 
   /**
    * Decides whether adjusting (i.e., decrementing) the precise_ip configuration could help to open a hardware
@@ -195,13 +339,10 @@ private:
    * high and the error code indicates to do so (e.g., reporting an invalid argument).
    *
    * @param current_precise_ip The current value of the precise_ip configuration.
-   * @param sample_type Sample type; std::nullopt if opened for counting only.
    * @param error_code The error code when failing.
    * @return True, when the counter should try to open again.
    */
-  [[nodiscard]] static bool is_adjust_precise_ip(std::uint8_t current_precise_ip,
-                                                 std::optional<std::uint64_t> sample_type,
-                                                 std::int64_t error_code) noexcept;
+  [[nodiscard]] static bool is_precise_ip_adjustable(std::uint8_t current_precise_ip, std::int32_t error_code) noexcept;
 
   /**
    * Prints a name of a type (e.g., sample, branch, ...) to the stream if the type is set in the mask.
@@ -213,5 +354,26 @@ private:
   static void print_type_to_stream(std::stringstream& stream,
                                    std::uint64_t mask,
                                    std::initializer_list<std::pair<std::uint64_t, std::string_view>>&& types);
+
+  /**
+   * Visitor for translating the period or frequency into the perf event attribute.
+   */
+  class PeriodOrFrequencyVisitor
+  {
+  public:
+    explicit PeriodOrFrequencyVisitor(perf_event_attr& attribute) noexcept
+      : _attribute(attribute)
+    {
+    }
+    void operator()(const Period period) noexcept { _attribute.sample_period = period.get(); }
+    void operator()(const Frequency frequency) noexcept
+    {
+      _attribute.freq = true;
+      _attribute.sample_period = frequency.get();
+    }
+
+  private:
+    perf_event_attr& _attribute;
+  };
 };
 }

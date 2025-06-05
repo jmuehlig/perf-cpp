@@ -106,19 +106,11 @@ perf::Sampler::open()
     throw CannotStartEmptySamplerError{};
   }
 
-  /// Check if cgroup is included into sampling – only if supported by the underlying kernel.
-#ifndef PERFCPP_NO_RECORD_CGROUP /// Recording cgroup is supported since Linux 5.7
-  const auto is_include_cgroup = this->_values.is_set(PERF_SAMPLE_CGROUP);
-#else
-  const auto is_include_cgroup = false;
-#endif
-
   /// Open the trigger hardware events.
   for (auto& sample_counter : this->_sample_counter) {
     /// Open the group.
     sample_counter.group().open(
       this->_config,
-      this->_values.is_set(PERF_SAMPLE_READ),
       sample_counter.has_intel_auxiliary_counter(),
       this->_config.buffer_pages(),
       this->_values.get(),
@@ -129,8 +121,7 @@ perf::Sampler::open()
                                                   : std::nullopt,
       this->_values.is_set(PERF_SAMPLE_STACK_USER) ? std::make_optional(this->_values.max_user_stack()) : std::nullopt,
       this->_values.is_set(PERF_SAMPLE_CALLCHAIN) ? std::make_optional(this->_values.max_call_stack()) : std::nullopt,
-      this->_values._is_include_context_switch,
-      is_include_cgroup);
+      this->_values._is_include_context_switch);
   }
 }
 

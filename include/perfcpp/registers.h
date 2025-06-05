@@ -225,8 +225,7 @@ private:
 class RegisterValues
 {
 public:
-  RegisterValues(const ABI abi,
-                 std::unordered_map<std::uint8_t, std::int64_t>&& register_values) noexcept
+  RegisterValues(const ABI abi, std::unordered_map<std::uint8_t, std::int64_t>&& register_values) noexcept
     : _abi(abi)
     , _values(std::move(register_values))
   {

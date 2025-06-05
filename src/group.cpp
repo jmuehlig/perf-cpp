@@ -5,60 +5,88 @@
 #include <type_traits>
 #include <unistd.h>
 
-bool
+perf::Group
+perf::Group::copy_from_template(const perf::Group& other)
+{
+  auto copy = perf::Group{};
+  copy._members.reserve(other._members.size());
+  for (const auto& counter : other._members) {
+    copy._members.push_back(Counter::copy_from_template(counter));
+  }
+
+  return copy;
+}
+
+void
+perf::Group::open(const perf::Config& config)
+{
+  if (this->_members.empty()) {
+    return;
+  }
+
+  /// Open the group leader.
+  this->_members.front().open(config, /* is live counter */ false);
+
+  /// Open the other events for that counter.
+  for (auto counter_id = 1U; counter_id < this->_members.size(); ++counter_id) {
+    this->_members[counter_id].open(config, this->_members.front().file_descriptor());
+  }
+}
+
+void
 perf::Group::open(const perf::Config& config,
-                  const bool is_read_format,
                   const bool has_auxiliary_event,
-                  const std::optional<std::uint64_t> buffer_pages,
-                  const std::optional<std::uint64_t> sample_type,
+                  const std::uint64_t buffer_pages,
+                  const std::uint64_t sample_type,
                   const std::optional<std::uint64_t> branch_type,
                   const std::optional<std::uint64_t> user_registers,
                   const std::optional<std::uint64_t> kernel_registers,
                   const std::optional<std::uint32_t> max_user_stack_size,
                   const std::optional<std::uint16_t> max_callstack_size,
-                  const bool is_include_context_switch,
-                  const bool is_include_cgroup)
+                  const bool is_include_context_switch)
 {
-  /// File descriptor of the group leader (the first counter in the group).
-  auto group_leader_file_descriptor = -1LL;
-
-  for (auto counter_id = 0U; counter_id < this->_members.size(); ++counter_id) {
-    auto& counter = this->_members[counter_id];
-
-    /// The first event is the group leader.
-    const auto is_group_leader = counter_id == 0U;
-
-    /// The user-level buffer is allocated (via mmap) for the group leader, if the group has no auxiliary event
-    /// (before Intel Sapphire Rapids and all AMD) – or if the group has an auxiliary event but this is the first
-    /// "real" (non-auxiliary) event.
-    const auto is_counter_needs_buffer =
-      (is_group_leader && !has_auxiliary_event) || (has_auxiliary_event && counter_id == 1U);
-
-    /// Open the counter for statistical monitoring (only start and end values, not sampling).
-    /// If opening fails, the open() call will throw an exception.
-    counter.open(config,
-                 is_group_leader,
-                 has_auxiliary_event && counter_id == 1U,
-                 group_leader_file_descriptor,
-                 is_read_format,
-                 is_counter_needs_buffer ? buffer_pages : std::nullopt,
-                 sample_type,
-                 branch_type,
-                 user_registers,
-                 kernel_registers,
-                 max_user_stack_size,
-                 max_callstack_size,
-                 is_include_context_switch,
-                 is_include_cgroup);
-
-    /// Set the group leader file descriptor.
-    if (is_group_leader) {
-      group_leader_file_descriptor = counter.file_descriptor();
-    }
+  if (this->_members.empty()) {
+    return;
   }
 
-  /// If we cannot open any counter, we will throw an exception.
-  return true;
+  /// Open the group leader. If the group contains an auxiliary event, the group leader will not contain a buffer (i.e.,
+  /// no buffer pages).
+  const auto group_leader_buffer_pages = !has_auxiliary_event ? buffer_pages : 0ULL;
+  this->_members.front().open(config,
+                              group_leader_buffer_pages,
+                              sample_type,
+                              branch_type,
+                              user_registers,
+                              kernel_registers,
+                              max_user_stack_size,
+                              max_callstack_size,
+                              is_include_context_switch);
+
+  /// The group leader's file descriptor will be passed to further counters.
+  const auto& group_leader_file_descriptor = this->_members.front().file_descriptor();
+
+  /// Open all the other counters after the first (group leader).
+  for (auto counter_id = 1U; counter_id < this->_members.size(); ++counter_id) {
+    /// Some counters on some Intel architectures (from Sapphire Rapids) need an auxiliary event in front (e.g.,
+    /// mem-loads, mem-stores). However, this auxiliary event is of a special function; e.g., although it is the group
+    /// leader, it does not need a buffer – the buffer is then allocated for the first "real" counter after the
+    /// auxiliary counter.
+    const auto is_counter_after_auxiliary = has_auxiliary_event && counter_id == 1U;
+    const auto counter_buffer_pages = is_counter_after_auxiliary ? buffer_pages : 0ULL;
+
+    /// Open the counter as a secondary counter after the group leader. Only the counter after an auxiliary counter will
+    /// have a buffer.
+    this->_members[counter_id].open(config,
+                                    counter_buffer_pages,
+                                    sample_type,
+                                    branch_type,
+                                    user_registers,
+                                    kernel_registers,
+                                    max_user_stack_size,
+                                    max_callstack_size,
+                                    is_include_context_switch,
+                                    group_leader_file_descriptor);
+  }
 }
 
 void
@@ -69,7 +97,7 @@ perf::Group::close()
   }
 }
 
-bool
+void
 perf::Group::start()
 {
   if (this->_members.empty()) {
@@ -80,7 +108,7 @@ perf::Group::start()
   this->enable();
 
   /// Read the counter values at start time.
-  return this->read(this->_start_value);
+  this->read(this->_start_value);
 }
 
 void
@@ -92,25 +120,23 @@ perf::Group::enable() const
   }
 }
 
-bool
+void
 perf::Group::stop()
 {
   if (this->_members.empty()) {
-    return false;
+    return;
   }
 
   /// Read the counter values at stop time.
-  const auto is_read_successful = this->read(this->_end_value);
+  this->read(this->_end_value);
 
   /// Disable counter group.
   this->disable();
 
   /// Calculate multiplexing correction.
-  const auto time_enabled = double(this->_end_value.time_enabled - this->_start_value.time_enabled);
-  const auto time_running = double(this->_end_value.time_running - this->_start_value.time_running);
+  const auto time_enabled = double(this->_end_value.time_enabled() - this->_start_value.time_enabled());
+  const auto time_running = double(this->_end_value.time_running() - this->_start_value.time_running());
   this->_multiplexing_correction = time_running > .0 ? time_enabled / time_running : 1.;
-
-  return is_read_successful;
 }
 
 void
@@ -122,25 +148,23 @@ perf::Group::disable() const
   }
 }
 
-bool
-perf::Group::read(CounterValues<MAX_MEMBERS>& values) const noexcept
+void
+perf::Group::read(CounterValues<MAX_MEMBERS>& values)
 {
   if (!this->empty()) {
-    const auto leader_file_descriptor = static_cast<std::int32_t>(this->_members.front().file_descriptor());
+    const auto read_size = ::read(
+      this->_members.front().file_descriptor().value(), &values, sizeof(std::remove_reference<decltype(values)>::type));
 
-    const auto read_size =
-      ::read(leader_file_descriptor, &values, sizeof(std::remove_reference<decltype(values)>::type));
-    return read_size > 0L;
+    if (read_size < 0LL) {
+      throw CannotReadCounter{};
+    }
   }
-
-  return false;
 }
 
-bool
+void
 perf::Group::add(const perf::CounterConfig counter)
 {
   this->_members.emplace_back(counter);
-  return true;
 }
 
 double
@@ -150,33 +174,19 @@ perf::Group::get(const std::size_t index) const noexcept
     const auto& counter = this->_members[index];
 
     /// Read start and end values for the requested counter.
-    const auto counter_start_value = Group::value_for_id(this->_start_value, counter.id());
-    const auto counter_end_value = Group::value_for_id(this->_end_value, counter.id());
+    if (const auto start_value = this->_start_value.value(counter.id()); start_value.has_value()) {
+      /// Correct and return the result, if the counter was found.
+      if (const auto end_value = this->_end_value.value(counter.id()); end_value.has_value()) {
+        const auto result = double(end_value.value() - start_value.value());
 
-    /// Correct and return the result, if the counter was found.
-    if (counter_start_value.has_value() && counter_end_value.has_value()) {
-      const auto result = double(counter_end_value.value() - counter_start_value.value());
-
-      /// Fall back to zero, of the counter value is 0 (or lower).
-      return std::max(.0, result) * this->_multiplexing_correction;
+        /// Fall back to zero, of the counter value is 0 (or lower).
+        return std::max(.0, result) * this->_multiplexing_correction;
+      }
     }
   }
 
   /// Return if counter or values were not found.
   return .0;
-}
-
-std::optional<std::uint64_t>
-perf::Group::value_for_id(const CounterValues<Group::MAX_MEMBERS>& counter_values, const std::uint64_t id) noexcept
-{
-  /// Check the Id the counters to find the matching one.
-  for (auto member_index = 0ULL; member_index < counter_values.count_members; ++member_index) {
-    if (counter_values.values[member_index].id == id) {
-      return counter_values.values[member_index].value;
-    }
-  }
-
-  return std::nullopt;
 }
 
 std::vector<std::vector<std::byte>>
@@ -185,9 +195,9 @@ perf::Group::consume_samples()
   /// Check the first two members. Normally, the first member will control the sample buffer; however, on some Intel
   /// architectures, an auxiliary counter is needed before the "real" counter, i.e., the "real" counter is the second
   /// one.
-  for (auto member_index = 0UL; member_index < std::min(_members.size(), 2UL); ++member_index) {
-    if (_members[member_index].user_level_buffer().has_value()) {
-      return _members[member_index].user_level_buffer()->consume_sample_data();
+  for (auto member_index = 0UL; member_index < std::min(this->_members.size(), 2UL); ++member_index) {
+    if (this->_members[member_index].user_level_buffer().has_value()) {
+      return this->_members[member_index].user_level_buffer()->consume_sample_data();
     }
   }
 

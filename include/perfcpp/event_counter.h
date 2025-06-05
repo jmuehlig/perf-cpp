@@ -9,6 +9,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace perf {
@@ -31,13 +32,21 @@ public:
     Group     /// Events are placed on the same hardware counter.
   };
 
+  /**
+   * Creates a copy from another event counter. The copy will hold the same counter definition, config, event sets, and
+   * counter configurations. However, the copy will not be opened (this is also true for the counters).
+   *
+   * @param other EventCounter to copy from.
+   * @return Copied event counter.
+   */
+  [[nodiscard]] static EventCounter copy_from_template(const EventCounter& other);
+
   explicit EventCounter(const CounterDefinition& counter_definition, Config config = {})
     : _counter_definitions(counter_definition)
     , _config(config)
   {
   }
   EventCounter(EventCounter&&) noexcept = default;
-  EventCounter(const EventCounter&) = default;
 
   ~EventCounter();
 
@@ -223,6 +232,17 @@ private:
 
   /// Flag indicating if the EventCounter was opened. Opens automatically on startup at the latest.
   bool _is_opened{ false };
+
+  EventCounter(const CounterDefinition& counter_definition,
+               const Config config,
+               RequestedEventSet requested_event_set,
+               RequestedEventSet requested_live_event_set)
+    : _counter_definitions(counter_definition)
+    , _config(config)
+    , _requested_event_set(std::move(requested_event_set))
+    , _requested_live_event_set(std::move(requested_live_event_set))
+  {
+  }
 
   /**
    * @return The number of opened (or to open) counters (groups or group leaders and live counters).
@@ -454,10 +474,10 @@ class MultiThreadEventCounter final : public MultiEventCounterBase
 public:
   MultiThreadEventCounter(const CounterDefinition& counter_definition, std::uint16_t num_threads, Config config = {});
 
-  MultiThreadEventCounter(EventCounter&& perf, std::uint16_t num_threads);
+  MultiThreadEventCounter(EventCounter&& event_counter, std::uint16_t num_threads);
 
   MultiThreadEventCounter(const EventCounter& event_counter, const std::uint16_t num_threads)
-    : MultiThreadEventCounter(perf::EventCounter{ event_counter }, num_threads)
+    : MultiThreadEventCounter(EventCounter::copy_from_template(event_counter), num_threads)
   {
   }
 
@@ -510,10 +530,10 @@ class MultiProcessEventCounter final : public StartableMultiEventCounterBase
 public:
   MultiProcessEventCounter(const CounterDefinition& counter_list, std::vector<pid_t>&& process_ids, Config config = {});
 
-  MultiProcessEventCounter(EventCounter&& perf, std::vector<pid_t>&& process_ids);
+  MultiProcessEventCounter(EventCounter&& event_counter, std::vector<pid_t>&& process_ids);
 
   MultiProcessEventCounter(const EventCounter& event_counter, std::vector<pid_t>&& process_ids)
-    : MultiProcessEventCounter(perf::EventCounter{ event_counter }, std::move(process_ids))
+    : MultiProcessEventCounter(EventCounter::copy_from_template(event_counter), std::move(process_ids))
   {
   }
 
@@ -541,10 +561,10 @@ public:
                         std::vector<std::uint16_t>&& cpu_ids,
                         Config config = {});
 
-  MultiCoreEventCounter(EventCounter&& perf, std::vector<std::uint16_t>&& cpu_ids);
+  MultiCoreEventCounter(EventCounter&& event_counter, std::vector<std::uint16_t>&& cpu_ids);
 
   MultiCoreEventCounter(const EventCounter& event_counter, std::vector<std::uint16_t>&& cpu_ids)
-    : MultiCoreEventCounter(perf::EventCounter{ event_counter }, std::move(cpu_ids))
+    : MultiCoreEventCounter(EventCounter::copy_from_template(event_counter), std::move(cpu_ids))
   {
   }
 

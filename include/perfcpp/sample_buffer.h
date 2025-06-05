@@ -4,6 +4,7 @@
 #include "feature.h"
 #include "mmap_buffer.h"
 #include "sample.h"
+#include "unique_file_descriptor.h"
 #include <cstdint>
 #include <mutex>
 #include <thread>
@@ -18,24 +19,30 @@ namespace perf {
 class SampleBuffer
 {
 public:
-  SampleBuffer(std::int32_t file_descriptor, std::uint64_t count_buffer_pages);
+  /**
+   * Creates a sample buffer for a single page (only needed for live counters).
+   *
+   * @param file_descriptor File descriptor of the counter.
+   */
+  explicit SampleBuffer(const UniqueFileDescriptor& file_descriptor)
+    : _mmap_buffer(file_descriptor, false, 1ULL)
+  {
+  }
+
+  /**
+   * Creates a sample buffer for multiple pages, including overflow handling.
+   *
+   * @param file_descriptor File descriptor of the counter.
+   * @param count_buffer_pages Number of buffer pages.
+   */
+  SampleBuffer(const UniqueFileDescriptor& file_descriptor, std::uint64_t count_buffer_pages);
 
   SampleBuffer(SampleBuffer&& other) noexcept
     : _mmap_buffer(std::move(other._mmap_buffer))
     , _sample_buffers(std::move(other._sample_buffers))
     , _poll_and_handle_ringbuffer_overflow_thread(std::move(other._poll_and_handle_ringbuffer_overflow_thread))
-    , _cancel_thread_event_file_descriptor(std::exchange(other._cancel_thread_event_file_descriptor, std::nullopt))
+    , _cancel_thread_event_file_descriptor(std::move(other._cancel_thread_event_file_descriptor))
   {
-  }
-
-  /**
-   * The SampleBuffer should not be copied after initialization.
-   */
-  SampleBuffer(const SampleBuffer& other)
-  {
-    if (static_cast<bool>(other._mmap_buffer)) {
-      throw CannotCopySampleBuffer{};
-    }
   }
 
   ~SampleBuffer();
@@ -59,7 +66,8 @@ public:
    * @param perf_file_descriptor File descriptor of the mmap-ed buffer.
    * @param cancel_file_descriptor File descriptor for canceling the thread when closing the buffer.
    */
-  void poll_and_handle_ringbuffer_overflow(std::int32_t perf_file_descriptor, std::int32_t cancel_file_descriptor);
+  void poll_and_handle_ringbuffer_overflow(FileDescriptorView perf_file_descriptor,
+                                           FileDescriptorView cancel_file_descriptor);
 
 private:
   MmapBuffer _mmap_buffer;
@@ -76,7 +84,7 @@ private:
   std::optional<std::thread> _poll_and_handle_ringbuffer_overflow_thread;
 
   /// File descriptor used to cancel the ::select call the poll_and_handle thread is blocked by.
-  std::optional<std::int32_t> _cancel_thread_event_file_descriptor{ std::nullopt };
+  UniqueFileDescriptor _cancel_thread_event_file_descriptor;
 
   /**
    * Aligns the number of buffer pages to a number that is a power of two plus one for the header.

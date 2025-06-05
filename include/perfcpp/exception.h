@@ -41,6 +41,16 @@ private:
   [[nodiscard]] static std::string create_error_message_from_code(std::int64_t error_code);
 };
 
+class CannotReadCounter final : public std::runtime_error
+{
+public:
+  explicit CannotReadCounter()
+    : std::runtime_error(std::string{ "Cannot read from event counter." })
+  {
+  }
+  ~CannotReadCounter() override = default;
+};
+
 class MmapError final : public std::runtime_error
 {
 public:
@@ -318,26 +328,12 @@ public:
 class CannotCreateEventFileDescriptor final : public std::runtime_error
 {
 public:
-  explicit CannotCreateEventFileDescriptor(const std::int32_t original_file_descriptor)
-    : std::runtime_error(std::string{ "Cannot create eventfd for file descriptor " }
-                           .append(std::to_string(original_file_descriptor))
-                           .append("."))
+  CannotCreateEventFileDescriptor()
+    : std::runtime_error(std::string{ "Cannot create eventfd for file descriptor." })
   {
   }
 
   ~CannotCreateEventFileDescriptor() override = default;
-};
-
-class CannotCopySampleBuffer final : public std::runtime_error
-{
-public:
-  CannotCopySampleBuffer()
-    : std::runtime_error{
-      "Cannot copy sample buffer after initialization. Did you try to copy the Sampler including a SampleBuffer?"
-    }
-  {
-  }
-  ~CannotCopySampleBuffer() override = default;
 };
 
 class CannotAddHeaderToTable final : public std::runtime_error
@@ -372,11 +368,9 @@ class CannotReadSymbolsForModule final : public std::runtime_error
 {
 public:
   CannotReadSymbolsForModule(const std::string_view name, const std::string_view path)
-    : std::runtime_error{ std::string{ "Cannot read symbols for module " }
-                            .append(name)
-                            .append(" from path")
-                            .append(path)
-                            .append(".") }
+    : std::runtime_error{
+      std::string{ "Cannot read symbols for module " }.append(name).append(" from path").append(path).append(".")
+    }
   {
   }
   ~CannotReadSymbolsForModule() override = default;
@@ -386,11 +380,9 @@ class CannotReadFstatForModule final : public std::runtime_error
 {
 public:
   CannotReadFstatForModule(const std::string_view name, const std::string_view path)
-    : std::runtime_error{ std::string{ "Cannot read fstat for module " }
-                            .append(name)
-                            .append(" from path")
-                            .append(path)
-                            .append(".") }
+    : std::runtime_error{
+      std::string{ "Cannot read fstat for module " }.append(name).append(" from path").append(path).append(".")
+    }
   {
   }
   ~CannotReadFstatForModule() override = default;
@@ -400,11 +392,9 @@ class CannotReadElfForModule final : public std::runtime_error
 {
 public:
   CannotReadElfForModule(const std::string_view name, const std::string_view path)
-    : std::runtime_error{ std::string{ "Cannot read ELF data for module " }
-                            .append(name)
-                            .append(" from path")
-                            .append(path)
-                            .append(".") }
+    : std::runtime_error{
+      std::string{ "Cannot read ELF data for module " }.append(name).append(" from path").append(path).append(".")
+    }
   {
   }
   ~CannotReadElfForModule() override = default;
@@ -414,11 +404,9 @@ class CannotVerifyElfMagicForModule final : public std::runtime_error
 {
 public:
   CannotVerifyElfMagicForModule(const std::string_view name, const std::string_view path)
-    : std::runtime_error{ std::string{ "Cannot verify ELF magic for module " }
-                            .append(name)
-                            .append(" from path")
-                            .append(path)
-                            .append(".") }
+    : std::runtime_error{
+      std::string{ "Cannot verify ELF magic for module " }.append(name).append(" from path").append(path).append(".")
+    }
   {
   }
   ~CannotVerifyElfMagicForModule() override = default;

@@ -19,125 +19,189 @@ perf::Counter::~Counter()
 }
 
 void
-perf::Counter::open(const perf::Config& config,
-                    const bool is_group_leader,
-                    const bool is_secret_leader,
-                    const std::int64_t group_leader_file_descriptor,
-                    const bool is_read_format,
-                    std::optional<std::uint64_t> buffer_pages,
-                    const std::optional<std::uint64_t> sample_type,
-                    const std::optional<std::uint64_t> branch_type,
-                    const std::optional<std::uint64_t> user_registers,
-                    const std::optional<std::uint64_t> kernel_registers,
-                    const std::optional<std::uint32_t> max_user_stack_size,
-                    [[maybe_unused]] const std::optional<std::uint16_t> max_callstack_size,
-                    [[maybe_unused]] const bool is_include_context_switch,
-                    [[maybe_unused]] const bool is_include_cgroup)
+perf::Counter::open(const perf::Config& configuration, const bool is_live)
 {
-  std::memset(&this->_event_attribute, 0, sizeof(perf_event_attr));
-  this->_event_attribute.type = this->_config.type();
-  this->_event_attribute.size = sizeof(perf_event_attr);
-  this->_event_attribute.config = this->_config.event_id();
-  this->_event_attribute.config1 = this->_config.event_id_extension()[0U];
-  this->_event_attribute.config2 = this->_config.event_id_extension()[1U];
-  this->_event_attribute.disabled = is_group_leader;
-
-  this->_event_attribute.inherit = config.is_include_child_threads();
-  this->_event_attribute.exclude_kernel = !config.is_include_kernel();
-  this->_event_attribute.exclude_user = !config.is_include_user();
-  this->_event_attribute.exclude_hv = !config.is_include_hypervisor();
-  this->_event_attribute.exclude_idle = !config.is_include_idle();
-  this->_event_attribute.exclude_guest = !config.is_include_guest();
-
-  /// Set attributes needed for sampling, if sampling is requested.
-  if (sample_type.has_value()) {
-    if (is_group_leader || is_secret_leader) {
-      /// Set the sample type for the group leader (or the counter after the auxiliary-event).
-      this->_event_attribute.sample_type = sample_type.value();
-
-      /// Sampling is not only indicated by the sample_type since "live" events (read without stopping the counter) also
-      /// have a sample type but are not truly sampling. We assume that true sampling is only requested when
-      /// period/frequency and precision is set since both are needed for sampling but not for reading counter without
-      /// stopping.
-      if (this->_config.period_or_frequency().has_value() && this->_config.precise_ip().has_value()) {
-        this->_event_attribute.sample_id_all = 1U;
-
-        /// Set period of frequency, based on the PeriodOrFrequency variant.
-        Counter::set_period_or_frequency(this->_event_attribute, this->_config.period_or_frequency().value());
-
-        /// Set sampled fields.
-        this->_event_attribute.branch_sample_type = branch_type.value_or(0ULL);
-#ifndef PERFCPP_NO_SAMPLE_MAX_STACK /// Max sample stack is only supported since Linux 4.8
-        this->_event_attribute.sample_max_stack = max_callstack_size.value_or(0U);
-#endif
-        this->_event_attribute.sample_regs_user = user_registers.value_or(0ULL);
-        this->_event_attribute.sample_regs_intr = kernel_registers.value_or(0ULL);
-        this->_event_attribute.sample_stack_user = max_user_stack_size.value_or(0U);
-#ifndef PERFCPP_NO_RECORD_SWITCH /// Record switch is supported since Linux 4.3.
-        this->_event_attribute.context_switch = is_include_context_switch;
-#endif
-#ifndef PERFCPP_NO_RECORD_CGROUP /// Recording cgroup is supported since Linux 5.7.
-        this->_event_attribute.cgroup = is_include_cgroup;
-#endif
-      }
-    }
+  /// Configure the perf event attribute as a normal or live counter.
+  if (!is_live) {
+    this->_event_attribute = this->create_perf_event_attribute(true, configuration);
+  } else {
+    this->_event_attribute = this->create_perf_event_attribute(true,
+                                                               configuration,
+                                                               PERF_SAMPLE_READ,
+                                                               /* branch type */ std::nullopt,
+                                                               /* user registers */ std::nullopt,
+                                                               /* kernel registers */ std::nullopt,
+                                                               /* max user stack size */ std::nullopt,
+                                                               /* max callstack size */ std::nullopt,
+                                                               /* include context switch */ false);
   }
 
-  /// Set format of counter values (which is only needed when counters are read).
-  /// The group leader additionally records the running time.
-  if (is_read_format) {
-    this->_event_attribute.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
-    this->_event_attribute.read_format |=
-      static_cast<std::uint64_t>(is_group_leader) * (PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING);
-  }
+  /// Enable the read format including timing.
+  this->_event_attribute.read_format = Counter::create_perf_event_read_format(true);
 
-  /// Transform the CPU id to the format expected by the perf subsystem – which is -1 for any CPU (but perf-cpp uses an
-  /// optional unsigned integer for that case).
-  const std::int32_t cpu_id = config.cpu_id().has_value() ? std::int32_t{ config.cpu_id().value() } : -1;
-
-  /// Use the specified process id or 0 for indicating that the counter should monitor the calling thread/process.
-  const auto process_id = config.process_id().value_or(0);
-
-  /// Try to open the counter. For sampling, we might try to adjust the precise_ip configuration (see
-  /// Counter::is_adjust_precise_ip).
-  auto precise_ip = this->_config.precise_ip().value_or(0U);
-  do {
-    /// precise_ip is only needed for sampling, not counting events and live events; thus, only set when it has a value.
-    if (this->_config.precise_ip().has_value()) {
-      this->_event_attribute.precise_ip =
-        precise_ip & 0b11; /// Use only two bits as perf_event_attr.precise_ip has only two bits.
-    }
-
-    /// Try to open using the perf subsystem. This might fail. If precise_ip is the reason (derived by the error code),
-    /// we try to adjust the precision and try again (see Counter::is_adjust_precise_ip).
-    this->_file_descriptor = this->perf_event_open(process_id, cpu_id, is_group_leader, group_leader_file_descriptor);
-
-    /// Repeat until success (file_descriptor has a "valid" value or trying again is hopeless.
-  } while (this->_file_descriptor < 0LL && Counter::is_adjust_precise_ip(precise_ip--, sample_type, errno));
-
-  /// In case perf_event_open reported an error, notice it here, but process it later.
-  const auto error_code = errno;
+  /// Open the counter via the perf subsystem.
+  auto [file_descriptor, error_code] = this->try_open_via_perf_subsystem(configuration);
+  this->_file_descriptor = std::move(file_descriptor);
 
   /// Read and set the counter's id.
   /// This is done before (possibly) printing the counter to include the counter id into printing.
-  if (this->_file_descriptor > -1LL) {
-    ::ioctl(static_cast<std::int32_t>(this->_file_descriptor), PERF_EVENT_IOC_ID, &this->_id);
+  if (this->_file_descriptor.has_value()) {
+    this->_id = this->read_id();
   }
 
   /// Print debug output, if requested.
-  if (config.is_debug()) {
-    std::cout << this->to_string(is_group_leader, group_leader_file_descriptor, config.process_id(), cpu_id)
+  if (configuration.is_debug()) {
+    std::cout << this->to_string(true, this->_file_descriptor, configuration.process_id(), configuration.cpu_id())
               << std::flush;
   }
 
   /// Notify the caller that opening the counter via the perf subsystem failed.
-  if (this->_file_descriptor < 0LL) {
+  if (!this->_file_descriptor.has_value()) {
     throw CannotOpenCounterError{ error_code };
   }
 
-  /// Create a buffer for reading live events and/or storing samples.
-  if (buffer_pages.value_or(0ULL) > 0ULL) {
-    this->_sample_buffer.emplace(static_cast<std::int32_t>(this->_file_descriptor), buffer_pages.value());
+  /// Live counter use a single buffer page.
+  if (is_live) {
+    this->_sample_buffer.emplace(this->_file_descriptor);
+  }
+}
+
+void
+perf::Counter::open(const perf::Config& configuration, const perf::UniqueFileDescriptor& group_leader_file_descriptor)
+{
+  /// Configure the perf event attribute (including read format).
+  this->_event_attribute = this->create_perf_event_attribute(false, configuration);
+  this->_event_attribute.read_format = Counter::create_perf_event_read_format(false);
+
+  /// Open the counter via the perf subsystem.
+  auto [file_descriptor, error_code] =
+    this->try_open_via_perf_subsystem(configuration, FileDescriptorView{ group_leader_file_descriptor });
+  this->_file_descriptor = std::move(file_descriptor);
+
+  /// Read and set the counter's id.
+  /// This is done before (possibly) printing the counter to include the counter id into printing.
+  if (this->_file_descriptor.has_value()) {
+    this->_id = this->read_id();
+  }
+
+  /// Print debug output, if requested.
+  if (configuration.is_debug()) {
+    std::cout << this->to_string(false, this->_file_descriptor, configuration.process_id(), configuration.cpu_id())
+              << std::flush;
+  }
+
+  /// Notify the caller that opening the counter via the perf subsystem failed.
+  if (!this->_file_descriptor.has_value()) {
+    throw CannotOpenCounterError{ error_code };
+  }
+}
+
+void
+perf::Counter::open(const perf::Config& config,
+                    const std::uint64_t buffer_pages,
+                    const std::uint64_t sample_type,
+                    const std::optional<std::uint64_t> branch_type,
+                    const std::optional<std::uint64_t> user_registers,
+                    const std::optional<std::uint64_t> kernel_registers,
+                    const std::optional<std::uint32_t> max_user_stack_size,
+                    const std::optional<std::uint16_t> max_callstack_size,
+                    const bool is_include_context_switch)
+{
+  /// Configure the perf event attribute for sampling.
+  this->_event_attribute = this->create_perf_event_attribute(true,
+                                                             config,
+                                                             sample_type,
+                                                             branch_type,
+                                                             user_registers,
+                                                             kernel_registers,
+                                                             max_user_stack_size,
+                                                             max_callstack_size,
+                                                             is_include_context_switch);
+
+  if (static_cast<bool>(sample_type | std::uint64_t(PERF_SAMPLE_READ))) {
+    /// Enable the read format including timing.
+    this->_event_attribute.read_format = Counter::create_perf_event_read_format(true);
+  }
+
+  /// Open the counter via the perf subsystem.
+  auto [file_descriptor, error_code] =
+    this->try_open_via_perf_subsystem(config, this->_config.precise_ip().value_or(0U));
+  this->_file_descriptor = std::move(file_descriptor);
+
+  /// Read and set the counter's id.
+  /// This is done before (possibly) printing the counter to include the counter id into printing.
+  if (this->_file_descriptor.has_value()) {
+    this->_id = this->read_id();
+  }
+
+  /// Print debug output, if requested.
+  if (config.is_debug()) {
+    std::cout << this->to_string(true, this->_file_descriptor, config.process_id(), config.cpu_id()) << std::flush;
+  }
+
+  /// Notify the caller that opening the counter via the perf subsystem failed.
+  if (!this->_file_descriptor.has_value()) {
+    throw CannotOpenCounterError{ error_code };
+  }
+
+  /// Create sample buffer to store samples.
+  if (buffer_pages > 0ULL) {
+    this->_sample_buffer.emplace(this->_file_descriptor, buffer_pages);
+  }
+}
+
+void
+perf::Counter::open(const perf::Config& config,
+                    const std::uint64_t buffer_pages,
+                    const std::uint64_t sample_type,
+                    const std::optional<std::uint64_t> branch_type,
+                    const std::optional<std::uint64_t> user_registers,
+                    const std::optional<std::uint64_t> kernel_registers,
+                    const std::optional<std::uint32_t> max_user_stack_size,
+                    const std::optional<std::uint16_t> max_callstack_size,
+                    const bool is_include_context_switch,
+                    const perf::UniqueFileDescriptor& group_leader_file_descriptor)
+{
+  /// Configure the perf event attribute for sampling.
+  this->_event_attribute = this->create_perf_event_attribute(false,
+                                                             config,
+                                                             sample_type,
+                                                             branch_type,
+                                                             user_registers,
+                                                             kernel_registers,
+                                                             max_user_stack_size,
+                                                             max_callstack_size,
+                                                             is_include_context_switch);
+
+  if (static_cast<bool>(sample_type | std::uint64_t(PERF_SAMPLE_READ))) {
+    /// Enable the read format including timing.
+    this->_event_attribute.read_format = Counter::create_perf_event_read_format(false);
+  }
+
+  /// Open the counter via the perf subsystem.
+  auto [file_descriptor, error_code] = this->try_open_via_perf_subsystem(
+    config, this->_config.precise_ip().value_or(0U), FileDescriptorView{ group_leader_file_descriptor });
+  this->_file_descriptor = std::move(file_descriptor);
+
+  /// Read and set the counter's id.
+  /// This is done before (possibly) printing the counter to include the counter id into printing.
+  if (this->_file_descriptor.has_value()) {
+    this->_id = this->read_id();
+  }
+
+  /// Print debug output, if requested.
+  if (config.is_debug()) {
+    std::cout << this->to_string(false, this->_file_descriptor, config.process_id(), config.cpu_id()) << std::flush;
+  }
+
+  /// Notify the caller that opening the counter via the perf subsystem failed.
+  if (!this->_file_descriptor.has_value()) {
+    throw CannotOpenCounterError{ error_code };
+  }
+
+  /// Create sample buffer to store samples.
+  if (buffer_pages > 0ULL) {
+    this->_sample_buffer.emplace(this->_file_descriptor, buffer_pages);
   }
 }
 
@@ -148,69 +212,155 @@ perf::Counter::close()
   if (this->_sample_buffer.has_value()) {
     this->_sample_buffer.reset();
   }
-
-  /// Close the file descriptor.
-  if (const auto file_descriptor = std::exchange(this->_file_descriptor, -1LL); file_descriptor > -1LL) {
-    ::close(static_cast<std::int32_t>(file_descriptor));
-  }
 }
 
 void
 perf::Counter::enable() const
 {
-  ::ioctl(static_cast<std::int32_t>(this->_file_descriptor), PERF_EVENT_IOC_RESET, 0);
-  ::ioctl(static_cast<std::int32_t>(this->_file_descriptor), PERF_EVENT_IOC_ENABLE, 0);
+  ::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_RESET, 0);
+  ::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_ENABLE, 0);
 }
 
 void
 perf::Counter::disable() const
 {
-  ::ioctl(static_cast<std::int32_t>(this->_file_descriptor), PERF_EVENT_IOC_DISABLE, 0);
+  ::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_DISABLE, 0);
 }
 
-void
-perf::Counter::set_period_or_frequency(perf_event_attr& event_attribute,
-                                       const perf::PeriodOrFrequency& period_or_frequency)
+std::uint64_t
+perf::Counter::read_id() const
 {
-  std::visit(
-    [&event_attribute](const auto& value) {
-      using T = std::decay_t<decltype(value)>;
-      if constexpr (std::is_same_v<T, class Period>) {
-        event_attribute.sample_period = value.get();
-      } else if constexpr (std::is_same_v<T, class Frequency>) {
-        event_attribute.freq = true;
-        event_attribute.sample_period = value.get();
-      }
-    },
-    period_or_frequency);
+  std::uint64_t id;
+  ::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_ID, &id);
+  return id;
 }
 
-std::int64_t
-perf::Counter::perf_event_open(const pid_t process_id,
-                               const std::int32_t cpu_id,
-                               const bool is_group_leader,
-                               const std::int64_t group_leader_file_descriptor)
+perf_event_attr
+perf::Counter::create_perf_event_attribute(const bool is_disabled, const perf::Config& configuration) const noexcept
 {
+  auto attribute = perf_event_attr{};
+
+  /// Set all attributes to zero.
+  std::memset(&attribute, 0, sizeof(perf_event_attr));
+
+  /// Set all requested attributes.
+  attribute.type = this->_config.type();
+  attribute.size = sizeof(perf_event_attr);
+  attribute.config = this->_config.event_id();
+  attribute.config1 = this->_config.event_id_extension()[0U];
+  attribute.config2 = this->_config.event_id_extension()[1U];
+  attribute.disabled = is_disabled;
+
+  attribute.inherit = configuration.is_include_child_threads();
+  attribute.exclude_kernel = !configuration.is_include_kernel();
+  attribute.exclude_user = !configuration.is_include_user();
+  attribute.exclude_hv = !configuration.is_include_hypervisor();
+  attribute.exclude_idle = !configuration.is_include_idle();
+  attribute.exclude_guest = !configuration.is_include_guest();
+
+  return attribute;
+}
+
+perf_event_attr
+perf::Counter::create_perf_event_attribute(const bool is_disabled,
+                                           const perf::Config& configuration,
+                                           const std::uint64_t sample_type,
+                                           const std::optional<std::uint64_t> branch_type,
+                                           const std::optional<std::uint64_t> user_registers,
+                                           const std::optional<std::uint64_t> kernel_registers,
+                                           const std::optional<std::uint32_t> max_user_stack_size,
+                                           [[maybe_unused]] const std::optional<std::uint16_t> max_callstack_size,
+                                           [[maybe_unused]] const bool is_include_context_switch) const noexcept
+{
+  auto attribute = this->create_perf_event_attribute(is_disabled, configuration);
+
+  /// Set the sample type for the group leader (or the counter after the auxiliary-event).
+  attribute.sample_type = sample_type;
+
+  /// Sampling is not only indicated by the sample_type since "live" events (read without stopping the counter) also
+  /// have a sample type but are not truly sampling. We assume that true sampling is only requested when
+  /// period/frequency and precision is set since both are needed for sampling but not for reading counter without
+  /// stopping.
+  if (this->_config.period_or_frequency().has_value() && this->_config.precise_ip().has_value()) {
+    attribute.sample_id_all = 1U;
+
+    /// Set period of frequency, based on the PeriodOrFrequency variant.
+    std::visit(PeriodOrFrequencyVisitor{ attribute }, this->_config.period_or_frequency().value());
+
+    /// Set sampled fields.
+    attribute.branch_sample_type = branch_type.value_or(0ULL);
+#ifndef PERFCPP_NO_SAMPLE_MAX_STACK /// Max sample stack is only supported since Linux 4.8
+    attribute.sample_max_stack = max_callstack_size.value_or(0U);
+#endif
+    attribute.sample_regs_user = user_registers.value_or(0ULL);
+    attribute.sample_regs_intr = kernel_registers.value_or(0ULL);
+    attribute.sample_stack_user = max_user_stack_size.value_or(0U);
+#ifndef PERFCPP_NO_RECORD_SWITCH /// Record switch is supported since Linux 4.3.
+    attribute.context_switch = is_include_context_switch;
+#endif
+#ifndef PERFCPP_NO_RECORD_CGROUP /// Recording cgroup is supported since Linux 5.7.
+    attribute.cgroup = static_cast<bool>(sample_type & std::uint64_t(PERF_SAMPLE_CGROUP));
+#endif
+  }
+
+  return attribute;
+}
+
+std::uint64_t
+perf::Counter::create_perf_event_read_format(const bool is_include_time) noexcept
+{
+  return PERF_FORMAT_GROUP | PERF_FORMAT_ID |
+         (static_cast<std::uint64_t>(is_include_time) *
+          (PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING));
+}
+
+std::pair<perf::UniqueFileDescriptor, std::int32_t>
+perf::Counter::try_open_via_perf_subsystem(const perf::Config& configuration,
+                                           const perf::FileDescriptorView group_leader_file_descriptor)
+{
+  /// Transform the CPU id to the format expected by the perf subsystem – which is -1 for any CPU (but perf-cpp uses an
+  /// optional unsigned integer for that case).
+  const std::int32_t cpu_id = configuration.cpu_id().has_value() ? std::int32_t{ configuration.cpu_id().value() } : -1;
+
+  const auto process_id = configuration.process_id().value_or(0);
+
   /// Finally, pass the configuration to the perf subsystem to open the hardware performance counter.
-  return ::syscall(__NR_perf_event_open,
-                   &this->_event_attribute,
-                   process_id,
-                   cpu_id,
-                   is_group_leader ? -1LL : group_leader_file_descriptor,
-                   0);
+  const auto file_descriptor = ::syscall(
+    __NR_perf_event_open, &this->_event_attribute, process_id, cpu_id, group_leader_file_descriptor.value(), 0);
+
+  return std::make_pair(UniqueFileDescriptor{ file_descriptor }, errno);
+}
+
+std::pair<perf::UniqueFileDescriptor, std::int32_t>
+perf::Counter::try_open_via_perf_subsystem(const perf::Config& configuration,
+                                           const std::uint8_t precision,
+                                           const perf::FileDescriptorView group_leader_file_descriptor)
+{
+  auto file_descriptor = UniqueFileDescriptor{};
+  std::int32_t error_code;
+
+  /// Try to open the counter. For sampling, we might try to adjust the precise_ip configuration (see
+  /// Counter::is_precise_ip_adjustable).
+  auto precise_ip = precision;
+  do {
+    /// precise_ip is only needed for sampling, not counting events and live events; thus, only set when it has a value.
+    this->_event_attribute.precise_ip =
+      precise_ip & 0b11; /// Use only two bits as perf_event_attr.precise_ip has only two bits.
+
+    /// Try to open using the perf subsystem. This might fail. If precise_ip is the reason (derived by the error code),
+    /// we try to adjust the precision and try again (see Counter::is_precise_ip_adjustable).
+    std::tie(file_descriptor, error_code) =
+      this->try_open_via_perf_subsystem(configuration, group_leader_file_descriptor);
+
+    /// Repeat until success (file_descriptor has a "valid" value or trying again is hopeless.
+  } while (!file_descriptor.has_value() && Counter::is_precise_ip_adjustable(precise_ip--, error_code));
+
+  return std::make_pair(std::move(file_descriptor), error_code);
 }
 
 bool
-perf::Counter::is_adjust_precise_ip(const std::uint8_t current_precise_ip,
-                                    const std::optional<std::uint64_t> sample_type,
-                                    const std::int64_t error_code) noexcept
+perf::Counter::is_precise_ip_adjustable(const std::uint8_t current_precise_ip, const std::int32_t error_code) noexcept
 {
-  /// If the counter was only opened for counting or live counting (indicated by PERF_SAMPLE_READ), precise_ip has no
-  /// impact.
-  if (sample_type.value_or(PERF_SAMPLE_READ) == PERF_SAMPLE_READ) {
-    return false;
-  }
-
   /// When precise_ip is already the lowest possible configuration (0 or lower), lowering has no impact.
   if (current_precise_ip < 1U || current_precise_ip > 3U) {
     return false;
@@ -223,28 +373,26 @@ perf::Counter::is_adjust_precise_ip(const std::uint8_t current_precise_ip,
 }
 
 std::string
-perf::Counter::to_string(const std::optional<bool> is_group_leader,
-                         const std::optional<std::int64_t> group_leader_file_descriptor,
+perf::Counter::to_string(const bool is_group_leader,
+                         const UniqueFileDescriptor& group_leader_file_descriptor,
                          const std::optional<pid_t> process_id,
-                         const std::optional<std::int32_t> cpu_id) const
+                         const std::optional<std::uint32_t> cpu_id) const
 {
   auto stream = std::stringstream{};
 
   stream << "Counter:\n"
          << "    id: " << this->_id << "\n"
-         << "    file_descriptor: " << this->_file_descriptor << "\n";
+         << "    file_descriptor: " << this->_file_descriptor.value() << "\n";
 
   /// Role (leader or member).
-  if (is_group_leader.has_value()) {
-    if (is_group_leader.value()) {
-      stream << "    role: group leader\n";
-    } else {
-      stream << "    role: group member\n";
-      if (group_leader_file_descriptor.has_value()) {
-        stream << "    leader's file_descriptor: " << group_leader_file_descriptor.value() << "\n";
-      }
-      stream << "\n";
+  if (is_group_leader) {
+    stream << "    role: group leader\n";
+  } else {
+    stream << "    role: group member\n";
+    if (group_leader_file_descriptor.has_value()) {
+      stream << "    leader's file_descriptor: " << group_leader_file_descriptor.value() << "\n";
     }
+    stream << "\n";
   }
 
   /// Process
@@ -261,12 +409,7 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
 
   /// CPU
   if (cpu_id.has_value()) {
-    stream << "    cpu: ";
-    if (cpu_id.value() >= 0) {
-      stream << cpu_id.value() << "\n";
-    } else {
-      stream << cpu_id.value() << " (any)\n";
-    }
+    stream << "    cpu: " << cpu_id.value() << "\n";
   }
 
   /// Perf Event
@@ -347,7 +490,7 @@ perf::Counter::to_string(const std::optional<bool> is_group_leader,
   if (this->_event_attribute.read_format > 0U) {
     stream << "        read_format: ";
     Counter::print_type_to_stream(stream,
-                                  this->_event_attribute.sample_type,
+                                  this->_event_attribute.read_format,
                                   { { PERF_FORMAT_TOTAL_TIME_ENABLED, "TOTAL_TIME_ENABLED" },
                                     { PERF_FORMAT_TOTAL_TIME_RUNNING, "TOTAL_TIME_RUNNING" },
                                     { PERF_FORMAT_ID, "ID" },

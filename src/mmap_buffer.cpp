@@ -8,18 +8,16 @@
 #include <x86intrin.h>
 #endif
 
-perf::MmapBuffer::MmapBuffer(const std::int32_t file_descriptor, const bool is_write, std::uint64_t count_pages)
+perf::MmapBuffer::MmapBuffer(const UniqueFileDescriptor& file_descriptor,
+                             const bool is_write,
+                             std::uint64_t count_pages)
   : _count_pages(count_pages)
 {
   /// Open the mapped buffer; use write mode if needed because a separate thread will copy data into application-level
   /// buffers.
   const auto prod_flags = PROT_READ | (static_cast<decltype(PROT_WRITE)>(is_write) * PROT_WRITE);
-  this->_header = reinterpret_cast<perf_event_mmap_page*>(::mmap(nullptr,
-                                                                 count_pages * HardwareInfo::memory_page_size(),
-                                                                 prod_flags,
-                                                                 MAP_SHARED,
-                                                                 static_cast<std::int32_t>(file_descriptor),
-                                                                 0));
+  this->_header = reinterpret_cast<perf_event_mmap_page*>(::mmap(
+    nullptr, count_pages * HardwareInfo::memory_page_size(), prod_flags, MAP_SHARED, file_descriptor.value(), 0));
 
   /// Notify the caller if buffer-allocation via ::mmap() failed.
   if (this->_header == MAP_FAILED) {
