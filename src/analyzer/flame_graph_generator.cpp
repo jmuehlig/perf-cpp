@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iterator>
+#include <algorithm>
 #include <perfcpp/analyzer/flame_graph_generator.h>
 
 std::optional<std::reference_wrapper<const perf::SymbolResolver::Symbol>>
