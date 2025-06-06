@@ -32,16 +32,16 @@ public:
   /**
    * Creates a sample buffer for multiple pages, including overflow handling.
    *
-   * @param file_descriptor File descriptor of the counter.
+   * @param counter_file_descriptor File descriptor of the counter.
    * @param count_buffer_pages Number of buffer pages.
    */
-  SampleBuffer(const UniqueFileDescriptor& file_descriptor, std::uint64_t count_buffer_pages);
+  SampleBuffer(const UniqueFileDescriptor& counter_file_descriptor, std::uint64_t count_buffer_pages);
 
   SampleBuffer(SampleBuffer&& other) noexcept
     : _mmap_buffer(std::move(other._mmap_buffer))
-    , _sample_buffers(std::move(other._sample_buffers))
-    , _poll_and_handle_ringbuffer_overflow_thread(std::move(other._poll_and_handle_ringbuffer_overflow_thread))
-    , _cancel_thread_event_file_descriptor(std::move(other._cancel_thread_event_file_descriptor))
+    , _copied_sample_buffers(std::move(other._copied_sample_buffers))
+    , _handle_buffer_overflow_thread(std::move(other._handle_buffer_overflow_thread))
+    , _cancel_handle_overflow_thread_file_descriptor(std::move(other._cancel_handle_overflow_thread_file_descriptor))
   {
   }
 
@@ -63,11 +63,9 @@ public:
   /**
    * Polls on the given file descriptor in order to drain the mmap-ed buffer.
    *
-   * @param perf_file_descriptor File descriptor of the mmap-ed buffer.
-   * @param cancel_file_descriptor File descriptor for canceling the thread when closing the buffer.
+   * @param counter_file_descriptor File descriptor of the hardware counter.
    */
-  void poll_and_handle_ringbuffer_overflow(FileDescriptorView perf_file_descriptor,
-                                           FileDescriptorView cancel_file_descriptor);
+  void poll_and_handle_buffer_overflow(FileDescriptorView counter_file_descriptor);
 
 private:
   MmapBuffer _mmap_buffer;
@@ -76,15 +74,15 @@ private:
   /// handling buffer and the thread consuming the results.
   std::mutex _buffers_mutex;
 
-  /// Separate buffer to copy data to when the mmap-ed buffer is near to full.
-  std::vector<std::vector<std::byte>> _sample_buffers;
+  /// Separate buffers containing data copied from the mmap-ed buffer when it becomes full.
+  std::vector<std::vector<std::byte>> _copied_sample_buffers;
 
   /// Thread that is notified when the buffer is near to full and copies the data into a separated application-level
   /// buffer.
-  std::optional<std::thread> _poll_and_handle_ringbuffer_overflow_thread;
+  std::optional<std::thread> _handle_buffer_overflow_thread;
 
   /// File descriptor used to cancel the ::select call the poll_and_handle thread is blocked by.
-  UniqueFileDescriptor _cancel_thread_event_file_descriptor;
+  UniqueFileDescriptor _cancel_handle_overflow_thread_file_descriptor;
 
   /**
    * Aligns the number of buffer pages to a number that is a power of two plus one for the header.

@@ -78,7 +78,7 @@ perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
 }
 
 std::vector<std::byte>
-perf::MmapBuffer::copy_sample_data() noexcept
+perf::MmapBuffer::copy_data() noexcept
 {
   /// Fore more information about the perf ring buffer see:
   /// https://docs.kernel.org/userspace-api/perf_ring_buffer.html

@@ -40,7 +40,7 @@ public:
    *
    * @return Data copied from the buffer.
    */
-  [[nodiscard]] std::vector<std::byte> copy_sample_data() noexcept;
+  [[nodiscard]] std::vector<std::byte> copy_data() noexcept;
 
   [[nodiscard]] explicit operator bool() const noexcept { return _header != nullptr; }
 

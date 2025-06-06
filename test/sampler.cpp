@@ -1,6 +1,7 @@
 #include "access_benchmark.h"
 #include <catch2/catch_test_macros.hpp>
 #include <perfcpp/sampler.h>
+#include <iostream>
 
 TEST_CASE("config", "[Sampler]")
 {
@@ -81,9 +82,12 @@ TEST_CASE("sampling", "[Sampler]")
 
   SECTION("sample period")
   {
-    auto sampler1 = perf::Sampler{ counter_definition };
+    auto config = perf::SampleConfig{};
+    config.is_debug(true);
+    config.buffer_pages(64U);
+    auto sampler1 = perf::Sampler{ counter_definition, config };
 
-    REQUIRE_NOTHROW(sampler1.trigger("cycles", perf::Period{ 8000U }));
+    REQUIRE_NOTHROW(sampler1.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 200000 }));
     sampler1.values().instruction_pointer(true).timestamp(true);
 
     REQUIRE_NOTHROW(sampler1.open());
@@ -96,9 +100,9 @@ TEST_CASE("sampling", "[Sampler]")
     REQUIRE_FALSE(samples1.empty());
     REQUIRE_NOTHROW(sampler1.close());
 
-    auto sampler2 = perf::Sampler{ counter_definition };
+    auto sampler2 = perf::Sampler{ counter_definition, config };
 
-    REQUIRE_NOTHROW(sampler2.trigger("cycles", perf::Period{ 32000U }));
+    REQUIRE_NOTHROW(sampler2.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 800000 }));
     sampler2.values().instruction_pointer(true).timestamp(true);
 
     REQUIRE_NOTHROW(sampler2.open());
