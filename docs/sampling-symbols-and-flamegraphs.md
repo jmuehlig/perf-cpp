@@ -35,16 +35,17 @@ sampler.stop();
 auto symbol_resolver = perf::SymbolResolver{};
 
 for (const auto& sample : sampler.results()) {
-  if (sample.instruction_execution().logical_instruction_pointer().has_value()) {
+  const auto instruction_pointer =   sample.instruction_execution().logical_instruction_pointer();
+  if (instruction_pointer.has_value()) {
       
     /// Resolve the symbol.
-    const auto symbol = symbol_resolver.resolve(sample.instruction_execution().logical_instruction_pointer().value());
+    const auto symbol = symbol_resolver.resolve(instruction_pointer.value());
     
     /// Translate the symbol into a string.
     const auto symbol_name = symbol.has_value() ? symbol->to_string() : std::string{"??"};
 
     std::cout " Instruction Pointer = 0x" << std::hex
-              << sample.instruction_execution().logical_instruction_pointer().value() << std::dec
+              << instruction_pointer.value() << std::dec
               << " | Symbol = " << symbol_name
               << "\n";
   }
