@@ -82,10 +82,7 @@ TEST_CASE("sampling", "[Sampler]")
 
   SECTION("sample period")
   {
-    auto config = perf::SampleConfig{};
-    config.is_debug(true);
-    config.buffer_pages(64U);
-    auto sampler1 = perf::Sampler{ counter_definition, config };
+    auto sampler1 = perf::Sampler{ counter_definition };
 
     REQUIRE_NOTHROW(sampler1.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 200000 }));
     sampler1.values().instruction_pointer(true).timestamp(true);
@@ -100,7 +97,7 @@ TEST_CASE("sampling", "[Sampler]")
     REQUIRE_FALSE(samples1.empty());
     REQUIRE_NOTHROW(sampler1.close());
 
-    auto sampler2 = perf::Sampler{ counter_definition, config };
+    auto sampler2 = perf::Sampler{ counter_definition };
 
     REQUIRE_NOTHROW(sampler2.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 800000 }));
     sampler2.values().instruction_pointer(true).timestamp(true);
