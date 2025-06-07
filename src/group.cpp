@@ -188,18 +188,3 @@ perf::Group::get(const std::size_t index) const noexcept
   /// Return if counter or values were not found.
   return .0;
 }
-
-std::vector<std::vector<std::byte>>
-perf::Group::consume_samples()
-{
-  /// Check the first two members. Normally, the first member will control the sample buffer; however, on some Intel
-  /// architectures, an auxiliary counter is needed before the "real" counter, i.e., the "real" counter is the second
-  /// one.
-  for (auto member_index = 0UL; member_index < std::min(this->_members.size(), 2UL); ++member_index) {
-    if (this->_members[member_index].user_level_buffer().has_value()) {
-      return this->_members[member_index].user_level_buffer()->consume_sample_data();
-    }
-  }
-
-  return {};
-}

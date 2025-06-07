@@ -341,7 +341,7 @@ perf::Sampler::result(const bool sort_by_time)
   for (auto& sample_counter : this->_sample_counter) {
 
     /// Get all buffers: the current mmap-ed ringbuffer and the application-level buffers used to copy the ringbuffer to
-    auto buffer_ranges = sample_counter.group().consume_samples();
+    auto buffer_ranges = sample_counter.consume_samples();
 
     /// Decode all samples from the buffers.
     auto samples = sample_decoder.decode(std::move(buffer_ranges),
@@ -360,6 +360,21 @@ perf::Sampler::result(const bool sort_by_time)
   }
 
   return result;
+}
+
+std::vector<std::vector<std::byte>>
+perf::Sampler::SampleCounter::consume_samples()
+{
+  /// Normally, the first member will control the sample buffer; however, on some Intel
+  /// architectures, an auxiliary counter is needed before the "real" counter – the "real" counter controlling the
+  /// buffer is the second one.
+  const auto counter_index = 0U + static_cast<std::uint8_t>(this->_has_intel_auxiliary_counter);
+  auto& members = this->group().members();
+  if (members.size() >= (counter_index + 1U) && members[counter_index].user_level_buffer().has_value()) {
+    return members[counter_index].user_level_buffer()->consume_sample_data();
+  }
+
+  return {};
 }
 
 std::vector<perf::Sample>

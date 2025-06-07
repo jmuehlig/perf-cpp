@@ -504,7 +504,8 @@ perf::SampleDecoder::decode_data_access_source(std::uint64_t memory_level_code) 
 }
 
 std::optional<perf::DataAccess::Snoop>
-perf::SampleDecoder::decode_data_access_snoop(std::uint64_t snoop_code, std::uint64_t snoopx_code) noexcept
+perf::SampleDecoder::decode_data_access_snoop(const std::uint64_t snoop_code,
+                                              [[maybe_unused]] const std::uint64_t snoopx_code) noexcept
 {
   if (snoop_code > 0 && !(snoop_code & PERF_MEM_SNOOP_NA) && !(snoop_code & PERF_MEM_SNOOP_NONE)) {
     auto snoop = DataAccess::Snoop{};

@@ -912,6 +912,11 @@ private:
     [[nodiscard]] bool has_amd_fetch_pmu_counter() const noexcept { return _has_amd_ibs_fetch_pmu; }
     [[nodiscard]] bool has_amd_op_pmu_counter() const noexcept { return _has_amd_ibs_op_pmu; }
 
+    /**
+     * @return User-level buffer of the first counter (if not nullptr) or the second counter.
+     */
+    [[nodiscard]] std::vector<std::vector<std::byte>> consume_samples();
+
   private:
     /// Group including the leader that is responsible for sampling.
     Group _group;
