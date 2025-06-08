@@ -284,7 +284,7 @@ All fields are returned as `std::optional`, unless otherwise noted.
 | **Fetch**                        | Captures instruction fetch-specific information.                                                                                   | [See details below](#instruction-fetch)                                                             | `record.instruction_execution().fetch()`                        | `std::optional<perf::InstructionExecution::Fetch>`                    |
 | **Hardware Transaction Abort**   | Provides information on transactional memory aborts.                                                                               | [See details below](#hardware-transaction-abort)                                                    | `record.instruction_execution().hardware_transaction_abort()`   | `std::optional<perf::InstructionExecution::HardwareTransactionAbort>` |
 
-**Example:** [`examples/instruction_pointer_sampling.cpp`](../examples/instruction_pointer_sampling.cpp)
+**Example:** [`examples/instruction_pointer_sampling.cpp`](../examples/sampling/instruction_pointer.cpp)
 
 #### Instruction Latency
 Latency information captures timing characteristics for instruction execution or micro-operations (on AMD).  
@@ -369,7 +369,7 @@ Note that most fields are returned as `std::optional`.
 | **Access Width**            | The size (in bytes) of the accessed data ([**AMD's Op PMU**](#ibs-op-pmu) only).                  | `sampler.values().data_source(true).raw(true)`   | `record.data_source().access_width()`            | `std::optional<std::uint8_t>`             |
 | **Data Page Size**          | The page size of the instruction pointer (from Linux `5.11`).                                     | `sampler.values().data_page_size(true)`          | `record.data_source().page_size()`               | `std::optional<std::uint64_t>`            |
 
-**Example:** [`examples/address_sampling.cpp`](../examples/address_sampling.cpp)
+**Example:** [`examples/address_sampling.cpp`](../examples/sampling/memory_address.cpp)
 
 #### Data Source
 Provides detailed information about the memory or cache source involved in a data access.  
@@ -435,7 +435,7 @@ Refer to the documentation on [recording events](recording.md) and [metrics](met
 |--------------------|----------------------------------------------------------|----------------------------------------------------------------------------------------------------------|--------------------|---------------------------------------------------------------------------------|
 | **Counter Values** | Captures the values of the specified performance events. | `sampler.values().counter({"cycles", "instructions", "cycles-per-instruction"})` (example counter names) | `record.counter()` | `perf::CounterResult` (see the [recording events](recording.md) documentation). |
 
-**Example:** [`examples/counter_sampling.cpp`](../examples/counter_sampling.cpp)
+**Example:** [`examples/counter_sampling.cpp`](../examples/sampling/counter.cpp)
 
 ### Branch Stack
 Captures the branch stack recorded by the CPU at the time of sampling.  
@@ -476,7 +476,7 @@ Each entry in the branch stack contains the following information:
 | **Is Transaction Abort**     | Indicates that the branch aborted a hardware transaction.         | `record.branch_stack()->at(i).is_transaction_abort()`     | `bool`                         |
 | **Cycles**                   | The number of cycles for the branch (if supported).               | `record.branch_stack()->at(i).cycles()`                   | `std::optional<std::uint64_t>` |
 
-**Example:** [`examples/branch_sampling.cpp`](../examples/branch_sampling.cpp)
+**Example:** [`examples/branch_sampling.cpp`](../examples/sampling/branch.cpp)
 
 ### User Stack
 Captures a snapshot of the user-level stack at the time of sampling.  
@@ -505,7 +505,7 @@ The following fields are available:
 | **Register Value** | The value of a specific register.                | `record.user_registers()->get(perf::Registers::x86::AX)` (example register) | `std::optional<std::int64_t>` |
 | **ABI**            | The ABI used when capturing the register values. | `record.user_registers()->abi()`                                            | `perf::ABI`                   |
 
-**Example:** [`examples/register_sampling.cpp`](../examples/register_sampling.cpp)
+**Example:** [`examples/register_sampling.cpp`](../examples/sampling/register.cpp)
 
 ### Raw Data
 Captures the raw data output from the underlying Performance Monitoring Unit.  
@@ -535,7 +535,7 @@ If recorded, the following [metadata fields](#metadata) will also be included:
 - CPU ID
 - Sample ID
 
-**Example:** [`examples/context_switch_sampling.cpp`](../examples/context_switch_sampling.cpp)
+**Example:** [`examples/context_switch_sampling.cpp`](../examples/sampling/context_switch.cpp)
 
 ### CGroup
 Captures information about control groups (cgroups) associated with each sample.  
@@ -609,7 +609,7 @@ You can add load and store events like this:
 ```cpp
 sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid); /// Only load events
 ```
-&rarr; [See code example](../examples/address_sampling.cpp)
+&rarr; [See code example](../examples/sampling/memory_address.cpp)
 
 or
 ```cpp
@@ -625,7 +625,7 @@ sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
     { perf::Sampler::Trigger{ "mem-stores", perf::Precision::MustHaveZeroSkid } } /// Stores
   });
 ```
-&rarr; [See code example](../examples/multi_event_sampling.cpp)
+&rarr; [See code example](../examples/sampling/multi_event.cpp)
 
 #### Sapphire Rapids and Beyond
 To use memory latency sampling on Intel's Sapphire Rapids architecture, the perf subsystem **needs an auxiliary counter** to be added to the group, before the first "real" counter is added (see [this commit](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).

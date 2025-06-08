@@ -9,7 +9,7 @@ The Memory Access Analyzer helps identify which specific memory addresses experi
 * Mapping samples to individual data object instances
 * Generating detailed access statistics including cache hits/misses, TLB performance, and average latency metrics
 
-&rarr; [For a practical implementation, check out our random-access-benchmark example.](../examples/memory_access_analyzer.cpp)
+&rarr; [For a practical implementation, check out our random-access-benchmark example.](../examples/sampling/memory_access_analyzer.cpp)
 
 ---
 ## Table of Contents

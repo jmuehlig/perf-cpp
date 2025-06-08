@@ -60,7 +60,7 @@ Instruction Pointer = 0x57459be95faf | Symbol = [instruction-pointer-sampling] _
 Instruction Pointer = 0x57459be987d0 | Symbol = [instruction-pointer-sampling] _ZNKSt6vectorIN4perf7example15AccessBenchmark10cache_lineESaIS3_EEixEm+0
 ```
 
-**&rarr; [See a practical example](../examples/instruction_pointer_sampling.cpp)**
+**&rarr; [See a practical example](../examples/sampling/instruction_pointer.cpp)**
 
 ### Translating Sampler Results into Flame Graphs
 
@@ -108,4 +108,4 @@ After writing the output, we can use that file as an input to flamegraph generat
 - [flamegraph.com](https://flamegraph.com/): Upload the `flamegraphs.txt`
 - [Speedscope](https://www.speedscope.app/): Upload the `flamegraphs.txt`
 
-**&rarr; [See full example](../examples/flame_graph.cpp)**
+**&rarr; [See full example](../examples/sampling/flame_graph.cpp)**

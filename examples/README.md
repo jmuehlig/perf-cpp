@@ -22,19 +22,20 @@ The examples will be built to `build/examples/bin/`.
 
 ## List of Examples
 ### Counting Hardware Events
-* [single_thread.cpp](single_thread.cpp) provides an example to record and read performance counters for a specific code segment on a **single** thread.
-* [inherit_thread.cpp](inherit_thread.cpp) advances the example to record counter statistics not only from one but also for its **child-threads**.
-* [multi_thread.cpp](multi_thread.cpp) shows how to record performance counter statistics on **multiple** threads.
-* [multi_cpu.cpp](multi_cpu.cpp) shows how to pin performance counters to **specific CPU cores** instead of focussing on threads and processes.
+* [statistics/single_thread.cpp](statistics/single_thread.cpp) provides an example to record and read performance counters for a specific code segment on a **single** thread.
+* [statistics/inherit_thread.cpp](statistics/inherit_thread.cpp) advances the example to record counter statistics not only from one but also for its **child-threads**.
+* [statistics/multi_thread.cpp](statistics/multi_thread.cpp) shows how to record performance counter statistics on **multiple** threads.
+* [statistics/multi_cpu.cpp](statistics/multi_cpu.cpp) shows how to pin performance counters to **specific CPU cores** instead of focussing on threads and processes.
+* [statistics/live_events.cpp](statistics/live_events.cpp) shows how to access hardware counters with **low latency**.
 
 ### Sampling
-* [instruction_pointer_sampling.cpp](instruction_pointer_sampling.cpp) provides an example to sample instruction pointers on a single thread.
-* [flame_graph.cpp](flame_graph.cpp) provides an example to generate a format that can be used by flamegraph generators.
-* [address_sampling.cpp](address_sampling.cpp) provides an example to sample virtual memory addresses, their latency, and their origin.
-* [counter_sampling.cpp](counter_sampling.cpp) shows how to include values of further hardware performance counters into samples.
-* [branch_sampling.cpp](branch_sampling.cpp) exemplifies sampling for last branch records and their prediction success.
-* [register_sampling.cpp](register_sampling.cpp) provides an example on how to include values of specific registers into samples.
-* [context_switch_sampling.cpp](context_switch_sampling.cpp) provides an example that samples context switches on a single thread.
-* [multi_event_sampling.cpp](multi_event_sampling.cpp) exemplifies how to use multiple events as a trigger using Intel counters as an example.
-* [multi_thread_sampling.cpp)](multi_thread_sampling.cpp) explains how to sample data on multiple threads at the same time.
-* [multi_cpu_sampling.cpp](multi_cpu_sampling.cpp) provides an example that monitors multiple CPU cores and records samples.
+* [sampling/instruction_pointer.cpp](sampling/instruction_pointer.cpp) provides an example to sample instruction pointers on a single thread.
+* [sampling/flame_graph.cpp](sampling/flame_graph.cpp) provides an example to generate a format that can be used by flamegraph generators.
+* [sampling/memory_address.cpp](sampling/memory_address.cpp) provides an example to sample virtual memory addresses, their latency, and their origin.
+* [sampling/counter.cpp](sampling/counter.cpp) shows how to include values of further hardware performance counters into samples.
+* [sampling/branch.cpp](sampling/branch.cpp) exemplifies sampling for last branch records and their prediction success.
+* [sampling/register.cpp](sampling/register.cpp) provides an example on how to include values of specific registers into samples.
+* [sampling/context_switch.cpp](sampling/context_switch.cpp) provides an example that samples context switches on a single thread.
+* [sampling/multi_event.cpp](sampling/multi_event.cpp) exemplifies how to use multiple events as a trigger using Intel counters as an example.
+* [sampling/multi_thread.cpp)](sampling/multi_thread.cpp) explains how to sample data on multiple threads at the same time.
+* [sampling/multi_cpu.cpp](sampling/multi_cpu.cpp) provides an example that monitors multiple CPU cores and records samples.

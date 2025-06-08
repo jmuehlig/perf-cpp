@@ -21,7 +21,7 @@ This guide will cover how to set up and utilize these sampling capabilities effe
 ## Sample Separate Threads
 *perf-cpp* provides the `MultiThreadSampler` class to manage samplers for different threads, enabling precise performance measurements across thread-specific tasks.
 
-&rarr; [See code example `multi_thread_sampling.cpp`](../examples/multi_thread_sampling.cpp)
+&rarr; [See code example `multi_thread_sampling.cpp`](../examples/sampling/multi_thread.cpp)
 
 ### Setting Up Multi-threaded Sampler
 Initialize a sampler for each thread to monitor specific events:
@@ -106,7 +106,7 @@ sampler.close();
 ## Sample on Specific CPU Cores
 For applications sensitive to the specific cores they run on, *perf-cpp* offers `MultiCoreSampler`.
 
-&rarr; [See code example `multi_cpu_sampling.cpp`](../examples/multi_cpu_sampling.cpp)
+&rarr; [See code example `multi_cpu_sampling.cpp`](../examples/sampling/multi_cpu.cpp)
 
 **Note**: This records data of all processes running on the specified cores and needs specific permissions (i.e., a value of less than `1` in `/proc/sys/kernel/perf_event_paranoid`).
 

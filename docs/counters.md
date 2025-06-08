@@ -154,7 +154,7 @@ However, for manual setup, you can utilize libpfm4 to fetch and configure events
 To ensure compatibility and optimal performance measurement, you can probe the specific hardware capabilities at runtime using the `perf::HardwareInfo` class.
 This allows you to determine the appropriate counters and features based on the underlying CPU architecture.
 
-&rarr; [See code example](../examples/address_sampling.cpp)
+&rarr; [See code example](../examples/sampling/memory_address.cpp)
 
 ```cpp
 #include <perfcpp/hardware_info.h>

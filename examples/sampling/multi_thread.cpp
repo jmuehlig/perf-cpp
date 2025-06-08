@@ -1,8 +1,7 @@
-#include "access_benchmark.h"
-#include <atomic>
+#include "../access_benchmark.h"
+#include "perfcpp/sampler.h"
 #include <iostream>
 #include <numeric>
-#include <perfcpp/sampler.h>
 #include <thread>
 
 int
@@ -10,7 +9,7 @@ main()
 {
   std::cout << "libperf-cpp example: Record perf samples including time, "
                "instruction pointer, and cpu id for single-threaded random "
-               "access to an in-memory array on multiple CPU cores."
+               "access to an in-memory array on multiple threads."
             << std::endl;
 
   constexpr auto count_threads = 4U;
@@ -18,17 +17,13 @@ main()
   /// Initialize counter definitions.
   /// Note that the perf::CounterDefinition holds all counter names and must be
   /// alive until the benchmark finishes.
-  auto counter_definitions = perf::CounterDefinition{};
+  const auto counter_definitions = perf::CounterDefinition{};
 
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
-  perf_config.period(32000); /// Record every 32,000th event.
+  perf_config.period(5000000U); /// Record every 5,000,000th event.
 
-  /// Create a list of cpus to sample (all available, in this example).
-  auto cpus_to_watch = std::vector<std::uint16_t>(std::min(4U, std::thread::hardware_concurrency()));
-  std::iota(cpus_to_watch.begin(), cpus_to_watch.end(), 0U);
-
-  auto sampler = perf::MultiCoreSampler{ counter_definitions, std::move(cpus_to_watch), perf_config };
+  auto sampler = perf::MultiThreadSampler{ counter_definitions, count_threads, perf_config };
 
   /// Setup event that triggers writing samples.
   sampler.trigger("cycles");
@@ -46,44 +41,34 @@ main()
   auto thread_local_results =
     std::vector<std::uint64_t>(count_threads, 0U); /// Array to store the thread-local results.
 
-  /// Barrier for the threads to wait in order to start them all at the same time.
-  auto thread_barrier = std::atomic<bool>{ false };
-
-  for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
-    threads.emplace_back([thread_index, items_per_thread, &thread_local_results, &benchmark, &thread_barrier]() {
+  for (auto thread_index = std::uint16_t(0U); thread_index < count_threads; ++thread_index) {
+    threads.emplace_back([thread_index, items_per_thread, &thread_local_results, &benchmark, &sampler]() {
       auto local_value = 0ULL;
 
-      /// Wait for the barrier to become "true", i.e., all threads are spawned.
-      while (!thread_barrier)
-        ;
+      /// Start sampling per thread.
+      try {
+        sampler.start(thread_index);
+      } catch (std::runtime_error& exception) {
+        std::cerr << exception.what() << std::endl;
+        return;
+      }
 
       /// Process the data.
       for (auto index = 0U; index < items_per_thread; ++index) {
         local_value += benchmark[(thread_index * items_per_thread) + index].value;
       }
 
+      /// Stop sampling on this thread.
+      sampler.stop(thread_index);
+
       thread_local_results[thread_index] = local_value;
     });
   }
-
-  /// Start sampling for all specified CPUs at once.
-  try {
-    sampler.start();
-  } catch (std::runtime_error& exception) {
-    std::cerr << exception.what() << std::endl;
-    return 1;
-  }
-
-  /// Let threads start.
-  thread_barrier = true;
 
   /// Wait for all threads to finish.
   for (auto& thread : threads) {
     thread.join();
   }
-
-  /// Stop sampling on all CPUs.
-  sampler.stop();
 
   /// Add up the results so that the compiler does not get the idea of
   /// optimizing away the accesses.
@@ -102,9 +87,9 @@ main()
 
     /// Since we recorded the time, period, the instruction pointer, and the CPU
     /// id, we can only read these values.
-    if (sample.metadata().timestamp().has_value() && sample.metadata().cpu_id().has_value() &&
-        sample.metadata().thread_id().has_value() &&
-        sample.instruction_execution().logical_instruction_pointer().has_value()) {
+    if (sample.metadata().timestamp().has_value() && sample.metadata().thread_id().has_value() &&
+        sample.instruction_execution().logical_instruction_pointer().has_value() &&
+        sample.metadata().cpu_id().has_value()) {
       std::cout << "Time = " << sample.metadata().timestamp().value()
                 << " | CPU ID = " << sample.metadata().cpu_id().value()
                 << " | Thread ID = " << sample.metadata().thread_id().value() << " | Instruction Pointer = 0x"

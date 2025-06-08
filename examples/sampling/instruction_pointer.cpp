@@ -1,6 +1,7 @@
-#include "access_benchmark.h"
+#include "../access_benchmark.h"
+#include "perfcpp/sampler.h"
+#include "perfcpp/symbol_resolver.h"
 #include <iostream>
-#include <perfcpp/sampler.h>
 
 int
 main()
@@ -15,21 +16,17 @@ main()
   /// alive until the benchmark finishes.
   const auto counter_definitions = perf::CounterDefinition{};
 
-  /// Initialize sampler.
-  auto perf_config = perf::SampleConfig{};
-  perf_config.period(8000U); /// Record every 8,000th event.
-
-  auto sampler = perf::Sampler{ counter_definitions, perf_config };
+  auto sampler = perf::Sampler{ counter_definitions };
 
   /// Event that generates an overflow which is samples.
-  sampler.trigger("cycles", perf::Precision::RequestZeroSkid);
+  sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 4000U });
 
   /// Include Timestamp, period, instruction pointer, and CPU number into samples.
-  sampler.values().timestamp(true).cpu_id(true).context_switch(true);
+  sampler.values().timestamp(true).period(true).instruction_pointer(true).cpu_id(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
-                                                   /* create benchmark of 2 GB */ 2048U };
+                                                   /* create benchmark of 512 MB */ 512U };
 
   /// Start sampling.
   try {
@@ -54,31 +51,35 @@ main()
   sampler.stop();
 
   /// Get all the recorded samples.
-  auto samples = sampler.result();
-  const auto count_samples_before_filter = samples.size();
+  const auto samples = sampler.result();
 
-  /// Filter out samples without context switch.
-  samples.erase(std::remove_if(samples.begin(),
-                               samples.end(),
-                               [](const auto& sample) {
-                                 return !sample.metadata().cpu_id().has_value() ||
-                                        !sample.metadata().timestamp().has_value() ||
-                                        !sample.context_switch().has_value();
-                               }),
-                samples.end());
+  auto symbol_resolver = perf::SymbolResolver{};
 
   /// Print the first samples.
-  const auto count_show_samples = std::min<std::size_t>(samples.size(), 40U);
-  std::cout << "\nRecorded " << count_samples_before_filter << " samples. " << samples.size()
-            << " remaining after filter." << std::endl;
+  const auto count_show_samples = std::min<std::size_t>(samples.size(), 400U);
+  std::cout << "\nRecorded " << samples.size() << " samples." << std::endl;
   std::cout << "Here are the first " << count_show_samples << " recorded samples:\n" << std::endl;
   for (auto index = 0U; index < count_show_samples; ++index) {
     const auto& sample = samples[index];
 
-    std::cout << "Time = " << sample.metadata().timestamp().value()
-              << " | CPU ID = " << sample.metadata().cpu_id().value()
-              << " | is in = " << sample.context_switch().value().is_in()
-              << " | is preempt = " << sample.context_switch().value().is_preempt() << "\n";
+    /// Since we recorded the time, period, the instruction pointer, and the CPU
+    /// id, we can only read these values.
+    if (sample.metadata().timestamp().has_value() && sample.metadata().period().has_value() &&
+        sample.instruction_execution().logical_instruction_pointer().has_value() &&
+        sample.metadata().cpu_id().has_value()) {
+
+      auto symbol = std::string{"??"};
+      if (auto sym = symbol_resolver.resolve(sample.instruction_execution().logical_instruction_pointer().value()); sym.has_value()) {
+        symbol = sym->to_string();
+      }
+
+      std::cout << "Time = " << sample.metadata().timestamp().value()
+                << " | Period = " << sample.metadata().period().value() << " | Instruction Pointer = 0x" << std::hex
+                << sample.instruction_execution().logical_instruction_pointer().value() << std::dec
+                << " | Symbol = " << symbol
+                << " | CPU ID = " << sample.metadata().cpu_id().value() << " | "
+                << (sample.instruction_execution().logical_instruction_pointer() ? "exact" : "not exact") << "\n";
+    }
   }
   std::cout << std::flush;
 

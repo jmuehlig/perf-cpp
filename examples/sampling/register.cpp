@@ -1,6 +1,6 @@
-#include "access_benchmark.h"
+#include "../access_benchmark.h"
+#include "perfcpp/sampler.h"
 #include <iostream>
-#include <perfcpp/sampler.h>
 
 int
 main()

@@ -3,9 +3,11 @@ Performance metrics are critical for evaluating the efficiency of computer hardw
 One key metric frequently used is the "Cycles per Instruction" (CPI). 
 This metric helps to measure how many CPU cycles are consumed for executiong an instruction, providing insight into the system's efficiency—the fewer the cycles needed per instruction, the more efficient the system.
 
-**Hint**: When [defining custom metrics](#creating-custom-metrics), you should take a look at the list of metrics in the [Likwid project](https://github.com/RRZE-HPC/likwid/tree/master/groups).
+> [!TIP]
+> When [defining custom metrics](#creating-custom-metrics), you should take a look at the list of metrics in the [Likwid project](https://github.com/RRZE-HPC/likwid/tree/master/groups).
 
-**Note**: Metrics are not applicable for [live events](recording-live-events.md).
+> [!NOTE]
+> Metrics are not applicable for [live events](recording-live-events.md).
 
 ---
 ## Table of Contents
@@ -45,8 +47,9 @@ When metrics are used, *perf-cpp* internally counts the required hardware events
 Metrics are often based on the performance counters supported by the underlying hardware.
 You can create custom metrics to tailor them to your specific hardware. 
 
-**Hint**: The [Likwid project](https://github.com/RRZE-HPC/likwid/tree/master) gives an excellent and extensive list of available metrics for various CPUs. 
-Take a look at their [groups/ directory](https://github.com/RRZE-HPC/likwid/tree/master/groups).
+> [!TIP]
+> The [Likwid project](https://github.com/RRZE-HPC/likwid/tree/master) gives an excellent and extensive list of available metrics for various CPUs. 
+> Take a look at their [groups/ directory](https://github.com/RRZE-HPC/likwid/tree/master/groups).
 
 There are two ways to define custom metrics.
 
@@ -60,7 +63,8 @@ counter_definitions.add("stalls-by-mem-loads", "(CYCLE_ACTIVITY_STALLS_LDM_PENDI
 
 The formular can use the following operators: `+`, `-`, `*`, and `/`.
 
-**Note**: In formulas, event names that contain *operators* (like `-` in `L1D-misses`) need to be **escaped** using single quotes, e.g., `'L1D-misses'`.
+> [!NOTE]
+> In formulas, event names that contain *operators* (like `-` in `L1D-misses`) need to be **escaped** using single quotes, e.g., `'L1D-misses'`.
 
 The example depends on events from the Intel SkylakeX architecture and is taken from [Likwid](https://github.com/RRZE-HPC/likwid/blob/master/groups/skylakeX/CYCLE_STALLS.txt).
 

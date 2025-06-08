@@ -1,6 +1,6 @@
-#include "access_benchmark.h"
+#include "../access_benchmark.h"
+#include "perfcpp/event_counter.h"
 #include <iostream>
-#include <perfcpp/event_counter.h>
 
 int
 main()

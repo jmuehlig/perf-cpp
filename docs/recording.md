@@ -3,6 +3,8 @@
 This section details how to leverage the *perf-cpp* library to monitor and analyze hardware performance counters directly from your C++ applications. 
 The library also supports [multi-threading and multi-CPU counting](recording-parallel.md) and [live access to event counts without stopping the counters](recording-live-events.md).
 
+&rarr; [View a working code-example here.](../examples/statistics/single_thread.cpp)
+
 ---
 ## Table of Contents
 - [Setting Up Event Counters](#setting-up-event-counters)

@@ -1,6 +1,6 @@
-#include "access_benchmark.h"
+#include "../access_benchmark.h"
+#include "perfcpp/sampler.h"
 #include <iostream>
-#include <perfcpp/sampler.h>
 
 /**
  * A function using multiple branches hard to optimize for the compiler for
