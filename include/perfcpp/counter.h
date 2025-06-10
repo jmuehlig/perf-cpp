@@ -2,12 +2,13 @@
 
 #include "config.h"
 #include "counter_result.h"
+#include "mmap_buffer.h"
 #include "precision.h"
-#include "sample_buffer.h"
 #include "unique_file_descriptor.h"
 #include <array>
 #include <cstdint>
 #include <linux/perf_event.h>
+#include <memory>
 #include <optional>
 #include <string>
 #include <thread>
@@ -218,12 +219,15 @@ public:
    *
    * @return The current value of the counter.
    */
-  [[nodiscard]] std::uint64_t read_live() const noexcept { return _sample_buffer->read_live(); }
+  [[nodiscard]] std::uint64_t read_live() const noexcept
+  {
+    return _mmap_buffer != nullptr ? _mmap_buffer->read_performance_monitoring_counter() : 0ULL;
+  }
 
   /**
    * @return The sample buffer that manages the mmap-ed buffer for storing samples and/or live events.
    */
-  [[nodiscard]] std::optional<SampleBuffer>& user_level_buffer() noexcept { return _sample_buffer; }
+  [[nodiscard]] const std::unique_ptr<MmapBuffer>& mmap_buffer() noexcept { return _mmap_buffer; }
 
   /**
    * Prints the configuration of the counter, borrowing the format of Linux perf.
@@ -254,9 +258,9 @@ private:
   /// The file descriptor as returned by the perf subsystem when opening the counter.
   UniqueFileDescriptor _file_descriptor;
 
-  /// Buffer used to store samples. The SampleBuffer mmaps a ringbuffer and handles overflows via a separate thread.
-  /// Additionally, the SampleBuffer can read live events.
-  std::optional<SampleBuffer> _sample_buffer{ std::nullopt };
+  /// Buffer used to store samples. The buffer mmaps a ringbuffer and handles overflows via a separate thread.
+  /// Additionally, the MmapBuffer can read live events.
+  std::unique_ptr<MmapBuffer> _mmap_buffer{ nullptr };
 
   /**
    * Creates an perf event of the counter.

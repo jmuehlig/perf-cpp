@@ -62,7 +62,7 @@ perf::Counter::open(const perf::Config& configuration, const bool is_live)
 
   /// Live counter use a single buffer page.
   if (is_live) {
-    this->_sample_buffer.emplace(this->_file_descriptor);
+    this->_mmap_buffer = std::make_unique<MmapBuffer>(this->_file_descriptor);
   }
 }
 
@@ -146,7 +146,7 @@ perf::Counter::open(const perf::Config& config,
 
   /// Create sample buffer to store samples.
   if (buffer_pages > 0ULL) {
-    this->_sample_buffer.emplace(this->_file_descriptor, buffer_pages);
+    this->_mmap_buffer = std::make_unique<MmapBuffer>(this->_file_descriptor, buffer_pages);
   }
 }
 
@@ -201,7 +201,7 @@ perf::Counter::open(const perf::Config& config,
 
   /// Create sample buffer to store samples.
   if (buffer_pages > 0ULL) {
-    this->_sample_buffer.emplace(this->_file_descriptor, buffer_pages);
+    this->_mmap_buffer = std::make_unique<MmapBuffer>(this->_file_descriptor, buffer_pages);
   }
 }
 
@@ -209,8 +209,8 @@ void
 perf::Counter::close()
 {
   /// Close/un-map the mmap-ed buffer, if any.
-  if (this->_sample_buffer.has_value()) {
-    this->_sample_buffer.reset();
+  if (this->_mmap_buffer != nullptr) {
+    this->_mmap_buffer.reset();
   }
 }
 

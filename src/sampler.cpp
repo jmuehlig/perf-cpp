@@ -370,8 +370,8 @@ perf::Sampler::SampleCounter::consume_samples()
   /// buffer is the second one.
   const auto counter_index = 0U + static_cast<std::uint8_t>(this->_has_intel_auxiliary_counter);
   auto& members = this->group().members();
-  if (members.size() >= (counter_index + 1U) && members[counter_index].user_level_buffer().has_value()) {
-    return members[counter_index].user_level_buffer()->consume_sample_data();
+  if (members.size() >= (counter_index + 1U) && members[counter_index].mmap_buffer() != nullptr) {
+    return members[counter_index].mmap_buffer()->data();
   }
 
   return {};

@@ -38,7 +38,6 @@ set(PERF_CPP_SRC
     src/metric_expression.cpp
     src/requested_event.cpp
     src/sampler.cpp
-    src/sample_buffer.cpp
     src/sample_decoder.cpp
     src/table.cpp
     src/mmap_buffer.cpp
