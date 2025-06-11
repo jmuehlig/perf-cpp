@@ -22,6 +22,9 @@ public:
   MmapBufferOverflowWorker(MmapBuffer& mmap_buffer, const UniqueFileDescriptor& counter_file_descriptor);
   ~MmapBufferOverflowWorker() = default;
 
+  MmapBufferOverflowWorker(MmapBufferOverflowWorker&&) = delete;
+  MmapBufferOverflowWorker(const MmapBufferOverflowWorker&) = delete;
+
   /**
    * Cancels the worker thread and awaits its shutdown.
    */
@@ -51,12 +54,11 @@ private:
 class MmapBuffer
 {
 public:
-  explicit MmapBuffer(const UniqueFileDescriptor& file_descriptor)
-    : MmapBuffer(file_descriptor, 1ULL)
-  {
-  }
-  MmapBuffer(const UniqueFileDescriptor& file_descriptor, std::uint64_t count_pages);
+  explicit MmapBuffer(const UniqueFileDescriptor& file_descriptor, std::uint64_t count_pages = 1ULL);
   ~MmapBuffer();
+
+  MmapBuffer(MmapBuffer&&) = delete;
+  MmapBuffer(const MmapBuffer&) = delete;
 
   /**
    * Reads a performance monitoring counter value from the mmap-ed buffer via the `rdpmc` instruction.
@@ -69,7 +71,7 @@ public:
    * @return The entire data from the buffer, including all data copied from overflows. This will consume the data,
    * i.e., the caller owns the data.
    */
-  [[nodiscard]] std::vector<std::vector<std::byte>> data();
+  [[nodiscard]] std::vector<std::vector<std::byte>> consume_data();
 
   /**
    * Copies the data from the mmap-ed buffer into a specific application-level buffer.

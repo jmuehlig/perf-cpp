@@ -162,7 +162,7 @@ perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
 }
 
 std::vector<std::vector<std::byte>>
-perf::MmapBuffer::data()
+perf::MmapBuffer::consume_data()
 {
   /// Lock the sample buffers vector. The thread polling for buffer overflows might copy data at the moment (or wants to
   /// do so while we are reading the data),
