@@ -22,6 +22,9 @@ std::optional<bool> perf::HardwareInfo::_is_ibs_l3_filter_supported{ std::nullop
 /// Cache variable to remember the memory page size.
 std::optional<std::uint64_t> perf::HardwareInfo::_memory_page_size{ std::nullopt };
 
+/// Number of performance counters per logical CPU core.
+std::optional<std::uint16_t> perf::HardwareInfo::_performance_counters_per_logical_core{ std::nullopt };
+
 bool
 perf::HardwareInfo::is_intel_aux_counter_required()
 {
@@ -136,4 +139,56 @@ perf::HardwareInfo::memory_page_size()
 
   const auto memory_page_size = std::uint64_t(std::max(0L, ::sysconf(_SC_PAGESIZE)));
   return HardwareInfo::cache_value(HardwareInfo::_memory_page_size, memory_page_size);
+}
+
+std::uint16_t
+perf::HardwareInfo::performance_counters_per_logical_core()
+{
+  if (HardwareInfo::_performance_counters_per_logical_core.has_value()) {
+    return HardwareInfo::_performance_counters_per_logical_core.value();
+  }
+
+#if defined(__x86_64__) || defined(__i386__)
+  if (HardwareInfo::is_intel()) {
+    std::uint32_t eax, ebx, ecx, edx;
+
+    /// Read CPUID information with 0x0A (see https://www.felixcloutier.com/x86/cpuid).
+    if (__get_cpuid_count(0x0A, 0, &eax, &ebx, &ecx, &edx) > 0) {
+      /// Number of general-purpose performance monitoring counter per logical processor is in bits 15-08.
+      const auto performance_counters_per_logical_core = (eax >> 8) & 0xFF;
+
+      return HardwareInfo::cache_value(HardwareInfo::_performance_counters_per_logical_core,
+                                       std::uint16_t(performance_counters_per_logical_core));
+    }
+  }
+
+  if (HardwareInfo::is_amd()) {
+    std::uint32_t eax, ebx, ecx, edx;
+
+    if (__get_cpuid_count(0x80000001, 0, &eax, &ebx, &ecx, &edx) > 0 && ecx & (std::uint32_t(1U) << 23)) {
+      if (__get_cpuid_count(0x80000000, 0, &eax, &ebx, &ecx, &edx) > 0 && eax >= 0x80000022) {
+        if (__get_cpuid_count(0x80000022, 0, &eax, &ebx, &ecx, &edx) > 0) {
+          const auto performance_counters_per_logical_core = eax & 0xFF;
+
+          return HardwareInfo::cache_value(HardwareInfo::_performance_counters_per_logical_core,
+                                           std::uint16_t(performance_counters_per_logical_core));
+        }
+      }
+    }
+  }
+#elif defined(__aarch64__)
+  std::uint64_t pmcr_el0;
+
+  /// Aarch64 uses the Performance Monitors Control Register PMCR_EL0 (see
+  /// https://developer.arm.com/documentation/ddi0601/2025-03/AArch64-Registers/PMCR-EL0--Performance-Monitors-Control-Register).
+  __asm__ volatile("mrs %0, pmcr_el0" : "=r"(val));
+
+  /// The number of counters is in bits 15-11.
+  const auto performance_counters_per_logical_core = (pmcr_el0 >> 11) & 0x1F;
+
+  return HardwareInfo::cache_value(HardwareInfo::_performance_counters_per_logical_core,
+                                   std::uint16_t(performance_counters_per_logical_core));
+#endif
+
+  return 0U;
 }

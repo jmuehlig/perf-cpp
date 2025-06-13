@@ -1,7 +1,9 @@
 #include "access_benchmark.h"
 #include <catch2/catch_test_macros.hpp>
-#include <perfcpp/sampler.h>
+
+#if defined(__x86_64__) || defined(__i386__)
 #include <iostream>
+#include <perfcpp/sampler.h>
 
 TEST_CASE("config", "[Sampler]")
 {
@@ -115,3 +117,4 @@ TEST_CASE("sampling", "[Sampler]")
     REQUIRE(samples1.size() > (samples2.size() * 3U));
   }
 }
+#endif

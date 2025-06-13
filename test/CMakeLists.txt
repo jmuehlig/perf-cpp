@@ -12,6 +12,7 @@ set(PERF_CPP_TEST
         test/metric.cpp
         test/event_counter.cpp
         test/sampler.cpp
+        test/hardware_info.cpp
 )
 
 add_executable(tests ${PERF_CPP_TEST})
