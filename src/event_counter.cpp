@@ -681,7 +681,7 @@ perf::MultiProcessEventCounter::MultiProcessEventCounter(const perf::CounterDefi
   this->_process_local_counter.reserve(process_ids.size());
 
   for (const auto process_id : process_ids) {
-    config.process_id(process_id);
+    config.process(Process{process_id});
     this->_process_local_counter.emplace_back(counter_list, config);
   }
 }
@@ -696,7 +696,7 @@ perf::MultiProcessEventCounter::MultiProcessEventCounter(perf::EventCounter&& ev
 
     /// Create one counter for every process: Copy the config for every process and bind the EventCounter to that
     /// process.
-    config.process_id(process_ids[i]);
+    config.process(Process{process_ids[i]});
     auto process_local_counter = EventCounter::copy_from_template(event_counter);
     process_local_counter.config(config);
 
@@ -704,7 +704,7 @@ perf::MultiProcessEventCounter::MultiProcessEventCounter(perf::EventCounter&& ev
   }
 
   /// Re-use the given EventCounter for the last process in the list.
-  config.process_id(process_ids.back());
+  config.process(Process{process_ids.back()});
   event_counter.config(config);
   this->_process_local_counter.emplace_back(std::move(event_counter));
 }
@@ -713,12 +713,12 @@ perf::MultiCoreEventCounter::MultiCoreEventCounter(const perf::CounterDefinition
                                                    std::vector<std::uint16_t>&& cpu_ids,
                                                    perf::Config config)
 {
-  config.process_id(-1); /// Record every thread/process on the given CPUs.
+  config.process(Process::ANY); /// Record every thread/process on the given CPUs.
 
   this->_cpu_local_counter.reserve(cpu_ids.size());
 
   for (const auto cpu_id : cpu_ids) {
-    config.cpu_id(cpu_id);
+    config.cpu_core(CpuCore{cpu_id});
     this->_cpu_local_counter.emplace_back(counter_definition, config);
   }
 }
@@ -728,12 +728,12 @@ perf::MultiCoreEventCounter::MultiCoreEventCounter(perf::EventCounter&& event_co
 {
   this->_cpu_local_counter.reserve(cpu_ids.size());
   auto config = event_counter.config();
-  config.process_id(-1); /// Record every thread/process on the given CPUs.
+  config.process(Process::ANY); /// Record every thread/process on the given CPUs.
 
   for (auto i = 0U; i < cpu_ids.size() - 1U; ++i) {
 
     /// Create one EventCounter for every CPU core from the list via config.
-    config.cpu_id(cpu_ids[i]);
+    config.cpu_core(CpuCore{cpu_ids[i]});
     auto process_local_counter = EventCounter::copy_from_template(event_counter);
     process_local_counter.config(config);
 
@@ -741,7 +741,7 @@ perf::MultiCoreEventCounter::MultiCoreEventCounter(perf::EventCounter&& event_co
   }
 
   /// Re-use the given EventCounter for the last CPU Id in the list.
-  config.cpu_id(cpu_ids.back());
+  config.cpu_core(CpuCore{cpu_ids.back()});
   event_counter.config(config);
   this->_cpu_local_counter.push_back(std::move(event_counter));
 }

@@ -467,7 +467,7 @@ perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_
   , _core_ids(std::move(core_ids))
 {
   /// Record all processes on the CPUs.
-  _config.process_id(-1);
+  _config.process(Process::ANY);
 
   /// Create thread-local samplers without config (will be set when starting).
   for (auto core_id = 0U; core_id < this->_core_ids.size(); ++core_id) {
@@ -480,7 +480,7 @@ perf::MultiCoreSampler::open()
 {
   for (auto sampler_id = 0U; sampler_id < this->_core_ids.size(); ++sampler_id) {
     auto config = this->_config;
-    config.cpu_id(this->_core_ids[sampler_id]);
+    config.cpu_core(CpuCore{this->_core_ids[sampler_id]});
     MultiSamplerBase::open(this->_core_local_samplers[sampler_id], config);
   }
 }
@@ -490,7 +490,7 @@ perf::MultiCoreSampler::start()
 {
   for (auto sampler_id = 0U; sampler_id < this->_core_ids.size(); ++sampler_id) {
     auto config = this->_config;
-    config.cpu_id(this->_core_ids[sampler_id]);
+    config.cpu_core(CpuCore{this->_core_ids[sampler_id]});
     MultiSamplerBase::start(this->_core_local_samplers[sampler_id], config);
   }
 

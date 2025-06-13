@@ -240,8 +240,8 @@ public:
    */
   [[nodiscard]] std::string to_string(bool is_group_leader,
                                       const UniqueFileDescriptor& group_leader_file_descriptor,
-                                      std::optional<pid_t> process_id,
-                                      std::optional<std::uint32_t> cpu_id) const;
+                                      Process process,
+                                      CpuCore cpu_core) const;
 
   [[nodiscard]] bool operator==(const CounterConfig& config) const noexcept { return _config == config; }
 

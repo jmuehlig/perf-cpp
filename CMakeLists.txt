@@ -28,6 +28,7 @@ message("Building Tests             = ${BUILD_TESTS}")
 #   perf-cpp library definition                             #
 #############################################################
 set(PERF_CPP_SRC
+    src/config.cpp
     src/counter.cpp
     src/counter_definition.cpp
     src/counter_result.cpp

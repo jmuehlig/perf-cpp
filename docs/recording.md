@@ -12,6 +12,8 @@ The library also supports [multi-threading and multi-CPU counting](recording-par
 - [Managing Counter Lifecycle](#managing-counter-lifecycle)
 - [Retrieving Counter Data](#retrieving-counter-data)
 - [Closing the Hardware Counters *(optional)*](#closing-the-hardware-counters-optional)
+- [Binding the Event Counter to a Specific CPU Core](#binding-the-event-counter-to-a-specific-cpu-core)
+- [Binding the Event Counter to a Specific Process](#binding-the-event-counter-to-a-specific-process)
 - [Control Scheduling of Events to Hardware Counters](#control-scheduling-of-events-to-hardware-counters)
 - [Example: Analyzing Random Access Patterns](#example-analyzing-random-access-patterns)
 - [Troubleshooting Counter Configurations](#troubleshooting-counter-configurations)
@@ -122,7 +124,49 @@ which will schedule each provided event to a **separate** hardware counter.
 
 `EventCounter::add()` will throw an exception, if the scheduling does not fit (e.g., too many events are requested to group together.)
 
-### Adjusting hardware settings to the underlying system
+### Binding the Event Counter to a Specific CPU Core
+By default, a `perf::EventCounter` tracks events across all CPU cores on which the associated thread is scheduled, as well as the process that instantiated the counter.
+To restrict event counting to a particular CPU core, configure the counter as follows:
+
+```cpp
+auto config = perf::Config{};
+config.cpu_core(5U); /// Bind to CPU core 5.
+```
+
+To revert this and resume counting on all cores the thread executes on:
+
+```cpp
+config.cpu_core(perf::CpuCore::ANY); /// Count events an all CPU cores the thread is executed on.
+```
+
+### Binding the Event Counter to a Specific Process
+Similarly, process binding determines which process’s events are monitored. 
+By default, `perf::EventCounter` captures only the events triggered by the *calling* process.
+You can customize this behavior to:
+- Bind to a specific process by PID
+- Monitor all processes on the system
+
+> [!NOTE]
+> Monitoring other or all processes may require elevated privileges. 
+> Refer to the [perf paranoid setting](perf-paranoid.md) for configuration guidance.
+
+The process to monitor can be configured as follows:
+
+```cpp
+auto config = perf::Config{};
+config.process(perf::Process::CALLING); /// Default: Monitor only the calling process.
+
+/// Alternatively:
+config.process(perf::Process{1337});    /// Monitor events from process with PID 1337.
+
+/// Alternatively:
+config.process(perf::Process::ANY);     /// Monitor events from all processes.
+```
+
+> [!TIP]
+> Certain hardware events (e.g., Intel's off-core events) may require monitoring all processes on a specific CPU core, as the hardware does not attribute these events to individual processes.
+
+### Adjusting Hardware Settings to the Underlying System
 *perf-cpp* cannot identify the underlying hardware settings and assumes **four** groups (i.e., *physical* hardware counters) and **five** events per group.
 However, some CPUs (e.g., ARM Cortex-A72) do not implement multiplexing at all.
 

@@ -51,7 +51,7 @@ perf::Counter::open(const perf::Config& configuration, const bool is_live)
 
   /// Print debug output, if requested.
   if (configuration.is_debug()) {
-    std::cout << this->to_string(true, this->_file_descriptor, configuration.process_id(), configuration.cpu_id())
+    std::cout << this->to_string(true, this->_file_descriptor, configuration.process(), configuration.cpu_core())
               << std::flush;
   }
 
@@ -86,7 +86,7 @@ perf::Counter::open(const perf::Config& configuration, const perf::UniqueFileDes
 
   /// Print debug output, if requested.
   if (configuration.is_debug()) {
-    std::cout << this->to_string(false, this->_file_descriptor, configuration.process_id(), configuration.cpu_id())
+    std::cout << this->to_string(false, this->_file_descriptor, configuration.process(), configuration.cpu_core())
               << std::flush;
   }
 
@@ -136,7 +136,7 @@ perf::Counter::open(const perf::Config& config,
 
   /// Print debug output, if requested.
   if (config.is_debug()) {
-    std::cout << this->to_string(true, this->_file_descriptor, config.process_id(), config.cpu_id()) << std::flush;
+    std::cout << this->to_string(true, this->_file_descriptor, config.process(), config.cpu_core()) << std::flush;
   }
 
   /// Notify the caller that opening the counter via the perf subsystem failed.
@@ -191,7 +191,7 @@ perf::Counter::open(const perf::Config& config,
 
   /// Print debug output, if requested.
   if (config.is_debug()) {
-    std::cout << this->to_string(false, this->_file_descriptor, config.process_id(), config.cpu_id()) << std::flush;
+    std::cout << this->to_string(false, this->_file_descriptor, config.process(), config.cpu_core()) << std::flush;
   }
 
   /// Notify the caller that opening the counter via the perf subsystem failed.
@@ -318,15 +318,9 @@ std::pair<perf::UniqueFileDescriptor, std::int32_t>
 perf::Counter::try_open_via_perf_subsystem(const perf::Config& configuration,
                                            const perf::FileDescriptorView group_leader_file_descriptor)
 {
-  /// Transform the CPU id to the format expected by the perf subsystem – which is -1 for any CPU (but perf-cpp uses an
-  /// optional unsigned integer for that case).
-  const std::int32_t cpu_id = configuration.cpu_id().has_value() ? std::int32_t{ configuration.cpu_id().value() } : -1;
-
-  const auto process_id = configuration.process_id().value_or(0);
-
   /// Finally, pass the configuration to the perf subsystem to open the hardware performance counter.
   const auto file_descriptor = ::syscall(
-    __NR_perf_event_open, &this->_event_attribute, process_id, cpu_id, group_leader_file_descriptor.value(), 0);
+    __NR_perf_event_open, &this->_event_attribute, static_cast<pid_t>(configuration.process()), static_cast<std::int32_t>(configuration.cpu_core()), group_leader_file_descriptor.value(), 0);
 
   return std::make_pair(UniqueFileDescriptor{ file_descriptor }, errno);
 }
@@ -375,8 +369,8 @@ perf::Counter::is_precise_ip_adjustable(const std::uint8_t current_precise_ip, c
 std::string
 perf::Counter::to_string(const bool is_group_leader,
                          const UniqueFileDescriptor& group_leader_file_descriptor,
-                         const std::optional<pid_t> process_id,
-                         const std::optional<std::uint32_t> cpu_id) const
+                         const Process process,
+                         const CpuCore cpu_core) const
 {
   auto stream = std::stringstream{};
 
@@ -396,20 +390,21 @@ perf::Counter::to_string(const bool is_group_leader,
   }
 
   /// Process
-  if (process_id.has_value()) {
-    stream << "    process: ";
-    if (process_id.value() == 0) {
-      stream << "0 (calling)\n";
-    } else if (process_id.value() > 0) {
-      stream << process_id.value() << " (specific process)\n";
-    } else {
-      stream << process_id.value() << " (all)\n";
-    }
+  stream << "    process: ";
+  if (process.is_any()) {
+    stream << "any (-1)\n";
+  } else if (process.is_calling()) {
+    stream << "calling (0)\n";
+  } else {
+    stream << static_cast<pid_t>(process) << "\n";
   }
 
   /// CPU
-  if (cpu_id.has_value()) {
-    stream << "    cpu: " << cpu_id.value() << "\n";
+  stream << "    cpu: ";
+  if (cpu_core.is_any()) {
+    stream << "any (-1)\n";
+  } else {
+    stream << static_cast<std::int32_t>(cpu_core) << "\n";
   }
 
   /// Perf Event
