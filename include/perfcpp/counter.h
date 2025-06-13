@@ -346,7 +346,7 @@ private:
    * @param error_code The error code when failing.
    * @return True, when the counter should try to open again.
    */
-  [[nodiscard]] static bool is_precise_ip_adjustable(std::uint8_t current_precise_ip, std::int32_t error_code) noexcept;
+  [[nodiscard]] static bool is_precision_adjustable(std::uint8_t current_precise_ip, std::int32_t error_code) noexcept;
 
   /**
    * Prints a name of a type (e.g., sample, branch, ...) to the stream if the type is set in the mask.

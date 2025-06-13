@@ -38,6 +38,7 @@ perf::Counter::open(const perf::Config& configuration, const bool is_live)
 
   /// Enable the read format including timing.
   this->_event_attribute.read_format = Counter::create_perf_event_read_format(true);
+  this->_event_attribute.sample_type |= PERF_SAMPLE_IDENTIFIER;
 
   /// Open the counter via the perf subsystem.
   auto [file_descriptor, error_code] = this->try_open_via_perf_subsystem(configuration);
@@ -327,7 +328,7 @@ perf::Counter::try_open_via_perf_subsystem(const perf::Config& configuration,
 
 std::pair<perf::UniqueFileDescriptor, std::int32_t>
 perf::Counter::try_open_via_perf_subsystem(const perf::Config& configuration,
-                                           const std::uint8_t precision,
+                                           std::uint8_t precision,
                                            const perf::FileDescriptorView group_leader_file_descriptor)
 {
   auto file_descriptor = UniqueFileDescriptor{};
@@ -335,25 +336,24 @@ perf::Counter::try_open_via_perf_subsystem(const perf::Config& configuration,
 
   /// Try to open the counter. For sampling, we might try to adjust the precise_ip configuration (see
   /// Counter::is_precise_ip_adjustable).
-  auto precise_ip = precision;
   do {
     /// precise_ip is only needed for sampling, not counting events and live events; thus, only set when it has a value.
     this->_event_attribute.precise_ip =
-      precise_ip & 0b11; /// Use only two bits as perf_event_attr.precise_ip has only two bits.
+      precision & 0b11; /// Use only two bits as perf_event_attr.precise_ip has only two bits.
 
     /// Try to open using the perf subsystem. This might fail. If precise_ip is the reason (derived by the error code),
-    /// we try to adjust the precision and try again (see Counter::is_precise_ip_adjustable).
+    /// we try to adjust the precision and try again (see Counter::is_precision_adjustable).
     std::tie(file_descriptor, error_code) =
       this->try_open_via_perf_subsystem(configuration, group_leader_file_descriptor);
 
     /// Repeat until success (file_descriptor has a "valid" value or trying again is hopeless.
-  } while (!file_descriptor.has_value() && Counter::is_precise_ip_adjustable(precise_ip--, error_code));
+  } while (!file_descriptor.has_value() && Counter::is_precision_adjustable(precision--, error_code));
 
   return std::make_pair(std::move(file_descriptor), error_code);
 }
 
 bool
-perf::Counter::is_precise_ip_adjustable(const std::uint8_t current_precise_ip, const std::int32_t error_code) noexcept
+perf::Counter::is_precision_adjustable(const std::uint8_t current_precise_ip, const std::int32_t error_code) noexcept
 {
   /// When precise_ip is already the lowest possible configuration (0 or lower), lowering has no impact.
   if (current_precise_ip < 1U || current_precise_ip > 3U) {
