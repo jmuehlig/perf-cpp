@@ -110,7 +110,7 @@ perf::ProcessorSpecificEventProvider::add_events(perf::CounterDefinition& counte
 }
 """
 
-    print(f"[INCLUDE_PROCESSOR_EVENTS] Generated source file with {len(events)} events.")
+    print(f"[GEN_PROCESSOR_EVENTS] Generated source file with {len(events)} events.")
     return cpp_content
 
 
@@ -129,7 +129,7 @@ def write_output_file(output_path, content):
         return True
 
     except Exception as e:
-        print(f"[INCLUDE_PROCESSOR_EVENTS] Error writing to {output_path}: {e}", file=sys.stderr)
+        print(f"[GEN_PROCESSOR_EVENTS] Error writing to {output_path}: {e}", file=sys.stderr)
         return False
 
 
@@ -168,7 +168,7 @@ def main():
             micro_architecture = get_micro_architecture(architecture_path)
             if micro_architecture:
                 if args.verbose:
-                    print(f"[INCLUDE_PROCESSOR_EVENTS] Detected micro-architecture: {micro_architecture}")
+                    print(f"[GEN_PROCESSOR_EVENTS] Detected micro-architecture: {micro_architecture}")
                 micro_architecture_path = architecture_path / f'{micro_architecture}.csv'
                 if micro_architecture_path.is_file():
                     events_to_generate = read_events(micro_architecture_path)
@@ -180,10 +180,10 @@ def main():
     # Write to output file
     if write_output_file(args.output, cpp_content):
         if args.verbose:
-            print(f"[INCLUDE_PROCESSOR_EVENTS] Wrote source file with processor-specific events: {args.output}")
+            print(f"[GEN_PROCESSOR_EVENTS] Wrote source file with processor-specific events: {args.output}")
         return 0
     else:
-        print("[INCLUDE_PROCESSOR_EVENTS] Generation failed", file=sys.stderr)
+        print(f"[GEN_PROCESSOR_EVENTS] Failed writing to {args.output}", file=sys.stderr)
         return 1
 
 

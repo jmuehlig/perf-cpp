@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -DNDEBUG")
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif()
-message("Building Mode                     = ${CMAKE_BUILD_TYPE}")
+message("Building Mode                        = ${CMAKE_BUILD_TYPE}")
 
 # Include include/ folder.
 include_directories(include/)
@@ -19,12 +19,12 @@ include_directories(include/)
 option(BUILD_EXAMPLES "Build examples in examples/ directory." OFF)
 option(BUILD_LIB_SHARED "Build the library as a shared library (default is static)." OFF)
 option(BUILD_TESTS "Build the unit tests." OFF)
-option(INCLUDE_PROCESSOR_EVENTS "Include processor-specific events" OFF)
+option(GEN_PROCESSOR_EVENTS "Generate processor-specific events" OFF)
 
-message("Building as Shared Library        = ${BUILD_LIB_SHARED}")
-message("Building Examples                 = ${BUILD_EXAMPLES}")
-message("Building Tests                    = ${BUILD_TESTS}")
-message("Include Processor-specific Events = ${INCLUDE_PROCESSOR_EVENTS}")
+message("Building as Shared Library           = ${BUILD_LIB_SHARED}")
+message("Building Examples                    = ${BUILD_EXAMPLES}")
+message("Building Tests                       = ${BUILD_TESTS}")
+message("Generating Processor-specific Events = ${GEN_PROCESSOR_EVENTS}")
 
 #############################################################
 #   perf-cpp source files                                   #
@@ -51,7 +51,7 @@ set(PERF_CPP_SRC
 )
 
 # Add the processor specific event provider, if requested.
-if (INCLUDE_PROCESSOR_EVENTS)
+if (GEN_PROCESSOR_EVENTS)
     set(PROCESSOR_EVENT_SRC_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/processor_specific_event_provider.cpp")
 
     # Execute the Python script to generate the file
