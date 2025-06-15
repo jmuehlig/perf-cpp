@@ -19,6 +19,8 @@ namespace perf {
 class CounterDefinition
 {
 public:
+  static CounterDefinition DEFAULT;
+
   CounterDefinition();
   explicit CounterDefinition(const std::string& config_file);
   explicit CounterDefinition(std::string&& config_file)
@@ -346,7 +348,12 @@ public:
    * @param config Config string.
    * @return Number.
    */
-  [[nodiscard]] static std::uint64_t config_string_to_unsigned_ling(const std::string& config);
+  [[nodiscard]] static std::uint64_t config_string_to_unsigned_long(const std::string& config);
+
+  /**
+   * @return A table containing all events, metrics, and virtual time events.
+   */
+  [[nodiscard]] std::string to_string() const;
 
 private:
   /// List of added counter configurations for different PMUs. Each PMU can have multiple counters; but different PMUs

@@ -27,8 +27,7 @@ Recording hardware event statistics operates much like `perf stat`: it quantifie
 #include <perfcpp/event_counter.h>
 
 /// Initialize the counter
-const auto counters = perf::CounterDefinition{};
-auto event_counter = perf::EventCounter{ counters };
+auto event_counter = perf::EventCounter{};
 
 /// Specify hardware events to count
 event_counter.add({"seconds", "instructions", "cycles", "cache-misses"});
@@ -65,8 +64,7 @@ Recording samples functions much like `perf [mem] record`: it captures execution
 #include <perfcpp/sampler.h>
 
 /// Create the sampler
-const auto counters = perf::CounterDefinition{};
-auto sampler = perf::Sampler{ counters };
+auto sampler = perf::Sampler{};
 
 /// Specify when a sample is recorded: every 4000th cycle
 sampler.trigger("cycles", perf::Period{4000U});

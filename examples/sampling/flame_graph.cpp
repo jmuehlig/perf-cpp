@@ -10,12 +10,7 @@ main()
                "instruction pointer, and callchain for flamegraph generation."
             << std::endl;
 
-  /// Initialize counter definitions.
-  /// Note that the perf::CounterDefinition holds all counter names and must be
-  /// alive until the benchmark finishes.
-  const auto counter_definitions = perf::CounterDefinition{};
-
-  auto sampler = perf::Sampler{ counter_definitions };
+  auto sampler = perf::Sampler{};
 
   /// Event that generates an overflow which is samples.
   sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 4000U });

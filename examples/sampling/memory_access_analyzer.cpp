@@ -9,13 +9,8 @@ main()
 {
   std::cout << "libperf-cpp example: Sample memory addresses and analyze data objects." << std::endl;
 
-  /// Initialize counter definitions.
-  /// Note that the perf::CounterDefinition holds all counter names and must be
-  /// alive until the benchmark finishes.
-  const auto counter_definitions = perf::CounterDefinition{};
-
   /// Initialize sampler.
-  auto sampler = perf::Sampler{ counter_definitions };
+  auto sampler = perf::Sampler{};
 
   /// Setup which counters trigger the writing of samples (depends on the underlying hardware substrate).
   if (perf::HardwareInfo::is_amd_ibs_supported()) {

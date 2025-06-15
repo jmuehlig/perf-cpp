@@ -4,10 +4,13 @@
 #include <perfcpp/exception.h>
 #include <perfcpp/feature.h>
 #include <perfcpp/hardware_info.h>
+#include <perfcpp/table.h>
 #include <regex>
 #include <sstream>
 #include <string_view>
 #include <utility>
+
+perf::CounterDefinition perf::CounterDefinition::DEFAULT = perf::CounterDefinition{};
 
 perf::CounterDefinition::CounterDefinition()
 {
@@ -334,7 +337,7 @@ perf::CounterDefinition::add_metrics()
 }
 
 std::uint64_t
-perf::CounterDefinition::config_string_to_unsigned_ling(const std::string& config)
+perf::CounterDefinition::config_string_to_unsigned_long(const std::string& config)
 {
   if (config.rfind("0x", 0ULL) == 0ULL) {
     return std::stoull(config.substr(2ULL), nullptr, 16);
@@ -372,17 +375,17 @@ perf::CounterDefinition::read_counter_configuration(const std::string& csv_filen
       if (std::string config_str; std::getline(line_stream, config_str, ',')) {
 
         /// Translate config into number.
-        config = CounterDefinition::config_string_to_unsigned_ling(config_str);
+        config = CounterDefinition::config_string_to_unsigned_long(config_str);
 
         /// Read extended config-field and translate into integer.
         if (std::string extended_config_str; std::getline(line_stream, extended_config_str, ',')) {
           /// Translate extended config into number.
-          extended_config = CounterDefinition::config_string_to_unsigned_ling(extended_config_str);
+          extended_config = CounterDefinition::config_string_to_unsigned_long(extended_config_str);
 
           /// Read type-field and translate into integer.
           if (std::string type_str; std::getline(line_stream, type_str, ',')) {
             /// Translate type into number.
-            type = std::uint32_t(CounterDefinition::config_string_to_unsigned_ling(type_str));
+            type = std::uint32_t(CounterDefinition::config_string_to_unsigned_long(type_str));
           }
         }
 
@@ -513,4 +516,53 @@ perf::CounterDefinition::parse_event_file_descriptor_format(std::filesystem::pat
   }
 
   return configs;
+}
+
+std::string
+perf::CounterDefinition::to_string() const
+{
+  /// Lambda to turn decimal value into a hexadecimal string. Used to print event ids.
+  const auto decimal_to_hex_string = [](const auto decimal) -> std::string {
+    auto stream = std::stringstream{};
+    stream << "0x" << std::hex << decimal << std::dec;
+    return stream.str();
+  };
+
+  auto table = Table{};
+
+  // Header.
+  table.add({ Table::Header{ "PMU", Table::Alignment::Left },
+              Table::Header{ "name", Table::Alignment::Left },
+              Table::Header{ "type", Table::Alignment::Left },
+              Table::Header{ "config", Table::Alignment::Left },
+              Table::Header{ "config1", Table::Alignment::Left },
+              Table::Header{ "config2", Table::Alignment::Left } });
+
+  /// Add all events to the table.
+  for (const auto& [pmu, events] : this->_performance_monitoring_unit_events) {
+    for (const auto& [name, config] : events) {
+      auto row = Table::Row{};
+
+      row << pmu << name << config.type() << decimal_to_hex_string(config.event_id())
+          << decimal_to_hex_string(config.event_id_extension()[0U])
+          << decimal_to_hex_string(config.event_id_extension()[1U]);
+      table.add(std::move(row));
+    }
+  }
+
+  /// Add all metrics to the table.
+  for (const auto& [name, _] : this->_metrics) {
+    auto row = Table::Row{};
+    row << "metric" << name << "" << "" << "" << "";
+    table.add(std::move(row));
+  }
+
+  /// Add all virtual time events to the table.
+  for (const auto& [name, _] : this->_time_events) {
+    auto row = Table::Row{};
+    row << "time" << name << "" << "" << "" << "";
+    table.add(std::move(row));
+  }
+
+  return table.to_string();
 }

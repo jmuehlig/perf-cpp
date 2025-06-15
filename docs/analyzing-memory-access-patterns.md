@@ -19,7 +19,7 @@ The Memory Access Analyzer helps identify which specific memory addresses experi
 - [Processing the Result](#processing-the-result)
 ---
 
-## Describing Data Types
+## Step 1: Describing Data Types
 The **Memory Access Analyzer** requires information about the structure of your data types. 
 Let's walk through an example using a binary tree node:
 ```cpp
@@ -41,9 +41,10 @@ binary_tree_node.add("left_child", sizeof(BinaryTreeNode*));  /// Describe the "
 binary_tree_node.add("right_child", sizeof(BinaryTreeNode*)); /// Describe the "right_child" attribute.
 ```
 
-**Hint**: For accurate size and offset information, you can use [**pahole**](https://linux.die.net/man/1/pahole). See [Paramoud Kumbhar's detailed guide](https://pramodkumbhar.com/2023/11/pahole-to-analyz-data-structure-memory-layouts-with-ease/) for usage instructions.
+> [!TIP]
+> For accurate size and offset information, you can use [**pahole**](https://linux.die.net/man/1/pahole). See [Paramoud Kumbhar's detailed guide](https://pramodkumbhar.com/2023/11/pahole-to-analyz-data-structure-memory-layouts-with-ease/) for usage instructions.
 
-## Registering Data Type Instances
+## Step 2: Registering Data Type Instances
 Since each instance of a data structure may exhibit different access patterns, the Memory Access Analyzer needs to track individual instances. 
 Here's how to register them:
 
@@ -62,7 +63,7 @@ for (auto* node : tree->nodes()) {
 }
 ```
 
-## Mapping Samples to Data Type Instances
+## Step 3: Mapping Samples to Data Type Instances
 To collect memory access data, use *perf-cpp*'s [sampling mechanism](sampling.md) with the following key requirements:
 * Include logical memory addresses
 * Capture data source information
@@ -73,8 +74,7 @@ To collect memory access data, use *perf-cpp*'s [sampling mechanism](sampling.md
 #include <perfcpp/sampler.h>
 #include <perfcpp/analyzer/memory_access.h>
 
-const auto counter_definitions = perf::CounterDefinition{};
-auto sampler = perf::Sampler{ counter_definitions };
+auto sampler = perf::Sampler{};
 
 /// Set trigger that enables memory sampling.
 sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid, perf::Period{ 1000U });
@@ -95,7 +95,7 @@ const auto samples = sampler.result();
 const auto result = memory_access_analyzer.map(samples);
 ```
 
-## Processing the Result
+## Step 4: Processing the Result
 The analyzer generates detailed statistics for each data type attribute. 
 To view the results:
 ```cpp

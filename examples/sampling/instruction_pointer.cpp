@@ -11,12 +11,7 @@ main()
                "access to an in-memory array."
             << std::endl;
 
-  /// Initialize counter definitions.
-  /// Note that the perf::CounterDefinition holds all counter names and must be
-  /// alive until the benchmark finishes.
-  const auto counter_definitions = perf::CounterDefinition{};
-
-  auto sampler = perf::Sampler{ counter_definitions };
+  auto sampler = perf::Sampler{};
 
   /// Event that generates an overflow which is samples.
   sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 4000U });
@@ -68,16 +63,16 @@ main()
         sample.instruction_execution().logical_instruction_pointer().has_value() &&
         sample.metadata().cpu_id().has_value()) {
 
-      auto symbol = std::string{"??"};
-      if (auto sym = symbol_resolver.resolve(sample.instruction_execution().logical_instruction_pointer().value()); sym.has_value()) {
+      auto symbol = std::string{ "??" };
+      if (auto sym = symbol_resolver.resolve(sample.instruction_execution().logical_instruction_pointer().value());
+          sym.has_value()) {
         symbol = sym->to_string();
       }
 
       std::cout << "Time = " << sample.metadata().timestamp().value()
                 << " | Period = " << sample.metadata().period().value() << " | Instruction Pointer = 0x" << std::hex
                 << sample.instruction_execution().logical_instruction_pointer().value() << std::dec
-                << " | Symbol = " << symbol
-                << " | CPU ID = " << sample.metadata().cpu_id().value() << " | "
+                << " | Symbol = " << symbol << " | CPU ID = " << sample.metadata().cpu_id().value() << " | "
                 << (sample.instruction_execution().logical_instruction_pointer() ? "exact" : "not exact") << "\n";
     }
   }

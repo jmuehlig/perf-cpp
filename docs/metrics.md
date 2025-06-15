@@ -34,13 +34,24 @@ To employ these metrics, include their names in the `perf::EventCounter` instanc
 
 ## Utilizing Metrics
 Metrics function similarly to hardware events in the  `perf::EventCounter`:
+
 ```cpp
 #include <perfcpp/event_counter.h>
-const auto counter_definitions = perf::CounterDefinition{};
-auto event_counter = perf::EventCounter{counter_definitions};
+auto event_counter = perf::EventCounter{};
 
+/// Add the metric like a "normal" hardware event.
 event_counter.add("cycles-per-instruction");
+
+/// Record events and metrics.
+event_counter.start();
+/// ....
+event_counter.stop();
+const auto result = event_counter.result();
+
+/// Access the metric like events.
+const auto cycles_per_instruction = result.get("cycles-per-instruction");
 ```
+
 When metrics are used, *perf-cpp* internally counts the required hardware events (like cycles and instructions for CPI) and displays only the specified metrics and events.
 
 ## Creating Custom Metrics
@@ -52,13 +63,17 @@ You can create custom metrics to tailor them to your specific hardware.
 > Take a look at their [groups/ directory](https://github.com/RRZE-HPC/likwid/tree/master/groups).
 
 There are two ways to define custom metrics.
+For both, you will need to create your own instance of the `perf::CounterDefinition` and pass it to the `perf::EventCounter` or `perf::Sampler`.
 
 ### Using Formulas
 The first option is to express a metric as a calculation of several hardware and time events, for example:
 
 ```cpp
-auto counter_definitions = perf::CounterDefinition{};
-counter_definitions.add("stalls-by-mem-loads", "(CYCLE_ACTIVITY_STALLS_LDM_PENDING/CYCLE_ACTIVITY_STALLS_TOTAL)*100");
+auto counter_definition = perf::CounterDefinition{};
+counter_definition.add("stalls-by-mem-loads", 
+                        "(CYCLE_ACTIVITY_STALLS_LDM_PENDING / CYCLE_ACTIVITY_STALLS_TOTAL) * 100");
+
+auto event_counter = perf::EventCounter{ counter_definition };
 ```
 
 The formular can use the following operators: `+`, `-`, `*`, and `/`.
@@ -108,22 +123,19 @@ public:
 After implementing custom metrics, incorporate them into the `perf::CounterDefinition` to utilize them effectively:
 
 ```cpp
-auto counter_definitions = perf::CounterDefinition{};
-counter_definitions.add(std::make_unique<StallsPerCacheMiss>());
+auto counter_definition = perf::CounterDefinition{};
+counter_definition.add(std::make_unique<StallsPerCacheMiss>());
+
+auto event_counter = perf::EventCounter{ counter_definition };
+event_counter.add("stalls-per-cache-miss");
 ```
 
 You can also rename the metrics as needed:
 
 ```cpp
-counter_definitions.add("SPM", std::make_unique<StallsPerCacheMiss>());
-```
+/// Add the metric using a custom name:
+counter_definition.add("SPM", std::make_unique<StallsPerCacheMiss>());
 
-### Record custom Metrics
-To record custom defined metrics (via formula  or `perf::Metric` interface), add the custom metrics to the `perf::EventCounter`:
-
-```cpp
-event_counter.add("stalls-per-cache-miss");
-
-/// Or, if you renamed it:
+/// Use the custom name:
 event_counter.add("SPCM");
 ```

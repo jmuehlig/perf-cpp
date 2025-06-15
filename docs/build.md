@@ -35,7 +35,7 @@ cmake . -B build
 cmake --build build
 ```
 
-### Install the Library
+### Install the Library 
 To install the library, specify the `CMAKE_INSTALL_PREFIX`:
 ```bash
 # Generate Makefile

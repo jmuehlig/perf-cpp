@@ -12,17 +12,12 @@ main()
             << std::endl;
   std::cout << "We will record the counters for all threads spawned by the main-thread." << std::endl;
 
-  /// Initialize performance counters.
-  /// Note that the perf::CounterDefinition holds all counter names and must be
-  /// alive until the benchmark finishes.
-  const auto counter_definitions = perf::CounterDefinition{};
-
   /// In this example, we will perform the benchmark multi-threaded and record
   /// all child-threads. If `include_child_threads` is not set to true, we would
   /// only record the main-thread.
   auto config = perf::Config{};
   config.include_child_threads(true);
-  auto event_counter = perf::EventCounter{ counter_definitions, config };
+  auto event_counter = perf::EventCounter{ config };
 
   /// Add all the performance counters we want to record.
   try {

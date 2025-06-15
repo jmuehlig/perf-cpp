@@ -10,12 +10,9 @@ TEST_CASE("config", "[Sampler]")
   /// Benchmark used for all sampling tests.
   auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
 
-  /// Counter definitions used for all sampling tests.
-  const auto counter_definition = perf::CounterDefinition{};
-
   SECTION("empty sampler")
   {
-    auto sampler = perf::Sampler{ counter_definition };
+    auto sampler = perf::Sampler{ };
     sampler.values().instruction_pointer(true);
 
     REQUIRE_THROWS(sampler.open());
@@ -27,12 +24,9 @@ TEST_CASE("sampling", "[Sampler]")
   /// Benchmark used for all sampling tests.
   auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
 
-  /// Counter definitions used for all sampling tests.
-  const auto counter_definition = perf::CounterDefinition{};
-
   SECTION("IP with cycles")
   {
-    auto sampler = perf::Sampler{ counter_definition };
+    auto sampler = perf::Sampler{  };
     REQUIRE_NOTHROW(sampler.trigger("cycles"));
     sampler.values().instruction_pointer(true);
 
@@ -55,7 +49,7 @@ TEST_CASE("sampling", "[Sampler]")
 
   SECTION("re-start")
   {
-    auto sampler = perf::Sampler{ counter_definition };
+    auto sampler = perf::Sampler{ };
     REQUIRE_NOTHROW(sampler.trigger("cycles"));
     sampler.values().instruction_pointer(true).timestamp(true);
 
@@ -84,7 +78,7 @@ TEST_CASE("sampling", "[Sampler]")
 
   SECTION("sample period")
   {
-    auto sampler1 = perf::Sampler{ counter_definition };
+    auto sampler1 = perf::Sampler{ };
 
     REQUIRE_NOTHROW(sampler1.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 200000 }));
     sampler1.values().instruction_pointer(true).timestamp(true);
@@ -99,7 +93,7 @@ TEST_CASE("sampling", "[Sampler]")
     REQUIRE_FALSE(samples1.empty());
     REQUIRE_NOTHROW(sampler1.close());
 
-    auto sampler2 = perf::Sampler{ counter_definition };
+    auto sampler2 = perf::Sampler{ };
 
     REQUIRE_NOTHROW(sampler2.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 800000 }));
     sampler2.values().instruction_pointer(true).timestamp(true);

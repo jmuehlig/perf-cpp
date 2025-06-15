@@ -12,16 +12,11 @@ main()
                "using multiple events as trigger."
             << std::endl;
 
-  /// Initialize counter definitions.
-  /// Note that the perf::CounterDefinition holds all counter names and must be
-  /// alive until the benchmark finishes.
-  const auto counter_definitions = perf::CounterDefinition{};
-
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
   perf_config.period(8000U); /// Record every 8,000th event.
 
-  auto sampler = perf::Sampler{ counter_definitions, perf_config };
+  auto sampler = perf::Sampler{ perf_config };
 
   if (perf::HardwareInfo::is_intel()) {
     sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{

@@ -19,10 +19,8 @@ The `perf::MultiThreadEventCounter` class allows you to copy the measurement on 
 ### Define the events to record
 ```cpp
 #include <perfcpp/event_counter.h>
-/// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
-const auto counter_definitions = perf::CounterDefinition{};
 
-auto multithread_event_counter = perf::MultiThreadEventCounter{counter_definitions};
+auto multithread_event_counter = perf::MultiThreadEventCounter{};
 try {
     multithread_event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
 } catch (std::runtime_error& e) {
@@ -94,12 +92,11 @@ The `perf::Config` class allows you to inherit the measurement to all child thre
 ### Define inheritance and the counters to record
 ```cpp
 #include <perfcpp/event_counter.h>
-const auto counter_definitions = perf::CounterDefinition{};
 
 auto config = perf::Config{};
 config.include_child_threads(true);
 
-auto event_counter = perf::EventCounter{counter_definitions, config};
+auto event_counter = perf::EventCounter{ config };
 
 try {
     event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
@@ -182,10 +179,8 @@ cpus_to_watch.add(1U);
 ### Define the counters you want to record
 ```cpp
 #include <perfcpp/event_counter.h>
-/// The perf::CounterDefinition object holds all counter names and must be alive when counters are accessed.
-const auto counter_definitions = perf::CounterDefinition{};
 
-auto multi_cpu_event_counter = perf::MultiCoreEventCounter{counter_definitions};
+auto multi_cpu_event_counter = perf::MultiCoreEventCounter{};
 try {
     multi_cpu_event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
 } catch (std::runtime_error& e) {

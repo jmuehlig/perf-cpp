@@ -10,11 +10,7 @@ main()
        "hardware performance counters. As a benchmark, we use random access to an in-memory array multiple times."
     << std::endl;
 
-  /// Initialize performance counters.
-  /// Note that the perf::CounterDefinition holds all counter names and must be
-  /// alive until the benchmark finishes.
-  const auto counter_definitions = perf::CounterDefinition{};
-  auto event_counter = perf::EventCounter{ counter_definitions };
+  auto event_counter = perf::EventCounter{};
 
   try {
     /// Add counters that are recorded over the entire period (from start to end).

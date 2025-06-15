@@ -15,11 +15,6 @@ main()
 
   constexpr auto count_threads = 4U;
 
-  /// Initialize counter definitions.
-  /// Note that the perf::CounterDefinition holds all counter names and must be
-  /// alive until the benchmark finishes.
-  auto counter_definitions = perf::CounterDefinition{};
-
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
   perf_config.period(32000); /// Record every 32,000th event.
@@ -28,7 +23,7 @@ main()
   auto cpus_to_watch = std::vector<std::uint16_t>(std::min(4U, std::thread::hardware_concurrency()));
   std::iota(cpus_to_watch.begin(), cpus_to_watch.end(), 0U);
 
-  auto sampler = perf::MultiCoreSampler{ counter_definitions, std::move(cpus_to_watch), perf_config };
+  auto sampler = perf::MultiCoreSampler{ std::move(cpus_to_watch), perf_config };
 
   /// Setup event that triggers writing samples.
   sampler.trigger("cycles");

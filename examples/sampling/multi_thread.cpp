@@ -14,16 +14,11 @@ main()
 
   constexpr auto count_threads = 4U;
 
-  /// Initialize counter definitions.
-  /// Note that the perf::CounterDefinition holds all counter names and must be
-  /// alive until the benchmark finishes.
-  const auto counter_definitions = perf::CounterDefinition{};
-
   /// Initialize sampler.
   auto perf_config = perf::SampleConfig{};
   perf_config.period(5000000U); /// Record every 5,000,000th event.
 
-  auto sampler = perf::MultiThreadSampler{ counter_definitions, count_threads, perf_config };
+  auto sampler = perf::MultiThreadSampler{ count_threads, perf_config };
 
   /// Setup event that triggers writing samples.
   sampler.trigger("cycles");

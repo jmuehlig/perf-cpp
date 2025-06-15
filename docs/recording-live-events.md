@@ -21,8 +21,7 @@ Define which events to monitor live and which to read post-computation using the
 ```cpp
 #include <perfcpp/event_counter.h>
 
-const auto counters = perf::CounterDefinition{}; 
-auto event_counter = perf::EventCounter{counters};
+auto event_counter = perf::EventCounter{};
 
 try {
     /// Events for live monitoring.

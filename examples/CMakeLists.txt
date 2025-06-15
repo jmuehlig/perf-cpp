@@ -67,6 +67,9 @@ add_executable(flame-graph EXCLUDE_FROM_ALL examples/sampling/flame_graph.cpp ex
 target_compile_options(flame-graph PUBLIC "-g3")
 target_link_libraries(flame-graph perf-cpp)
 
+add_executable(counter-definition EXCLUDE_FROM_ALL examples/counter_definition.cpp)
+target_link_libraries(counter-definition perf-cpp)
+
 ## One target for all examples
 add_custom_target(examples)
 add_dependencies(examples
@@ -74,4 +77,4 @@ add_dependencies(examples
         instruction-pointer-sampling counter-sampling branch-sampling
         memory-address-sampling register-sampling multi-thread-sampling multi-cpu-sampling
         multi-event-sampling context-switch-sampling
-        memory-access-analyzer live-events flame-graph)
+        memory-access-analyzer live-events flame-graph counter-definition)

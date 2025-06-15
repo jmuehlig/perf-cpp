@@ -48,19 +48,14 @@ During sampling, the hardware captures a specified set of data fields when a con
 In the following example, a timestamp and the current instruction pointer are recorded every 4000th cycle:
 ```cpp
 #include <perfcpp/sampler.h>
-const const auto counter_definitions = perf::CounterDefinition{};
 
 auto sample_config = perf::SampleConfig{};
 sample_config.period(4000U);
 
-auto sampler = perf::Sampler{ counter_definitions, sample_config };
+auto sampler = perf::Sampler{ sample_config };
 sampler.trigger("cycles");
 sampler.values().timestamp(true).instruction_pointer(true);
 ```
-
-> [!IMPORTANT]
-> The `perf::CounterDefinition` instance is used to store event configurations (e.g., names) and passed as a reference.
-Consequently, the instance needs to be alive while using the `Sampler` ([as described here](counters.md)).
 
 ## Initializing the Sampler *(optional)*
 The sampler is initialized using `sampler.start()`, if it is not already done.
@@ -176,7 +171,7 @@ If you do not set any precision level through the `.trigger()` interface, you ca
 auto sample_config = perf::SampleConfig{};
 sample_config.precision(perf::Precision::RequestZeroSkid);
 
-auto sampler = perf::Sampler{ counter_definitions, sample_config };
+auto sampler = perf::Sampler{ sample_config };
 sampler.trigger("cycles");
 ```
 
@@ -661,7 +656,7 @@ The *IBS Op PMU* offers information on micro-op execution, including data cache 
 In contrast to Intel's mechanism, IBS cannot tag specific load and store instructions (and apply a filter on the latency).
 In case the instruction was a load/store instruction, the sample will include data source, latency, and a memory address ([see kernel mailing list](https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/)).
 
-*perf-cpp* –or the `perf::CounterDefinition` class to be precise– will detect IBS support on AMD devices and adds the following counters that can be used as **trigger** for sampling on AMD:
+*perf-cpp* will detect IBS support on AMD devices and adds the following counters that can be used as **trigger** for sampling on AMD:
 - `ibs_op` selects instructions during the execution pipeline. CPU cycles (on the specified period/frequency) will lead to tag an instruction.
 - `ibs_op_uops` selects instructions during the execution pipeline, **but** the period/frequency refers to the number of executed micro-operations, **not** CPU cycles.
 - `ibs_op_l3missonly` selects instructions during the execution pipeline that miss the L3 cache. CPU cycles are used as the trigger.
@@ -685,7 +680,7 @@ You can configure the size of this buffer using the `SampleConfig` class as demo
 auto sample_config = perf::SampleConfig{};
 sample_config.buffer_pages(4096U); // This sets the buffer to 16MB (4096 pages x 4kB per page).
 
-auto sampler = perf::Sampler{ counter_definitions, sample_config };
+auto sampler = perf::Sampler{ sample_config };
 ```
 
 Because the ring buffer has a finite size, it needs to be drained before it becomes full.
@@ -705,12 +700,12 @@ Utilize *perf-cpp*'s debugging features to gain insights into the internal worki
 auto config = perf::SampleConfig{};
 config.is_debug(true);
 
-auto sampler = perf::Sampler{ counter_definitions, config };
+auto sampler = perf::Sampler{ config };
 ```
 
 The idea is borrowed from *Linux Perf*, which can be asked to print counter configurations as follows:
 ```bash
-perf --debug perf-event-open stat -- sleep 1
+perf --debug perf-event-open record -- sleep 1
 ```
 
 This command helps visualize configurations for various counters, which is also beneficial for retrieving event codes (for more details, see the [counters documentation](counters.md)).

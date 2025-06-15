@@ -23,8 +23,7 @@ The `perf::SymbolResolver` allows to translate logical instruction pointers into
 #include <perfcpp/sampler.h>
 #include <perfcpp/symbol_resolver.h>
 
-const auto counter_definitions = perf::CounterDefinition{};
-auto sampler = perf::Sampler{ counter_definitions };
+auto sampler = perf::Sampler{};
 sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 4000U });
 sampler.values().instruction_pointer(true);
 
@@ -74,9 +73,8 @@ For more condensed outputs, it is also recommended to include the *timestamp* an
 
 ```cpp
 #include <perfcpp/sampler.h>
-const const auto counter_definitions = perf::CounterDefinition{};
 
-auto sampler = perf::Sampler{ counter_definitions, sample_config };
+auto sampler = perf::Sampler{ sample_config };
 sampler.trigger("cycles");
 sampler.values()
     .instruction_pointer(true)
