@@ -23,6 +23,7 @@ def get_cpu_info():
             vendor_id = None
             cpu_family = None
             model = None
+            stepping = None
 
             for line in cpuinfo.split('\n'):
                 if line.startswith('vendor_id'):
@@ -30,13 +31,15 @@ def get_cpu_info():
                 elif line.startswith('cpu family'):
                     cpu_family = int(line.split(':')[1].strip())
                 elif line.startswith('model') and not line.startswith('model name'):
-                    model = int(line.split(':')[1].strip(), 16)
+                    model = int(line.split(':')[1].strip())
+                elif line.startswith('stepping'):
+                    stepping = int(line.split(':')[1].strip())
 
                 # Break after finding all info for the first CPU
-                if vendor_id and cpu_family is not None and model is not None:
+                if vendor_id and cpu_family is not None and model is not None and stepping is not None:
                     break
 
-            return vendor_id, cpu_family, model
+            return vendor_id, cpu_family, model, stepping
 
         # Fallback for other systems - limited info available
         return None, None, None
@@ -56,12 +59,13 @@ def get_micro_architecture(architecture_dir):
     if not map_file_path.is_file():
         return None
 
-    vendor_id, cpu_family, model = get_cpu_info()
+    vendor_id, cpu_family, model, stepping = get_cpu_info()
     if not vendor_id or cpu_family is None or model is None:
         return None
 
     # Format the CPU signature
     cpu_signature = f"{vendor_id}-{cpu_family}-{model:X}"
+    cpu_signature_with_stepping = f"{cpu_signature}-{stepping}"
 
     with open(map_file_path, 'r') as f:
         reader = csv.DictReader(f)
@@ -83,7 +87,7 @@ def get_micro_architecture(architecture_dir):
             # Add anchors for exact matching
             regex_pattern = f"^{regex_pattern}$"
 
-            if re.match(regex_pattern, cpu_signature, re.IGNORECASE):
+            if re.match(regex_pattern, cpu_signature, re.IGNORECASE) or re.match(regex_pattern, cpu_signature_with_stepping, re.IGNORECASE):
                 return row['Filename']
 
     return None
