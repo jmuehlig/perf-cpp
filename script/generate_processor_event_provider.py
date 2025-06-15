@@ -30,7 +30,7 @@ def get_cpu_info():
                 elif line.startswith('cpu family'):
                     cpu_family = int(line.split(':')[1].strip())
                 elif line.startswith('model') and not line.startswith('model name'):
-                    model = int(line.split(':')[1].strip())
+                    model = int(line.split(':')[1].strip(), 16)
 
                 # Break after finding all info for the first CPU
                 if vendor_id and cpu_family is not None and model is not None:
