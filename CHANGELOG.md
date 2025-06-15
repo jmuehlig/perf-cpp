@@ -1,8 +1,11 @@
 # *perf-cpp*: Changelog
 
 ## v0.12 (in progress)
-- **Translating Instruction Pointers into Symbols**: The `perf::SymbolResolver` can now translate instruction pointers into symbols (i.e., function names) (see the [documentation](docs/sampling-symbols-and-flamegraphs.md#translating-instruction-pointers-into-symbols)).
-- **Generating FlameGraphs**: Using the `perf::analyzer::FlameGraphGenerator`, sampling results can now be turned into a format to visualize FlameGraphs understood by tools such as [Brendan Gregg's FlameGraph](https://github.com/brendangregg/FlameGraph), [Speedscope](https://www.speedscope.app/), or [flamegraph.com](https://flamegraph.com/) (see the [documentation](docs/sampling-symbols-and-flamegraphs.md#translating-sampler-results-into-flame-graphs)).
+This release introduces symbolic analysis and visualization support for sampled data, along with a built-in library of processor-specific performance events.
+
+- **Symbol Resolution**: Instruction pointers in sampled data can now be translated into human-readable symbols (e.g., function names) using `perf::SymbolResolver` (see the [documentation](docs/sampling-symbols-and-flamegraphs.md#translating-instruction-pointers-into-symbols)).
+- **FlameGraph Support**: Sampling data can be exported in formats compatible with tools like [Brendan Gregg's FlameGraph](https://github.com/brendangregg/FlameGraph), [Speedscope](https://www.speedscope.app/), or [flamegraph.com](https://flamegraph.com/) , using `perf::analyzer::FlameGraphGenerator` (see the [documentation](docs/sampling-symbols-and-flamegraphs.md#translating-sampler-results-into-flame-graphs)).
+- **Built-in Event Definitions**: A curated collection of `x86`-specific hardware event definitions is now included in the library under [events/x86](events/x86). These can be loaded at runtime via `perf::CounterDefinition` and serve as a replacement for the `make perf-list` tool.
 
 ## v0.11.1
 - Unified the behaviour of the `time` and `timestamp` fields in the sampling API, removing discrepancies between the two.

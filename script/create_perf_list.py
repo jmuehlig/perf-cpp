@@ -50,6 +50,9 @@ for events_content in str(events_result.stdout).split('#------------------------
 with open('../perf_list.csv', 'w') as perf_out_file:
     for counter in counters:
         perf_out_file.write(f'{counter[0]},{counter[1]}\n')
-    
+
+print('-------------------------------------------------------------------------------------------------------------------------------------------------')
+print('WARNING: The \'perf-list\' target is deprecated and will be removed with perf-cpp v0.14! Use the processor-specific event files in events/ instead.')
+print('-------------------------------------------------------------------------------------------------------------------------------------------------')
 print(f'Wrote {len(counters)} counter definitions to \'perf_list.csv\'.')
 
