@@ -31,6 +31,7 @@ set(PERF_CPP_SRC
     src/config.cpp
     src/counter.cpp
     src/counter_definition.cpp
+    src/event_provider.cpp
     src/counter_result.cpp
     src/event_counter.cpp
     src/exception.cpp

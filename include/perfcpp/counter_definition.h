@@ -1,16 +1,18 @@
 #pragma once
 
 #include "counter.h"
+#include "event_provider.h"
 #include "metric.h"
 #include "time_event.h"
 #include <algorithm>
 #include <cstdint>
-#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <unordered_map>
+#include <utility>
 
 namespace perf {
 /**
@@ -21,7 +23,7 @@ class CounterDefinition
 public:
   static CounterDefinition DEFAULT;
 
-  CounterDefinition();
+  explicit CounterDefinition(std::unique_ptr<EventProvider>&& event_provider = nullptr);
   explicit CounterDefinition(const std::string& config_file);
   explicit CounterDefinition(std::string&& config_file)
     : CounterDefinition(config_file)
@@ -341,14 +343,9 @@ public:
    * Reads and adds counters from the provided CSV file with counter configurations.
    * @param csv_filename CSV file with counter configurations.
    */
-  void read_counter_configuration(const std::string& csv_filename);
-
-  /**
-   * Translates a config string (hexadecimal or decimal) to a number.
-   * @param config Config string.
-   * @return Number.
-   */
-  [[nodiscard]] static std::uint64_t config_string_to_unsigned_long(const std::string& config);
+  [[deprecated("Adding events from a file after construction will be removed with v0.13. Use the constructor and "
+               "provide a file instead.")]] void
+  read_counter_configuration(const std::string& csv_filename);
 
   /**
    * @return A table containing all events, metrics, and virtual time events.
@@ -365,69 +362,5 @@ private:
 
   /// List of time events.
   std::unordered_map<std::string, std::unique_ptr<TimeEvent>> _time_events;
-
-  /**
-   * Adds all counters specified as constants by the perf subsystem in the linux perf header.
-   */
-  void add_general_events_from_perf_subsystem();
-
-  /**
-   * Scans the given path for events and adds the found ones.
-   * All events that are already specified (e.g., by the perf subsystem constant) will NOT be replaced.
-   *
-   * @param pmu_name Name of the PMU the events belong to.
-   * @param path Path of the event descriptors.
-   */
-  void add_events_from_descriptor_files(std::string&& pmu_name, std::string&& path);
-
-  /**
-   * If the system is an AMD, read IBS Fetch PMU, if supported.
-   */
-  void add_amd_ibs_fetch_events();
-
-  /**
-   * If the system is an AMD, read IBS Op PMU, if supported.
-   */
-  void add_amd_ibs_op_events();
-
-  /**
-   * Initializes time events.
-   */
-  void add_virtual_time_events();
-
-  /**
-   * Add pre-defined metrics.
-   */
-  void add_metrics();
-
-  /**
-   * Parses an event file descriptor (typically located somewhere in the /sys/bus/event_source/.. directory).
-   * Typically, event file descriptors contain the event code, umask, and some additional data (e.g., ldlat for load
-   * latency).
-   *
-   * @param path Path of the file descriptor.
-   * @return A pair of configuration code and (optional) additional information, like load latency. When the descriptor
-   * could not be parsed, nullopt will be returned.
-   */
-  [[nodiscard]] static std::optional<std::pair<std::uint64_t, std::optional<std::uint64_t>>>
-  parse_event_file_descriptor_config(const std::filesystem::path& path);
-
-  /**
-   * Tries to read the type from the provided file.
-   *
-   * @param path Path of the type file.
-   * @return Integer representation of type.
-   */
-  [[nodiscard]] static std::optional<std::uint32_t> parse_event_file_descriptor_type(std::filesystem::path&& path);
-
-  /**
-   * Tries to read a format file and returns the id of the config and the number of bits.
-   * Some formats have multiple entries.
-   *
-   * @param path Path of the format file.
-   * @return List of pairs (config id, bits).
-   */
-  [[nodiscard]] static std::vector<std::pair<std::uint8_t, std::pair<std::uint8_t, std::optional<std::uint8_t>>>>
-  parse_event_file_descriptor_format(std::filesystem::path&& path);
 };
 }
