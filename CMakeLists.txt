@@ -73,6 +73,12 @@ endif()
 add_custom_target(perf-list python3 ${CMAKE_SOURCE_DIR}/script/create_perf_list.py)
 
 #############################################################
+#   Custom target to download hardware events from linux    #
+#   kernel into CSV files                                   #
+#############################################################
+add_custom_target(event-library python3 ${CMAKE_SOURCE_DIR}/script/create_event_library.py)
+
+#############################################################
 #   Rules for installing the library                        #
 #############################################################
 if(PROJECT_IS_TOP_LEVEL)
