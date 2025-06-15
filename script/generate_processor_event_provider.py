@@ -55,7 +55,7 @@ def get_architecture():
     return None
 
 def get_micro_architecture(architecture_dir):
-    map_file_path = architecture_dir / 'mapfile.csv'
+    map_file_path = architecture_dir / 'cpu-to-micro-architecture-mapping.csv'
     if not map_file_path.is_file():
         return None
 
@@ -71,24 +71,10 @@ def get_micro_architecture(architecture_dir):
         reader = csv.DictReader(f)
 
         for row in reader:
-            family_model_pattern = row['Family-model']
-
-            # Convert the pattern to a regex
-            # Replace hex ranges like [56789ABCDEF] and handle other patterns
-            regex_pattern = family_model_pattern
-
-            # Handle patterns like GenuineIntel-6-(97|9A|B7|BA|BF)
-            # Convert to proper regex format
-            regex_pattern = regex_pattern.replace('(', '(')
-            regex_pattern = regex_pattern.replace(')', ')')
-            regex_pattern = regex_pattern.replace('[[:xdigit:]]', '[0-9A-F]')
-
-            # Escape special regex characters except those we want to keep
-            # Add anchors for exact matching
-            regex_pattern = f"^{regex_pattern}$"
+            regex_pattern = f"^{row['CPU-Pattern']}$"
 
             if re.match(regex_pattern, cpu_signature, re.IGNORECASE) or re.match(regex_pattern, cpu_signature_with_stepping, re.IGNORECASE):
-                return row['Filename']
+                return row['micro-architecture']
 
     return None
 
@@ -123,6 +109,8 @@ perf::ProcessorSpecificEventProvider::add_events(perf::CounterDefinition& counte
     cpp_content = cpp_content + """
 }
 """
+
+    print(f"[INCLUDE_PROCESSOR_EVENTS] Generated source file with {len(events)} events.")
     return cpp_content
 
 
@@ -192,7 +180,7 @@ def main():
     # Write to output file
     if write_output_file(args.output, cpp_content):
         if args.verbose:
-            print(f"[INCLUDE_PROCESSOR_EVENTS] Generated source file with processor-specific events: {args.output}")
+            print(f"[INCLUDE_PROCESSOR_EVENTS] Wrote source file with processor-specific events: {args.output}")
         return 0
     else:
         print("[INCLUDE_PROCESSOR_EVENTS] Generation failed", file=sys.stderr)

@@ -14,8 +14,7 @@ import json
 import re
 from pathlib import Path
 from typing import List, Optional, Tuple
-
-import shutil
+import csv
 import requests
 
 
@@ -162,7 +161,7 @@ class PMUEventConverter:
             if microarch_dir.is_dir():
                 self._convert_microarchitecture(microarch_dir, arch_dir.name)
 
-        self._copy_map_file(arch_dir.name)
+        self._convert_map_file(arch_dir.name)
 
     def _convert_microarchitecture(self, microarch_dir: Path, arch_name: str) -> None:
         """Convert JSON files from one micro-architecture to CSV."""
@@ -186,12 +185,12 @@ class PMUEventConverter:
 
             for event in data:
                 if "EventName" in event:
-                    event_codes = self._generate_event_codes(event)
-                    if event_codes[0] is not None:
+                    event_codes =  self._generate_event_codes(event)
+                    for index, event_code in enumerate(event_codes):
                         events.append((
-                            event['EventName'],
-                            hex(event_codes[0]),
-                            hex(event_codes[1]) if event_codes[1] is not None else None
+                            event['EventName'].lower() if len(event_codes) == 1 else f'{event['EventName'].lower()}_{index}',
+                            hex(event_code[0]),
+                            None if not event_code[1] else hex(event_code[1])
                         ))
 
         except (json.JSONDecodeError, IOError) as e:
@@ -203,21 +202,18 @@ class PMUEventConverter:
         """Generate event codes from event configuration."""
         try:
             if "EventCode" not in event:
-                return (None, None)
+                return []
 
             # Calculate config0 (main event code)
             umask = 0 if "UMask" not in event else int(event["UMask"], 0)
-            config0 = (umask << 8) | int(event["EventCode"], 0)
-            config1 = None
 
-            # Extract config1 from Filter if present
-            if "Filter" in event:
-                config1 = self._extract_config1_from_filter(event["Filter"])
+            codes = [int(code.strip(), 0) for code in event["EventCode"].split(',')]
+            config1 = None if "Filter" not in event else self._extract_config1_from_filter(event["Filter"])
 
-            return (config0, config1)
+            return [((umask << 8) | code, config1) for code in codes]
 
         except (ValueError, KeyError):
-            return (None, None)
+            return []
 
     def _extract_config1_from_filter(self, filter_string: str) -> Optional[int]:
         """Extract config1 value from filter string."""
@@ -248,12 +244,32 @@ class PMUEventConverter:
 
         print(f"Created CSV: {csv_path} ({len(events)} events)")
 
-    def _copy_map_file(self, arch_name):
+    def _convert_map_file(self, arch_name):
         map_file_source_path = self.json_dir / arch_name / "mapfile.csv"
         if map_file_source_path.is_file():
-            map_file_target_path = self.csv_dir / arch_name / "mapfile.csv"
-            shutil.copy(str(map_file_source_path), str(map_file_target_path))
-            print(f"Created Mapfile: {map_file_target_path}")
+            map_file_target_path = self.csv_dir / arch_name / "cpu-to-micro-architecture-mapping.csv"
+
+            with open(map_file_source_path, 'r', newline='') as source_map_file:
+                source_map_file_reader = csv.reader(source_map_file)
+                source_header = next(source_map_file_reader)
+                source_indices = [source_header.index(column) for column in ['Family-model','Filename']]
+
+                rows = []
+                for row in source_map_file_reader:
+                    pattern = row[source_indices[0]].replace('[[:xdigit:]]', '[0-9A-F]')
+                    micro_architecture = row[source_indices[1]]
+                    rows.append([pattern, micro_architecture])
+
+                rows.sort(key=lambda r: r[0], reverse=False)
+
+                with open(map_file_target_path, 'w', newline='') as target_map_file:
+                    target_map_file_writer = csv.writer(target_map_file)
+                    target_map_file_writer.writerow(['CPU-Pattern', 'micro-architecture'])
+
+                    for row in rows:
+                        target_map_file_writer.writerow(row)
+
+                    print(f"Created Mapfile: {map_file_target_path}")
 
 
 def main():
