@@ -4,7 +4,13 @@
 #include <perfcpp/table.h>
 #include <sstream>
 
+#ifdef PERFCPP_HAS_PROCESSOR_SPECIFIC_EVENTS
+perf::CounterDefinition perf::CounterDefinition::DEFAULT = perf::CounterDefinition{
+  std::make_unique<ProcessorSpecificEventProvider>()
+};
+#else
 perf::CounterDefinition perf::CounterDefinition::DEFAULT = perf::CounterDefinition{};
+#endif
 
 perf::CounterDefinition::CounterDefinition(std::unique_ptr<EventProvider>&& event_provider)
 {

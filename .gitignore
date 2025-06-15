@@ -7,3 +7,4 @@ CMakeCache.txt
 cmake_install.cmake
 build/
 tests
+src/processor_specific_event_provider.cpp
