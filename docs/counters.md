@@ -3,7 +3,7 @@
 Modern CPUs introduce new performance events with each generation, often unique to their micro-architecture. 
 To accurately measure performance across diverse hardware platforms, it’s important to use events tailored to the underlying processor.
 
-The `perf::CounterDefinition` class allows you to define and integrate both standard and hardware-specific performance counters.
+The `perf::CounterDefinition` class allows you to define and integrate both standard and hardware-specific performance events.
 
 > [!TIP] 
 > *perf-cpp* includes an event code library for *x86* processors (see the [events/ directory](../events/x86)).
@@ -65,7 +65,7 @@ cpu-migrations
 migrations
 ```
 
-In addition, *perf-cpp* supports *virtual time events*, which use `std::chrono` rather than hardware counters. 
+In addition, *perf-cpp* supports *virtual time events*, which use `std::chrono` rather than hardware events. 
 These are useful for measuring wall-clock time or for integrating time into custom [metrics](metrics.md):
 
 ```
@@ -112,7 +112,7 @@ std::cout << counter_definition.to_string() << std::endl;
 
 ### Generating Processor-Specific Events at Compile Time
 However, copying and choosing the matching CSV file might be cumbersome.
-For an easier use, *perf-cpp* can auto-generate a C++ source file containing the processor-specific counters at compile time.
+For an easier use, *perf-cpp* can auto-generate a C++ source file containing the processor-specific events at compile time.
 The new class will be compiled and linked automatically; processor-specific events are available out-of-the box.
 
 For the time begin, the option `GEN_PROCESSOR_EVENTS` needs to be activated when building *perf-cpp*:
@@ -131,7 +131,7 @@ cmake --build build
 ```
 
 > [!IMPORTANT]
-> Please be careful when using this option and double-check your results as counters might be configured wrong.
+> Please be careful when using this option and double-check your results as events might be configured wrong.
 > We have not tested all available processors. 
 
 ### Adding Events Manually
