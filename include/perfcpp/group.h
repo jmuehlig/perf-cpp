@@ -200,6 +200,33 @@ public:
    */
   [[nodiscard]] std::vector<Counter>& members() noexcept { return _members; }
 
+  /**
+   * Calculates the multiplexing factor based on the time the counter was enabled and the time the counter was running.
+   *
+   * @param time_enabled Time the counter was enabled.
+   * @param time_running Time the counter was running.
+   * @return Multiplexing factor the result of the events has to be multiplied with.
+   */
+  [[nodiscard]] static double calculate_multiplexing_factor(const CounterValues<MAX_MEMBERS>::time_t time_enabled, const CounterValues<MAX_MEMBERS>::time_t time_running) noexcept
+  {
+    return time_running > 0ULL ? double(time_enabled) / double(time_running) : 1.;
+  }
+
+  /**
+   * Calculates the multiplexing factor based on the time the counter was enabled and the time the counter was running.
+   *
+   * @param start Start value of the counter.
+   * @param end End value of the counter.
+   * @return Multiplexing factor the result of the events has to be multiplied with.
+   */
+  [[nodiscard]] static double calculate_multiplexing_factor(const CounterValues<MAX_MEMBERS>& start, const CounterValues<MAX_MEMBERS>& end) noexcept
+  {
+    const auto time_enabled = end.time_enabled() - start.time_enabled();
+    const auto time_running = end.time_running() - start.time_running();
+
+    return calculate_multiplexing_factor(time_enabled, time_running);
+  }
+
 private:
   /// List of all the group members.
   std::vector<Counter> _members;

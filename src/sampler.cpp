@@ -348,7 +348,7 @@ perf::Sampler::result(const bool sort_by_time)
                                          sample_counter.has_amd_op_pmu_counter(),
                                          sample_counter.has_amd_fetch_pmu_counter(),
                                          sample_counter.requested_events(),
-                                         sample_counter.group().size());
+                                         sample_counter.group());
 
     /// Append samples to the entire result.
     std::move(samples.begin(), samples.end(), std::back_inserter(result));

@@ -31,6 +31,7 @@ public:
 
   ~CounterConfig() noexcept = default;
 
+  void scale(const double scale) noexcept { _scale = scale; }
   void precise_ip(const std::uint8_t precise_ip) noexcept { _precise_ip = precise_ip; }
   void period_or_frequency(const PeriodOrFrequency period_or_frequency) noexcept
   {
@@ -40,6 +41,7 @@ public:
   [[nodiscard]] std::uint32_t type() const noexcept { return _type; }
   [[nodiscard]] std::uint64_t event_id() const noexcept { return _event_id; }
   [[nodiscard]] std::array<std::uint64_t, 2U> event_id_extension() const noexcept { return _event_id_extension; }
+  [[nodiscard]] double scale() const noexcept { return _scale; }
   [[nodiscard]] std::optional<std::uint8_t> precise_ip() const noexcept { return _precise_ip; }
   [[nodiscard]] std::optional<PeriodOrFrequency> period_or_frequency() const noexcept { return _period_or_frequency; }
 
@@ -52,6 +54,7 @@ private:
   std::uint32_t _type;
   std::uint64_t _event_id;
   std::array<std::uint64_t, 2U> _event_id_extension;
+  double _scale {1.0};
   std::optional<std::uint8_t> _precise_ip{ std::nullopt };
   std::optional<PeriodOrFrequency> _period_or_frequency{ std::nullopt };
 };
@@ -228,6 +231,11 @@ public:
    * @return The sample buffer that manages the mmap-ed buffer for storing samples and/or live events.
    */
   [[nodiscard]] const std::unique_ptr<MmapBuffer>& mmap_buffer() noexcept { return _mmap_buffer; }
+
+  /**
+   * @return Scale of the event, provided by the event configuration.
+   */
+  [[nodiscard]] double scale() const noexcept { return _config.scale(); }
 
   /**
    * Prints the configuration of the counter, borrowing the format of Linux perf.

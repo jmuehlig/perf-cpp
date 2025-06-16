@@ -135,6 +135,11 @@ perf::SystemSpecificEventProvider::add_events(perf::CounterDefinition& counter_d
   if (std::filesystem::exists("/sys/bus/event_source/devices/cpu_atom/")) {
     SystemSpecificEventProvider::add_events(counter_definition, "cpu-atom", "/sys/bus/event_source/devices/cpu_atom/");
   }
+
+  /// Read events from the power PMU, if available.
+  if (std::filesystem::exists("/sys/bus/event_source/devices/power/")) {
+    SystemSpecificEventProvider::add_events(counter_definition, "power", "/sys/bus/event_source/devices/power/");
+  }
 }
 
 void
@@ -145,21 +150,34 @@ perf::SystemSpecificEventProvider::add_events(perf::CounterDefinition& counter_d
   /// Parse the type for the PMU.
   if (auto type = SystemSpecificEventProvider::parse_event_file_descriptor_type(path + "type"); type.has_value()) {
     /// Iterate over all files in the descriptor path.
-    for (auto& file_descriptor : std::filesystem::directory_iterator(path + "events")) {
+    for (const auto& file_entry : std::filesystem::directory_iterator(path + "events")) {
 
-      /// Check if a counter with the given filename already exists. If yes, do not add another.
-      if (!counter_definition.counter(pmu_name, file_descriptor.path().filename()).has_value()) {
+      /// Events are only described in files without extension.
+      if (file_entry.path().extension() == "") {
 
-        /// Parse the file descriptor containing configuration code and further information.
-        if (const auto event_configuration =
-              SystemSpecificEventProvider::parse_event_file_descriptor_config(file_descriptor.path());
-            event_configuration.has_value()) {
+        /// Check if a counter with the given filename already exists. If yes, do not add another.
+        if (!counter_definition.counter(pmu_name, file_entry.path().filename()).has_value()) {
 
-          /// Add the event, if parsing was successfully.
-          auto config = CounterConfig{ type.value(),
-                                       std::get<0>(event_configuration.value()),
-                                       std::get<1>(event_configuration.value()).value_or(0U) };
-          counter_definition.add(std::string{ pmu_name }, file_descriptor.path().filename(), config);
+          /// Parse the file descriptor containing configuration code and further information.
+          if (const auto event_configuration =
+                SystemSpecificEventProvider::parse_event_file_descriptor_config(file_entry.path());
+              event_configuration.has_value()) {
+
+            /// Add the event, if parsing was successfully.
+            auto config = CounterConfig{ type.value(),
+                                         std::get<0>(event_configuration.value()),
+                                         std::get<1>(event_configuration.value()).value_or(0U) };
+
+            /// Try to find and parse a .scale file for the given event. Only a few events (e.g., the power PMU)
+            /// provide/need a scale factor.
+            if (const auto scale =
+                  SystemSpecificEventProvider::parse_event_file_descriptor_scale(file_entry.path().string() + ".scale");
+                scale.has_value()) {
+              config.scale(scale.value());
+            }
+
+            counter_definition.add(std::string{ pmu_name }, file_entry.path().filename(), config);
+          }
         }
       }
     }
@@ -220,9 +238,11 @@ perf::SystemSpecificEventProvider::parse_event_file_descriptor_config(const std:
     }
 
     /// Combine event and umask to a single event id.
-    if (event.has_value() && umask.has_value()) {
-      const auto event_configuration =
-        std::stoull(/* combine <umask><event> */ umask.value().append(event.value()), nullptr, 16);
+    if (event.has_value()) {
+      const auto event_value = std::stoull(event.value(), nullptr, 16);
+      const auto umask_value = umask.has_value() ? std::stoull(umask.value(), nullptr, 16) : 0UL;
+
+      const auto event_configuration = (umask_value << 8) | event_value;
 
       if (ldlat.has_value()) {
         return std::make_pair(event_configuration, std::stoull(ldlat.value()));
@@ -245,6 +265,24 @@ perf::SystemSpecificEventProvider::parse_event_file_descriptor_type(std::filesys
   auto type_stream = std::ifstream{ path };
   if (type_stream.is_open()) {
     std::uint32_t type;
+    type_stream >> type;
+
+    return type;
+  }
+
+  return std::nullopt;
+}
+
+std::optional<double>
+perf::SystemSpecificEventProvider::parse_event_file_descriptor_scale(std::filesystem::path&& path)
+{
+  if (!std::filesystem::exists(path)) {
+    return std::nullopt;
+  }
+
+  auto type_stream = std::ifstream{ path };
+  if (type_stream.is_open()) {
+    double type;
     type_stream >> type;
 
     return type;

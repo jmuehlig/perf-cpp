@@ -134,9 +134,7 @@ perf::Group::stop()
   this->disable();
 
   /// Calculate multiplexing correction.
-  const auto time_enabled = double(this->_end_value.time_enabled() - this->_start_value.time_enabled());
-  const auto time_running = double(this->_end_value.time_running() - this->_start_value.time_running());
-  this->_multiplexing_correction = time_running > .0 ? time_enabled / time_running : 1.;
+  this->_multiplexing_correction = Group::calculate_multiplexing_factor(this->_start_value, this->_end_value);
 }
 
 void
@@ -177,7 +175,7 @@ perf::Group::get(const std::size_t index) const noexcept
     if (const auto start_value = this->_start_value.value(counter.id()); start_value.has_value()) {
       /// Correct and return the result, if the counter was found.
       if (const auto end_value = this->_end_value.value(counter.id()); end_value.has_value()) {
-        const auto result = double(end_value.value() - start_value.value());
+        const auto result = double(end_value.value() - start_value.value()) * counter.scale();
 
         /// Fall back to zero, of the counter value is 0 (or lower).
         return std::max(.0, result) * this->_multiplexing_correction;

@@ -89,6 +89,14 @@ public:
   [[nodiscard]] static std::optional<std::uint32_t> parse_event_file_descriptor_type(std::filesystem::path&& path);
 
   /**
+   * Tries to read the scale from the provided file.
+   *
+   * @param path Path of the type file.
+   * @return Double representation of scale.
+   */
+  [[nodiscard]] static std::optional<double> parse_event_file_descriptor_scale(std::filesystem::path&& path);
+
+  /**
    * Parses an event file descriptor (typically located somewhere in the /sys/bus/event_source/.. directory).
    * Typically, event file descriptors contain the event code, umask, and some additional data (e.g., ldlat for load
    * latency).

@@ -159,14 +159,14 @@ public:
    * @param has_amd_ibs_op_pmu Flag, indicating if the IBS Op PMU was used.
    * @param has_amd_ibs_fetch_pmu Flag, indicating if the IBS Fetch PMU was used.
    * @param requested_event_set List of requested events.
-   * @param count_hardware_counter Number of hardware recorded counters.
+   * @param event_group Group of hardware events.
    * @return List of decoded samples.
    */
   [[nodiscard]] std::vector<Sample> decode(std::vector<std::vector<std::byte>>&& sample_buffers,
                                            bool has_amd_ibs_op_pmu,
                                            bool has_amd_ibs_fetch_pmu,
                                            const RequestedEventSet& requested_event_set,
-                                           std::size_t count_hardware_counter);
+                                           const Group& event_group);
 
 private:
   const CounterDefinition& _counter_definition;
@@ -188,14 +188,14 @@ private:
    * @param has_amd_ibs_op_pmu Flag indicating if the AMD IBS Op PMU is the trigger.
    * @param has_amd_ibs_fetch_pmu Flag, indicating if the AMD IBS Fetch PMU is the trigger.
    * @param requested_event_set Set of requested events
-   * @param count_hardware_counter Number of recorded hardware counters.
+   * @param event_group Group of hardware events.
    * @return Sample.
    */
   [[nodiscard]] perf::Sample decode_sample_event(SampleIterator&& entry,
                                                  bool has_amd_ibs_op_pmu,
                                                  bool has_amd_ibs_fetch_pmu,
                                                  const RequestedEventSet& requested_event_set,
-                                                 std::size_t count_hardware_counter) const;
+                                                 const Group& event_group) const;
 
   /**
    * Reads registers from the current buffer entry.
@@ -210,13 +210,13 @@ private:
    *
    * @param entry Current position at the buffer.
    * @param requested_event_set Set of requested events
-   * @param count_hardware_counter Number of recorded hardware counters.
+   * @param event_group Group of hardwre events.
    * @return Event values
    */
-  [[nodiscard]] std::optional<CounterResult> decode_hardware_counter_events(
+  [[nodiscard]] std::optional<CounterResult> decode_hardware_events_values(
     SampleIterator& entry,
     const RequestedEventSet& requested_event_set,
-    std::size_t count_hardware_counter) const;
+    const Group& event_group) const;
 
   /**
    * Reads the callchain from the current buffer entry.

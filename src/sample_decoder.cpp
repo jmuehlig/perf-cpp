@@ -35,7 +35,7 @@ perf::SampleDecoder::decode(std::vector<std::vector<std::byte>>&& sample_buffers
                             const bool has_amd_ibs_op_pmu,
                             const bool has_amd_ibs_fetch_pmu,
                             const perf::RequestedEventSet& requested_event_set,
-                            const std::size_t count_hardware_counter)
+                            const Group& event_group)
 {
   auto samples = std::vector<perf::Sample>{};
   samples.reserve(sample_buffers.size() * 2048UL);
@@ -56,7 +56,7 @@ perf::SampleDecoder::decode(std::vector<std::vector<std::byte>>&& sample_buffers
 
       if (entry.is_sample_event()) { /// Read "normal" samples.
         samples.push_back(this->decode_sample_event(
-          std::move(entry), has_amd_ibs_op_pmu, has_amd_ibs_fetch_pmu, requested_event_set, count_hardware_counter));
+          std::move(entry), has_amd_ibs_op_pmu, has_amd_ibs_fetch_pmu, requested_event_set, event_group));
       } else if (entry.is_loss_event()) { /// Read lost samples.
         samples.push_back(this->decode_loss_event(std::move(entry)));
       } else if (entry.is_context_switch_event()) { /// Read context switch.
@@ -107,7 +107,7 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
                                          bool has_amd_ibs_op_pmu,
                                          bool has_amd_ibs_fetch_pmu,
                                          const RequestedEventSet& requested_event_set,
-                                         std::size_t count_hardware_counter) const
+                                         const Group& event_group) const
 
 {
   auto sample = Sample{};
@@ -149,10 +149,9 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
   }
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_READ)) {
-    auto counter_result =
-      SampleDecoder::decode_hardware_counter_events(entry, requested_event_set, count_hardware_counter);
-    if (counter_result.has_value()) {
-      sample.counter(std::move(counter_result.value()));
+    auto event_result = SampleDecoder::decode_hardware_events_values(entry, requested_event_set, event_group);
+    if (event_result.has_value()) {
+      sample.counter(std::move(event_result.value()));
     }
   }
 
@@ -363,41 +362,43 @@ perf::SampleDecoder::decode_registers(SampleIterator& entry, const Registers& re
 }
 
 std::optional<perf::CounterResult>
-perf::SampleDecoder::decode_hardware_counter_events(SampleIterator& entry,
+perf::SampleDecoder::decode_hardware_events_values(SampleIterator& entry,
                                                     const RequestedEventSet& requested_event_set,
-                                                    std::size_t count_hardware_counter) const
+                                                    const Group& event_group) const
 {
-  /// Read the number of counters.
-  const auto count_counter_values = entry.read<CounterValues<Group::MAX_MEMBERS>::size_t>();
+  /// Read the number of hardware events.
+  const auto count_events = entry.read<CounterValues<Group::MAX_MEMBERS>::size_t>();
 
-  if (count_counter_values != count_hardware_counter) {
+  if (count_events != event_group.size()) {
     return std::nullopt;
   }
 
   /// Time enabled and running for correction.
   const auto time_enabled = entry.read<CounterValues<Group::MAX_MEMBERS>::time_t>();
   const auto time_running = entry.read<CounterValues<Group::MAX_MEMBERS>::time_t>();
-  const auto multiplexing_correction = time_running > 0ULL ? double(time_enabled) / double(time_running) : 1.;
+  const auto multiplexing_correction = Group::calculate_multiplexing_factor(time_enabled, time_running);
 
-  /// Read the counters (if the number matches the number of specified counters).
-  auto* counter_values = entry.read<CounterValues<Group::MAX_MEMBERS>::ValueAndIdentifier>(count_counter_values);
+  /// Read the event values (if the number matches the number of specified events).
+  auto* raw_event_values = entry.read<CounterValues<Group::MAX_MEMBERS>::ValueAndIdentifier>(count_events);
 
   /// Create a list of results with only hardware events – regardless of their visibility in the result. This list will
   /// be used to build a result containing visible events and metrics.
-  auto hardware_counter_results = std::vector<std::pair<std::string_view, double>>{};
-  hardware_counter_results.reserve(count_hardware_counter);
+  auto event_results = std::vector<std::pair<std::string_view, double>>{};
+  event_results.reserve(event_group.size());
   for (const auto& requested_event : requested_event_set) {
     if (requested_event.is_hardware_event()) {
-      const auto counter_index = requested_event.scheduled_group()->position();
+      const auto event_index = requested_event.scheduled_group()->position();
+      const auto& event = event_group.member(event_index);
+
       /// Counter value (corrected).
-      const auto counter_result = double(counter_values[counter_index].value()) * multiplexing_correction;
-      hardware_counter_results.emplace_back(requested_event.event_name(), counter_result);
+      const auto event_value = double(raw_event_values[event_index].value()) * event.scale() * multiplexing_correction;
+      event_results.emplace_back(requested_event.event_name(), event_value);
     }
   }
 
   /// Build a result containing metrics and hardware events requested by teh user.
   return requested_event_set.result(
-    this->_counter_definition, CounterResult{ std::move(hardware_counter_results) }, 1ULL);
+    this->_counter_definition, CounterResult{ std::move(event_results) }, 1ULL);
 }
 
 std::optional<std::vector<std::uintptr_t>>

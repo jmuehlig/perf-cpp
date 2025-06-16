@@ -386,7 +386,6 @@ perf::Counter::to_string(const bool is_group_leader,
     if (group_leader_file_descriptor.has_value()) {
       stream << "    leader's file_descriptor: " << group_leader_file_descriptor.value() << "\n";
     }
-    stream << "\n";
   }
 
   /// Process
