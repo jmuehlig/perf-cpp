@@ -213,10 +213,9 @@ private:
    * @param event_group Group of hardwre events.
    * @return Event values
    */
-  [[nodiscard]] std::optional<CounterResult> decode_hardware_events_values(
-    SampleIterator& entry,
-    const RequestedEventSet& requested_event_set,
-    const Group& event_group) const;
+  [[nodiscard]] std::optional<CounterResult> decode_hardware_events_values(SampleIterator& entry,
+                                                                           const RequestedEventSet& requested_event_set,
+                                                                           const Group& event_group) const;
 
   /**
    * Reads the callchain from the current buffer entry.

@@ -58,7 +58,7 @@ public:
   [[nodiscard]] static std::uint16_t performance_counters_per_logical_core();
 
 private:
-  static std::optional<bool> _is_intel_aux_counter_required;
+  static std::optional<bool> _is_intel_aux_event_required;
   static std::optional<bool> _is_intel_12th_generation_or_newer;
   static std::optional<bool> _is_amd_ibs_supported;
   static std::optional<bool> _is_ibs_l3_filter_supported;

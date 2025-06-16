@@ -9,36 +9,50 @@
 #include <sched.h>
 
 namespace perf {
-class Process {
+class Process
+{
 public:
   static Process ANY;
   static Process CALLING;
 
-  explicit Process(const pid_t process_id) : _process_id(process_id) {
+  explicit Process(const pid_t process_id)
+    : _process_id(process_id)
+  {
   }
 
   explicit operator pid_t() const noexcept { return _process_id; }
 
   [[nodiscard]] bool is_any() const noexcept { return _process_id == ANY._process_id; }
   [[nodiscard]] bool is_calling() const noexcept { return _process_id == CALLING._process_id; }
+
+  [[nodiscard]] bool operator==(const Process other) const noexcept { return _process_id == other._process_id; }
+
 private:
   pid_t _process_id;
 };
 
-class CpuCore {
+class CpuCore
+{
 public:
   static CpuCore ANY;
 
-  explicit CpuCore(const std::uint16_t cpu_core_id) : _cpu_core_id(cpu_core_id) {
+  explicit CpuCore(const std::uint16_t cpu_core_id)
+    : _cpu_core_id(cpu_core_id)
+  {
   }
 
   explicit operator std::int32_t() const noexcept { return _cpu_core_id; }
 
   [[nodiscard]] bool is_any() const noexcept { return _cpu_core_id == ANY._cpu_core_id; }
+
+  [[nodiscard]] bool operator==(const CpuCore other) const noexcept { return _cpu_core_id == other._cpu_core_id; }
+
 private:
   std::int32_t _cpu_core_id;
 
-  explicit CpuCore(const std::int32_t cpu_core_id) : _cpu_core_id(cpu_core_id) {
+  explicit CpuCore(const std::int32_t cpu_core_id)
+    : _cpu_core_id(cpu_core_id)
+  {
   }
 };
 
@@ -158,7 +172,7 @@ public:
    *
    * @param cpu_core CPU core to monitor.
    */
-  void cpu_core(const std::uint16_t cpu_core_id) noexcept { _cpu_core = CpuCore{cpu_core_id}; }
+  void cpu_core(const std::uint16_t cpu_core_id) noexcept { _cpu_core = CpuCore{ cpu_core_id }; }
 
   /**
    * If specified, the EventCounter or Sampler will only monitor that specified process.
@@ -172,21 +186,29 @@ public:
    *
    * @param process Process to monitor.
    */
-  void process(const pid_t process_id) noexcept { _process = Process{process_id}; }
+  void process(const pid_t process_id) noexcept { _process = Process{ process_id }; }
 
   /**
    * If specified, the EventCounter or Sampler will monitor only that specified CPU.
    *
    * @param cpu_id CPU to monitor.
    */
-  [[deprecated("Will be removed with v0.13. Use cpu_core(perf::CpuCore) instead.")]] void cpu_id(const std::uint16_t cpu_id) noexcept { _cpu_core = CpuCore{cpu_id}; }
+  [[deprecated("Will be removed with v0.13. Use cpu_core(perf::CpuCore) instead.")]] void cpu_id(
+    const std::uint16_t cpu_id) noexcept
+  {
+    _cpu_core = CpuCore{ cpu_id };
+  }
 
   /**
    * If specified, the EventCounter or Sampler will only monitor that specified process.
    *
    * @param process_id Process to monitor.
    */
-  [[deprecated("Will be removed with v0.13. Use process(perf::Process) instead.")]] void process_id(const pid_t process_id) noexcept { _process = Process{process_id}; }
+  [[deprecated("Will be removed with v0.13. Use process(perf::Process) instead.")]] void process_id(
+    const pid_t process_id) noexcept
+  {
+    _process = Process{ process_id };
+  }
 
 private:
   std::uint8_t _max_groups{ 5U };
@@ -201,8 +223,8 @@ private:
 
   bool _is_debug{ false };
 
-  CpuCore _cpu_core { CpuCore::ANY };
-  Process _process { Process::CALLING };
+  CpuCore _cpu_core{ CpuCore::ANY };
+  Process _process{ Process::CALLING };
 };
 
 class SampleConfig final : public Config
@@ -253,7 +275,11 @@ public:
    *
    * @param precision Default precision for sampling.
    */
-  [[deprecated("Will be removed with v0.13. Use precision(Precision) instead.")]] void precise_ip(const Precision precision) noexcept { _precise_ip = precision; }
+  [[deprecated("Will be removed with v0.13. Use precision(Precision) instead.")]] void precise_ip(
+    const Precision precision) noexcept
+  {
+    _precise_ip = precision;
+  }
 
   /**
    * Default precision for sampling, if not specified along with a trigger.
@@ -271,7 +297,8 @@ public:
    *
    * @param precision Default precision for sampling.
    */
-  [[deprecated("Will be removed with v0.13. Use precision(Precision) instead.")]] void precise_ip(const std::uint8_t precise_ip) noexcept
+  [[deprecated("Will be removed with v0.13. Use precision(Precision) instead.")]] void precise_ip(
+    const std::uint8_t precise_ip) noexcept
   {
     switch (precise_ip) {
       case 0U:

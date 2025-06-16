@@ -92,9 +92,9 @@ public:
   /**
    * Adds the given event to the group.
    *
-   * @param counter Event to add.
+   * @param event_config Event to add.
    */
-  void add(CounterConfig counter);
+  void add(CounterConfig event_config);
 
   /**
    * Opens all counters of the group for event counting, configured by the provided config.
@@ -207,7 +207,9 @@ public:
    * @param time_running Time the counter was running.
    * @return Multiplexing factor the result of the events has to be multiplied with.
    */
-  [[nodiscard]] static double calculate_multiplexing_factor(const CounterValues<MAX_MEMBERS>::time_t time_enabled, const CounterValues<MAX_MEMBERS>::time_t time_running) noexcept
+  [[nodiscard]] static double calculate_multiplexing_factor(
+    const CounterValues<MAX_MEMBERS>::time_t time_enabled,
+    const CounterValues<MAX_MEMBERS>::time_t time_running) noexcept
   {
     return time_running > 0ULL ? double(time_enabled) / double(time_running) : 1.;
   }
@@ -219,7 +221,8 @@ public:
    * @param end End value of the counter.
    * @return Multiplexing factor the result of the events has to be multiplied with.
    */
-  [[nodiscard]] static double calculate_multiplexing_factor(const CounterValues<MAX_MEMBERS>& start, const CounterValues<MAX_MEMBERS>& end) noexcept
+  [[nodiscard]] static double calculate_multiplexing_factor(const CounterValues<MAX_MEMBERS>& start,
+                                                            const CounterValues<MAX_MEMBERS>& end) noexcept
   {
     const auto time_enabled = end.time_enabled() - start.time_enabled();
     const auto time_running = end.time_running() - start.time_running();

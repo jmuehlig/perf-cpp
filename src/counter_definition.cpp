@@ -5,9 +5,8 @@
 #include <sstream>
 
 #ifdef PERFCPP_HAS_PROCESSOR_SPECIFIC_EVENTS
-perf::CounterDefinition perf::CounterDefinition::DEFAULT = perf::CounterDefinition{
-  std::make_unique<ProcessorSpecificEventProvider>()
-};
+perf::CounterDefinition perf::CounterDefinition::DEFAULT =
+  perf::CounterDefinition{ std::make_unique<ProcessorSpecificEventProvider>() };
 #else
 perf::CounterDefinition perf::CounterDefinition::DEFAULT = perf::CounterDefinition{};
 #endif
@@ -158,7 +157,7 @@ perf::CounterDefinition::to_string() const
               Table::Header{ "config", Table::Alignment::Left },
               Table::Header{ "config1", Table::Alignment::Left },
               Table::Header{ "config2", Table::Alignment::Left },
-              Table::Header{ "scale", Table::Alignment::Left }});
+              Table::Header{ "scale", Table::Alignment::Left } });
 
   /// Add all events to the table.
   for (const auto& [pmu, events] : this->_performance_monitoring_unit_events) {
@@ -167,8 +166,7 @@ perf::CounterDefinition::to_string() const
 
       row << pmu << name << config.type() << decimal_to_hex_string(config.event_id())
           << decimal_to_hex_string(config.event_id_extension()[0U])
-          << decimal_to_hex_string(config.event_id_extension()[1U])
-          << double_to_scientific(config.scale());
+          << decimal_to_hex_string(config.event_id_extension()[1U]) << double_to_scientific(config.scale());
       table.add(std::move(row));
     }
   }

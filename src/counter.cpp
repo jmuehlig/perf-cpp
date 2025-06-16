@@ -320,8 +320,12 @@ perf::Counter::try_open_via_perf_subsystem(const perf::Config& configuration,
                                            const perf::FileDescriptorView group_leader_file_descriptor)
 {
   /// Finally, pass the configuration to the perf subsystem to open the hardware performance counter.
-  const auto file_descriptor = ::syscall(
-    __NR_perf_event_open, &this->_event_attribute, static_cast<pid_t>(configuration.process()), static_cast<std::int32_t>(configuration.cpu_core()), group_leader_file_descriptor.value(), 0);
+  const auto file_descriptor = ::syscall(__NR_perf_event_open,
+                                         &this->_event_attribute,
+                                         static_cast<pid_t>(configuration.process()),
+                                         static_cast<std::int32_t>(configuration.cpu_core()),
+                                         group_leader_file_descriptor.value(),
+                                         0);
 
   return std::make_pair(UniqueFileDescriptor{ file_descriptor }, errno);
 }

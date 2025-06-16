@@ -54,7 +54,7 @@ private:
   std::uint32_t _type;
   std::uint64_t _event_id;
   std::array<std::uint64_t, 2U> _event_id_extension;
-  double _scale {1.0};
+  double _scale{ 1.0 };
   std::optional<std::uint8_t> _precise_ip{ std::nullopt };
   std::optional<PeriodOrFrequency> _period_or_frequency{ std::nullopt };
 };

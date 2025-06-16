@@ -10,8 +10,8 @@ perf::Group::copy_from_template(const perf::Group& other)
 {
   auto copy = perf::Group{};
   copy._members.reserve(other._members.size());
-  for (const auto& counter : other._members) {
-    copy._members.push_back(Counter::copy_from_template(counter));
+  for (const auto& event : other._members) {
+    copy._members.push_back(Counter::copy_from_template(event));
   }
 
   return copy;
@@ -28,8 +28,8 @@ perf::Group::open(const perf::Config& config)
   this->_members.front().open(config, /* is live counter */ false);
 
   /// Open the other events for that counter.
-  for (auto counter_id = 1U; counter_id < this->_members.size(); ++counter_id) {
-    this->_members[counter_id].open(config, this->_members.front().file_descriptor());
+  for (auto member_id = 1U; member_id < this->_members.size(); ++member_id) {
+    this->_members[member_id].open(config, this->_members.front().file_descriptor());
   }
 }
 
@@ -65,35 +65,35 @@ perf::Group::open(const perf::Config& config,
   /// The group leader's file descriptor will be passed to further counters.
   const auto& group_leader_file_descriptor = this->_members.front().file_descriptor();
 
-  /// Open all the other counters after the first (group leader).
-  for (auto counter_id = 1U; counter_id < this->_members.size(); ++counter_id) {
-    /// Some counters on some Intel architectures (from Sapphire Rapids) need an auxiliary event in front (e.g.,
+  /// Open all the other events after the first (group leader).
+  for (auto event_id = 1U; event_id < this->_members.size(); ++event_id) {
+    /// Some events on some Intel architectures (from Sapphire Rapids) need an auxiliary event in front (e.g.,
     /// mem-loads, mem-stores). However, this auxiliary event is of a special function; e.g., although it is the group
-    /// leader, it does not need a buffer – the buffer is then allocated for the first "real" counter after the
-    /// auxiliary counter.
-    const auto is_counter_after_auxiliary = has_auxiliary_event && counter_id == 1U;
-    const auto counter_buffer_pages = is_counter_after_auxiliary ? buffer_pages : 0ULL;
+    /// leader, it does not need a buffer – the buffer is then allocated for the first "real" event after the
+    /// auxiliary event.
+    const auto is_event_after_auxiliary = has_auxiliary_event && event_id == 1U;
+    const auto event_buffer_pages = is_event_after_auxiliary ? buffer_pages : 0ULL;
 
-    /// Open the counter as a secondary counter after the group leader. Only the counter after an auxiliary counter will
+    /// Open the event as a secondary counter after the group leader. Only the event after an auxiliary event will
     /// have a buffer.
-    this->_members[counter_id].open(config,
-                                    counter_buffer_pages,
-                                    sample_type,
-                                    branch_type,
-                                    user_registers,
-                                    kernel_registers,
-                                    max_user_stack_size,
-                                    max_callstack_size,
-                                    is_include_context_switch,
-                                    group_leader_file_descriptor);
+    this->_members[event_id].open(config,
+                                  event_buffer_pages,
+                                  sample_type,
+                                  branch_type,
+                                  user_registers,
+                                  kernel_registers,
+                                  max_user_stack_size,
+                                  max_callstack_size,
+                                  is_include_context_switch,
+                                  group_leader_file_descriptor);
   }
 }
 
 void
 perf::Group::close()
 {
-  for (auto& counter : this->_members) {
-    counter.close();
+  for (auto& member : this->_members) {
+    member.close();
   }
 }
 
@@ -104,10 +104,10 @@ perf::Group::start()
     throw CannotStartEmptyGroupError{};
   }
 
-  /// Enable the counters.
+  /// Enable the counter.
   this->enable();
 
-  /// Read the counter values at start time.
+  /// Read the event values at start time.
   this->read(this->_start_value);
 }
 
@@ -127,10 +127,10 @@ perf::Group::stop()
     return;
   }
 
-  /// Read the counter values at stop time.
+  /// Read the event values at stop time.
   this->read(this->_end_value);
 
-  /// Disable counter group.
+  /// Disable group.
   this->disable();
 
   /// Calculate multiplexing correction.
@@ -160,29 +160,29 @@ perf::Group::read(CounterValues<MAX_MEMBERS>& values)
 }
 
 void
-perf::Group::add(const perf::CounterConfig counter)
+perf::Group::add(const perf::CounterConfig event_config)
 {
-  this->_members.emplace_back(counter);
+  this->_members.emplace_back(event_config);
 }
 
 double
 perf::Group::get(const std::size_t index) const noexcept
 {
   if (index < this->_members.size()) {
-    const auto& counter = this->_members[index];
+    const auto& event = this->_members[index];
 
-    /// Read start and end values for the requested counter.
-    if (const auto start_value = this->_start_value.value(counter.id()); start_value.has_value()) {
-      /// Correct and return the result, if the counter was found.
-      if (const auto end_value = this->_end_value.value(counter.id()); end_value.has_value()) {
-        const auto result = double(end_value.value() - start_value.value()) * counter.scale();
+    /// Read start and end values for the requested event.
+    if (const auto start_value = this->_start_value.value(event.id()); start_value.has_value()) {
+      /// Correct and return the result, if the event was found.
+      if (const auto end_value = this->_end_value.value(event.id()); end_value.has_value()) {
+        const auto result = double(end_value.value() - start_value.value()) * event.scale();
 
-        /// Fall back to zero, of the counter value is 0 (or lower).
+        /// Fall back to zero, of the event value is 0 (or lower).
         return std::max(.0, result) * this->_multiplexing_correction;
       }
     }
   }
 
-  /// Return if counter or values were not found.
+  /// Return if event or values were not found.
   return .0;
 }

@@ -46,8 +46,8 @@ perf::RequestedEventSet::result(const perf::CounterDefinition& counter_definitio
                                 perf::CounterResult&& hardware_events_result,
                                 const std::uint64_t normalization) const
 {
-  auto counter_results = std::vector<std::pair<std::string_view, double>>{};
-  counter_results.reserve(this->_requested_events.size());
+  auto event_results = std::vector<std::pair<std::string_view, double>>{};
+  event_results.reserve(this->_requested_events.size());
 
   /// Add all the events that are requested as visible in the results.
   for (const auto& requested_event : this->_requested_events) {
@@ -56,8 +56,8 @@ perf::RequestedEventSet::result(const perf::CounterDefinition& counter_definitio
       if (requested_event.is_hardware_event() || requested_event.is_time_event()) {
         if (const auto hardware_event_value = hardware_events_result.get(requested_event.event_name());
             hardware_event_value.has_value()) {
-          counter_results.emplace_back(requested_event.event_name(),
-                                       hardware_event_value.value() / double(normalization));
+          event_results.emplace_back(requested_event.event_name(),
+                                     hardware_event_value.value() / double(normalization));
         }
       }
 
@@ -66,12 +66,12 @@ perf::RequestedEventSet::result(const perf::CounterDefinition& counter_definitio
         if (auto metric = counter_definition.metric(requested_event.event_name()); metric.has_value()) {
           if (const auto calculated_metric_value = std::get<1>(metric.value()).calculate(hardware_events_result);
               calculated_metric_value.has_value()) {
-            counter_results.emplace_back(requested_event.event_name(), calculated_metric_value.value());
+            event_results.emplace_back(requested_event.event_name(), calculated_metric_value.value());
           }
         }
       }
     }
   }
 
-  return CounterResult{ std::move(counter_results) };
+  return CounterResult{ std::move(event_results) };
 }

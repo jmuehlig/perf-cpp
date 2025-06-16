@@ -363,8 +363,8 @@ perf::SampleDecoder::decode_registers(SampleIterator& entry, const Registers& re
 
 std::optional<perf::CounterResult>
 perf::SampleDecoder::decode_hardware_events_values(SampleIterator& entry,
-                                                    const RequestedEventSet& requested_event_set,
-                                                    const Group& event_group) const
+                                                   const RequestedEventSet& requested_event_set,
+                                                   const Group& event_group) const
 {
   /// Read the number of hardware events.
   const auto count_events = entry.read<CounterValues<Group::MAX_MEMBERS>::size_t>();
@@ -397,8 +397,7 @@ perf::SampleDecoder::decode_hardware_events_values(SampleIterator& entry,
   }
 
   /// Build a result containing metrics and hardware events requested by teh user.
-  return requested_event_set.result(
-    this->_counter_definition, CounterResult{ std::move(event_results) }, 1ULL);
+  return requested_event_set.result(this->_counter_definition, CounterResult{ std::move(event_results) }, 1ULL);
 }
 
 std::optional<std::vector<std::uintptr_t>>

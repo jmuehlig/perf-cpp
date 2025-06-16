@@ -6,8 +6,8 @@
 #include <cpuid.h>
 #endif
 
-/// Cache variable to remember if Intel's auxiliary counter is required for sampling.
-std::optional<bool> perf::HardwareInfo::_is_intel_aux_counter_required{ std::nullopt };
+/// Cache variable to remember if Intel's auxiliary event is required for sampling.
+std::optional<bool> perf::HardwareInfo::_is_intel_aux_event_required{ std::nullopt };
 
 /// Cache variable to remember if the underlying Intel hardware is from the 12th generation or even newer; these
 /// machines have heterogeneous CPUs and PMUs.
@@ -28,18 +28,18 @@ std::optional<std::uint16_t> perf::HardwareInfo::_performance_counters_per_logic
 bool
 perf::HardwareInfo::is_intel_aux_counter_required()
 {
-  if (HardwareInfo::_is_intel_aux_counter_required.has_value()) {
-    return HardwareInfo::_is_intel_aux_counter_required.value();
+  if (HardwareInfo::_is_intel_aux_event_required.has_value()) {
+    return HardwareInfo::_is_intel_aux_event_required.value();
   }
 
   if (!HardwareInfo::is_intel()) {
-    return HardwareInfo::cache_value(HardwareInfo::_is_intel_aux_counter_required, false);
+    return HardwareInfo::cache_value(HardwareInfo::_is_intel_aux_event_required, false);
   }
 
-  const auto is_aux_counter_required =
+  const auto is_aux_event_required =
     std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu/events/mem-loads-aux")) ||
     std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu_core/events/mem-loads-aux"));
-  return HardwareInfo::cache_value(HardwareInfo::_is_intel_aux_counter_required, is_aux_counter_required);
+  return HardwareInfo::cache_value(HardwareInfo::_is_intel_aux_event_required, is_aux_event_required);
 }
 
 bool

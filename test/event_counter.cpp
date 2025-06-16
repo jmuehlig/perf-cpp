@@ -8,7 +8,7 @@ TEST_CASE("configuration", "[EventCounter]")
 
   SECTION("non-existing counter")
   {
-    auto event_counter = perf::EventCounter{ };
+    auto event_counter = perf::EventCounter{};
 
     REQUIRE_THROWS(event_counter.add("non-existing"));
   }
@@ -42,7 +42,7 @@ TEST_CASE("configuration", "[EventCounter]")
 
   SECTION("empty counter")
   {
-    auto event_counter = perf::EventCounter{ };
+    auto event_counter = perf::EventCounter{};
     event_counter.start();
     readonly_benchmark.run();
     event_counter.stop();
@@ -58,7 +58,7 @@ TEST_CASE("counter scheduling", "[EventCounter]")
 
   SECTION("same hardware counter")
   {
-    auto event_counter = perf::EventCounter{ };
+    auto event_counter = perf::EventCounter{};
 
     event_counter.add(std::vector<std::string>{ "instructions", "cycles" }, perf::EventCounter::Schedule::Group);
 
@@ -74,7 +74,7 @@ TEST_CASE("counter scheduling", "[EventCounter]")
 
   SECTION("separate hardware counter")
   {
-    auto event_counter = perf::EventCounter{ };
+    auto event_counter = perf::EventCounter{};
 
     event_counter.add(std::vector<std::string>{ "instructions", "cycles" }, perf::EventCounter::Schedule::Separate);
 
@@ -96,7 +96,7 @@ TEST_CASE("counting", "[EventCounter]")
 
   SECTION("instructions only")
   {
-    auto event_counter = perf::EventCounter{ };
+    auto event_counter = perf::EventCounter{};
     event_counter.add("instructions");
 
     event_counter.start();
@@ -111,7 +111,7 @@ TEST_CASE("counting", "[EventCounter]")
 
   SECTION("re-open")
   {
-    auto event_counter = perf::EventCounter{ };
+    auto event_counter = perf::EventCounter{};
     event_counter.add("instructions");
 
     event_counter.start();
@@ -139,7 +139,7 @@ TEST_CASE("counting", "[EventCounter]")
 
   SECTION("instructions only")
   {
-    auto event_counter = perf::EventCounter{ };
+    auto event_counter = perf::EventCounter{};
     event_counter.add("instructions");
 
     event_counter.start();
@@ -152,9 +152,9 @@ TEST_CASE("counting", "[EventCounter]")
     REQUIRE(event_counter.result().get("instructions").value() < 140000000.);
   }
 
-  SECTION("cache pattern")
+  SECTION("cache pattern increasing workload")
   {
-    auto event_counter = perf::EventCounter{ };
+    auto event_counter = perf::EventCounter{};
     event_counter.add({ "seconds", "instructions", "cycles", "cache-misses" });
 
     event_counter.start();
@@ -183,9 +183,40 @@ TEST_CASE("counting", "[EventCounter]")
     REQUIRE(random_result.get("seconds").value() > (sequential_result.get("seconds").value() * 2U));
   }
 
+  SECTION("random access per cache line")
+  {
+    auto event_counter = perf::EventCounter{};
+    event_counter.add({ "instructions", "cycles", "cache-misses", "branches", "dTLB-miss-ratio" });
+
+    event_counter.start();
+    readonly_benchmark.run();
+    event_counter.stop();
+    const auto random_result = event_counter.result(readonly_benchmark.size());
+
+    REQUIRE(random_result.get("instructions").has_value());
+    REQUIRE(random_result.get("instructions").value() > 6U);
+    REQUIRE(random_result.get("instructions").value() < 9U);
+
+    REQUIRE(random_result.get("cycles").has_value());
+    REQUIRE(random_result.get("cycles").value() > 25U);
+    REQUIRE(random_result.get("cycles").value() < 100U);
+
+    REQUIRE(random_result.get("cache-misses").has_value());
+    REQUIRE(random_result.get("cache-misses").value() > 1);
+    REQUIRE(random_result.get("cache-misses").value() < 2);
+
+    REQUIRE(random_result.get("branches").has_value());
+    REQUIRE(random_result.get("branches").value() > .9);
+    REQUIRE(random_result.get("branches").value() < 1.1);
+
+    REQUIRE(random_result.get("dTLB-miss-ratio").has_value());
+    REQUIRE(random_result.get("dTLB-miss-ratio").value() > .9);
+    REQUIRE(random_result.get("dTLB-miss-ratio").value() < 1.1);
+  }
+
   SECTION("time")
   {
-    auto event_counter = perf::EventCounter{ };
+    auto event_counter = perf::EventCounter{};
     event_counter.add(std::vector<std::string>{ "seconds", "milliseconds" });
 
     event_counter.start();

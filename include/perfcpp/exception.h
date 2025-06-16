@@ -8,6 +8,16 @@
 
 namespace perf {
 
+class InvalidConfigAnyCpuCoreAndAnyProcess final : public std::runtime_error
+{
+public:
+  explicit InvalidConfigAnyCpuCoreAndAnyProcess()
+    : std::runtime_error("Cannot monitor any process on any CPU core. This configuration is invalid.")
+  {
+  }
+  ~InvalidConfigAnyCpuCoreAndAnyProcess() override = default;
+};
+
 class CannotOpenFileError final : public std::runtime_error
 {
 public:

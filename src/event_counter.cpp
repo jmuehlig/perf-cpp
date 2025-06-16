@@ -40,7 +40,7 @@ perf::EventCounter::add(const std::string& event_name, const Schedule schedule)
                                        bool>>{};
   this->unfold(event_name, events);
 
-  /// Schedule the events to hardware event counters.
+  /// Schedule the events to hardware counters.
   this->schedule(std::move(events), schedule);
 
   /// If no exception was thrown, we are good to go. The bool is only returned for interface compatibility.
@@ -56,12 +56,12 @@ perf::EventCounter::add(const std::vector<std::string>& event_names, const Sched
                                        std::optional<CounterConfig>,
                                        bool>>{};
 
-  /// Unfold all counters.
+  /// Unfold all events.
   for (const auto& event_name : event_names) {
     this->unfold(event_name, events);
   }
 
-  /// Schedule the events to hardware event counters.
+  /// Schedule the events to hardware counters.
   this->schedule(std::move(events), schedule);
 
   /// If no exception was thrown, we are good to go. The bool is only returned for interface compatibility.
@@ -81,7 +81,7 @@ perf::EventCounter::unfold(const std::string& name,
       EventCounter::add(pmu_name,
                         event_name,
                         config,
-                        /* requested hardware counters are visible */ true,
+                        /* requested hardware events are visible */ true,
                         result_vector);
     }
   }
@@ -89,19 +89,19 @@ perf::EventCounter::unfold(const std::string& name,
   /// If the given name references an existing metric, add the metric and all its required counters.
   else if (const auto metric = this->_counter_definitions.metric(name); metric.has_value()) {
     /// Add all hardware counters required by the metric..
-    for (auto& dependent_counter_name : std::get<1>(metric.value()).required_counter_names()) {
+    for (auto& dependent_event_name : std::get<1>(metric.value()).required_counter_names()) {
 
-      if (const auto metric_event_configurations = this->_counter_definitions.counter(dependent_counter_name);
+      if (const auto metric_event_configurations = this->_counter_definitions.counter(dependent_event_name);
           !metric_event_configurations.empty()) {
         for (const auto& [pmu_name, event_name, config] : metric_event_configurations) {
           EventCounter::add(pmu_name,
                             event_name,
                             config,
-                            /* hardware counters only used for metrics are not visible */ false,
+                            /* hardware events only used for metrics are not visible */ false,
                             result_vector);
         }
 
-      } else if (const auto dependent_time_event = this->_counter_definitions.time_event(dependent_counter_name);
+      } else if (const auto dependent_time_event = this->_counter_definitions.time_event(dependent_event_name);
                  dependent_time_event.has_value()) {
         result_vector.emplace_back(std::nullopt,
                                    std::get<0>(dependent_time_event.value()),
@@ -109,11 +109,11 @@ perf::EventCounter::unfold(const std::string& name,
                                    std::nullopt,
                                    false);
       } else {
-        throw CannotFindEventForMetricError{ dependent_counter_name, name };
+        throw CannotFindEventForMetricError{ dependent_event_name, name };
       }
     }
 
-    /// If all of the metric's counters could be added (i.e., no exception was thrown), add the metric itself.
+    /// If all of the metric's events could be added (i.e., no exception was thrown), add the metric itself.
     result_vector.emplace_back(
       std::nullopt, std::get<0>(metric.value()), RequestedEvent::Type::Metric, std::nullopt, true);
   }
@@ -130,7 +130,7 @@ perf::EventCounter::unfold(const std::string& name,
 void
 perf::EventCounter::add(const std::string_view pmu_name,
                         const std::string_view event_name,
-                        const perf::CounterConfig& counter_config,
+                        const perf::CounterConfig& event_config,
                         const bool is_shown_in_results,
                         std::vector<std::tuple<std::optional<std::string_view>,
                                                std::string_view,
@@ -145,7 +145,7 @@ perf::EventCounter::add(const std::string_view pmu_name,
   if (iterator == result_vector.end()) {
     /// Append, if the event does not exist.
     result_vector.emplace_back(
-      pmu_name, event_name, RequestedEvent::Type::HardwareEvent, counter_config, is_shown_in_results);
+      pmu_name, event_name, RequestedEvent::Type::HardwareEvent, event_config, is_shown_in_results);
   } else if (is_shown_in_results) {
     /// Adjust visibility if the event should be shown.
     std::get<4>(*iterator) = true;
@@ -161,10 +161,10 @@ perf::EventCounter::schedule(std::vector<std::tuple<std::optional<std::string_vi
                              const perf::EventCounter::Schedule schedule)
 {
   if (schedule == Schedule::Append) {
-    for (const auto& [pmu_name, event_name, type, counter_config, is_shown_in_results] : events) {
-      /// Metrics and time events (indicated by no hardware counter config) do not need to be scheduled to hardware
+    for (const auto& [pmu_name, event_name, type, event_config, is_shown_in_results] : events) {
+      /// Metrics and time events (indicated by no hardware event config) do not need to be scheduled to hardware
       /// counter groups; just add it to the event set.
-      if (!counter_config.has_value() || !pmu_name.has_value()) {
+      if (!event_config.has_value() || !pmu_name.has_value()) {
         this->_requested_event_set.add(pmu_name, event_name, type, is_shown_in_results);
         continue;
       }
@@ -175,9 +175,9 @@ perf::EventCounter::schedule(std::vector<std::tuple<std::optional<std::string_vi
         continue;
       }
 
-      /// Try to find a group where we can append the counter.
+      /// Try to find a group where we can append the event.
       if (this->append_to_any_hardware_counter(
-            pmu_name.value(), event_name, counter_config.value(), is_shown_in_results)) {
+            pmu_name.value(), event_name, event_config.value(), is_shown_in_results)) {
         continue;
       }
 
@@ -187,22 +187,22 @@ perf::EventCounter::schedule(std::vector<std::tuple<std::optional<std::string_vi
         throw MaxCountersReachedError{ this->_config.max_groups(), this->_config.max_counters_per_group() };
       }
 
-      /// Create a new group and add the counter, if we did not raise an exception.
+      /// Create a new group and add the event, if we did not raise an exception.
       auto& group_and_flag = this->_hardware_event_groups.emplace_back(
         Group{},
-        /* instantly close, if we can only add one counter per group */ this->_config.max_counters_per_group() > 1U);
-      std::get<0>(group_and_flag).add(counter_config.value());
+        /* instantly close, if we can only add one event per group */ this->_config.max_counters_per_group() > 1U);
+      std::get<0>(group_and_flag).add(event_config.value());
 
       /// Add to the request set.
       const auto group_id = std::uint8_t(this->_hardware_event_groups.size() - 1U);
       this->_requested_event_set.add(
-        pmu_name.value(), event_name, is_shown_in_results, group_id, /* the counter is the first in the group */ 0U);
+        pmu_name.value(), event_name, is_shown_in_results, group_id, /* the event is the first in the group */ 0U);
     }
   } else if (schedule == Schedule::Separate) {
-    for (const auto& [pmu_name, event_name, type, counter_config, is_shown_in_results] : events) {
-      /// Metrics and time events (indicated by no hardware counter config) do not need to be scheduled to hardware
+    for (const auto& [pmu_name, event_name, type, event_config, is_shown_in_results] : events) {
+      /// Metrics and time events (indicated by no hardware event config) do not need to be scheduled to hardware
       /// counter groups; just add it to the event set.
-      if (!counter_config.has_value() || !pmu_name.has_value()) {
+      if (!event_config.has_value() || !pmu_name.has_value()) {
         this->_requested_event_set.add(pmu_name, event_name, type, is_shown_in_results);
         continue;
       }
@@ -218,15 +218,15 @@ perf::EventCounter::schedule(std::vector<std::tuple<std::optional<std::string_vi
         throw MaxGroupsReachedError{ this->_config.max_groups() };
       }
 
-      /// Create a new group and add the counter, if we did not raise an exception.
+      /// Create a new group and add the event, if we did not raise an exception.
       auto& group_and_flag = this->_hardware_event_groups.emplace_back(
-        Group{}, /* the counter should be scheduled individually; close it */ false);
-      std::get<0>(group_and_flag).add(counter_config.value());
+        Group{}, /* the event should be scheduled individually; close it */ false);
+      std::get<0>(group_and_flag).add(event_config.value());
 
       /// Add to the request set.
       const auto group_id = std::uint8_t(this->_hardware_event_groups.size() - 1U);
       this->_requested_event_set.add(
-        pmu_name.value(), event_name, is_shown_in_results, group_id, /* the counter is the first in the group */ 0U);
+        pmu_name.value(), event_name, is_shown_in_results, group_id, /* the event is the first in the group */ 0U);
     }
   } else if (schedule == Schedule::Group) {
     /// Test if we can add another group.
@@ -234,24 +234,24 @@ perf::EventCounter::schedule(std::vector<std::tuple<std::optional<std::string_vi
       throw MaxGroupsReachedError{ this->_config.max_groups() };
     }
 
-    /// Test, if all the hardware counters fit into a single group.
-    const auto count_hardware_counters =
+    /// Test, if all the hardware events fit into a single group.
+    const auto count_hardware_events =
       std::count_if(events.begin(), events.end(), [](const auto& event) { return std::get<3>(event).has_value(); });
-    if (count_hardware_counters > this->_config.max_counters_per_group()) {
-      throw CannotAddCountersToSingleGroupError{ std::uint64_t(count_hardware_counters),
+    if (count_hardware_events > this->_config.max_counters_per_group()) {
+      throw CannotAddCountersToSingleGroupError{ std::uint64_t(count_hardware_events),
                                                  this->_config.max_counters_per_group() };
     }
 
-    /// Create a new group and add the counter, if we did not raise an exception.
+    /// Create a new group and add the event, if we did not raise an exception.
     auto& [group, _] = this->_hardware_event_groups.emplace_back(
-      Group{}, /* the counter should be scheduled individually; close it */ false);
+      Group{}, /* the event should be scheduled individually; close it */ false);
 
     /// Add all events.
     const auto group_id = std::uint8_t(this->_hardware_event_groups.size() - 1U);
-    for (const auto& [pmu_name, event_name, type, counter_config, is_shown_in_results] : events) {
-      /// Metrics and time events (indicated by no hardware counter config) do not need to be scheduled to hardware
+    for (const auto& [pmu_name, event_name, type, event_config, is_shown_in_results] : events) {
+      /// Metrics and time events (indicated by no hardware event config) do not need to be scheduled to hardware
       /// counter groups; just add it to the event set.
-      if (!counter_config.has_value() || !pmu_name.has_value()) {
+      if (!event_config.has_value() || !pmu_name.has_value()) {
         this->_requested_event_set.add(pmu_name, event_name, type, is_shown_in_results);
         continue;
       }
@@ -262,9 +262,9 @@ perf::EventCounter::schedule(std::vector<std::tuple<std::optional<std::string_vi
         continue;
       }
 
-      /// Add the hardware counter to the group.
+      /// Add the hardware event to the group.
       const auto in_group_position = std::uint8_t(group.size());
-      group.add(counter_config.value());
+      group.add(event_config.value());
 
       /// Add to the request set.
       this->_requested_event_set.add(pmu_name.value(), event_name, is_shown_in_results, group_id, in_group_position);
@@ -275,7 +275,7 @@ perf::EventCounter::schedule(std::vector<std::tuple<std::optional<std::string_vi
 bool
 perf::EventCounter::append_to_any_hardware_counter(const std::string_view pmu_name,
                                                    const std::string_view event_name,
-                                                   const perf::CounterConfig& counter_config,
+                                                   const perf::CounterConfig& event_config,
                                                    const bool is_shown_in_results)
 {
   for (auto group_id = 0U; group_id < this->_hardware_event_groups.size(); ++group_id) {
@@ -286,7 +286,7 @@ perf::EventCounter::append_to_any_hardware_counter(const std::string_view pmu_na
       const auto in_group_position = std::uint8_t(group.size());
 
       /// Add to the hardware counter group.
-      group.add(counter_config);
+      group.add(event_config);
 
       /// Add to the request set.
       this->_requested_event_set.add(
@@ -325,12 +325,12 @@ perf::EventCounter::add_live(const std::string& event_name)
     return;
   }
 
-  /// If the counter does not exist, check if it is a metric, which is not supported for live events. Let the user know.
+  /// If the event does not exist, check if it is a metric, which is not supported for live events. Let the user know.
   if (this->_counter_definitions.is_metric(event_name)) {
     throw MetricNotSupportedAsLiveEventError{ event_name };
   }
 
-  /// If the counter does not exist, check if it is a time event, which is not supported for live events. Let the user
+  /// If the event does not exist, check if it is a time event, which is not supported for live events. Let the user
   /// know.
   if (this->_counter_definitions.is_time_event(event_name)) {
     throw TimeEventNotSupportedAsLiveEventError{ event_name };
@@ -350,6 +350,11 @@ perf::EventCounter::add_live(std::vector<std::string>&& event_names)
 void
 perf::EventCounter::open()
 {
+  /// Measuring any CPU core and any process is invalid, according to the perf subsystem documentation.
+  if (this->_config.cpu_core() == CpuCore::ANY && this->_config.process() == Process::ANY) {
+    throw InvalidConfigAnyCpuCoreAndAnyProcess{};
+  }
+
   /// Verify that the EventCounter is not already opened (_is_open == false) and set flag appropriately.
   if (const auto is_open = std::exchange(this->_is_opened, true); !is_open) {
     /// Open all groups. If one of them fails, group.open() will throw an exception.
@@ -370,7 +375,7 @@ perf::EventCounter::start()
   /// Opens the hardware performance counters, if not already done specifically by calling EventCounter::open().
   this->open();
 
-  /// Start all counter groups. If one of them fails, group.start() will throw an exception.
+  /// Start all groups. If one of them fails, group.start() will throw an exception.
   for (auto& [group, _] : this->_hardware_event_groups) {
     group.start();
   }
@@ -393,7 +398,7 @@ perf::EventCounter::stop()
   /// Stop timer.
   std::get<1>(this->_start_and_end_time) = std::chrono::steady_clock::now();
 
-  /// Stop all counter groups.
+  /// Stop all groups.
   for (auto& [group, _] : this->_hardware_event_groups) {
     group.stop();
   }
@@ -408,7 +413,7 @@ void
 perf::EventCounter::close()
 {
   if (const auto is_open = std::exchange(this->_is_opened, false); is_open) {
-    /// Close all counter groups.
+    /// Close all groups.
     for (auto& [group, _] : this->_hardware_event_groups) {
       group.close();
     }
@@ -423,7 +428,7 @@ perf::EventCounter::close()
 perf::CounterResult
 perf::EventCounter::result(const std::uint64_t normalization) const
 {
-  /// Build result with all counters, including hidden ones.
+  /// Build result with all events, including hidden ones.
   auto event_values = std::vector<std::pair<std::string_view, double>>{};
   event_values.reserve(this->_requested_event_set.size());
 
@@ -436,7 +441,7 @@ perf::EventCounter::result(const std::uint64_t normalization) const
       event_values.emplace_back(event.event_name(), group.get(scheduled_group.position()));
     }
 
-    /// Time events are read using the event counter's start and stop time.
+    /// Time events are read using the event's start and stop time.
     else if (event.is_time_event()) {
       if (const auto& time_calculator = this->_counter_definitions.time_event(event.event_name());
           time_calculator.has_value()) {
@@ -681,7 +686,7 @@ perf::MultiProcessEventCounter::MultiProcessEventCounter(const perf::CounterDefi
   this->_process_local_counter.reserve(process_ids.size());
 
   for (const auto process_id : process_ids) {
-    config.process(Process{process_id});
+    config.process(Process{ process_id });
     this->_process_local_counter.emplace_back(counter_list, config);
   }
 }
@@ -696,7 +701,7 @@ perf::MultiProcessEventCounter::MultiProcessEventCounter(perf::EventCounter&& ev
 
     /// Create one counter for every process: Copy the config for every process and bind the EventCounter to that
     /// process.
-    config.process(Process{process_ids[i]});
+    config.process(Process{ process_ids[i] });
     auto process_local_counter = EventCounter::copy_from_template(event_counter);
     process_local_counter.config(config);
 
@@ -704,7 +709,7 @@ perf::MultiProcessEventCounter::MultiProcessEventCounter(perf::EventCounter&& ev
   }
 
   /// Re-use the given EventCounter for the last process in the list.
-  config.process(Process{process_ids.back()});
+  config.process(Process{ process_ids.back() });
   event_counter.config(config);
   this->_process_local_counter.emplace_back(std::move(event_counter));
 }
@@ -718,7 +723,7 @@ perf::MultiCoreEventCounter::MultiCoreEventCounter(const perf::CounterDefinition
   this->_cpu_local_counter.reserve(cpu_ids.size());
 
   for (const auto cpu_id : cpu_ids) {
-    config.cpu_core(CpuCore{cpu_id});
+    config.cpu_core(CpuCore{ cpu_id });
     this->_cpu_local_counter.emplace_back(counter_definition, config);
   }
 }
@@ -733,7 +738,7 @@ perf::MultiCoreEventCounter::MultiCoreEventCounter(perf::EventCounter&& event_co
   for (auto i = 0U; i < cpu_ids.size() - 1U; ++i) {
 
     /// Create one EventCounter for every CPU core from the list via config.
-    config.cpu_core(CpuCore{cpu_ids[i]});
+    config.cpu_core(CpuCore{ cpu_ids[i] });
     auto process_local_counter = EventCounter::copy_from_template(event_counter);
     process_local_counter.config(config);
 
@@ -741,7 +746,7 @@ perf::MultiCoreEventCounter::MultiCoreEventCounter(perf::EventCounter&& event_co
   }
 
   /// Re-use the given EventCounter for the last CPU Id in the list.
-  config.cpu_core(CpuCore{cpu_ids.back()});
+  config.cpu_core(CpuCore{ cpu_ids.back() });
   event_counter.config(config);
   this->_cpu_local_counter.push_back(std::move(event_counter));
 }

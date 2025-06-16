@@ -80,22 +80,27 @@ perf::Sampler::trigger(std::vector<std::vector<Trigger>>&& triggers)
 void
 perf::Sampler::open()
 {
+  /// Measuring any CPU core and any process is invalid, according to the perf subsystem documentation.
+  if (this->_config.cpu_core() == CpuCore::ANY && this->_config.process() == Process::ANY) {
+    throw InvalidConfigAnyCpuCoreAndAnyProcess{};
+  }
+
   /// Do not open again, if the sampler was already opened.
   /// The is_open flag will be reset on closing the sampler.
   if (std::exchange(this->_is_opened, true)) {
     return;
   }
 
-  /// Build the groups from triggers + counters from values.
+  /// Build the groups from triggers + events from values.
   for (const auto& trigger_group : this->_triggers) {
-    /// Convert the trigger group (list of (event name, configuration attributes)) into "real" sample counters, which is
+    /// Convert the trigger group (list of (event name, configuration attributes)) into "real" sample event, which is
     /// basically a group of hardware events (one ore multiple triggers and to-recorded hardware events, if requested).
     if (!trigger_group.empty()) {
       /// As each event can be available on different, heterogeneous PMUs, we need to check if a trigger is available on
       /// multiple PMUs and add it multiple times – once per PMU.
       const auto event_name = std::get<0>(trigger_group.front());
-      for (const auto& hardware_counter : this->_counter_definitions.counter(event_name)) {
-        auto sample_counter = this->transform_trigger_to_sample_counter(std::get<0>(hardware_counter), trigger_group);
+      for (const auto& hardware_events : this->_counter_definitions.counter(event_name)) {
+        auto sample_counter = this->transform_trigger_to_sample_counter(std::get<0>(hardware_events), trigger_group);
         this->_sample_counter.push_back(std::move(sample_counter));
       }
     }
@@ -111,7 +116,7 @@ perf::Sampler::open()
     /// Open the group.
     sample_counter.group().open(
       this->_config,
-      sample_counter.has_intel_auxiliary_counter(),
+      sample_counter.has_intel_auxiliary_event(),
       this->_config.buffer_pages(),
       this->_values.get(),
       this->_values.is_set(PERF_SAMPLE_BRANCH_STACK) ? std::make_optional(this->_values.branch_mask()) : std::nullopt,
@@ -152,7 +157,7 @@ void
 perf::Sampler::close() noexcept
 {
   if (std::exchange(this->_is_opened, false)) {
-    /// Clear all buffers, groups, and counter names
+    /// Clear all buffers, groups, and event names
     /// in order to enable opening again.
     this->_sample_counter.clear();
   }
@@ -167,30 +172,30 @@ perf::Sampler::transform_trigger_to_sample_counter(
   /// Group of hardware events.
   auto group = Group{};
 
-  /// List of counter names that should be read later from results.
+  /// List of event names that should be read later from results.
   auto requested_events = RequestedEventSet{};
 
-  /// Check if the auxiliary counter is needed and needs to be added.
+  /// Check if the auxiliary event is needed and needs to be added.
   const auto [is_auxiliary_event_needed, is_auxiliary_event_included] =
     this->is_auxiliary_event_needed_and_already_included(pmu_name, trigger_group);
 
-  /// If the auxiliary counter is needed but not included, add it.
+  /// If the auxiliary event is needed but not included, add it.
   if (is_auxiliary_event_needed && !is_auxiliary_event_included) {
     if (auto auxiliary_event = this->_counter_definitions.counter(pmu_name, "mem-loads-aux");
         auxiliary_event.has_value()) {
 
-      /// Read the counter config (like event id, etc.).
-      auto auxiliary_counter_config = std::get<2>(auxiliary_event.value());
+      /// Read the event config (like event id, etc.).
+      auto auxiliary_event_config = std::get<2>(auxiliary_event.value());
 
       /// The auxiliary event needs constant skid.
-      auxiliary_counter_config.precise_ip(Precision::MustHaveConstantSkid);
+      auxiliary_event_config.precise_ip(Precision::MustHaveConstantSkid);
 
-      /// Set the counters period or frequency equal to the first trigger (or fall back to config if not configured).
+      /// Set the event's period or frequency equal to the first trigger (or fall back to config if not configured).
       auto period_or_frequency = std::get<2>(trigger_group.front());
-      auxiliary_counter_config.period_or_frequency(period_or_frequency.value_or(this->_config.period_for_frequency()));
+      auxiliary_event_config.period_or_frequency(period_or_frequency.value_or(this->_config.period_for_frequency()));
 
-      /// Add the counter to the group.
-      group.add(auxiliary_counter_config);
+      /// Add the event to the group.
+      group.add(auxiliary_event_config);
     } else {
       throw AuxiliaryEventForSamplingNotFoundError{};
     }
@@ -199,22 +204,22 @@ perf::Sampler::transform_trigger_to_sample_counter(
   /// Add the trigger(s) to the group. For the most time, this will be a single trigger.
   for (const auto& trigger : trigger_group) {
     const auto [event_name, precision, period_or_frequency] = trigger;
-    if (auto counter_name_and_config = this->_counter_definitions.counter(pmu_name, event_name);
-        counter_name_and_config.has_value()) {
+    if (auto event_name_and_config = this->_counter_definitions.counter(pmu_name, event_name);
+        event_name_and_config.has_value()) {
 
-      /// Read the counter config (like event id, etc.).
-      auto counter_config = std::get<2>(counter_name_and_config.value());
+      /// Read the event config (like event id, etc.).
+      auto event_config = std::get<2>(event_name_and_config.value());
 
-      /// Set the counters precise_ip (fall back to config if empty).
-      counter_config.precise_ip(static_cast<std::uint8_t>(precision.value_or(this->_config.precise_ip())));
+      /// Set the event's precise_ip (fall back to config if empty).
+      event_config.precise_ip(static_cast<std::uint8_t>(precision.value_or(this->_config.precise_ip())));
 
-      /// Set the counters period or frequency (fall back to config if empty).
-      counter_config.period_or_frequency(period_or_frequency.value_or(this->_config.period_for_frequency()));
+      /// Set the event's period or frequency (fall back to config if empty).
+      event_config.period_or_frequency(period_or_frequency.value_or(this->_config.period_for_frequency()));
 
-      /// Add the counter to the group.
-      group.add(counter_config);
+      /// Add the event to the group.
+      group.add(event_config);
 
-      /// Notice the counter name of the trigger event.
+      /// Notice the event name of the trigger event.
       if (this->_values.is_set(PERF_SAMPLE_READ)) {
         requested_events.add(pmu_name, event_name, 0U);
       }
@@ -223,41 +228,41 @@ perf::Sampler::transform_trigger_to_sample_counter(
     }
   }
 
-  /// Add possible counters as value to the sample.
+  /// Add possible events as value to the sample.
   if (this->_values.is_set(PERF_SAMPLE_READ)) {
     for (const auto& event_name : this->_values.counters()) {
 
-      /// Check if the event is a true hardware counter – if so, just add it to the list.
-      if (auto counter_config = this->_counter_definitions.counter(pmu_name, event_name); counter_config.has_value()) {
+      /// Check if the event is a true hardware event – if so, just add it to the list.
+      if (auto event_config = this->_counter_definitions.counter(pmu_name, event_name); event_config.has_value()) {
         /// Add the event to the requested event set.
         /// If the request returns true, the event as indeed added and needs to be added to the group.
         const auto is_added =
-          requested_events.add(pmu_name, std::get<1>(counter_config.value()), std::uint8_t(group.size()));
+          requested_events.add(pmu_name, std::get<1>(event_config.value()), std::uint8_t(group.size()));
         if (is_added) {
-          group.add(std::get<2>(counter_config.value()));
+          group.add(std::get<2>(event_config.value()));
         }
       }
 
-      /// Otherwise, check if the event is a metric. In that case, add all depending hardware counters (if not already
+      /// Otherwise, check if the event is a metric. In that case, add all depending hardware events (if not already
       /// done).
       else if (auto metric = this->_counter_definitions.metric(event_name); metric.has_value()) {
         const auto metric_name = std::get<0>(metric.value());
-        /// For metrics, we need to add every hardware counter the metric depends on (and check their existence).
-        for (const auto& depending_counter_name : std::get<1>(metric.value()).required_counter_names()) {
-          if (auto depending_counter_config = this->_counter_definitions.counter(pmu_name, depending_counter_name);
-              depending_counter_config.has_value()) {
+        /// For metrics, we need to add every hardware event the metric depends on (and check their existence).
+        for (const auto& depending_event_name : std::get<1>(metric.value()).required_counter_names()) {
+          if (auto depending_event_config = this->_counter_definitions.counter(pmu_name, depending_event_name);
+              depending_event_config.has_value()) {
 
             /// Add the event to the requested event set.
             /// If the request returns true, the event is indeed added and needs to be added to the group.
             const auto is_added =
-              requested_events.add(pmu_name, std::get<0>(depending_counter_config.value()), std::uint8_t(group.size()));
+              requested_events.add(pmu_name, std::get<0>(depending_event_config.value()), std::uint8_t(group.size()));
             if (is_added) {
-              group.add(std::get<2>(depending_counter_config.value()));
+              group.add(std::get<2>(depending_event_config.value()));
             }
-          } else if (this->_counter_definitions.is_time_event(depending_counter_name)) {
+          } else if (this->_counter_definitions.is_time_event(depending_event_name)) {
             throw TimeEventNotSupportedForSamplingError{ event_name };
           } else {
-            throw CannotFindEventForMetricError{ depending_counter_name, metric_name };
+            throw CannotFindEventForMetricError{ depending_event_name, metric_name };
           }
         }
 
@@ -307,10 +312,10 @@ perf::Sampler::is_auxiliary_event_needed_and_already_included(
               trigger_event.has_value()) {
             const auto is_mem_loads_event = std::get<2>(trigger_event.value()) == std::get<2>(mem_loads_event.value());
 
-            /// If there is a mem-loads event we need the auxiliary counter.
+            /// If there is a mem-loads event we need the auxiliary event.
             if (is_mem_loads_event) {
 
-              /// Check if the first counter in the group is already the mem-loads-aux event.
+              /// Check if the first event in the group is already the mem-loads-aux event.
               if (const auto leading_trigger_event =
                     this->_counter_definitions.counter(pmu_name, std::get<0>(trigger_group.front()));
                   leading_trigger_event.has_value()) {
@@ -319,7 +324,7 @@ perf::Sampler::is_auxiliary_event_needed_and_already_included(
                 return std::make_pair(true, has_mem_loads_aux_event);
               }
 
-              /// The auxiliary counter is needed, but not included.
+              /// The auxiliary event is needed, but not included.
               return std::make_pair(true, false);
             }
           }
@@ -366,12 +371,12 @@ std::vector<std::vector<std::byte>>
 perf::Sampler::SampleCounter::consume_samples()
 {
   /// Normally, the first member will control the sample buffer; however, on some Intel
-  /// architectures, an auxiliary counter is needed before the "real" counter – the "real" counter controlling the
+  /// architectures, an auxiliary event is needed before the "real" event – the "real" event controlling the
   /// buffer is the second one.
-  const auto counter_index = 0U + static_cast<std::uint8_t>(this->_has_intel_auxiliary_counter);
+  const auto event_index = 0U + static_cast<std::uint8_t>(this->_has_intel_auxiliary_event);
   auto& members = this->group().members();
-  if (members.size() > counter_index && members[counter_index].mmap_buffer() != nullptr) {
-    return members[counter_index].mmap_buffer()->consume_data();
+  if (members.size() > event_index && members[event_index].mmap_buffer() != nullptr) {
+    return members[event_index].mmap_buffer()->consume_data();
   }
 
   return {};
@@ -449,18 +454,18 @@ perf::MultiSamplerBase::start(perf::Sampler& sampler, const perf::SampleConfig c
   std::ignore = sampler.start();
 }
 
-perf::MultiThreadSampler::MultiThreadSampler(const perf::CounterDefinition& counter_list,
+perf::MultiThreadSampler::MultiThreadSampler(const perf::CounterDefinition& counter_definition,
                                              const std::uint16_t num_threads,
                                              const perf::SampleConfig config)
   : MultiSamplerBase(config)
 {
   /// Create thread-local samplers without config (will be set when starting).
   for (auto thread_id = 0U; thread_id < num_threads; ++thread_id) {
-    this->_thread_local_samplers.emplace_back(counter_list);
+    this->_thread_local_samplers.emplace_back(counter_definition);
   }
 }
 
-perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_list,
+perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_definition,
                                          std::vector<std::uint16_t>&& core_ids,
                                          perf::SampleConfig config)
   : MultiSamplerBase(config)
@@ -471,7 +476,7 @@ perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_
 
   /// Create thread-local samplers without config (will be set when starting).
   for (auto core_id = 0U; core_id < this->_core_ids.size(); ++core_id) {
-    this->_core_local_samplers.emplace_back(counter_list);
+    this->_core_local_samplers.emplace_back(counter_definition);
   }
 }
 
@@ -480,7 +485,7 @@ perf::MultiCoreSampler::open()
 {
   for (auto sampler_id = 0U; sampler_id < this->_core_ids.size(); ++sampler_id) {
     auto config = this->_config;
-    config.cpu_core(CpuCore{this->_core_ids[sampler_id]});
+    config.cpu_core(CpuCore{ this->_core_ids[sampler_id] });
     MultiSamplerBase::open(this->_core_local_samplers[sampler_id], config);
   }
 }
@@ -490,7 +495,7 @@ perf::MultiCoreSampler::start()
 {
   for (auto sampler_id = 0U; sampler_id < this->_core_ids.size(); ++sampler_id) {
     auto config = this->_config;
-    config.cpu_core(CpuCore{this->_core_ids[sampler_id]});
+    config.cpu_core(CpuCore{ this->_core_ids[sampler_id] });
     MultiSamplerBase::start(this->_core_local_samplers[sampler_id], config);
   }
 
