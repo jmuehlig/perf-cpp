@@ -222,9 +222,9 @@ public:
    *
    * @return The current value of the counter.
    */
-  [[nodiscard]] std::uint64_t read_live() const noexcept
+  [[nodiscard]] double read_live() const noexcept
   {
-    return _mmap_buffer != nullptr ? _mmap_buffer->read_performance_monitoring_counter() : 0ULL;
+    return _mmap_buffer != nullptr ? (double(_mmap_buffer->read_performance_monitoring_counter()) * this->scale()) : .0;
   }
 
   /**
