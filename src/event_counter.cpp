@@ -351,7 +351,7 @@ void
 perf::EventCounter::open()
 {
   /// Measuring any CPU core and any process is invalid, according to the perf subsystem documentation.
-  if (this->_config.cpu_core() == CpuCore::ANY && this->_config.process() == Process::ANY) {
+  if (this->_config.cpu_core().is_any() && this->_config.process().is_any()) {
     throw InvalidConfigAnyCpuCoreAndAnyProcess{};
   }
 
@@ -718,7 +718,7 @@ perf::MultiCoreEventCounter::MultiCoreEventCounter(const perf::CounterDefinition
                                                    std::vector<std::uint16_t>&& cpu_ids,
                                                    perf::Config config)
 {
-  config.process(Process::ANY); /// Record every thread/process on the given CPUs.
+  config.process(Process::Any); /// Record every thread/process on the given CPUs.
 
   this->_cpu_local_counter.reserve(cpu_ids.size());
 
@@ -733,7 +733,7 @@ perf::MultiCoreEventCounter::MultiCoreEventCounter(perf::EventCounter&& event_co
 {
   this->_cpu_local_counter.reserve(cpu_ids.size());
   auto config = event_counter.config();
-  config.process(Process::ANY); /// Record every thread/process on the given CPUs.
+  config.process(Process::Any); /// Record every thread/process on the given CPUs.
 
   for (auto i = 0U; i < cpu_ids.size() - 1U; ++i) {
 

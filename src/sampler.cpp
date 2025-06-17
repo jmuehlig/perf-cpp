@@ -81,7 +81,7 @@ void
 perf::Sampler::open()
 {
   /// Measuring any CPU core and any process is invalid, according to the perf subsystem documentation.
-  if (this->_config.cpu_core() == CpuCore::ANY && this->_config.process() == Process::ANY) {
+  if (this->_config.cpu_core().is_any() && this->_config.process().is_any()) {
     throw InvalidConfigAnyCpuCoreAndAnyProcess{};
   }
 
@@ -472,7 +472,7 @@ perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_
   , _core_ids(std::move(core_ids))
 {
   /// Record all processes on the CPUs.
-  _config.process(Process::ANY);
+  _config.process(Process::Any);
 
   /// Create thread-local samplers without config (will be set when starting).
   for (auto core_id = 0U; core_id < this->_core_ids.size(); ++core_id) {

@@ -135,7 +135,7 @@ config.cpu_core(5U); /// Bind to CPU core 5.
 To revert this and resume counting on all cores the thread executes on:
 
 ```cpp
-config.cpu_core(perf::CpuCore::ANY); /// Count events an all CPU cores the thread is executed on.
+config.cpu_core(perf::CpuCore::Any); /// Count events an all CPU cores the thread is executed on.
 ```
 
 ### Binding the Event Counter to a Specific Process
@@ -153,13 +153,13 @@ The process to monitor can be configured as follows:
 
 ```cpp
 auto config = perf::Config{};
-config.process(perf::Process::CALLING); /// Default: Monitor only the calling process.
+config.process(perf::Process::Calling); /// Default: Monitor only the calling process.
 
 /// Alternatively:
 config.process(perf::Process{1337});    /// Monitor events from process with PID 1337.
 
 /// Alternatively:
-config.process(perf::Process::ANY);     /// Monitor events from all processes.
+config.process(perf::Process::Any);     /// Monitor events from all processes.
 ```
 
 > [!TIP]

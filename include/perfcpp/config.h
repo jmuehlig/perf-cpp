@@ -12,8 +12,8 @@ namespace perf {
 class Process
 {
 public:
-  static Process ANY;
-  static Process CALLING;
+  static Process Any;
+  static Process Calling;
 
   explicit Process(const pid_t process_id)
     : _process_id(process_id)
@@ -22,8 +22,8 @@ public:
 
   explicit operator pid_t() const noexcept { return _process_id; }
 
-  [[nodiscard]] bool is_any() const noexcept { return _process_id == ANY._process_id; }
-  [[nodiscard]] bool is_calling() const noexcept { return _process_id == CALLING._process_id; }
+  [[nodiscard]] bool is_any() const noexcept { return _process_id == Any._process_id; }
+  [[nodiscard]] bool is_calling() const noexcept { return _process_id == Calling._process_id; }
 
   [[nodiscard]] bool operator==(const Process other) const noexcept { return _process_id == other._process_id; }
 
@@ -34,7 +34,7 @@ private:
 class CpuCore
 {
 public:
-  static CpuCore ANY;
+  static CpuCore Any;
 
   explicit CpuCore(const std::uint16_t cpu_core_id)
     : _cpu_core_id(cpu_core_id)
@@ -43,7 +43,7 @@ public:
 
   explicit operator std::int32_t() const noexcept { return _cpu_core_id; }
 
-  [[nodiscard]] bool is_any() const noexcept { return _cpu_core_id == ANY._cpu_core_id; }
+  [[nodiscard]] bool is_any() const noexcept { return _cpu_core_id == Any._cpu_core_id; }
 
   [[nodiscard]] bool operator==(const CpuCore other) const noexcept { return _cpu_core_id == other._cpu_core_id; }
 
@@ -223,8 +223,8 @@ private:
 
   bool _is_debug{ false };
 
-  CpuCore _cpu_core{ CpuCore::ANY };
-  Process _process{ Process::CALLING };
+  CpuCore _cpu_core{ CpuCore::Any };
+  Process _process{ Process::Calling };
 };
 
 class SampleConfig final : public Config
