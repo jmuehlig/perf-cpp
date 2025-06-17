@@ -11,11 +11,7 @@ main()
             << std::endl;
 
   /// Initialize performance counters.
-  auto config = perf::Config{};
-  config.is_debug(true);
-  config.cpu_core(0);
-  config.process(perf::Process::Any);
-  auto event_counter = perf::EventCounter{config};
+  auto event_counter = perf::EventCounter{};
 
   /// Add all the performance counters we want to record.
   try {
@@ -27,7 +23,7 @@ main()
                         "L1-data-miss-ratio",
                         "cycles-per-instruction",
                         "nanoseconds",
-                        "gigahertz", "energy-pkg" });
+                        "gigahertz" });
   } catch (std::runtime_error& e) {
     std::cerr << e.what() << std::endl;
     return 1;

@@ -208,7 +208,12 @@ class PMUEventConverter:
             umask = 0 if "UMask" not in event else int(event["UMask"], 0)
 
             codes = [int(code.strip(), 0) for code in event["EventCode"].split(',')]
-            config1 = None if "Filter" not in event else self._extract_config1_from_filter(event["Filter"])
+
+            config1 = None
+            if  "Filter" in event:
+                config1 = self._extract_config1_from_filter(event["Filter"])
+            elif "MSRValue" in event:
+                config1 = int(event["MSRValue"],0)
 
             return [((umask << 8) | code, config1) for code in codes]
 
