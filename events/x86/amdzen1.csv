@@ -78,8 +78,6 @@ fp_retired_ser_ops.x87_ctrl_ret, 0x805
 fp_retired_ser_ops.x87_bot_ret, 0x405
 fp_retired_ser_ops.sse_ctrl_ret, 0x205
 fp_retired_ser_ops.sse_bot_ret, 0x105
-ic_oc_mode_switch.oc_ic_mode_switch, 0x28a
-ic_oc_mode_switch.ic_oc_mode_switch, 0x38a
 de_dis_dispatch_token_stalls0.retire_token_stall, 0x40af
 de_dis_dispatch_token_stalls0.agsq_token_stall, 0x20af
 de_dis_dispatch_token_stalls0.alu_token_stall, 0x10af
@@ -87,18 +85,10 @@ de_dis_dispatch_token_stalls0.alsq3_0_token_stall, 0x8af
 de_dis_dispatch_token_stalls0.alsq3_token_stall, 0x4af
 de_dis_dispatch_token_stalls0.alsq2_token_stall, 0x2af
 de_dis_dispatch_token_stalls0.alsq1_token_stall, 0x1af
-remote_outbound_data_controller_0, 0x7c7
-remote_outbound_data_controller_1, 0xa07
-remote_outbound_data_controller_2, 0xa47
-remote_outbound_data_controller_3, 0xa87
 dram_channel_data_controller_0, 0x3807
 dram_channel_data_controller_1, 0x3847
 dram_channel_data_controller_2, 0x3887
 dram_channel_data_controller_3, 0x38c7
-dram_channel_data_controller_4, 0x3907
-dram_channel_data_controller_5, 0x3947
-dram_channel_data_controller_6, 0x3987
-dram_channel_data_controller_7, 0x39c7
 bp_l1_btb_correct, 0x8a
 bp_l2_btb_correct, 0x8b
 bp_dyn_ind_pred, 0x8e
@@ -177,7 +167,3 @@ ex_ret_mmx_fp_instr.x87_instr, 0x1cb
 ex_ret_cond, 0xd1
 ex_div_busy, 0xd3
 ex_div_count, 0xd4
-ex_tagged_ibs_ops.ibs_count_rollover, 0x5cf
-ex_tagged_ibs_ops.ibs_tagged_ops_ret, 0x3cf
-ex_tagged_ibs_ops.ibs_tagged_ops, 0x1cf
-ex_ret_fus_brnch_inst, 0x1d0

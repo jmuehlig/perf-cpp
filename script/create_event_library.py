@@ -215,7 +215,7 @@ class PMUEventConverter:
             elif "MSRValue" in event:
                 config1 = int(event["MSRValue"],0)
 
-            return [((umask << 8) | code, config1) for code in codes]
+            return [((umask << 8) | code, config1) for code in codes if code <= 255]
 
         except (ValueError, KeyError):
             return []
