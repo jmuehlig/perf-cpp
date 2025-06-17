@@ -142,7 +142,7 @@ def main():
     parser.add_argument(
         '--output', '-o',
         required=True,
-        help='Output file path (e.g., src/processor_specific_event_provider.cpp)'
+        help='Output file path'
     )
 
     parser.add_argument(

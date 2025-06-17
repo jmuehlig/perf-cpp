@@ -10,9 +10,9 @@ Tools like [Linux Perf](https://perfwiki.github.io/main/), [Intel® VTune™](ht
 ## What can perf-cpp do?
 Built around Linux's powerful [*perf subsystem*](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), **perf-cpp** provides a clean interface for *counting* and *sampling* hardware events – without the complexity of low-level APIs.
 
-- **Measure exactly what you want** – start/stop hardware event counters, similar to `perf stat`, but around performance-sensitive code paths, not an entire binary ([documentation](docs/recording.md)). 
+- **Measure exactly what you want** – utilize *performance counters* to count hardware events, similar to `perf stat`, but around specific code paths, not an entire binary ([documentation](docs/recording.md)). 
 - **Calculate metrics** such as *cycles per instruction* and *cache miss to access ratio* based on hardware events and timing ([documentation](docs/metrics.md)). 
-- **Low-latency hardware counters access** without starting/stopping the counters, for micro-benchmarks or adaptive tuning ([documentation](docs/recording-live-events.md)).
+- **Low-latency performance counters access** without starting/stopping the counters, for micro-benchmarks or adaptive tuning ([documentation](docs/recording-live-events.md)).
 - **Record instruction and memory samples**, just like `perf [mem] record` – but from inside your application ([documentation](docs/recording-live-events.md)).
 - **Correlate samples with data structures and symbols** to generate [per-class access statistics](docs/analyzing-memory-access-patterns.md) and [flame graphs](docs/sampling-symbols-and-flamegraphs.md).
 - Mix built-in events (e.g., *cycles*, *instructions*, *cache misses*, ...) with processor-specific counters ([documentation](docs/counters.md)).
@@ -126,8 +126,9 @@ cd perf-cpp
 git checkout v0.12-dev
 
 # Build the library (in build/)
-# Note: -DBUILD_EXAMPLES=1   can be used to compile examples
-# Note: -DBUILD_LIB_SHARED=1 can be used to build the library as a shared one
+# -DBUILD_EXAMPLES=1        compiles all examples (optional)
+# -DBUILD_LIB_SHARED=1      creates the library as a shared one (optional)
+# -DGEN_PROCESSOR_EVENTS=1  generates and compiles a .cpp file that adds events specific to the underlying CPU (optional)
 cmake . -B build -DBUILD_EXAMPLES=1
 cmake --build build
 
@@ -158,10 +159,11 @@ cmake --build build --target examples
 - **[Changelog](CHANGELOG.md)**: Stay updated with the latest changes and improvements.
 
 ## System Requirements
-- Requires support for **C++17** features.
-- CMake Version **3.10** or higher.
-- Linux Kernel **4.0** or newer (note that some features need a newer Kernel).
+- *Clang* / *GCC* with support for **C++17** features.
+- *CMake* version **3.10** or higher.
+- *Linux Kernel* **4.0** or newer (note that some features need a newer Kernel).
 - `perf_event_paranoid` setting: Adjust as needed to allow access to performance counters (see the [Paranoid Value](docs/perf-paranoid.md) documentation).
+- *Python3*, if you make use of [processor-specific hardware event generation](docs/build.md#generate-processor-specific-events).
 
 ## Contribute and Contact
 We welcome contributions and feedback.

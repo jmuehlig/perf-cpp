@@ -14,8 +14,9 @@
 ---
 
 ## Building Manually
-**Note**: Throughout the documentation, we use `./build` as the build directory.
-However, the build directory can be any directory of your choice (including `.`).
+> [!NOTE]
+> Throughout the documentation, we use `./build` as the build directory. 
+> However, the build directory can be any directory of your choice (including `.`).
 
 ### Build the Library
 #### Download the source code
@@ -49,6 +50,22 @@ cmake --install build
 ```
 
 The library will then be available for discovery via CMake and `find_package` (see [below](#via-find_package)).
+
+### Generate Processor-specific Events
+With `-DGEN_PROCESSOR_EVENTS=1`, *perf-cpp*  will read the processor-specific events from the event library ([events/](../events)) and generate a source file (`src/processor_specific_event_provider.cpp`) that adds these events to the default `perf::CounterDefinition` (see also the documentation on [hardware events](counters.md)).
+With this option, processor-specific events can be used like *built-in* ones.
+
+```bash
+# Generate Makefile and source file for processor-specific events
+cmake . -B build -DGEN_PROCESSOR_EVENTS=1
+
+# Build Library
+cmake --build build
+```
+
+> [!NOTE]
+> Depending on the underlying processor, the source file can grow very large and increase compilation time significantly.
+
 
 ### Build Examples
 Enable example compilation with `-DBUILD_EXAMPLES=1` and build the `examples` target:
