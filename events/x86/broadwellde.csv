@@ -7,14 +7,14 @@ hle_retired.aborted_misc5, 0x80c8
 hle_retired.commit, 0x2c8
 hle_retired.start, 0x1c8
 machine_clears.memory_ordering, 0x2c3
-mem_trans_retired.load_latency_gt_128, 0x1cd
-mem_trans_retired.load_latency_gt_16, 0x1cd
-mem_trans_retired.load_latency_gt_256, 0x1cd
-mem_trans_retired.load_latency_gt_32, 0x1cd
-mem_trans_retired.load_latency_gt_4, 0x1cd
-mem_trans_retired.load_latency_gt_512, 0x1cd
-mem_trans_retired.load_latency_gt_64, 0x1cd
-mem_trans_retired.load_latency_gt_8, 0x1cd
+mem_trans_retired.load_latency_gt_128, 0x1cd, 0x80
+mem_trans_retired.load_latency_gt_16, 0x1cd, 0x10
+mem_trans_retired.load_latency_gt_256, 0x1cd, 0x100
+mem_trans_retired.load_latency_gt_32, 0x1cd, 0x20
+mem_trans_retired.load_latency_gt_4, 0x1cd, 0x4
+mem_trans_retired.load_latency_gt_512, 0x1cd, 0x200
+mem_trans_retired.load_latency_gt_64, 0x1cd, 0x40
+mem_trans_retired.load_latency_gt_8, 0x1cd, 0x8
 misalign_mem_ref.loads, 0x105
 misalign_mem_ref.stores, 0x205
 rtm_retired.aborted, 0x4c9

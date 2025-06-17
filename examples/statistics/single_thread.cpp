@@ -11,7 +11,11 @@ main()
             << std::endl;
 
   /// Initialize performance counters.
-  auto event_counter = perf::EventCounter{};
+  auto config = perf::Config{};
+  config.is_debug(true);
+  config.cpu_core(0);
+  config.process(perf::Process::Any);
+  auto event_counter = perf::EventCounter{config};
 
   /// Add all the performance counters we want to record.
   try {
@@ -23,7 +27,7 @@ main()
                         "L1-data-miss-ratio",
                         "cycles-per-instruction",
                         "nanoseconds",
-                        "gigahertz" });
+                        "gigahertz", "energy-pkg" });
   } catch (std::runtime_error& e) {
     std::cerr << e.what() << std::endl;
     return 1;
@@ -31,7 +35,7 @@ main()
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
-                                                   /* create benchmark of 512 MB */ 512U };
+                                                   /* create benchmark of 512 MB */ 4096 };
 
   /// Start recording.
   try {
@@ -56,7 +60,7 @@ main()
   event_counter.stop();
 
   /// Get the result (normalized per cache line).
-  const auto result = event_counter.result(benchmark.size());
+  const auto result = event_counter.result();
 
   /// Print the performance counters manually.
   std::cout << "\nResults:\n";

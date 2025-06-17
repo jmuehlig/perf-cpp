@@ -1,13 +1,13 @@
 cycle_activity.stalls_l3_miss, 0x6a3
 machine_clears.memory_ordering, 0x2c3
-mem_trans_retired.load_latency_gt_128, 0x1cd
-mem_trans_retired.load_latency_gt_16, 0x1cd
-mem_trans_retired.load_latency_gt_256, 0x1cd
-mem_trans_retired.load_latency_gt_32, 0x1cd
-mem_trans_retired.load_latency_gt_4, 0x1cd
-mem_trans_retired.load_latency_gt_512, 0x1cd
-mem_trans_retired.load_latency_gt_64, 0x1cd
-mem_trans_retired.load_latency_gt_8, 0x1cd
+mem_trans_retired.load_latency_gt_128, 0x1cd, 0x80
+mem_trans_retired.load_latency_gt_16, 0x1cd, 0x10
+mem_trans_retired.load_latency_gt_256, 0x1cd, 0x100
+mem_trans_retired.load_latency_gt_32, 0x1cd, 0x20
+mem_trans_retired.load_latency_gt_4, 0x1cd, 0x4
+mem_trans_retired.load_latency_gt_512, 0x1cd, 0x200
+mem_trans_retired.load_latency_gt_64, 0x1cd, 0x40
+mem_trans_retired.load_latency_gt_8, 0x1cd, 0x8
 offcore_requests.l3_miss_demand_data_rd, 0x10b0
 rtm_retired.aborted, 0x4c9
 rtm_retired.aborted_events, 0x80c9
@@ -60,29 +60,29 @@ fp_arith_inst_retired.vector, 0xfcc7
 core_power.lvl0_turbo_license, 0x728
 core_power.lvl1_turbo_license, 0x1828
 core_power.lvl2_turbo_license, 0x2028
-ocr.streaming_wr.any_response_0, 0x1b7
-ocr.streaming_wr.any_response_1, 0x1bb
+ocr.streaming_wr.any_response_0, 0x1b7, 0x10800
+ocr.streaming_wr.any_response_1, 0x1bb, 0x10800
 baclears.any, 0x1e6
 decode.lcp, 0x187
 dsb2mite_switches.count, 0x2ab
 dsb2mite_switches.penalty_cycles, 0x2ab
-frontend_retired.any_dsb_miss, 0x1c6
-frontend_retired.dsb_miss, 0x1c6
-frontend_retired.itlb_miss, 0x1c6
-frontend_retired.l1i_miss, 0x1c6
-frontend_retired.l2_miss, 0x1c6
-frontend_retired.latency_ge_1, 0x1c6
-frontend_retired.latency_ge_128, 0x1c6
-frontend_retired.latency_ge_16, 0x1c6
-frontend_retired.latency_ge_2, 0x1c6
-frontend_retired.latency_ge_256, 0x1c6
-frontend_retired.latency_ge_2_bubbles_ge_1, 0x1c6
-frontend_retired.latency_ge_32, 0x1c6
-frontend_retired.latency_ge_4, 0x1c6
-frontend_retired.latency_ge_512, 0x1c6
-frontend_retired.latency_ge_64, 0x1c6
-frontend_retired.latency_ge_8, 0x1c6
-frontend_retired.stlb_miss, 0x1c6
+frontend_retired.any_dsb_miss, 0x1c6, 0x1
+frontend_retired.dsb_miss, 0x1c6, 0x11
+frontend_retired.itlb_miss, 0x1c6, 0x14
+frontend_retired.l1i_miss, 0x1c6, 0x12
+frontend_retired.l2_miss, 0x1c6, 0x13
+frontend_retired.latency_ge_1, 0x1c6, 0x500106
+frontend_retired.latency_ge_128, 0x1c6, 0x508006
+frontend_retired.latency_ge_16, 0x1c6, 0x501006
+frontend_retired.latency_ge_2, 0x1c6, 0x500206
+frontend_retired.latency_ge_256, 0x1c6, 0x510006
+frontend_retired.latency_ge_2_bubbles_ge_1, 0x1c6, 0x100206
+frontend_retired.latency_ge_32, 0x1c6, 0x502006
+frontend_retired.latency_ge_4, 0x1c6, 0x500406
+frontend_retired.latency_ge_512, 0x1c6, 0x520006
+frontend_retired.latency_ge_64, 0x1c6, 0x504006
+frontend_retired.latency_ge_8, 0x1c6, 0x500806
+frontend_retired.stlb_miss, 0x1c6, 0x15
 icache_16b.ifdata_stall, 0x480
 icache_64b.iftag_hit, 0x183
 icache_64b.iftag_miss, 0x283
@@ -249,12 +249,12 @@ mem_load_retired.l2_hit, 0x2d1
 mem_load_retired.l2_miss, 0x10d1
 mem_load_retired.l3_hit, 0x4d1
 mem_load_retired.l3_miss, 0x20d1
-ocr.demand_data_rd.l3_hit.snoop_hitm_0, 0x1b7
-ocr.demand_data_rd.l3_hit.snoop_hitm_1, 0x1bb
-ocr.demand_data_rd.l3_hit.snoop_hit_with_fwd_0, 0x1b7
-ocr.demand_data_rd.l3_hit.snoop_hit_with_fwd_1, 0x1bb
-ocr.demand_rfo.l3_hit.snoop_hitm_0, 0x1b7
-ocr.demand_rfo.l3_hit.snoop_hitm_1, 0x1bb
+ocr.demand_data_rd.l3_hit.snoop_hitm_0, 0x1b7, 0x10003c0001
+ocr.demand_data_rd.l3_hit.snoop_hitm_1, 0x1bb, 0x10003c0001
+ocr.demand_data_rd.l3_hit.snoop_hit_with_fwd_0, 0x1b7, 0x8003c0001
+ocr.demand_data_rd.l3_hit.snoop_hit_with_fwd_1, 0x1bb, 0x8003c0001
+ocr.demand_rfo.l3_hit.snoop_hitm_0, 0x1b7, 0x10003c0002
+ocr.demand_rfo.l3_hit.snoop_hitm_1, 0x1bb, 0x10003c0002
 offcore_requests.all_data_rd, 0x8b0
 offcore_requests.all_requests, 0x80b0
 offcore_requests.demand_data_rd, 0x1b0

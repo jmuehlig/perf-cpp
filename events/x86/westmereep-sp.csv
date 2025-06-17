@@ -1,137 +1,137 @@
-offcore_response.any_data.any_dram_0, 0x1b7
-offcore_response.any_data.any_dram_1, 0x1bb
-offcore_response.any_data.any_llc_miss_0, 0x1b7
-offcore_response.any_data.any_llc_miss_1, 0x1bb
-offcore_response.any_data.local_dram_0, 0x1b7
-offcore_response.any_data.local_dram_1, 0x1bb
-offcore_response.any_data.remote_dram_0, 0x1b7
-offcore_response.any_data.remote_dram_1, 0x1bb
-offcore_response.any_ifetch.any_dram_0, 0x1b7
-offcore_response.any_ifetch.any_dram_1, 0x1bb
-offcore_response.any_ifetch.any_llc_miss_0, 0x1b7
-offcore_response.any_ifetch.any_llc_miss_1, 0x1bb
-offcore_response.any_ifetch.local_dram_0, 0x1b7
-offcore_response.any_ifetch.local_dram_1, 0x1bb
-offcore_response.any_ifetch.remote_dram_0, 0x1b7
-offcore_response.any_ifetch.remote_dram_1, 0x1bb
-offcore_response.any_request.any_dram_0, 0x1b7
-offcore_response.any_request.any_dram_1, 0x1bb
-offcore_response.any_request.any_llc_miss_0, 0x1b7
-offcore_response.any_request.any_llc_miss_1, 0x1bb
-offcore_response.any_request.local_dram_0, 0x1b7
-offcore_response.any_request.local_dram_1, 0x1bb
-offcore_response.any_request.remote_dram_0, 0x1b7
-offcore_response.any_request.remote_dram_1, 0x1bb
-offcore_response.any_rfo.any_dram_0, 0x1b7
-offcore_response.any_rfo.any_dram_1, 0x1bb
-offcore_response.any_rfo.any_llc_miss_0, 0x1b7
-offcore_response.any_rfo.any_llc_miss_1, 0x1bb
-offcore_response.any_rfo.local_dram_0, 0x1b7
-offcore_response.any_rfo.local_dram_1, 0x1bb
-offcore_response.any_rfo.remote_dram_0, 0x1b7
-offcore_response.any_rfo.remote_dram_1, 0x1bb
-offcore_response.corewb.any_dram_0, 0x1b7
-offcore_response.corewb.any_dram_1, 0x1bb
-offcore_response.corewb.any_llc_miss_0, 0x1b7
-offcore_response.corewb.any_llc_miss_1, 0x1bb
-offcore_response.corewb.local_dram_0, 0x1b7
-offcore_response.corewb.local_dram_1, 0x1bb
-offcore_response.corewb.remote_dram_0, 0x1b7
-offcore_response.corewb.remote_dram_1, 0x1bb
-offcore_response.data_ifetch.any_dram_0, 0x1b7
-offcore_response.data_ifetch.any_dram_1, 0x1bb
-offcore_response.data_ifetch.any_llc_miss_0, 0x1b7
-offcore_response.data_ifetch.any_llc_miss_1, 0x1bb
-offcore_response.data_ifetch.local_dram_0, 0x1b7
-offcore_response.data_ifetch.local_dram_1, 0x1bb
-offcore_response.data_ifetch.remote_dram_0, 0x1b7
-offcore_response.data_ifetch.remote_dram_1, 0x1bb
-offcore_response.data_in.any_dram_0, 0x1b7
-offcore_response.data_in.any_dram_1, 0x1bb
-offcore_response.data_in.any_llc_miss_0, 0x1b7
-offcore_response.data_in.any_llc_miss_1, 0x1bb
-offcore_response.data_in.local_dram_0, 0x1b7
-offcore_response.data_in.local_dram_1, 0x1bb
-offcore_response.data_in.remote_dram_0, 0x1b7
-offcore_response.data_in.remote_dram_1, 0x1bb
-offcore_response.demand_data.any_dram_0, 0x1b7
-offcore_response.demand_data.any_dram_1, 0x1bb
-offcore_response.demand_data.any_llc_miss_0, 0x1b7
-offcore_response.demand_data.any_llc_miss_1, 0x1bb
-offcore_response.demand_data.local_dram_0, 0x1b7
-offcore_response.demand_data.local_dram_1, 0x1bb
-offcore_response.demand_data.remote_dram_0, 0x1b7
-offcore_response.demand_data.remote_dram_1, 0x1bb
-offcore_response.demand_data_rd.any_dram_0, 0x1b7
-offcore_response.demand_data_rd.any_dram_1, 0x1bb
-offcore_response.demand_data_rd.any_llc_miss_0, 0x1b7
-offcore_response.demand_data_rd.any_llc_miss_1, 0x1bb
-offcore_response.demand_data_rd.local_dram_0, 0x1b7
-offcore_response.demand_data_rd.local_dram_1, 0x1bb
-offcore_response.demand_data_rd.remote_dram_0, 0x1b7
-offcore_response.demand_data_rd.remote_dram_1, 0x1bb
-offcore_response.demand_ifetch.any_dram_0, 0x1b7
-offcore_response.demand_ifetch.any_dram_1, 0x1bb
-offcore_response.demand_ifetch.any_llc_miss_0, 0x1b7
-offcore_response.demand_ifetch.any_llc_miss_1, 0x1bb
-offcore_response.demand_ifetch.local_dram_0, 0x1b7
-offcore_response.demand_ifetch.local_dram_1, 0x1bb
-offcore_response.demand_ifetch.remote_dram_0, 0x1b7
-offcore_response.demand_ifetch.remote_dram_1, 0x1bb
-offcore_response.demand_rfo.any_dram_0, 0x1b7
-offcore_response.demand_rfo.any_dram_1, 0x1bb
-offcore_response.demand_rfo.any_llc_miss_0, 0x1b7
-offcore_response.demand_rfo.any_llc_miss_1, 0x1bb
-offcore_response.demand_rfo.local_dram_0, 0x1b7
-offcore_response.demand_rfo.local_dram_1, 0x1bb
-offcore_response.demand_rfo.remote_dram_0, 0x1b7
-offcore_response.demand_rfo.remote_dram_1, 0x1bb
-offcore_response.other.any_dram_0, 0x1b7
-offcore_response.other.any_dram_1, 0x1bb
-offcore_response.other.any_llc_miss_0, 0x1b7
-offcore_response.other.any_llc_miss_1, 0x1bb
-offcore_response.other.remote_dram_0, 0x1b7
-offcore_response.other.remote_dram_1, 0x1bb
-offcore_response.pf_data.any_dram_0, 0x1b7
-offcore_response.pf_data.any_dram_1, 0x1bb
-offcore_response.pf_data.any_llc_miss_0, 0x1b7
-offcore_response.pf_data.any_llc_miss_1, 0x1bb
-offcore_response.pf_data.local_dram_0, 0x1b7
-offcore_response.pf_data.local_dram_1, 0x1bb
-offcore_response.pf_data.remote_dram_0, 0x1b7
-offcore_response.pf_data.remote_dram_1, 0x1bb
-offcore_response.pf_data_rd.any_dram_0, 0x1b7
-offcore_response.pf_data_rd.any_dram_1, 0x1bb
-offcore_response.pf_data_rd.any_llc_miss_0, 0x1b7
-offcore_response.pf_data_rd.any_llc_miss_1, 0x1bb
-offcore_response.pf_data_rd.local_dram_0, 0x1b7
-offcore_response.pf_data_rd.local_dram_1, 0x1bb
-offcore_response.pf_data_rd.remote_dram_0, 0x1b7
-offcore_response.pf_data_rd.remote_dram_1, 0x1bb
-offcore_response.pf_ifetch.any_dram_0, 0x1b7
-offcore_response.pf_ifetch.any_dram_1, 0x1bb
-offcore_response.pf_ifetch.any_llc_miss_0, 0x1b7
-offcore_response.pf_ifetch.any_llc_miss_1, 0x1bb
-offcore_response.pf_ifetch.local_dram_0, 0x1b7
-offcore_response.pf_ifetch.local_dram_1, 0x1bb
-offcore_response.pf_ifetch.remote_dram_0, 0x1b7
-offcore_response.pf_ifetch.remote_dram_1, 0x1bb
-offcore_response.pf_rfo.any_dram_0, 0x1b7
-offcore_response.pf_rfo.any_dram_1, 0x1bb
-offcore_response.pf_rfo.any_llc_miss_0, 0x1b7
-offcore_response.pf_rfo.any_llc_miss_1, 0x1bb
-offcore_response.pf_rfo.local_dram_0, 0x1b7
-offcore_response.pf_rfo.local_dram_1, 0x1bb
-offcore_response.pf_rfo.remote_dram_0, 0x1b7
-offcore_response.pf_rfo.remote_dram_1, 0x1bb
-offcore_response.prefetch.any_dram_0, 0x1b7
-offcore_response.prefetch.any_dram_1, 0x1bb
-offcore_response.prefetch.any_llc_miss_0, 0x1b7
-offcore_response.prefetch.any_llc_miss_1, 0x1bb
-offcore_response.prefetch.local_dram_0, 0x1b7
-offcore_response.prefetch.local_dram_1, 0x1bb
-offcore_response.prefetch.remote_dram_0, 0x1b7
-offcore_response.prefetch.remote_dram_1, 0x1bb
+offcore_response.any_data.any_dram_0, 0x1b7, 0x6011
+offcore_response.any_data.any_dram_1, 0x1bb, 0x6011
+offcore_response.any_data.any_llc_miss_0, 0x1b7, 0xf811
+offcore_response.any_data.any_llc_miss_1, 0x1bb, 0xf811
+offcore_response.any_data.local_dram_0, 0x1b7, 0x2011
+offcore_response.any_data.local_dram_1, 0x1bb, 0x2011
+offcore_response.any_data.remote_dram_0, 0x1b7, 0x4011
+offcore_response.any_data.remote_dram_1, 0x1bb, 0x4011
+offcore_response.any_ifetch.any_dram_0, 0x1b7, 0x6044
+offcore_response.any_ifetch.any_dram_1, 0x1bb, 0x6044
+offcore_response.any_ifetch.any_llc_miss_0, 0x1b7, 0xf844
+offcore_response.any_ifetch.any_llc_miss_1, 0x1bb, 0xf844
+offcore_response.any_ifetch.local_dram_0, 0x1b7, 0x2044
+offcore_response.any_ifetch.local_dram_1, 0x1bb, 0x2044
+offcore_response.any_ifetch.remote_dram_0, 0x1b7, 0x4044
+offcore_response.any_ifetch.remote_dram_1, 0x1bb, 0x4044
+offcore_response.any_request.any_dram_0, 0x1b7, 0x60ff
+offcore_response.any_request.any_dram_1, 0x1bb, 0x60ff
+offcore_response.any_request.any_llc_miss_0, 0x1b7, 0xf8ff
+offcore_response.any_request.any_llc_miss_1, 0x1bb, 0xf8ff
+offcore_response.any_request.local_dram_0, 0x1b7, 0x20ff
+offcore_response.any_request.local_dram_1, 0x1bb, 0x20ff
+offcore_response.any_request.remote_dram_0, 0x1b7, 0x40ff
+offcore_response.any_request.remote_dram_1, 0x1bb, 0x40ff
+offcore_response.any_rfo.any_dram_0, 0x1b7, 0x6022
+offcore_response.any_rfo.any_dram_1, 0x1bb, 0x6022
+offcore_response.any_rfo.any_llc_miss_0, 0x1b7, 0xf822
+offcore_response.any_rfo.any_llc_miss_1, 0x1bb, 0xf822
+offcore_response.any_rfo.local_dram_0, 0x1b7, 0x2022
+offcore_response.any_rfo.local_dram_1, 0x1bb, 0x2022
+offcore_response.any_rfo.remote_dram_0, 0x1b7, 0x4022
+offcore_response.any_rfo.remote_dram_1, 0x1bb, 0x4022
+offcore_response.corewb.any_dram_0, 0x1b7, 0x6008
+offcore_response.corewb.any_dram_1, 0x1bb, 0x6008
+offcore_response.corewb.any_llc_miss_0, 0x1b7, 0xf808
+offcore_response.corewb.any_llc_miss_1, 0x1bb, 0xf808
+offcore_response.corewb.local_dram_0, 0x1b7, 0x2008
+offcore_response.corewb.local_dram_1, 0x1bb, 0x2008
+offcore_response.corewb.remote_dram_0, 0x1b7, 0x4008
+offcore_response.corewb.remote_dram_1, 0x1bb, 0x4008
+offcore_response.data_ifetch.any_dram_0, 0x1b7, 0x6077
+offcore_response.data_ifetch.any_dram_1, 0x1bb, 0x6077
+offcore_response.data_ifetch.any_llc_miss_0, 0x1b7, 0xf877
+offcore_response.data_ifetch.any_llc_miss_1, 0x1bb, 0xf877
+offcore_response.data_ifetch.local_dram_0, 0x1b7, 0x2077
+offcore_response.data_ifetch.local_dram_1, 0x1bb, 0x2077
+offcore_response.data_ifetch.remote_dram_0, 0x1b7, 0x4077
+offcore_response.data_ifetch.remote_dram_1, 0x1bb, 0x4077
+offcore_response.data_in.any_dram_0, 0x1b7, 0x6033
+offcore_response.data_in.any_dram_1, 0x1bb, 0x6033
+offcore_response.data_in.any_llc_miss_0, 0x1b7, 0xf833
+offcore_response.data_in.any_llc_miss_1, 0x1bb, 0xf833
+offcore_response.data_in.local_dram_0, 0x1b7, 0x2033
+offcore_response.data_in.local_dram_1, 0x1bb, 0x2033
+offcore_response.data_in.remote_dram_0, 0x1b7, 0x4033
+offcore_response.data_in.remote_dram_1, 0x1bb, 0x4033
+offcore_response.demand_data.any_dram_0, 0x1b7, 0x6003
+offcore_response.demand_data.any_dram_1, 0x1bb, 0x6003
+offcore_response.demand_data.any_llc_miss_0, 0x1b7, 0xf803
+offcore_response.demand_data.any_llc_miss_1, 0x1bb, 0xf803
+offcore_response.demand_data.local_dram_0, 0x1b7, 0x2003
+offcore_response.demand_data.local_dram_1, 0x1bb, 0x2003
+offcore_response.demand_data.remote_dram_0, 0x1b7, 0x4003
+offcore_response.demand_data.remote_dram_1, 0x1bb, 0x4003
+offcore_response.demand_data_rd.any_dram_0, 0x1b7, 0x6001
+offcore_response.demand_data_rd.any_dram_1, 0x1bb, 0x6001
+offcore_response.demand_data_rd.any_llc_miss_0, 0x1b7, 0xf801
+offcore_response.demand_data_rd.any_llc_miss_1, 0x1bb, 0xf801
+offcore_response.demand_data_rd.local_dram_0, 0x1b7, 0x2001
+offcore_response.demand_data_rd.local_dram_1, 0x1bb, 0x2001
+offcore_response.demand_data_rd.remote_dram_0, 0x1b7, 0x4001
+offcore_response.demand_data_rd.remote_dram_1, 0x1bb, 0x4001
+offcore_response.demand_ifetch.any_dram_0, 0x1b7, 0x6004
+offcore_response.demand_ifetch.any_dram_1, 0x1bb, 0x6004
+offcore_response.demand_ifetch.any_llc_miss_0, 0x1b7, 0xf804
+offcore_response.demand_ifetch.any_llc_miss_1, 0x1bb, 0xf804
+offcore_response.demand_ifetch.local_dram_0, 0x1b7, 0x2004
+offcore_response.demand_ifetch.local_dram_1, 0x1bb, 0x2004
+offcore_response.demand_ifetch.remote_dram_0, 0x1b7, 0x4004
+offcore_response.demand_ifetch.remote_dram_1, 0x1bb, 0x4004
+offcore_response.demand_rfo.any_dram_0, 0x1b7, 0x6002
+offcore_response.demand_rfo.any_dram_1, 0x1bb, 0x6002
+offcore_response.demand_rfo.any_llc_miss_0, 0x1b7, 0xf802
+offcore_response.demand_rfo.any_llc_miss_1, 0x1bb, 0xf802
+offcore_response.demand_rfo.local_dram_0, 0x1b7, 0x2002
+offcore_response.demand_rfo.local_dram_1, 0x1bb, 0x2002
+offcore_response.demand_rfo.remote_dram_0, 0x1b7, 0x4002
+offcore_response.demand_rfo.remote_dram_1, 0x1bb, 0x4002
+offcore_response.other.any_dram_0, 0x1b7, 0x6080
+offcore_response.other.any_dram_1, 0x1bb, 0x6080
+offcore_response.other.any_llc_miss_0, 0x1b7, 0xf880
+offcore_response.other.any_llc_miss_1, 0x1bb, 0xf880
+offcore_response.other.remote_dram_0, 0x1b7, 0x4080
+offcore_response.other.remote_dram_1, 0x1bb, 0x4080
+offcore_response.pf_data.any_dram_0, 0x1b7, 0x6050
+offcore_response.pf_data.any_dram_1, 0x1bb, 0x6050
+offcore_response.pf_data.any_llc_miss_0, 0x1b7, 0xf850
+offcore_response.pf_data.any_llc_miss_1, 0x1bb, 0xf850
+offcore_response.pf_data.local_dram_0, 0x1b7, 0x2050
+offcore_response.pf_data.local_dram_1, 0x1bb, 0x2050
+offcore_response.pf_data.remote_dram_0, 0x1b7, 0x4050
+offcore_response.pf_data.remote_dram_1, 0x1bb, 0x4050
+offcore_response.pf_data_rd.any_dram_0, 0x1b7, 0x6010
+offcore_response.pf_data_rd.any_dram_1, 0x1bb, 0x6010
+offcore_response.pf_data_rd.any_llc_miss_0, 0x1b7, 0xf810
+offcore_response.pf_data_rd.any_llc_miss_1, 0x1bb, 0xf810
+offcore_response.pf_data_rd.local_dram_0, 0x1b7, 0x2010
+offcore_response.pf_data_rd.local_dram_1, 0x1bb, 0x2010
+offcore_response.pf_data_rd.remote_dram_0, 0x1b7, 0x4010
+offcore_response.pf_data_rd.remote_dram_1, 0x1bb, 0x4010
+offcore_response.pf_ifetch.any_dram_0, 0x1b7, 0x6040
+offcore_response.pf_ifetch.any_dram_1, 0x1bb, 0x6040
+offcore_response.pf_ifetch.any_llc_miss_0, 0x1b7, 0xf840
+offcore_response.pf_ifetch.any_llc_miss_1, 0x1bb, 0xf840
+offcore_response.pf_ifetch.local_dram_0, 0x1b7, 0x2040
+offcore_response.pf_ifetch.local_dram_1, 0x1bb, 0x2040
+offcore_response.pf_ifetch.remote_dram_0, 0x1b7, 0x4040
+offcore_response.pf_ifetch.remote_dram_1, 0x1bb, 0x4040
+offcore_response.pf_rfo.any_dram_0, 0x1b7, 0x6020
+offcore_response.pf_rfo.any_dram_1, 0x1bb, 0x6020
+offcore_response.pf_rfo.any_llc_miss_0, 0x1b7, 0xf820
+offcore_response.pf_rfo.any_llc_miss_1, 0x1bb, 0xf820
+offcore_response.pf_rfo.local_dram_0, 0x1b7, 0x2020
+offcore_response.pf_rfo.local_dram_1, 0x1bb, 0x2020
+offcore_response.pf_rfo.remote_dram_0, 0x1b7, 0x4020
+offcore_response.pf_rfo.remote_dram_1, 0x1bb, 0x4020
+offcore_response.prefetch.any_dram_0, 0x1b7, 0x6070
+offcore_response.prefetch.any_dram_1, 0x1bb, 0x6070
+offcore_response.prefetch.any_llc_miss_0, 0x1b7, 0xf870
+offcore_response.prefetch.any_llc_miss_1, 0x1bb, 0xf870
+offcore_response.prefetch.local_dram_0, 0x1b7, 0x2070
+offcore_response.prefetch.local_dram_1, 0x1bb, 0x2070
+offcore_response.prefetch.remote_dram_0, 0x1b7, 0x4070
+offcore_response.prefetch.remote_dram_1, 0x1bb, 0x4070
 dtlb_load_misses.any, 0x108
 dtlb_load_misses.pde_miss, 0x2008
 dtlb_load_misses.stlb_hit, 0x1008
@@ -387,20 +387,20 @@ l2_write.rfo.s_state, 0x227
 longest_lat_cache.miss, 0x412e
 longest_lat_cache.reference, 0x4f2e
 mem_inst_retired.latency_above_threshold_0, 0x100b
-mem_inst_retired.latency_above_threshold_1024, 0x100b
-mem_inst_retired.latency_above_threshold_128, 0x100b
-mem_inst_retired.latency_above_threshold_16, 0x100b
-mem_inst_retired.latency_above_threshold_16384, 0x100b
-mem_inst_retired.latency_above_threshold_2048, 0x100b
-mem_inst_retired.latency_above_threshold_256, 0x100b
-mem_inst_retired.latency_above_threshold_32, 0x100b
-mem_inst_retired.latency_above_threshold_32768, 0x100b
-mem_inst_retired.latency_above_threshold_4, 0x100b
-mem_inst_retired.latency_above_threshold_4096, 0x100b
-mem_inst_retired.latency_above_threshold_512, 0x100b
-mem_inst_retired.latency_above_threshold_64, 0x100b
-mem_inst_retired.latency_above_threshold_8, 0x100b
-mem_inst_retired.latency_above_threshold_8192, 0x100b
+mem_inst_retired.latency_above_threshold_1024, 0x100b, 0x400
+mem_inst_retired.latency_above_threshold_128, 0x100b, 0x80
+mem_inst_retired.latency_above_threshold_16, 0x100b, 0x10
+mem_inst_retired.latency_above_threshold_16384, 0x100b, 0x4000
+mem_inst_retired.latency_above_threshold_2048, 0x100b, 0x800
+mem_inst_retired.latency_above_threshold_256, 0x100b, 0x100
+mem_inst_retired.latency_above_threshold_32, 0x100b, 0x20
+mem_inst_retired.latency_above_threshold_32768, 0x100b, 0x8000
+mem_inst_retired.latency_above_threshold_4, 0x100b, 0x4
+mem_inst_retired.latency_above_threshold_4096, 0x100b, 0x1000
+mem_inst_retired.latency_above_threshold_512, 0x100b, 0x200
+mem_inst_retired.latency_above_threshold_64, 0x100b, 0x40
+mem_inst_retired.latency_above_threshold_8, 0x100b, 0x8
+mem_inst_retired.latency_above_threshold_8192, 0x100b, 0x2000
 mem_inst_retired.loads, 0x10b
 mem_inst_retired.stores, 0x20b
 mem_load_retired.hit_lfb, 0x40cb
@@ -431,412 +431,412 @@ offcore_requests_outstanding.demand.read_data_not_empty, 0x160
 offcore_requests_outstanding.demand.rfo, 0x460
 offcore_requests_outstanding.demand.rfo_not_empty, 0x460
 offcore_requests_sq_full, 0x1b2
-offcore_response.any_data.any_cache_dram_0, 0x1b7
-offcore_response.any_data.any_cache_dram_1, 0x1bb
-offcore_response.any_data.any_location_0, 0x1b7
-offcore_response.any_data.any_location_1, 0x1bb
-offcore_response.any_data.io_csr_mmio_0, 0x1b7
-offcore_response.any_data.io_csr_mmio_1, 0x1bb
-offcore_response.any_data.llc_hit_no_other_core_0, 0x1b7
-offcore_response.any_data.llc_hit_no_other_core_1, 0x1bb
-offcore_response.any_data.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.any_data.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.any_data.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.any_data.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.any_data.local_cache_0, 0x1b7
-offcore_response.any_data.local_cache_1, 0x1bb
-offcore_response.any_data.local_cache_dram_0, 0x1b7
-offcore_response.any_data.local_cache_dram_1, 0x1bb
-offcore_response.any_data.remote_cache_0, 0x1b7
-offcore_response.any_data.remote_cache_1, 0x1bb
-offcore_response.any_data.remote_cache_dram_0, 0x1b7
-offcore_response.any_data.remote_cache_dram_1, 0x1bb
-offcore_response.any_data.remote_cache_hit_0, 0x1b7
-offcore_response.any_data.remote_cache_hit_1, 0x1bb
-offcore_response.any_data.remote_cache_hitm_0, 0x1b7
-offcore_response.any_data.remote_cache_hitm_1, 0x1bb
-offcore_response.any_ifetch.any_cache_dram_0, 0x1b7
-offcore_response.any_ifetch.any_cache_dram_1, 0x1bb
-offcore_response.any_ifetch.any_location_0, 0x1b7
-offcore_response.any_ifetch.any_location_1, 0x1bb
-offcore_response.any_ifetch.io_csr_mmio_0, 0x1b7
-offcore_response.any_ifetch.io_csr_mmio_1, 0x1bb
-offcore_response.any_ifetch.llc_hit_no_other_core_0, 0x1b7
-offcore_response.any_ifetch.llc_hit_no_other_core_1, 0x1bb
-offcore_response.any_ifetch.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.any_ifetch.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.any_ifetch.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.any_ifetch.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.any_ifetch.local_cache_0, 0x1b7
-offcore_response.any_ifetch.local_cache_1, 0x1bb
-offcore_response.any_ifetch.local_cache_dram_0, 0x1b7
-offcore_response.any_ifetch.local_cache_dram_1, 0x1bb
-offcore_response.any_ifetch.remote_cache_0, 0x1b7
-offcore_response.any_ifetch.remote_cache_1, 0x1bb
-offcore_response.any_ifetch.remote_cache_dram_0, 0x1b7
-offcore_response.any_ifetch.remote_cache_dram_1, 0x1bb
-offcore_response.any_ifetch.remote_cache_hit_0, 0x1b7
-offcore_response.any_ifetch.remote_cache_hit_1, 0x1bb
-offcore_response.any_ifetch.remote_cache_hitm_0, 0x1b7
-offcore_response.any_ifetch.remote_cache_hitm_1, 0x1bb
-offcore_response.any_request.any_cache_dram_0, 0x1b7
-offcore_response.any_request.any_cache_dram_1, 0x1bb
-offcore_response.any_request.any_location_0, 0x1b7
-offcore_response.any_request.any_location_1, 0x1bb
-offcore_response.any_request.io_csr_mmio_0, 0x1b7
-offcore_response.any_request.io_csr_mmio_1, 0x1bb
-offcore_response.any_request.llc_hit_no_other_core_0, 0x1b7
-offcore_response.any_request.llc_hit_no_other_core_1, 0x1bb
-offcore_response.any_request.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.any_request.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.any_request.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.any_request.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.any_request.local_cache_0, 0x1b7
-offcore_response.any_request.local_cache_1, 0x1bb
-offcore_response.any_request.local_cache_dram_0, 0x1b7
-offcore_response.any_request.local_cache_dram_1, 0x1bb
-offcore_response.any_request.remote_cache_0, 0x1b7
-offcore_response.any_request.remote_cache_1, 0x1bb
-offcore_response.any_request.remote_cache_dram_0, 0x1b7
-offcore_response.any_request.remote_cache_dram_1, 0x1bb
-offcore_response.any_request.remote_cache_hit_0, 0x1b7
-offcore_response.any_request.remote_cache_hit_1, 0x1bb
-offcore_response.any_request.remote_cache_hitm_0, 0x1b7
-offcore_response.any_request.remote_cache_hitm_1, 0x1bb
-offcore_response.any_rfo.any_cache_dram_0, 0x1b7
-offcore_response.any_rfo.any_cache_dram_1, 0x1bb
-offcore_response.any_rfo.any_location_0, 0x1b7
-offcore_response.any_rfo.any_location_1, 0x1bb
-offcore_response.any_rfo.io_csr_mmio_0, 0x1b7
-offcore_response.any_rfo.io_csr_mmio_1, 0x1bb
-offcore_response.any_rfo.llc_hit_no_other_core_0, 0x1b7
-offcore_response.any_rfo.llc_hit_no_other_core_1, 0x1bb
-offcore_response.any_rfo.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.any_rfo.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.any_rfo.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.any_rfo.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.any_rfo.local_cache_0, 0x1b7
-offcore_response.any_rfo.local_cache_1, 0x1bb
-offcore_response.any_rfo.local_cache_dram_0, 0x1b7
-offcore_response.any_rfo.local_cache_dram_1, 0x1bb
-offcore_response.any_rfo.remote_cache_0, 0x1b7
-offcore_response.any_rfo.remote_cache_1, 0x1bb
-offcore_response.any_rfo.remote_cache_dram_0, 0x1b7
-offcore_response.any_rfo.remote_cache_dram_1, 0x1bb
-offcore_response.any_rfo.remote_cache_hit_0, 0x1b7
-offcore_response.any_rfo.remote_cache_hit_1, 0x1bb
-offcore_response.any_rfo.remote_cache_hitm_0, 0x1b7
-offcore_response.any_rfo.remote_cache_hitm_1, 0x1bb
-offcore_response.corewb.any_cache_dram_0, 0x1b7
-offcore_response.corewb.any_cache_dram_1, 0x1bb
-offcore_response.corewb.any_location_0, 0x1b7
-offcore_response.corewb.any_location_1, 0x1bb
-offcore_response.corewb.io_csr_mmio_0, 0x1b7
-offcore_response.corewb.io_csr_mmio_1, 0x1bb
-offcore_response.corewb.llc_hit_no_other_core_0, 0x1b7
-offcore_response.corewb.llc_hit_no_other_core_1, 0x1bb
-offcore_response.corewb.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.corewb.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.corewb.local_cache_0, 0x1b7
-offcore_response.corewb.local_cache_1, 0x1bb
-offcore_response.corewb.local_cache_dram_0, 0x1b7
-offcore_response.corewb.local_cache_dram_1, 0x1bb
-offcore_response.corewb.remote_cache_0, 0x1b7
-offcore_response.corewb.remote_cache_1, 0x1bb
-offcore_response.corewb.remote_cache_dram_0, 0x1b7
-offcore_response.corewb.remote_cache_dram_1, 0x1bb
-offcore_response.corewb.remote_cache_hit_0, 0x1b7
-offcore_response.corewb.remote_cache_hit_1, 0x1bb
-offcore_response.corewb.remote_cache_hitm_0, 0x1b7
-offcore_response.corewb.remote_cache_hitm_1, 0x1bb
-offcore_response.data_ifetch.any_cache_dram_0, 0x1b7
-offcore_response.data_ifetch.any_cache_dram_1, 0x1bb
-offcore_response.data_ifetch.any_location_0, 0x1b7
-offcore_response.data_ifetch.any_location_1, 0x1bb
-offcore_response.data_ifetch.io_csr_mmio_0, 0x1b7
-offcore_response.data_ifetch.io_csr_mmio_1, 0x1bb
-offcore_response.data_ifetch.llc_hit_no_other_core_0, 0x1b7
-offcore_response.data_ifetch.llc_hit_no_other_core_1, 0x1bb
-offcore_response.data_ifetch.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.data_ifetch.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.data_ifetch.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.data_ifetch.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.data_ifetch.local_cache_0, 0x1b7
-offcore_response.data_ifetch.local_cache_1, 0x1bb
-offcore_response.data_ifetch.local_cache_dram_0, 0x1b7
-offcore_response.data_ifetch.local_cache_dram_1, 0x1bb
-offcore_response.data_ifetch.remote_cache_0, 0x1b7
-offcore_response.data_ifetch.remote_cache_1, 0x1bb
-offcore_response.data_ifetch.remote_cache_dram_0, 0x1b7
-offcore_response.data_ifetch.remote_cache_dram_1, 0x1bb
-offcore_response.data_ifetch.remote_cache_hit_0, 0x1b7
-offcore_response.data_ifetch.remote_cache_hit_1, 0x1bb
-offcore_response.data_ifetch.remote_cache_hitm_0, 0x1b7
-offcore_response.data_ifetch.remote_cache_hitm_1, 0x1bb
-offcore_response.data_in.any_cache_dram_0, 0x1b7
-offcore_response.data_in.any_cache_dram_1, 0x1bb
-offcore_response.data_in.any_location_0, 0x1b7
-offcore_response.data_in.any_location_1, 0x1bb
-offcore_response.data_in.io_csr_mmio_0, 0x1b7
-offcore_response.data_in.io_csr_mmio_1, 0x1bb
-offcore_response.data_in.llc_hit_no_other_core_0, 0x1b7
-offcore_response.data_in.llc_hit_no_other_core_1, 0x1bb
-offcore_response.data_in.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.data_in.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.data_in.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.data_in.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.data_in.local_cache_0, 0x1b7
-offcore_response.data_in.local_cache_1, 0x1bb
-offcore_response.data_in.local_cache_dram_0, 0x1b7
-offcore_response.data_in.local_cache_dram_1, 0x1bb
-offcore_response.data_in.remote_cache_0, 0x1b7
-offcore_response.data_in.remote_cache_1, 0x1bb
-offcore_response.data_in.remote_cache_dram_0, 0x1b7
-offcore_response.data_in.remote_cache_dram_1, 0x1bb
-offcore_response.data_in.remote_cache_hit_0, 0x1b7
-offcore_response.data_in.remote_cache_hit_1, 0x1bb
-offcore_response.data_in.remote_cache_hitm_0, 0x1b7
-offcore_response.data_in.remote_cache_hitm_1, 0x1bb
-offcore_response.demand_data.any_cache_dram_0, 0x1b7
-offcore_response.demand_data.any_cache_dram_1, 0x1bb
-offcore_response.demand_data.any_location_0, 0x1b7
-offcore_response.demand_data.any_location_1, 0x1bb
-offcore_response.demand_data.io_csr_mmio_0, 0x1b7
-offcore_response.demand_data.io_csr_mmio_1, 0x1bb
-offcore_response.demand_data.llc_hit_no_other_core_0, 0x1b7
-offcore_response.demand_data.llc_hit_no_other_core_1, 0x1bb
-offcore_response.demand_data.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.demand_data.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.demand_data.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.demand_data.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.demand_data.local_cache_0, 0x1b7
-offcore_response.demand_data.local_cache_1, 0x1bb
-offcore_response.demand_data.local_cache_dram_0, 0x1b7
-offcore_response.demand_data.local_cache_dram_1, 0x1bb
-offcore_response.demand_data.remote_cache_0, 0x1b7
-offcore_response.demand_data.remote_cache_1, 0x1bb
-offcore_response.demand_data.remote_cache_dram_0, 0x1b7
-offcore_response.demand_data.remote_cache_dram_1, 0x1bb
-offcore_response.demand_data.remote_cache_hit_0, 0x1b7
-offcore_response.demand_data.remote_cache_hit_1, 0x1bb
-offcore_response.demand_data.remote_cache_hitm_0, 0x1b7
-offcore_response.demand_data.remote_cache_hitm_1, 0x1bb
-offcore_response.demand_data_rd.any_cache_dram_0, 0x1b7
-offcore_response.demand_data_rd.any_cache_dram_1, 0x1bb
-offcore_response.demand_data_rd.any_location_0, 0x1b7
-offcore_response.demand_data_rd.any_location_1, 0x1bb
-offcore_response.demand_data_rd.io_csr_mmio_0, 0x1b7
-offcore_response.demand_data_rd.io_csr_mmio_1, 0x1bb
-offcore_response.demand_data_rd.llc_hit_no_other_core_0, 0x1b7
-offcore_response.demand_data_rd.llc_hit_no_other_core_1, 0x1bb
-offcore_response.demand_data_rd.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.demand_data_rd.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.demand_data_rd.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.demand_data_rd.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.demand_data_rd.local_cache_0, 0x1b7
-offcore_response.demand_data_rd.local_cache_1, 0x1bb
-offcore_response.demand_data_rd.local_cache_dram_0, 0x1b7
-offcore_response.demand_data_rd.local_cache_dram_1, 0x1bb
-offcore_response.demand_data_rd.remote_cache_0, 0x1b7
-offcore_response.demand_data_rd.remote_cache_1, 0x1bb
-offcore_response.demand_data_rd.remote_cache_dram_0, 0x1b7
-offcore_response.demand_data_rd.remote_cache_dram_1, 0x1bb
-offcore_response.demand_data_rd.remote_cache_hit_0, 0x1b7
-offcore_response.demand_data_rd.remote_cache_hit_1, 0x1bb
-offcore_response.demand_data_rd.remote_cache_hitm_0, 0x1b7
-offcore_response.demand_data_rd.remote_cache_hitm_1, 0x1bb
-offcore_response.demand_ifetch.any_cache_dram_0, 0x1b7
-offcore_response.demand_ifetch.any_cache_dram_1, 0x1bb
-offcore_response.demand_ifetch.any_location_0, 0x1b7
-offcore_response.demand_ifetch.any_location_1, 0x1bb
-offcore_response.demand_ifetch.io_csr_mmio_0, 0x1b7
-offcore_response.demand_ifetch.io_csr_mmio_1, 0x1bb
-offcore_response.demand_ifetch.llc_hit_no_other_core_0, 0x1b7
-offcore_response.demand_ifetch.llc_hit_no_other_core_1, 0x1bb
-offcore_response.demand_ifetch.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.demand_ifetch.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.demand_ifetch.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.demand_ifetch.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.demand_ifetch.local_cache_0, 0x1b7
-offcore_response.demand_ifetch.local_cache_1, 0x1bb
-offcore_response.demand_ifetch.local_cache_dram_0, 0x1b7
-offcore_response.demand_ifetch.local_cache_dram_1, 0x1bb
-offcore_response.demand_ifetch.remote_cache_0, 0x1b7
-offcore_response.demand_ifetch.remote_cache_1, 0x1bb
-offcore_response.demand_ifetch.remote_cache_dram_0, 0x1b7
-offcore_response.demand_ifetch.remote_cache_dram_1, 0x1bb
-offcore_response.demand_ifetch.remote_cache_hit_0, 0x1b7
-offcore_response.demand_ifetch.remote_cache_hit_1, 0x1bb
-offcore_response.demand_ifetch.remote_cache_hitm_0, 0x1b7
-offcore_response.demand_ifetch.remote_cache_hitm_1, 0x1bb
-offcore_response.demand_rfo.any_cache_dram_0, 0x1b7
-offcore_response.demand_rfo.any_cache_dram_1, 0x1bb
-offcore_response.demand_rfo.any_location_0, 0x1b7
-offcore_response.demand_rfo.any_location_1, 0x1bb
-offcore_response.demand_rfo.io_csr_mmio_0, 0x1b7
-offcore_response.demand_rfo.io_csr_mmio_1, 0x1bb
-offcore_response.demand_rfo.llc_hit_no_other_core_0, 0x1b7
-offcore_response.demand_rfo.llc_hit_no_other_core_1, 0x1bb
-offcore_response.demand_rfo.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.demand_rfo.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.demand_rfo.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.demand_rfo.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.demand_rfo.local_cache_0, 0x1b7
-offcore_response.demand_rfo.local_cache_1, 0x1bb
-offcore_response.demand_rfo.local_cache_dram_0, 0x1b7
-offcore_response.demand_rfo.local_cache_dram_1, 0x1bb
-offcore_response.demand_rfo.remote_cache_0, 0x1b7
-offcore_response.demand_rfo.remote_cache_1, 0x1bb
-offcore_response.demand_rfo.remote_cache_dram_0, 0x1b7
-offcore_response.demand_rfo.remote_cache_dram_1, 0x1bb
-offcore_response.demand_rfo.remote_cache_hit_0, 0x1b7
-offcore_response.demand_rfo.remote_cache_hit_1, 0x1bb
-offcore_response.demand_rfo.remote_cache_hitm_0, 0x1b7
-offcore_response.demand_rfo.remote_cache_hitm_1, 0x1bb
-offcore_response.other.any_cache_dram_0, 0x1b7
-offcore_response.other.any_cache_dram_1, 0x1bb
-offcore_response.other.any_location_0, 0x1b7
-offcore_response.other.any_location_1, 0x1bb
-offcore_response.other.io_csr_mmio_0, 0x1b7
-offcore_response.other.io_csr_mmio_1, 0x1bb
-offcore_response.other.llc_hit_no_other_core_0, 0x1b7
-offcore_response.other.llc_hit_no_other_core_1, 0x1bb
-offcore_response.other.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.other.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.other.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.other.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.other.local_cache_0, 0x1b7
-offcore_response.other.local_cache_1, 0x1bb
-offcore_response.other.local_cache_dram_0, 0x1b7
-offcore_response.other.local_cache_dram_1, 0x1bb
-offcore_response.other.remote_cache_0, 0x1b7
-offcore_response.other.remote_cache_1, 0x1bb
-offcore_response.other.remote_cache_dram_0, 0x1b7
-offcore_response.other.remote_cache_dram_1, 0x1bb
-offcore_response.other.remote_cache_hit_0, 0x1b7
-offcore_response.other.remote_cache_hit_1, 0x1bb
-offcore_response.other.remote_cache_hitm_0, 0x1b7
-offcore_response.other.remote_cache_hitm_1, 0x1bb
-offcore_response.pf_data.any_cache_dram_0, 0x1b7
-offcore_response.pf_data.any_cache_dram_1, 0x1bb
-offcore_response.pf_data.any_location_0, 0x1b7
-offcore_response.pf_data.any_location_1, 0x1bb
-offcore_response.pf_data.io_csr_mmio_0, 0x1b7
-offcore_response.pf_data.io_csr_mmio_1, 0x1bb
-offcore_response.pf_data.llc_hit_no_other_core_0, 0x1b7
-offcore_response.pf_data.llc_hit_no_other_core_1, 0x1bb
-offcore_response.pf_data.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.pf_data.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.pf_data.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.pf_data.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.pf_data.local_cache_0, 0x1b7
-offcore_response.pf_data.local_cache_1, 0x1bb
-offcore_response.pf_data.local_cache_dram_0, 0x1b7
-offcore_response.pf_data.local_cache_dram_1, 0x1bb
-offcore_response.pf_data.remote_cache_0, 0x1b7
-offcore_response.pf_data.remote_cache_1, 0x1bb
-offcore_response.pf_data.remote_cache_dram_0, 0x1b7
-offcore_response.pf_data.remote_cache_dram_1, 0x1bb
-offcore_response.pf_data.remote_cache_hit_0, 0x1b7
-offcore_response.pf_data.remote_cache_hit_1, 0x1bb
-offcore_response.pf_data.remote_cache_hitm_0, 0x1b7
-offcore_response.pf_data.remote_cache_hitm_1, 0x1bb
-offcore_response.pf_data_rd.any_cache_dram_0, 0x1b7
-offcore_response.pf_data_rd.any_cache_dram_1, 0x1bb
-offcore_response.pf_data_rd.any_location_0, 0x1b7
-offcore_response.pf_data_rd.any_location_1, 0x1bb
-offcore_response.pf_data_rd.io_csr_mmio_0, 0x1b7
-offcore_response.pf_data_rd.io_csr_mmio_1, 0x1bb
-offcore_response.pf_data_rd.llc_hit_no_other_core_0, 0x1b7
-offcore_response.pf_data_rd.llc_hit_no_other_core_1, 0x1bb
-offcore_response.pf_data_rd.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.pf_data_rd.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.pf_data_rd.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.pf_data_rd.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.pf_data_rd.local_cache_0, 0x1b7
-offcore_response.pf_data_rd.local_cache_1, 0x1bb
-offcore_response.pf_data_rd.local_cache_dram_0, 0x1b7
-offcore_response.pf_data_rd.local_cache_dram_1, 0x1bb
-offcore_response.pf_data_rd.remote_cache_0, 0x1b7
-offcore_response.pf_data_rd.remote_cache_1, 0x1bb
-offcore_response.pf_data_rd.remote_cache_dram_0, 0x1b7
-offcore_response.pf_data_rd.remote_cache_dram_1, 0x1bb
-offcore_response.pf_data_rd.remote_cache_hit_0, 0x1b7
-offcore_response.pf_data_rd.remote_cache_hit_1, 0x1bb
-offcore_response.pf_data_rd.remote_cache_hitm_0, 0x1b7
-offcore_response.pf_data_rd.remote_cache_hitm_1, 0x1bb
-offcore_response.pf_ifetch.any_cache_dram_0, 0x1b7
-offcore_response.pf_ifetch.any_cache_dram_1, 0x1bb
-offcore_response.pf_ifetch.any_location_0, 0x1b7
-offcore_response.pf_ifetch.any_location_1, 0x1bb
-offcore_response.pf_ifetch.io_csr_mmio_0, 0x1b7
-offcore_response.pf_ifetch.io_csr_mmio_1, 0x1bb
-offcore_response.pf_ifetch.llc_hit_no_other_core_0, 0x1b7
-offcore_response.pf_ifetch.llc_hit_no_other_core_1, 0x1bb
-offcore_response.pf_ifetch.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.pf_ifetch.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.pf_ifetch.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.pf_ifetch.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.pf_ifetch.local_cache_0, 0x1b7
-offcore_response.pf_ifetch.local_cache_1, 0x1bb
-offcore_response.pf_ifetch.local_cache_dram_0, 0x1b7
-offcore_response.pf_ifetch.local_cache_dram_1, 0x1bb
-offcore_response.pf_ifetch.remote_cache_0, 0x1b7
-offcore_response.pf_ifetch.remote_cache_1, 0x1bb
-offcore_response.pf_ifetch.remote_cache_dram_0, 0x1b7
-offcore_response.pf_ifetch.remote_cache_dram_1, 0x1bb
-offcore_response.pf_ifetch.remote_cache_hit_0, 0x1b7
-offcore_response.pf_ifetch.remote_cache_hit_1, 0x1bb
-offcore_response.pf_ifetch.remote_cache_hitm_0, 0x1b7
-offcore_response.pf_ifetch.remote_cache_hitm_1, 0x1bb
-offcore_response.pf_rfo.any_cache_dram_0, 0x1b7
-offcore_response.pf_rfo.any_cache_dram_1, 0x1bb
-offcore_response.pf_rfo.any_location_0, 0x1b7
-offcore_response.pf_rfo.any_location_1, 0x1bb
-offcore_response.pf_rfo.io_csr_mmio_0, 0x1b7
-offcore_response.pf_rfo.io_csr_mmio_1, 0x1bb
-offcore_response.pf_rfo.llc_hit_no_other_core_0, 0x1b7
-offcore_response.pf_rfo.llc_hit_no_other_core_1, 0x1bb
-offcore_response.pf_rfo.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.pf_rfo.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.pf_rfo.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.pf_rfo.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.pf_rfo.local_cache_0, 0x1b7
-offcore_response.pf_rfo.local_cache_1, 0x1bb
-offcore_response.pf_rfo.local_cache_dram_0, 0x1b7
-offcore_response.pf_rfo.local_cache_dram_1, 0x1bb
-offcore_response.pf_rfo.remote_cache_0, 0x1b7
-offcore_response.pf_rfo.remote_cache_1, 0x1bb
-offcore_response.pf_rfo.remote_cache_dram_0, 0x1b7
-offcore_response.pf_rfo.remote_cache_dram_1, 0x1bb
-offcore_response.pf_rfo.remote_cache_hit_0, 0x1b7
-offcore_response.pf_rfo.remote_cache_hit_1, 0x1bb
-offcore_response.pf_rfo.remote_cache_hitm_0, 0x1b7
-offcore_response.pf_rfo.remote_cache_hitm_1, 0x1bb
-offcore_response.prefetch.any_cache_dram_0, 0x1b7
-offcore_response.prefetch.any_cache_dram_1, 0x1bb
-offcore_response.prefetch.any_location_0, 0x1b7
-offcore_response.prefetch.any_location_1, 0x1bb
-offcore_response.prefetch.io_csr_mmio_0, 0x1b7
-offcore_response.prefetch.io_csr_mmio_1, 0x1bb
-offcore_response.prefetch.llc_hit_no_other_core_0, 0x1b7
-offcore_response.prefetch.llc_hit_no_other_core_1, 0x1bb
-offcore_response.prefetch.llc_hit_other_core_hit_0, 0x1b7
-offcore_response.prefetch.llc_hit_other_core_hit_1, 0x1bb
-offcore_response.prefetch.llc_hit_other_core_hitm_0, 0x1b7
-offcore_response.prefetch.llc_hit_other_core_hitm_1, 0x1bb
-offcore_response.prefetch.local_cache_0, 0x1b7
-offcore_response.prefetch.local_cache_1, 0x1bb
-offcore_response.prefetch.local_cache_dram_0, 0x1b7
-offcore_response.prefetch.local_cache_dram_1, 0x1bb
-offcore_response.prefetch.remote_cache_0, 0x1b7
-offcore_response.prefetch.remote_cache_1, 0x1bb
-offcore_response.prefetch.remote_cache_dram_0, 0x1b7
-offcore_response.prefetch.remote_cache_dram_1, 0x1bb
-offcore_response.prefetch.remote_cache_hit_0, 0x1b7
-offcore_response.prefetch.remote_cache_hit_1, 0x1bb
-offcore_response.prefetch.remote_cache_hitm_0, 0x1b7
-offcore_response.prefetch.remote_cache_hitm_1, 0x1bb
+offcore_response.any_data.any_cache_dram_0, 0x1b7, 0x7f11
+offcore_response.any_data.any_cache_dram_1, 0x1bb, 0x7f11
+offcore_response.any_data.any_location_0, 0x1b7, 0xff11
+offcore_response.any_data.any_location_1, 0x1bb, 0xff11
+offcore_response.any_data.io_csr_mmio_0, 0x1b7, 0x8011
+offcore_response.any_data.io_csr_mmio_1, 0x1bb, 0x8011
+offcore_response.any_data.llc_hit_no_other_core_0, 0x1b7, 0x111
+offcore_response.any_data.llc_hit_no_other_core_1, 0x1bb, 0x111
+offcore_response.any_data.llc_hit_other_core_hit_0, 0x1b7, 0x211
+offcore_response.any_data.llc_hit_other_core_hit_1, 0x1bb, 0x211
+offcore_response.any_data.llc_hit_other_core_hitm_0, 0x1b7, 0x411
+offcore_response.any_data.llc_hit_other_core_hitm_1, 0x1bb, 0x411
+offcore_response.any_data.local_cache_0, 0x1b7, 0x711
+offcore_response.any_data.local_cache_1, 0x1bb, 0x711
+offcore_response.any_data.local_cache_dram_0, 0x1b7, 0x2711
+offcore_response.any_data.local_cache_dram_1, 0x1bb, 0x2711
+offcore_response.any_data.remote_cache_0, 0x1b7, 0x1811
+offcore_response.any_data.remote_cache_1, 0x1bb, 0x1811
+offcore_response.any_data.remote_cache_dram_0, 0x1b7, 0x5811
+offcore_response.any_data.remote_cache_dram_1, 0x1bb, 0x5811
+offcore_response.any_data.remote_cache_hit_0, 0x1b7, 0x1011
+offcore_response.any_data.remote_cache_hit_1, 0x1bb, 0x1011
+offcore_response.any_data.remote_cache_hitm_0, 0x1b7, 0x811
+offcore_response.any_data.remote_cache_hitm_1, 0x1bb, 0x811
+offcore_response.any_ifetch.any_cache_dram_0, 0x1b7, 0x7f44
+offcore_response.any_ifetch.any_cache_dram_1, 0x1bb, 0x7f44
+offcore_response.any_ifetch.any_location_0, 0x1b7, 0xff44
+offcore_response.any_ifetch.any_location_1, 0x1bb, 0xff44
+offcore_response.any_ifetch.io_csr_mmio_0, 0x1b7, 0x8044
+offcore_response.any_ifetch.io_csr_mmio_1, 0x1bb, 0x8044
+offcore_response.any_ifetch.llc_hit_no_other_core_0, 0x1b7, 0x144
+offcore_response.any_ifetch.llc_hit_no_other_core_1, 0x1bb, 0x144
+offcore_response.any_ifetch.llc_hit_other_core_hit_0, 0x1b7, 0x244
+offcore_response.any_ifetch.llc_hit_other_core_hit_1, 0x1bb, 0x244
+offcore_response.any_ifetch.llc_hit_other_core_hitm_0, 0x1b7, 0x444
+offcore_response.any_ifetch.llc_hit_other_core_hitm_1, 0x1bb, 0x444
+offcore_response.any_ifetch.local_cache_0, 0x1b7, 0x744
+offcore_response.any_ifetch.local_cache_1, 0x1bb, 0x744
+offcore_response.any_ifetch.local_cache_dram_0, 0x1b7, 0x2744
+offcore_response.any_ifetch.local_cache_dram_1, 0x1bb, 0x2744
+offcore_response.any_ifetch.remote_cache_0, 0x1b7, 0x1844
+offcore_response.any_ifetch.remote_cache_1, 0x1bb, 0x1844
+offcore_response.any_ifetch.remote_cache_dram_0, 0x1b7, 0x5844
+offcore_response.any_ifetch.remote_cache_dram_1, 0x1bb, 0x5844
+offcore_response.any_ifetch.remote_cache_hit_0, 0x1b7, 0x1044
+offcore_response.any_ifetch.remote_cache_hit_1, 0x1bb, 0x1044
+offcore_response.any_ifetch.remote_cache_hitm_0, 0x1b7, 0x844
+offcore_response.any_ifetch.remote_cache_hitm_1, 0x1bb, 0x844
+offcore_response.any_request.any_cache_dram_0, 0x1b7, 0x7fff
+offcore_response.any_request.any_cache_dram_1, 0x1bb, 0x7fff
+offcore_response.any_request.any_location_0, 0x1b7, 0xffff
+offcore_response.any_request.any_location_1, 0x1bb, 0xffff
+offcore_response.any_request.io_csr_mmio_0, 0x1b7, 0x80ff
+offcore_response.any_request.io_csr_mmio_1, 0x1bb, 0x80ff
+offcore_response.any_request.llc_hit_no_other_core_0, 0x1b7, 0x1ff
+offcore_response.any_request.llc_hit_no_other_core_1, 0x1bb, 0x1ff
+offcore_response.any_request.llc_hit_other_core_hit_0, 0x1b7, 0x2ff
+offcore_response.any_request.llc_hit_other_core_hit_1, 0x1bb, 0x2ff
+offcore_response.any_request.llc_hit_other_core_hitm_0, 0x1b7, 0x4ff
+offcore_response.any_request.llc_hit_other_core_hitm_1, 0x1bb, 0x4ff
+offcore_response.any_request.local_cache_0, 0x1b7, 0x7ff
+offcore_response.any_request.local_cache_1, 0x1bb, 0x7ff
+offcore_response.any_request.local_cache_dram_0, 0x1b7, 0x27ff
+offcore_response.any_request.local_cache_dram_1, 0x1bb, 0x27ff
+offcore_response.any_request.remote_cache_0, 0x1b7, 0x18ff
+offcore_response.any_request.remote_cache_1, 0x1bb, 0x18ff
+offcore_response.any_request.remote_cache_dram_0, 0x1b7, 0x58ff
+offcore_response.any_request.remote_cache_dram_1, 0x1bb, 0x58ff
+offcore_response.any_request.remote_cache_hit_0, 0x1b7, 0x10ff
+offcore_response.any_request.remote_cache_hit_1, 0x1bb, 0x10ff
+offcore_response.any_request.remote_cache_hitm_0, 0x1b7, 0x8ff
+offcore_response.any_request.remote_cache_hitm_1, 0x1bb, 0x8ff
+offcore_response.any_rfo.any_cache_dram_0, 0x1b7, 0x7f22
+offcore_response.any_rfo.any_cache_dram_1, 0x1bb, 0x7f22
+offcore_response.any_rfo.any_location_0, 0x1b7, 0xff22
+offcore_response.any_rfo.any_location_1, 0x1bb, 0xff22
+offcore_response.any_rfo.io_csr_mmio_0, 0x1b7, 0x8022
+offcore_response.any_rfo.io_csr_mmio_1, 0x1bb, 0x8022
+offcore_response.any_rfo.llc_hit_no_other_core_0, 0x1b7, 0x122
+offcore_response.any_rfo.llc_hit_no_other_core_1, 0x1bb, 0x122
+offcore_response.any_rfo.llc_hit_other_core_hit_0, 0x1b7, 0x222
+offcore_response.any_rfo.llc_hit_other_core_hit_1, 0x1bb, 0x222
+offcore_response.any_rfo.llc_hit_other_core_hitm_0, 0x1b7, 0x422
+offcore_response.any_rfo.llc_hit_other_core_hitm_1, 0x1bb, 0x422
+offcore_response.any_rfo.local_cache_0, 0x1b7, 0x722
+offcore_response.any_rfo.local_cache_1, 0x1bb, 0x722
+offcore_response.any_rfo.local_cache_dram_0, 0x1b7, 0x2722
+offcore_response.any_rfo.local_cache_dram_1, 0x1bb, 0x2722
+offcore_response.any_rfo.remote_cache_0, 0x1b7, 0x1822
+offcore_response.any_rfo.remote_cache_1, 0x1bb, 0x1822
+offcore_response.any_rfo.remote_cache_dram_0, 0x1b7, 0x5822
+offcore_response.any_rfo.remote_cache_dram_1, 0x1bb, 0x5822
+offcore_response.any_rfo.remote_cache_hit_0, 0x1b7, 0x1022
+offcore_response.any_rfo.remote_cache_hit_1, 0x1bb, 0x1022
+offcore_response.any_rfo.remote_cache_hitm_0, 0x1b7, 0x822
+offcore_response.any_rfo.remote_cache_hitm_1, 0x1bb, 0x822
+offcore_response.corewb.any_cache_dram_0, 0x1b7, 0x7f08
+offcore_response.corewb.any_cache_dram_1, 0x1bb, 0x7f08
+offcore_response.corewb.any_location_0, 0x1b7, 0xff08
+offcore_response.corewb.any_location_1, 0x1bb, 0xff08
+offcore_response.corewb.io_csr_mmio_0, 0x1b7, 0x8008
+offcore_response.corewb.io_csr_mmio_1, 0x1bb, 0x8008
+offcore_response.corewb.llc_hit_no_other_core_0, 0x1b7, 0x108
+offcore_response.corewb.llc_hit_no_other_core_1, 0x1bb, 0x108
+offcore_response.corewb.llc_hit_other_core_hitm_0, 0x1b7, 0x408
+offcore_response.corewb.llc_hit_other_core_hitm_1, 0x1bb, 0x408
+offcore_response.corewb.local_cache_0, 0x1b7, 0x708
+offcore_response.corewb.local_cache_1, 0x1bb, 0x708
+offcore_response.corewb.local_cache_dram_0, 0x1b7, 0x2708
+offcore_response.corewb.local_cache_dram_1, 0x1bb, 0x2708
+offcore_response.corewb.remote_cache_0, 0x1b7, 0x1808
+offcore_response.corewb.remote_cache_1, 0x1bb, 0x1808
+offcore_response.corewb.remote_cache_dram_0, 0x1b7, 0x5808
+offcore_response.corewb.remote_cache_dram_1, 0x1bb, 0x5808
+offcore_response.corewb.remote_cache_hit_0, 0x1b7, 0x1008
+offcore_response.corewb.remote_cache_hit_1, 0x1bb, 0x1008
+offcore_response.corewb.remote_cache_hitm_0, 0x1b7, 0x808
+offcore_response.corewb.remote_cache_hitm_1, 0x1bb, 0x808
+offcore_response.data_ifetch.any_cache_dram_0, 0x1b7, 0x7f77
+offcore_response.data_ifetch.any_cache_dram_1, 0x1bb, 0x7f77
+offcore_response.data_ifetch.any_location_0, 0x1b7, 0xff77
+offcore_response.data_ifetch.any_location_1, 0x1bb, 0xff77
+offcore_response.data_ifetch.io_csr_mmio_0, 0x1b7, 0x8077
+offcore_response.data_ifetch.io_csr_mmio_1, 0x1bb, 0x8077
+offcore_response.data_ifetch.llc_hit_no_other_core_0, 0x1b7, 0x177
+offcore_response.data_ifetch.llc_hit_no_other_core_1, 0x1bb, 0x177
+offcore_response.data_ifetch.llc_hit_other_core_hit_0, 0x1b7, 0x277
+offcore_response.data_ifetch.llc_hit_other_core_hit_1, 0x1bb, 0x277
+offcore_response.data_ifetch.llc_hit_other_core_hitm_0, 0x1b7, 0x477
+offcore_response.data_ifetch.llc_hit_other_core_hitm_1, 0x1bb, 0x477
+offcore_response.data_ifetch.local_cache_0, 0x1b7, 0x777
+offcore_response.data_ifetch.local_cache_1, 0x1bb, 0x777
+offcore_response.data_ifetch.local_cache_dram_0, 0x1b7, 0x2777
+offcore_response.data_ifetch.local_cache_dram_1, 0x1bb, 0x2777
+offcore_response.data_ifetch.remote_cache_0, 0x1b7, 0x1877
+offcore_response.data_ifetch.remote_cache_1, 0x1bb, 0x1877
+offcore_response.data_ifetch.remote_cache_dram_0, 0x1b7, 0x5877
+offcore_response.data_ifetch.remote_cache_dram_1, 0x1bb, 0x5877
+offcore_response.data_ifetch.remote_cache_hit_0, 0x1b7, 0x1077
+offcore_response.data_ifetch.remote_cache_hit_1, 0x1bb, 0x1077
+offcore_response.data_ifetch.remote_cache_hitm_0, 0x1b7, 0x877
+offcore_response.data_ifetch.remote_cache_hitm_1, 0x1bb, 0x877
+offcore_response.data_in.any_cache_dram_0, 0x1b7, 0x7f33
+offcore_response.data_in.any_cache_dram_1, 0x1bb, 0x7f33
+offcore_response.data_in.any_location_0, 0x1b7, 0xff33
+offcore_response.data_in.any_location_1, 0x1bb, 0xff33
+offcore_response.data_in.io_csr_mmio_0, 0x1b7, 0x8033
+offcore_response.data_in.io_csr_mmio_1, 0x1bb, 0x8033
+offcore_response.data_in.llc_hit_no_other_core_0, 0x1b7, 0x133
+offcore_response.data_in.llc_hit_no_other_core_1, 0x1bb, 0x133
+offcore_response.data_in.llc_hit_other_core_hit_0, 0x1b7, 0x233
+offcore_response.data_in.llc_hit_other_core_hit_1, 0x1bb, 0x233
+offcore_response.data_in.llc_hit_other_core_hitm_0, 0x1b7, 0x433
+offcore_response.data_in.llc_hit_other_core_hitm_1, 0x1bb, 0x433
+offcore_response.data_in.local_cache_0, 0x1b7, 0x733
+offcore_response.data_in.local_cache_1, 0x1bb, 0x733
+offcore_response.data_in.local_cache_dram_0, 0x1b7, 0x2733
+offcore_response.data_in.local_cache_dram_1, 0x1bb, 0x2733
+offcore_response.data_in.remote_cache_0, 0x1b7, 0x1833
+offcore_response.data_in.remote_cache_1, 0x1bb, 0x1833
+offcore_response.data_in.remote_cache_dram_0, 0x1b7, 0x5833
+offcore_response.data_in.remote_cache_dram_1, 0x1bb, 0x5833
+offcore_response.data_in.remote_cache_hit_0, 0x1b7, 0x1033
+offcore_response.data_in.remote_cache_hit_1, 0x1bb, 0x1033
+offcore_response.data_in.remote_cache_hitm_0, 0x1b7, 0x833
+offcore_response.data_in.remote_cache_hitm_1, 0x1bb, 0x833
+offcore_response.demand_data.any_cache_dram_0, 0x1b7, 0x7f03
+offcore_response.demand_data.any_cache_dram_1, 0x1bb, 0x7f03
+offcore_response.demand_data.any_location_0, 0x1b7, 0xff03
+offcore_response.demand_data.any_location_1, 0x1bb, 0xff03
+offcore_response.demand_data.io_csr_mmio_0, 0x1b7, 0x8003
+offcore_response.demand_data.io_csr_mmio_1, 0x1bb, 0x8003
+offcore_response.demand_data.llc_hit_no_other_core_0, 0x1b7, 0x103
+offcore_response.demand_data.llc_hit_no_other_core_1, 0x1bb, 0x103
+offcore_response.demand_data.llc_hit_other_core_hit_0, 0x1b7, 0x203
+offcore_response.demand_data.llc_hit_other_core_hit_1, 0x1bb, 0x203
+offcore_response.demand_data.llc_hit_other_core_hitm_0, 0x1b7, 0x403
+offcore_response.demand_data.llc_hit_other_core_hitm_1, 0x1bb, 0x403
+offcore_response.demand_data.local_cache_0, 0x1b7, 0x703
+offcore_response.demand_data.local_cache_1, 0x1bb, 0x703
+offcore_response.demand_data.local_cache_dram_0, 0x1b7, 0x2703
+offcore_response.demand_data.local_cache_dram_1, 0x1bb, 0x2703
+offcore_response.demand_data.remote_cache_0, 0x1b7, 0x1803
+offcore_response.demand_data.remote_cache_1, 0x1bb, 0x1803
+offcore_response.demand_data.remote_cache_dram_0, 0x1b7, 0x5803
+offcore_response.demand_data.remote_cache_dram_1, 0x1bb, 0x5803
+offcore_response.demand_data.remote_cache_hit_0, 0x1b7, 0x1003
+offcore_response.demand_data.remote_cache_hit_1, 0x1bb, 0x1003
+offcore_response.demand_data.remote_cache_hitm_0, 0x1b7, 0x803
+offcore_response.demand_data.remote_cache_hitm_1, 0x1bb, 0x803
+offcore_response.demand_data_rd.any_cache_dram_0, 0x1b7, 0x7f01
+offcore_response.demand_data_rd.any_cache_dram_1, 0x1bb, 0x7f01
+offcore_response.demand_data_rd.any_location_0, 0x1b7, 0xff01
+offcore_response.demand_data_rd.any_location_1, 0x1bb, 0xff01
+offcore_response.demand_data_rd.io_csr_mmio_0, 0x1b7, 0x8001
+offcore_response.demand_data_rd.io_csr_mmio_1, 0x1bb, 0x8001
+offcore_response.demand_data_rd.llc_hit_no_other_core_0, 0x1b7, 0x101
+offcore_response.demand_data_rd.llc_hit_no_other_core_1, 0x1bb, 0x101
+offcore_response.demand_data_rd.llc_hit_other_core_hit_0, 0x1b7, 0x201
+offcore_response.demand_data_rd.llc_hit_other_core_hit_1, 0x1bb, 0x201
+offcore_response.demand_data_rd.llc_hit_other_core_hitm_0, 0x1b7, 0x401
+offcore_response.demand_data_rd.llc_hit_other_core_hitm_1, 0x1bb, 0x401
+offcore_response.demand_data_rd.local_cache_0, 0x1b7, 0x701
+offcore_response.demand_data_rd.local_cache_1, 0x1bb, 0x701
+offcore_response.demand_data_rd.local_cache_dram_0, 0x1b7, 0x2701
+offcore_response.demand_data_rd.local_cache_dram_1, 0x1bb, 0x2701
+offcore_response.demand_data_rd.remote_cache_0, 0x1b7, 0x1801
+offcore_response.demand_data_rd.remote_cache_1, 0x1bb, 0x1801
+offcore_response.demand_data_rd.remote_cache_dram_0, 0x1b7, 0x5801
+offcore_response.demand_data_rd.remote_cache_dram_1, 0x1bb, 0x5801
+offcore_response.demand_data_rd.remote_cache_hit_0, 0x1b7, 0x1001
+offcore_response.demand_data_rd.remote_cache_hit_1, 0x1bb, 0x1001
+offcore_response.demand_data_rd.remote_cache_hitm_0, 0x1b7, 0x801
+offcore_response.demand_data_rd.remote_cache_hitm_1, 0x1bb, 0x801
+offcore_response.demand_ifetch.any_cache_dram_0, 0x1b7, 0x7f04
+offcore_response.demand_ifetch.any_cache_dram_1, 0x1bb, 0x7f04
+offcore_response.demand_ifetch.any_location_0, 0x1b7, 0xff04
+offcore_response.demand_ifetch.any_location_1, 0x1bb, 0xff04
+offcore_response.demand_ifetch.io_csr_mmio_0, 0x1b7, 0x8004
+offcore_response.demand_ifetch.io_csr_mmio_1, 0x1bb, 0x8004
+offcore_response.demand_ifetch.llc_hit_no_other_core_0, 0x1b7, 0x104
+offcore_response.demand_ifetch.llc_hit_no_other_core_1, 0x1bb, 0x104
+offcore_response.demand_ifetch.llc_hit_other_core_hit_0, 0x1b7, 0x204
+offcore_response.demand_ifetch.llc_hit_other_core_hit_1, 0x1bb, 0x204
+offcore_response.demand_ifetch.llc_hit_other_core_hitm_0, 0x1b7, 0x404
+offcore_response.demand_ifetch.llc_hit_other_core_hitm_1, 0x1bb, 0x404
+offcore_response.demand_ifetch.local_cache_0, 0x1b7, 0x704
+offcore_response.demand_ifetch.local_cache_1, 0x1bb, 0x704
+offcore_response.demand_ifetch.local_cache_dram_0, 0x1b7, 0x2704
+offcore_response.demand_ifetch.local_cache_dram_1, 0x1bb, 0x2704
+offcore_response.demand_ifetch.remote_cache_0, 0x1b7, 0x1804
+offcore_response.demand_ifetch.remote_cache_1, 0x1bb, 0x1804
+offcore_response.demand_ifetch.remote_cache_dram_0, 0x1b7, 0x5804
+offcore_response.demand_ifetch.remote_cache_dram_1, 0x1bb, 0x5804
+offcore_response.demand_ifetch.remote_cache_hit_0, 0x1b7, 0x1004
+offcore_response.demand_ifetch.remote_cache_hit_1, 0x1bb, 0x1004
+offcore_response.demand_ifetch.remote_cache_hitm_0, 0x1b7, 0x804
+offcore_response.demand_ifetch.remote_cache_hitm_1, 0x1bb, 0x804
+offcore_response.demand_rfo.any_cache_dram_0, 0x1b7, 0x7f02
+offcore_response.demand_rfo.any_cache_dram_1, 0x1bb, 0x7f02
+offcore_response.demand_rfo.any_location_0, 0x1b7, 0xff02
+offcore_response.demand_rfo.any_location_1, 0x1bb, 0xff02
+offcore_response.demand_rfo.io_csr_mmio_0, 0x1b7, 0x8002
+offcore_response.demand_rfo.io_csr_mmio_1, 0x1bb, 0x8002
+offcore_response.demand_rfo.llc_hit_no_other_core_0, 0x1b7, 0x102
+offcore_response.demand_rfo.llc_hit_no_other_core_1, 0x1bb, 0x102
+offcore_response.demand_rfo.llc_hit_other_core_hit_0, 0x1b7, 0x202
+offcore_response.demand_rfo.llc_hit_other_core_hit_1, 0x1bb, 0x202
+offcore_response.demand_rfo.llc_hit_other_core_hitm_0, 0x1b7, 0x402
+offcore_response.demand_rfo.llc_hit_other_core_hitm_1, 0x1bb, 0x402
+offcore_response.demand_rfo.local_cache_0, 0x1b7, 0x702
+offcore_response.demand_rfo.local_cache_1, 0x1bb, 0x702
+offcore_response.demand_rfo.local_cache_dram_0, 0x1b7, 0x2702
+offcore_response.demand_rfo.local_cache_dram_1, 0x1bb, 0x2702
+offcore_response.demand_rfo.remote_cache_0, 0x1b7, 0x1802
+offcore_response.demand_rfo.remote_cache_1, 0x1bb, 0x1802
+offcore_response.demand_rfo.remote_cache_dram_0, 0x1b7, 0x5802
+offcore_response.demand_rfo.remote_cache_dram_1, 0x1bb, 0x5802
+offcore_response.demand_rfo.remote_cache_hit_0, 0x1b7, 0x1002
+offcore_response.demand_rfo.remote_cache_hit_1, 0x1bb, 0x1002
+offcore_response.demand_rfo.remote_cache_hitm_0, 0x1b7, 0x802
+offcore_response.demand_rfo.remote_cache_hitm_1, 0x1bb, 0x802
+offcore_response.other.any_cache_dram_0, 0x1b7, 0x7f80
+offcore_response.other.any_cache_dram_1, 0x1bb, 0x7f80
+offcore_response.other.any_location_0, 0x1b7, 0xff80
+offcore_response.other.any_location_1, 0x1bb, 0xff80
+offcore_response.other.io_csr_mmio_0, 0x1b7, 0x8080
+offcore_response.other.io_csr_mmio_1, 0x1bb, 0x8080
+offcore_response.other.llc_hit_no_other_core_0, 0x1b7, 0x180
+offcore_response.other.llc_hit_no_other_core_1, 0x1bb, 0x180
+offcore_response.other.llc_hit_other_core_hit_0, 0x1b7, 0x280
+offcore_response.other.llc_hit_other_core_hit_1, 0x1bb, 0x280
+offcore_response.other.llc_hit_other_core_hitm_0, 0x1b7, 0x480
+offcore_response.other.llc_hit_other_core_hitm_1, 0x1bb, 0x480
+offcore_response.other.local_cache_0, 0x1b7, 0x780
+offcore_response.other.local_cache_1, 0x1bb, 0x780
+offcore_response.other.local_cache_dram_0, 0x1b7, 0x2780
+offcore_response.other.local_cache_dram_1, 0x1bb, 0x2780
+offcore_response.other.remote_cache_0, 0x1b7, 0x1880
+offcore_response.other.remote_cache_1, 0x1bb, 0x1880
+offcore_response.other.remote_cache_dram_0, 0x1b7, 0x5880
+offcore_response.other.remote_cache_dram_1, 0x1bb, 0x5880
+offcore_response.other.remote_cache_hit_0, 0x1b7, 0x1080
+offcore_response.other.remote_cache_hit_1, 0x1bb, 0x1080
+offcore_response.other.remote_cache_hitm_0, 0x1b7, 0x880
+offcore_response.other.remote_cache_hitm_1, 0x1bb, 0x880
+offcore_response.pf_data.any_cache_dram_0, 0x1b7, 0x7f50
+offcore_response.pf_data.any_cache_dram_1, 0x1bb, 0x7f50
+offcore_response.pf_data.any_location_0, 0x1b7, 0xff50
+offcore_response.pf_data.any_location_1, 0x1bb, 0xff50
+offcore_response.pf_data.io_csr_mmio_0, 0x1b7, 0x8050
+offcore_response.pf_data.io_csr_mmio_1, 0x1bb, 0x8050
+offcore_response.pf_data.llc_hit_no_other_core_0, 0x1b7, 0x150
+offcore_response.pf_data.llc_hit_no_other_core_1, 0x1bb, 0x150
+offcore_response.pf_data.llc_hit_other_core_hit_0, 0x1b7, 0x250
+offcore_response.pf_data.llc_hit_other_core_hit_1, 0x1bb, 0x250
+offcore_response.pf_data.llc_hit_other_core_hitm_0, 0x1b7, 0x450
+offcore_response.pf_data.llc_hit_other_core_hitm_1, 0x1bb, 0x450
+offcore_response.pf_data.local_cache_0, 0x1b7, 0x750
+offcore_response.pf_data.local_cache_1, 0x1bb, 0x750
+offcore_response.pf_data.local_cache_dram_0, 0x1b7, 0x2750
+offcore_response.pf_data.local_cache_dram_1, 0x1bb, 0x2750
+offcore_response.pf_data.remote_cache_0, 0x1b7, 0x1850
+offcore_response.pf_data.remote_cache_1, 0x1bb, 0x1850
+offcore_response.pf_data.remote_cache_dram_0, 0x1b7, 0x5850
+offcore_response.pf_data.remote_cache_dram_1, 0x1bb, 0x5850
+offcore_response.pf_data.remote_cache_hit_0, 0x1b7, 0x1050
+offcore_response.pf_data.remote_cache_hit_1, 0x1bb, 0x1050
+offcore_response.pf_data.remote_cache_hitm_0, 0x1b7, 0x850
+offcore_response.pf_data.remote_cache_hitm_1, 0x1bb, 0x850
+offcore_response.pf_data_rd.any_cache_dram_0, 0x1b7, 0x7f10
+offcore_response.pf_data_rd.any_cache_dram_1, 0x1bb, 0x7f10
+offcore_response.pf_data_rd.any_location_0, 0x1b7, 0xff10
+offcore_response.pf_data_rd.any_location_1, 0x1bb, 0xff10
+offcore_response.pf_data_rd.io_csr_mmio_0, 0x1b7, 0x8010
+offcore_response.pf_data_rd.io_csr_mmio_1, 0x1bb, 0x8010
+offcore_response.pf_data_rd.llc_hit_no_other_core_0, 0x1b7, 0x110
+offcore_response.pf_data_rd.llc_hit_no_other_core_1, 0x1bb, 0x110
+offcore_response.pf_data_rd.llc_hit_other_core_hit_0, 0x1b7, 0x210
+offcore_response.pf_data_rd.llc_hit_other_core_hit_1, 0x1bb, 0x210
+offcore_response.pf_data_rd.llc_hit_other_core_hitm_0, 0x1b7, 0x410
+offcore_response.pf_data_rd.llc_hit_other_core_hitm_1, 0x1bb, 0x410
+offcore_response.pf_data_rd.local_cache_0, 0x1b7, 0x710
+offcore_response.pf_data_rd.local_cache_1, 0x1bb, 0x710
+offcore_response.pf_data_rd.local_cache_dram_0, 0x1b7, 0x2710
+offcore_response.pf_data_rd.local_cache_dram_1, 0x1bb, 0x2710
+offcore_response.pf_data_rd.remote_cache_0, 0x1b7, 0x1810
+offcore_response.pf_data_rd.remote_cache_1, 0x1bb, 0x1810
+offcore_response.pf_data_rd.remote_cache_dram_0, 0x1b7, 0x5810
+offcore_response.pf_data_rd.remote_cache_dram_1, 0x1bb, 0x5810
+offcore_response.pf_data_rd.remote_cache_hit_0, 0x1b7, 0x1010
+offcore_response.pf_data_rd.remote_cache_hit_1, 0x1bb, 0x1010
+offcore_response.pf_data_rd.remote_cache_hitm_0, 0x1b7, 0x810
+offcore_response.pf_data_rd.remote_cache_hitm_1, 0x1bb, 0x810
+offcore_response.pf_ifetch.any_cache_dram_0, 0x1b7, 0x7f40
+offcore_response.pf_ifetch.any_cache_dram_1, 0x1bb, 0x7f40
+offcore_response.pf_ifetch.any_location_0, 0x1b7, 0xff40
+offcore_response.pf_ifetch.any_location_1, 0x1bb, 0xff40
+offcore_response.pf_ifetch.io_csr_mmio_0, 0x1b7, 0x8040
+offcore_response.pf_ifetch.io_csr_mmio_1, 0x1bb, 0x8040
+offcore_response.pf_ifetch.llc_hit_no_other_core_0, 0x1b7, 0x140
+offcore_response.pf_ifetch.llc_hit_no_other_core_1, 0x1bb, 0x140
+offcore_response.pf_ifetch.llc_hit_other_core_hit_0, 0x1b7, 0x240
+offcore_response.pf_ifetch.llc_hit_other_core_hit_1, 0x1bb, 0x240
+offcore_response.pf_ifetch.llc_hit_other_core_hitm_0, 0x1b7, 0x440
+offcore_response.pf_ifetch.llc_hit_other_core_hitm_1, 0x1bb, 0x440
+offcore_response.pf_ifetch.local_cache_0, 0x1b7, 0x740
+offcore_response.pf_ifetch.local_cache_1, 0x1bb, 0x740
+offcore_response.pf_ifetch.local_cache_dram_0, 0x1b7, 0x2740
+offcore_response.pf_ifetch.local_cache_dram_1, 0x1bb, 0x2740
+offcore_response.pf_ifetch.remote_cache_0, 0x1b7, 0x1840
+offcore_response.pf_ifetch.remote_cache_1, 0x1bb, 0x1840
+offcore_response.pf_ifetch.remote_cache_dram_0, 0x1b7, 0x5840
+offcore_response.pf_ifetch.remote_cache_dram_1, 0x1bb, 0x5840
+offcore_response.pf_ifetch.remote_cache_hit_0, 0x1b7, 0x1040
+offcore_response.pf_ifetch.remote_cache_hit_1, 0x1bb, 0x1040
+offcore_response.pf_ifetch.remote_cache_hitm_0, 0x1b7, 0x840
+offcore_response.pf_ifetch.remote_cache_hitm_1, 0x1bb, 0x840
+offcore_response.pf_rfo.any_cache_dram_0, 0x1b7, 0x7f20
+offcore_response.pf_rfo.any_cache_dram_1, 0x1bb, 0x7f20
+offcore_response.pf_rfo.any_location_0, 0x1b7, 0xff20
+offcore_response.pf_rfo.any_location_1, 0x1bb, 0xff20
+offcore_response.pf_rfo.io_csr_mmio_0, 0x1b7, 0x8020
+offcore_response.pf_rfo.io_csr_mmio_1, 0x1bb, 0x8020
+offcore_response.pf_rfo.llc_hit_no_other_core_0, 0x1b7, 0x120
+offcore_response.pf_rfo.llc_hit_no_other_core_1, 0x1bb, 0x120
+offcore_response.pf_rfo.llc_hit_other_core_hit_0, 0x1b7, 0x220
+offcore_response.pf_rfo.llc_hit_other_core_hit_1, 0x1bb, 0x220
+offcore_response.pf_rfo.llc_hit_other_core_hitm_0, 0x1b7, 0x420
+offcore_response.pf_rfo.llc_hit_other_core_hitm_1, 0x1bb, 0x420
+offcore_response.pf_rfo.local_cache_0, 0x1b7, 0x720
+offcore_response.pf_rfo.local_cache_1, 0x1bb, 0x720
+offcore_response.pf_rfo.local_cache_dram_0, 0x1b7, 0x2720
+offcore_response.pf_rfo.local_cache_dram_1, 0x1bb, 0x2720
+offcore_response.pf_rfo.remote_cache_0, 0x1b7, 0x1820
+offcore_response.pf_rfo.remote_cache_1, 0x1bb, 0x1820
+offcore_response.pf_rfo.remote_cache_dram_0, 0x1b7, 0x5820
+offcore_response.pf_rfo.remote_cache_dram_1, 0x1bb, 0x5820
+offcore_response.pf_rfo.remote_cache_hit_0, 0x1b7, 0x1020
+offcore_response.pf_rfo.remote_cache_hit_1, 0x1bb, 0x1020
+offcore_response.pf_rfo.remote_cache_hitm_0, 0x1b7, 0x820
+offcore_response.pf_rfo.remote_cache_hitm_1, 0x1bb, 0x820
+offcore_response.prefetch.any_cache_dram_0, 0x1b7, 0x7f70
+offcore_response.prefetch.any_cache_dram_1, 0x1bb, 0x7f70
+offcore_response.prefetch.any_location_0, 0x1b7, 0xff70
+offcore_response.prefetch.any_location_1, 0x1bb, 0xff70
+offcore_response.prefetch.io_csr_mmio_0, 0x1b7, 0x8070
+offcore_response.prefetch.io_csr_mmio_1, 0x1bb, 0x8070
+offcore_response.prefetch.llc_hit_no_other_core_0, 0x1b7, 0x170
+offcore_response.prefetch.llc_hit_no_other_core_1, 0x1bb, 0x170
+offcore_response.prefetch.llc_hit_other_core_hit_0, 0x1b7, 0x270
+offcore_response.prefetch.llc_hit_other_core_hit_1, 0x1bb, 0x270
+offcore_response.prefetch.llc_hit_other_core_hitm_0, 0x1b7, 0x470
+offcore_response.prefetch.llc_hit_other_core_hitm_1, 0x1bb, 0x470
+offcore_response.prefetch.local_cache_0, 0x1b7, 0x770
+offcore_response.prefetch.local_cache_1, 0x1bb, 0x770
+offcore_response.prefetch.local_cache_dram_0, 0x1b7, 0x2770
+offcore_response.prefetch.local_cache_dram_1, 0x1bb, 0x2770
+offcore_response.prefetch.remote_cache_0, 0x1b7, 0x1870
+offcore_response.prefetch.remote_cache_1, 0x1bb, 0x1870
+offcore_response.prefetch.remote_cache_dram_0, 0x1b7, 0x5870
+offcore_response.prefetch.remote_cache_dram_1, 0x1bb, 0x5870
+offcore_response.prefetch.remote_cache_hit_0, 0x1b7, 0x1070
+offcore_response.prefetch.remote_cache_hit_1, 0x1bb, 0x1070
+offcore_response.prefetch.remote_cache_hitm_0, 0x1b7, 0x870
+offcore_response.prefetch.remote_cache_hitm_1, 0x1bb, 0x870
 sq_misc.lru_hints, 0x4f4
 sq_misc.split_lock, 0x10f4
 store_blocks.at_ret, 0x406

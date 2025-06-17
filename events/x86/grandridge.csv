@@ -7,8 +7,8 @@ ld_head.st_addr_at_ret, 0x8405
 machine_clears.memory_ordering, 0x2c3
 misalign_mem_ref.load_page_split, 0x213
 misalign_mem_ref.store_page_split, 0x413
-ocr.demand_data_rd.l3_miss, 0x1b7
-ocr.demand_rfo.l3_miss, 0x1b7
+ocr.demand_data_rd.l3_miss, 0x1b7, 0x3fbfc00001
+ocr.demand_rfo.l3_miss, 0x1b7, 0x3fbfc00002
 dtlb_load_misses.stlb_hit, 0x2008
 dtlb_load_misses.walk_completed, 0xe08
 dtlb_load_misses.walk_completed_2m_4m, 0x408
@@ -248,7 +248,7 @@ unc_cha_tor_occupancy.loc_all, 0xc000ff0536
 unc_cha_tor_occupancy.loc_ia, 0xc000ff0136
 unc_cha_tor_occupancy.loc_io, 0xc000ff0436
 lbr_inserts.any, 0x1e4
-ocr.streaming_wr.any_response, 0x1b7
+ocr.streaming_wr.any_response, 0x1b7, 0x10800
 baclears.any, 0x1e6
 frontend_retired.itlb_miss, 0x10c6
 icache.accesses, 0x380
@@ -504,16 +504,16 @@ mem_scheduler_block.rsv, 0x404
 mem_scheduler_block.st_buf, 0x104
 mem_uops_retired.all_loads, 0x81d0
 mem_uops_retired.all_stores, 0x82d0
-mem_uops_retired.load_latency_gt_1024, 0x5d0
-mem_uops_retired.load_latency_gt_128, 0x5d0
-mem_uops_retired.load_latency_gt_16, 0x5d0
-mem_uops_retired.load_latency_gt_2048, 0x5d0
-mem_uops_retired.load_latency_gt_256, 0x5d0
-mem_uops_retired.load_latency_gt_32, 0x5d0
-mem_uops_retired.load_latency_gt_4, 0x5d0
-mem_uops_retired.load_latency_gt_512, 0x5d0
-mem_uops_retired.load_latency_gt_64, 0x5d0
-mem_uops_retired.load_latency_gt_8, 0x5d0
+mem_uops_retired.load_latency_gt_1024, 0x5d0, 0x400
+mem_uops_retired.load_latency_gt_128, 0x5d0, 0x80
+mem_uops_retired.load_latency_gt_16, 0x5d0, 0x10
+mem_uops_retired.load_latency_gt_2048, 0x5d0, 0x800
+mem_uops_retired.load_latency_gt_256, 0x5d0, 0x100
+mem_uops_retired.load_latency_gt_32, 0x5d0, 0x20
+mem_uops_retired.load_latency_gt_4, 0x5d0, 0x4
+mem_uops_retired.load_latency_gt_512, 0x5d0, 0x200
+mem_uops_retired.load_latency_gt_64, 0x5d0, 0x40
+mem_uops_retired.load_latency_gt_8, 0x5d0, 0x8
 mem_uops_retired.lock_loads, 0x21d0
 mem_uops_retired.split, 0x43d0
 mem_uops_retired.split_loads, 0x41d0
@@ -522,11 +522,11 @@ mem_uops_retired.stlb_miss, 0x13d0
 mem_uops_retired.stlb_miss_loads, 0x11d0
 mem_uops_retired.stlb_miss_stores, 0x12d0
 mem_uops_retired.store_latency, 0x6d0
-ocr.demand_data_rd.any_response, 0x1b7
-ocr.demand_data_rd.l3_hit.snoop_hitm, 0x1b7
-ocr.demand_data_rd.l3_hit.snoop_hit_with_fwd, 0x1b7
-ocr.demand_rfo.any_response, 0x1b7
-ocr.demand_rfo.l3_hit.snoop_hitm, 0x1b7
+ocr.demand_data_rd.any_response, 0x1b7, 0x10001
+ocr.demand_data_rd.l3_hit.snoop_hitm, 0x1b7, 0x10003c0001
+ocr.demand_data_rd.l3_hit.snoop_hit_with_fwd, 0x1b7, 0x8003c0001
+ocr.demand_rfo.any_response, 0x1b7, 0x10002
+ocr.demand_rfo.l3_hit.snoop_hitm, 0x1b7, 0x10003c0002
 topdown_fe_bound.icache, 0x2071
 unc_m_act_count.all, 0xf702
 unc_m_act_count.rd, 0xf102

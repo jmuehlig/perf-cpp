@@ -1,104 +1,104 @@
 machine_clears.memory_ordering, 0x2c3
-offcore_response.any_code_rd.ddr, 0x1b7
-offcore_response.any_code_rd.ddr_far, 0x1b7
-offcore_response.any_code_rd.ddr_near, 0x1b7
-offcore_response.any_code_rd.mcdram, 0x1b7
-offcore_response.any_code_rd.mcdram_far, 0x1b7
-offcore_response.any_code_rd.mcdram_near, 0x1b7
-offcore_response.any_data_rd.ddr, 0x1b7
-offcore_response.any_data_rd.ddr_far, 0x1b7
-offcore_response.any_data_rd.ddr_near, 0x1b7
-offcore_response.any_data_rd.mcdram, 0x1b7
-offcore_response.any_data_rd.mcdram_far, 0x1b7
-offcore_response.any_data_rd.mcdram_near, 0x1b7
-offcore_response.any_pf_l2.ddr_far, 0x1b7
-offcore_response.any_pf_l2.ddr_near, 0x1b7
-offcore_response.any_pf_l2.mcdram, 0x1b7
-offcore_response.any_pf_l2.mcdram_far, 0x1b7
-offcore_response.any_pf_l2.mcdram_near, 0x1b7
-offcore_response.any_read.ddr, 0x1b7
-offcore_response.any_read.ddr_far, 0x1b7
-offcore_response.any_read.ddr_near, 0x1b7
-offcore_response.any_read.mcdram, 0x1b7
-offcore_response.any_read.mcdram_far, 0x1b7
-offcore_response.any_read.mcdram_near, 0x1b7
-offcore_response.any_request.ddr, 0x1b7
-offcore_response.any_request.ddr_far, 0x1b7
-offcore_response.any_request.ddr_near, 0x1b7
-offcore_response.any_request.mcdram, 0x1b7
-offcore_response.any_request.mcdram_far, 0x1b7
-offcore_response.any_request.mcdram_near, 0x1b7
-offcore_response.any_rfo.ddr, 0x1b7
-offcore_response.any_rfo.ddr_far, 0x1b7
-offcore_response.any_rfo.ddr_near, 0x1b7
-offcore_response.any_rfo.mcdram, 0x1b7
-offcore_response.any_rfo.mcdram_far, 0x1b7
-offcore_response.any_rfo.mcdram_near, 0x1b7
-offcore_response.bus_locks.ddr, 0x1b7
-offcore_response.bus_locks.ddr_far, 0x1b7
-offcore_response.bus_locks.ddr_near, 0x1b7
-offcore_response.bus_locks.mcdram, 0x1b7
-offcore_response.bus_locks.mcdram_far, 0x1b7
-offcore_response.bus_locks.mcdram_near, 0x1b7
-offcore_response.demand_code_rd.ddr, 0x1b7
-offcore_response.demand_code_rd.ddr_far, 0x1b7
-offcore_response.demand_code_rd.ddr_near, 0x1b7
-offcore_response.demand_code_rd.mcdram, 0x1b7
-offcore_response.demand_code_rd.mcdram_far, 0x1b7
-offcore_response.demand_code_rd.mcdram_near, 0x1b7
-offcore_response.demand_data_rd.ddr, 0x1b7
-offcore_response.demand_data_rd.ddr_far, 0x1b7
-offcore_response.demand_data_rd.ddr_near, 0x1b7
-offcore_response.demand_data_rd.mcdram, 0x1b7
-offcore_response.demand_data_rd.mcdram_far, 0x1b7
-offcore_response.demand_data_rd.mcdram_near, 0x1b7
-offcore_response.demand_rfo.ddr, 0x1b7
-offcore_response.demand_rfo.ddr_far, 0x1b7
-offcore_response.demand_rfo.ddr_near, 0x1b7
-offcore_response.demand_rfo.mcdram, 0x1b7
-offcore_response.demand_rfo.mcdram_far, 0x1b7
-offcore_response.demand_rfo.mcdram_near, 0x1b7
-offcore_response.partial_reads.ddr, 0x1b7
-offcore_response.partial_reads.ddr_far, 0x1b7
-offcore_response.partial_reads.ddr_near, 0x1b7
-offcore_response.partial_reads.mcdram, 0x1b7
-offcore_response.partial_reads.mcdram_far, 0x1b7
-offcore_response.partial_reads.mcdram_near, 0x1b7
-offcore_response.partial_reads.non_dram, 0x1b7
-offcore_response.partial_writes.ddr_far, 0x1b7
-offcore_response.partial_writes.ddr_near, 0x1b7
-offcore_response.partial_writes.mcdram, 0x1b7
-offcore_response.partial_writes.mcdram_far, 0x1b7
-offcore_response.partial_writes.mcdram_near, 0x1b7
-offcore_response.pf_l1_data_rd.ddr, 0x1b7
-offcore_response.pf_l1_data_rd.ddr_far, 0x1b7
-offcore_response.pf_l1_data_rd.ddr_near, 0x1b7
-offcore_response.pf_l1_data_rd.mcdram_far, 0x1b7
-offcore_response.pf_l1_data_rd.mcdram_near, 0x1b7
-offcore_response.pf_l2_code_rd.ddr, 0x1b7
-offcore_response.pf_l2_code_rd.ddr_far, 0x1b7
-offcore_response.pf_l2_code_rd.ddr_near, 0x1b7
-offcore_response.pf_l2_code_rd.mcdram_far, 0x1b7
-offcore_response.pf_l2_code_rd.mcdram_near, 0x1b7
-offcore_response.pf_l2_rfo.ddr, 0x1b7
-offcore_response.pf_l2_rfo.ddr_far, 0x1b7
-offcore_response.pf_l2_rfo.ddr_near, 0x1b7
-offcore_response.pf_l2_rfo.mcdram, 0x1b7
-offcore_response.pf_l2_rfo.mcdram_far, 0x1b7
-offcore_response.pf_l2_rfo.mcdram_near, 0x1b7
-offcore_response.pf_l2_rfo.non_dram, 0x1b7
-offcore_response.pf_software.ddr, 0x1b7
-offcore_response.pf_software.ddr_far, 0x1b7
-offcore_response.pf_software.ddr_near, 0x1b7
-offcore_response.pf_software.mcdram, 0x1b7
-offcore_response.pf_software.mcdram_far, 0x1b7
-offcore_response.pf_software.mcdram_near, 0x1b7
-offcore_response.uc_code_reads.ddr, 0x1b7
-offcore_response.uc_code_reads.ddr_far, 0x1b7
-offcore_response.uc_code_reads.ddr_near, 0x1b7
-offcore_response.uc_code_reads.mcdram, 0x1b7
-offcore_response.uc_code_reads.mcdram_far, 0x1b7
-offcore_response.uc_code_reads.mcdram_near, 0x1b7
+offcore_response.any_code_rd.ddr, 0x1b7, 0x181800044
+offcore_response.any_code_rd.ddr_far, 0x1b7, 0x101000044
+offcore_response.any_code_rd.ddr_near, 0x1b7, 0x80800044
+offcore_response.any_code_rd.mcdram, 0x1b7, 0x180600044
+offcore_response.any_code_rd.mcdram_far, 0x1b7, 0x100400044
+offcore_response.any_code_rd.mcdram_near, 0x1b7, 0x80200044
+offcore_response.any_data_rd.ddr, 0x1b7, 0x181803091
+offcore_response.any_data_rd.ddr_far, 0x1b7, 0x101003091
+offcore_response.any_data_rd.ddr_near, 0x1b7, 0x80803091
+offcore_response.any_data_rd.mcdram, 0x1b7, 0x180603091
+offcore_response.any_data_rd.mcdram_far, 0x1b7, 0x100403091
+offcore_response.any_data_rd.mcdram_near, 0x1b7, 0x80203091
+offcore_response.any_pf_l2.ddr_far, 0x1b7, 0x101000070
+offcore_response.any_pf_l2.ddr_near, 0x1b7, 0x80800070
+offcore_response.any_pf_l2.mcdram, 0x1b7, 0x180600070
+offcore_response.any_pf_l2.mcdram_far, 0x1b7, 0x100400070
+offcore_response.any_pf_l2.mcdram_near, 0x1b7, 0x80200070
+offcore_response.any_read.ddr, 0x1b7, 0x1818032f7
+offcore_response.any_read.ddr_far, 0x1b7, 0x1010032f7
+offcore_response.any_read.ddr_near, 0x1b7, 0x808032f7
+offcore_response.any_read.mcdram, 0x1b7, 0x1806032f7
+offcore_response.any_read.mcdram_far, 0x1b7, 0x1004032f7
+offcore_response.any_read.mcdram_near, 0x1b7, 0x802032f7
+offcore_response.any_request.ddr, 0x1b7, 0x181808000
+offcore_response.any_request.ddr_far, 0x1b7, 0x101008000
+offcore_response.any_request.ddr_near, 0x1b7, 0x80808000
+offcore_response.any_request.mcdram, 0x1b7, 0x180608000
+offcore_response.any_request.mcdram_far, 0x1b7, 0x100408000
+offcore_response.any_request.mcdram_near, 0x1b7, 0x80208000
+offcore_response.any_rfo.ddr, 0x1b7, 0x181800022
+offcore_response.any_rfo.ddr_far, 0x1b7, 0x101000022
+offcore_response.any_rfo.ddr_near, 0x1b7, 0x80800022
+offcore_response.any_rfo.mcdram, 0x1b7, 0x180600022
+offcore_response.any_rfo.mcdram_far, 0x1b7, 0x100400022
+offcore_response.any_rfo.mcdram_near, 0x1b7, 0x80200022
+offcore_response.bus_locks.ddr, 0x1b7, 0x181800400
+offcore_response.bus_locks.ddr_far, 0x1b7, 0x101000400
+offcore_response.bus_locks.ddr_near, 0x1b7, 0x80800400
+offcore_response.bus_locks.mcdram, 0x1b7, 0x180600400
+offcore_response.bus_locks.mcdram_far, 0x1b7, 0x100400400
+offcore_response.bus_locks.mcdram_near, 0x1b7, 0x80200400
+offcore_response.demand_code_rd.ddr, 0x1b7, 0x181800004
+offcore_response.demand_code_rd.ddr_far, 0x1b7, 0x101000004
+offcore_response.demand_code_rd.ddr_near, 0x1b7, 0x80800004
+offcore_response.demand_code_rd.mcdram, 0x1b7, 0x180600004
+offcore_response.demand_code_rd.mcdram_far, 0x1b7, 0x100400004
+offcore_response.demand_code_rd.mcdram_near, 0x1b7, 0x80200004
+offcore_response.demand_data_rd.ddr, 0x1b7, 0x181800001
+offcore_response.demand_data_rd.ddr_far, 0x1b7, 0x101000001
+offcore_response.demand_data_rd.ddr_near, 0x1b7, 0x80800001
+offcore_response.demand_data_rd.mcdram, 0x1b7, 0x180600001
+offcore_response.demand_data_rd.mcdram_far, 0x1b7, 0x100400001
+offcore_response.demand_data_rd.mcdram_near, 0x1b7, 0x80200001
+offcore_response.demand_rfo.ddr, 0x1b7, 0x181800002
+offcore_response.demand_rfo.ddr_far, 0x1b7, 0x101000002
+offcore_response.demand_rfo.ddr_near, 0x1b7, 0x80800002
+offcore_response.demand_rfo.mcdram, 0x1b7, 0x180600002
+offcore_response.demand_rfo.mcdram_far, 0x1b7, 0x100400002
+offcore_response.demand_rfo.mcdram_near, 0x1b7, 0x80200002
+offcore_response.partial_reads.ddr, 0x1b7, 0x181800080
+offcore_response.partial_reads.ddr_far, 0x1b7, 0x101000080
+offcore_response.partial_reads.ddr_near, 0x1b7, 0x80800080
+offcore_response.partial_reads.mcdram, 0x1b7, 0x180600080
+offcore_response.partial_reads.mcdram_far, 0x1b7, 0x100400080
+offcore_response.partial_reads.mcdram_near, 0x1b7, 0x80200080
+offcore_response.partial_reads.non_dram, 0x1b7, 0x2000020080
+offcore_response.partial_writes.ddr_far, 0x1b7, 0x101000100
+offcore_response.partial_writes.ddr_near, 0x1b7, 0x80800100
+offcore_response.partial_writes.mcdram, 0x1b7, 0x180600100
+offcore_response.partial_writes.mcdram_far, 0x1b7, 0x100400100
+offcore_response.partial_writes.mcdram_near, 0x1b7, 0x80200100
+offcore_response.pf_l1_data_rd.ddr, 0x1b7, 0x181802000
+offcore_response.pf_l1_data_rd.ddr_far, 0x1b7, 0x101002000
+offcore_response.pf_l1_data_rd.ddr_near, 0x1b7, 0x80802000
+offcore_response.pf_l1_data_rd.mcdram_far, 0x1b7, 0x100402000
+offcore_response.pf_l1_data_rd.mcdram_near, 0x1b7, 0x80202000
+offcore_response.pf_l2_code_rd.ddr, 0x1b7, 0x181800040
+offcore_response.pf_l2_code_rd.ddr_far, 0x1b7, 0x101000040
+offcore_response.pf_l2_code_rd.ddr_near, 0x1b7, 0x80800040
+offcore_response.pf_l2_code_rd.mcdram_far, 0x1b7, 0x100400040
+offcore_response.pf_l2_code_rd.mcdram_near, 0x1b7, 0x80200040
+offcore_response.pf_l2_rfo.ddr, 0x1b7, 0x181800020
+offcore_response.pf_l2_rfo.ddr_far, 0x1b7, 0x101000020
+offcore_response.pf_l2_rfo.ddr_near, 0x1b7, 0x80800020
+offcore_response.pf_l2_rfo.mcdram, 0x1b7, 0x180600020
+offcore_response.pf_l2_rfo.mcdram_far, 0x1b7, 0x100400020
+offcore_response.pf_l2_rfo.mcdram_near, 0x1b7, 0x80200020
+offcore_response.pf_l2_rfo.non_dram, 0x1b7, 0x2000020020
+offcore_response.pf_software.ddr, 0x1b7, 0x181801000
+offcore_response.pf_software.ddr_far, 0x1b7, 0x101001000
+offcore_response.pf_software.ddr_near, 0x1b7, 0x80801000
+offcore_response.pf_software.mcdram, 0x1b7, 0x180601000
+offcore_response.pf_software.mcdram_far, 0x1b7, 0x100401000
+offcore_response.pf_software.mcdram_near, 0x1b7, 0x80201000
+offcore_response.uc_code_reads.ddr, 0x1b7, 0x181800200
+offcore_response.uc_code_reads.ddr_far, 0x1b7, 0x101000200
+offcore_response.uc_code_reads.ddr_near, 0x1b7, 0x80800200
+offcore_response.uc_code_reads.mcdram, 0x1b7, 0x180600200
+offcore_response.uc_code_reads.mcdram_far, 0x1b7, 0x100400200
+offcore_response.uc_code_reads.mcdram_near, 0x1b7, 0x80200200
 mem_uops_retired.dtlb_miss_loads, 0x804
 page_walks.cycles, 0x305
 page_walks.d_side_cycles, 0x105
@@ -616,205 +616,205 @@ mem_uops_retired.l2_hit_loads, 0x204
 mem_uops_retired.l2_miss_loads, 0x404
 mem_uops_retired.utlb_miss_loads, 0x1004
 offcore_response, 0x1b7
-offcore_response.any_code_rd.any_response, 0x1b7
-offcore_response.any_code_rd.l2_hit_far_tile, 0x1b7
-offcore_response.any_code_rd.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.any_code_rd.l2_hit_far_tile_m, 0x1b7
-offcore_response.any_code_rd.l2_hit_near_tile, 0x1b7
-offcore_response.any_code_rd.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.any_code_rd.l2_hit_near_tile_m, 0x1b7
-offcore_response.any_code_rd.l2_hit_this_tile_e, 0x1b7
-offcore_response.any_code_rd.l2_hit_this_tile_f, 0x1b7
-offcore_response.any_code_rd.l2_hit_this_tile_m, 0x1b7
-offcore_response.any_code_rd.l2_hit_this_tile_s, 0x1b7
-offcore_response.any_code_rd.outstanding, 0x1b7
-offcore_response.any_data_rd.any_response, 0x1b7
-offcore_response.any_data_rd.l2_hit_far_tile, 0x1b7
-offcore_response.any_data_rd.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.any_data_rd.l2_hit_far_tile_m, 0x1b7
-offcore_response.any_data_rd.l2_hit_near_tile, 0x1b7
-offcore_response.any_data_rd.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.any_data_rd.l2_hit_near_tile_m, 0x1b7
-offcore_response.any_data_rd.l2_hit_this_tile_e, 0x1b7
-offcore_response.any_data_rd.l2_hit_this_tile_f, 0x1b7
-offcore_response.any_data_rd.l2_hit_this_tile_m, 0x1b7
-offcore_response.any_data_rd.l2_hit_this_tile_s, 0x1b7
-offcore_response.any_data_rd.outstanding, 0x1b7
-offcore_response.any_pf_l2.any_response, 0x1b7
-offcore_response.any_pf_l2.l2_hit_far_tile, 0x1b7
-offcore_response.any_pf_l2.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.any_pf_l2.l2_hit_far_tile_m, 0x1b7
-offcore_response.any_pf_l2.l2_hit_near_tile, 0x1b7
-offcore_response.any_pf_l2.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.any_pf_l2.l2_hit_near_tile_m, 0x1b7
-offcore_response.any_pf_l2.l2_hit_this_tile_e, 0x1b7
-offcore_response.any_pf_l2.l2_hit_this_tile_f, 0x1b7
-offcore_response.any_pf_l2.l2_hit_this_tile_m, 0x1b7
-offcore_response.any_pf_l2.outstanding, 0x1b7
-offcore_response.any_read.any_response, 0x1b7
-offcore_response.any_read.l2_hit_far_tile, 0x1b7
-offcore_response.any_read.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.any_read.l2_hit_far_tile_m, 0x1b7
-offcore_response.any_read.l2_hit_near_tile, 0x1b7
-offcore_response.any_read.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.any_read.l2_hit_near_tile_m, 0x1b7
-offcore_response.any_read.l2_hit_this_tile_e, 0x1b7
-offcore_response.any_read.l2_hit_this_tile_f, 0x1b7
-offcore_response.any_read.l2_hit_this_tile_m, 0x1b7
-offcore_response.any_read.l2_hit_this_tile_s, 0x1b7
-offcore_response.any_read.outstanding, 0x1b7
-offcore_response.any_request.any_response, 0x1b7
-offcore_response.any_request.l2_hit_far_tile, 0x1b7
-offcore_response.any_request.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.any_request.l2_hit_far_tile_m, 0x1b7
-offcore_response.any_request.l2_hit_near_tile, 0x1b7
-offcore_response.any_request.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.any_request.l2_hit_near_tile_m, 0x1b7
-offcore_response.any_request.l2_hit_this_tile_e, 0x1b7
-offcore_response.any_request.l2_hit_this_tile_f, 0x1b7
-offcore_response.any_request.l2_hit_this_tile_m, 0x1b7
-offcore_response.any_request.l2_hit_this_tile_s, 0x1b7
-offcore_response.any_request.l2_miss, 0x1b7
-offcore_response.any_request.outstanding, 0x1b7
-offcore_response.any_rfo.any_response, 0x1b7
-offcore_response.any_rfo.l2_hit_far_tile, 0x1b7
-offcore_response.any_rfo.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.any_rfo.l2_hit_far_tile_m, 0x1b7
-offcore_response.any_rfo.l2_hit_near_tile, 0x1b7
-offcore_response.any_rfo.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.any_rfo.l2_hit_near_tile_m, 0x1b7
-offcore_response.any_rfo.l2_hit_this_tile_e, 0x1b7
-offcore_response.any_rfo.l2_hit_this_tile_f, 0x1b7
-offcore_response.any_rfo.l2_hit_this_tile_m, 0x1b7
-offcore_response.any_rfo.l2_hit_this_tile_s, 0x1b7
-offcore_response.any_rfo.outstanding, 0x1b7
-offcore_response.bus_locks.any_response, 0x1b7
-offcore_response.bus_locks.l2_hit_far_tile, 0x1b7
-offcore_response.bus_locks.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.bus_locks.l2_hit_far_tile_m, 0x1b7
-offcore_response.bus_locks.l2_hit_near_tile, 0x1b7
-offcore_response.bus_locks.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.bus_locks.l2_hit_near_tile_m, 0x1b7
-offcore_response.bus_locks.l2_hit_this_tile_e, 0x1b7
-offcore_response.bus_locks.l2_hit_this_tile_f, 0x1b7
-offcore_response.bus_locks.l2_hit_this_tile_m, 0x1b7
-offcore_response.bus_locks.l2_hit_this_tile_s, 0x1b7
-offcore_response.bus_locks.outstanding, 0x1b7
-offcore_response.demand_code_rd.any_response, 0x1b7
-offcore_response.demand_code_rd.l2_hit_far_tile, 0x1b7
-offcore_response.demand_code_rd.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.demand_code_rd.l2_hit_far_tile_m, 0x1b7
-offcore_response.demand_code_rd.l2_hit_near_tile, 0x1b7
-offcore_response.demand_code_rd.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.demand_code_rd.l2_hit_near_tile_m, 0x1b7
-offcore_response.demand_code_rd.l2_hit_this_tile_e, 0x1b7
-offcore_response.demand_code_rd.l2_hit_this_tile_f, 0x1b7
-offcore_response.demand_code_rd.l2_hit_this_tile_m, 0x1b7
-offcore_response.demand_code_rd.l2_hit_this_tile_s, 0x1b7
-offcore_response.demand_code_rd.outstanding, 0x1b7
-offcore_response.demand_data_rd.any_response, 0x1b7
-offcore_response.demand_data_rd.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.demand_data_rd.l2_hit_far_tile_m, 0x1b7
-offcore_response.demand_data_rd.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.demand_data_rd.l2_hit_near_tile_m, 0x1b7
-offcore_response.demand_data_rd.l2_hit_this_tile_e, 0x1b7
-offcore_response.demand_data_rd.l2_hit_this_tile_f, 0x1b7
-offcore_response.demand_data_rd.l2_hit_this_tile_m, 0x1b7
-offcore_response.demand_data_rd.l2_hit_this_tile_s, 0x1b7
-offcore_response.demand_data_rd.outstanding, 0x1b7
-offcore_response.demand_rfo.any_response, 0x1b7
-offcore_response.demand_rfo.l2_hit_far_tile, 0x1b7
-offcore_response.demand_rfo.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.demand_rfo.l2_hit_far_tile_m, 0x1b7
-offcore_response.demand_rfo.l2_hit_near_tile, 0x1b7
-offcore_response.demand_rfo.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.demand_rfo.l2_hit_near_tile_m, 0x1b7
-offcore_response.demand_rfo.l2_hit_this_tile_e, 0x1b7
-offcore_response.demand_rfo.l2_hit_this_tile_f, 0x1b7
-offcore_response.demand_rfo.l2_hit_this_tile_m, 0x1b7
-offcore_response.demand_rfo.l2_hit_this_tile_s, 0x1b7
-offcore_response.demand_rfo.outstanding, 0x1b7
-offcore_response.full_streaming_stores.any_response, 0x1b7
-offcore_response.partial_reads.any_response, 0x1b7
-offcore_response.partial_reads.l2_hit_far_tile, 0x1b7
-offcore_response.partial_reads.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.partial_reads.l2_hit_far_tile_m, 0x1b7
-offcore_response.partial_reads.l2_hit_near_tile, 0x1b7
-offcore_response.partial_reads.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.partial_reads.l2_hit_near_tile_m, 0x1b7
-offcore_response.partial_reads.l2_hit_this_tile_e, 0x1b7
-offcore_response.partial_reads.l2_hit_this_tile_f, 0x1b7
-offcore_response.partial_reads.l2_hit_this_tile_m, 0x1b7
-offcore_response.partial_reads.l2_hit_this_tile_s, 0x1b7
-offcore_response.partial_reads.outstanding, 0x1b7
-offcore_response.partial_streaming_stores.any_response, 0x1b7
-offcore_response.partial_writes.any_response, 0x1b7
-offcore_response.partial_writes.l2_hit_far_tile, 0x1b7
-offcore_response.partial_writes.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.partial_writes.l2_hit_far_tile_m, 0x1b7
-offcore_response.partial_writes.l2_hit_near_tile, 0x1b7
-offcore_response.partial_writes.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.partial_writes.l2_hit_near_tile_m, 0x1b7
-offcore_response.partial_writes.l2_hit_this_tile_e, 0x1b7
-offcore_response.partial_writes.l2_hit_this_tile_f, 0x1b7
-offcore_response.partial_writes.l2_hit_this_tile_m, 0x1b7
-offcore_response.partial_writes.l2_hit_this_tile_s, 0x1b7
-offcore_response.pf_l1_data_rd.any_response, 0x1b7
-offcore_response.pf_l1_data_rd.l2_hit_far_tile, 0x1b7
-offcore_response.pf_l1_data_rd.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.pf_l1_data_rd.l2_hit_far_tile_m, 0x1b7
-offcore_response.pf_l1_data_rd.l2_hit_near_tile, 0x1b7
-offcore_response.pf_l1_data_rd.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.pf_l1_data_rd.l2_hit_near_tile_m, 0x1b7
-offcore_response.pf_l1_data_rd.l2_hit_this_tile_e, 0x1b7
-offcore_response.pf_l1_data_rd.l2_hit_this_tile_f, 0x1b7
-offcore_response.pf_l1_data_rd.l2_hit_this_tile_m, 0x1b7
-offcore_response.pf_l1_data_rd.l2_hit_this_tile_s, 0x1b7
-offcore_response.pf_l1_data_rd.outstanding, 0x1b7
-offcore_response.pf_l2_code_rd.any_response, 0x1b7
-offcore_response.pf_l2_code_rd.l2_hit_far_tile, 0x1b7
-offcore_response.pf_l2_code_rd.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.pf_l2_code_rd.l2_hit_far_tile_m, 0x1b7
-offcore_response.pf_l2_code_rd.l2_hit_near_tile, 0x1b7
-offcore_response.pf_l2_code_rd.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.pf_l2_code_rd.l2_hit_near_tile_m, 0x1b7
-offcore_response.pf_l2_code_rd.l2_hit_this_tile_e, 0x1b7
-offcore_response.pf_l2_code_rd.l2_hit_this_tile_f, 0x1b7
-offcore_response.pf_l2_code_rd.outstanding, 0x1b7
-offcore_response.pf_l2_rfo.any_response, 0x1b7
-offcore_response.pf_l2_rfo.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.pf_l2_rfo.l2_hit_far_tile_m, 0x1b7
-offcore_response.pf_l2_rfo.l2_hit_near_tile, 0x1b7
-offcore_response.pf_l2_rfo.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.pf_l2_rfo.l2_hit_near_tile_m, 0x1b7
-offcore_response.pf_l2_rfo.l2_hit_this_tile_e, 0x1b7
-offcore_response.pf_l2_rfo.l2_hit_this_tile_f, 0x1b7
-offcore_response.pf_l2_rfo.l2_hit_this_tile_m, 0x1b7
-offcore_response.pf_l2_rfo.l2_hit_this_tile_s, 0x1b7
-offcore_response.pf_software.any_response, 0x1b7
-offcore_response.pf_software.l2_hit_far_tile, 0x1b7
-offcore_response.pf_software.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.pf_software.l2_hit_far_tile_m, 0x1b7
-offcore_response.pf_software.l2_hit_near_tile, 0x1b7
-offcore_response.pf_software.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.pf_software.l2_hit_near_tile_m, 0x1b7
-offcore_response.pf_software.l2_hit_this_tile_e, 0x1b7
-offcore_response.pf_software.l2_hit_this_tile_f, 0x1b7
-offcore_response.pf_software.l2_hit_this_tile_m, 0x1b7
-offcore_response.pf_software.l2_hit_this_tile_s, 0x1b7
-offcore_response.pf_software.outstanding, 0x1b7
-offcore_response.streaming_stores.any_response, 0x1b7
-offcore_response.uc_code_reads.any_response, 0x1b7
-offcore_response.uc_code_reads.l2_hit_far_tile_e_f, 0x1b7
-offcore_response.uc_code_reads.l2_hit_far_tile_m, 0x1b7
-offcore_response.uc_code_reads.l2_hit_near_tile, 0x1b7
-offcore_response.uc_code_reads.l2_hit_near_tile_e_f, 0x1b7
-offcore_response.uc_code_reads.l2_hit_near_tile_m, 0x1b7
-offcore_response.uc_code_reads.l2_hit_this_tile_e, 0x1b7
-offcore_response.uc_code_reads.l2_hit_this_tile_f, 0x1b7
-offcore_response.uc_code_reads.l2_hit_this_tile_m, 0x1b7
-offcore_response.uc_code_reads.l2_hit_this_tile_s, 0x1b7
-offcore_response.uc_code_reads.outstanding, 0x1b7
+offcore_response.any_code_rd.any_response, 0x1b7, 0x10044
+offcore_response.any_code_rd.l2_hit_far_tile, 0x1b7, 0x1800400044
+offcore_response.any_code_rd.l2_hit_far_tile_e_f, 0x1b7, 0x800400044
+offcore_response.any_code_rd.l2_hit_far_tile_m, 0x1b7, 0x1000400044
+offcore_response.any_code_rd.l2_hit_near_tile, 0x1b7, 0x1800180044
+offcore_response.any_code_rd.l2_hit_near_tile_e_f, 0x1b7, 0x800080044
+offcore_response.any_code_rd.l2_hit_near_tile_m, 0x1b7, 0x1000080044
+offcore_response.any_code_rd.l2_hit_this_tile_e, 0x1b7, 0x4000044
+offcore_response.any_code_rd.l2_hit_this_tile_f, 0x1b7, 0x10000044
+offcore_response.any_code_rd.l2_hit_this_tile_m, 0x1b7, 0x2000044
+offcore_response.any_code_rd.l2_hit_this_tile_s, 0x1b7, 0x8000044
+offcore_response.any_code_rd.outstanding, 0x1b7, 0x4000000044
+offcore_response.any_data_rd.any_response, 0x1b7, 0x13091
+offcore_response.any_data_rd.l2_hit_far_tile, 0x1b7, 0x1800403091
+offcore_response.any_data_rd.l2_hit_far_tile_e_f, 0x1b7, 0x800403091
+offcore_response.any_data_rd.l2_hit_far_tile_m, 0x1b7, 0x1000403091
+offcore_response.any_data_rd.l2_hit_near_tile, 0x1b7, 0x1800183091
+offcore_response.any_data_rd.l2_hit_near_tile_e_f, 0x1b7, 0x800083091
+offcore_response.any_data_rd.l2_hit_near_tile_m, 0x1b7, 0x1000083091
+offcore_response.any_data_rd.l2_hit_this_tile_e, 0x1b7, 0x4003091
+offcore_response.any_data_rd.l2_hit_this_tile_f, 0x1b7, 0x10003091
+offcore_response.any_data_rd.l2_hit_this_tile_m, 0x1b7, 0x2003091
+offcore_response.any_data_rd.l2_hit_this_tile_s, 0x1b7, 0x8003091
+offcore_response.any_data_rd.outstanding, 0x1b7, 0x4000003091
+offcore_response.any_pf_l2.any_response, 0x1b7, 0x10070
+offcore_response.any_pf_l2.l2_hit_far_tile, 0x1b7, 0x1800400070
+offcore_response.any_pf_l2.l2_hit_far_tile_e_f, 0x1b7, 0x800400070
+offcore_response.any_pf_l2.l2_hit_far_tile_m, 0x1b7, 0x1000400070
+offcore_response.any_pf_l2.l2_hit_near_tile, 0x1b7, 0x1800180070
+offcore_response.any_pf_l2.l2_hit_near_tile_e_f, 0x1b7, 0x800080070
+offcore_response.any_pf_l2.l2_hit_near_tile_m, 0x1b7, 0x1000080070
+offcore_response.any_pf_l2.l2_hit_this_tile_e, 0x1b7, 0x4000070
+offcore_response.any_pf_l2.l2_hit_this_tile_f, 0x1b7, 0x10000070
+offcore_response.any_pf_l2.l2_hit_this_tile_m, 0x1b7, 0x2000070
+offcore_response.any_pf_l2.outstanding, 0x1b7, 0x4000000070
+offcore_response.any_read.any_response, 0x1b7, 0x132f7
+offcore_response.any_read.l2_hit_far_tile, 0x1b7, 0x18004032f7
+offcore_response.any_read.l2_hit_far_tile_e_f, 0x1b7, 0x8004032f7
+offcore_response.any_read.l2_hit_far_tile_m, 0x1b7, 0x10004032f7
+offcore_response.any_read.l2_hit_near_tile, 0x1b7, 0x18001832f7
+offcore_response.any_read.l2_hit_near_tile_e_f, 0x1b7, 0x8000832f7
+offcore_response.any_read.l2_hit_near_tile_m, 0x1b7, 0x10000832f7
+offcore_response.any_read.l2_hit_this_tile_e, 0x1b7, 0x40032f7
+offcore_response.any_read.l2_hit_this_tile_f, 0x1b7, 0x100032f7
+offcore_response.any_read.l2_hit_this_tile_m, 0x1b7, 0x20032f7
+offcore_response.any_read.l2_hit_this_tile_s, 0x1b7, 0x80032f7
+offcore_response.any_read.outstanding, 0x1b7, 0x40000032f7
+offcore_response.any_request.any_response, 0x1b7, 0x18000
+offcore_response.any_request.l2_hit_far_tile, 0x1b7, 0x1800408000
+offcore_response.any_request.l2_hit_far_tile_e_f, 0x1b7, 0x800408000
+offcore_response.any_request.l2_hit_far_tile_m, 0x1b7, 0x1000408000
+offcore_response.any_request.l2_hit_near_tile, 0x1b7, 0x1800188000
+offcore_response.any_request.l2_hit_near_tile_e_f, 0x1b7, 0x800088000
+offcore_response.any_request.l2_hit_near_tile_m, 0x1b7, 0x1000088000
+offcore_response.any_request.l2_hit_this_tile_e, 0x1b7, 0x4008000
+offcore_response.any_request.l2_hit_this_tile_f, 0x1b7, 0x10008000
+offcore_response.any_request.l2_hit_this_tile_m, 0x1b7, 0x2008000
+offcore_response.any_request.l2_hit_this_tile_s, 0x1b7, 0x8008000
+offcore_response.any_request.l2_miss, 0x1b7, 0x18001981f8
+offcore_response.any_request.outstanding, 0x1b7, 0x4000008000
+offcore_response.any_rfo.any_response, 0x1b7, 0x10022
+offcore_response.any_rfo.l2_hit_far_tile, 0x1b7, 0x1800400022
+offcore_response.any_rfo.l2_hit_far_tile_e_f, 0x1b7, 0x800400022
+offcore_response.any_rfo.l2_hit_far_tile_m, 0x1b7, 0x1000400022
+offcore_response.any_rfo.l2_hit_near_tile, 0x1b7, 0x1800180022
+offcore_response.any_rfo.l2_hit_near_tile_e_f, 0x1b7, 0x800080022
+offcore_response.any_rfo.l2_hit_near_tile_m, 0x1b7, 0x1000080022
+offcore_response.any_rfo.l2_hit_this_tile_e, 0x1b7, 0x4000022
+offcore_response.any_rfo.l2_hit_this_tile_f, 0x1b7, 0x10000022
+offcore_response.any_rfo.l2_hit_this_tile_m, 0x1b7, 0x2000022
+offcore_response.any_rfo.l2_hit_this_tile_s, 0x1b7, 0x8000022
+offcore_response.any_rfo.outstanding, 0x1b7, 0x4000000022
+offcore_response.bus_locks.any_response, 0x1b7, 0x10400
+offcore_response.bus_locks.l2_hit_far_tile, 0x1b7, 0x1800400400
+offcore_response.bus_locks.l2_hit_far_tile_e_f, 0x1b7, 0x800400400
+offcore_response.bus_locks.l2_hit_far_tile_m, 0x1b7, 0x1000400400
+offcore_response.bus_locks.l2_hit_near_tile, 0x1b7, 0x1800180400
+offcore_response.bus_locks.l2_hit_near_tile_e_f, 0x1b7, 0x800080400
+offcore_response.bus_locks.l2_hit_near_tile_m, 0x1b7, 0x1000080400
+offcore_response.bus_locks.l2_hit_this_tile_e, 0x1b7, 0x4000400
+offcore_response.bus_locks.l2_hit_this_tile_f, 0x1b7, 0x10000400
+offcore_response.bus_locks.l2_hit_this_tile_m, 0x1b7, 0x2000400
+offcore_response.bus_locks.l2_hit_this_tile_s, 0x1b7, 0x8000400
+offcore_response.bus_locks.outstanding, 0x1b7, 0x4000000400
+offcore_response.demand_code_rd.any_response, 0x1b7, 0x10004
+offcore_response.demand_code_rd.l2_hit_far_tile, 0x1b7, 0x1800400004
+offcore_response.demand_code_rd.l2_hit_far_tile_e_f, 0x1b7, 0x800400004
+offcore_response.demand_code_rd.l2_hit_far_tile_m, 0x1b7, 0x1000400004
+offcore_response.demand_code_rd.l2_hit_near_tile, 0x1b7, 0x1800180004
+offcore_response.demand_code_rd.l2_hit_near_tile_e_f, 0x1b7, 0x800080004
+offcore_response.demand_code_rd.l2_hit_near_tile_m, 0x1b7, 0x1000080004
+offcore_response.demand_code_rd.l2_hit_this_tile_e, 0x1b7, 0x4000004
+offcore_response.demand_code_rd.l2_hit_this_tile_f, 0x1b7, 0x10000004
+offcore_response.demand_code_rd.l2_hit_this_tile_m, 0x1b7, 0x2000004
+offcore_response.demand_code_rd.l2_hit_this_tile_s, 0x1b7, 0x8000004
+offcore_response.demand_code_rd.outstanding, 0x1b7, 0x4000000004
+offcore_response.demand_data_rd.any_response, 0x1b7, 0x10001
+offcore_response.demand_data_rd.l2_hit_far_tile_e_f, 0x1b7, 0x800400001
+offcore_response.demand_data_rd.l2_hit_far_tile_m, 0x1b7, 0x1000400001
+offcore_response.demand_data_rd.l2_hit_near_tile_e_f, 0x1b7, 0x800080001
+offcore_response.demand_data_rd.l2_hit_near_tile_m, 0x1b7, 0x1000080001
+offcore_response.demand_data_rd.l2_hit_this_tile_e, 0x1b7, 0x4000001
+offcore_response.demand_data_rd.l2_hit_this_tile_f, 0x1b7, 0x10000001
+offcore_response.demand_data_rd.l2_hit_this_tile_m, 0x1b7, 0x2000001
+offcore_response.demand_data_rd.l2_hit_this_tile_s, 0x1b7, 0x8000001
+offcore_response.demand_data_rd.outstanding, 0x1b7, 0x4000000001
+offcore_response.demand_rfo.any_response, 0x1b7, 0x10002
+offcore_response.demand_rfo.l2_hit_far_tile, 0x1b7, 0x1800400002
+offcore_response.demand_rfo.l2_hit_far_tile_e_f, 0x1b7, 0x800400002
+offcore_response.demand_rfo.l2_hit_far_tile_m, 0x1b7, 0x1000400002
+offcore_response.demand_rfo.l2_hit_near_tile, 0x1b7, 0x1800180002
+offcore_response.demand_rfo.l2_hit_near_tile_e_f, 0x1b7, 0x800080002
+offcore_response.demand_rfo.l2_hit_near_tile_m, 0x1b7, 0x1000080002
+offcore_response.demand_rfo.l2_hit_this_tile_e, 0x1b7, 0x4000002
+offcore_response.demand_rfo.l2_hit_this_tile_f, 0x1b7, 0x10000002
+offcore_response.demand_rfo.l2_hit_this_tile_m, 0x1b7, 0x2000002
+offcore_response.demand_rfo.l2_hit_this_tile_s, 0x1b7, 0x8000002
+offcore_response.demand_rfo.outstanding, 0x1b7, 0x4000000002
+offcore_response.full_streaming_stores.any_response, 0x1b7, 0x10800
+offcore_response.partial_reads.any_response, 0x1b7, 0x10080
+offcore_response.partial_reads.l2_hit_far_tile, 0x1b7, 0x1800400080
+offcore_response.partial_reads.l2_hit_far_tile_e_f, 0x1b7, 0x800400080
+offcore_response.partial_reads.l2_hit_far_tile_m, 0x1b7, 0x1000400080
+offcore_response.partial_reads.l2_hit_near_tile, 0x1b7, 0x1800180080
+offcore_response.partial_reads.l2_hit_near_tile_e_f, 0x1b7, 0x800080080
+offcore_response.partial_reads.l2_hit_near_tile_m, 0x1b7, 0x1000080080
+offcore_response.partial_reads.l2_hit_this_tile_e, 0x1b7, 0x4000080
+offcore_response.partial_reads.l2_hit_this_tile_f, 0x1b7, 0x10000080
+offcore_response.partial_reads.l2_hit_this_tile_m, 0x1b7, 0x2000080
+offcore_response.partial_reads.l2_hit_this_tile_s, 0x1b7, 0x8000080
+offcore_response.partial_reads.outstanding, 0x1b7, 0x4000000080
+offcore_response.partial_streaming_stores.any_response, 0x1b7, 0x14000
+offcore_response.partial_writes.any_response, 0x1b7, 0x10100
+offcore_response.partial_writes.l2_hit_far_tile, 0x1b7, 0x1800400100
+offcore_response.partial_writes.l2_hit_far_tile_e_f, 0x1b7, 0x800400100
+offcore_response.partial_writes.l2_hit_far_tile_m, 0x1b7, 0x1000400100
+offcore_response.partial_writes.l2_hit_near_tile, 0x1b7, 0x1800180100
+offcore_response.partial_writes.l2_hit_near_tile_e_f, 0x1b7, 0x800080100
+offcore_response.partial_writes.l2_hit_near_tile_m, 0x1b7, 0x1000080100
+offcore_response.partial_writes.l2_hit_this_tile_e, 0x1b7, 0x4000100
+offcore_response.partial_writes.l2_hit_this_tile_f, 0x1b7, 0x10000100
+offcore_response.partial_writes.l2_hit_this_tile_m, 0x1b7, 0x2000100
+offcore_response.partial_writes.l2_hit_this_tile_s, 0x1b7, 0x8000100
+offcore_response.pf_l1_data_rd.any_response, 0x1b7, 0x12000
+offcore_response.pf_l1_data_rd.l2_hit_far_tile, 0x1b7, 0x1800402000
+offcore_response.pf_l1_data_rd.l2_hit_far_tile_e_f, 0x1b7, 0x800402000
+offcore_response.pf_l1_data_rd.l2_hit_far_tile_m, 0x1b7, 0x1000402000
+offcore_response.pf_l1_data_rd.l2_hit_near_tile, 0x1b7, 0x1800182000
+offcore_response.pf_l1_data_rd.l2_hit_near_tile_e_f, 0x1b7, 0x800082000
+offcore_response.pf_l1_data_rd.l2_hit_near_tile_m, 0x1b7, 0x1000082000
+offcore_response.pf_l1_data_rd.l2_hit_this_tile_e, 0x1b7, 0x4002000
+offcore_response.pf_l1_data_rd.l2_hit_this_tile_f, 0x1b7, 0x10002000
+offcore_response.pf_l1_data_rd.l2_hit_this_tile_m, 0x1b7, 0x2002000
+offcore_response.pf_l1_data_rd.l2_hit_this_tile_s, 0x1b7, 0x8002000
+offcore_response.pf_l1_data_rd.outstanding, 0x1b7, 0x4000002000
+offcore_response.pf_l2_code_rd.any_response, 0x1b7, 0x10040
+offcore_response.pf_l2_code_rd.l2_hit_far_tile, 0x1b7, 0x1800400040
+offcore_response.pf_l2_code_rd.l2_hit_far_tile_e_f, 0x1b7, 0x800400040
+offcore_response.pf_l2_code_rd.l2_hit_far_tile_m, 0x1b7, 0x1000400040
+offcore_response.pf_l2_code_rd.l2_hit_near_tile, 0x1b7, 0x1800180040
+offcore_response.pf_l2_code_rd.l2_hit_near_tile_e_f, 0x1b7, 0x800080040
+offcore_response.pf_l2_code_rd.l2_hit_near_tile_m, 0x1b7, 0x1000080040
+offcore_response.pf_l2_code_rd.l2_hit_this_tile_e, 0x1b7, 0x4000040
+offcore_response.pf_l2_code_rd.l2_hit_this_tile_f, 0x1b7, 0x10000040
+offcore_response.pf_l2_code_rd.outstanding, 0x1b7, 0x4000000040
+offcore_response.pf_l2_rfo.any_response, 0x1b7, 0x10020
+offcore_response.pf_l2_rfo.l2_hit_far_tile_e_f, 0x1b7, 0x800400020
+offcore_response.pf_l2_rfo.l2_hit_far_tile_m, 0x1b7, 0x1000400020
+offcore_response.pf_l2_rfo.l2_hit_near_tile, 0x1b7, 0x1800180020
+offcore_response.pf_l2_rfo.l2_hit_near_tile_e_f, 0x1b7, 0x800080020
+offcore_response.pf_l2_rfo.l2_hit_near_tile_m, 0x1b7, 0x1000080020
+offcore_response.pf_l2_rfo.l2_hit_this_tile_e, 0x1b7, 0x4000020
+offcore_response.pf_l2_rfo.l2_hit_this_tile_f, 0x1b7, 0x10000020
+offcore_response.pf_l2_rfo.l2_hit_this_tile_m, 0x1b7, 0x2000020
+offcore_response.pf_l2_rfo.l2_hit_this_tile_s, 0x1b7, 0x8000020
+offcore_response.pf_software.any_response, 0x1b7, 0x11000
+offcore_response.pf_software.l2_hit_far_tile, 0x1b7, 0x1800401000
+offcore_response.pf_software.l2_hit_far_tile_e_f, 0x1b7, 0x800401000
+offcore_response.pf_software.l2_hit_far_tile_m, 0x1b7, 0x1000401000
+offcore_response.pf_software.l2_hit_near_tile, 0x1b7, 0x1800181000
+offcore_response.pf_software.l2_hit_near_tile_e_f, 0x1b7, 0x800081000
+offcore_response.pf_software.l2_hit_near_tile_m, 0x1b7, 0x1000081000
+offcore_response.pf_software.l2_hit_this_tile_e, 0x1b7, 0x4001000
+offcore_response.pf_software.l2_hit_this_tile_f, 0x1b7, 0x10001000
+offcore_response.pf_software.l2_hit_this_tile_m, 0x1b7, 0x2001000
+offcore_response.pf_software.l2_hit_this_tile_s, 0x1b7, 0x8001000
+offcore_response.pf_software.outstanding, 0x1b7, 0x4000001000
+offcore_response.streaming_stores.any_response, 0x1b7, 0x14800
+offcore_response.uc_code_reads.any_response, 0x1b7, 0x10200
+offcore_response.uc_code_reads.l2_hit_far_tile_e_f, 0x1b7, 0x800400200
+offcore_response.uc_code_reads.l2_hit_far_tile_m, 0x1b7, 0x1000400200
+offcore_response.uc_code_reads.l2_hit_near_tile, 0x1b7, 0x1800180200
+offcore_response.uc_code_reads.l2_hit_near_tile_e_f, 0x1b7, 0x800080200
+offcore_response.uc_code_reads.l2_hit_near_tile_m, 0x1b7, 0x1000080200
+offcore_response.uc_code_reads.l2_hit_this_tile_e, 0x1b7, 0x4000200
+offcore_response.uc_code_reads.l2_hit_this_tile_f, 0x1b7, 0x10000200
+offcore_response.uc_code_reads.l2_hit_this_tile_m, 0x1b7, 0x2000200
+offcore_response.uc_code_reads.l2_hit_this_tile_s, 0x1b7, 0x8000200
+offcore_response.uc_code_reads.outstanding, 0x1b7, 0x4000000200
 unc_e_edc_access.hit_clean, 0x102
 unc_e_edc_access.hit_dirty, 0x202
 unc_e_edc_access.miss_clean, 0x402

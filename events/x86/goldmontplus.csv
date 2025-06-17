@@ -95,83 +95,83 @@ mem_uops_retired.split, 0x43d0
 mem_uops_retired.split_loads, 0x41d0
 mem_uops_retired.split_stores, 0x42d0
 offcore_response, 0x1b7
-offcore_response.any_data_rd.any_response, 0x1b7
-offcore_response.any_data_rd.l2_hit, 0x1b7
-offcore_response.any_data_rd.l2_miss.hitm_other_core, 0x1b7
-offcore_response.any_data_rd.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.any_data_rd.outstanding, 0x1b7
-offcore_response.any_pf_data_rd.any_response, 0x1b7
-offcore_response.any_pf_data_rd.l2_hit, 0x1b7
-offcore_response.any_pf_data_rd.l2_miss.hitm_other_core, 0x1b7
-offcore_response.any_pf_data_rd.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.any_pf_data_rd.outstanding, 0x1b7
-offcore_response.any_read.any_response, 0x1b7
-offcore_response.any_read.l2_hit, 0x1b7
-offcore_response.any_read.l2_miss.hitm_other_core, 0x1b7
-offcore_response.any_read.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.any_read.outstanding, 0x1b7
-offcore_response.any_request.any_response, 0x1b7
-offcore_response.any_request.l2_hit, 0x1b7
-offcore_response.any_request.l2_miss.hitm_other_core, 0x1b7
-offcore_response.any_request.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.any_request.outstanding, 0x1b7
-offcore_response.any_rfo.any_response, 0x1b7
-offcore_response.any_rfo.l2_hit, 0x1b7
-offcore_response.any_rfo.l2_miss.hitm_other_core, 0x1b7
-offcore_response.any_rfo.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.any_rfo.outstanding, 0x1b7
-offcore_response.bus_locks.any_response, 0x1b7
-offcore_response.bus_locks.l2_hit, 0x1b7
-offcore_response.bus_locks.l2_miss.hitm_other_core, 0x1b7
-offcore_response.bus_locks.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.bus_locks.outstanding, 0x1b7
-offcore_response.corewb.any_response, 0x1b7
-offcore_response.corewb.l2_hit, 0x1b7
-offcore_response.corewb.l2_miss.hitm_other_core, 0x1b7
-offcore_response.corewb.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.corewb.outstanding, 0x1b7
-offcore_response.demand_code_rd.any_response, 0x1b7
-offcore_response.demand_code_rd.l2_hit, 0x1b7
-offcore_response.demand_code_rd.l2_miss.hitm_other_core, 0x1b7
-offcore_response.demand_code_rd.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.demand_code_rd.outstanding, 0x1b7
-offcore_response.demand_data_rd.any_response, 0x1b7
-offcore_response.demand_data_rd.l2_hit, 0x1b7
-offcore_response.demand_data_rd.l2_miss.hitm_other_core, 0x1b7
-offcore_response.demand_data_rd.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.demand_data_rd.outstanding, 0x1b7
-offcore_response.demand_rfo.any_response, 0x1b7
-offcore_response.demand_rfo.l2_hit, 0x1b7
-offcore_response.demand_rfo.l2_miss.hitm_other_core, 0x1b7
-offcore_response.demand_rfo.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.demand_rfo.outstanding, 0x1b7
-offcore_response.full_streaming_stores.any_response, 0x1b7
-offcore_response.full_streaming_stores.l2_hit, 0x1b7
-offcore_response.full_streaming_stores.l2_miss.hitm_other_core, 0x1b7
-offcore_response.full_streaming_stores.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.full_streaming_stores.outstanding, 0x1b7
-offcore_response.pf_l1_data_rd.any_response, 0x1b7
-offcore_response.pf_l1_data_rd.l2_hit, 0x1b7
-offcore_response.pf_l1_data_rd.l2_miss.hitm_other_core, 0x1b7
-offcore_response.pf_l1_data_rd.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.pf_l1_data_rd.outstanding, 0x1b7
-offcore_response.pf_l2_data_rd.any_response, 0x1b7
-offcore_response.pf_l2_data_rd.l2_hit, 0x1b7
-offcore_response.pf_l2_data_rd.l2_miss.hitm_other_core, 0x1b7
-offcore_response.pf_l2_data_rd.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.pf_l2_data_rd.outstanding, 0x1b7
-offcore_response.pf_l2_rfo.any_response, 0x1b7
-offcore_response.pf_l2_rfo.l2_hit, 0x1b7
-offcore_response.pf_l2_rfo.l2_miss.hitm_other_core, 0x1b7
-offcore_response.pf_l2_rfo.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.pf_l2_rfo.outstanding, 0x1b7
-offcore_response.streaming_stores.any_response, 0x1b7
-offcore_response.streaming_stores.l2_hit, 0x1b7
-offcore_response.streaming_stores.l2_miss.hitm_other_core, 0x1b7
-offcore_response.streaming_stores.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.streaming_stores.outstanding, 0x1b7
-offcore_response.sw_prefetch.any_response, 0x1b7
-offcore_response.sw_prefetch.l2_hit, 0x1b7
-offcore_response.sw_prefetch.l2_miss.hitm_other_core, 0x1b7
-offcore_response.sw_prefetch.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7
-offcore_response.sw_prefetch.outstanding, 0x1b7
+offcore_response.any_data_rd.any_response, 0x1b7, 0x13091
+offcore_response.any_data_rd.l2_hit, 0x1b7, 0x43091
+offcore_response.any_data_rd.l2_miss.hitm_other_core, 0x1b7, 0x1000003091
+offcore_response.any_data_rd.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x200003091
+offcore_response.any_data_rd.outstanding, 0x1b7, 0x4000003091
+offcore_response.any_pf_data_rd.any_response, 0x1b7, 0x13010
+offcore_response.any_pf_data_rd.l2_hit, 0x1b7, 0x43010
+offcore_response.any_pf_data_rd.l2_miss.hitm_other_core, 0x1b7, 0x1000003010
+offcore_response.any_pf_data_rd.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x200003010
+offcore_response.any_pf_data_rd.outstanding, 0x1b7, 0x4000003010
+offcore_response.any_read.any_response, 0x1b7, 0x132b7
+offcore_response.any_read.l2_hit, 0x1b7, 0x432b7
+offcore_response.any_read.l2_miss.hitm_other_core, 0x1b7, 0x10000032b7
+offcore_response.any_read.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x2000032b7
+offcore_response.any_read.outstanding, 0x1b7, 0x40000032b7
+offcore_response.any_request.any_response, 0x1b7, 0x18000
+offcore_response.any_request.l2_hit, 0x1b7, 0x48000
+offcore_response.any_request.l2_miss.hitm_other_core, 0x1b7, 0x1000008000
+offcore_response.any_request.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x200008000
+offcore_response.any_request.outstanding, 0x1b7, 0x4000008000
+offcore_response.any_rfo.any_response, 0x1b7, 0x10022
+offcore_response.any_rfo.l2_hit, 0x1b7, 0x40022
+offcore_response.any_rfo.l2_miss.hitm_other_core, 0x1b7, 0x1000000022
+offcore_response.any_rfo.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x200000022
+offcore_response.any_rfo.outstanding, 0x1b7, 0x4000000022
+offcore_response.bus_locks.any_response, 0x1b7, 0x10400
+offcore_response.bus_locks.l2_hit, 0x1b7, 0x40400
+offcore_response.bus_locks.l2_miss.hitm_other_core, 0x1b7, 0x1000000400
+offcore_response.bus_locks.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x200000400
+offcore_response.bus_locks.outstanding, 0x1b7, 0x4000000400
+offcore_response.corewb.any_response, 0x1b7, 0x10008
+offcore_response.corewb.l2_hit, 0x1b7, 0x40008
+offcore_response.corewb.l2_miss.hitm_other_core, 0x1b7, 0x1000000008
+offcore_response.corewb.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x200000008
+offcore_response.corewb.outstanding, 0x1b7, 0x4000000008
+offcore_response.demand_code_rd.any_response, 0x1b7, 0x10004
+offcore_response.demand_code_rd.l2_hit, 0x1b7, 0x40004
+offcore_response.demand_code_rd.l2_miss.hitm_other_core, 0x1b7, 0x1000000004
+offcore_response.demand_code_rd.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x200000004
+offcore_response.demand_code_rd.outstanding, 0x1b7, 0x4000000004
+offcore_response.demand_data_rd.any_response, 0x1b7, 0x10001
+offcore_response.demand_data_rd.l2_hit, 0x1b7, 0x40001
+offcore_response.demand_data_rd.l2_miss.hitm_other_core, 0x1b7, 0x1000000001
+offcore_response.demand_data_rd.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x200000001
+offcore_response.demand_data_rd.outstanding, 0x1b7, 0x4000000001
+offcore_response.demand_rfo.any_response, 0x1b7, 0x10002
+offcore_response.demand_rfo.l2_hit, 0x1b7, 0x40002
+offcore_response.demand_rfo.l2_miss.hitm_other_core, 0x1b7, 0x1000000002
+offcore_response.demand_rfo.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x200000002
+offcore_response.demand_rfo.outstanding, 0x1b7, 0x4000000002
+offcore_response.full_streaming_stores.any_response, 0x1b7, 0x10800
+offcore_response.full_streaming_stores.l2_hit, 0x1b7, 0x40800
+offcore_response.full_streaming_stores.l2_miss.hitm_other_core, 0x1b7, 0x1000000800
+offcore_response.full_streaming_stores.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x200000800
+offcore_response.full_streaming_stores.outstanding, 0x1b7, 0x4000000800
+offcore_response.pf_l1_data_rd.any_response, 0x1b7, 0x12000
+offcore_response.pf_l1_data_rd.l2_hit, 0x1b7, 0x42000
+offcore_response.pf_l1_data_rd.l2_miss.hitm_other_core, 0x1b7, 0x1000002000
+offcore_response.pf_l1_data_rd.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x200002000
+offcore_response.pf_l1_data_rd.outstanding, 0x1b7, 0x4000002000
+offcore_response.pf_l2_data_rd.any_response, 0x1b7, 0x10010
+offcore_response.pf_l2_data_rd.l2_hit, 0x1b7, 0x40010
+offcore_response.pf_l2_data_rd.l2_miss.hitm_other_core, 0x1b7, 0x1000000010
+offcore_response.pf_l2_data_rd.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x200000010
+offcore_response.pf_l2_data_rd.outstanding, 0x1b7, 0x4000000010
+offcore_response.pf_l2_rfo.any_response, 0x1b7, 0x10020
+offcore_response.pf_l2_rfo.l2_hit, 0x1b7, 0x40020
+offcore_response.pf_l2_rfo.l2_miss.hitm_other_core, 0x1b7, 0x1000000020
+offcore_response.pf_l2_rfo.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x200000020
+offcore_response.pf_l2_rfo.outstanding, 0x1b7, 0x4000000020
+offcore_response.streaming_stores.any_response, 0x1b7, 0x14800
+offcore_response.streaming_stores.l2_hit, 0x1b7, 0x44800
+offcore_response.streaming_stores.l2_miss.hitm_other_core, 0x1b7, 0x1000004800
+offcore_response.streaming_stores.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x200004800
+offcore_response.streaming_stores.outstanding, 0x1b7, 0x4000004800
+offcore_response.sw_prefetch.any_response, 0x1b7, 0x11000
+offcore_response.sw_prefetch.l2_hit, 0x1b7, 0x41000
+offcore_response.sw_prefetch.l2_miss.hitm_other_core, 0x1b7, 0x1000001000
+offcore_response.sw_prefetch.l2_miss.snoop_miss_or_no_snoop_needed, 0x1b7, 0x200001000
+offcore_response.sw_prefetch.outstanding, 0x1b7, 0x4000001000
