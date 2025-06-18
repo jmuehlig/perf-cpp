@@ -196,10 +196,8 @@ perf::SystemSpecificEventProvider::parse_event_file_descriptor_config(const std:
       return std::nullopt;
     }
 
-    /// The line should look like "event=0xcd,umask=0x1[,ldlat=3]".
-    auto event = std::optional<std::string>{ std::nullopt };
-    auto umask = std::optional<std::string>{ std::nullopt };
-    auto ldlat = std::optional<std::string>{ std::nullopt };
+    /// Store all entries (A,B) from parsing the line in the format "A=B[,C=D]*", with entries being "event", "umask", or "ldlat".
+    auto entries = std::unordered_map<std::string, std::uint64_t>{};
 
     auto token_stream = std::stringstream{ line };
     std::string token;
@@ -223,32 +221,31 @@ perf::SystemSpecificEventProvider::parse_event_file_descriptor_config(const std:
       /// Convert key to lowercase for case-insensitivity
       std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 
-      /// Remove the values "0x" prefix.
-      if (value.rfind("0x", 0ULL) == 0ULL) {
-        value = value.substr(2ULL);
-      }
-
-      if (key == "event") {
-        event = std::move(value);
-      } else if (key == "umask") {
-        umask = std::move(value);
-      } else if (key == "ldlat") {
-        ldlat = std::move(value);
+      /// Transform value into integer and add to entries.
+      if (!key.empty()) {
+        if (const auto integer = SystemSpecificEventProvider::parse_integer(value); integer.has_value()) {
+          entries.insert(std::make_pair(std::move(key), integer.value()));
+        }
       }
     }
 
     /// Combine event and umask to a single event id.
-    if (event.has_value()) {
-      const auto event_value = std::stoull(event.value(), nullptr, 16);
-      const auto umask_value = umask.has_value() ? std::stoull(umask.value(), nullptr, 16) : 0UL;
+    if (auto event = entries.find("event"); event != entries.end()) {
 
-      const auto event_configuration = (umask_value << 8) | event_value;
+      /// Fetch event value.
+      auto event_value = event->second;
 
-      if (ldlat.has_value()) {
-        return std::make_pair(event_configuration, std::stoull(ldlat.value()));
+      /// Apply umask, if available.
+      if (auto umask = entries.find("umask"); umask != entries.end()) {
+        event_value = (umask->second << 8) | event_value;
       }
 
-      return std::make_pair(event_configuration, std::nullopt);
+      /// Add load latency, if found (only available for mem-load on Intel PEBS).
+      if (auto load_latency = entries.find("ldlat"); load_latency != entries.end()) {
+        return std::make_pair(event_value, load_latency->second);
+      }
+
+      return std::make_pair(event_value, std::nullopt);
     }
   }
 
@@ -324,6 +321,26 @@ perf::SystemSpecificEventProvider::parse_event_file_descriptor_format(std::files
   }
 
   return configs;
+}
+
+std::optional<std::uint64_t>
+perf::SystemSpecificEventProvider::parse_integer(const std::string& value)
+{
+  if (value.empty()) {
+    return std::nullopt;
+  }
+
+  /// Strings starting with '0x' are considered hex numbers.
+  if (value.rfind("0x", 0ULL) == 0ULL) {
+    return std::stoull(value.substr(2ULL), nullptr, 16);
+  }
+
+  /// Strings containing digits are considered dec numbers.
+  if (std::all_of(value.begin(), value.end(), [](const auto c) { return std::isdigit(c); })) {
+    return std::stoull(value, nullptr, 0);
+  }
+
+  return std::nullopt;
 }
 
 void
@@ -425,24 +442,6 @@ perf::CsvFileEventProvider::add_events(perf::CounterDefinition& counter_definiti
     throw CannotOpenFileError{ this->_file_name };
   }
 
-  const auto string_to_ull = [](const auto& string) -> std::optional<std::uint64_t> {
-    if (string.empty()) {
-      return std::nullopt;
-    }
-
-    /// Strings starting with '0x' are considered hex numbers.
-    if (string.rfind("0x", 0ULL) == 0ULL) {
-      return std::stoull(string.substr(2ULL), nullptr, 16);
-    }
-
-    /// Strings containing digits are considered dec numbers.
-    if (std::all_of(string.begin(), string.end(), [](const auto c) { return std::isdigit(c); })) {
-      return std::stoull(string, nullptr, 0);
-    }
-
-    return std::nullopt;
-  };
-
   std::string line;
   while (std::getline(input_file, line)) {
     /// Skip lines that start with '#' and are considered a comment.
@@ -466,16 +465,16 @@ perf::CsvFileEventProvider::add_events(perf::CounterDefinition& counter_definiti
         if (std::string config_or_metric_str; std::getline(line_stream, config_or_metric_str, ',')) {
 
           /// Try to translate config into number.
-          if (const auto config = string_to_ull(config_or_metric_str); config.has_value()) {
+          if (const auto config = SystemSpecificEventProvider::parse_integer(config_or_metric_str); config.has_value()) {
             /// Read extended config-field and translate into integer.
             if (std::string extended_config_str; std::getline(line_stream, extended_config_str, ',')) {
               /// Translate extended config into number.
-              extended_config = string_to_ull(extended_config_str);
+              extended_config = SystemSpecificEventProvider::parse_integer(extended_config_str);
 
               /// Read type-field and translate into integer.
               if (std::string type_str; std::getline(line_stream, type_str, ',')) {
                 /// Translate type into number.
-                type = string_to_ull(type_str);
+                type = SystemSpecificEventProvider::parse_integer(type_str);
               }
             }
 

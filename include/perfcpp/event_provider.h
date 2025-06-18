@@ -118,6 +118,14 @@ public:
   [[nodiscard]] static std::vector<std::pair<std::uint8_t, std::pair<std::uint8_t, std::optional<std::uint8_t>>>>
   parse_event_file_descriptor_format(std::filesystem::path&& path);
 
+  /**
+   * Parses an integer (decimal or hex) from a given string.
+   *
+   * @param value String to parse.
+   * @return Integer, if parsable.
+   */
+  [[nodiscard]] static std::optional<std::uint64_t> parse_integer(const std::string& value);
+
 private:
   static void add_events(CounterDefinition& counter_definition, std::string&& pmu_name, std::string&& path);
 };
