@@ -425,47 +425,70 @@ perf::CsvFileEventProvider::add_events(perf::CounterDefinition& counter_definiti
     throw CannotOpenFileError{ this->_file_name };
   }
 
-  const auto string_to_ull = [](const auto& string) {
+  const auto string_to_ull = [](const auto& string) -> std::optional<std::uint64_t> {
+    if (string.empty()) {
+      return std::nullopt;
+    }
+
+    /// Strings starting with '0x' are considered hex numbers.
     if (string.rfind("0x", 0ULL) == 0ULL) {
       return std::stoull(string.substr(2ULL), nullptr, 16);
     }
 
-    return std::stoull(string, nullptr, 0);
+    /// Strings containing digits are considered dec numbers.
+    if (std::all_of(string.begin(), string.end(), [](const auto c) { return std::isdigit(c); })) {
+      return std::stoull(string, nullptr, 0);
+    }
+
+    return std::nullopt;
   };
 
   std::string line;
   while (std::getline(input_file, line)) {
-    auto line_stream = std::istringstream{ line };
+    /// Skip lines that start with '#' and are considered a comment.
+    if (const auto is_comment = !line.empty() && line.front() == '#'; is_comment) {
+      continue;
+    }
 
-    std::string name;
+    /// Lines containing a ',' (separator) are considered an event or an event.
+    if (const auto is_event_line = line.find(',') != std::string::npos; is_event_line) {
+      auto line_stream = std::istringstream{ line };
 
-    /// Read name.
-    if (std::getline(line_stream, name, ','); !name.empty()) {
+      std::string name;
 
-      std::uint64_t config;
-      auto extended_config = 0ULL;
-      auto type = std::uint32_t{ PERF_TYPE_RAW };
+      /// Read name.
+      if (std::getline(line_stream, name, ','); !name.empty()) {
 
-      /// Read config-field and translate into integer.
-      if (std::string config_str; std::getline(line_stream, config_str, ',')) {
+        auto extended_config = std::optional<std::uint64_t>{std::nullopt};
+        auto type = std::optional<std::uint32_t>{std::nullopt};
 
-        /// Translate config into number.
-        config = string_to_ull(config_str);
+        /// Read config-field and translate into integer.
+        if (std::string config_or_metric_str; std::getline(line_stream, config_or_metric_str, ',')) {
 
-        /// Read extended config-field and translate into integer.
-        if (std::string extended_config_str; std::getline(line_stream, extended_config_str, ',')) {
-          /// Translate extended config into number.
-          extended_config = string_to_ull(extended_config_str);
+          /// Try to translate config into number.
+          if (const auto config = string_to_ull(config_or_metric_str); config.has_value()) {
+            /// Read extended config-field and translate into integer.
+            if (std::string extended_config_str; std::getline(line_stream, extended_config_str, ',')) {
+              /// Translate extended config into number.
+              extended_config = string_to_ull(extended_config_str);
 
-          /// Read type-field and translate into integer.
-          if (std::string type_str; std::getline(line_stream, type_str, ',')) {
-            /// Translate type into number.
-            type = std::uint32_t(string_to_ull(type_str));
+              /// Read type-field and translate into integer.
+              if (std::string type_str; std::getline(line_stream, type_str, ',')) {
+                /// Translate type into number.
+                type = string_to_ull(type_str);
+              }
+            }
+
+            /// Add counter configuration.
+            counter_definition.add(std::move(name), CounterConfig{ type.value_or(PERF_TYPE_RAW), config.value(), extended_config.value_or(0ULL) });
+          }
+
+          /// Try to translate config into metric.
+          else {
+            auto metric = std::make_unique<FormulaMetric>(std::move(name), std::move(config_or_metric_str));
+            counter_definition.add(std::move(metric));
           }
         }
-
-        /// Add counter configuration.
-        counter_definition.add(std::move(name), CounterConfig{ type, config, extended_config });
       }
     }
   }

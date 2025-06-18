@@ -35,25 +35,55 @@ TEST_CASE("adding new events and metrics", "[CounterDefinition]")
     REQUIRE(std::get<0>(definition.metric(test_metric).value()) == test_metric);
   }
 
-  SECTION("read csv")
+  SECTION("read csv counter-only")
   {
-    const auto uops_issued_counter = std::string{ "UOPS_ISSUED.CORE_STALL_CYCLES" };
-    const auto mem_load_counter = std::string{ "mem-load-lat-3" };
+    const auto event0 = std::string{ "EVENT.TEST0" };
+    const auto event1 = std::string{ "event-test-1" };
 
-    REQUIRE(definition.counter(uops_issued_counter).empty());
-    REQUIRE(definition.counter(mem_load_counter).empty());
+    REQUIRE(definition.counter(event0).empty());
+    REQUIRE(definition.counter(event1).empty());
 
-    const auto definition_with_file = perf::CounterDefinition{ "test/counter.csv" };
+    const auto definition_with_file = perf::CounterDefinition{ "test/events.csv" };
 
-    REQUIRE_FALSE(definition_with_file.counter(uops_issued_counter).empty());
-    REQUIRE_FALSE(definition_with_file.counter(mem_load_counter).empty());
+    REQUIRE_FALSE(definition_with_file.counter(event0).empty());
+    REQUIRE_FALSE(definition_with_file.counter(event1).empty());
 
-    REQUIRE(std::get<2>(definition_with_file.counter(uops_issued_counter).front()).event_id() == 0x1f3010e);
-    REQUIRE(std::get<2>(definition_with_file.counter(uops_issued_counter).front()).event_id_extension()[0U] == 0U);
-    REQUIRE(std::get<2>(definition_with_file.counter(uops_issued_counter).front()).event_id_extension()[1U] == 0U);
+    REQUIRE(std::get<2>(definition_with_file.counter(event0).front()).event_id() == 0x1f3010e);
+    REQUIRE(std::get<2>(definition_with_file.counter(event0).front()).event_id_extension()[0U] == 0U);
+    REQUIRE(std::get<2>(definition_with_file.counter(event0).front()).event_id_extension()[1U] == 0U);
 
-    REQUIRE(std::get<2>(definition_with_file.counter(mem_load_counter).front()).event_id() == 0x1CD);
-    REQUIRE(std::get<2>(definition_with_file.counter(mem_load_counter).front()).event_id_extension()[0U] == 3U);
-    REQUIRE(std::get<2>(definition_with_file.counter(mem_load_counter).front()).event_id_extension()[1U] == 0U);
+    REQUIRE(std::get<2>(definition_with_file.counter(event1).front()).event_id() == 0x1CD);
+    REQUIRE(std::get<2>(definition_with_file.counter(event1).front()).event_id_extension()[0U] == 3U);
+    REQUIRE(std::get<2>(definition_with_file.counter(event1).front()).event_id_extension()[1U] == 0U);
+  }
+
+  SECTION("read csv with metric")
+  {
+    const auto event0 = std::string{ "EVENT.TEST0" };
+    const auto event1 = std::string{ "event-test-1" };
+    const auto test_metric = std::string{ "test-metric" };
+
+    REQUIRE(definition.counter(event0).empty());
+    REQUIRE(definition.counter(event1).empty());
+    REQUIRE(definition.counter(test_metric).empty());
+
+    REQUIRE_FALSE(definition.is_metric(test_metric));
+
+    const auto definition_with_file = perf::CounterDefinition{ "test/events-and-metrics.csv" };
+
+    REQUIRE_FALSE(definition_with_file.counter(event0).empty());
+    REQUIRE_FALSE(definition_with_file.counter(event1).empty());
+    REQUIRE(definition.counter(test_metric).empty());
+
+    REQUIRE(definition_with_file.is_metric(test_metric));
+
+    auto metric = definition_with_file.metric(test_metric);
+    REQUIRE(metric.has_value());
+
+    auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
+      std::make_pair("EVENT.TEST0", 100U), std::make_pair("event-test-1", 500U) } };
+    const auto metric_result = metric->second.calculate(counter_result);
+    REQUIRE(metric_result.has_value());
+    REQUIRE(metric_result.value() == 1500U);
   }
 }
