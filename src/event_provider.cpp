@@ -484,7 +484,7 @@ perf::CsvFileEventProvider::add_events(perf::CounterDefinition& counter_definiti
           }
 
           /// Try to translate config into metric.
-          else {
+          else if (!config_or_metric_str.empty()) {
             auto metric = std::make_unique<FormulaMetric>(std::move(name), std::move(config_or_metric_str));
             counter_definition.add(std::move(metric));
           }
