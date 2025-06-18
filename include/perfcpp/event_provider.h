@@ -127,7 +127,14 @@ public:
   [[nodiscard]] static std::optional<std::uint64_t> parse_integer(const std::string& value);
 
 private:
-  static void add_events(CounterDefinition& counter_definition, std::string&& pmu_name, std::string&& path);
+  /**
+   * Reads all events provided by the PMU at the provided path and adds them to the provided counter definition.
+   *
+   * @param counter_definition Counter definition to add events to.
+   * @param pmu_name Name of the PMU.
+   * @param path Path in the filesystem, containing event, type, and format files.
+   */
+  static void add_events(CounterDefinition& counter_definition, const std::string& pmu_name, const std::string& path);
 };
 
 /**

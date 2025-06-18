@@ -120,40 +120,31 @@ perf::MetricEventProvider::add_events(perf::CounterDefinition& counter_definitio
 void
 perf::SystemSpecificEventProvider::add_events(perf::CounterDefinition& counter_definition)
 {
-  /// Read events from the "CPU" PMU, if available. This will also include Intel PEBS events.
-  if (std::filesystem::exists("/sys/bus/event_source/devices/cpu/")) {
-    SystemSpecificEventProvider::add_events(counter_definition, "cpu", "/sys/bus/event_source/devices/cpu/");
-  }
+  const auto events = std::vector<std::pair<std::string, std::string>>{
+    { "/sys/bus/event_source/devices/cpu/", "cpu" },                /// CPU PMU
+    { "/sys/bus/event_source/devices/cpu_core/", "cpu" },           /// CPU PMU on heterogeneous Intel architectures
+    { "/sys/bus/event_source/devices/cpu_atom/", "cpu-atom" },      /// Atom PMU on heterogeneous Intel architectures
+    { "/sys/bus/event_source/devices/cstate_core/", "cstate-core" }, /// CState Core PMU on Intel architectures
+    { "/sys/bus/event_source/devices/cstate_pkg/", "cstate-pkg" },   /// CState Pkg PMU on Intel architectures
+    { "/sys/bus/event_source/devices/amd_iommu_0/", "amd-iommu-0" }, /// IO MMU on AMD architectures
+    { "/sys/bus/event_source/devices/power/", "power" }              /// Power PMU
+  };
 
-  /// Read events from the "CPU-Core" PMU, if available – but declare as "CPU" PMU (this makes things more simple as
-  /// "CPU" PMU is available on most CPUs). This will also include Intel PEBS events.
-  if (std::filesystem::exists("/sys/bus/event_source/devices/cpu_core/")) {
-    SystemSpecificEventProvider::add_events(counter_definition, "cpu", "/sys/bus/event_source/devices/cpu_core/");
-  }
-
-  /// Read events from the "CPU-Atom" PMU, if available. This will also include Intel PEBS events.
-  if (std::filesystem::exists("/sys/bus/event_source/devices/cpu_atom/")) {
-    SystemSpecificEventProvider::add_events(counter_definition, "cpu-atom", "/sys/bus/event_source/devices/cpu_atom/");
-  }
-
-  /// Read events from the AMD "IO MMU" PMU, if available.
-  if (std::filesystem::exists("/sys/bus/event_source/devices/amd_iommu_0/")) {
-    SystemSpecificEventProvider::add_events(counter_definition, "amd-iommu-0", "/sys/bus/event_source/devices/amd_iommu_0/");
-  }
-
-  /// Read events from the power PMU, if available.
-  if (std::filesystem::exists("/sys/bus/event_source/devices/power/")) {
-    SystemSpecificEventProvider::add_events(counter_definition, "power", "/sys/bus/event_source/devices/power/");
+  /// Add the events by reading from the filesystem as specified above.
+  for (const auto& [path, pmu_name] : events) {
+    if (std::filesystem::exists(path)) {
+      SystemSpecificEventProvider::add_events(counter_definition, pmu_name, path);
+    }
   }
 }
 
 void
 perf::SystemSpecificEventProvider::add_events(perf::CounterDefinition& counter_definition,
-                                              std::string&& pmu_name,
-                                              std::string&& path)
+                                              const std::string& pmu_name,
+                                              const std::string& path)
 {
   /// Parse the type for the PMU.
-  if (auto type = SystemSpecificEventProvider::parse_event_file_descriptor_type(path + "type"); type.has_value()) {
+  if (const auto type = SystemSpecificEventProvider::parse_event_file_descriptor_type(path + "type"); type.has_value()) {
     /// Iterate over all files in the descriptor path.
     for (const auto& file_entry : std::filesystem::directory_iterator(path + "events")) {
 
@@ -201,7 +192,8 @@ perf::SystemSpecificEventProvider::parse_event_file_descriptor_config(const std:
       return std::nullopt;
     }
 
-    /// Store all entries (A,B) from parsing the line in the format "A=B[,C=D]*", with entries being "event", "umask", or "ldlat".
+    /// Store all entries (A,B) from parsing the line in the format "A=B[,C=D]*", with entries being "event", "umask",
+    /// or "ldlat".
     auto entries = std::unordered_map<std::string, std::uint64_t>{};
 
     auto token_stream = std::stringstream{ line };
@@ -468,14 +460,15 @@ perf::CsvFileEventProvider::add_events(perf::CounterDefinition& counter_definiti
       /// Read name.
       if (std::getline(line_stream, name, ','); !name.empty()) {
 
-        auto extended_config = std::optional<std::uint64_t>{std::nullopt};
-        auto type = std::optional<std::uint32_t>{std::nullopt};
+        auto extended_config = std::optional<std::uint64_t>{ std::nullopt };
+        auto type = std::optional<std::uint32_t>{ std::nullopt };
 
         /// Read config-field and translate into integer.
         if (std::string config_or_metric_str; std::getline(line_stream, config_or_metric_str, ',')) {
 
           /// Try to translate config into number.
-          if (const auto config = SystemSpecificEventProvider::parse_integer(config_or_metric_str); config.has_value()) {
+          if (const auto config = SystemSpecificEventProvider::parse_integer(config_or_metric_str);
+              config.has_value()) {
             /// Read extended config-field and translate into integer.
             if (std::string extended_config_str; std::getline(line_stream, extended_config_str, ',')) {
               /// Translate extended config into number.
@@ -489,7 +482,9 @@ perf::CsvFileEventProvider::add_events(perf::CounterDefinition& counter_definiti
             }
 
             /// Add counter configuration.
-            counter_definition.add(std::move(name), CounterConfig{ type.value_or(PERF_TYPE_RAW), config.value(), extended_config.value_or(0ULL) });
+            counter_definition.add(
+              std::move(name),
+              CounterConfig{ type.value_or(PERF_TYPE_RAW), config.value(), extended_config.value_or(0ULL) });
           }
 
           /// Try to translate config into metric.
