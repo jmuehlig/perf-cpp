@@ -121,9 +121,9 @@ void
 perf::SystemSpecificEventProvider::add_events(perf::CounterDefinition& counter_definition)
 {
   const auto events = std::vector<std::pair<std::string, std::string>>{
-    { "/sys/bus/event_source/devices/cpu/", "cpu" },                /// CPU PMU
-    { "/sys/bus/event_source/devices/cpu_core/", "cpu" },           /// CPU PMU on heterogeneous Intel architectures
-    { "/sys/bus/event_source/devices/cpu_atom/", "cpu-atom" },      /// Atom PMU on heterogeneous Intel architectures
+    { "/sys/bus/event_source/devices/cpu/", "cpu" },                 /// CPU PMU
+    { "/sys/bus/event_source/devices/cpu_core/", "cpu" },            /// CPU PMU on heterogeneous Intel architectures
+    { "/sys/bus/event_source/devices/cpu_atom/", "cpu-atom" },       /// Atom PMU on heterogeneous Intel architectures
     { "/sys/bus/event_source/devices/cstate_core/", "cstate-core" }, /// CState Core PMU on Intel architectures
     { "/sys/bus/event_source/devices/cstate_pkg/", "cstate-pkg" },   /// CState Pkg PMU on Intel architectures
     { "/sys/bus/event_source/devices/amd_iommu_0/", "amd-iommu-0" }, /// IO MMU on AMD architectures
@@ -144,7 +144,8 @@ perf::SystemSpecificEventProvider::add_events(perf::CounterDefinition& counter_d
                                               const std::string& path)
 {
   /// Parse the type for the PMU.
-  if (const auto type = SystemSpecificEventProvider::parse_event_file_descriptor_type(path + "type"); type.has_value()) {
+  if (const auto type = SystemSpecificEventProvider::parse_event_file_descriptor_type(path + "type");
+      type.has_value()) {
     /// Iterate over all files in the descriptor path.
     for (const auto& file_entry : std::filesystem::directory_iterator(path + "events")) {
 
