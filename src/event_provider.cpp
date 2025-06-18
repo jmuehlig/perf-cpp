@@ -136,6 +136,11 @@ perf::SystemSpecificEventProvider::add_events(perf::CounterDefinition& counter_d
     SystemSpecificEventProvider::add_events(counter_definition, "cpu-atom", "/sys/bus/event_source/devices/cpu_atom/");
   }
 
+  /// Read events from the AMD "IO MMU" PMU, if available.
+  if (std::filesystem::exists("/sys/bus/event_source/devices/amd_iommu_0/")) {
+    SystemSpecificEventProvider::add_events(counter_definition, "amd-iommu-0", "/sys/bus/event_source/devices/amd_iommu_0/");
+  }
+
   /// Read events from the power PMU, if available.
   if (std::filesystem::exists("/sys/bus/event_source/devices/power/")) {
     SystemSpecificEventProvider::add_events(counter_definition, "power", "/sys/bus/event_source/devices/power/");
@@ -230,22 +235,27 @@ perf::SystemSpecificEventProvider::parse_event_file_descriptor_config(const std:
     }
 
     /// Combine event and umask to a single event id.
-    if (auto event = entries.find("event"); event != entries.end()) {
+    if (const auto event = entries.find("event"); event != entries.end()) {
 
       /// Fetch event value.
       auto event_value = event->second;
 
       /// Apply umask, if available.
-      if (auto umask = entries.find("umask"); umask != entries.end()) {
+      if (const auto umask = entries.find("umask"); umask != entries.end()) {
         event_value = (umask->second << 8) | event_value;
       }
 
       /// Add load latency, if found (only available for mem-load on Intel PEBS).
-      if (auto load_latency = entries.find("ldlat"); load_latency != entries.end()) {
+      if (const auto load_latency = entries.find("ldlat"); load_latency != entries.end()) {
         return std::make_pair(event_value, load_latency->second);
       }
 
       return std::make_pair(event_value, std::nullopt);
+    }
+
+    /// Some AMD IO MMU events are configured via csource instead.
+    if (const auto csource = entries.find("csource"); csource != entries.end()) {
+      return std::make_pair(csource->second, std::nullopt);
     }
   }
 
