@@ -173,7 +173,8 @@ class PMUEventConverter:
 
         # Write CSV file if we have events
         if events:
-            self._write_csv_file(events, arch_name, microarch_dir.name)
+            events.sort(key=lambda r: r[0], reverse=False)
+            self._write_csv_file(events, arch_name, self._convert_micro_architecture_name(microarch_dir.name))
 
     def _extract_events_from_file(self, json_file: Path) -> List[Tuple[str, str, Optional[str]]]:
         """Extract event data from a single JSON file."""
@@ -252,7 +253,7 @@ class PMUEventConverter:
     def _convert_map_file(self, arch_name):
         map_file_source_path = self.json_dir / arch_name / "mapfile.csv"
         if map_file_source_path.is_file():
-            map_file_target_path = self.csv_dir / arch_name / "cpu-to-micro-architecture-mapping.csv"
+            map_file_target_path = self.csv_dir / arch_name / "micro-architecture-register.csv"
 
             with open(map_file_source_path, 'r', newline='') as source_map_file:
                 source_map_file_reader = csv.reader(source_map_file)
@@ -262,20 +263,47 @@ class PMUEventConverter:
                 rows = []
                 for row in source_map_file_reader:
                     pattern = row[source_indices[0]].replace('[[:xdigit:]]', '[0-9A-F]')
-                    micro_architecture = row[source_indices[1]]
+                    micro_architecture = self._convert_micro_architecture_name(row[source_indices[1]])
                     rows.append([pattern, micro_architecture])
 
                 rows.sort(key=lambda r: r[0], reverse=False)
 
                 with open(map_file_target_path, 'w', newline='') as target_map_file:
                     target_map_file_writer = csv.writer(target_map_file)
-                    target_map_file_writer.writerow(['CPU-Pattern', 'micro-architecture'])
+                    target_map_file_writer.writerow(['regex', 'micro-architecture'])
 
                     for row in rows:
                         target_map_file_writer.writerow(row)
 
                     print(f"Created Mapfile: {map_file_target_path}")
+    def _convert_micro_architecture_name(self, name):
+        if name.startswith('amdzen'):
+            name = name.replace('amdzen', 'amd-zen-')
 
+        if name.endswith('x') and (not name.endswith('ex') or 'cascade' in name or 'lake' in name or 'snow' in name):
+            name = f'{name[:-1]}-x'
+
+        if name.endswith('p') and not (name.endswith('dp') or name.endswith('sp') or name.endswith('ep')):
+            name = f'{name[:-1]}-p'
+
+        if name.endswith('ex') and not ('cascade' in name or 'lake' in name or 'snow' in name):
+            name = f'{name[:-2]}-ex'
+
+        for part in ['de', 'ep', 'ep-dp', 'ep-sp']:
+            if name.endswith(part):
+                name = f'{name[:-(len(part))]}-{part}'
+
+        for part in ['bridge', 'lake', 'landing', 'rapids', 'forest', 'plus', 'town']:
+            if part in name:
+                name = name.replace(part, f'-{part}')
+
+        if 'ridge' in name and not 'bridge' in name:
+            name = name.replace('ridge', '-ridge')
+
+        if not 'amd' in name:
+            name = f'intel-{name}'
+
+        return name
 
 def main():
     """Main function to orchestrate the download and conversion process."""

@@ -55,7 +55,7 @@ def get_architecture():
     return None
 
 def get_micro_architecture(architecture_dir):
-    map_file_path = architecture_dir / 'cpu-to-micro-architecture-mapping.csv'
+    map_file_path = architecture_dir / 'micro-architecture-register.csv'
     if not map_file_path.is_file():
         return None
 
@@ -71,7 +71,7 @@ def get_micro_architecture(architecture_dir):
         reader = csv.DictReader(f)
 
         for row in reader:
-            regex_pattern = f"^{row['CPU-Pattern']}$"
+            regex_pattern = f"^{row['regex']}$"
 
             if re.match(regex_pattern, cpu_signature, re.IGNORECASE) or re.match(regex_pattern, cpu_signature_with_stepping, re.IGNORECASE):
                 return row['micro-architecture']
