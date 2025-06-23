@@ -20,5 +20,5 @@ target_link_libraries(tests PRIVATE Catch2::Catch2WithMain perf-cpp)
 target_include_directories(tests PRIVATE Catch2::Catch2WithMain test)
 set_target_properties(tests
         PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
