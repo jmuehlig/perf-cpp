@@ -50,7 +50,10 @@ set(PERF_CPP_SRC
     src/analyzer/flame_graph_generator.cpp
 )
 
-# Add the processor specific event provider, if requested.
+#############################################################
+#   Generated source file with processor-specific           #
+#   events.                                                 #
+#############################################################
 if (GEN_PROCESSOR_EVENTS)
     set(PROCESSOR_EVENT_SRC_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/processor_specific_event_provider.cpp")
 

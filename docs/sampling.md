@@ -45,12 +45,12 @@ For information on sampling across multiple threads or cores, refer to the [para
 During sampling, the hardware captures a specified set of data fields when a configured trigger event reaches its defined threshold  
 ([see what data can be recorded](#what-can-be-recorded-and-how-to-access-the-data) and [how trigger events work](#trigger)).
 
-In the following example, a timestamp and the current instruction pointer are recorded every 4000th cycle:
+In the following example, a timestamp and the current instruction pointer are recorded every 50,000th cycle:
 ```cpp
 #include <perfcpp/sampler.h>
 
 auto sample_config = perf::SampleConfig{};
-sample_config.period(4000U);
+sample_config.period(50000U);
 
 auto sampler = perf::Sampler{ sample_config };
 sampler.trigger("cycles");
@@ -183,8 +183,8 @@ However, it will not increase precision autonomously.
 You can request a specific period **or** frequency for each trigger – basically how often the hardware should write samples –, for example,
 
 ```cpp
-/// Every 4000th cycle.
-sampler.trigger("cycles", perf::Period{4000U /* cycle */});
+/// Every 50,000th cycle.
+sampler.trigger("cycles", perf::Period{50000U /* cycle */});
 ```
 
 **or**
@@ -197,15 +197,15 @@ sampler.trigger("cycles", perf::Frequency{1000U /* Hz */});
 
 You can also combine the configurations, for example, by
 ```cpp
-/// Every 4000th cycle with zero skid.
-sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{4000U});
+/// Every 50,000th cycle with zero skid.
+sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{50000U});
 ```
 
 If you do not set any precision level through the `.trigger()` interface, you can control the *default* period of frequency through the sample config:
 
 ```cpp
 auto sample_config = perf::SampleConfig{};
-sample_config.period(4000U /* trigger event, e.g., cycle */);
+sample_config.period(50000U /* trigger event, e.g., cycle */);
 /// xor:
 sample_config.frequency(1000U /* Hz */);
 

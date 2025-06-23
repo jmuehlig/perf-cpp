@@ -30,7 +30,7 @@ Initialize a sampler for each thread to monitor specific events:
 #include <perfcpp/sampler.h>
 
 auto sample_config = perf::SampleConfig{};
-sample_config.period(4000U);
+sample_config.period(50000U);
 
 auto sampler = perf::MultiThreadSampler{  
     /* number of threads */ 4U
@@ -117,7 +117,7 @@ The `MultiCoreSampler` needs to know which CPU cores will be sampled (see `cpus_
 auto cpus_to_watch = std::vector<std::uint16_t>{0U, 1U, 2U, 3U};
 
 auto sample_config = perf::SampleConfig{};
-sample_config.period(4000U);
+sample_config.period(50000U);
 
 auto sampler = perf::MultiCoreSampler{
     std::move(cpus_to_watch) /// List of CPUs to sample

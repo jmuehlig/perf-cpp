@@ -66,8 +66,8 @@ Recording samples functions much like `perf [mem] record`: it captures execution
 /// Create the sampler
 auto sampler = perf::Sampler{};
 
-/// Specify when a sample is recorded: every 4000th cycle
-sampler.trigger("cycles", perf::Period{4000U});
+/// Specify when a sample is recorded: every 50,000th cycle
+sampler.trigger("cycles", perf::Period{50000U});
 
 /// Specify what data is included into a sample: time, CPU ID, instruction
 sampler.values()

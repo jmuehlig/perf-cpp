@@ -24,7 +24,7 @@ The `perf::SymbolResolver` allows to translate logical instruction pointers into
 #include <perfcpp/symbol_resolver.h>
 
 auto sampler = perf::Sampler{};
-sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 4000U });
+sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 50000U });
 sampler.values().instruction_pointer(true);
 
 sampler.start();
