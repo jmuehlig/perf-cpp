@@ -255,7 +255,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
             /// Add the event to the requested event set.
             /// If the request returns true, the event is indeed added and needs to be added to the group.
             const auto is_added =
-              requested_events.add(pmu_name, std::get<0>(depending_event_config.value()), std::uint8_t(group.size()));
+              requested_events.add(pmu_name, std::get<1>(depending_event_config.value()), std::uint8_t(group.size()));
             if (is_added) {
               group.add(std::get<2>(depending_event_config.value()));
             }
