@@ -10,12 +10,8 @@ main()
                "access to an in-memory array."
             << std::endl;
 
-  /// Initialize sampler.
-  auto perf_config = perf::SampleConfig{};
-  perf_config.period(1000000U); /// Record every 1,000,000th event.
-
-  auto sampler = perf::Sampler{ perf_config };
-  sampler.trigger("cycles");
+  auto sampler = perf::Sampler{};
+  sampler.trigger("cycles", perf::Period{ 100000 });
   sampler.values()
     .timestamp(true)
     .user_registers(

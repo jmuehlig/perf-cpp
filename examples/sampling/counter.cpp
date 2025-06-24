@@ -17,14 +17,10 @@ main()
   /// Add metric that calculates the L1d miss ratio.
   counter_definitions.add("L1d-misses-per-load", "'L1-dcache-load-misses'/'L1-dcache-loads'");
 
-  /// Initialize sampler.
-  auto perf_config = perf::SampleConfig{};
-  perf_config.period(32000U); /// Record every 32,000th event.
-
-  auto sampler = perf::Sampler{ counter_definitions, perf_config };
+  auto sampler = perf::Sampler{ counter_definitions };
 
   /// Setup the event that will trigger writing samples.
-  sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid);
+  sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid, perf::Period{ 50000 });
 
   /// Setup which data should be included (L1 hit and miss counter, timestamp).
   sampler.values().counter({ "L1-dcache-loads", "L1-dcache-load-misses", "L1d-misses-per-load" }).timestamp(true);

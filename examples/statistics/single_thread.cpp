@@ -56,7 +56,7 @@ main()
   event_counter.stop();
 
   /// Get the result (normalized per cache line).
-  const auto result = event_counter.result();
+  const auto result = event_counter.result(benchmark.size());
 
   /// Print the performance counters manually.
   std::cout << "\nResults:\n";

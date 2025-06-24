@@ -10,14 +10,10 @@ main()
                "access to an in-memory array."
             << std::endl;
 
-  /// Initialize sampler.
-  auto perf_config = perf::SampleConfig{};
-  perf_config.period(8000U); /// Record every 8,000th event.
-
-  auto sampler = perf::Sampler{ perf_config };
+  auto sampler = perf::Sampler{};
 
   /// Event that generates an overflow which is samples.
-  sampler.trigger("cycles", perf::Precision::RequestZeroSkid);
+  sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 50000 });
 
   /// Include Timestamp, period, instruction pointer, and CPU number into samples.
   sampler.values().timestamp(true).cpu_id(true).context_switch(true);

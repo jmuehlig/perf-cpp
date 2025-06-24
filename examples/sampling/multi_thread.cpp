@@ -14,14 +14,10 @@ main()
 
   constexpr auto count_threads = 4U;
 
-  /// Initialize sampler.
-  auto perf_config = perf::SampleConfig{};
-  perf_config.period(5000000U); /// Record every 5,000,000th event.
-
-  auto sampler = perf::MultiThreadSampler{ count_threads, perf_config };
+  auto sampler = perf::MultiThreadSampler{ count_threads };
 
   /// Setup event that triggers writing samples.
-  sampler.trigger("cycles");
+  sampler.trigger("cycles", perf::Period{ 50000 });
 
   /// Setup what data the samples should include (timestamp, instruction pointer, CPU id, thread id).
   sampler.values().timestamp(true).instruction_pointer(true).cpu_id(true).thread_id(true);

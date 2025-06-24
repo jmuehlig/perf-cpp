@@ -15,18 +15,14 @@ main()
 
   constexpr auto count_threads = 4U;
 
-  /// Initialize sampler.
-  auto perf_config = perf::SampleConfig{};
-  perf_config.period(32000); /// Record every 32,000th event.
-
   /// Create a list of cpus to sample (all available, in this example).
   auto cpus_to_watch = std::vector<std::uint16_t>(std::min(4U, std::thread::hardware_concurrency()));
   std::iota(cpus_to_watch.begin(), cpus_to_watch.end(), 0U);
 
-  auto sampler = perf::MultiCoreSampler{ std::move(cpus_to_watch), perf_config };
+  auto sampler = perf::MultiCoreSampler{ std::move(cpus_to_watch) };
 
   /// Setup event that triggers writing samples.
-  sampler.trigger("cycles");
+  sampler.trigger("cycles", perf::Period{ 50000 });
 
   /// Setup what data the samples should include (timestamp, instruction pointer, CPU id, thread id).
   sampler.values().timestamp(true).instruction_pointer(true).cpu_id(true).thread_id(true);
