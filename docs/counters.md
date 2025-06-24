@@ -92,7 +92,7 @@ Although the generic events listed above can provide a good glimpse, many proces
 The event specifications allow a good impact on different events and can also be loaded via the `perf::CounterDefinition` class:
 
 ```cpp
-const auto counter_definition = perf::CounterDefinition{"events/x86/amdzen4.csv"};
+const auto counter_definition = perf::CounterDefinition{ "events/x86/amd-zen-4.csv" };
 
 auto event_counter = perf::EventCounter{ counter_definition };
 event_counter.add("ex_ret_instr"); /// Add ex_ret_instr event which is specific to 
@@ -106,7 +106,7 @@ The list of available events registered can be printed via:
 #include <perfcpp/counter_definition.h>
 #include <iostream>
 
-const auto counter_definition = perf::CounterDefinition{"events/x86/amdzen4.csv"};
+const auto counter_definition = perf::CounterDefinition{ "events/x86/amd-zen-4.csv" };
 std::cout << counter_definition.to_string() << std::endl;
 ```
 

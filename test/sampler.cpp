@@ -25,12 +25,14 @@ private:
 
 TEST_CASE("config", "[Sampler]")
 {
+  const auto counter_definition = perf::CounterDefinition{};
+
   /// Benchmark used for all sampling tests.
   auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
 
   SECTION("empty sampler")
   {
-    auto sampler = perf::Sampler{};
+    auto sampler = perf::Sampler{ counter_definition };
     sampler.values().instruction_pointer(true);
 
     REQUIRE_THROWS(sampler.open());
@@ -39,12 +41,14 @@ TEST_CASE("config", "[Sampler]")
 
 TEST_CASE("sampling", "[Sampler]")
 {
+  auto counter_definition = perf::CounterDefinition{};
+
   /// Benchmark used for all sampling tests.
   auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
 
   SECTION("IP with cycles")
   {
-    auto sampler = perf::Sampler{};
+    auto sampler = perf::Sampler{ counter_definition };
     REQUIRE_NOTHROW(sampler.trigger("cycles"));
     sampler.values().instruction_pointer(true);
 
@@ -67,7 +71,7 @@ TEST_CASE("sampling", "[Sampler]")
 
   SECTION("re-start")
   {
-    auto sampler = perf::Sampler{};
+    auto sampler = perf::Sampler{ counter_definition };
     REQUIRE_NOTHROW(sampler.trigger("cycles"));
     sampler.values().instruction_pointer(true).timestamp(true);
 
@@ -96,7 +100,7 @@ TEST_CASE("sampling", "[Sampler]")
 
   SECTION("sample period")
   {
-    auto sampler1 = perf::Sampler{};
+    auto sampler1 = perf::Sampler{ counter_definition };
 
     REQUIRE_NOTHROW(sampler1.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 200000 }));
     sampler1.values().instruction_pointer(true).timestamp(true);
@@ -111,7 +115,7 @@ TEST_CASE("sampling", "[Sampler]")
     REQUIRE_FALSE(samples1.empty());
     REQUIRE_NOTHROW(sampler1.close());
 
-    auto sampler2 = perf::Sampler{};
+    auto sampler2 = perf::Sampler{ counter_definition };
 
     REQUIRE_NOTHROW(sampler2.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 800000 }));
     sampler2.values().instruction_pointer(true).timestamp(true);
@@ -131,7 +135,7 @@ TEST_CASE("sampling", "[Sampler]")
 
   SECTION("mem-loads")
   {
-    auto sampler = perf::Sampler{};
+    auto sampler = perf::Sampler{ counter_definition };
 
     if (perf::HardwareInfo::is_intel()) {
       REQUIRE_NOTHROW(sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid, perf::Period{ 16000 }));
@@ -214,12 +218,10 @@ TEST_CASE("sampling", "[Sampler]")
 
   SECTION("metric-l1d-per-load")
   {
-    auto counter_definitions = perf::CounterDefinition{};
-
     /// Add metric that calculates the L1d miss ratio.
-    counter_definitions.add("L1d-misses-per-load", "'L1-dcache-load-misses'/'L1-dcache-loads'");
+    counter_definition.add("L1d-misses-per-load", "'L1-dcache-load-misses'/'L1-dcache-loads'");
 
-    auto sampler = perf::Sampler{ counter_definitions };
+    auto sampler = perf::Sampler{ counter_definition };
 
     REQUIRE_NOTHROW(sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid, perf::Period{ 100000 }));
     REQUIRE_NOTHROW(sampler.values().timestamp(true).counter({ "L1d-misses-per-load" }));

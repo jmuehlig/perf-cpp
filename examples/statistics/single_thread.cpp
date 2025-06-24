@@ -11,7 +11,8 @@ main()
             << std::endl;
 
   /// Initialize performance counters.
-  auto event_counter = perf::EventCounter{};
+  const auto counter_definition = perf::CounterDefinition{};
+  auto event_counter = perf::EventCounter{ counter_definition };
 
   /// Add all the performance counters we want to record.
   try {

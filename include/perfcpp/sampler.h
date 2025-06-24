@@ -696,11 +696,6 @@ public:
     std::optional<PeriodOrFrequency> _period_or_frequency{ std::nullopt };
   };
 
-  explicit Sampler(SampleConfig config = {})
-    : Sampler(CounterDefinition::DEFAULT, config)
-  {
-  }
-
   explicit Sampler(const CounterDefinition& counter_list, SampleConfig config = {})
     : _counter_definitions(counter_list)
     , _config(config)
@@ -1112,11 +1107,6 @@ protected:
 class MultiThreadSampler final : public MultiSamplerBase
 {
 public:
-  explicit MultiThreadSampler(std::uint16_t num_threads, SampleConfig config = {})
-    : MultiThreadSampler(CounterDefinition::DEFAULT, num_threads, config)
-  {
-  }
-
   MultiThreadSampler(const CounterDefinition& counter_definition, std::uint16_t num_threads, SampleConfig config = {});
 
   MultiThreadSampler(MultiThreadSampler&&) noexcept = default;
@@ -1291,11 +1281,6 @@ private:
 class MultiCoreSampler final : public MultiSamplerBase
 {
 public:
-  explicit MultiCoreSampler(std::vector<std::uint16_t>&& core_ids, SampleConfig config = {})
-    : MultiCoreSampler(CounterDefinition::DEFAULT, std::move(core_ids), config)
-  {
-  }
-
   MultiCoreSampler(const CounterDefinition& counter_definition,
                    std::vector<std::uint16_t>&& core_ids,
                    SampleConfig config = {});

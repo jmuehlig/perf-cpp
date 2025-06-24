@@ -21,8 +21,6 @@ namespace perf {
 class CounterDefinition
 {
 public:
-  static CounterDefinition DEFAULT;
-
   explicit CounterDefinition(std::unique_ptr<EventProvider>&& event_provider = nullptr);
   explicit CounterDefinition(const std::string& config_file);
   explicit CounterDefinition(std::string&& config_file)

@@ -25,8 +25,8 @@ main()
   std::cout << std::endl;
 
   /// Initialize performance counters.
-  const auto counter_definitions = perf::CounterDefinition{};
-  auto multi_cpu_event_counter = perf::MultiCoreEventCounter{ std::move(cpus_to_watch) };
+  const auto counter_definition = perf::CounterDefinition{};
+  auto multi_cpu_event_counter = perf::MultiCoreEventCounter{ counter_definition, std::move(cpus_to_watch) };
 
   /// Add all the performance counters we want to record.
   try {

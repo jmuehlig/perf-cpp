@@ -20,12 +20,13 @@ The library also supports [multi-threading and multi-CPU counting](recording-par
 ---
 
 ## Setting Up Event Counters
-Define the specific events you wish to record using the `perf::EventCounter` class:
+Define the specific events you wish to record using the `perf::EventCounter` class.
+The `perf::EventCounter` instances requires a `perf::CounterDefinition` as a reference, containing all events, their configurations, and names.
 
 ```cpp
 #include <perfcpp/event_counter.h>
-
-auto event_counter = perf::EventCounter{counters};
+const auto counter_definition = perf::CounterDefinition{};
+auto event_counter = perf::EventCounter{ counter_definition };
 
 try {
     event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
@@ -36,7 +37,7 @@ try {
 
 > [!IMPORTANT] 
 > The `perf::CounterDefinition` instance is used to store event configurations (e.g., names) and passed as a reference.
-Consequently, the instance needs to be alive while using the `EventCounter` ([as described here](counters.md)).
+> Consequently, the instance needs to be alive while using the `EventCounter`.
 
 ## Initializing the Hardware Counters *(optional)*
 Optionally, preparing the hardware counters ahead of time to exclude configuration time from your measurements, though this is also handled automatically at the start if skipped:
@@ -198,7 +199,8 @@ struct alignas(64U) cache_line { std::int64_t value; };
 int main()
 {
     /// Initialize performance counters.
-    auto event_counter = perf::EventCounter{};
+    const auto counter_definition = perf::CounterDefinition{};
+    auto event_counter = perf::EventCounter{ counter_definition };
     try {
         event_counter.add({"instructions", "cycles", "branches", "cache-misses", "cycles-per-instruction"});
     } catch (std::runtime_error& e) {

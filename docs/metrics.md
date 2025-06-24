@@ -37,7 +37,9 @@ Metrics function similarly to hardware events in the  `perf::EventCounter`:
 
 ```cpp
 #include <perfcpp/event_counter.h>
-auto event_counter = perf::EventCounter{};
+
+const auto counter_definition = perf::CounterDefinition{};
+auto event_counter = perf::EventCounter{ counter_definition };
 
 /// Add the metric like a "normal" hardware event.
 event_counter.add("cycles-per-instruction");

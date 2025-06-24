@@ -41,11 +41,6 @@ public:
    */
   [[nodiscard]] static EventCounter copy_from_template(const EventCounter& other);
 
-  explicit EventCounter(Config config = {})
-    : EventCounter(CounterDefinition::DEFAULT, config)
-  {
-  }
-
   explicit EventCounter(const CounterDefinition& counter_definition, Config config = {})
     : _counter_definitions(counter_definition)
     , _config(config)
@@ -477,11 +472,6 @@ public:
 class MultiThreadEventCounter final : public MultiEventCounterBase
 {
 public:
-  explicit MultiThreadEventCounter(std::uint16_t num_threads, Config config = {})
-    : MultiThreadEventCounter(CounterDefinition::DEFAULT, num_threads, config)
-  {
-  }
-
   MultiThreadEventCounter(const CounterDefinition& counter_definition, std::uint16_t num_threads, Config config = {});
 
   MultiThreadEventCounter(EventCounter&& event_counter, std::uint16_t num_threads);
@@ -538,11 +528,6 @@ private:
 class MultiProcessEventCounter final : public StartableMultiEventCounterBase
 {
 public:
-  explicit MultiProcessEventCounter(std::vector<pid_t>&& process_ids, Config config = {})
-    : MultiProcessEventCounter(CounterDefinition::DEFAULT, std::move(process_ids), config)
-  {
-  }
-
   MultiProcessEventCounter(const CounterDefinition& counter_list, std::vector<pid_t>&& process_ids, Config config = {});
 
   MultiProcessEventCounter(EventCounter&& event_counter, std::vector<pid_t>&& process_ids);
@@ -572,11 +557,6 @@ private:
 class MultiCoreEventCounter final : public StartableMultiEventCounterBase
 {
 public:
-  explicit MultiCoreEventCounter(std::vector<std::uint16_t>&& cpu_ids, Config config = {})
-    : MultiCoreEventCounter(CounterDefinition::DEFAULT, std::move(cpu_ids), config)
-  {
-  }
-
   MultiCoreEventCounter(const CounterDefinition& counter_definition,
                         std::vector<std::uint16_t>&& cpu_ids,
                         Config config = {});

@@ -4,11 +4,13 @@
 
 TEST_CASE("configuration", "[EventCounter]")
 {
+  auto counter_definition = perf::CounterDefinition{};
+
   auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
 
   SECTION("non-existing counter")
   {
-    auto event_counter = perf::EventCounter{};
+    auto event_counter = perf::EventCounter{ counter_definition };
 
     REQUIRE_THROWS(event_counter.add("non-existing"));
   }
@@ -18,7 +20,7 @@ TEST_CASE("configuration", "[EventCounter]")
     auto config = perf::Config{};
     config.max_counters_per_group(1U);
     config.max_groups(2U);
-    auto event_counter = perf::EventCounter{ config };
+    auto event_counter = perf::EventCounter{ counter_definition, config };
 
     event_counter.add(std::vector<std::string>{ "instructions", "cycles" });
 
@@ -35,14 +37,14 @@ TEST_CASE("configuration", "[EventCounter]")
     auto config = perf::Config{};
     config.max_counters_per_group(1U);
     config.max_groups(2U);
-    auto event_counter = perf::EventCounter{ config };
+    auto event_counter = perf::EventCounter{ counter_definition, config };
 
     REQUIRE_THROWS(event_counter.add({ "instructions", "cycles", "branches" }));
   }
 
   SECTION("empty counter")
   {
-    auto event_counter = perf::EventCounter{};
+    auto event_counter = perf::EventCounter{ counter_definition };
     event_counter.start();
     readonly_benchmark.run();
     event_counter.stop();
@@ -58,7 +60,7 @@ TEST_CASE("counter scheduling", "[EventCounter]")
 
   SECTION("same hardware counter")
   {
-    auto event_counter = perf::EventCounter{};
+    auto event_counter = perf::EventCounter{ counter_definition };
 
     event_counter.add(std::vector<std::string>{ "instructions", "cycles" }, perf::EventCounter::Schedule::Group);
 
@@ -74,7 +76,7 @@ TEST_CASE("counter scheduling", "[EventCounter]")
 
   SECTION("separate hardware counter")
   {
-    auto event_counter = perf::EventCounter{};
+    auto event_counter = perf::EventCounter{ counter_definition };
 
     event_counter.add(std::vector<std::string>{ "instructions", "cycles" }, perf::EventCounter::Schedule::Separate);
 
@@ -96,7 +98,7 @@ TEST_CASE("counting", "[EventCounter]")
 
   SECTION("instructions only")
   {
-    auto event_counter = perf::EventCounter{};
+    auto event_counter = perf::EventCounter{ counter_definition };
     event_counter.add("instructions");
 
     event_counter.start();
@@ -111,7 +113,7 @@ TEST_CASE("counting", "[EventCounter]")
 
   SECTION("re-open")
   {
-    auto event_counter = perf::EventCounter{};
+    auto event_counter = perf::EventCounter{ counter_definition };
     event_counter.add("instructions");
 
     event_counter.start();
@@ -139,7 +141,7 @@ TEST_CASE("counting", "[EventCounter]")
 
   SECTION("instructions only")
   {
-    auto event_counter = perf::EventCounter{};
+    auto event_counter = perf::EventCounter{ counter_definition };
     event_counter.add("instructions");
 
     event_counter.start();
@@ -154,7 +156,7 @@ TEST_CASE("counting", "[EventCounter]")
 
   SECTION("cache pattern increasing workload")
   {
-    auto event_counter = perf::EventCounter{};
+    auto event_counter = perf::EventCounter{ counter_definition };
     event_counter.add({ "seconds", "instructions", "cycles", "cache-misses" });
 
     event_counter.start();
@@ -185,7 +187,7 @@ TEST_CASE("counting", "[EventCounter]")
 
   SECTION("random access per cache line")
   {
-    auto event_counter = perf::EventCounter{};
+    auto event_counter = perf::EventCounter{ counter_definition };
     event_counter.add({ "instructions", "cycles", "cache-misses", "branches", "dTLB-miss-ratio" });
 
     event_counter.start();
@@ -216,7 +218,7 @@ TEST_CASE("counting", "[EventCounter]")
 
   SECTION("time")
   {
-    auto event_counter = perf::EventCounter{};
+    auto event_counter = perf::EventCounter{ counter_definition };
     event_counter.add(std::vector<std::string>{ "seconds", "milliseconds" });
 
     event_counter.start();

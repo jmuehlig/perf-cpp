@@ -21,10 +21,11 @@ main()
             << std::endl;
 
   /// Initialize sampler.
+  const auto counter_definition = perf::CounterDefinition{};
   auto perf_config = perf::SampleConfig{};
   perf_config.period(1000000U); /// Record every 1,000,000th event.
 
-  auto sampler = perf::Sampler{ perf_config };
+  auto sampler = perf::Sampler{ counter_definition, perf_config };
 
   /// Setup which counters trigger the writing of samples.
   sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid);

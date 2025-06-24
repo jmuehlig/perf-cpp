@@ -12,12 +12,12 @@ main()
   /// Initialize counter definitions.
   /// Note that the perf::CounterDefinition holds all counter names and must be
   /// alive until the benchmark finishes.
-  auto counter_definitions = perf::CounterDefinition{};
+  auto counter_definition = perf::CounterDefinition{};
 
   /// Add metric that calculates the L1d miss ratio.
-  counter_definitions.add("L1d-misses-per-load", "'L1-dcache-load-misses'/'L1-dcache-loads'");
+  counter_definition.add("L1d-misses-per-load", "'L1-dcache-load-misses'/'L1-dcache-loads'");
 
-  auto sampler = perf::Sampler{ counter_definitions };
+  auto sampler = perf::Sampler{ counter_definition };
 
   /// Setup the event that will trigger writing samples.
   sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid, perf::Period{ 50000 });

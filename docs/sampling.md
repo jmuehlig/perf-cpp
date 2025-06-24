@@ -52,10 +52,15 @@ In the following example, a timestamp and the current instruction pointer are re
 auto sample_config = perf::SampleConfig{};
 sample_config.period(50000U);
 
-auto sampler = perf::Sampler{ sample_config };
+const auto counter_definition = perf::CounterDefinition{};
+auto sampler = perf::Sampler{ counter_definition, sample_config };
 sampler.trigger("cycles");
 sampler.values().timestamp(true).instruction_pointer(true);
 ```
+
+> [!IMPORTANT]
+> The `perf::CounterDefinition` instance is used to store event configurations (e.g., names) and passed as a reference.
+> Consequently, the instance needs to be alive while using the `Sampler`.
 
 ## Initializing the Sampler *(optional)*
 The sampler is initialized using `sampler.start()`, if it is not already done.
@@ -171,13 +176,14 @@ If you do not set any precision level through the `.trigger()` interface, you ca
 auto sample_config = perf::SampleConfig{};
 sample_config.precision(perf::Precision::RequestZeroSkid);
 
-auto sampler = perf::Sampler{ sample_config };
+const auto counter_definition = perf::CounterDefinition{};
+auto sampler = perf::Sampler{ counter_definition, sample_config };
 sampler.trigger("cycles");
 ```
 
 > [!NOTE]
 > If the precision setting is too high and the perf subsystem fails to activate the trigger, *perf-cpp* will automatically reduce the precision. 
-However, it will not increase precision autonomously.
+> However, it will not increase precision autonomously.
 
 ## Period / Frequency
 You can request a specific period **or** frequency for each trigger – basically how often the hardware should write samples –, for example,
@@ -680,7 +686,8 @@ You can configure the size of this buffer using the `SampleConfig` class as demo
 auto sample_config = perf::SampleConfig{};
 sample_config.buffer_pages(4096U); // This sets the buffer to 16MB (4096 pages x 4kB per page).
 
-auto sampler = perf::Sampler{ sample_config };
+const auto counter_definition = perf::CounterDefinition{};
+auto sampler = perf::Sampler{ counter_definition, sample_config };
 ```
 
 Because the ring buffer has a finite size, it needs to be drained before it becomes full.
@@ -691,7 +698,6 @@ By default, the buffer is set to `16`MB.
 > [!NOTE]
 > The number of buffer pages must be a power of two; any non-power-of-two value will be rounded up accordingly.
 
-
 ## Troubleshooting Counter Configurations
 Debugging and configuring hardware counters can sometimes be complex, as settings (e.g., the precision – `precise_ip`) may need to be adjusted for different machines.
 Utilize *perf-cpp*'s debugging features to gain insights into the internal workings of performance counters and troubleshoot any configuration issues:
@@ -700,7 +706,8 @@ Utilize *perf-cpp*'s debugging features to gain insights into the internal worki
 auto config = perf::SampleConfig{};
 config.is_debug(true);
 
-auto sampler = perf::Sampler{ config };
+const auto counter_definition = perf::CounterDefinition{};
+auto sampler = perf::Sampler{ counter_definition, config };
 ```
 
 The idea is borrowed from *Linux Perf*, which can be asked to print counter configurations as follows:

@@ -36,7 +36,7 @@ cmake . -B build
 cmake --build build
 ```
 
-### Install the Library 
+### Install the Library
 To install the library, specify the `CMAKE_INSTALL_PREFIX`:
 ```bash
 # Generate Makefile
@@ -52,7 +52,8 @@ cmake --install build
 The library will then be available for discovery via CMake and `find_package` (see [below](#via-find_package)).
 
 ### Generate Processor-specific Events
-With `-DGEN_PROCESSOR_EVENTS=1`, *perf-cpp*  will read the processor-specific events from the event library ([events/](../events)) and generate a source file (`src/processor_specific_event_provider.cpp`) that adds these events to the default `perf::CounterDefinition` (see also the documentation on [hardware events](counters.md)).
+With `-DGEN_PROCESSOR_EVENTS=1`, the build process will try to read the processor-specific events from the event library ([events/](../events)) and generate a source file (`src/processor_specific_event_provider.cpp`) that adds these events to every (the default and *manually* instantiated) `perf::CounterDefinition` (see also the documentation on [hardware events](counters.md)).
+
 With this option, processor-specific events can be used like *built-in* ones.
 
 ```bash
@@ -63,7 +64,7 @@ cmake . -B build -DGEN_PROCESSOR_EVENTS=1
 cmake --build build
 ```
 
-> [!NOTE]
+> [!IMPORTANT]
 > Depending on the underlying processor, the source file can grow very large and increase compilation time significantly.
 
 

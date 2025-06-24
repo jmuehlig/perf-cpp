@@ -5,7 +5,7 @@ This guide will cover how to set up and utilize these sampling capabilities effe
 
 ---
 ## Table of Contents
-- [Sample Separate Threads](#sample-individual-threads)
+- [Sample Separate Threads](#sample-separate-threads)
   - [Setting Up Multi-threaded Sampler](#setting-up-multi-threaded-sampler)
   - [Starting and Stopping Sampler in Threads](#starting-and-stopping-sampler-in-threads)
   - [Retrieving and Analyzing Samples](#retrieving-and-analyzing-samples)
@@ -32,8 +32,10 @@ Initialize a sampler for each thread to monitor specific events:
 auto sample_config = perf::SampleConfig{};
 sample_config.period(50000U);
 
-auto sampler = perf::MultiThreadSampler{  
-    /* number of threads */ 4U
+const auto counter_definition = perf::CounterDefinition{};
+auto sampler = perf::MultiThreadSampler{ 
+    counter_definition,
+    /* number of threads */ 4U,
     sample_config
 };
 
@@ -119,8 +121,10 @@ auto cpus_to_watch = std::vector<std::uint16_t>{0U, 1U, 2U, 3U};
 auto sample_config = perf::SampleConfig{};
 sample_config.period(50000U);
 
+const auto counter_definition = perf::CounterDefinition{};
 auto sampler = perf::MultiCoreSampler{
-    std::move(cpus_to_watch) /// List of CPUs to sample
+    counter_definitio,
+    std::move(cpus_to_watch), /// List of CPUs to sample
     sample_config
 };
 

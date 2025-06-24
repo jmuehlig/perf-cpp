@@ -14,7 +14,8 @@ main()
 
   constexpr auto count_threads = 4U;
 
-  auto sampler = perf::MultiThreadSampler{ count_threads };
+  const auto counter_definition = perf::CounterDefinition{};
+  auto sampler = perf::MultiThreadSampler{ counter_definition, count_threads };
 
   /// Setup event that triggers writing samples.
   sampler.trigger("cycles", perf::Period{ 50000 });

@@ -78,7 +78,8 @@ main()
   std::cout << std::endl;
 
   /// Initialize performance counters.
-  auto multi_cpu_event_counter = perf::MultiProcessEventCounter{ std::move(process_ids) };
+  const auto counter_definition = perf::CounterDefinition{};
+  auto multi_cpu_event_counter = perf::MultiProcessEventCounter{ counter_definition, std::move(process_ids) };
 
   /// Add all the performance counters we want to record.
   try {

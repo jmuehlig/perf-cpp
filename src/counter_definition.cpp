@@ -4,8 +4,6 @@
 #include <perfcpp/table.h>
 #include <sstream>
 
-perf::CounterDefinition perf::CounterDefinition::DEFAULT = perf::CounterDefinition{};
-
 perf::CounterDefinition::CounterDefinition(std::unique_ptr<EventProvider>&& event_provider)
 {
   /// Reserve space for events.
