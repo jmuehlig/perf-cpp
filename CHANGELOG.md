@@ -1,12 +1,13 @@
 # *perf-cpp*: Changelog
 
-## v0.12 (in progress)
-This release introduces symbolic analysis and visualization support for sampled data, along with a built-in library of processor-specific performance events.
+## v0.12
+This release expands symbolic analysis capabilities, introduces FlameGraph generation, and improves hardware event management through both runtime and compile-time support.
 
-- **Symbol Resolution**: Instruction pointers in sampled data can now be translated into human-readable symbols (e.g., function names) using `perf::SymbolResolver` (see the [documentation](docs/sampling-symbols-and-flamegraphs.md#translating-instruction-pointers-into-symbols)).
-- **FlameGraph Support**: Sampling data can be exported in formats compatible with tools like [Brendan Gregg's FlameGraph](https://github.com/brendangregg/FlameGraph), [Speedscope](https://www.speedscope.app/), or [flamegraph.com](https://flamegraph.com/) , using `perf::analyzer::FlameGraphGenerator` (see the [documentation](docs/sampling-symbols-and-flamegraphs.md#translating-sampler-results-into-flame-graphs)).
-- **Built-in Event Definitions**: A curated collection of `x86`-specific hardware event definitions is now included in the library under [events/x86](events/x86). These can be loaded at runtime via `perf::CounterDefinition` and serve as a replacement for the `make perf-list` tool.
-- **Energy-related Counter** are now discovered automatically.
+- **Symbol Resolution**: Instruction pointers captured during sampling can now be resolved to function names using `perf::SymbolResolver` (see the [documentation](docs/sampling-symbols-and-flamegraphs.md#translating-instruction-pointers-into-symbols)).
+- **FlameGraph Export**: Sampling data can be converted into formats compatible with visualization tools such as [Brendan Gregg's FlameGraph](https://github.com/brendangregg/FlameGraph), [Speedscope](https://www.speedscope.app/), and [flamegraph.com](https://flamegraph.com/) using `perf::analyzer::FlameGraphGenerator` (see the [documentation](docs/sampling-symbols-and-flamegraphs.md#translating-sampler-results-into-flame-graphs)).
+- **Built-in Event Definitions**: A set of `x86`-specific hardware events is now bundled in [events/x86](events/x86) and can be loaded at runtime using `perf::CounterDefinition`. This serves as an alternative to the `make perf-list` target.
+- **Compile-time Event Injection**: Processor-specific event definitions can now be embedded directly at build time by configuring CMake with `-DGEN_PROCESSOR_EVENTS=1`. These are immediately available via `perf::CounterDefinition` (see the [documentation](docs/counters.md#generating-processor-specific-events-at-compile-time)).
+- **Automatic Event Discovery**: Additional event types—including RAPL energy counters and AMD IO MMU events—are now automatically detected during the creation of a `perf::CounterDefinition` instance ([issue #6](https://github.com/jmuehlig/perf-cpp/issues/6)).
 
 ## v0.11.1
 - Unified the behaviour of the `time` and `timestamp` fields in the sampling API, removing discrepancies between the two.
