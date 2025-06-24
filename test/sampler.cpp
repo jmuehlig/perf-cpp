@@ -3,21 +3,24 @@
 
 #if defined(__x86_64__) || defined(__i386__)
 #include <iostream>
-#include <perfcpp/sampler.h>
 #include <perfcpp/hardware_info.h>
+#include <perfcpp/sampler.h>
 
-class AverageCounter {
+class AverageCounter
+{
 public:
-  AverageCounter& operator+=(const std::uint64_t value) noexcept {
+  AverageCounter& operator+=(const std::uint64_t value) noexcept
+  {
     _sum += value;
     ++_count;
     return *this;
   }
 
   [[nodiscard]] std::uint64_t get() const noexcept { return _count > 0ULL ? _sum / _count : 0ULL; }
+
 private:
-  std::uint64_t _sum {0U};
-  std::uint64_t _count{0U};
+  std::uint64_t _sum{ 0U };
+  std::uint64_t _count{ 0U };
 };
 
 TEST_CASE("config", "[Sampler]")
@@ -27,7 +30,7 @@ TEST_CASE("config", "[Sampler]")
 
   SECTION("empty sampler")
   {
-    auto sampler = perf::Sampler{ };
+    auto sampler = perf::Sampler{};
     sampler.values().instruction_pointer(true);
 
     REQUIRE_THROWS(sampler.open());
@@ -41,7 +44,7 @@ TEST_CASE("sampling", "[Sampler]")
 
   SECTION("IP with cycles")
   {
-    auto sampler = perf::Sampler{  };
+    auto sampler = perf::Sampler{};
     REQUIRE_NOTHROW(sampler.trigger("cycles"));
     sampler.values().instruction_pointer(true);
 
@@ -64,7 +67,7 @@ TEST_CASE("sampling", "[Sampler]")
 
   SECTION("re-start")
   {
-    auto sampler = perf::Sampler{ };
+    auto sampler = perf::Sampler{};
     REQUIRE_NOTHROW(sampler.trigger("cycles"));
     sampler.values().instruction_pointer(true).timestamp(true);
 
@@ -93,7 +96,7 @@ TEST_CASE("sampling", "[Sampler]")
 
   SECTION("sample period")
   {
-    auto sampler1 = perf::Sampler{ };
+    auto sampler1 = perf::Sampler{};
 
     REQUIRE_NOTHROW(sampler1.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 200000 }));
     sampler1.values().instruction_pointer(true).timestamp(true);
@@ -108,7 +111,7 @@ TEST_CASE("sampling", "[Sampler]")
     REQUIRE_FALSE(samples1.empty());
     REQUIRE_NOTHROW(sampler1.close());
 
-    auto sampler2 = perf::Sampler{ };
+    auto sampler2 = perf::Sampler{};
 
     REQUIRE_NOTHROW(sampler2.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 800000 }));
     sampler2.values().instruction_pointer(true).timestamp(true);
@@ -152,41 +155,50 @@ TEST_CASE("sampling", "[Sampler]")
     auto ram = AverageCounter{};
 
     for (const auto& sample : samples) {
-        if (sample.data_access().is_load() && sample.data_access().logical_memory_address().has_value()) {
-          if (perf::HardwareInfo::is_intel()) {
+      if (sample.data_access().is_load() && sample.data_access().logical_memory_address().has_value()) {
+        if (perf::HardwareInfo::is_intel()) {
+          if (perf::HardwareInfo::is_intel_12th_generation_or_newer()) {
             REQUIRE(sample.data_access().latency().cache_access().has_value());
             if (sample.data_access().source().has_value()) {
-              if(sample.data_access().source()->is_l1_hit()) {
-                REQUIRE(sample.data_access().latency().cache_access().has_value());
+              if (sample.data_access().source()->is_l1_hit()) {
                 l1d += sample.data_access().latency().cache_access().value();
-              } else if(sample.data_access().source()->is_l2_hit()) {
-                REQUIRE(sample.data_access().latency().cache_access().has_value());
+              } else if (sample.data_access().source()->is_l2_hit()) {
                 l2 += sample.data_access().latency().cache_access().value();
-              } else if(sample.data_access().source()->is_l3_hit()) {
-                REQUIRE(sample.data_access().latency().cache_access().has_value());
+              } else if (sample.data_access().source()->is_l3_hit()) {
                 l3 += sample.data_access().latency().cache_access().value();
-              } else if(sample.data_access().source()->is_memory_hit()) {
-                REQUIRE(sample.data_access().latency().cache_access().has_value());
+              } else if (sample.data_access().source()->is_memory_hit()) {
                 ram += sample.data_access().latency().cache_access().value();
               }
             }
-          } else if (perf::HardwareInfo::is_amd()) {
-            REQUIRE(sample.data_access().latency().cache_miss().has_value());
+          } else {
+            REQUIRE(sample.instruction_execution().latency().instruction_retirement().has_value());
             if (sample.data_access().source().has_value()) {
-              if(sample.data_access().source()->is_l1_hit()) {
-                l1d += sample.data_access().latency().cache_miss().value_or(0U);
+              if (sample.data_access().source()->is_l1_hit()) {
+                l1d += sample.instruction_execution().latency().instruction_retirement().value();
               } else if (sample.data_access().source()->is_l2_hit()) {
-                REQUIRE(sample.data_access().latency().cache_miss().has_value());
-                l2 += sample.data_access().latency().cache_miss().value();
+                l2 += sample.instruction_execution().latency().instruction_retirement().value();
               } else if (sample.data_access().source()->is_l3_hit()) {
-                REQUIRE(sample.data_access().latency().cache_miss().has_value());
-                l3 += sample.data_access().latency().cache_miss().value();
+                l3 += sample.instruction_execution().latency().instruction_retirement().value();
               } else if (sample.data_access().source()->is_memory_hit()) {
-                REQUIRE(sample.data_access().latency().cache_miss().has_value());
-                ram += sample.data_access().latency().cache_miss().value();
+                ram += sample.instruction_execution().latency().instruction_retirement().value();
               }
             }
           }
+
+        } else if (perf::HardwareInfo::is_amd()) {
+          REQUIRE(sample.data_access().latency().cache_miss().has_value());
+          if (sample.data_access().source().has_value()) {
+            if (sample.data_access().source()->is_l1_hit()) {
+              l1d += sample.data_access().latency().cache_miss().value_or(0U);
+            } else if (sample.data_access().source()->is_l2_hit()) {
+              l2 += sample.data_access().latency().cache_miss().value();
+            } else if (sample.data_access().source()->is_l3_hit()) {
+              l3 += sample.data_access().latency().cache_miss().value();
+            } else if (sample.data_access().source()->is_memory_hit()) {
+              ram += sample.data_access().latency().cache_miss().value();
+            }
+          }
+        }
       }
     }
 
@@ -198,7 +210,6 @@ TEST_CASE("sampling", "[Sampler]")
 
     REQUIRE(l3.get() < 100U);
     REQUIRE(ram.get() > 100U);
-
   }
 
   SECTION("metric-l1d-per-load")
@@ -208,10 +219,10 @@ TEST_CASE("sampling", "[Sampler]")
     /// Add metric that calculates the L1d miss ratio.
     counter_definitions.add("L1d-misses-per-load", "'L1-dcache-load-misses'/'L1-dcache-loads'");
 
-    auto sampler = perf::Sampler{counter_definitions};
+    auto sampler = perf::Sampler{ counter_definitions };
 
     REQUIRE_NOTHROW(sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid, perf::Period{ 100000 }));
-    REQUIRE_NOTHROW(sampler.values().timestamp(true).counter({"L1d-misses-per-load"}));
+    REQUIRE_NOTHROW(sampler.values().timestamp(true).counter({ "L1d-misses-per-load" }));
     REQUIRE_NOTHROW(sampler.open());
 
     REQUIRE_NOTHROW(sampler.start());
@@ -221,7 +232,7 @@ TEST_CASE("sampling", "[Sampler]")
     const auto samples = sampler.result(true);
     REQUIRE_FALSE(samples.empty());
 
-    auto last_timestamp = std::optional<std::uint64_t>{std::nullopt};
+    auto last_timestamp = std::optional<std::uint64_t>{ std::nullopt };
 
     for (const auto& sample : samples) {
       REQUIRE(sample.metadata().timestamp().has_value());
@@ -235,7 +246,6 @@ TEST_CASE("sampling", "[Sampler]")
       REQUIRE(sample.counter()->get("L1d-misses-per-load").value() > 0);
       REQUIRE(sample.counter()->get("L1d-misses-per-load").value() < .7);
     }
-
   }
 }
 #endif
