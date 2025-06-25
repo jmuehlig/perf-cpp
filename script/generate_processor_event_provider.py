@@ -54,14 +54,14 @@ def get_architecture():
 
     return None
 
-def get_micro_architecture(architecture_dir):
+def get_vendor_and_micro_architecture(architecture_dir):
     map_file_path = architecture_dir / 'micro-architecture-register.csv'
     if not map_file_path.is_file():
-        return None
+        return (None, None)
 
     vendor_id, cpu_family, model, stepping = get_cpu_info()
     if not vendor_id or cpu_family is None or model is None:
-        return None
+        return (None, None)
 
     # Format the CPU signature
     cpu_signature = f"{vendor_id}-{cpu_family}-{model:X}"
@@ -74,9 +74,9 @@ def get_micro_architecture(architecture_dir):
             regex_pattern = f"^{row['regex']}$"
 
             if re.match(regex_pattern, cpu_signature, re.IGNORECASE) or re.match(regex_pattern, cpu_signature_with_stepping, re.IGNORECASE):
-                return row['micro-architecture']
+                return (row['vendor'], row['micro-architecture'])
 
-    return None
+    return (None, None)
 
 def read_events(events_file_path):
     events = []
@@ -165,11 +165,11 @@ def main():
     if architecture:
         architecture_path = Path(args.events) / architecture
         if architecture_path.is_dir():
-            micro_architecture = get_micro_architecture(architecture_path)
-            if micro_architecture:
+            vendor, micro_architecture = get_vendor_and_micro_architecture(architecture_path)
+            if vendor and micro_architecture:
                 if args.verbose:
-                    print(f"[GEN_PROCESSOR_EVENTS] Detected micro-architecture: {micro_architecture}")
-                micro_architecture_path = architecture_path / f'{micro_architecture}.csv'
+                    print(f"[GEN_PROCESSOR_EVENTS] Found vendor and micro-architecture: {vendor} / {micro_architecture}")
+                micro_architecture_path = architecture_path / vendor / f'{micro_architecture}.csv'
                 if micro_architecture_path.is_file():
                     events_to_generate = read_events(micro_architecture_path)
 
