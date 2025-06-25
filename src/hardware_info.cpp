@@ -181,7 +181,7 @@ perf::HardwareInfo::performance_counters_per_logical_core()
 
   /// Aarch64 uses the Performance Monitors Control Register PMCR_EL0 (see
   /// https://developer.arm.com/documentation/ddi0601/2025-03/AArch64-Registers/PMCR-EL0--Performance-Monitors-Control-Register).
-  __asm__ volatile("mrs %0, pmcr_el0" : "=r"(val));
+  __asm__ volatile("mrs %0, pmcr_el0" : "=r"(pmcr_el0));
 
   /// The number of counters is in bits 15-11.
   const auto performance_counters_per_logical_core = (pmcr_el0 >> 11) & 0x1F;
