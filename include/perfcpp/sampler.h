@@ -949,6 +949,19 @@ private:
       trigger_group) const;
 
   /**
+   * Adds the given metric and all dependent events and metrics to the event set and all events to the given group.
+   *
+   * @param metric Metric to add.
+   * @param pmu_name PMU.
+   * @param requested_event_set Requested event set.
+   * @param group Group.
+   */
+  void add(const std::pair<std::string_view, Metric&> metric,
+           std::string_view pmu_name,
+           RequestedEventSet& requested_event_set,
+           Group& group) const;
+
+  /**
    * Checks if the mem-loads-aux auxiliary counter is needed by the trigger group, which is true for some Intel
    * architectures (e.g., Sapphire Rapids).
    *

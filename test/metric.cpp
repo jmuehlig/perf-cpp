@@ -1,7 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <perfcpp/metric.h>
+#include <perfcpp/requested_event.h>
 
-TEST_CASE("calculating", "[CyclesPerInstruction]")
+TEST_CASE("calculating", "[Metric][CyclesPerInstruction]")
 {
 
   auto cpi_metric = perf::CyclesPerInstruction{};
@@ -28,7 +29,7 @@ TEST_CASE("calculating", "[CyclesPerInstruction]")
   }
 }
 
-TEST_CASE("calculating", "[InstructionsPerCycle]")
+TEST_CASE("calculating", "[Metric][InstructionsPerCycle]")
 {
 
   auto ipc_metric = perf::InstructionsPerCycle{};
@@ -55,7 +56,7 @@ TEST_CASE("calculating", "[InstructionsPerCycle]")
   }
 }
 
-TEST_CASE("calculating", "[CacheHitRatio]")
+TEST_CASE("calculating", "[Metric][CacheHitRatio]")
 {
   auto chr_metric = perf::CacheHitRatio{};
 
@@ -83,7 +84,7 @@ TEST_CASE("calculating", "[CacheHitRatio]")
   }
 }
 
-TEST_CASE("calculating", "[CacheMissRatio]")
+TEST_CASE("calculating", "[Metric][CacheMissRatio]")
 {
   auto chr_metric = perf::CacheMissRatio{};
 
@@ -111,7 +112,7 @@ TEST_CASE("calculating", "[CacheMissRatio]")
   }
 }
 
-TEST_CASE("calculating", "[DTLBMissRatio]")
+TEST_CASE("calculating", "[Metric][DTLBMissRatio]")
 {
   auto dtlbmr_metric = perf::DTLBMissRatio{};
 
@@ -139,7 +140,7 @@ TEST_CASE("calculating", "[DTLBMissRatio]")
   }
 }
 
-TEST_CASE("calculating", "[ITLBMissRatio]")
+TEST_CASE("calculating", "[Metric][ITLBMissRatio]")
 {
   auto itlbmr_metric = perf::ITLBMissRatio{};
 
@@ -167,7 +168,7 @@ TEST_CASE("calculating", "[ITLBMissRatio]")
   }
 }
 
-TEST_CASE("calculating", "[L1DataMissRatio]")
+TEST_CASE("calculating", "[Metric][L1DataMissRatio]")
 {
   auto l1dmr_metric = perf::L1DataMissRatio{};
 
@@ -195,7 +196,7 @@ TEST_CASE("calculating", "[L1DataMissRatio]")
   }
 }
 
-TEST_CASE("calculating", "[BranchMissRatio]")
+TEST_CASE("calculating", "[Metric][BranchMissRatio]")
 {
   auto bmr_metric = perf::BranchMissRatio{};
 
@@ -223,7 +224,7 @@ TEST_CASE("calculating", "[BranchMissRatio]")
   }
 }
 
-TEST_CASE("calculating", "[FormulaMetric]")
+TEST_CASE("calculating", "[Metric][Formula]")
 {
   SECTION("parsing")
   {
@@ -261,4 +262,64 @@ TEST_CASE("calculating", "[FormulaMetric]")
     REQUIRE(formula_metric.calculate(counter_result).has_value());
     REQUIRE(formula_metric.calculate(counter_result).value() == 113.37);
   }
+}
+
+TEST_CASE("calculating", "[Metric][NestedMetrics]")
+{
+  auto counter_definition = perf::CounterDefinition{};
+  counter_definition.add("metric-a", "'event-a' + 'event-b'");
+  counter_definition.add("metric-b", "'metric-a' + 400");
+
+  SECTION("in-order")
+  {
+    auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
+      std::make_pair("event-a", 100U), std::make_pair("event-b", 500U) } };
+
+    /// Add metric-a before metric-b and access the metrics in that order.
+    auto requested_event_set = perf::RequestedEventSet{};
+    requested_event_set.add("metric-a", perf::RequestedEvent::Type::Metric, true);
+    requested_event_set.add("metric-b", perf::RequestedEvent::Type::Metric, true);
+
+    const auto final_result = requested_event_set.result(counter_definition, std::move(counter_result), 1U);
+    REQUIRE(final_result.get("metric-a").has_value());
+    REQUIRE(final_result.get("metric-a") == 600U);
+    REQUIRE(final_result.get("metric-b").has_value());
+    REQUIRE(final_result.get("metric-b") == 1000U);
+  }
+
+  SECTION("out-of-order")
+  {
+    auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
+      std::make_pair("event-a", 100U), std::make_pair("event-b", 500U) } };
+
+    /// Add metric-b before metric-a and access the metrics in the opposite order.
+    auto requested_event_set = perf::RequestedEventSet{};
+    requested_event_set.add("metric-b", perf::RequestedEvent::Type::Metric, true);
+    requested_event_set.add("metric-a", perf::RequestedEvent::Type::Metric, true);
+
+    const auto final_result = requested_event_set.result(counter_definition, std::move(counter_result), 1U);
+    REQUIRE(final_result.get("metric-a").has_value());
+    REQUIRE(final_result.get("metric-a") == 600U);
+    REQUIRE(final_result.get("metric-b").has_value());
+    REQUIRE(final_result.get("metric-b") == 1000U);
+  }
+
+  SECTION("cyclic")
+  {
+    /// Add two metrics that reference each other.
+    counter_definition.add("metric-c", "'metric-d' + 'metric-a'");
+    counter_definition.add("metric-d", "'metric-c' + 'metric-b'");
+
+    auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
+      std::make_pair("event-a", 100U), std::make_pair("event-b", 500U) } };
+
+    /// Add metric-b before metric-a and access the metrics in the opposite order.
+    auto requested_event_set = perf::RequestedEventSet{};
+    requested_event_set.add("metric-c", perf::RequestedEvent::Type::Metric, true);
+    requested_event_set.add("metric-d", perf::RequestedEvent::Type::Metric, true);
+
+    /// Evaluation must throw an exception since the metrics are cyclic.
+    REQUIRE_THROWS(requested_event_set.result(counter_definition, std::move(counter_result), 1U));
+  }
+
 }

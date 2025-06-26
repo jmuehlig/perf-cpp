@@ -1,4 +1,5 @@
 #include <perfcpp/requested_event.h>
+#include <perfcpp/util/graph.h>
 
 bool
 perf::RequestedEventSet::add(const std::optional<std::string_view> pmu_name,
@@ -46,28 +47,63 @@ perf::RequestedEventSet::result(const perf::CounterDefinition& counter_definitio
                                 perf::CounterResult&& hardware_events_result,
                                 const std::uint64_t normalization) const
 {
+  /// Build a graph with all metrics.
+  auto metric_graph = util::DirectedGraph<std::string_view>{};
+  for (const auto& requested_event : this->_requested_events) {
+    if (const auto metric = counter_definition.metric(requested_event.event_name()); metric.has_value()) {
+
+      /// Add the metric as a node to the graph.
+      metric_graph.insert(requested_event.event_name());
+
+      /// Add an edge for every dependent metric: dependent_metric -> metric
+      for (const auto& dependency : std::get<1>(metric.value()).required_counter_names()) {
+        if (const auto dependent_metric = counter_definition.metric(dependency); dependent_metric.has_value()) {
+          metric_graph.connect(std::get<0>(dependent_metric.value()), requested_event.event_name());
+        }
+      }
+    }
+  }
+
+  /// Check if the metric graph has a cycle. In that case, we cannot evaluate the metrics.
+  if (metric_graph.is_cyclic()) {
+    throw CannotEvaluateMetricsBecauseOfCycleError{};
+  }
+
+  /// Add all metrics to the event results.
+  while (!metric_graph.empty()) {
+
+    /// Get metric without un-calculated dependency.
+    if (const auto metric_name = metric_graph.pop(); metric_name.has_value()) {
+      if (auto metric = counter_definition.metric(metric_name.value()); metric.has_value()) {
+
+        /// Calculate the metric.
+        if (const auto calculated_metric_value = std::get<1>(metric.value()).calculate(hardware_events_result);
+            calculated_metric_value.has_value()) {
+
+          /// Add it to the results.
+          hardware_events_result.emplace_back(metric_name.value(), calculated_metric_value.value());
+        }
+      }
+    }
+  }
+
   auto event_results = std::vector<std::pair<std::string_view, double>>{};
   event_results.reserve(this->_requested_events.size());
 
-  /// Add all the events that are requested as visible in the results.
+  /// Transform hardware events (now containing also metric results) into a set that is ordered like dictated by the
+  /// requested event.
   for (const auto& requested_event : this->_requested_events) {
     if (requested_event.is_shown_in_results()) {
-      /// Hardware events can be copied directly.
-      if (requested_event.is_hardware_event() || requested_event.is_time_event()) {
-        if (const auto hardware_event_value = hardware_events_result.get(requested_event.event_name());
-            hardware_event_value.has_value()) {
-          event_results.emplace_back(requested_event.event_name(),
-                                     hardware_event_value.value() / double(normalization));
-        }
-      }
+      if (const auto result = hardware_events_result.get(requested_event.event_name()); result.has_value()) {
 
-      /// Metrics need to be calculated by multiple hardware events.
-      else if (requested_event.is_metric()) {
-        if (auto metric = counter_definition.metric(requested_event.event_name()); metric.has_value()) {
-          if (const auto calculated_metric_value = std::get<1>(metric.value()).calculate(hardware_events_result);
-              calculated_metric_value.has_value()) {
-            event_results.emplace_back(requested_event.event_name(), calculated_metric_value.value());
-          }
+        /// Normalize hardware and time events.
+        if (requested_event.is_hardware_event() || requested_event.is_time_event()) {
+          event_results.emplace_back(requested_event.event_name(), result.value() / double(normalization));
+        }
+
+        /// Add metrics without normalization.
+        else {
+          event_results.emplace_back(requested_event.event_name(), result.value());
         }
       }
     }

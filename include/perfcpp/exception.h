@@ -154,6 +154,16 @@ public:
   ~CannotFindEventOrMetricError() override = default;
 };
 
+class CannotEvaluateMetricsBecauseOfCycleError final : public std::runtime_error
+{
+public:
+  explicit CannotEvaluateMetricsBecauseOfCycleError()
+    : std::runtime_error(std::string{ "Cannot evaluate metrics because they are mutually (cyclically) dependent. " })
+  {
+  }
+  ~CannotEvaluateMetricsBecauseOfCycleError() override = default;
+};
+
 class CannotFindEventError final : public std::runtime_error
 {
 public:

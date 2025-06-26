@@ -42,12 +42,12 @@ perf::Tokenizer::tokenize() const
 
   auto position = std::size_t{ 0U };
 
-  /// Skip all whitespaces.
-  while (position < this->_input.length() && std::isspace(this->_input[position])) {
-    ++position;
-  }
-
   while (position < this->_input.length()) {
+    /// Skip all whitespaces.
+    while (position < this->_input.length() && std::isspace(this->_input[position])) {
+      ++position;
+    }
+
     const auto current_char = this->_input[position];
 
     /// Check if the next character is a constant number (obviously a digit indicates a number – and so does a ".").
