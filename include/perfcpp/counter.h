@@ -3,8 +3,8 @@
 #include "config.h"
 #include "counter_result.h"
 #include "mmap_buffer.h"
+#include "util/unique_file_descriptor.h"
 #include "precision.h"
-#include "unique_file_descriptor.h"
 #include <array>
 #include <cstdint>
 #include <linux/perf_event.h>
@@ -87,7 +87,7 @@ public:
   /**
    * @return The file descriptor of the counter; -1 if the counter was not opened (successfully).
    */
-  [[nodiscard]] const UniqueFileDescriptor& file_descriptor() const noexcept { return _file_descriptor; }
+  [[nodiscard]] const util::UniqueFileDescriptor& file_descriptor() const noexcept { return _file_descriptor; }
 
   /**
    * Opens the counter using via the perf subsystem.
@@ -109,7 +109,7 @@ public:
    * @param configuration Configuration of the counter.
    * @param group_leader_file_descriptor File descriptor of the group leader.
    */
-  void open(const Config& configuration, const UniqueFileDescriptor& group_leader_file_descriptor);
+  void open(const Config& configuration, const util::UniqueFileDescriptor& group_leader_file_descriptor);
 
   /**
    * Opens the counter using via the perf subsystem.
@@ -163,7 +163,7 @@ public:
             std::optional<std::uint32_t> max_user_stack_size,
             std::optional<std::uint16_t> max_callstack_size,
             bool is_include_context_switch,
-            const UniqueFileDescriptor& group_leader_file_descriptor);
+            const util::UniqueFileDescriptor& group_leader_file_descriptor);
 
   /**
    * Opens the counter using the perf subsystem via the perf_event_open system call.
@@ -190,7 +190,7 @@ public:
   void open(const perf::Config& config,
             bool is_group_leader,
             bool is_secret_leader,
-            const UniqueFileDescriptor& group_leader_file_descriptor,
+            const util::UniqueFileDescriptor& group_leader_file_descriptor,
             bool is_read_format,
             std::optional<std::uint64_t> buffer_pages,
             std::optional<std::uint64_t> sample_type,
@@ -247,7 +247,7 @@ public:
    * @return A string representing all configurations of this counter.
    */
   [[nodiscard]] std::string to_string(bool is_group_leader,
-                                      const UniqueFileDescriptor& group_leader_file_descriptor,
+                                      const util::UniqueFileDescriptor& group_leader_file_descriptor,
                                       Process process,
                                       CpuCore cpu_core) const;
 
@@ -264,7 +264,7 @@ private:
   std::uint64_t _id{ 0U };
 
   /// The file descriptor as returned by the perf subsystem when opening the counter.
-  UniqueFileDescriptor _file_descriptor;
+  util::UniqueFileDescriptor _file_descriptor;
 
   /// Buffer used to store samples. The buffer mmaps a ringbuffer and handles overflows via a separate thread.
   /// Additionally, the MmapBuffer can read live events.
@@ -326,9 +326,9 @@ private:
    * @param group_leader_file_descriptor View to the group leader's file descriptor.
    * @return File descriptor and error code, which is valid when the file descriptor has no value.
    */
-  [[nodiscard]] std::pair<UniqueFileDescriptor, std::int32_t> try_open_via_perf_subsystem(
+  [[nodiscard]] std::pair<util::UniqueFileDescriptor, std::int32_t> try_open_via_perf_subsystem(
     const perf::Config& configuration,
-    FileDescriptorView group_leader_file_descriptor = FileDescriptorView{});
+    util::FileDescriptorView group_leader_file_descriptor = util::FileDescriptorView{});
 
   /**
    * Opens the perf subsystem event for sampling with the given configuration.
@@ -340,10 +340,10 @@ private:
    * @param group_leader_file_descriptor View to the group leader's file descriptor.
    * @return File descriptor and error code, which is valid when the file descriptor has no value.
    */
-  std::pair<UniqueFileDescriptor, std::int32_t> try_open_via_perf_subsystem(
+  std::pair<util::UniqueFileDescriptor, std::int32_t> try_open_via_perf_subsystem(
     const Config& configuration,
     std::uint8_t precision,
-    FileDescriptorView group_leader_file_descriptor = FileDescriptorView{});
+    util::FileDescriptorView group_leader_file_descriptor = util::FileDescriptorView{});
 
   /**
    * Decides whether adjusting (i.e., decrementing) the precise_ip configuration could help to open a hardware

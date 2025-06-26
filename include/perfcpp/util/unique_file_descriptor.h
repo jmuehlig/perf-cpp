@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <utility>
 
-namespace perf {
+namespace perf::util {
 /**
  * The unique file descriptor is backed by a common file descriptor; however, it does not allow copying.
  * Destroying the unique file descriptor leads to closing the underyling file descriptor – comparable to a unique

@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace perf {
+namespace perf::util {
 class Table
 {
 public:

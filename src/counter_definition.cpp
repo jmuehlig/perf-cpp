@@ -1,7 +1,7 @@
+#include "perfcpp/util/table.h"
 #include <fstream>
 #include <perfcpp/counter_definition.h>
 #include <perfcpp/hardware_info.h>
-#include <perfcpp/table.h>
 #include <sstream>
 
 perf::CounterDefinition::CounterDefinition(std::unique_ptr<EventProvider>&& event_provider)
@@ -146,21 +146,21 @@ perf::CounterDefinition::to_string() const
     return stream.str();
   };
 
-  auto table = Table{};
+  auto table = util::Table{};
 
   // Header.
-  table.add({ Table::Header{ "PMU", Table::Alignment::Left },
-              Table::Header{ "name", Table::Alignment::Left },
-              Table::Header{ "type", Table::Alignment::Left },
-              Table::Header{ "config", Table::Alignment::Left },
-              Table::Header{ "config1", Table::Alignment::Left },
-              Table::Header{ "config2", Table::Alignment::Left },
-              Table::Header{ "scale", Table::Alignment::Left } });
+  table.add({ util::Table::Header{ "PMU", util::Table::Alignment::Left },
+              util::Table::Header{ "name", util::Table::Alignment::Left },
+              util::Table::Header{ "type", util::Table::Alignment::Left },
+              util::Table::Header{ "config", util::Table::Alignment::Left },
+              util::Table::Header{ "config1", util::Table::Alignment::Left },
+              util::Table::Header{ "config2", util::Table::Alignment::Left },
+              util::Table::Header{ "scale", util::Table::Alignment::Left } });
 
   /// Add all events to the table.
   for (const auto& [pmu, events] : this->_performance_monitoring_unit_events) {
     for (const auto& [name, config] : events) {
-      auto row = Table::Row{};
+      auto row = util::Table::Row{};
 
       row << pmu << name << config.type() << decimal_to_hex_string(config.event_id())
           << decimal_to_hex_string(config.event_id_extension()[0U])
@@ -171,14 +171,14 @@ perf::CounterDefinition::to_string() const
 
   /// Add all metrics to the table.
   for (const auto& [name, _] : this->_metrics) {
-    auto row = Table::Row{};
+    auto row = util::Table::Row{};
     row << "metric" << name << "" << "" << "" << "" << "";
     table.add(std::move(row));
   }
 
   /// Add all virtual time events to the table.
   for (const auto& [name, _] : this->_time_events) {
-    auto row = Table::Row{};
+    auto row = util::Table::Row{};
     row << "time" << name << "" << "" << "" << "" << "";
     table.add(std::move(row));
   }

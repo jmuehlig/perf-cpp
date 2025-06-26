@@ -11,10 +11,10 @@
 #endif
 
 perf::MmapBufferOverflowWorker::MmapBufferOverflowWorker(perf::MmapBuffer& mmap_buffer,
-                                                         const UniqueFileDescriptor& counter_file_descriptor)
+                                                         const util::UniqueFileDescriptor& counter_file_descriptor)
 {
   /// Create an event file descriptor to cancel the thread when closing the sample buffer.
-  this->_cancel_thread_file_descriptor = UniqueFileDescriptor{ ::eventfd(0, 0) };
+  this->_cancel_thread_file_descriptor = util::UniqueFileDescriptor{ ::eventfd(0, 0) };
   if (!this->_cancel_thread_file_descriptor.has_value()) {
     throw CannotCreateEventFileDescriptor{};
   }
@@ -23,14 +23,14 @@ perf::MmapBufferOverflowWorker::MmapBufferOverflowWorker(perf::MmapBuffer& mmap_
   /// triggering the mmap buffers handle_overflow() function.
   this->_overflow_handle_thread = std::thread(&MmapBufferOverflowWorker::run,
                                               std::ref(mmap_buffer),
-                                              FileDescriptorView{ counter_file_descriptor },
-                                              FileDescriptorView{ this->_cancel_thread_file_descriptor });
+                                              util::FileDescriptorView{ counter_file_descriptor },
+                                              util::FileDescriptorView{ this->_cancel_thread_file_descriptor });
 }
 
 void
 perf::MmapBufferOverflowWorker::run(perf::MmapBuffer& mmap_buffer,
-                                    const perf::FileDescriptorView counter_file_descriptor,
-                                    const perf::FileDescriptorView cancel_file_descriptor) noexcept
+                                    const perf::util::FileDescriptorView counter_file_descriptor,
+                                    const perf::util::FileDescriptorView cancel_file_descriptor) noexcept
 {
   do {
     /// Initialize the file descriptor set.
@@ -73,7 +73,7 @@ perf::MmapBufferOverflowWorker::cancel()
   this->_overflow_handle_thread.join();
 }
 
-perf::MmapBuffer::MmapBuffer(const UniqueFileDescriptor& file_descriptor, const std::uint64_t count_pages)
+perf::MmapBuffer::MmapBuffer(const util::UniqueFileDescriptor& file_descriptor, const std::uint64_t count_pages)
   : _count_pages(MmapBuffer::align_number_of_buffer_pages(count_pages))
 {
   const auto is_handle_overflow = this->_count_pages != 1ULL;

@@ -68,7 +68,7 @@ perf::Counter::open(const perf::Config& configuration, const bool is_live)
 }
 
 void
-perf::Counter::open(const perf::Config& configuration, const perf::UniqueFileDescriptor& group_leader_file_descriptor)
+perf::Counter::open(const perf::Config& configuration, const perf::util::UniqueFileDescriptor& group_leader_file_descriptor)
 {
   /// Configure the perf event attribute (including read format).
   this->_event_attribute = this->create_perf_event_attribute(false, configuration);
@@ -76,7 +76,7 @@ perf::Counter::open(const perf::Config& configuration, const perf::UniqueFileDes
 
   /// Open the counter via the perf subsystem.
   auto [file_descriptor, error_code] =
-    this->try_open_via_perf_subsystem(configuration, FileDescriptorView{ group_leader_file_descriptor });
+    this->try_open_via_perf_subsystem(configuration, util::FileDescriptorView{ group_leader_file_descriptor });
   this->_file_descriptor = std::move(file_descriptor);
 
   /// Read and set the counter's id.
@@ -161,7 +161,7 @@ perf::Counter::open(const perf::Config& config,
                     const std::optional<std::uint32_t> max_user_stack_size,
                     const std::optional<std::uint16_t> max_callstack_size,
                     const bool is_include_context_switch,
-                    const perf::UniqueFileDescriptor& group_leader_file_descriptor)
+                    const perf::util::UniqueFileDescriptor& group_leader_file_descriptor)
 {
   /// Configure the perf event attribute for sampling.
   this->_event_attribute = this->create_perf_event_attribute(false,
@@ -181,7 +181,7 @@ perf::Counter::open(const perf::Config& config,
 
   /// Open the counter via the perf subsystem.
   auto [file_descriptor, error_code] = this->try_open_via_perf_subsystem(
-    config, this->_config.precise_ip().value_or(0U), FileDescriptorView{ group_leader_file_descriptor });
+    config, this->_config.precise_ip().value_or(0U), util::FileDescriptorView{ group_leader_file_descriptor });
   this->_file_descriptor = std::move(file_descriptor);
 
   /// Read and set the counter's id.
@@ -315,9 +315,9 @@ perf::Counter::create_perf_event_read_format(const bool is_include_time) noexcep
           (PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING));
 }
 
-std::pair<perf::UniqueFileDescriptor, std::int32_t>
+std::pair<perf::util::UniqueFileDescriptor, std::int32_t>
 perf::Counter::try_open_via_perf_subsystem(const perf::Config& configuration,
-                                           const perf::FileDescriptorView group_leader_file_descriptor)
+                                           const perf::util::FileDescriptorView group_leader_file_descriptor)
 {
   /// Finally, pass the configuration to the perf subsystem to open the hardware performance counter.
   const auto file_descriptor = ::syscall(__NR_perf_event_open,
@@ -327,15 +327,15 @@ perf::Counter::try_open_via_perf_subsystem(const perf::Config& configuration,
                                          group_leader_file_descriptor.value(),
                                          0);
 
-  return std::make_pair(UniqueFileDescriptor{ file_descriptor }, errno);
+  return std::make_pair(util::UniqueFileDescriptor{ file_descriptor }, errno);
 }
 
-std::pair<perf::UniqueFileDescriptor, std::int32_t>
+std::pair<perf::util::UniqueFileDescriptor, std::int32_t>
 perf::Counter::try_open_via_perf_subsystem(const perf::Config& configuration,
                                            std::uint8_t precision,
-                                           const perf::FileDescriptorView group_leader_file_descriptor)
+                                           const perf::util::FileDescriptorView group_leader_file_descriptor)
 {
-  auto file_descriptor = UniqueFileDescriptor{};
+  auto file_descriptor = util::UniqueFileDescriptor{};
   std::int32_t error_code;
 
   /// Try to open the counter. For sampling, we might try to adjust the precise_ip configuration (see
@@ -372,7 +372,7 @@ perf::Counter::is_precision_adjustable(const std::uint8_t current_precise_ip, co
 
 std::string
 perf::Counter::to_string(const bool is_group_leader,
-                         const UniqueFileDescriptor& group_leader_file_descriptor,
+                         const util::UniqueFileDescriptor& group_leader_file_descriptor,
                          const Process process,
                          const CpuCore cpu_core) const
 {
