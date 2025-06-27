@@ -62,7 +62,7 @@ perf::Tokenizer::tokenize() const
     /// Check if the next character is an alphabetical char, which indicates an identifier.
     /// Additionally, identifiers can start with single quotes to escape, for example, - operators as part of the
     /// identifier (e.g., the hardware counter "L1-cache-miss"). If so, return an identifier token.
-    if (std::isalpha(current_char) || current_char == '\'') {
+    if (std::isalpha(current_char) || Tokenizer::is_escape_char(current_char)) {
       auto [identifier_token, new_position] = Tokenizer::read_identifier(position);
       output_queue.push(std::move(identifier_token));
       position = new_position;
@@ -137,9 +137,9 @@ perf::Tokenizer::read_identifier(std::size_t begin) const
   auto count = 1ULL;
 
   /// If the identifier starts with a single quote, we scan until we find the "ending" single quote.
-  const auto is_start_with_quote = this->_input[begin] == '\'';
-  if (is_start_with_quote) {
-    while ((begin + count) < this->_input.size() && this->_input[begin + count] != '\'') {
+  const auto is_start_with_escape_char = Tokenizer::is_escape_char(this->_input[begin]);
+  if (is_start_with_escape_char) {
+    while ((begin + count) < this->_input.size() && !Tokenizer::is_escape_char(this->_input[begin + count])) {
       ++count;
     }
 
@@ -156,11 +156,11 @@ perf::Tokenizer::read_identifier(std::size_t begin) const
   }
 
   /// Increase the position by the number of scanned chars; skip the closing single quite if given.
-  const auto new_position = begin + count + static_cast<std::uint64_t>(is_start_with_quote);
+  const auto new_position = begin + count + static_cast<std::uint64_t>(is_start_with_escape_char);
 
   /// Return the identifier; remove single quotes if given.
-  auto token = Token{ this->_input.substr(begin + static_cast<std::uint64_t>(is_start_with_quote),
-                                          count - static_cast<std::uint64_t>(is_start_with_quote)) };
+  auto token = Token{ this->_input.substr(begin + static_cast<std::uint64_t>(is_start_with_escape_char),
+                                          count - static_cast<std::uint64_t>(is_start_with_escape_char)) };
   return std::make_pair(std::move(token), new_position);
 }
 
