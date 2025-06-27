@@ -118,15 +118,38 @@ perf::Tokenizer::read_constant(const std::size_t begin) const
   /// Read all characters that are digits or a dot.
   /// Additionally, check if the number has only one dot.
   auto has_dot = false;
+  auto has_scientific_e = false;
   while ((begin + count) < this->_input.length() &&
-         (std::isdigit(this->_input[begin + count]) || this->_input[begin + count] == '.')) {
+         (std::isdigit(this->_input[begin + count]) || this->_input[begin + count] == '-' || this->_input[begin + count] == '.' || this->_input[begin + count] == 'e' || this->_input[begin + count] == 'E')) {
+
+    /// Verify that only one dot is in the number.
     if (this->_input[begin + count] == '.' && std::exchange(has_dot, true)) {
       throw CannotParseExpressionError{ this->_input };
     }
+
+    /// Verify that only one scientific e is in the number.
+    if ((this->_input[begin + count] == 'e' || this->_input[begin + count] == 'E') && std::exchange(has_scientific_e, true)) {
+      throw CannotParseExpressionError{ this->_input };
+    }
+
     ++count;
   }
 
-  return std::make_pair(Token{ std::stod(_input.substr(begin, count)) }, begin + count);
+  /// Extract the number.
+  const auto number = _input.substr(begin, count);
+
+  /// Ensure the number is not empty.
+  if (number.empty()) {
+    throw CannotParseExpressionError{ this->_input };
+  }
+
+  /// Ensure the number does not end with minus or scientific e.
+  if (number.back() == '-' || number.back() == 'e' || number.back() == 'E') {
+    throw CannotParseExpressionError{ this->_input };
+  }
+
+  /// Parse number into decimal.
+  return std::make_pair(Token{ std::stod(number) }, begin + count);
 }
 
 std::pair<perf::Token, std::size_t>

@@ -262,6 +262,31 @@ TEST_CASE("calculating", "[Metric][Formula]")
     REQUIRE(formula_metric.calculate(counter_result).has_value());
     REQUIRE(formula_metric.calculate(counter_result).value() == 113.37);
   }
+
+  SECTION("scientific number")
+  {
+    auto scientific_metric = perf::FormulaMetric{ "scientific-formular", "'event-a' * 1e5" };
+
+    auto counter_result =
+      perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{ std::make_pair("event-a", 20U) } };
+    REQUIRE(scientific_metric.calculate(counter_result).has_value());
+    REQUIRE(scientific_metric.calculate(counter_result).value() == 2000000.);
+  }
+
+  SECTION("negative scientific number")
+  {
+    auto scientific_metric = perf::FormulaMetric{ "scientific-formular", "'event-a' * 1e-5" };
+
+    auto counter_result =
+      perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{ std::make_pair("event-a", 20U) } };
+    REQUIRE(scientific_metric.calculate(counter_result).has_value());
+    REQUIRE(scientific_metric.calculate(counter_result).value() == 0.0002);
+  }
+
+  SECTION("wrong scientific number")
+  {
+    REQUIRE_THROWS(perf::FormulaMetric{ "scientific-formular", "'event-a' * 1e2e5" });
+  }
 }
 
 TEST_CASE("calculating", "[Metric][NestedMetrics]")
