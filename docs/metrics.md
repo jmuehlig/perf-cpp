@@ -78,7 +78,9 @@ counter_definition.add("stalls-by-mem-loads",
 auto event_counter = perf::EventCounter{ counter_definition };
 ```
 
-The formular can use the following operators: `+`, `-`, `*`, and `/`.
+The formular can use the following **operators**: `+`, `-`, `*`, and `/`.
+
+In addition, **scientific numbers** (e.g., `1E5`, `1e-5`) can be used. 
 
 > [!NOTE]
 > In formulas, event names that contain *operators* (like `-` in `L1D-misses`) need to be **escaped** using single quotes, e.g., `'L1D-misses'`.
