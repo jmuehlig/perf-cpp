@@ -18,10 +18,8 @@ main()
   try {
     event_counter.add({ "instructions",
                         "cycles",
-                        "branches",
-                        "cache-misses",
-                        "dTLB-miss-ratio",
-                        "L1-data-miss-ratio",
+                        "exc_taken",
+                        "l1i_cache_refill",
                         "cycles-per-instruction",
                         "nanoseconds",
                         "gigahertz" });
@@ -32,7 +30,7 @@ main()
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
-                                                   /* create benchmark of 512 MB */ 4096 };
+                                                   /* create benchmark of 512 MB */ 512 };
 
   /// Start recording.
   try {
