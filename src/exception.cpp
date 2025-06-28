@@ -5,8 +5,7 @@ perf::CannotOpenCounterError::create_error_message_from_code(const std::int64_t 
 {
   switch (error_code) {
     case ENOENT:
-      return "configuration might not be valid (e.g., wrong type or too many counters scheduled to the same hardware "
-             "counter)";
+      return "configuration might not be valid (e.g., unsupported event)";
     case E2BIG:
       return "perf_event_attr.size was not configured properly – this could be a bug in the perf-cpp library";
     case EACCES:
