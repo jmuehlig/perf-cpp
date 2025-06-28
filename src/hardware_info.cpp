@@ -192,7 +192,7 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
   /// The number of counters is in bits 15-11.
   const auto performance_counters_per_logical_core = (pmcr_el0 >> 11) & 0x1F;
 
-  return HardwareInfo::cache_value(HardwareInfo::_performance_counters_per_logical_core,
+  return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
                                    std::uint16_t(performance_counters_per_logical_core));
 #endif
 
