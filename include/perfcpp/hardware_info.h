@@ -1,5 +1,6 @@
 #pragma once
 #include <optional>
+#include <perfcpp/counter.h>
 
 #include <cstdint>
 #if defined(__x86_64__) || defined(__i386__)
@@ -95,5 +96,13 @@ private:
    */
   [[nodiscard]] static std::optional<std::uint8_t>
   identify_hardware_counters_per_cpu_or_events_per_hardware_counter_experimentally(bool is_identify_hardware_counters);
+
+  /**
+   * Creates a list for hardware counter and event identification. The list may depend on the underlying hardware (e.g.,
+   * some ARM CPUs do not support all events defined by the perf subsystem).
+   *
+   * @return List of events to experiment for hardware counter and event identification.
+   */
+  [[nodiscard]] static std::vector<CounterConfig> generate_events_for_counter_identification();
 };
 }

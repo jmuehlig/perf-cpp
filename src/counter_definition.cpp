@@ -1,4 +1,4 @@
-#include "perfcpp/util/table.h"
+#include <perfcpp/util/table.h>
 #include <fstream>
 #include <perfcpp/counter_definition.h>
 #include <perfcpp/hardware_info.h>
@@ -119,6 +119,20 @@ perf::CounterDefinition::time_event(const std::string& name) const noexcept
   }
 
   return std::nullopt;
+}
+
+std::vector<std::pair<std::string_view, perf::CounterConfig>>
+perf::CounterDefinition::pmu(const std::string& pmu_name) const
+{
+  auto events = std::vector<std::pair<std::string_view, CounterConfig>>{};
+
+  if (const auto iterator = this->_performance_monitoring_unit_events.find(pmu_name); iterator != this->_performance_monitoring_unit_events.end()) {
+    std::transform(iterator->second.begin(), iterator->second.end(), std::back_inserter(events), [](const auto& pair) {
+      return std::make_pair(std::string_view{std::get<0>(pair)}, std::get<1>(pair));
+    });
+  }
+
+  return events;
 }
 
 void

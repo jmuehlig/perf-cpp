@@ -236,31 +236,10 @@ std::optional<std::uint8_t>
 perf::HardwareInfo::identify_hardware_counters_per_cpu_or_events_per_hardware_counter_experimentally(
   const bool is_identify_hardware_counters)
 {
-  /// All events we try to open on a single physical performance counter.
-  const auto event_names_to_try = std::vector<std::string>{ "instructions",    "cycles",
-                                                            "branches",        "branch-misses",
-                                                            "cache-misses",    "cache-references",
-                                                            "L1-dcache-loads", "L1-dcache-load-misses",
-                                                            "L1-icache-loads", "L1-icache-load-misses" };
-
   /// Translate event names into codes.
-  const auto counter_definition = perf::CounterDefinition{};
-  auto events_to_try = std::vector<CounterConfig>{};
-  events_to_try.reserve(event_names_to_try.size());
-  for (const auto& name : event_names_to_try) {
-    /// Translate name into config.
-    const auto event_config = counter_definition.counter("cpu", name);
+  auto events = HardwareInfo::generate_events_for_counter_identification();
 
-    /// Verify that the event is available. Since these events are defined by the perf subsystem, they should be
-    /// available.
-    if (!event_config.has_value()) {
-      return std::nullopt;
-    }
-
-    events_to_try.push_back(std::get<2>(event_config.value()));
-  }
-
-  for (auto number_events = std::uint8_t(1U); number_events <= std::uint8_t(events_to_try.size()); ++number_events) {
+  for (auto number_events = std::uint8_t(1U); number_events <= std::uint8_t(events.size()); ++number_events) {
     auto group = Group{};
 
     /// Depending on what we want to find, we use either (a) only one event per hardware counter or (b) only one
@@ -270,7 +249,7 @@ perf::HardwareInfo::identify_hardware_counters_per_cpu_or_events_per_hardware_co
 
     /// Add the number of events to the group.
     for (auto i = 0U; i < number_events; ++i) {
-      group.add(events_to_try[i]);
+      group.add(events[i]);
     }
 
     try {
@@ -294,5 +273,63 @@ perf::HardwareInfo::identify_hardware_counters_per_cpu_or_events_per_hardware_co
     }
   }
 
-  return events_to_try.size();
+  return events.size();
+}
+
+std::vector<perf::CounterConfig>
+perf::HardwareInfo::generate_events_for_counter_identification()
+{
+  /// Maximum number of events we need to experiment.
+  constexpr auto max_events = 12UL;
+
+  /// List of event codes.
+  auto event_codes = std::vector<CounterConfig>{};
+  event_codes.reserve(max_events);
+
+  const auto counter_definition = CounterDefinition{};
+
+  /// Fetch all PMU names that are registered.
+  const auto pmu_names = counter_definition.pmu_names();
+
+  /// Check if ARM events are registered. Some ARM CPUs do not support all events provided by the perf subsystem. Hence,
+  /// we rely on the events coming from the ARM pmu.
+  if (const auto arm_pmu_name =
+        std::find_if(pmu_names.begin(),
+                     pmu_names.end(),
+                     [](const std::string& name) { return name.length() >= 3 && name.substr(0, 3) == "arm"; });
+      arm_pmu_name != pmu_names.end()) {
+    const auto events = counter_definition.pmu(*arm_pmu_name);
+
+    /// Translate events into codes.
+    for (auto i = 0U; i < std::max(events.size(), max_events); ++i) {
+      event_codes.push_back(std::get<1>(events[i]));
+    }
+
+    return event_codes;
+  }
+
+  /// If we could not detect an ARM PMU, we use events provided by the perf subsystem.
+  const auto event_names = std::vector<std::string>{ "instructions",    "cycles",
+                                                     "branches",        "branch-misses",
+                                                     "cache-misses",    "cache-references",
+                                                     "L1-dcache-loads", "L1-dcache-load-misses",
+                                                     "L1-icache-loads", "L1-icache-load-misses",
+                                                     "dTLB-loads",      "dTLB-load-misses",
+                                                     "iTLB-loads",      "iTLB-load-misses" };
+
+  /// Translate event names into configurations.
+  for (const auto& name : event_names) {
+    const auto event_config = counter_definition.counter("cpu", name);
+    /// Verify that the event is available. Since these events are defined by the perf subsystem, they should be
+    /// available.
+    if (event_config.has_value()) {
+      event_codes.push_back(std::get<2>(event_config.value()));
+
+      if (event_codes.size() == max_events) {
+        break;
+      }
+    }
+  }
+
+  return event_codes;
 }

@@ -214,6 +214,15 @@ public:
   }
 
   /**
+   * Returns all events for a given PMU. If the PMU is unknown, the list will be empty.
+   *
+   * @param pmu_name Name of the PMU.
+   * @return List of event pairs (name, configuration).
+   */
+  [[nodiscard]] std::vector<std::pair<std::string_view, CounterConfig>> pmu(
+    const std::string& pmu_name) const;
+
+  /**
    * Checks if a metric with the given name is registered.
    *
    * @param name Name of the requested query.
@@ -325,9 +334,9 @@ public:
   }
 
   /**
-   * @return List names of all available counters.
+   * @return List of names of all available performance monitoring units.
    */
-  [[nodiscard]] std::vector<std::string> names() const
+  [[nodiscard]] std::vector<std::string> pmu_names() const
   {
     auto names = std::vector<std::string>{};
     std::transform(_performance_monitoring_unit_events.begin(),
