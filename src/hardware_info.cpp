@@ -291,13 +291,10 @@ perf::HardwareInfo::generate_events_for_counter_identification()
   }
 
   /// If we could not detect an ARM PMU, we use events provided by the perf subsystem.
-  const auto event_names = std::vector<std::string>{ "instructions",    "cycles",
-                                                     "branches",        "branch-misses",
-                                                     "cache-misses",    "cache-references",
-                                                     "L1-dcache-loads", "L1-dcache-load-misses",
-                                                     "L1-icache-loads", "L1-icache-load-misses",
-                                                     "dTLB-loads",      "dTLB-load-misses",
-                                                     "iTLB-loads",      "iTLB-load-misses" };
+  const auto event_names =
+    std::vector<std::string>{ "instructions",          "cycles",       "bus-cycles",       "branches",
+                              "branch-misses",         "cache-misses", "cache-references", "L1-dcache-loads",
+                              "L1-dcache-load-misses", "dTLB-loads",   "dTLB-load-misses" };
 
   /// Translate event names into configurations.
   for (const auto& name : event_names) {
