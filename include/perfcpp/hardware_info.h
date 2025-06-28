@@ -53,9 +53,14 @@ public:
   [[nodiscard]] static std::uint64_t memory_page_size();
 
   /**
-   * @return The number of performance counters per logical CPU core.
+   * @return The number of physical performance counters per logical CPU core.
    */
-  [[nodiscard]] static std::uint16_t performance_counters_per_logical_core();
+  [[nodiscard]] static std::uint8_t physical_performance_counters_per_logical_core();
+
+  /**
+   * @return The number of events that can be scheduled to the same physical performance counter.
+   */
+  [[nodiscard]] static std::uint8_t events_per_physical_performance_counter();
 
 private:
   static std::optional<bool> _is_intel_aux_event_required;
@@ -63,7 +68,8 @@ private:
   static std::optional<bool> _is_amd_ibs_supported;
   static std::optional<bool> _is_ibs_l3_filter_supported;
   static std::optional<std::uint64_t> _memory_page_size;
-  static std::optional<std::uint16_t> _performance_counters_per_logical_core;
+  static std::optional<std::uint8_t> _physical_performance_counters_per_logical_core;
+  static std::optional<std::uint8_t> _events_per_physical_performance_counter;
 
   /**
    * Writes a value into the cache variable and returns the value.
@@ -78,5 +84,13 @@ private:
     variable = value;
     return value;
   }
+
+  /**
+   * Tries to open a performance counter with more and more events until it cannot open more events on a single physical
+   * performance counter.
+   *
+   * @return The maximum number of events on a single physical performance counter.
+   */
+  [[nodiscard]] static std::optional<std::uint8_t> find_number_events_per_physical_performance_counter_by_trying();
 };
 }

@@ -1,5 +1,8 @@
 #include <algorithm>
+#include <errno.h>
 #include <filesystem>
+#include <perfcpp/counter_definition.h>
+#include <perfcpp/group.h>
 #include <perfcpp/hardware_info.h>
 #include <unistd.h>
 #if defined(__x86_64__) || defined(__i386__)
@@ -23,7 +26,10 @@ std::optional<bool> perf::HardwareInfo::_is_ibs_l3_filter_supported{ std::nullop
 std::optional<std::uint64_t> perf::HardwareInfo::_memory_page_size{ std::nullopt };
 
 /// Number of performance counters per logical CPU core.
-std::optional<std::uint16_t> perf::HardwareInfo::_performance_counters_per_logical_core{ std::nullopt };
+std::optional<std::uint8_t> perf::HardwareInfo::_physical_performance_counters_per_logical_core{ std::nullopt };
+
+/// Number of events that can be scheduled to the same physical performance counter.
+std::optional<std::uint8_t> perf::HardwareInfo::_events_per_physical_performance_counter{ std::nullopt };
 
 bool
 perf::HardwareInfo::is_intel_aux_counter_required()
@@ -141,11 +147,11 @@ perf::HardwareInfo::memory_page_size()
   return HardwareInfo::cache_value(HardwareInfo::_memory_page_size, memory_page_size);
 }
 
-std::uint16_t
-perf::HardwareInfo::performance_counters_per_logical_core()
+std::uint8_t
+perf::HardwareInfo::physical_performance_counters_per_logical_core()
 {
-  if (HardwareInfo::_performance_counters_per_logical_core.has_value()) {
-    return HardwareInfo::_performance_counters_per_logical_core.value();
+  if (HardwareInfo::_physical_performance_counters_per_logical_core.has_value()) {
+    return HardwareInfo::_physical_performance_counters_per_logical_core.value();
   }
 
 #if defined(__x86_64__) || defined(__i386__)
@@ -157,8 +163,8 @@ perf::HardwareInfo::performance_counters_per_logical_core()
       /// Number of general-purpose performance monitoring counter per logical processor is in bits 15-08.
       const auto performance_counters_per_logical_core = (eax >> 8) & 0xFF;
 
-      return HardwareInfo::cache_value(HardwareInfo::_performance_counters_per_logical_core,
-                                       std::uint16_t(performance_counters_per_logical_core));
+      return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
+                                       std::uint8_t(performance_counters_per_logical_core));
     }
   }
 
@@ -170,8 +176,8 @@ perf::HardwareInfo::performance_counters_per_logical_core()
         if (__get_cpuid_count(0x80000022, 0, &eax, &ebx, &ecx, &edx) > 0) {
           const auto performance_counters_per_logical_core = eax & 0xFF;
 
-          return HardwareInfo::cache_value(HardwareInfo::_performance_counters_per_logical_core,
-                                           std::uint16_t(performance_counters_per_logical_core));
+          return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
+                                           std::uint8_t(performance_counters_per_logical_core));
         }
       }
     }
@@ -191,4 +197,87 @@ perf::HardwareInfo::performance_counters_per_logical_core()
 #endif
 
   return 0U;
+}
+
+std::uint8_t
+perf::HardwareInfo::events_per_physical_performance_counter()
+{
+  if (HardwareInfo::_events_per_physical_performance_counter.has_value()) {
+    return HardwareInfo::_events_per_physical_performance_counter.value();
+  }
+
+  /// Try to find the number of events per physical performance counter.
+  const auto events_per_physical_performance_counter =
+    HardwareInfo::find_number_events_per_physical_performance_counter_by_trying();
+
+  /// Fallback: Set to one, if the experiment failed.
+  if (!events_per_physical_performance_counter.has_value()) {
+    return HardwareInfo::cache_value(HardwareInfo::_events_per_physical_performance_counter, std::uint8_t(1U));
+  }
+
+  return HardwareInfo::cache_value(HardwareInfo::_events_per_physical_performance_counter,
+                                   events_per_physical_performance_counter.value());
+}
+
+std::optional<std::uint8_t>
+perf::HardwareInfo::find_number_events_per_physical_performance_counter_by_trying()
+{
+  /// All events we try to open on a single physical performance counter.
+  const auto event_names_to_try = std::vector<std::string>{ "instructions",    "cycles",
+                                                            "branches",        "branch-misses",
+                                                            "cache-misses",    "cache-references",
+                                                            "L1-dcache-loads", "L1-dcache-load-misses",
+                                                            "L1-icache-loads", "L1-icache-load-misses" };
+
+  /// Translate event names into codes.
+  const auto counter_definition = perf::CounterDefinition{};
+  auto events_to_try = std::vector<CounterConfig>{};
+  events_to_try.reserve(event_names_to_try.size());
+  for (const auto& name : event_names_to_try) {
+    /// Translate name into config.
+    const auto event_config = counter_definition.counter("cpu", name);
+
+    /// Verify that the event is available. Since these events are defined by the perf subsystem, they should be
+    /// available.
+    if (!event_config.has_value()) {
+      return std::nullopt;
+    }
+
+    events_to_try.push_back(std::get<2>(event_config.value()));
+  }
+
+  for (auto number_events_per_physical_performance_counter = std::uint8_t(1U);
+       number_events_per_physical_performance_counter <= std::uint8_t(events_to_try.size());
+       ++number_events_per_physical_performance_counter) {
+    auto group = Group{};
+
+    auto config = Config{ 1U, number_events_per_physical_performance_counter };
+
+    /// Add the number of events to the group.
+    for (auto i = 0U; i < number_events_per_physical_performance_counter; ++i) {
+      group.add(events_to_try[i]);
+    }
+
+    try {
+      /// Try to open the performance counter via the perf subsystem.
+      group.open(config);
+    } catch (const CannotOpenCounterError& error) {
+
+      /// If the perf subsystem fails with error code EINVAL, it is likely that we hit the number.
+      if (error.error_code() == EINVAL) {
+
+        /// However, if we only added a single counter, we another issue seems to cause the error.
+        if (number_events_per_physical_performance_counter > 1U) {
+          return --number_events_per_physical_performance_counter;
+        }
+      }
+
+      return std::nullopt;
+    } catch (const std::runtime_error& error) {
+      /// For every other error, we cannot tell the reason.
+      return std::nullopt;
+    }
+  }
+
+  return events_to_try.size();
 }

@@ -116,15 +116,15 @@ event_counter.add({ "instructions", "cycles",
 which will schedule each provided event to a **separate** hardware counter.
 *perf-cpp* implements three different scheduling modes:
 
-| Schedule Mode                            | Description                                                                                                                                                                                   |
-|------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `perf::EventCounter::Schedule::Separate` | Schedule each event to a separate *physical*  hardware counter. If a metric is provided as an event, each counter used to calculate the metric will be placed on a separate hardware counter. |
-| `perf::EventCounter::Schedule::Append`   | Schedule each event to any *physical*  hardware counter and make use of multiplexing. This is the **default**.                                                                                |
-| `perf::EventCounter::Schedule::Group`    | Schedule the list of provided events to the **same** *physical*  hardware counter (this is true for list of events and metrics).                                                              |
+| Schedule Mode                            | Description                                                                                                                                                                                                        |
+|------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `perf::EventCounter::Schedule::Separate` | Schedule each event to a separate *physical* hardware counter to avoid multiplexing. If a metric is provided as an event, each counter used to calculate the metric will be placed on a separate hardware counter. |
+| `perf::EventCounter::Schedule::Append`   | Schedule each event to any *physical*  hardware counter and make use of multiplexing. This is the **default**.                                                                                                     |
+| `perf::EventCounter::Schedule::Group`    | Schedule the list of provided events to the **same** *physical* hardware counter to multiplex the events (this is true for list of events and metrics).                                                            |
 
 `EventCounter::add()` will throw an exception, if the scheduling does not fit (e.g., too many events are requested to group together.)
 
-### Binding the Event Counter to a Specific CPU Core
+## Binding the Event Counter to a Specific CPU Core
 By default, a `perf::EventCounter` tracks events across all CPU cores on which the associated thread is scheduled, as well as the process that instantiated the counter.
 To restrict event counting to a particular CPU core, configure the counter as follows:
 
@@ -139,7 +139,7 @@ To revert this and resume counting on all cores the thread executes on:
 config.cpu_core(perf::CpuCore::Any); /// Count events an all CPU cores the thread is executed on.
 ```
 
-### Binding the Event Counter to a Specific Process
+## Binding the Event Counter to a Specific Process
 Similarly, process binding determines which process’s events are monitored. 
 By default, `perf::EventCounter` captures only the events triggered by the *calling* process.
 You can customize this behavior to:
@@ -166,7 +166,7 @@ config.process(perf::Process::Any);     /// Monitor events from all processes.
 > [!TIP]
 > Certain hardware events (e.g., Intel's off-core events) may require monitoring all processes on a specific CPU core, as the hardware does not attribute these events to individual processes.
 
-### Adjusting Hardware Settings to the Underlying System
+## Adjusting Hardware Settings to the Underlying System
 *perf-cpp* cannot identify the underlying hardware settings and assumes **four** groups (i.e., *physical* hardware counters) and **five** events per group.
 However, some CPUs (e.g., ARM Cortex-A72) do not implement multiplexing at all.
 
