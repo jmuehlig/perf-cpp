@@ -18,6 +18,10 @@ target_link_libraries(multi-cpu-statistics perf-cpp)
 add_executable(multi-process-statistics EXCLUDE_FROM_ALL examples/statistics/multi_process.cpp examples/access_benchmark.cpp)
 target_link_libraries(multi-process-statistics perf-cpp)
 
+## Metrics
+add_executable(metric EXCLUDE_FROM_ALL examples/statistics/metric.cpp examples/access_benchmark.cpp)
+target_link_libraries(metric perf-cpp)
+
 ## Live Events
 add_executable(live-events EXCLUDE_FROM_ALL examples/statistics/live_events.cpp examples/access_benchmark.cpp)
 target_link_libraries(live-events perf-cpp)
@@ -74,7 +78,7 @@ target_link_libraries(counter-definition perf-cpp)
 add_custom_target(examples)
 add_dependencies(examples
         single-thread-statistics inherit-thread-statistics multi-thread-statistics multi-cpu-statistics multi-process-statistics
-        instruction-pointer-sampling counter-sampling branch-sampling
+        metric instruction-pointer-sampling counter-sampling branch-sampling
         memory-address-sampling register-sampling multi-thread-sampling multi-cpu-sampling
         multi-event-sampling context-switch-sampling
         memory-access-analyzer live-events flame-graph counter-definition)

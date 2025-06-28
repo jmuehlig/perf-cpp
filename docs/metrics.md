@@ -4,6 +4,8 @@ One key metric frequently used is the "Cycles per Instruction" (CPI).
 This metric helps to measure how many CPU cycles are consumed for executiong an instruction, providing insight into the system's efficiency—the fewer the cycles needed per instruction, the more efficient the system.
 
 > [!TIP]
+> Our examples include a working code-example: **[statistics/metric.cpp](../examples/statistics/metric.cpp)**.
+> 
 > When [defining custom metrics](#creating-custom-metrics), you should take a look at the list of metrics in the [Likwid project](https://github.com/RRZE-HPC/likwid/tree/master/groups).
 
 > [!NOTE]

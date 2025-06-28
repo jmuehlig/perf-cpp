@@ -6,6 +6,10 @@ To monitor multiple threads or CPU cores, you have various options:
 * Initiate measurements that record counters for all child threads simultaneously (&rarr; [See our multithreaded inheritance code example: `examples/inherit_thread.cpp`](../examples/statistics/inherit_thread.cpp)).
 * Monitor specific CPU cores and record counters of all processes executed there (&rarr; [See our multi cpu code example: `examples/multi_cpu.cpp`](../examples/statistics/multi_cpu.cpp)).
 
+> [!TIP]
+> Our examples include several working code-examples, e.g., **[statistics/inherit_thread.cpp](../examples/statistics/inherit_thread.cpp)**, **[statistics/multi_cpu.cpp](../examples/statistics/multi_cpu.cpp)**, **[statistics/multi_thread.cpp](../examples/statistics/multi_thread.cpp)**, and **[statistics/multi_process.cpp](../examples/statistics/multi_process.cpp)**.
+
+
 ----
 ## Table of Contents
 - [1st Option: Count Events Individually for each Thread](#1st-option-count-events-individually-for-each-thread)
