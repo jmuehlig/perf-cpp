@@ -182,19 +182,6 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
       }
     }
   }
-// #elif defined(__aarch64__)
-//   std::uint64_t pmcr_el0_value;
-//
-//   /// Aarch64 uses the Performance Monitors Control Register PMCR_EL0 (see
-//   ///
-//   https://developer.arm.com/documentation/ddi0601/2025-03/AArch64-Registers/PMCR-EL0--Performance-Monitors-Control-Register).
-//   __asm__ volatile("mrs %0, pmcr_el0" : "=r"(pmcr_el0_value));
-//
-//   /// The number of counters is in bits 15-11.
-//   const auto performance_counters_per_logical_core = (pmcr_el0_value >> 11) & 0x1F;
-//
-//   return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
-//                                    std::uint8_t(performance_counters_per_logical_core));
 #endif
 
   /// Try to find the number of hardware counters per logical core.
@@ -208,8 +195,6 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
 
   return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
                                    hardware_counters.value());
-
-  return 0U;
 }
 
 std::uint8_t
@@ -257,13 +242,10 @@ perf::HardwareInfo::identify_hardware_counters_per_cpu_or_events_per_hardware_co
       group.open(config);
     } catch (const CannotOpenCounterError& error) {
 
-      /// If the perf subsystem fails with error code EINVAL, it is likely that we hit the number.
-      if (error.error_code() == EINVAL) {
-
-        /// However, if we only added a single counter, we another issue seems to cause the error.
-        if (number_events > 1U) {
-          return --number_events;
-        }
+      /// If the perf subsystem fails with error code EINVAL, it is likely that we hit the number. However, if we only
+      /// added a single counter, we another issue seems to cause the error.
+      if (error.error_code() == EINVAL && number_events > 1U) {
+        return --number_events;
       }
 
       return std::nullopt;
