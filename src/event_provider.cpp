@@ -120,18 +120,20 @@ perf::MetricEventProvider::add_events(perf::CounterDefinition& counter_definitio
 void
 perf::SystemSpecificEventProvider::add_events(perf::CounterDefinition& counter_definition)
 {
-  const auto events = std::vector<std::pair<std::string, std::string>>{
+  auto performance_monitoring_units = std::vector<std::pair<std::string, std::string>>{
     { "/sys/bus/event_source/devices/cpu/", "cpu" },                 /// CPU PMU
     { "/sys/bus/event_source/devices/cpu_core/", "cpu" },            /// CPU PMU on heterogeneous Intel architectures
     { "/sys/bus/event_source/devices/cpu_atom/", "cpu-atom" },       /// Atom PMU on heterogeneous Intel architectures
     { "/sys/bus/event_source/devices/cstate_core/", "cstate-core" }, /// CState Core PMU on Intel architectures
     { "/sys/bus/event_source/devices/cstate_pkg/", "cstate-pkg" },   /// CState Pkg PMU on Intel architectures
-    { "/sys/bus/event_source/devices/amd_iommu_0/", "amd-iommu-0" }, /// IO MMU on AMD architectures
     { "/sys/bus/event_source/devices/power/", "power" }              /// Power PMU
   };
 
+  /// Identify more dynamic PMUs (e.g., amd-iommu-0, etc).
+  SystemSpecificEventProvider::detect_performance_monitoring_units("amd_iommu.*|armv.*", performance_monitoring_units);
+
   /// Add the events by reading from the filesystem as specified above.
-  for (const auto& [path, pmu_name] : events) {
+  for (const auto& [path, pmu_name] : performance_monitoring_units) {
     if (std::filesystem::exists(path)) {
       SystemSpecificEventProvider::add_events(counter_definition, pmu_name, path);
     }
@@ -344,6 +346,29 @@ perf::SystemSpecificEventProvider::parse_integer(const std::string& value)
   }
 
   return std::nullopt;
+}
+
+void
+perf::SystemSpecificEventProvider::detect_performance_monitoring_units(
+  std::string&& regex_pattern,
+  std::vector<std::pair<std::string, std::string>>& performance_monitoring_units)
+{
+  const auto pattern = std::regex{ regex_pattern };
+
+  /// Iterate through the directory
+  for (const auto& entry : std::filesystem::directory_iterator("/sys/bus/event_source/devices/")) {
+    if (entry.is_directory()) {
+      /// Check if folder name matches the regex pattern
+      if (const auto subfolder = entry.path().filename().string(); std::regex_match(subfolder, pattern)) {
+
+        /// If yes, replace all underscores by dashes.
+        auto pmu_name = subfolder;
+        std::replace(pmu_name.begin(), pmu_name.end(), '_', '-');
+
+        performance_monitoring_units.emplace_back(entry.path().string().append("/"), std::move(pmu_name));
+      }
+    }
+  }
 }
 
 void
