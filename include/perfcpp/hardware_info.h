@@ -89,8 +89,11 @@ private:
    * Tries to open a performance counter with more and more events until it cannot open more events on a single physical
    * performance counter.
    *
+   * @param is_identify_hardware_counters If true, identify the number of hardware counters. Otherwise, identify the
+   * number of events per hardware counter.
    * @return The maximum number of events on a single physical performance counter.
    */
-  [[nodiscard]] static std::optional<std::uint8_t> find_number_events_per_physical_performance_counter_by_trying();
+  [[nodiscard]] static std::optional<std::uint8_t>
+  identify_hardware_counters_per_cpu_or_events_per_hardware_counter_experimentally(bool is_identify_hardware_counters);
 };
 }

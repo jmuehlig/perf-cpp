@@ -182,19 +182,32 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
       }
     }
   }
-#elif defined(__aarch64__)
-  std::uint64_t pmcr_el0;
+// #elif defined(__aarch64__)
+//   std::uint64_t pmcr_el0_value;
+//
+//   /// Aarch64 uses the Performance Monitors Control Register PMCR_EL0 (see
+//   ///
+//   https://developer.arm.com/documentation/ddi0601/2025-03/AArch64-Registers/PMCR-EL0--Performance-Monitors-Control-Register).
+//   __asm__ volatile("mrs %0, pmcr_el0" : "=r"(pmcr_el0_value));
+//
+//   /// The number of counters is in bits 15-11.
+//   const auto performance_counters_per_logical_core = (pmcr_el0_value >> 11) & 0x1F;
+//
+//   return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
+//                                    std::uint8_t(performance_counters_per_logical_core));
+#endif
 
-  /// Aarch64 uses the Performance Monitors Control Register PMCR_EL0 (see
-  /// https://developer.arm.com/documentation/ddi0601/2025-03/AArch64-Registers/PMCR-EL0--Performance-Monitors-Control-Register).
-  __asm__ volatile("mrs %0, pmcr_el0" : "=r"(pmcr_el0));
+  /// Try to find the number of hardware counters per logical core.
+  const auto hardware_counters =
+    HardwareInfo::identify_hardware_counters_per_cpu_or_events_per_hardware_counter_experimentally(true);
 
-  /// The number of counters is in bits 15-11.
-  const auto performance_counters_per_logical_core = (pmcr_el0 >> 11) & 0x1F;
+  /// Fallback: Set to one, if the experiment failed.
+  if (!hardware_counters.has_value()) {
+    return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core, std::uint8_t(0U));
+  }
 
   return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
-                                   std::uint16_t(performance_counters_per_logical_core));
-#endif
+                                   hardware_counters.value());
 
   return 0U;
 }
@@ -208,7 +221,7 @@ perf::HardwareInfo::events_per_physical_performance_counter()
 
   /// Try to find the number of events per physical performance counter.
   const auto events_per_physical_performance_counter =
-    HardwareInfo::find_number_events_per_physical_performance_counter_by_trying();
+    HardwareInfo::identify_hardware_counters_per_cpu_or_events_per_hardware_counter_experimentally(false);
 
   /// Fallback: Set to one, if the experiment failed.
   if (!events_per_physical_performance_counter.has_value()) {
@@ -220,7 +233,8 @@ perf::HardwareInfo::events_per_physical_performance_counter()
 }
 
 std::optional<std::uint8_t>
-perf::HardwareInfo::find_number_events_per_physical_performance_counter_by_trying()
+perf::HardwareInfo::identify_hardware_counters_per_cpu_or_events_per_hardware_counter_experimentally(
+  const bool is_identify_hardware_counters)
 {
   /// All events we try to open on a single physical performance counter.
   const auto event_names_to_try = std::vector<std::string>{ "instructions",    "cycles",
@@ -246,15 +260,16 @@ perf::HardwareInfo::find_number_events_per_physical_performance_counter_by_tryin
     events_to_try.push_back(std::get<2>(event_config.value()));
   }
 
-  for (auto number_events_per_physical_performance_counter = std::uint8_t(1U);
-       number_events_per_physical_performance_counter <= std::uint8_t(events_to_try.size());
-       ++number_events_per_physical_performance_counter) {
+  for (auto number_events = std::uint8_t(1U); number_events <= std::uint8_t(events_to_try.size()); ++number_events) {
     auto group = Group{};
 
-    auto config = Config{ 1U, number_events_per_physical_performance_counter };
+    /// Depending on what we want to find, we use either (a) only one event per hardware counter or (b) only one
+    /// hardware counter with multiple events.
+    auto config = is_identify_hardware_counters ? Config{ /* max groups */ number_events, /* max events */ 1U }
+                                                : Config{ /* max groups */ 1U, /* max events */ number_events };
 
     /// Add the number of events to the group.
-    for (auto i = 0U; i < number_events_per_physical_performance_counter; ++i) {
+    for (auto i = 0U; i < number_events; ++i) {
       group.add(events_to_try[i]);
     }
 
@@ -267,8 +282,8 @@ perf::HardwareInfo::find_number_events_per_physical_performance_counter_by_tryin
       if (error.error_code() == EINVAL) {
 
         /// However, if we only added a single counter, we another issue seems to cause the error.
-        if (number_events_per_physical_performance_counter > 1U) {
-          return --number_events_per_physical_performance_counter;
+        if (number_events > 1U) {
+          return --number_events;
         }
       }
 
