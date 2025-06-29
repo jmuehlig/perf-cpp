@@ -261,12 +261,9 @@ perf::HardwareInfo::identify_hardware_counters_per_cpu_or_events_per_hardware_co
 std::vector<perf::CounterConfig>
 perf::HardwareInfo::generate_events_for_counter_identification()
 {
-  /// Maximum number of events we need to experiment.
-  constexpr auto max_events = 12UL;
-
   /// List of event codes.
   auto event_codes = std::vector<CounterConfig>{};
-  event_codes.reserve(max_events);
+  event_codes.reserve(Group::MAX_MEMBERS);
 
   const auto counter_definition = CounterDefinition{};
 
@@ -283,30 +280,32 @@ perf::HardwareInfo::generate_events_for_counter_identification()
     const auto events = counter_definition.pmu(*arm_pmu_name);
 
     /// Translate events into codes.
-    for (auto i = 0U; i < std::max(events.size(), max_events); ++i) {
+    for (auto i = 0U; i < std::max<std::size_t>(events.size(), Group::MAX_MEMBERS); ++i) {
       event_codes.push_back(std::get<1>(events[i]));
     }
 
     return event_codes;
   }
 
-  /// If we could not detect an ARM PMU, we use events provided by the perf subsystem.
-  const auto event_names =
-    std::vector<std::string>{ "instructions",          "cycles",       "bus-cycles",       "branches",
-                              "branch-misses",         "cache-misses", "cache-references", "L1-dcache-loads",
-                              "L1-dcache-load-misses", "dTLB-loads",   "dTLB-load-misses" };
+  /// If we could not detect an ARM PMU, we use events provided "cpu" PMU.
+  for (const auto& [name, config] : counter_definition.pmu("cpu")) {
 
-  /// Translate event names into configurations.
-  for (const auto& name : event_names) {
-    const auto event_config = counter_definition.counter("cpu", name);
-    /// Verify that the event is available. Since these events are defined by the perf subsystem, they should be
-    /// available.
-    if (event_config.has_value()) {
-      event_codes.push_back(std::get<2>(event_config.value()));
+    /// Try to open the event on a physical performance counter.
+    try {
+      auto counter = Counter{config};
 
-      if (event_codes.size() == max_events) {
-        break;
+      /// Open as a single (non-live) event on a performance counter.
+      counter.open(Config{1U, 1U}, false);
+
+      /// If the open() call did not throw an exception, we can use the event.
+      event_codes.push_back(config);
+
+      /// Check if we reached the limit.
+      if (event_codes.size() == Group::MAX_MEMBERS) {
+        return event_codes;
       }
+    } catch (CannotOpenCounterError&) {
+      /// We do not handle the counter as some events will definitely lead to an exception, as not all events provided by the perf subsystem are supported on any hardware.
     }
   }
 
