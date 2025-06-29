@@ -1,16 +1,20 @@
+#include <iostream>
 #include <perfcpp/counter_definition.h>
 #include <perfcpp/hardware_info.h>
-#include <iostream>
 
 int
 main()
 {
-  std::cout << "libperf-cpp example: This example prints all automatically read events stored in the perf::CounterDefinition.\n"
-            << std::endl;
+  std::cout
+    << "libperf-cpp example: This example prints all automatically read events stored in the perf::CounterDefinition.\n"
+    << std::endl;
 
   std::cout << "Scanning the underlying hardware for hardware counters..." << std::endl;
-  std::cout << "Physical Hardware Counters  = " << std::uint16_t(perf::HardwareInfo::physical_performance_counters_per_logical_core()) << "\n";
-  std::cout << "Events per Hardware Counter = " << std::uint16_t(perf::HardwareInfo::events_per_physical_performance_counter()) << "\n" << std::endl;
+  std::cout << "Physical Hardware Counters  = "
+            << std::uint16_t(perf::HardwareInfo::physical_performance_counters_per_logical_core()) << "\n";
+  std::cout << "Events per Hardware Counter = "
+            << std::uint16_t(perf::HardwareInfo::events_per_physical_performance_counter()) << "\n"
+            << std::endl;
 
   /// Create custom instance of the counter definition.
   const auto counter_definition = perf::CounterDefinition{};

@@ -219,8 +219,7 @@ public:
    * @param pmu_name Name of the PMU.
    * @return List of event pairs (name, configuration).
    */
-  [[nodiscard]] std::vector<std::pair<std::string_view, CounterConfig>> pmu(
-    const std::string& pmu_name) const;
+  [[nodiscard]] std::vector<std::pair<std::string_view, CounterConfig>> pmu(const std::string& pmu_name) const;
 
   /**
    * Checks if a metric with the given name is registered.

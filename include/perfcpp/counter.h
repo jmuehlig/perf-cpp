@@ -3,8 +3,8 @@
 #include "config.h"
 #include "counter_result.h"
 #include "mmap_buffer.h"
-#include "util/unique_file_descriptor.h"
 #include "precision.h"
+#include "util/unique_file_descriptor.h"
 #include <array>
 #include <cstdint>
 #include <linux/perf_event.h>

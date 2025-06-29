@@ -120,7 +120,9 @@ perf::Tokenizer::read_constant(const std::size_t begin) const
   auto has_dot = false;
   auto has_scientific_e = false;
   while ((begin + count) < this->_input.length() &&
-         (std::isdigit(this->_input[begin + count]) || this->_input[begin + count] == '-' || this->_input[begin + count] == '.' || this->_input[begin + count] == 'e' || this->_input[begin + count] == 'E')) {
+         (std::isdigit(this->_input[begin + count]) || this->_input[begin + count] == '-' ||
+          this->_input[begin + count] == '.' || this->_input[begin + count] == 'e' ||
+          this->_input[begin + count] == 'E')) {
 
     /// Verify that only one dot is in the number.
     if (this->_input[begin + count] == '.' && std::exchange(has_dot, true)) {
@@ -128,7 +130,8 @@ perf::Tokenizer::read_constant(const std::size_t begin) const
     }
 
     /// Verify that only one scientific e is in the number.
-    if ((this->_input[begin + count] == 'e' || this->_input[begin + count] == 'E') && std::exchange(has_scientific_e, true)) {
+    if ((this->_input[begin + count] == 'e' || this->_input[begin + count] == 'E') &&
+        std::exchange(has_scientific_e, true)) {
       throw CannotParseExpressionError{ this->_input };
     }
 

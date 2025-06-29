@@ -166,9 +166,9 @@ perf::util::Table::to_string() const
 
 void
 perf::util::Table::print_text_aligned(std::stringstream& stream,
-                                perf::util::Table::Alignment alignment,
-                                const std::string& text,
-                                const std::size_t column_size)
+                                      perf::util::Table::Alignment alignment,
+                                      const std::string& text,
+                                      const std::size_t column_size)
 {
   const auto excess_size = column_size - text.size();
 

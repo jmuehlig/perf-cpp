@@ -70,7 +70,6 @@ perf::PerfSubsystemEventProvider::add_events(perf::CounterDefinition& counter_de
                          PERF_COUNT_HW_CACHE_ITLB | (PERF_COUNT_HW_CACHE_OP_READ << 8) |
                            (PERF_COUNT_HW_CACHE_RESULT_MISS << 16));
 
-
   /// Software events
   counter_definition.add("software", "cpu-clock", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_CLOCK);
   counter_definition.add("software", "task-clock", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_TASK_CLOCK);

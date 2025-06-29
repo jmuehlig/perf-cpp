@@ -346,5 +346,4 @@ TEST_CASE("calculating", "[Metric][NestedMetrics]")
     /// Evaluation must throw an exception since the metrics are cyclic.
     REQUIRE_THROWS(requested_event_set.result(counter_definition, std::move(counter_result), 1U));
   }
-
 }

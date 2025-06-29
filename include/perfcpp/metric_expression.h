@@ -306,7 +306,10 @@ private:
    * @param current_char Current character.
    * @return True, if the given char is an escape character.
    */
-  [[nodiscard]] static bool is_escape_char(char current_char) noexcept { return current_char == '\'' || current_char == '`'; }
+  [[nodiscard]] static bool is_escape_char(char current_char) noexcept
+  {
+    return current_char == '\'' || current_char == '`';
+  }
 
   /**
    * Tests if the left operator has greater precedence than the right operator.

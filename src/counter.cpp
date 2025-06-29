@@ -68,7 +68,8 @@ perf::Counter::open(const perf::Config& configuration, const bool is_live)
 }
 
 void
-perf::Counter::open(const perf::Config& configuration, const perf::util::UniqueFileDescriptor& group_leader_file_descriptor)
+perf::Counter::open(const perf::Config& configuration,
+                    const perf::util::UniqueFileDescriptor& group_leader_file_descriptor)
 {
   /// Configure the perf event attribute (including read format).
   this->_event_attribute = this->create_perf_event_attribute(false, configuration);

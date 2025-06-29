@@ -292,10 +292,10 @@ perf::HardwareInfo::generate_events_for_counter_identification()
 
     /// Try to open the event on a physical performance counter.
     try {
-      auto counter = Counter{config};
+      auto counter = Counter{ config };
 
       /// Open as a single (non-live) event on a performance counter.
-      counter.open(Config{1U, 1U}, false);
+      counter.open(Config{ 1U, 1U }, false);
 
       /// If the open() call did not throw an exception, we can use the event.
       event_codes.push_back(config);
@@ -305,7 +305,8 @@ perf::HardwareInfo::generate_events_for_counter_identification()
         return event_codes;
       }
     } catch (CannotOpenCounterError&) {
-      /// We do not handle the counter as some events will definitely lead to an exception, as not all events provided by the perf subsystem are supported on any hardware.
+      /// We do not handle the counter as some events will definitely lead to an exception, as not all events provided
+      /// by the perf subsystem are supported on any hardware.
     }
   }
 

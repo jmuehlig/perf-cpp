@@ -1,7 +1,7 @@
-#include <perfcpp/util/table.h>
 #include <fstream>
 #include <perfcpp/counter_definition.h>
 #include <perfcpp/hardware_info.h>
+#include <perfcpp/util/table.h>
 #include <sstream>
 
 perf::CounterDefinition::CounterDefinition(std::unique_ptr<EventProvider>&& event_provider)
@@ -126,9 +126,10 @@ perf::CounterDefinition::pmu(const std::string& pmu_name) const
 {
   auto events = std::vector<std::pair<std::string_view, CounterConfig>>{};
 
-  if (const auto iterator = this->_performance_monitoring_unit_events.find(pmu_name); iterator != this->_performance_monitoring_unit_events.end()) {
+  if (const auto iterator = this->_performance_monitoring_unit_events.find(pmu_name);
+      iterator != this->_performance_monitoring_unit_events.end()) {
     std::transform(iterator->second.begin(), iterator->second.end(), std::back_inserter(events), [](const auto& pair) {
-      return std::make_pair(std::string_view{std::get<0>(pair)}, std::get<1>(pair));
+      return std::make_pair(std::string_view{ std::get<0>(pair) }, std::get<1>(pair));
     });
   }
 
@@ -177,8 +178,8 @@ perf::CounterDefinition::to_string() const
       auto row = util::Table::Row{};
 
       row << pmu << name << config.type() << decimal_to_hex_string(config.configs()[0U])
-          << decimal_to_hex_string(config.configs()[1U])
-          << decimal_to_hex_string(config.configs()[2U]) << double_to_scientific(config.scale());
+          << decimal_to_hex_string(config.configs()[1U]) << decimal_to_hex_string(config.configs()[2U])
+          << double_to_scientific(config.scale());
       table.add(std::move(row));
     }
   }

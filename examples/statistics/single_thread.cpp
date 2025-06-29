@@ -16,13 +16,8 @@ main()
 
   /// Add all the performance counters we want to record.
   try {
-    event_counter.add({ "instructions",
-                        "cycles",
-                        "branches",
-                        "branch-misses",
-                        "cycles-per-instruction",
-                        "nanoseconds",
-                        "gigahertz" });
+    event_counter.add(
+      { "instructions", "cycles", "branches", "branch-misses", "cycles-per-instruction", "nanoseconds", "gigahertz" });
   } catch (std::runtime_error& e) {
     std::cerr << e.what() << std::endl;
     return 1;
