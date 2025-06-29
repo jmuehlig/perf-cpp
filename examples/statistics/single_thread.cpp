@@ -18,8 +18,8 @@ main()
   try {
     event_counter.add({ "instructions",
                         "cycles",
-                        "exc_taken",
-                        "l1i_cache_refill",
+                        "branches",
+                        "branch-misses",
                         "cycles-per-instruction",
                         "nanoseconds",
                         "gigahertz" });
