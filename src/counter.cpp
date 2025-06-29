@@ -126,7 +126,7 @@ perf::Counter::open(const perf::Config& config,
 
   /// Open the counter via the perf subsystem.
   auto [file_descriptor, error_code] =
-    this->try_open_via_perf_subsystem(config, this->_config.precise_ip().value_or(0U));
+    this->try_open_via_perf_subsystem(config, this->_config.precision().value_or(0U));
   this->_file_descriptor = std::move(file_descriptor);
 
   /// Read and set the counter's id.
@@ -181,7 +181,7 @@ perf::Counter::open(const perf::Config& config,
 
   /// Open the counter via the perf subsystem.
   auto [file_descriptor, error_code] = this->try_open_via_perf_subsystem(
-    config, this->_config.precise_ip().value_or(0U), util::FileDescriptorView{ group_leader_file_descriptor });
+    config, this->_config.precision().value_or(0U), util::FileDescriptorView{ group_leader_file_descriptor });
   this->_file_descriptor = std::move(file_descriptor);
 
   /// Read and set the counter's id.
@@ -247,9 +247,9 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled, const perf::C
   /// Set all requested attributes.
   attribute.type = this->_config.type();
   attribute.size = sizeof(perf_event_attr);
-  attribute.config = this->_config.event_id();
-  attribute.config1 = this->_config.event_id_extension()[0U];
-  attribute.config2 = this->_config.event_id_extension()[1U];
+  attribute.config = this->_config.configs()[0U];
+  attribute.config1 = this->_config.configs()[1U];
+  attribute.config2 = this->_config.configs()[2U];
   attribute.disabled = is_disabled;
 
   attribute.inherit = configuration.is_include_child_threads();
@@ -282,7 +282,7 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled,
   /// have a sample type but are not truly sampling. We assume that true sampling is only requested when
   /// period/frequency and precision is set since both are needed for sampling but not for reading counter without
   /// stopping.
-  if (this->_config.period_or_frequency().has_value() && this->_config.precise_ip().has_value()) {
+  if (this->_config.period_or_frequency().has_value() && this->_config.precision().has_value()) {
     attribute.sample_id_all = 1U;
 
     /// Set period of frequency, based on the PeriodOrFrequency variant.
@@ -338,14 +338,14 @@ perf::Counter::try_open_via_perf_subsystem(const perf::Config& configuration,
   auto file_descriptor = util::UniqueFileDescriptor{};
   std::int32_t error_code;
 
-  /// Try to open the counter. For sampling, we might try to adjust the precise_ip configuration (see
+  /// Try to open the counter. For sampling, we might try to adjust the precision configuration (see
   /// Counter::is_precise_ip_adjustable).
   do {
-    /// precise_ip is only needed for sampling, not counting events and live events; thus, only set when it has a value.
+    /// precision is only needed for sampling, not counting events and live events; thus, only set when it has a value.
     this->_event_attribute.precise_ip =
-      precision & 0b11; /// Use only two bits as perf_event_attr.precise_ip has only two bits.
+      precision & 0b11; /// Use only two bits as perf_event_attr.precision has only two bits.
 
-    /// Try to open using the perf subsystem. This might fail. If precise_ip is the reason (derived by the error code),
+    /// Try to open using the perf subsystem. This might fail. If precision is the reason (derived by the error code),
     /// we try to adjust the precision and try again (see Counter::is_precision_adjustable).
     std::tie(file_descriptor, error_code) =
       this->try_open_via_perf_subsystem(configuration, group_leader_file_descriptor);
@@ -359,13 +359,13 @@ perf::Counter::try_open_via_perf_subsystem(const perf::Config& configuration,
 bool
 perf::Counter::is_precision_adjustable(const std::uint8_t current_precise_ip, const std::int32_t error_code) noexcept
 {
-  /// When precise_ip is already the lowest possible configuration (0 or lower), lowering has no impact.
+  /// When precision is already the lowest possible configuration (0 or lower), lowering has no impact.
   if (current_precise_ip < 1U || current_precise_ip > 3U) {
     return false;
   }
 
-  /// EINVAL indicates an invalid argument, which could be a too high value for precise_ip.
-  /// Likewise, EOPNOTSUPP could indicate that such a high value of precise_ip is not supported on the underlying
+  /// EINVAL indicates an invalid argument, which could be a too high value for precision.
+  /// Likewise, EOPNOTSUPP could indicate that such a high value of precision is not supported on the underlying
   /// machine. In both scenarios, we should decrease the value and try again.
   return error_code == EINVAL || error_code == EOPNOTSUPP;
 }
@@ -473,7 +473,7 @@ perf::Counter::to_string(const bool is_group_leader,
   }
 
   if (this->_event_attribute.precise_ip > 0U) {
-    stream << "        precise_ip: " << this->_event_attribute.precise_ip << "\n";
+    stream << "        precision: " << this->_event_attribute.precise_ip << "\n";
   }
 
   if (this->_event_attribute.mmap > 0U) {

@@ -19,7 +19,7 @@ TEST_CASE("adding new events and metrics", "[CounterDefinition]")
     definition.add(std::string{ test_counter }, 100U, 0x1234);
     REQUIRE(definition.counter(test_counter).size() == 1U);
     REQUIRE(std::get<1>(definition.counter(test_counter).front()) == test_counter);
-    REQUIRE(std::get<2>(definition.counter(test_counter).front()).event_id() == 0x1234);
+    REQUIRE(std::get<2>(definition.counter(test_counter).front()).configs()[0U] == 0x1234);
     REQUIRE(std::get<2>(definition.counter(test_counter).front()).type() == 100U);
     REQUIRE(definition.is_metric(test_counter) == false);
     REQUIRE(definition.metric(test_counter).has_value() == false);
@@ -48,13 +48,13 @@ TEST_CASE("adding new events and metrics", "[CounterDefinition]")
     REQUIRE_FALSE(definition_with_file.counter(event0).empty());
     REQUIRE_FALSE(definition_with_file.counter(event1).empty());
 
-    REQUIRE(std::get<2>(definition_with_file.counter(event0).front()).event_id() == 0x1f3010e);
-    REQUIRE(std::get<2>(definition_with_file.counter(event0).front()).event_id_extension()[0U] == 0U);
-    REQUIRE(std::get<2>(definition_with_file.counter(event0).front()).event_id_extension()[1U] == 0U);
+    REQUIRE(std::get<2>(definition_with_file.counter(event0).front()).configs()[0U] == 0x1f3010e);
+    REQUIRE(std::get<2>(definition_with_file.counter(event0).front()).configs()[1U] == 0U);
+    REQUIRE(std::get<2>(definition_with_file.counter(event0).front()).configs()[2U] == 0U);
 
-    REQUIRE(std::get<2>(definition_with_file.counter(event1).front()).event_id() == 0x1CD);
-    REQUIRE(std::get<2>(definition_with_file.counter(event1).front()).event_id_extension()[0U] == 3U);
-    REQUIRE(std::get<2>(definition_with_file.counter(event1).front()).event_id_extension()[1U] == 0U);
+    REQUIRE(std::get<2>(definition_with_file.counter(event1).front()).configs()[0U] == 0x1CD);
+    REQUIRE(std::get<2>(definition_with_file.counter(event1).front()).configs()[1U] == 3U);
+    REQUIRE(std::get<2>(definition_with_file.counter(event1).front()).configs()[2U] == 0U);
   }
 
   SECTION("read csv with metric")

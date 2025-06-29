@@ -176,9 +176,9 @@ perf::CounterDefinition::to_string() const
     for (const auto& [name, config] : events) {
       auto row = util::Table::Row{};
 
-      row << pmu << name << config.type() << decimal_to_hex_string(config.event_id())
-          << decimal_to_hex_string(config.event_id_extension()[0U])
-          << decimal_to_hex_string(config.event_id_extension()[1U]) << double_to_scientific(config.scale());
+      row << pmu << name << config.type() << decimal_to_hex_string(config.configs()[0U])
+          << decimal_to_hex_string(config.configs()[1U])
+          << decimal_to_hex_string(config.configs()[2U]) << double_to_scientific(config.scale());
       table.add(std::move(row));
     }
   }

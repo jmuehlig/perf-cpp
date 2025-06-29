@@ -188,7 +188,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
       auto auxiliary_event_config = std::get<2>(auxiliary_event.value());
 
       /// The auxiliary event needs constant skid.
-      auxiliary_event_config.precise_ip(Precision::MustHaveConstantSkid);
+      auxiliary_event_config.precision(Precision::MustHaveConstantSkid);
 
       /// Set the event's period or frequency equal to the first trigger (or fall back to config if not configured).
       auto period_or_frequency = std::get<2>(trigger_group.front());
@@ -210,8 +210,8 @@ perf::Sampler::transform_trigger_to_sample_counter(
       /// Read the event config (like event id, etc.).
       auto event_config = std::get<2>(event_name_and_config.value());
 
-      /// Set the event's precise_ip (fall back to config if empty).
-      event_config.precise_ip(static_cast<std::uint8_t>(precision.value_or(this->_config.precise_ip())));
+      /// Set the event's precision (fall back to config if empty).
+      event_config.precision(static_cast<std::uint8_t>(precision.value_or(this->_config.precise_ip())));
 
       /// Set the event's period or frequency (fall back to config if empty).
       event_config.period_or_frequency(period_or_frequency.value_or(this->_config.period_for_frequency()));
