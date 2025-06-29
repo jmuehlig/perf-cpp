@@ -74,7 +74,7 @@ class Group
 {
 public:
   /// Number of maximal members per group.
-  constexpr static inline auto MAX_MEMBERS = 8U;
+  constexpr static inline auto MAX_MEMBERS = 12U;
 
   /**
    * Creates a copy of the given counter with the same counter configuration.

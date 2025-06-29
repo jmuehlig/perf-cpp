@@ -27,6 +27,8 @@ The examples will be built to `build/examples/bin/`.
 * [statistics/multi_thread.cpp](statistics/multi_thread.cpp) shows how to record performance counter statistics on **multiple** threads.
 * [statistics/multi_cpu.cpp](statistics/multi_cpu.cpp) shows how to pin performance counters to **specific CPU cores** instead of focussing on threads and processes.
 * [statistics/live_events.cpp](statistics/live_events.cpp) shows how to access hardware counters with **low latency**.
+* [statistics/metric.cpp](statistics/metric.cpp) shows how define new metrics.
+
 
 ### Sampling
 * [sampling/instruction_pointer.cpp](sampling/instruction_pointer.cpp) provides an example to sample instruction pointers on a single thread.

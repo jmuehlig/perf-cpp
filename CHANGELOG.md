@@ -1,6 +1,13 @@
 # *perf-cpp*: Changelog
 
-## v0.12
+## v0.12.1
+This update extends event discovery to ARM platforms, improves hardware counter introspection, and enhances the flexibility of metric definitions.
+
+- **Automatic Event Discovery on ARM**: Hardware event types are now automatically detected on ARM architectures when initializing a `perf::CounterDefinition` instance.
+- **Hardware Counter Introspection**: The number of available physical performance counters per logical core, along with the number of events each counter can multiplex, is now determined automatically when creating a `perf::EventCounter`.
+- **Recursive and Scientific Metrics**: Metric expressions can now reference other metrics recursively. Support for scientific notation (e.g., `1e5`) in formula-based metrics has also been added.
+
+## v0.12.0
 This release expands symbolic analysis capabilities, introduces FlameGraph generation, and improves hardware event management through both runtime and compile-time support.
 
 - **Symbol Resolution**: Instruction pointers captured during sampling can now be resolved to function names using `perf::SymbolResolver` (see the [documentation](docs/sampling-symbols-and-flamegraphs.md#translating-instruction-pointers-into-symbols)).

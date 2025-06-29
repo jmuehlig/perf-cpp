@@ -42,6 +42,14 @@ public:
   [[nodiscard]] const_iterator end() const { return _results.end(); }
 
   /**
+   * Adds the given result to the end of the results.
+   *
+   * @param name Name of the result.
+   * @param value Value of the result.
+   */
+  void emplace_back(const std::string_view name, const double value) { _results.emplace_back(name, value); }
+
+  /**
    * Converts the result to a json-formatted string.
    * @return Result in JSON format.
    */

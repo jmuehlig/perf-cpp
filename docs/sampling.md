@@ -7,6 +7,9 @@ This mechanism is conceptually similar to tools like `perf record`, but is speci
 
 &rarr; [See what data can be recorded and how to access it](#what-can-be-recorded-and-how-to-access-the-data).
 
+> [!TIP]
+> Our examples include several working code-examples, e.g., **[sampling/instruction_pointer.cpp](../examples/sampling/instruction_pointer.cpp)**, **[sampling/branch.cpp](../examples/sampling/branch.cpp)**, **[sampling/counter.cpp](../examples/sampling/counter.cpp)**, and **[sampling/memory_address.cpp](../examples/sampling/memory_address.cpp)**.
+
 The sections below provide a general overview of sampling behavior.  
 For information on sampling across multiple threads or cores, refer to the [parallel sampling documentation](sampling-parallel.md).
 

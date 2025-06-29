@@ -43,7 +43,7 @@ set(PERF_CPP_SRC
     src/requested_event.cpp
     src/sampler.cpp
     src/sample_decoder.cpp
-    src/table.cpp
+    src/util/table.cpp
     src/mmap_buffer.cpp
     src/symbol_resolver.cpp
     src/analyzer/memory_access.cpp

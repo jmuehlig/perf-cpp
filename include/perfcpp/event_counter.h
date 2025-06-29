@@ -258,10 +258,12 @@ private:
    * request.
    *
    * @param name Name of the event to add.
+   * @param is_visible_in_results Indicates if the added event/metric/time should be visible in the results.
    * @param result_vector List of information about the event. If the event is a single hardware event, the list will
    * have one entry. If the event is a metric, the list will have multiple entries.
    */
   void unfold(const std::string& name,
+              bool is_visible_in_results,
               std::vector<std::tuple<std::optional<std::string_view>,
                                      std::string_view,
                                      RequestedEvent::Type,

@@ -3,6 +3,9 @@ In parallel computing environments, understanding the performance of code execut
 *perf-cpp* facilitates this by providing tools to sample performance metrics either by individual threads or specific CPU cores. 
 This guide will cover how to set up and utilize these sampling capabilities effectively.
 
+> [!TIP]
+> Our examples include several working code-examples, e.g., **[sampling/multi_cpu.cpp](../examples/sampling/multi_cpu.cpp)** and **[sampling/multi_thread.cpp](../examples/sampling/multi_thread.cpp)**.
+
 ---
 ## Table of Contents
 - [Sample Separate Threads](#sample-separate-threads)

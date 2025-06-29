@@ -1,6 +1,6 @@
 #pragma once
 
-#include "unique_file_descriptor.h"
+#include "util/unique_file_descriptor.h"
 #include <cstddef>
 #include <cstdint>
 #include <linux/perf_event.h>
@@ -19,7 +19,7 @@ class MmapBuffer;
 class MmapBufferOverflowWorker
 {
 public:
-  MmapBufferOverflowWorker(MmapBuffer& mmap_buffer, const UniqueFileDescriptor& counter_file_descriptor);
+  MmapBufferOverflowWorker(MmapBuffer& mmap_buffer, const util::UniqueFileDescriptor& counter_file_descriptor);
   ~MmapBufferOverflowWorker() = default;
 
   MmapBufferOverflowWorker(MmapBufferOverflowWorker&&) = delete;
@@ -35,7 +35,7 @@ private:
   std::thread _overflow_handle_thread;
 
   /// File descriptor to communicate with the thread in case of canceling the worker.
-  UniqueFileDescriptor _cancel_thread_file_descriptor;
+  util::UniqueFileDescriptor _cancel_thread_file_descriptor;
 
   /**
    * Worker function that waits for an overflow within the mmap-ed buffer–calling the mmap buffer to handle the
@@ -47,14 +47,14 @@ private:
    * @param cancel_file_descriptor File descriptor used to communicate canceling the worker thread.
    */
   static void run(MmapBuffer& mmap_buffer,
-                  FileDescriptorView counter_file_descriptor,
-                  FileDescriptorView cancel_file_descriptor) noexcept;
+                  util::FileDescriptorView counter_file_descriptor,
+                  util::FileDescriptorView cancel_file_descriptor) noexcept;
 };
 
 class MmapBuffer
 {
 public:
-  explicit MmapBuffer(const UniqueFileDescriptor& file_descriptor, std::uint64_t count_pages = 1ULL);
+  explicit MmapBuffer(const util::UniqueFileDescriptor& file_descriptor, std::uint64_t count_pages = 1ULL);
   ~MmapBuffer();
 
   MmapBuffer(MmapBuffer&&) = delete;

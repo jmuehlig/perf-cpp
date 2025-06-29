@@ -188,7 +188,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
       auto auxiliary_event_config = std::get<2>(auxiliary_event.value());
 
       /// The auxiliary event needs constant skid.
-      auxiliary_event_config.precise_ip(Precision::MustHaveConstantSkid);
+      auxiliary_event_config.precision(Precision::MustHaveConstantSkid);
 
       /// Set the event's period or frequency equal to the first trigger (or fall back to config if not configured).
       auto period_or_frequency = std::get<2>(trigger_group.front());
@@ -210,8 +210,8 @@ perf::Sampler::transform_trigger_to_sample_counter(
       /// Read the event config (like event id, etc.).
       auto event_config = std::get<2>(event_name_and_config.value());
 
-      /// Set the event's precise_ip (fall back to config if empty).
-      event_config.precise_ip(static_cast<std::uint8_t>(precision.value_or(this->_config.precise_ip())));
+      /// Set the event's precision (fall back to config if empty).
+      event_config.precision(static_cast<std::uint8_t>(precision.value_or(this->_config.precise_ip())));
 
       /// Set the event's period or frequency (fall back to config if empty).
       event_config.period_or_frequency(period_or_frequency.value_or(this->_config.period_for_frequency()));
@@ -245,29 +245,8 @@ perf::Sampler::transform_trigger_to_sample_counter(
 
       /// Otherwise, check if the event is a metric. In that case, add all depending hardware events (if not already
       /// done).
-      else if (auto metric = this->_counter_definitions.metric(event_name); metric.has_value()) {
-        const auto metric_name = std::get<0>(metric.value());
-        /// For metrics, we need to add every hardware event the metric depends on (and check their existence).
-        for (const auto& depending_event_name : std::get<1>(metric.value()).required_counter_names()) {
-          if (auto depending_event_config = this->_counter_definitions.counter(pmu_name, depending_event_name);
-              depending_event_config.has_value()) {
-
-            /// Add the event to the requested event set.
-            /// If the request returns true, the event is indeed added and needs to be added to the group.
-            const auto is_added =
-              requested_events.add(pmu_name, std::get<1>(depending_event_config.value()), std::uint8_t(group.size()));
-            if (is_added) {
-              group.add(std::get<2>(depending_event_config.value()));
-            }
-          } else if (this->_counter_definitions.is_time_event(depending_event_name)) {
-            throw TimeEventNotSupportedForSamplingError{ event_name };
-          } else {
-            throw CannotFindEventForMetricError{ depending_event_name, metric_name };
-          }
-        }
-
-        /// Add the metric to the list of scheduled events.
-        requested_events.add(metric_name, RequestedEvent::Type::Metric, true);
+      else if (const auto metric = this->_counter_definitions.metric(event_name); metric.has_value()) {
+        this->add(metric.value(), pmu_name, requested_events, group);
       }
 
       /// Otherwise, check if the event is a time event. Time events are not supported for sampling; let the user know.
@@ -291,6 +270,39 @@ perf::Sampler::transform_trigger_to_sample_counter(
   }
 
   return SampleCounter{ std::move(group), is_auxiliary_event_needed, pmu_name == "ibs_fetch", pmu_name == "ibs_op" };
+}
+
+void
+perf::Sampler::add(const std::pair<std::string_view, Metric&> metric,
+                   const std::string_view pmu_name,
+                   perf::RequestedEventSet& requested_event_set,
+                   perf::Group& group) const
+{
+  const auto metric_name = std::get<0>(metric);
+  /// For metrics, we need to add every hardware event the metric depends on (and check their existence).
+  for (const auto& depending_event_name : std::get<1>(metric).required_counter_names()) {
+    if (const auto depending_event_config = this->_counter_definitions.counter(pmu_name, depending_event_name);
+        depending_event_config.has_value()) {
+
+      /// Add the event to the requested event set.
+      /// If the request returns true, the event is indeed added and needs to be added to the group.
+      const auto is_added =
+        requested_event_set.add(pmu_name, std::get<1>(depending_event_config.value()), std::uint8_t(group.size()));
+      if (is_added) {
+        group.add(std::get<2>(depending_event_config.value()));
+      }
+    } else if (const auto depending_metric = this->_counter_definitions.metric(depending_event_name);
+               depending_metric.has_value()) {
+      this->add(depending_metric.value(), pmu_name, requested_event_set, group);
+    } else if (this->_counter_definitions.is_time_event(depending_event_name)) {
+      throw TimeEventNotSupportedForSamplingError{ depending_event_name };
+    } else {
+      throw CannotFindEventForMetricError{ depending_event_name, metric_name };
+    }
+  }
+
+  /// Add the metric to the list of scheduled events.
+  requested_event_set.add(metric_name, RequestedEvent::Type::Metric, true);
 }
 
 std::pair<bool, bool>

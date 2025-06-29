@@ -5,7 +5,8 @@ This feature allows for interim results during ongoing computations, ideal for r
 The `perf::EventCounter` class is designed to support both standard and "live" events, allowing configuration of hardware performance counters to access results either "live" (for interim results) or after stopping.
 For the latter, see [the recording basics documentation](recording.md).
 
-&rarr; [View a working code-example here.](../examples/statistics/live_events.cpp)
+> [!TIP]
+> Our examples include a working code-example: **[statistics/live_events.cpp](../examples/statistics/live_events.cpp)**.
 
 ---
 ## Table of Contents

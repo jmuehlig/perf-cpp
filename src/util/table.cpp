@@ -1,10 +1,10 @@
+#include "perfcpp/util/table.h"
+#include "perfcpp/exception.h"
 #include <numeric>
-#include <perfcpp/exception.h>
-#include <perfcpp/table.h>
 #include <sstream>
 
 void
-perf::Table::add(std::vector<perf::Table::Header>&& header_row)
+perf::util::Table::add(std::vector<perf::util::Table::Header>&& header_row)
 {
   const auto count_columns =
     std::accumulate(header_row.begin(), header_row.end(), 0U, [](const auto count, const auto& header) {
@@ -21,7 +21,7 @@ perf::Table::add(std::vector<perf::Table::Header>&& header_row)
 }
 
 void
-perf::Table::add(perf::Table::Row&& row)
+perf::util::Table::add(perf::util::Table::Row&& row)
 {
   const auto count_columns = row.columns().size();
 
@@ -36,7 +36,7 @@ perf::Table::add(perf::Table::Row&& row)
 }
 
 std::string
-perf::Table::to_string() const
+perf::util::Table::to_string() const
 {
   if (!this->_count_columns.has_value()) {
     return "";
@@ -165,10 +165,10 @@ perf::Table::to_string() const
 }
 
 void
-perf::Table::print_text_aligned(std::stringstream& stream,
-                                perf::Table::Alignment alignment,
-                                const std::string& text,
-                                const std::size_t column_size)
+perf::util::Table::print_text_aligned(std::stringstream& stream,
+                                      perf::util::Table::Alignment alignment,
+                                      const std::string& text,
+                                      const std::size_t column_size)
 {
   const auto excess_size = column_size - text.size();
 

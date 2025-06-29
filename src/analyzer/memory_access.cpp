@@ -1,8 +1,8 @@
+#include "perfcpp/util/table.h"
 #include <algorithm>
 #include <numeric>
 #include <perfcpp/analyzer/memory_access.h>
 #include <perfcpp/exception.h>
-#include <perfcpp/table.h>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_set>
@@ -171,7 +171,7 @@ perf::analyzer::MemoryAccessResult::to_string() const
            }) != data_type.members().end();
   };
 
-  auto data_types = std::vector<std::tuple<std::string, std::size_t, Table, std::size_t>>{};
+  auto data_types = std::vector<std::tuple<std::string, std::size_t, util::Table, std::size_t>>{};
 
   for (const auto& data_type : this->_data_types) {
     if (data_type.members().empty()) {
@@ -187,15 +187,15 @@ perf::analyzer::MemoryAccessResult::to_string() const
     auto count_samples = 0ULL;
 
     /// Create the data type table.
-    auto table = Table{ 2U };
+    auto table = util::Table{ 2U };
     table.reserve(data_type.members().size() + 3U);
 
     /// Access type headers.
-    auto access_type_headers = std::vector<Table::Header>{ Table::Header{ "", 3U, false } };
-    auto category_headers = std::vector<Table::Header>{ Table::Header{ "", 3U, false } };
-    auto row_headers = std::vector<Table::Header>{ Table::Header{ "" },
-                                                   Table::Header{ "", Table::Alignment::Left },
-                                                   Table::Header{ "samples" } };
+    auto access_type_headers = std::vector<util::Table::Header>{ util::Table::Header{ "", 3U, false } };
+    auto category_headers = std::vector<util::Table::Header>{ util::Table::Header{ "", 3U, false } };
+    auto row_headers = std::vector<util::Table::Header>{ util::Table::Header{ "" },
+                                                         util::Table::Header{ "", util::Table::Alignment::Left },
+                                                         util::Table::Header{ "samples" } };
 
     if (has_load) {
       access_type_headers.emplace_back("loads",
@@ -323,7 +323,7 @@ perf::analyzer::MemoryAccessResult::to_string() const
                                               MemberStatistic{},
                                               [](auto& current, const auto& sample) { return current += sample; });
 
-      auto row = Table::Row{};
+      auto row = util::Table::Row{};
       auto member_offset = std::to_string(member.offset()).append(": ");
       auto member_name = std::string{ member.name() }.append(" (").append(std::to_string(member.size())).append("B)");
       row << member_offset << member_name << member.samples().size();

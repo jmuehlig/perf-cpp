@@ -135,6 +135,18 @@ private:
    * @param path Path in the filesystem, containing event, type, and format files.
    */
   static void add_events(CounterDefinition& counter_definition, const std::string& pmu_name, const std::string& path);
+
+  /**
+   * Tries to identify more PMUs by searching "/sys/bus/event_source/devices/" for subfolders with the given pattern.
+   * The identified PMUs are appended to the given list of PMUs.
+   *
+   * @param regex_pattern Pattern the subfolders must match.
+   * @param performance_monitoring_units List of PMUs.
+   * @return A list of pairs (path, pmu name) where "pmu name" contains "-" instead of "_".
+   */
+  static void detect_performance_monitoring_units(
+    std::string&& regex_pattern,
+    std::vector<std::pair<std::string, std::string>>& performance_monitoring_units);
 };
 
 /**

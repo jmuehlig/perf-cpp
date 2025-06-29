@@ -32,25 +32,6 @@ perf::PerfSubsystemEventProvider::add_events(perf::CounterDefinition& counter_de
   counter_definition.add("stalled-cycles-frontend", PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_FRONTEND);
   counter_definition.add("idle-cycles-frontend", PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_FRONTEND);
 
-  /// Software events
-  counter_definition.add("cpu-clock", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_CLOCK);
-  counter_definition.add("task-clock", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_TASK_CLOCK);
-  counter_definition.add("page-faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS);
-  counter_definition.add("faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS);
-  counter_definition.add("major-faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MAJ);
-  counter_definition.add("minor-faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MIN);
-  counter_definition.add("alignment-faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_ALIGNMENT_FAULTS);
-  counter_definition.add("emulation-faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_EMULATION_FAULTS);
-  counter_definition.add("context-switches", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CONTEXT_SWITCHES);
-#ifndef PERFCPP_NO_COUNT_SW_BPF_OUTPUT /// PERF_COUNT_SW_BPF_OUTPUT is supported since Linux Kernel 4.4
-  counter_definition.add("bpf-output", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_BPF_OUTPUT);
-#endif
-#ifndef PERFCPP_NO_CGROUP_SWITCHES /// PERF_COUNT_SW_CGROUP_SWITCHES is supported since Linux Kernel 5.13
-  counter_definition.add("cgroup-switches", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CGROUP_SWITCHES);
-#endif
-  counter_definition.add("cpu-migrations", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS);
-  counter_definition.add("migrations", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS);
-
   /// Cache events
   counter_definition.add("cache-misses", PERF_TYPE_HARDWARE, PERF_COUNT_HW_CACHE_MISSES);
   counter_definition.add("cache-references", PERF_TYPE_HARDWARE, PERF_COUNT_HW_CACHE_REFERENCES);
@@ -88,6 +69,25 @@ perf::PerfSubsystemEventProvider::add_events(perf::CounterDefinition& counter_de
                          PERF_TYPE_HW_CACHE,
                          PERF_COUNT_HW_CACHE_ITLB | (PERF_COUNT_HW_CACHE_OP_READ << 8) |
                            (PERF_COUNT_HW_CACHE_RESULT_MISS << 16));
+
+  /// Software events
+  counter_definition.add("software", "cpu-clock", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_CLOCK);
+  counter_definition.add("software", "task-clock", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_TASK_CLOCK);
+  counter_definition.add("software", "page-faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS);
+  counter_definition.add("software", "faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS);
+  counter_definition.add("software", "major-faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MAJ);
+  counter_definition.add("software", "minor-faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MIN);
+  counter_definition.add("software", "alignment-faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_ALIGNMENT_FAULTS);
+  counter_definition.add("software", "emulation-faults", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_EMULATION_FAULTS);
+  counter_definition.add("software", "context-switches", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CONTEXT_SWITCHES);
+#ifndef PERFCPP_NO_COUNT_SW_BPF_OUTPUT /// PERF_COUNT_SW_BPF_OUTPUT is supported since Linux Kernel 4.4
+  counter_definition.add("software", "bpf-output", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_BPF_OUTPUT);
+#endif
+#ifndef PERFCPP_NO_CGROUP_SWITCHES /// PERF_COUNT_SW_CGROUP_SWITCHES is supported since Linux Kernel 5.13
+  counter_definition.add("software", "cgroup-switches", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CGROUP_SWITCHES);
+#endif
+  counter_definition.add("software", "cpu-migrations", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS);
+  counter_definition.add("software", "migrations", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS);
 }
 
 void
@@ -120,18 +120,20 @@ perf::MetricEventProvider::add_events(perf::CounterDefinition& counter_definitio
 void
 perf::SystemSpecificEventProvider::add_events(perf::CounterDefinition& counter_definition)
 {
-  const auto events = std::vector<std::pair<std::string, std::string>>{
+  auto performance_monitoring_units = std::vector<std::pair<std::string, std::string>>{
     { "/sys/bus/event_source/devices/cpu/", "cpu" },                 /// CPU PMU
     { "/sys/bus/event_source/devices/cpu_core/", "cpu" },            /// CPU PMU on heterogeneous Intel architectures
     { "/sys/bus/event_source/devices/cpu_atom/", "cpu-atom" },       /// Atom PMU on heterogeneous Intel architectures
     { "/sys/bus/event_source/devices/cstate_core/", "cstate-core" }, /// CState Core PMU on Intel architectures
     { "/sys/bus/event_source/devices/cstate_pkg/", "cstate-pkg" },   /// CState Pkg PMU on Intel architectures
-    { "/sys/bus/event_source/devices/amd_iommu_0/", "amd-iommu-0" }, /// IO MMU on AMD architectures
     { "/sys/bus/event_source/devices/power/", "power" }              /// Power PMU
   };
 
+  /// Identify more dynamic PMUs (e.g., amd-iommu-0, etc).
+  SystemSpecificEventProvider::detect_performance_monitoring_units("amd_iommu.*|armv.*", performance_monitoring_units);
+
   /// Add the events by reading from the filesystem as specified above.
-  for (const auto& [path, pmu_name] : events) {
+  for (const auto& [path, pmu_name] : performance_monitoring_units) {
     if (std::filesystem::exists(path)) {
       SystemSpecificEventProvider::add_events(counter_definition, pmu_name, path);
     }
@@ -344,6 +346,29 @@ perf::SystemSpecificEventProvider::parse_integer(const std::string& value)
   }
 
   return std::nullopt;
+}
+
+void
+perf::SystemSpecificEventProvider::detect_performance_monitoring_units(
+  std::string&& regex_pattern,
+  std::vector<std::pair<std::string, std::string>>& performance_monitoring_units)
+{
+  const auto pattern = std::regex{ regex_pattern };
+
+  /// Iterate through the directory
+  for (const auto& entry : std::filesystem::directory_iterator("/sys/bus/event_source/devices/")) {
+    if (entry.is_directory()) {
+      /// Check if folder name matches the regex pattern
+      if (const auto subfolder = entry.path().filename().string(); std::regex_match(subfolder, pattern)) {
+
+        /// If yes, replace all underscores by dashes.
+        auto pmu_name = subfolder;
+        std::replace(pmu_name.begin(), pmu_name.end(), '_', '-');
+
+        performance_monitoring_units.emplace_back(entry.path().string().append("/"), std::move(pmu_name));
+      }
+    }
+  }
 }
 
 void

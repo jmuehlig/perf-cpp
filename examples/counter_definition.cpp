@@ -1,24 +1,26 @@
-#include <perfcpp/counter_definition.h>
 #include <iostream>
+#include <perfcpp/counter_definition.h>
+#include <perfcpp/hardware_info.h>
 
 int
 main()
 {
-  std::cout << "libperf-cpp example: This example prints all automatically read events stored in the perf::CounterDefinition.\n"
+  std::cout
+    << "libperf-cpp example: This example prints all automatically read events stored in the perf::CounterDefinition.\n"
+    << std::endl;
+
+  std::cout << "Scanning the underlying hardware for hardware counters..." << std::endl;
+  std::cout << "Physical Hardware Counters  = "
+            << std::uint16_t(perf::HardwareInfo::physical_performance_counters_per_logical_core()) << "\n";
+  std::cout << "Events per Hardware Counter = "
+            << std::uint16_t(perf::HardwareInfo::events_per_physical_performance_counter()) << "\n"
             << std::endl;
 
   /// Create custom instance of the counter definition.
-  /// If -DINCLUDE_PROCESSOR_EVENTS=1 is set, a source file with hardware-specific events is generated; include that to print all events for this platform.
-#ifdef PERFCPP_HAS_PROCESSOR_SPECIFIC_EVENTS
-  const auto counter_definition = perf::CounterDefinition{
-    std::make_unique<perf::ProcessorSpecificEventProvider>()
-  };
-#else
   const auto counter_definition = perf::CounterDefinition{};
-#endif
 
   /// Dump to the console without adding further events.
-  std::cout << counter_definition.to_string() << std::endl;
+  std::cout << "Detected events:\n" << counter_definition.to_string() << std::endl;
 
   return 0;
 }

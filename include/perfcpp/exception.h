@@ -37,11 +37,18 @@ public:
                            .append("): ")
                            .append(CannotOpenCounterError::create_error_message_from_code(error_code))
                            .append("."))
+    , _error_code(error_code)
   {
   }
   ~CannotOpenCounterError() override = default;
 
+  /**
+   * @return The error code provided by the perf subsystem.
+   */
+  [[nodiscard]] std::int64_t error_code() const noexcept { return _error_code; }
+
 private:
+  std::int64_t _error_code;
   /**
    * Creates an exception message based on the errno set when accessing the perf subsystem to open an event.
    *
@@ -152,6 +159,16 @@ public:
   {
   }
   ~CannotFindEventOrMetricError() override = default;
+};
+
+class CannotEvaluateMetricsBecauseOfCycleError final : public std::runtime_error
+{
+public:
+  explicit CannotEvaluateMetricsBecauseOfCycleError()
+    : std::runtime_error(std::string{ "Cannot evaluate metrics because they are mutually (cyclically) dependent. " })
+  {
+  }
+  ~CannotEvaluateMetricsBecauseOfCycleError() override = default;
 };
 
 class CannotFindEventError final : public std::runtime_error

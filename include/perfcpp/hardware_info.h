@@ -1,5 +1,6 @@
 #pragma once
 #include <optional>
+#include <perfcpp/counter.h>
 
 #include <cstdint>
 #if defined(__x86_64__) || defined(__i386__)
@@ -53,9 +54,14 @@ public:
   [[nodiscard]] static std::uint64_t memory_page_size();
 
   /**
-   * @return The number of performance counters per logical CPU core.
+   * @return The number of physical performance counters per logical CPU core.
    */
-  [[nodiscard]] static std::uint16_t performance_counters_per_logical_core();
+  [[nodiscard]] static std::uint8_t physical_performance_counters_per_logical_core();
+
+  /**
+   * @return The number of events that can be scheduled to the same physical performance counter.
+   */
+  [[nodiscard]] static std::uint8_t events_per_physical_performance_counter();
 
 private:
   static std::optional<bool> _is_intel_aux_event_required;
@@ -63,7 +69,8 @@ private:
   static std::optional<bool> _is_amd_ibs_supported;
   static std::optional<bool> _is_ibs_l3_filter_supported;
   static std::optional<std::uint64_t> _memory_page_size;
-  static std::optional<std::uint16_t> _performance_counters_per_logical_core;
+  static std::optional<std::uint8_t> _physical_performance_counters_per_logical_core;
+  static std::optional<std::uint8_t> _events_per_physical_performance_counter;
 
   /**
    * Writes a value into the cache variable and returns the value.
@@ -78,5 +85,24 @@ private:
     variable = value;
     return value;
   }
+
+  /**
+   * Tries to open a performance counter with more and more events until it cannot open more events on a single physical
+   * performance counter.
+   *
+   * @param is_identify_hardware_counters If true, identify the number of hardware counters. Otherwise, identify the
+   * number of events per hardware counter.
+   * @return The maximum number of events on a single physical performance counter.
+   */
+  [[nodiscard]] static std::optional<std::uint8_t>
+  identify_hardware_counters_per_cpu_or_events_per_hardware_counter_experimentally(bool is_identify_hardware_counters);
+
+  /**
+   * Creates a list for hardware counter and event identification. The list may depend on the underlying hardware (e.g.,
+   * some ARM CPUs do not support all events defined by the perf subsystem).
+   *
+   * @return List of events to experiment for hardware counter and event identification.
+   */
+  [[nodiscard]] static std::vector<CounterConfig> generate_events_for_counter_identification();
 };
 }

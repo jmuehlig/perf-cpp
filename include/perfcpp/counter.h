@@ -4,7 +4,7 @@
 #include "counter_result.h"
 #include "mmap_buffer.h"
 #include "precision.h"
-#include "unique_file_descriptor.h"
+#include "util/unique_file_descriptor.h"
 #include <array>
 #include <cstdint>
 #include <linux/perf_event.h>
@@ -20,42 +20,81 @@ class CounterConfig
 {
 public:
   CounterConfig(const std::uint32_t type,
-                const std::uint64_t event_id,
-                const std::uint64_t event_id_extension_1 = 0U,
-                const std::uint64_t event_id_extension_2 = 0U) noexcept
+                const std::uint64_t id,
+                const std::uint64_t id_extension_1 = 0UL,
+                const std::uint64_t id_extension_2 = 0UL) noexcept
     : _type(type)
-    , _event_id(event_id)
-    , _event_id_extension({ event_id_extension_1, event_id_extension_2 })
+    , _configs({ id, id_extension_1, id_extension_2 })
   {
   }
 
   ~CounterConfig() noexcept = default;
 
+  /**
+   * Set the scale for calculating the event result.
+   * @param scale Scale of the event.
+   */
   void scale(const double scale) noexcept { _scale = scale; }
-  void precise_ip(const std::uint8_t precise_ip) noexcept { _precise_ip = precise_ip; }
+
+  /**
+   * Set the precision if the event is used for sampling.
+   * @param precision Precision.
+   */
+  void precision(const std::uint8_t precision) noexcept { _precision = precision; }
+
+  /**
+   * Set the period or frequency if the event is used for sampling.
+   * @param period_or_frequency Period of frequency.
+   */
   void period_or_frequency(const PeriodOrFrequency period_or_frequency) noexcept
   {
     _period_or_frequency = period_or_frequency;
   }
 
+  /**
+   * @return Type of the event, mostly referring to the PMU.
+   */
   [[nodiscard]] std::uint32_t type() const noexcept { return _type; }
-  [[nodiscard]] std::uint64_t event_id() const noexcept { return _event_id; }
-  [[nodiscard]] std::array<std::uint64_t, 2U> event_id_extension() const noexcept { return _event_id_extension; }
+
+  /**
+   * @return Configurations of the event.
+   */
+  [[nodiscard]] std::array<std::uint64_t, 3U> configs() const noexcept { return _configs; }
+
+  /**
+   * @return Scale of the event.
+   */
   [[nodiscard]] double scale() const noexcept { return _scale; }
-  [[nodiscard]] std::optional<std::uint8_t> precise_ip() const noexcept { return _precise_ip; }
+
+  /**
+   * @return Precision, if the event is used for sampling.
+   */
+  [[nodiscard]] std::optional<std::uint8_t> precision() const noexcept { return _precision; }
+
+  /**
+   * @return Period or frequency, if the event is used for sampling.
+   */
   [[nodiscard]] std::optional<PeriodOrFrequency> period_or_frequency() const noexcept { return _period_or_frequency; }
 
   [[nodiscard]] bool operator==(const CounterConfig& other) const noexcept
   {
-    return _type == other._type && _event_id == other._event_id;
+    return _type == other._type && _configs[0U] == other._configs[0U];
   }
 
 private:
+  /// Type of the event, mostly referring to the PMU.
   std::uint32_t _type;
-  std::uint64_t _event_id;
-  std::array<std::uint64_t, 2U> _event_id_extension;
+
+  /// Configuration ids of the event.
+  std::array<std::uint64_t, 3U> _configs;
+
+  /// Scale of the event.
   double _scale{ 1.0 };
-  std::optional<std::uint8_t> _precise_ip{ std::nullopt };
+
+  /// Precision, if the event is used for sampling.
+  std::optional<std::uint8_t> _precision{ std::nullopt };
+
+  /// Period of frequency, if the event is used for sampling.
   std::optional<PeriodOrFrequency> _period_or_frequency{ std::nullopt };
 };
 
@@ -87,7 +126,7 @@ public:
   /**
    * @return The file descriptor of the counter; -1 if the counter was not opened (successfully).
    */
-  [[nodiscard]] const UniqueFileDescriptor& file_descriptor() const noexcept { return _file_descriptor; }
+  [[nodiscard]] const util::UniqueFileDescriptor& file_descriptor() const noexcept { return _file_descriptor; }
 
   /**
    * Opens the counter using via the perf subsystem.
@@ -109,7 +148,7 @@ public:
    * @param configuration Configuration of the counter.
    * @param group_leader_file_descriptor File descriptor of the group leader.
    */
-  void open(const Config& configuration, const UniqueFileDescriptor& group_leader_file_descriptor);
+  void open(const Config& configuration, const util::UniqueFileDescriptor& group_leader_file_descriptor);
 
   /**
    * Opens the counter using via the perf subsystem.
@@ -163,7 +202,7 @@ public:
             std::optional<std::uint32_t> max_user_stack_size,
             std::optional<std::uint16_t> max_callstack_size,
             bool is_include_context_switch,
-            const UniqueFileDescriptor& group_leader_file_descriptor);
+            const util::UniqueFileDescriptor& group_leader_file_descriptor);
 
   /**
    * Opens the counter using the perf subsystem via the perf_event_open system call.
@@ -190,7 +229,7 @@ public:
   void open(const perf::Config& config,
             bool is_group_leader,
             bool is_secret_leader,
-            const UniqueFileDescriptor& group_leader_file_descriptor,
+            const util::UniqueFileDescriptor& group_leader_file_descriptor,
             bool is_read_format,
             std::optional<std::uint64_t> buffer_pages,
             std::optional<std::uint64_t> sample_type,
@@ -247,7 +286,7 @@ public:
    * @return A string representing all configurations of this counter.
    */
   [[nodiscard]] std::string to_string(bool is_group_leader,
-                                      const UniqueFileDescriptor& group_leader_file_descriptor,
+                                      const util::UniqueFileDescriptor& group_leader_file_descriptor,
                                       Process process,
                                       CpuCore cpu_core) const;
 
@@ -264,7 +303,7 @@ private:
   std::uint64_t _id{ 0U };
 
   /// The file descriptor as returned by the perf subsystem when opening the counter.
-  UniqueFileDescriptor _file_descriptor;
+  util::UniqueFileDescriptor _file_descriptor;
 
   /// Buffer used to store samples. The buffer mmaps a ringbuffer and handles overflows via a separate thread.
   /// Additionally, the MmapBuffer can read live events.
@@ -326,9 +365,9 @@ private:
    * @param group_leader_file_descriptor View to the group leader's file descriptor.
    * @return File descriptor and error code, which is valid when the file descriptor has no value.
    */
-  [[nodiscard]] std::pair<UniqueFileDescriptor, std::int32_t> try_open_via_perf_subsystem(
+  [[nodiscard]] std::pair<util::UniqueFileDescriptor, std::int32_t> try_open_via_perf_subsystem(
     const perf::Config& configuration,
-    FileDescriptorView group_leader_file_descriptor = FileDescriptorView{});
+    util::FileDescriptorView group_leader_file_descriptor = util::FileDescriptorView{});
 
   /**
    * Opens the perf subsystem event for sampling with the given configuration.
@@ -340,17 +379,17 @@ private:
    * @param group_leader_file_descriptor View to the group leader's file descriptor.
    * @return File descriptor and error code, which is valid when the file descriptor has no value.
    */
-  std::pair<UniqueFileDescriptor, std::int32_t> try_open_via_perf_subsystem(
+  std::pair<util::UniqueFileDescriptor, std::int32_t> try_open_via_perf_subsystem(
     const Config& configuration,
     std::uint8_t precision,
-    FileDescriptorView group_leader_file_descriptor = FileDescriptorView{});
+    util::FileDescriptorView group_leader_file_descriptor = util::FileDescriptorView{});
 
   /**
-   * Decides whether adjusting (i.e., decrementing) the precise_ip configuration could help to open a hardware
-   * performance counter if an previous attempt failed. This is only true for sampling, if the current precise_ip is too
+   * Decides whether adjusting (i.e., decrementing) the precision configuration could help to open a hardware
+   * performance counter if an previous attempt failed. This is only true for sampling, if the current precision is too
    * high and the error code indicates to do so (e.g., reporting an invalid argument).
    *
-   * @param current_precise_ip The current value of the precise_ip configuration.
+   * @param current_precise_ip The current value of the precision configuration.
    * @param error_code The error code when failing.
    * @return True, when the counter should try to open again.
    */

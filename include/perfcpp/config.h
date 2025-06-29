@@ -59,7 +59,12 @@ private:
 class Config
 {
 public:
-  Config() noexcept = default;
+  Config() noexcept;
+  Config(const std::uint8_t max_groups, const std::uint8_t max_counters_per_group) noexcept
+    : _max_groups(max_groups)
+    , _max_counters_per_group(max_counters_per_group)
+  {
+  }
   ~Config() noexcept = default;
   Config(const Config&) noexcept = default;
   Config& operator=(const Config&) noexcept = default;

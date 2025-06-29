@@ -42,12 +42,12 @@ perf::Tokenizer::tokenize() const
 
   auto position = std::size_t{ 0U };
 
-  /// Skip all whitespaces.
-  while (position < this->_input.length() && std::isspace(this->_input[position])) {
-    ++position;
-  }
-
   while (position < this->_input.length()) {
+    /// Skip all whitespaces.
+    while (position < this->_input.length() && std::isspace(this->_input[position])) {
+      ++position;
+    }
+
     const auto current_char = this->_input[position];
 
     /// Check if the next character is a constant number (obviously a digit indicates a number – and so does a ".").
@@ -62,7 +62,7 @@ perf::Tokenizer::tokenize() const
     /// Check if the next character is an alphabetical char, which indicates an identifier.
     /// Additionally, identifiers can start with single quotes to escape, for example, - operators as part of the
     /// identifier (e.g., the hardware counter "L1-cache-miss"). If so, return an identifier token.
-    if (std::isalpha(current_char) || current_char == '\'') {
+    if (std::isalpha(current_char) || Tokenizer::is_escape_char(current_char)) {
       auto [identifier_token, new_position] = Tokenizer::read_identifier(position);
       output_queue.push(std::move(identifier_token));
       position = new_position;
@@ -118,15 +118,41 @@ perf::Tokenizer::read_constant(const std::size_t begin) const
   /// Read all characters that are digits or a dot.
   /// Additionally, check if the number has only one dot.
   auto has_dot = false;
+  auto has_scientific_e = false;
   while ((begin + count) < this->_input.length() &&
-         (std::isdigit(this->_input[begin + count]) || this->_input[begin + count] == '.')) {
+         (std::isdigit(this->_input[begin + count]) || this->_input[begin + count] == '-' ||
+          this->_input[begin + count] == '.' || this->_input[begin + count] == 'e' ||
+          this->_input[begin + count] == 'E')) {
+
+    /// Verify that only one dot is in the number.
     if (this->_input[begin + count] == '.' && std::exchange(has_dot, true)) {
       throw CannotParseExpressionError{ this->_input };
     }
+
+    /// Verify that only one scientific e is in the number.
+    if ((this->_input[begin + count] == 'e' || this->_input[begin + count] == 'E') &&
+        std::exchange(has_scientific_e, true)) {
+      throw CannotParseExpressionError{ this->_input };
+    }
+
     ++count;
   }
 
-  return std::make_pair(Token{ std::stod(_input.substr(begin, count)) }, begin + count);
+  /// Extract the number.
+  const auto number = _input.substr(begin, count);
+
+  /// Ensure the number is not empty.
+  if (number.empty()) {
+    throw CannotParseExpressionError{ this->_input };
+  }
+
+  /// Ensure the number does not end with minus or scientific e.
+  if (number.back() == '-' || number.back() == 'e' || number.back() == 'E') {
+    throw CannotParseExpressionError{ this->_input };
+  }
+
+  /// Parse number into decimal.
+  return std::make_pair(Token{ std::stod(number) }, begin + count);
 }
 
 std::pair<perf::Token, std::size_t>
@@ -137,9 +163,9 @@ perf::Tokenizer::read_identifier(std::size_t begin) const
   auto count = 1ULL;
 
   /// If the identifier starts with a single quote, we scan until we find the "ending" single quote.
-  const auto is_start_with_quote = this->_input[begin] == '\'';
-  if (is_start_with_quote) {
-    while ((begin + count) < this->_input.size() && this->_input[begin + count] != '\'') {
+  const auto is_start_with_escape_char = Tokenizer::is_escape_char(this->_input[begin]);
+  if (is_start_with_escape_char) {
+    while ((begin + count) < this->_input.size() && !Tokenizer::is_escape_char(this->_input[begin + count])) {
       ++count;
     }
 
@@ -156,11 +182,11 @@ perf::Tokenizer::read_identifier(std::size_t begin) const
   }
 
   /// Increase the position by the number of scanned chars; skip the closing single quite if given.
-  const auto new_position = begin + count + static_cast<std::uint64_t>(is_start_with_quote);
+  const auto new_position = begin + count + static_cast<std::uint64_t>(is_start_with_escape_char);
 
   /// Return the identifier; remove single quotes if given.
-  auto token = Token{ this->_input.substr(begin + static_cast<std::uint64_t>(is_start_with_quote),
-                                          count - static_cast<std::uint64_t>(is_start_with_quote)) };
+  auto token = Token{ this->_input.substr(begin + static_cast<std::uint64_t>(is_start_with_escape_char),
+                                          count - static_cast<std::uint64_t>(is_start_with_escape_char)) };
   return std::make_pair(std::move(token), new_position);
 }
 

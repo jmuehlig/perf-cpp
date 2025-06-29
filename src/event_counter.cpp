@@ -38,7 +38,7 @@ perf::EventCounter::add(const std::string& event_name, const Schedule schedule)
                                        RequestedEvent::Type,
                                        std::optional<CounterConfig>,
                                        bool>>{};
-  this->unfold(event_name, events);
+  this->unfold(event_name, true, events);
 
   /// Schedule the events to hardware counters.
   this->schedule(std::move(events), schedule);
@@ -58,7 +58,7 @@ perf::EventCounter::add(const std::vector<std::string>& event_names, const Sched
 
   /// Unfold all events.
   for (const auto& event_name : event_names) {
-    this->unfold(event_name, events);
+    this->unfold(event_name, true, events);
   }
 
   /// Schedule the events to hardware counters.
@@ -70,6 +70,7 @@ perf::EventCounter::add(const std::vector<std::string>& event_names, const Sched
 
 void
 perf::EventCounter::unfold(const std::string& name,
+                           const bool is_visible_in_results,
                            std::vector<std::tuple<std::optional<std::string_view>,
                                                   std::string_view,
                                                   RequestedEvent::Type,
@@ -81,47 +82,38 @@ perf::EventCounter::unfold(const std::string& name,
       EventCounter::add(pmu_name,
                         event_name,
                         config,
-                        /* requested hardware events are visible */ true,
+                        /* requested hardware events are visible */ is_visible_in_results,
                         result_vector);
     }
   }
 
   /// If the given name references an existing metric, add the metric and all its required counters.
   else if (const auto metric = this->_counter_definitions.metric(name); metric.has_value()) {
+
     /// Add all hardware counters required by the metric..
     for (auto& dependent_event_name : std::get<1>(metric.value()).required_counter_names()) {
 
-      if (const auto metric_event_configurations = this->_counter_definitions.counter(dependent_event_name);
-          !metric_event_configurations.empty()) {
-        for (const auto& [pmu_name, event_name, config] : metric_event_configurations) {
-          EventCounter::add(pmu_name,
-                            event_name,
-                            config,
-                            /* hardware events only used for metrics are not visible */ false,
-                            result_vector);
-        }
-
-      } else if (const auto dependent_time_event = this->_counter_definitions.time_event(dependent_event_name);
-                 dependent_time_event.has_value()) {
-        result_vector.emplace_back(std::nullopt,
-                                   std::get<0>(dependent_time_event.value()),
-                                   RequestedEvent::Type::TimeEvent,
-                                   std::nullopt,
-                                   false);
-      } else {
-        throw CannotFindEventForMetricError{ dependent_event_name, name };
+      /// Check if the dependent event is already in the list.
+      if (std::find_if(result_vector.begin(), result_vector.end(), [&name](const auto& entry) {
+            return std::get<1>(entry) == name;
+          }) == result_vector.end()) {
+        /// Unfold dependent events recursively.
+        this->unfold(dependent_event_name, false, result_vector);
       }
     }
 
     /// If all of the metric's events could be added (i.e., no exception was thrown), add the metric itself.
     result_vector.emplace_back(
-      std::nullopt, std::get<0>(metric.value()), RequestedEvent::Type::Metric, std::nullopt, true);
+      std::nullopt, std::get<0>(metric.value()), RequestedEvent::Type::Metric, std::nullopt, is_visible_in_results);
   }
 
   /// If the given name references an existing time event, add the time event.
   else if (const auto time_event = this->_counter_definitions.time_event(name); time_event.has_value()) {
-    result_vector.emplace_back(
-      std::nullopt, std::get<0>(time_event.value()), RequestedEvent::Type::TimeEvent, std::nullopt, true);
+    result_vector.emplace_back(std::nullopt,
+                               std::get<0>(time_event.value()),
+                               RequestedEvent::Type::TimeEvent,
+                               std::nullopt,
+                               is_visible_in_results);
   } else {
     throw CannotFindEventOrMetricError{ name };
   }
