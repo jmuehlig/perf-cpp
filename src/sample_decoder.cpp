@@ -227,59 +227,8 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
 #endif
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_DATA_SRC)) {
-    const auto perf_data_source = entry.read<std::uint64_t>();
-    /// Read source value from perf.
-    const auto [access_type, data_source, snoop, tlb, is_locked] =
-      SampleDecoder::decode_data_access_information(perf_data_source);
-
-    /// Set access type and memory instruction type, if not already set.
-    if (access_type.has_value()) {
-      if (!sample.instruction_execution().type().has_value()) {
-        sample.instruction_execution().type(InstructionExecution::InstructionType::DataAccess);
-      }
-      sample.data_access().type(access_type.value());
-
-      if (access_type.value() == DataAccess::AccessType::Store) {
-        if (HardwareInfo::is_amd()) {
-          /// For store operations, the cache miss latency is not valid; hence, remove it.
-          sample.data_access().latency().cache_miss(std::nullopt);
-        }
-
-        else if (HardwareInfo::is_intel() && sample.data_access().latency().cache_access().has_value() &&
-                 !sample.instruction_execution().latency().instruction_retirement().has_value()) {
-          /// On Intel hardware, store instructions do only provide instruction latency, not cache access latency.
-          /// However, when parsing the latency information, we do not know if the instruction was a store.
-          /// Consequently, we fix it here: If the instruction was a store, we move the cache latency information
-          /// towards the instruction latency.
-
-          /// Set instruction latency to data access latency.
-          sample.instruction_execution().latency().instruction_retirement(
-            sample.data_access().latency().cache_access().value());
-
-          /// Remove cache access latency.
-          sample.data_access().latency().cache_access(std::nullopt);
-        }
-      }
-    }
-
-    /// Set data source.
-    sample.data_access().source(data_source);
-
-    /// Set snoop.
-    if (snoop.has_value()) {
-      sample.data_access().snoop(snoop.value());
-    }
-
-    /// Set TLB hit.
-    if (tlb.has_value()) {
-      sample.data_access().tlb().is_l1_hit(std::get<0>(tlb.value()));
-      sample.data_access().tlb().is_l2_hit(std::get<1>(tlb.value()));
-    }
-
-    /// Set is_locked information.
-    if (is_locked.has_value()) {
-      sample.instruction_execution().is_locked(is_locked.value());
-    }
+    const auto data_source = perf_mem_data_src{ entry.read<std::uint64_t>() };
+    SampleDecoder::decode_data_access(data_source, sample);
   }
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_TRANSACTION)) {
@@ -456,9 +405,65 @@ perf::SampleDecoder::decode_branch_stack(SampleIterator& entry)
   return branches;
 }
 
-std::optional<perf::DataAccess::AccessType>
-perf::SampleDecoder::decode_data_access_type(std::uint64_t op_code) noexcept
+void
+perf::SampleDecoder::decode_data_access(perf_mem_data_src data_source, Sample& sample)
 {
+  /// Set access type and memory instruction type, if not already set.
+  if (const auto access_type = SampleDecoder::decode_data_access_type(data_source); access_type.has_value()) {
+    if (!sample.instruction_execution().type().has_value()) {
+      sample.instruction_execution().type(InstructionExecution::InstructionType::DataAccess);
+    }
+    sample.data_access().type(access_type.value());
+
+    if (access_type.value() == DataAccess::AccessType::Store) {
+      if (HardwareInfo::is_amd()) {
+        /// For store operations, the cache miss latency is not valid; hence, remove it.
+        sample.data_access().latency().cache_miss(std::nullopt);
+      }
+
+      else if (HardwareInfo::is_intel() && sample.data_access().latency().cache_access().has_value() &&
+               !sample.instruction_execution().latency().instruction_retirement().has_value()) {
+        /// On Intel hardware, store instructions do only provide instruction latency, not cache access latency.
+        /// However, when parsing the latency information, we do not know if the instruction was a store.
+        /// Consequently, we fix it here: If the instruction was a store, we move the cache latency information
+        /// towards the instruction latency.
+
+        /// Set instruction latency to data access latency.
+        sample.instruction_execution().latency().instruction_retirement(
+          sample.data_access().latency().cache_access().value());
+
+        /// Remove cache access latency.
+        sample.data_access().latency().cache_access(std::nullopt);
+      }
+    }
+  }
+
+  /// Set data source.
+  sample.data_access().source(SampleDecoder::decode_data_access_source_and_remote(data_source));
+
+  /// Set snoop.
+#ifndef PERFCPP_NO_MEM_SNOOPX /// Snoopx was introduced in Linux 4.14.0
+  const auto snoop = SampleDecoder::decode_data_access_snoop(data_source.mem_snoop, data_source.mem_snoopx);
+#else
+  const auto snoop = SampleDecoder::decode_data_access_snoop(perf_data_source.mem_snoop, 0ULL);
+#endif
+  sample.data_access().snoop(snoop);
+
+  /// Set TLB hit.
+  if (const auto tlb = SampleDecoder::decode_data_access_tlb(data_source.mem_dtlb); tlb.has_value()) {
+    sample.data_access().tlb().is_l1_hit(std::get<0>(tlb.value()));
+    sample.data_access().tlb().is_l2_hit(std::get<1>(tlb.value()));
+  }
+
+  /// Set is_locked information.
+  sample.instruction_execution().is_locked(SampleDecoder::decode_data_access_is_locked(data_source.mem_lock));
+}
+
+std::optional<perf::DataAccess::AccessType>
+perf::SampleDecoder::decode_data_access_type(const perf_mem_data_src perf_data_source) noexcept
+{
+  const auto op_code = perf_data_source.mem_op;
+
   if (op_code & PERF_MEM_OP_LOAD) {
     return DataAccess::AccessType::Load;
   }
@@ -475,7 +480,7 @@ perf::SampleDecoder::decode_data_access_type(std::uint64_t op_code) noexcept
 }
 
 perf::DataAccess::Source
-perf::SampleDecoder::decode_data_access_source(std::uint64_t memory_level_code) noexcept
+perf::SampleDecoder::decode_data_access_source(const std::uint64_t memory_level_code) noexcept
 {
   /// Translate into Source object.
   auto data_access_source = DataAccess::Source{};
@@ -533,7 +538,7 @@ perf::SampleDecoder::decode_data_access_snoop(const std::uint64_t snoop_code,
 }
 
 std::optional<std::pair<bool, bool>>
-perf::SampleDecoder::decode_data_access_tlb(std::uint64_t tlb_code) noexcept
+perf::SampleDecoder::decode_data_access_tlb(const std::uint64_t tlb_code) noexcept
 {
   if (!(tlb_code & PERF_MEM_TLB_NA)) {
     const auto is_l1_tbl_hit = (tlb_code & PERF_MEM_TLB_L1) && (tlb_code & PERF_MEM_TLB_HIT);
@@ -545,8 +550,8 @@ perf::SampleDecoder::decode_data_access_tlb(std::uint64_t tlb_code) noexcept
 }
 
 std::optional<std::uint8_t>
-perf::SampleDecoder::decode_data_access_remote_hops([[maybe_unused]] std::uint64_t hops_code,
-                                                    [[maybe_unused]] std::uint64_t memory_level_code) noexcept
+perf::SampleDecoder::decode_data_access_remote_hops([[maybe_unused]] const std::uint64_t hops_code,
+                                                    [[maybe_unused]] const std::uint64_t memory_level_code) noexcept
 {
 #ifndef PERFCPP_NO_MEM_HOPS_0 /// Remote Hops were introduced in Linux 5.16
   if (hops_code == PERF_MEM_HOPS_0) {
@@ -579,24 +584,16 @@ perf::SampleDecoder::decode_data_access_remote_hops([[maybe_unused]] std::uint64
   return std::nullopt;
 }
 
-std::tuple<std::optional<perf::DataAccess::AccessType>,
-           perf::DataAccess::Source,
-           std::optional<perf::DataAccess::Snoop>,
-           std::optional<std::pair<bool, bool>>,
-           std::optional<bool>>
-perf::SampleDecoder::decode_data_access_information(std::uint64_t source) noexcept
+std::optional<perf::DataAccess::Source>
+perf::SampleDecoder::decode_data_access_source_and_remote(const perf_mem_data_src perf_data_source) noexcept
 {
-  const auto perf_data_source = perf_mem_data_src{ source };
-
-  /// Read memory instruction type.
-  auto access_type = SampleDecoder::decode_data_access_type(perf_data_source.mem_op);
-
   /// Translate into Source object.
 #ifndef PERFCPP_NO_MEM_LVLNUM /// lvl_num field is supported since Linux 6.1
-  auto data_access_source = SampleDecoder::decode_data_access_source(perf_data_source.mem_lvl_num);
+  const auto mem_lvl_num = perf_data_source.mem_lvl_num;
 #else /// Use lvl before Linux 6.1
-  auto data_access_source = SampleDecoder::decode_data_access_source(perf_data_source.mem_lvl);
+  const auto mem_lvl_num = perf_data_source.mem_lvl;
 #endif
+  auto data_access_source = SampleDecoder::decode_data_access_source(mem_lvl_num);
 
   /// Set the remote flag, depending on the available information.
 #ifndef PERFCPP_NO_MEM_REMOTE // Remote field is supported since Linux 4.14
@@ -624,22 +621,17 @@ perf::SampleDecoder::decode_data_access_information(std::uint64_t source) noexce
     }
   }
 
-  /// Snoop.
-#ifndef PERFCPP_NO_MEM_SNOOPX /// Snoopx was introduced in Linux 4.14.0
-  const auto snoop = SampleDecoder::decode_data_access_snoop(perf_data_source.mem_snoop, perf_data_source.mem_snoopx);
-#else
-  const auto snoop = SampleDecoder::decode_data_access_snoop(perf_data_source.mem_snoop, 0ULL);
-#endif
+  return data_access_source;
+}
 
-  /// TLB.
-  const auto tlb = SampleDecoder::decode_data_access_tlb(perf_mem_data_src{ source }.mem_dtlb);
+std::optional<bool>
+perf::SampleDecoder::decode_data_access_is_locked(const std::uint64_t lock) noexcept
+{
+  if (!(lock & PERF_MEM_LOCK_NA)) {
+    return lock & PERF_MEM_LOCK_LOCKED;
+  }
 
-  /// Locked.
-  const auto perf_lock = perf_mem_data_src{ source }.mem_lock;
-  const auto is_locked = !(perf_lock & PERF_MEM_LOCK_NA) ? std::make_optional<bool>(perf_lock & PERF_MEM_LOCK_LOCKED)
-                                                         : std::optional<bool>{ std::nullopt };
-
-  return std::make_tuple(access_type, data_access_source, snoop, tlb, is_locked);
+  return std::nullopt;
 }
 
 perf::InstructionExecution::HardwareTransactionAbort

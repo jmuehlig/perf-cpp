@@ -1,5 +1,4 @@
 #include <perfcpp/requested_event.h>
-#include <perfcpp/util/graph.h>
 
 bool
 perf::RequestedEventSet::add(const std::optional<std::string_view> pmu_name,
@@ -47,29 +46,19 @@ perf::RequestedEventSet::result(const perf::CounterDefinition& counter_definitio
                                 perf::CounterResult&& hardware_events_result,
                                 const std::uint64_t normalization) const
 {
-  /// Build a graph with all metrics.
-  auto metric_graph = util::DirectedGraph<std::string_view>{};
-  for (const auto& requested_event : this->_requested_events) {
-    if (const auto metric = counter_definition.metric(requested_event.event_name()); metric.has_value()) {
-
-      /// Add the metric as a node to the graph.
-      metric_graph.insert(requested_event.event_name());
-
-      /// Add an edge for every dependent metric: dependent_metric -> metric
-      for (const auto& dependency : std::get<1>(metric.value()).required_counter_names()) {
-        if (const auto dependent_metric = counter_definition.metric(dependency); dependent_metric.has_value()) {
-          metric_graph.connect(std::get<0>(dependent_metric.value()), requested_event.event_name());
-        }
-      }
-    }
-  }
+  /// Combine all hardware events and metrics into a single result, showing only the requested events and metrics, in
+  /// the requested order. Accordingly, we need to calculate the metrics first, using the given hardware events.
+  /// However, since metrics can be referenced recursively (metric_a uses metric_b), we need to resolve the metrics in a
+  /// specific order (metric_b before metric_a in this example). To do so, we calculate a metric dependency graph first
+  /// and calculate metrics without dependencies, until all metrics are calculated.
+  auto metric_graph = this->build_metric_graph(counter_definition);
 
   /// Check if the metric graph has a cycle. In that case, we cannot evaluate the metrics.
   if (metric_graph.is_cyclic()) {
     throw CannotEvaluateMetricsBecauseOfCycleError{};
   }
 
-  /// Add all metrics to the event results.
+  /// Walk through the metric graph, removing one metric without dependencies ata time.
   while (!metric_graph.empty()) {
 
     /// Get metric without un-calculated dependency.
@@ -110,4 +99,26 @@ perf::RequestedEventSet::result(const perf::CounterDefinition& counter_definitio
   }
 
   return CounterResult{ std::move(event_results) };
+}
+
+perf::util::DirectedGraph<std::string_view>
+perf::RequestedEventSet::build_metric_graph(const perf::CounterDefinition& counter_definition) const
+{
+  auto metric_graph = util::DirectedGraph<std::string_view>{};
+  for (const auto& requested_event : this->_requested_events) {
+    if (const auto metric = counter_definition.metric(requested_event.event_name()); metric.has_value()) {
+
+      /// Add the metric as a node to the graph.
+      metric_graph.insert(requested_event.event_name());
+
+      /// Add an edge for every dependent metric: dependent_metric -> metric
+      for (const auto& dependency : std::get<1>(metric.value()).required_counter_names()) {
+        if (const auto dependent_metric = counter_definition.metric(dependency); dependent_metric.has_value()) {
+          metric_graph.connect(std::get<0>(dependent_metric.value()), requested_event.event_name());
+        }
+      }
+    }
+  }
+
+  return metric_graph;
 }

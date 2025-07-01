@@ -406,13 +406,13 @@ public:
    * Set the source characteristics of the data access.
    * @param source Populated Source instance.
    */
-  void source(Source source) noexcept { _source.emplace(source); }
+  void source(std::optional<Source> source) noexcept { _source = source; }
 
   /**
    * Set the snoop characteristics of the data access.
    * @param snoop Populated Snoop instance.
    */
-  void snoop(Snoop snoop) noexcept { _snoop.emplace(snoop); }
+  void snoop(std::optional<Snoop> snoop) noexcept { _snoop = snoop; }
 
   /**
    * Set whether the access incurred a misalignment penalty.
