@@ -61,11 +61,59 @@ private:
 class CannotReadCounter final : public std::runtime_error
 {
 public:
-  explicit CannotReadCounter()
+  CannotReadCounter()
     : std::runtime_error(std::string{ "Cannot read from event counter." })
   {
   }
   ~CannotReadCounter() override = default;
+};
+
+class IoctlError : public std::runtime_error
+{
+public:
+  explicit IoctlError(const std::int64_t error_code, std::string&& error_message)
+    : std::runtime_error(error_message.append(" (error no ")
+                           .append(std::to_string(error_code))
+                           .append("): ")
+                           .append(IoctlError::create_error_message_from_code(error_code))
+                           .append("."))
+  {
+  }
+
+  ~IoctlError() override = default;
+
+protected:
+  [[nodiscard]] static std::string create_error_message_from_code(std::int64_t error_code);
+};
+
+class CannotEnableCounter final : public IoctlError
+{
+public:
+  explicit CannotEnableCounter(const std::int64_t error_code)
+    : IoctlError(error_code, "Cannot enable counter")
+  {
+  }
+  ~CannotEnableCounter() override = default;
+};
+
+class CannotDisableCounter final : public IoctlError
+{
+public:
+  explicit CannotDisableCounter(const std::int64_t error_code)
+    : IoctlError(error_code, "Cannot disable counter")
+  {
+  }
+  ~CannotDisableCounter() override = default;
+};
+
+class CannotReadCounterId final : public IoctlError
+{
+public:
+  explicit CannotReadCounterId(const std::int64_t error_code)
+    : IoctlError(error_code, "Cannot open counter")
+  {
+  }
+  ~CannotReadCounterId() override = default;
 };
 
 class MmapError final : public std::runtime_error

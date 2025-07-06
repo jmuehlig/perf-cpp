@@ -219,21 +219,31 @@ perf::Counter::close()
 void
 perf::Counter::enable() const
 {
-  ::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_RESET, 0);
-  ::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_ENABLE, 0);
+  if (::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_RESET, 0) < 0) {
+    throw CannotEnableCounter{errno};
+  }
+
+  if (::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_ENABLE, 0) < 0) {
+    throw CannotEnableCounter{errno};
+  }
 }
 
 void
 perf::Counter::disable() const
 {
-  ::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_DISABLE, 0);
+  if (::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_DISABLE, 0) < 0) {
+    throw CannotDisableCounter{errno};
+  }
 }
 
 std::uint64_t
 perf::Counter::read_id() const
 {
   std::uint64_t id;
-  ::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_ID, &id);
+  if (::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_ID, &id) < 0) {
+    throw CannotReadCounterId{errno};
+  }
+
   return id;
 }
 
