@@ -2,6 +2,9 @@
 
 #include "config.h"
 #include "counter.h"
+#include <cstdint>
+#include <vector>
+#include <optional>
 
 namespace perf {
 
@@ -54,7 +57,7 @@ public:
 
 private:
   /// Number of counters in the following array.
-  [[maybe_unused]] size_t _count_members{ 0U };
+  [[maybe_unused]] std::size_t _count_members{ 0U };
 
   /// Time the event was enabled.
   time_t _time_enabled{ 0U };
