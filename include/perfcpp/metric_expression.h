@@ -8,8 +8,10 @@
 #include <memory>
 #include <optional>
 #include <queue>
+#include <stack>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace perf {
@@ -185,61 +187,66 @@ private:
 class Token
 {
 public:
-  enum class Type : std::uint8_t
+  enum class Parenthesis : std::uint8_t
   {
-    ConstantNumber,
-    Identifier,
-    Operator,
-    LeftParenthesis,
-    RightParenthesis,
+    Left,
+    Right
   };
+
+  /**
+   * Token can be an identifier, a constant number, an operator, or a parenthesis.
+   */
+  using token_t = std::variant<std::string, double, MetricOperator, Parenthesis>;
 
   Token(Token&&) noexcept = default;
   Token(const Token&) = default;
 
   explicit Token(const MetricOperator operator_)
-    : _type(Type::Operator)
-    , _operator(operator_)
+    : _token(operator_)
   {
   }
-  explicit Token(const Type type)
-    : _type(type)
-  {
-  }
+
   explicit Token(const double number)
-    : _type(Type::ConstantNumber)
-    , _number(number)
+    : _token(number)
   {
   }
+
   explicit Token(std::string&& text)
-    : _type(Type::Identifier)
-    , _text(std::move(text))
+    : _token(std::move(text))
   {
   }
+
+  explicit Token(const Parenthesis parenthesis)
+    : _token(parenthesis)
+  {
+  }
+
   ~Token() = default;
 
-  bool operator==(const Type type) const noexcept { return _type == type; }
-  bool operator!=(const Type type) const noexcept { return _type != type; }
+  Token& operator=(Token&&) noexcept = default;
 
   /**
-   * @return The type of the token.
+   * @return True, if this token is a left parenthesis.
    */
-  [[nodiscard]] Type type() const noexcept { return _type; }
+  [[nodiscard]] bool is_left_parenthesis() const noexcept
+  {
+    return std::holds_alternative<Parenthesis>(_token) && std::get<Parenthesis>(_token) == Parenthesis::Left;
+  }
 
   /**
-   * @return The original text of the token.
+   * @return True, if this token is a metric operator.
    */
-  [[nodiscard]] std::optional<std::string>& text() noexcept { return _text; }
+  [[nodiscard]] bool is_operator() const noexcept { return std::holds_alternative<MetricOperator>(_token); }
 
   /**
-   * @return The number, if the token is a constant.
+   * @return The operator inside the token.
    */
-  [[nodiscard]] std::optional<double> number() const noexcept { return _number; }
+  [[nodiscard]] MetricOperator operator_() const noexcept { return std::get<MetricOperator>(_token); }
 
   /**
-   * @return The operator (e.g., + or -) if the token is an operator.
+   * @return Ownership of the underlying token data.
    */
-  [[nodiscard]] std::optional<MetricOperator> op() const noexcept { return _operator; }
+  [[nodiscard]] token_t data() noexcept { return std::move(_token); }
 
   /**
    * @return A text representation of this token.
@@ -247,10 +254,46 @@ public:
   [[nodiscard]] std::string to_string() const;
 
 private:
-  Type _type;
-  std::optional<std::string> _text{ std::nullopt };
-  std::optional<double> _number{ std::nullopt };
-  std::optional<MetricOperator> _operator{ std::nullopt };
+  token_t _token;
+};
+
+/**
+ * Visits a token and translates it into an std::string.
+ */
+class TokenToStringVisitor
+{
+public:
+  [[nodiscard]] std::string operator()(const std::string& identifier) { return identifier; }
+
+  [[nodiscard]] std::string operator()(const double constant) { return std::to_string(constant); }
+
+  [[nodiscard]] std::string operator()(const MetricOperator metric_operator)
+  {
+    switch (metric_operator) {
+      case MetricOperator::Plus:
+        return "+";
+      case MetricOperator::Minus:
+        return "-";
+      case MetricOperator::Times:
+        return "*";
+      case MetricOperator::Divide:
+        return "/";
+      default:
+        return "<unknown operator>";
+    }
+  }
+
+  [[nodiscard]] std::string operator()(const Token::Parenthesis parenthesis)
+  {
+    switch (parenthesis) {
+      case Token::Parenthesis::Left:
+        return "(";
+      case Token::Parenthesis::Right:
+        return ")";
+      default:
+        return "<unknown parenthesis>";
+    }
+  }
 };
 
 /**
@@ -276,13 +319,16 @@ public:
   [[nodiscard]] std::queue<Token> tokenize() const;
 
 private:
+  /// The expression to tokenize.
+  const std::string _input;
+
   /**
    * Reads a constant number (e.g., 13.37) from the input string, starting at the given position.
    *
    * @param begin Position within the input string.
    * @return A tuple (token containing the constant, new position).
    */
-  [[nodiscard]] std::pair<Token, std::size_t> read_constant(std::size_t begin) const;
+  [[nodiscard]] std::pair<double, std::size_t> read_constant(std::size_t begin) const;
 
   /**
    * Reads an identifier (e.g., a hardware counter name) from the input string, starting at the given position.
@@ -290,15 +336,15 @@ private:
    * @param begin Position within the input string.
    * @return A tuple (token containing the identifier, new position).
    */
-  [[nodiscard]] std::pair<Token, std::size_t> read_identifier(std::size_t begin) const;
+  [[nodiscard]] std::pair<std::string, std::size_t> read_identifier(std::size_t begin) const;
 
   /**
    * Reads an operator (e.g., +) from the given char.
    *
    * @param current_char Current char from input string.
-   * @return A token containing the operator.
+   * @return The metric operator.
    */
-  [[nodiscard]] Token read_operator(char current_char) const;
+  [[nodiscard]] MetricOperator read_operator(char current_char) const;
 
   /**
    * Checks if the given char is an escape character.
@@ -319,14 +365,8 @@ private:
    * @return True, if the left operator has a greater precedence than the right operator (or if the right operator is
    * left associative if both have the same precedence).
    */
-  [[nodiscard]] static bool has_greater_precedence(const Token& left_operator, const Token& right_operator) noexcept
-  {
-    const auto left_precedence = precedence(left_operator.op().value());
-    const auto right_precedence = precedence(right_operator.op().value());
-
-    return (is_left_associative(right_operator.op().value()) && right_precedence <= left_precedence) ||
-           (right_precedence < left_precedence);
-  }
+  [[nodiscard]] static bool has_greater_precedence(MetricOperator left_operator,
+                                                   MetricOperator right_operator) noexcept;
 
   /**
    * Returns the precedence of the given operator.
@@ -334,19 +374,7 @@ private:
    * @param operator_ Operator.
    * @return Precedence of the operator.
    */
-  [[nodiscard]] static std::uint8_t precedence(const MetricOperator operator_) noexcept
-  {
-    switch (operator_) {
-      case MetricOperator::Plus:
-      case MetricOperator::Minus:
-        return 4U;
-      case MetricOperator::Times:
-      case MetricOperator::Divide:
-        return 8U;
-    }
-
-    return 0U;
-  }
+  [[nodiscard]] static std::uint8_t precedence(MetricOperator operator_) noexcept;
 
   /**
    * Tests if the operator is left associative.
@@ -354,18 +382,7 @@ private:
    * @param operator_ Operator to test.
    * @return True, if left associative.
    */
-  [[nodiscard]] static bool is_left_associative(const MetricOperator operator_) noexcept
-  {
-    switch (operator_) {
-      case MetricOperator::Plus:
-      case MetricOperator::Minus:
-      case MetricOperator::Times:
-      case MetricOperator::Divide:
-        return true;
-      default:
-        return false;
-    }
-  }
+  [[nodiscard]] static bool is_left_associative(MetricOperator operator_) noexcept;
 
   /**
    * Checks if the given char could belong to an identifier (alphanumerical chars, _, ., etc.).
@@ -377,9 +394,6 @@ private:
   {
     return std::isalnum(char_) || char_ == '_' || char_ == '.';
   }
-
-  /// The expression to tokenize.
-  const std::string _input;
 };
 
 /**
@@ -391,9 +405,51 @@ public:
   /**
    * Builds an evaluable expression from the given expression-string.
    *
-   * @param expression Expression.
+   * @param input_expression Expression to translate into a metric expression.
    * @return Evaluable expression.
    */
-  [[nodiscard]] static std::unique_ptr<MetricExpressionInterface> build(std::string&& expression);
+  [[nodiscard]] static std::unique_ptr<MetricExpressionInterface> build(std::string&& input_expression);
+
+private:
+  /**
+   * Visits the token and translates the token into a metric expression that can be pushed to the stack.
+   */
+  class TokenToMetricExpressionVisitor
+  {
+  public:
+    TokenToMetricExpressionVisitor(const std::string& input,
+                                   std::stack<std::unique_ptr<MetricExpressionInterface>>& expression_stack) noexcept
+      : _input(input)
+      , _expression_stack(expression_stack)
+    {
+    }
+    ~TokenToMetricExpressionVisitor() = default;
+
+    [[nodiscard]] std::unique_ptr<MetricExpressionInterface> operator()(std::string&& identifier)
+    {
+      return std::make_unique<IdentifierExpression>(std::move(identifier));
+    }
+
+    [[nodiscard]] std::unique_ptr<MetricExpressionInterface> operator()(const double constant)
+    {
+      return std::make_unique<ConstantExpression>(constant);
+    }
+
+    [[nodiscard]] std::unique_ptr<MetricExpressionInterface> operator()(
+      [[maybe_unused]] const Token::Parenthesis /* parenthesis */) const
+    {
+      /// Ignore parenthesis.
+      return nullptr;
+    }
+
+    [[nodiscard]] std::unique_ptr<MetricExpressionInterface> operator()(MetricOperator metric_operator);
+
+  private:
+    /// Input of the expression, used to throw an exception.
+    const std::string& _input;
+
+    /// Expression stack to push expressions to (and pop operators).
+    std::stack<std::unique_ptr<MetricExpressionInterface>>& _expression_stack;
+  };
 };
 }
