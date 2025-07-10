@@ -1,13 +1,43 @@
 #include <perfcpp/metric_expression.h>
 
 std::string
-perf::Token::to_string() const
+perf::metric::expression::Token::TokenToStringVisitor::operator()(const perf::metric::expression::Operator_ metric_operator) const
+{
+  switch (metric_operator) {
+    case Operator_::Plus:
+      return "+";
+    case Operator_::Minus:
+      return "-";
+    case Operator_::Times:
+      return "*";
+    case Operator_::Divide:
+      return "/";
+    default:
+      return "<unknown operator>";
+  }
+}
+
+std::string
+perf::metric::expression::Token::TokenToStringVisitor::operator()(const perf::metric::expression::Token::Parenthesis parenthesis) const
+{
+  switch (parenthesis) {
+    case Token::Parenthesis::Left:
+      return "(";
+    case Token::Parenthesis::Right:
+      return ")";
+    default:
+      return "<unknown parenthesis>";
+  }
+}
+
+std::string
+perf::metric::expression::Token::to_string() const
 {
   return std::visit(TokenToStringVisitor{}, this->_token);
 }
 
-std::queue<perf::Token>
-perf::Tokenizer::tokenize() const
+std::queue<perf::metric::expression::Token>
+perf::metric::expression::Tokenizer::tokenize() const
 {
   /// Tokenize the input string using the Shunting yard algorithm.
   /// For more information see: https://en.wikipedia.org/wiki/Shunting_yard_algorithm
@@ -79,8 +109,8 @@ perf::Tokenizer::tokenize() const
     else {
       const auto operator_ = Tokenizer::read_operator(current_char);
 
-      while (!operator_stack.empty() && !operator_stack.top().is_left_parenthesis() &&
-             operator_stack.top().is_operator() &&
+      while (!operator_stack.empty() && operator_stack.top().is_operator() &&
+             !operator_stack.top().is_left_parenthesis() &&
              Tokenizer::has_greater_precedence(operator_stack.top().operator_(), operator_)) {
         output_queue.push(operator_stack.top());
         operator_stack.pop();
@@ -107,7 +137,7 @@ perf::Tokenizer::tokenize() const
 }
 
 std::pair<double, std::size_t>
-perf::Tokenizer::read_constant(const std::size_t begin) const
+perf::metric::expression::Tokenizer::read_constant(const std::size_t begin) const
 {
   /// We know that the current character (this->_position) is a digit; otherwise, this function wouldn't have been
   /// called.
@@ -154,7 +184,7 @@ perf::Tokenizer::read_constant(const std::size_t begin) const
 }
 
 std::pair<std::string, std::size_t>
-perf::Tokenizer::read_identifier(std::size_t begin) const
+perf::metric::expression::Tokenizer::read_identifier(const std::size_t begin) const
 {
   /// We know that the current character (this->_position) is alphabetical; otherwise, this function wouldn't have been
   /// called.
@@ -189,19 +219,19 @@ perf::Tokenizer::read_identifier(std::size_t begin) const
   return std::make_pair(std::move(identifier), new_position);
 }
 
-perf::MetricOperator
-perf::Tokenizer::read_operator(const char current_char) const
+perf::metric::expression::Operator_
+perf::metric::expression::Tokenizer::read_operator(const char current_char) const
 {
   /// Translate the given char into an operator, if it is one.
   switch (current_char) {
     case '+':
-      return MetricOperator::Plus;
+      return Operator_::Plus;
     case '-':
-      return MetricOperator::Minus;
+      return Operator_::Minus;
     case '*':
-      return MetricOperator::Times;
+      return Operator_::Times;
     case '/':
-      return MetricOperator::Divide;
+      return Operator_::Divide;
 
       /// We could not tokenize a number, a sequence of chars. or an operator. This is an error.
     default:
@@ -210,8 +240,8 @@ perf::Tokenizer::read_operator(const char current_char) const
 }
 
 bool
-perf::Tokenizer::has_greater_precedence(const perf::MetricOperator left_operator,
-                                        const perf::MetricOperator right_operator) noexcept
+perf::metric::expression::Tokenizer::has_greater_precedence(const perf::metric::expression::Operator_ left_operator,
+                                                const perf::metric::expression::Operator_ right_operator) noexcept
 {
   const auto left_precedence = Tokenizer::precedence(left_operator);
   const auto right_precedence = Tokenizer::precedence(right_operator);
@@ -221,14 +251,14 @@ perf::Tokenizer::has_greater_precedence(const perf::MetricOperator left_operator
 }
 
 std::uint8_t
-perf::Tokenizer::precedence(const perf::MetricOperator operator_) noexcept
+perf::metric::expression::Tokenizer::precedence(const perf::metric::expression::Operator_ operator_) noexcept
 {
   switch (operator_) {
-    case MetricOperator::Plus:
-    case MetricOperator::Minus:
+    case Operator_::Plus:
+    case Operator_::Minus:
       return 4U;
-    case MetricOperator::Times:
-    case MetricOperator::Divide:
+    case Operator_::Times:
+    case Operator_::Divide:
       return 8U;
   }
 
@@ -236,21 +266,22 @@ perf::Tokenizer::precedence(const perf::MetricOperator operator_) noexcept
 }
 
 bool
-perf::Tokenizer::is_left_associative(const perf::MetricOperator operator_) noexcept
+perf::metric::expression::Tokenizer::is_left_associative(const perf::metric::expression::Operator_ operator_) noexcept
 {
   switch (operator_) {
-    case MetricOperator::Plus:
-    case MetricOperator::Minus:
-    case MetricOperator::Times:
-    case MetricOperator::Divide:
+    case Operator_::Plus:
+    case Operator_::Minus:
+    case Operator_::Times:
+    case Operator_::Divide:
       return true;
     default:
       return false;
   }
 }
 
-std::unique_ptr<perf::MetricExpressionInterface>
-perf::ExpressionBuilder::TokenToMetricExpressionVisitor::operator()(const perf::MetricOperator metric_operator)
+std::unique_ptr<perf::metric::expression::ExpressionInterface>
+perf::metric::expression::Builder::TokenToMetricExpressionVisitor::operator()(
+  const perf::metric::expression::Operator_ metric_operator)
 {
   /// Verify that there are at least two expressions that can be consumed by the binary expression.
   if (this->_expression_stack.size() < 2U) {
@@ -265,31 +296,31 @@ perf::ExpressionBuilder::TokenToMetricExpressionVisitor::operator()(const perf::
 
   /// Translate the operator into an expression.
   switch (metric_operator) {
-    case MetricOperator::Plus:
-      return std::make_unique<BinaryExpression<MetricOperator::Plus>>(std::move(left_expression),
-                                                                      std::move(right_expression));
-    case MetricOperator::Minus:
-      return std::make_unique<BinaryExpression<MetricOperator::Minus>>(std::move(left_expression),
-                                                                       std::move(right_expression));
-    case MetricOperator::Times:
-      return std::make_unique<BinaryExpression<MetricOperator::Times>>(std::move(left_expression),
-                                                                       std::move(right_expression));
-    case MetricOperator::Divide:
-      return std::make_unique<BinaryExpression<MetricOperator::Divide>>(std::move(left_expression),
-                                                                        std::move(right_expression));
+    case Operator_::Plus:
+      return std::make_unique<BinaryExpression<Operator_::Plus>>(std::move(left_expression),
+                                                                 std::move(right_expression));
+    case Operator_::Minus:
+      return std::make_unique<BinaryExpression<Operator_::Minus>>(std::move(left_expression),
+                                                                  std::move(right_expression));
+    case Operator_::Times:
+      return std::make_unique<BinaryExpression<Operator_::Times>>(std::move(left_expression),
+                                                                  std::move(right_expression));
+    case Operator_::Divide:
+      return std::make_unique<BinaryExpression<Operator_::Divide>>(std::move(left_expression),
+                                                                   std::move(right_expression));
     default:
       return nullptr;
   }
 }
 
-std::unique_ptr<perf::MetricExpressionInterface>
-perf::ExpressionBuilder::build(std::string&& input_expression)
+std::unique_ptr<perf::metric::expression::ExpressionInterface>
+perf::metric::expression::Builder::build(std::string&& input_expression)
 {
   auto tokenizer = Tokenizer{ std::move(input_expression) };
   auto token_queue = tokenizer.tokenize();
 
   /// The expression stack will be built and consumed while scanning the tokens.
-  auto expression_stack = std::stack<std::unique_ptr<MetricExpressionInterface>>{};
+  auto expression_stack = std::stack<std::unique_ptr<ExpressionInterface>>{};
 
   /// Scan the tokenized queue: Push identifier and constants to the expression stack and consume them by binary
   /// expressions.
@@ -300,8 +331,7 @@ perf::ExpressionBuilder::build(std::string&& input_expression)
 
     /// The TokenVisitor will visit the token data and builds an expression. For operators, the visitor pops expressions
     /// from the stack.
-    if (auto metric_expression = std::visit(
-          ExpressionBuilder::TokenToMetricExpressionVisitor{ tokenizer.input(), expression_stack }, token.data());
+    if (auto metric_expression = std::visit(Builder::TokenToMetricExpressionVisitor{ tokenizer.input(), expression_stack }, token.data());
         metric_expression != nullptr) {
       expression_stack.push(std::move(metric_expression));
     }
