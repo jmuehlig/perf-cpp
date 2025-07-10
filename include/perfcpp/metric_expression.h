@@ -14,12 +14,12 @@
 #include <variant>
 #include <vector>
 
-namespace perf {
+namespace perf::metric::expression {
 
 /**
  * Representation of the supported operators.
  */
-enum class MetricOperator
+enum class Operator_
 {
   Plus,
   Minus,
@@ -30,11 +30,11 @@ enum class MetricOperator
 /**
  * The interface for all evaluable metric expressions.
  */
-class MetricExpressionInterface
+class ExpressionInterface
 {
 public:
-  MetricExpressionInterface() noexcept = default;
-  virtual ~MetricExpressionInterface() = default;
+  ExpressionInterface() noexcept = default;
+  virtual ~ExpressionInterface() = default;
 
   /**
    * Evaluates the metric with respect to the provided (hardware) counter result.
@@ -54,7 +54,7 @@ public:
 /**
  * Representation of a constant in a metric expression.
  */
-class ConstantExpression final : public MetricExpressionInterface
+class ConstantExpression final : public ExpressionInterface
 {
 public:
   explicit ConstantExpression(const double value) noexcept
@@ -81,7 +81,7 @@ private:
 /**
  * Resolves an identifier and returns the hardware/time event value of that identifier.
  */
-class IdentifierExpression final : public MetricExpressionInterface
+class IdentifierExpression final : public ExpressionInterface
 {
 public:
   explicit IdentifierExpression(std::string&& identifier)
@@ -118,12 +118,11 @@ private:
 /**
  * Implementation of binary expressions (+,-,*,/).
  */
-template<MetricOperator OP>
-class BinaryExpression final : public MetricExpressionInterface
+template<Operator_ OP>
+class BinaryExpression final : public ExpressionInterface
 {
 public:
-  BinaryExpression(std::unique_ptr<MetricExpressionInterface>&& left,
-                   std::unique_ptr<MetricExpressionInterface>&& right)
+  BinaryExpression(std::unique_ptr<ExpressionInterface>&& left, std::unique_ptr<ExpressionInterface>&& right)
     : _left(std::move(left))
     , _right(std::move(right))
   {
@@ -142,19 +141,19 @@ public:
     if (const auto left = this->_left->evaluate(result); left.has_value()) {
       if (const auto right = this->_right->evaluate(result); right.has_value()) {
 
-        if constexpr (OP == MetricOperator::Plus) {
+        if constexpr (OP == Operator_::Plus) {
           return left.value() + right.value();
         }
 
-        if constexpr (OP == MetricOperator::Minus) {
+        if constexpr (OP == Operator_::Minus) {
           return left.value() - right.value();
         }
 
-        if constexpr (OP == MetricOperator::Times) {
+        if constexpr (OP == Operator_::Times) {
           return left.value() * right.value();
         }
 
-        if constexpr (OP == MetricOperator::Divide) {
+        if constexpr (OP == Operator_::Divide) {
           if (right.value() > .0) {
             return left.value() / right.value();
           }
@@ -177,8 +176,8 @@ public:
   }
 
 private:
-  std::unique_ptr<MetricExpressionInterface> _left;
-  std::unique_ptr<MetricExpressionInterface> _right;
+  std::unique_ptr<ExpressionInterface> _left;
+  std::unique_ptr<ExpressionInterface> _right;
 };
 
 /**
@@ -196,12 +195,12 @@ public:
   /**
    * Token can be an identifier, a constant number, an operator, or a parenthesis.
    */
-  using token_t = std::variant<std::string, double, MetricOperator, Parenthesis>;
+  using token_t = std::variant<std::string, double, Operator_, Parenthesis>;
 
   Token(Token&&) noexcept = default;
   Token(const Token&) = default;
 
-  explicit Token(const MetricOperator operator_)
+  explicit Token(const Operator_ operator_)
     : _token(operator_)
   {
   }
@@ -236,12 +235,12 @@ public:
   /**
    * @return True, if this token is a metric operator.
    */
-  [[nodiscard]] bool is_operator() const noexcept { return std::holds_alternative<MetricOperator>(_token); }
+  [[nodiscard]] bool is_operator() const noexcept { return std::holds_alternative<Operator_>(_token); }
 
   /**
    * @return The operator inside the token.
    */
-  [[nodiscard]] MetricOperator operator_() const noexcept { return std::get<MetricOperator>(_token); }
+  [[nodiscard]] Operator_ operator_() const noexcept { return std::get<Operator_>(_token); }
 
   /**
    * @return Ownership of the underlying token data.
@@ -255,45 +254,21 @@ public:
 
 private:
   token_t _token;
-};
 
-/**
- * Visits a token and translates it into an std::string.
- */
-class TokenToStringVisitor
-{
-public:
-  [[nodiscard]] std::string operator()(const std::string& identifier) { return identifier; }
-
-  [[nodiscard]] std::string operator()(const double constant) { return std::to_string(constant); }
-
-  [[nodiscard]] std::string operator()(const MetricOperator metric_operator)
+  /**
+   * Visits a token and translates it into an std::string.
+   */
+  class TokenToStringVisitor
   {
-    switch (metric_operator) {
-      case MetricOperator::Plus:
-        return "+";
-      case MetricOperator::Minus:
-        return "-";
-      case MetricOperator::Times:
-        return "*";
-      case MetricOperator::Divide:
-        return "/";
-      default:
-        return "<unknown operator>";
-    }
-  }
+  public:
+    [[nodiscard]] std::string operator()(const std::string& identifier) const { return identifier; }
 
-  [[nodiscard]] std::string operator()(const Token::Parenthesis parenthesis)
-  {
-    switch (parenthesis) {
-      case Token::Parenthesis::Left:
-        return "(";
-      case Token::Parenthesis::Right:
-        return ")";
-      default:
-        return "<unknown parenthesis>";
-    }
-  }
+    [[nodiscard]] std::string operator()(const double constant) const { return std::to_string(constant); }
+
+    [[nodiscard]] std::string operator()(Operator_ metric_operator) const;
+
+    [[nodiscard]] std::string operator()(Token::Parenthesis parenthesis) const;
+  };
 };
 
 /**
@@ -344,7 +319,7 @@ private:
    * @param current_char Current char from input string.
    * @return The metric operator.
    */
-  [[nodiscard]] MetricOperator read_operator(char current_char) const;
+  [[nodiscard]] Operator_ read_operator(char current_char) const;
 
   /**
    * Checks if the given char is an escape character.
@@ -365,8 +340,7 @@ private:
    * @return True, if the left operator has a greater precedence than the right operator (or if the right operator is
    * left associative if both have the same precedence).
    */
-  [[nodiscard]] static bool has_greater_precedence(MetricOperator left_operator,
-                                                   MetricOperator right_operator) noexcept;
+  [[nodiscard]] static bool has_greater_precedence(Operator_ left_operator, Operator_ right_operator) noexcept;
 
   /**
    * Returns the precedence of the given operator.
@@ -374,7 +348,7 @@ private:
    * @param operator_ Operator.
    * @return Precedence of the operator.
    */
-  [[nodiscard]] static std::uint8_t precedence(MetricOperator operator_) noexcept;
+  [[nodiscard]] static std::uint8_t precedence(Operator_ operator_) noexcept;
 
   /**
    * Tests if the operator is left associative.
@@ -382,7 +356,7 @@ private:
    * @param operator_ Operator to test.
    * @return True, if left associative.
    */
-  [[nodiscard]] static bool is_left_associative(MetricOperator operator_) noexcept;
+  [[nodiscard]] static bool is_left_associative(Operator_ operator_) noexcept;
 
   /**
    * Checks if the given char could belong to an identifier (alphanumerical chars, _, ., etc.).
@@ -399,7 +373,7 @@ private:
 /**
  * The expression builder translates an expression (string) to an executable metric expression.
  */
-class ExpressionBuilder
+class Builder
 {
 public:
   /**
@@ -408,7 +382,7 @@ public:
    * @param input_expression Expression to translate into a metric expression.
    * @return Evaluable expression.
    */
-  [[nodiscard]] static std::unique_ptr<MetricExpressionInterface> build(std::string&& input_expression);
+  [[nodiscard]] static std::unique_ptr<ExpressionInterface> build(std::string&& input_expression);
 
 private:
   /**
@@ -418,38 +392,38 @@ private:
   {
   public:
     TokenToMetricExpressionVisitor(const std::string& input,
-                                   std::stack<std::unique_ptr<MetricExpressionInterface>>& expression_stack) noexcept
+                                   std::stack<std::unique_ptr<ExpressionInterface>>& expression_stack) noexcept
       : _input(input)
       , _expression_stack(expression_stack)
     {
     }
     ~TokenToMetricExpressionVisitor() = default;
 
-    [[nodiscard]] std::unique_ptr<MetricExpressionInterface> operator()(std::string&& identifier)
+    [[nodiscard]] std::unique_ptr<ExpressionInterface> operator()(std::string&& identifier)
     {
       return std::make_unique<IdentifierExpression>(std::move(identifier));
     }
 
-    [[nodiscard]] std::unique_ptr<MetricExpressionInterface> operator()(const double constant)
+    [[nodiscard]] std::unique_ptr<ExpressionInterface> operator()(const double constant)
     {
       return std::make_unique<ConstantExpression>(constant);
     }
 
-    [[nodiscard]] std::unique_ptr<MetricExpressionInterface> operator()(
+    [[nodiscard]] std::unique_ptr<ExpressionInterface> operator()(
       [[maybe_unused]] const Token::Parenthesis /* parenthesis */) const
     {
       /// Ignore parenthesis.
       return nullptr;
     }
 
-    [[nodiscard]] std::unique_ptr<MetricExpressionInterface> operator()(MetricOperator metric_operator);
+    [[nodiscard]] std::unique_ptr<ExpressionInterface> operator()(Operator_ metric_operator);
 
   private:
     /// Input of the expression, used to throw an exception.
     const std::string& _input;
 
     /// Expression stack to push expressions to (and pop operators).
-    std::stack<std::unique_ptr<MetricExpressionInterface>>& _expression_stack;
+    std::stack<std::unique_ptr<ExpressionInterface>>& _expression_stack;
   };
 };
 }
