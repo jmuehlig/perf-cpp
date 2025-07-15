@@ -372,32 +372,59 @@ public:
   ~DataTypeNotRegisteredError() override = default;
 };
 
-class CannotParseExpressionError final : public std::runtime_error
+class CannotParseMetricExpressionError final : public std::runtime_error
 {
 public:
-  explicit CannotParseExpressionError(const std::string_view input)
+  explicit CannotParseMetricExpressionError(const std::string_view input)
     : std::runtime_error(std::string{ "Cannot parse expression from '" }.append(input).append("'."))
   {
   }
 
-  CannotParseExpressionError(const std::string_view input, const std::string_view reason)
+  CannotParseMetricExpressionError(const std::string_view input, const std::string_view reason)
     : std::runtime_error(
         std::string{ "Cannot parse expression from '" }.append(input).append("': ").append(reason).append("."))
   {
   }
 
-  ~CannotParseExpressionError() override = default;
+  ~CannotParseMetricExpressionError() override = default;
 };
 
-class CannotEvaluateExpressionError final : public std::runtime_error
+class CannotParseMetricExpressionUnknownFunctionError final : public std::runtime_error
 {
 public:
-  explicit CannotEvaluateExpressionError(const std::string_view input)
-    : std::runtime_error(std::string{ "Cannot evaluate expression '" }.append(input).append("'."))
+  explicit CannotParseMetricExpressionUnknownFunctionError(const std::string_view input,
+                                                           const std::string_view function_name)
+    : std::runtime_error(std::string{ "Cannot parse expression. Unknown function '" }
+                           .append(function_name)
+                           .append("' in expression '")
+                           .append(input)
+                           .append("'."))
   {
   }
 
-  ~CannotEvaluateExpressionError() override = default;
+  ~CannotParseMetricExpressionUnknownFunctionError() override = default;
+};
+
+class CannotParseMetricExpressionUnexpectedFunctionArgumentsError final : public std::runtime_error
+{
+public:
+  explicit CannotParseMetricExpressionUnexpectedFunctionArgumentsError(const std::string_view input,
+                                                                       const std::string_view function_name,
+                                                                       const std::size_t expected_arguments,
+                                                                       const std::size_t arguments)
+    : std::runtime_error(std::string{ "Cannot parse expression. Function '" }
+                           .append(function_name)
+                           .append("' takes ")
+                           .append(std::to_string(expected_arguments))
+                           .append(" arguments, got ")
+                           .append(std::to_string(arguments))
+                           .append(" in expression '")
+                           .append(input)
+                           .append("'."))
+  {
+  }
+
+  ~CannotParseMetricExpressionUnexpectedFunctionArgumentsError() override = default;
 };
 
 class CannotCreateEventFileDescriptor final : public std::runtime_error

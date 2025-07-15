@@ -287,6 +287,21 @@ TEST_CASE("calculating", "[Metric][Formula]")
   {
     REQUIRE_THROWS(perf::FormulaMetric{ "scientific-formular", "'event-a' * 1e2e5" });
   }
+
+  SECTION("d_ratio function")
+  {
+    REQUIRE_THROWS(perf::FormulaMetric{ "d-ratio-formular", "d_ratio()" });
+    REQUIRE_THROWS(perf::FormulaMetric{ "d-ratio-formular", "d_ratio('event-a')" });
+    REQUIRE_THROWS(perf::FormulaMetric{ "d-ratio-formular", "d_ratio('event-a', )" });
+    REQUIRE_THROWS(perf::FormulaMetric{ "d-ratio-formular", "d_ratio('event-a', 'event-b', 'event-c')" });
+
+    auto d_ratio_metric = perf::FormulaMetric{ "d-ratio-formular", "d_ratio('event-a', 'event-b')" };
+
+    auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
+      std::make_pair("event-a", 100U), std::make_pair("event-b", 20U) } };
+    REQUIRE(d_ratio_metric.calculate(counter_result).has_value());
+    REQUIRE(d_ratio_metric.calculate(counter_result).value() == 5.);
+  }
 }
 
 TEST_CASE("calculating", "[Metric][NestedMetrics]")

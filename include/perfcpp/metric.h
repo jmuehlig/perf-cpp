@@ -1,7 +1,7 @@
 #pragma once
 
 #include "counter.h"
-#include "metric_expression.h"
+#include "metric/expression/parser.h"
 #include <string>
 #include <vector>
 
@@ -24,7 +24,7 @@ class FormulaMetric final : public Metric
 public:
   FormulaMetric(std::string&& name, std::string&& formula)
     : _name(std::move(name))
-    , _expression(metric::expression::Builder::build(std::move(formula)))
+    , _expression(metric::expression::Parser{ std::move(formula) }.parse())
   {
     _expression->add_required_hardware_counter(this->_required_counter_names);
   }
