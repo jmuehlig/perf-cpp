@@ -31,12 +31,11 @@ perf::metric::expression::Parser::parse_additive_expression()
     /// Build the binary (additive) expression.
     switch (operator_) {
       case Operator_::Plus:
-        left_expression =
-          std::make_unique<BinaryExpression<Operator_::Plus>>(std::move(left_expression), std::move(right_expression));
+        left_expression = std::make_unique<AdditionExpression>(std::move(left_expression), std::move(right_expression));
         break;
       case Operator_::Minus:
         left_expression =
-          std::make_unique<BinaryExpression<Operator_::Minus>>(std::move(left_expression), std::move(right_expression));
+          std::make_unique<SubtractionExpression>(std::move(left_expression), std::move(right_expression));
         break;
       default:
         throw CannotParseMetricExpressionError{ this->_tokenizer.input() };
@@ -64,12 +63,10 @@ perf::metric::expression::Parser::parse_multiplicative_expression()
     /// Build the binary (multiplicative) expression.
     switch (operator_) {
       case Operator_::Times:
-        left_expression =
-          std::make_unique<BinaryExpression<Operator_::Times>>(std::move(left_expression), std::move(right_expression));
+        left_expression = std::make_unique<MultiplyExpression>(std::move(left_expression), std::move(right_expression));
         break;
       case Operator_::Divide:
-        left_expression = std::make_unique<BinaryExpression<Operator_::Divide>>(std::move(left_expression),
-                                                                                std::move(right_expression));
+        left_expression = std::make_unique<DivideExpression>(std::move(left_expression), std::move(right_expression));
         break;
       default:
         throw CannotParseMetricExpressionError{ this->_tokenizer.input() };
@@ -91,7 +88,7 @@ perf::metric::expression::Parser::parse_primary()
 
 std::unique_ptr<perf::metric::expression::ExpressionInterface>
 perf::metric::expression::Parser::build_function(std::string&& function_name,
-                                                 std::vector<std::unique_ptr<ExpressionInterface>>&& arguments)
+                                                 std::vector<std::unique_ptr<ExpressionInterface>>&& arguments) const
 {
   /// Transform the function name into lower characters.
   std::transform(function_name.begin(), function_name.end(), function_name.begin(), [](const auto character) {
@@ -102,11 +99,22 @@ perf::metric::expression::Parser::build_function(std::string&& function_name,
   if (function_name == "d_ratio" || function_name == "ratio") {
     if (arguments.size() == 2U) {
       return std::make_unique<DRatioFunction>(std::move(arguments[0U]), std::move(arguments[1U]));
-    } else {
-      throw CannotParseMetricExpressionUnexpectedFunctionArgumentsError{
-        this->_tokenizer.input(), function_name, 2U, arguments.size()
-      };
     }
+
+    throw CannotParseMetricExpressionUnexpectedFunctionArgumentsError{
+      this->_tokenizer.input(), function_name, 2U, arguments.size()
+    };
+  }
+
+  /// Turn the function name and arguments into a function expression.
+  if (function_name == "sum") {
+    if (arguments.size() >= 2U) {
+      return std::make_unique<SumFunction>(std::move(arguments));
+    }
+
+    throw CannotParseMetricExpressionUnexpectedFunctionArgumentsError{
+      this->_tokenizer.input(), function_name, 2U, arguments.size()
+    };
   }
 
   throw CannotParseMetricExpressionUnknownFunctionError{ this->_tokenizer.input(), function_name };
@@ -172,8 +180,7 @@ perf::metric::expression::Parser::TokenVisitor::operator()(const perf::metric::e
 
     /// Creating an expression subtracting the operand from zero.
     auto operand = this->_parser.parse_primary();
-    return std::make_unique<BinaryExpression<Operator_::Minus>>(std::make_unique<ConstantExpression>(0),
-                                                                std::move(operand));
+    return std::make_unique<SubtractionExpression>(std::make_unique<ConstantExpression>(0), std::move(operand));
   }
 
   /// Handle an expression starting with "+".

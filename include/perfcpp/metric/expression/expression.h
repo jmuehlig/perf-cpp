@@ -98,10 +98,9 @@ private:
 };
 
 /**
- * Implementation of binary expressions (+,-,*,/).
+ * Abstract implementation of binary expressions to simplify the implementation of specific operations like addition.
  */
-template<Operator_ OP>
-class BinaryExpression final : public ExpressionInterface
+class BinaryExpression : public ExpressionInterface
 {
 public:
   BinaryExpression(std::unique_ptr<ExpressionInterface>&& left, std::unique_ptr<ExpressionInterface>&& right)
@@ -120,30 +119,7 @@ public:
    */
   [[nodiscard]] std::optional<double> evaluate(const CounterResult& result) const override
   {
-    if (const auto left = this->_left->evaluate(result); left.has_value()) {
-      if (const auto right = this->_right->evaluate(result); right.has_value()) {
-
-        if constexpr (OP == Operator_::Plus) {
-          return left.value() + right.value();
-        }
-
-        if constexpr (OP == Operator_::Minus) {
-          return left.value() - right.value();
-        }
-
-        if constexpr (OP == Operator_::Times) {
-          return left.value() * right.value();
-        }
-
-        if constexpr (OP == Operator_::Divide) {
-          if (right.value() > .0) {
-            return left.value() / right.value();
-          }
-        }
-      }
-    }
-
-    return std::nullopt;
+    return evaluate(this->_left->evaluate(result), this->_right->evaluate(result));
   }
 
   /**
@@ -157,8 +133,80 @@ public:
     _right->add_required_hardware_counter(hardware_counter_names);
   }
 
+protected:
+  [[nodiscard]] virtual std::optional<double> evaluate(std::optional<double> left,
+                                                       std::optional<double> right) const = 0;
+
 private:
   std::unique_ptr<ExpressionInterface> _left;
   std::unique_ptr<ExpressionInterface> _right;
+};
+
+/**
+ * Performs an addition of both operands.
+ */
+class AdditionExpression final : public BinaryExpression
+{
+public:
+  AdditionExpression(std::unique_ptr<ExpressionInterface>&& left, std::unique_ptr<ExpressionInterface>&& right)
+    : BinaryExpression(std::move(left), std::move(right))
+  {
+  }
+
+  ~AdditionExpression() override = default;
+
+protected:
+  [[nodiscard]] std::optional<double> evaluate(std::optional<double> left, std::optional<double> right) const override;
+};
+
+/**
+ * Performs a subtraction of both operands.
+ */
+class SubtractionExpression final : public BinaryExpression
+{
+public:
+  SubtractionExpression(std::unique_ptr<ExpressionInterface>&& left, std::unique_ptr<ExpressionInterface>&& right)
+    : BinaryExpression(std::move(left), std::move(right))
+  {
+  }
+
+  ~SubtractionExpression() override = default;
+
+protected:
+  [[nodiscard]] std::optional<double> evaluate(std::optional<double> left, std::optional<double> right) const override;
+};
+
+/**
+ * Multiplies both operands.
+ */
+class MultiplyExpression final : public BinaryExpression
+{
+public:
+  MultiplyExpression(std::unique_ptr<ExpressionInterface>&& left, std::unique_ptr<ExpressionInterface>&& right)
+    : BinaryExpression(std::move(left), std::move(right))
+  {
+  }
+
+  ~MultiplyExpression() override = default;
+
+protected:
+  [[nodiscard]] std::optional<double> evaluate(std::optional<double> left, std::optional<double> right) const override;
+};
+
+/**
+ * Divides both operands.
+ */
+class DivideExpression final : public BinaryExpression
+{
+public:
+  DivideExpression(std::unique_ptr<ExpressionInterface>&& left, std::unique_ptr<ExpressionInterface>&& right)
+    : BinaryExpression(std::move(left), std::move(right))
+  {
+  }
+
+  ~DivideExpression() override = default;
+
+protected:
+  [[nodiscard]] std::optional<double> evaluate(std::optional<double> left, std::optional<double> right) const override;
 };
 }

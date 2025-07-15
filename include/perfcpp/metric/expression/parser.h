@@ -93,7 +93,7 @@ private:
    */
   [[nodiscard]] std::unique_ptr<ExpressionInterface> build_function(
     std::string&& function_name,
-    std::vector<std::unique_ptr<ExpressionInterface>>&& arguments);
+    std::vector<std::unique_ptr<ExpressionInterface>>&& arguments) const;
 
   /**
    * Visits a token and translates it into an expression, called by the parse_primary() function.

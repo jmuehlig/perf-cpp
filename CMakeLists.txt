@@ -47,8 +47,9 @@ set(PERF_CPP_SRC
     src/symbol_resolver.cpp
     src/metric/expression/token.cpp
     src/metric/expression/tokenizer.cpp
-    src/metric/expression/function.cpp
     src/metric/expression/parser.cpp
+    src/metric/expression/function.cpp
+    src/metric/expression/expression.cpp
     src/analyzer/memory_access.cpp
     src/analyzer/flame_graph_generator.cpp
 )
