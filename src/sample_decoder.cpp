@@ -445,7 +445,7 @@ perf::SampleDecoder::decode_data_access(perf_mem_data_src data_source, Sample& s
 #ifndef PERFCPP_NO_MEM_SNOOPX /// Snoopx was introduced in Linux 4.14.0
   const auto snoop = SampleDecoder::decode_data_access_snoop(data_source.mem_snoop, data_source.mem_snoopx);
 #else
-  const auto snoop = SampleDecoder::decode_data_access_snoop(perf_data_source.mem_snoop, 0ULL);
+  const auto snoop = SampleDecoder::decode_data_access_snoop(data_source.mem_snoop, 0ULL);
 #endif
   sample.data_access().snoop(snoop);
 
