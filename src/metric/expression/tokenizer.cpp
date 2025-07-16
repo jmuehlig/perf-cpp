@@ -81,44 +81,44 @@ perf::metric::expression::Tokenizer::read_constant(const std::size_t begin) cons
 {
   /// We know that the current character (this->_position) is a digit; otherwise, this function wouldn't have been
   /// called.
-  auto count = 1ULL;
+  auto position = begin + 1ULL;
 
-  /// Read all characters that are digits or a dot.
-  /// Additionally, check if the number has only one dot.
-  auto has_dot = false;
-  auto has_scientific_e = false;
-  while ((begin + count) < this->_input.length() &&
-         (std::isdigit(this->_input[begin + count]) || this->_input[begin + count] == '-' ||
-          this->_input[begin + count] == '.' || Tokenizer::is_scientific_e(this->_input[begin + count]))) {
+  /// Read all digits.
+  while (position < this->_input.length() && std::isdigit(this->_input[position])) {
+    ++position;
+  }
 
-    /// Verify that only one dot is in the number.
-    if (this->_input[begin + count] == '.' && std::exchange(has_dot, true)) {
-      throw CannotParseMetricExpressionError{ this->_input };
+  /// When hitting a (decimal) point, continue reading.
+  if (position < this->_input.length() && this->_input[position] == '.') {
+    ++position;
+
+    /// Again, read all digits after the decimal point.
+    while (position < this->_input.length() && std::isdigit(this->_input[position])) {
+      ++position;
     }
+  }
 
-    /// Verify that only one scientific e is in the number.
-    if (Tokenizer::is_scientific_e(this->_input[begin + count]) && std::exchange(has_scientific_e, true)) {
-      throw CannotParseMetricExpressionError{ this->_input };
+  /// When hitting a scientific e, continue reading.
+  if (position < this->_input.length() && Tokenizer::is_scientific_e(this->_input[position])) {
+    ++position;
+
+    /// Include possible +/- sign after scientific e.
+    position += static_cast<std::size_t>( position < this->_input.length() && (this->_input[position] == '+' || this->_input[position] == '-'));
+
+    /// Again, read all digits after the scientific e.
+    while (position < this->_input.length() && std::isdigit(this->_input[position])) {
+      ++position;
     }
-
-    ++count;
   }
 
   /// Extract the number.
-  const auto number = _input.substr(begin, count);
-
-  /// Ensure the number is not empty.
-  if (number.empty()) {
-    throw CannotParseMetricExpressionError{ this->_input };
+  const auto number = this->_input.substr(begin, position - begin);
+  try {
+    /// Parse the number to decimal.
+    return std::make_pair(std::stod(number), position);
+  } catch (std::invalid_argument& e) {
+    throw CannotParseMetricExpressionError{ this->_input, std::string{"Cannot parse number ("}.append(e.what()).append(")") };
   }
-
-  /// Ensure the number does not end with minus or scientific e.
-  if (number.back() == '-' || Tokenizer::is_scientific_e(number.back())) {
-    throw CannotParseMetricExpressionError{ this->_input };
-  }
-
-  /// Parse number into decimal.
-  return std::make_pair(std::stod(number), begin + count);
 }
 
 std::pair<std::string, std::size_t>
