@@ -40,6 +40,8 @@ try {
 > The `perf::CounterDefinition` instance is used to store event configurations (e.g., names) and passed as a reference.
 > Consequently, the instance needs to be alive while using the `EventCounter`.
 
+> [!NOTE]
+> Live events can only capture hardware events but not metrics.
 
 ## Initializing the Hardware Counters *(optional)*
 Optionally, preparing the hardware counters ahead of time to exclude configuration time from your measurements, though this is also handled automatically at the start if skipped:
