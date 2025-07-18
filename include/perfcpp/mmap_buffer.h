@@ -65,7 +65,7 @@ public:
    *
    * @return PMC value read via `rdpmc` from the buffer.
    */
-  [[nodiscard]] std::uint64_t read_performance_monitoring_counter() const noexcept;
+  [[nodiscard]] std::optional<std::uint64_t> read_performance_monitoring_counter() const noexcept;
 
   /**
    * @return The entire data from the buffer, including all data copied from overflows. This will consume the data,

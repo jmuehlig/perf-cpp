@@ -175,7 +175,7 @@ public:
    * @param counter_index Index of the counter to be read live.
    * @return The live value of the counter.
    */
-  [[nodiscard]] double live_result(std::uint64_t counter_index) const noexcept;
+  [[nodiscard]] std::optional<double> live_result(std::uint64_t counter_index) const noexcept;
 
   /**
    * Performs a live read for every group without stopping the counter.
@@ -184,7 +184,8 @@ public:
    * @param normalization Normalization value.
    * @return The live value of the counter.
    */
-  [[nodiscard]] double live_result(std::uint64_t counter_index, std::uint64_t normalization) const noexcept;
+  [[nodiscard]] std::optional<double> live_result(std::uint64_t counter_index,
+                                                  std::uint64_t normalization) const noexcept;
 
   /**
    * @return A list of event names that are added as live evens.
@@ -370,7 +371,7 @@ private:
   std::vector<std::string_view> _event_names;
 
   /// List of (start, stop) tuples for all live events.
-  std::vector<std::pair<double, double>> _counter_values;
+  std::vector<std::pair<std::optional<double>, std::optional<double>>> _counter_values;
 };
 
 class MultiEventCounterBase

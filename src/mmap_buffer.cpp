@@ -121,7 +121,9 @@ perf::MmapBuffer::~MmapBuffer()
   }
 }
 
-std::uint64_t
+#include <iostream>
+
+std::optional<std::uint64_t>
 perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
 {
   /// Read the counter without stopping/disabling it via the "rdpmc" instruction.
@@ -129,8 +131,17 @@ perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
   /// For more details see https://man7.org/linux/man-pages/man2/perf_event_open.2.html (section MMAP layout).
 
 #if defined(__x86_64__) || defined(__i386__)
-  std::uint64_t value;
+  /// Lock for sequentializing the read.
   decltype(perf_event_mmap_page::lock) lock;
+
+  /// Index of the physical counter.
+  std::uint32_t index;
+
+  /// Timing.
+  std::uint64_t enabled, running;
+
+  /// Counter value.
+  std::int64_t count;
 
   do {
     lock = this->_ringbuffer_header->lock;
@@ -138,26 +149,42 @@ perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
     /// Memory fence.
     asm volatile("" ::: "memory");
 
-    /// Read the hardware counter identifier.
-    const auto index = this->_ringbuffer_header->index;
-
-    /// Verify that "rdpmc" is allowed.
-    if (index == 0U) {
-      return 0ULL;
-    }
+    /// Hardware counter identifier.
+    index = this->_ringbuffer_header->index;
 
     /// Offset that must be added to the value.
-    const auto offset = this->_ringbuffer_header->offset;
+    count = this->_ringbuffer_header->offset;
 
-    /// Read the value.
-    value = std::uint64_t(std::int64_t(_rdpmc(index - 1U)) + offset);
+    /// Read timing to scale the value in case the event was not counted the entire time.
+    enabled = this->_ringbuffer_header->time_enabled;
+    running = this->_ringbuffer_header->time_running;
+
+    if (this->_ringbuffer_header->cap_user_rdpmc && index) {
+      /// Read the hardware counter value.
+      auto value = _rdpmc(index - 1U);
+
+      /// Read the width of the value.
+      const auto width = 64 - this->_ringbuffer_header->pmc_width;
+
+      /// Adjust the value for the given width.
+      value = (value << width) >> width;
+
+      count += value;
+    } else {
+      return std::nullopt;
+    }
 
     asm volatile("" ::: "memory");
   } while (this->_ringbuffer_header->lock != lock);
 
-  return value;
+  /// Scale the value if it was not counted the entire time.
+  if (running && (enabled > running)) {
+    count *= (enabled / running);
+  }
+
+  return static_cast<std::uint64_t>(count);
 #else
-  return 0ULL;
+  return std::nullopt;
 #endif
 }
 

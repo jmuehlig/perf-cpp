@@ -37,7 +37,7 @@ perf::Counter::open(const perf::Config& configuration, const bool is_live)
   }
 
   /// Enable the read format including timing.
-  this->_event_attribute.read_format = Counter::create_perf_event_read_format(true);
+  this->_event_attribute.read_format = Counter::create_perf_event_read_format(true, !is_live);
   this->_event_attribute.sample_type |= PERF_SAMPLE_IDENTIFIER;
 
   /// Open the counter via the perf subsystem.
@@ -73,7 +73,7 @@ perf::Counter::open(const perf::Config& configuration,
 {
   /// Configure the perf event attribute (including read format).
   this->_event_attribute = this->create_perf_event_attribute(false, configuration);
-  this->_event_attribute.read_format = Counter::create_perf_event_read_format(false);
+  this->_event_attribute.read_format = Counter::create_perf_event_read_format(false, true);
 
   /// Open the counter via the perf subsystem.
   auto [file_descriptor, error_code] =
@@ -122,7 +122,7 @@ perf::Counter::open(const perf::Config& config,
 
   if (static_cast<bool>(sample_type | std::uint64_t(PERF_SAMPLE_READ))) {
     /// Enable the read format including timing.
-    this->_event_attribute.read_format = Counter::create_perf_event_read_format(true);
+    this->_event_attribute.read_format = Counter::create_perf_event_read_format(true, true);
   }
 
   /// Open the counter via the perf subsystem.
@@ -177,7 +177,7 @@ perf::Counter::open(const perf::Config& config,
 
   if (static_cast<bool>(sample_type | std::uint64_t(PERF_SAMPLE_READ))) {
     /// Enable the read format including timing.
-    this->_event_attribute.read_format = Counter::create_perf_event_read_format(false);
+    this->_event_attribute.read_format = Counter::create_perf_event_read_format(false, true);
   }
 
   /// Open the counter via the perf subsystem.
@@ -220,11 +220,11 @@ void
 perf::Counter::enable() const
 {
   if (::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_RESET, 0) < 0) {
-    throw CannotEnableCounter{errno};
+    throw CannotEnableCounter{ errno };
   }
 
   if (::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_ENABLE, 0) < 0) {
-    throw CannotEnableCounter{errno};
+    throw CannotEnableCounter{ errno };
   }
 }
 
@@ -232,7 +232,7 @@ void
 perf::Counter::disable() const
 {
   if (::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_DISABLE, 0) < 0) {
-    throw CannotDisableCounter{errno};
+    throw CannotDisableCounter{ errno };
   }
 }
 
@@ -241,7 +241,7 @@ perf::Counter::read_id() const
 {
   std::uint64_t id;
   if (::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_ID, &id) < 0) {
-    throw CannotReadCounterId{errno};
+    throw CannotReadCounterId{ errno };
   }
 
   return id;
@@ -319,9 +319,9 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled,
 }
 
 std::uint64_t
-perf::Counter::create_perf_event_read_format(const bool is_include_time) noexcept
+perf::Counter::create_perf_event_read_format(const bool is_include_time, const bool is_include_group) noexcept
 {
-  return PERF_FORMAT_GROUP | PERF_FORMAT_ID |
+  return (static_cast<std::uint64_t>(is_include_group) * PERF_FORMAT_GROUP) | PERF_FORMAT_ID |
          (static_cast<std::uint64_t>(is_include_time) *
           (PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING));
 }

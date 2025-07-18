@@ -15,10 +15,10 @@ main()
 
   try {
     /// Add counters that are recorded over the entire period (from start to end).
-    event_counter.add({ "cycles", "instructions", "cache-references", "cache-misses" });
+    //event_counter.add({ "cycles", "instructions", "cache-references", "cache-misses", "branches" });
 
     /// Add live counters that can be read without stopping the EventCounter.
-    event_counter.add_live(std::vector<std::string>{ "cache-references", "cache-misses" });
+    event_counter.add_live(std::vector<std::string>{ "cache-references", "cache-misses", "branches"});
   } catch (std::runtime_error& e) {
     std::cerr << e.what() << std::endl;
     return 1;
@@ -61,13 +61,13 @@ main()
 
     /// Print the live values.
     std::cout << "Live results: " << live_events.get("cache-references", benchmark.size()) << " cache-references, "
-              << live_events.get("cache-misses", benchmark.size()) << " cache-misses" << std::endl;
+              << live_events.get("cache-misses", benchmark.size()) << " cache-misses, "
+              << live_events.get("branches", benchmark.size()) << " branches" <<
+            std::endl;
   }
 
   /// Stop recording counters.
   event_counter.stop();
-
-  std::cout << "\nOverall Results:\n" << event_counter.result(benchmark.size() * iterations).to_string() << std::endl;
 
   return 0;
 }
