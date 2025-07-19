@@ -1,5 +1,11 @@
 # *perf-cpp*: Changelog
 
+## v0.12.2
+
+- **Metric Functions**: Metrics now support built-in functions such as `ratio(A, B)` and `sum(A, B, C, ...)`, enabling more expressive and reusable formulas (see the [documentation](docs/metrics.md#functions)).
+- **Optimized Compile-time Event Injection**: The generated runtime event registration class is now only created if it does not already exist, reducing unnecessary recompilation.
+- **Improved Live Event Accuracy**: Live event values now account for partial runtime durations via time scaling, improving accuracy when counters were not active for the full measurement window.
+
 ## v0.12.1
 This update extends event discovery to ARM platforms, improves hardware counter introspection, and enhances the flexibility of metric definitions.
 
@@ -28,7 +34,6 @@ The previous flat API is still available but deprecated and will be removed in `
 - **New Sampling Interface**: Work with clearly separated sample sections, exposing additional **AMD IBS** fields that are not surfaced by the `perf_event_open` records.
 - **Explicit Latency Attributes**: Vendor-specific latency signals–*cache-access* on Intel and *cache-miss* on AMD–are now surfaced as distinct fields.
 - **Heterogeneous-core Support**: Sampling can target multiple PMU domains (e.g., *cpu_core* and *cpu_atom*) on hybrid Intel processors.
-
 
 ## v0.10.0
 * New feature: The *auxiliary event* is added automatically if required by the (Intel-) hardware (see the [documentation](docs/sampling.md#sapphire-rapids-and-beyond)).
