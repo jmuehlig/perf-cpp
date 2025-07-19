@@ -73,6 +73,31 @@ private:
   static std::optional<std::uint8_t> _events_per_physical_performance_counter;
 
   /**
+   * Result of a __get_cpuid call.
+   */
+  class CPUIDResult
+  {
+  public:
+    CPUIDResult() noexcept = default;
+    ~CPUIDResult() noexcept = default;
+
+    std::uint32_t eax;
+    std::uint32_t ebx;
+    std::uint32_t ecx;
+    std::uint32_t edx;
+  };
+
+  /**
+   * Fires a __get_cpuid call with the provided leaf and sub leaf. In case the call was successful, the register values
+   * are returned.
+   *
+   * @param leaf Leaf.
+   * @param sub_leaf Sub leaf (0 by default).
+   * @return Register values (eax, ebx, ecx, edx) in case the cpuid request was successful.
+   */
+  static std::optional<CPUIDResult> cpuid(std::uint32_t leaf, std::uint32_t sub_leaf = 0U) noexcept;
+
+  /**
    * Writes a value into the cache variable and returns the value.
    *
    * @param variable Cache variable.
@@ -94,8 +119,8 @@ private:
    * number of events per hardware counter.
    * @return The maximum number of events on a single physical performance counter.
    */
-  [[nodiscard]] static std::optional<std::uint8_t>
-  identify_hardware_counters_per_cpu_or_events_per_hardware_counter_experimentally(bool is_identify_hardware_counters);
+  [[nodiscard]] static std::optional<std::uint8_t> explore_hardware_counters_experimentally(
+    bool is_identify_hardware_counters);
 
   /**
    * Creates a list for hardware counter and event identification. The list may depend on the underlying hardware (e.g.,

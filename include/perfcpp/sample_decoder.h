@@ -234,26 +234,30 @@ private:
   [[nodiscard]] static std::optional<std::vector<Branch>> decode_branch_stack(SampleIterator& entry);
 
   /**
-   * Reads the data source field and translates it into an instruction type, the source, snoop information, tlb
-   * information, and lock information.
+   * Decodes the data source and writes the data into the provided sample.
    *
-   * @param source Data source field.
-   * @return 3-tuple (instruction type, data source, snoop, (is l1 tlb hit bit, is l2 tlb hit bit), is locked bit)
+   * @param data_source Perf data source to decode.
+   * @param sample Sample to write the results to.
    */
-  [[nodiscard]] static std::tuple<std::optional<DataAccess::AccessType>,
-                                  DataAccess::Source,
-                                  std::optional<DataAccess::Snoop>,
-                                  std::optional<std::pair<bool, bool>>,
-                                  std::optional<bool>>
-  decode_data_access_information(std::uint64_t source) noexcept;
+  static void decode_data_access(perf_mem_data_src data_source, Sample& sample);
 
   /**
-   * Reads the access type and translates it into an AccessType.
+   * Translates the perf data source information into an AccessType.
    *
-   * @param op_code Operation code provided by the perf subsystem.
+   * @param perf_data_source Data source read from perf sample.
    * @return Translated access type.
    */
-  [[nodiscard]] static std::optional<DataAccess::AccessType> decode_data_access_type(std::uint64_t op_code) noexcept;
+  [[nodiscard]] static std::optional<DataAccess::AccessType> decode_data_access_type(
+    perf_mem_data_src perf_data_source) noexcept;
+
+  /**
+   * Translates the perf data source information into a Source.
+   *
+   * @param perf_data_source Data source read from perf sample.
+   * @return Translated source.
+   */
+  [[nodiscard]] static std::optional<DataAccess::Source> decode_data_access_source_and_remote(
+    perf_mem_data_src perf_data_source) noexcept;
 
   /**
    * Reads the access source and translates it into a Source.
@@ -292,6 +296,14 @@ private:
    * @return Translated pair (dTLB hit, STLB hit).
    */
   [[nodiscard]] static std::optional<std::pair<bool, bool>> decode_data_access_tlb(std::uint64_t tlb_code) noexcept;
+
+  /**
+   * Reads the perf lock information from a sample and translates it into a bool
+   *
+   * @param lock Memory lock code provided by the perf subsystem.
+   * @return Translated lock.
+   */
+  [[nodiscard]] static std::optional<bool> decode_data_access_is_locked(std::uint64_t lock) noexcept;
 
   /**
    * Reads the hardware transaction abort from the current buffer entry.

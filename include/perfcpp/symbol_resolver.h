@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <elf.h>
 
 namespace perf {
 class SymbolResolver
@@ -159,5 +160,14 @@ private:
    * @return List of all symbols linked to the module.
    */
   [[nodiscard]] static std::vector<Symbol> parse_symbol_table(const perf::SymbolResolver::Module& module);
+
+  /**
+   * Scans the section header table for the symbol table and string table.
+   *
+   * @param section_header_table Pointer to the section header table.
+   * @param size Size of the section header table.
+   * @return Pointer pair (symbol table, string table).
+   */
+  [[nodiscard]] static std::pair<const Elf64_Shdr*, const Elf64_Shdr*> find_symbol_and_string_tables(const Elf64_Shdr* section_header_table, std::uint16_t size) noexcept;
 };
 }

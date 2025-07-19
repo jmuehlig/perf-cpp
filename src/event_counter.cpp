@@ -455,7 +455,7 @@ void
 perf::EventCounter::live_result(std::vector<double>& result) const noexcept
 {
   for (auto counter_id = 0U; counter_id < this->_hardware_live_counters.size(); ++counter_id) {
-    result[counter_id] = this->live_result(counter_id);
+    result[counter_id] = this->live_result(counter_id).value_or(.0);
   }
 }
 
@@ -463,20 +463,24 @@ void
 perf::EventCounter::live_result(std::vector<double>& result, std::uint64_t normalization) const noexcept
 {
   for (auto counter_id = 0U; counter_id < this->_hardware_live_counters.size(); ++counter_id) {
-    result[counter_id] = this->live_result(counter_id, normalization);
+    result[counter_id] = this->live_result(counter_id, normalization).value_or(.0);
   }
 }
 
-double
+std::optional<double>
 perf::EventCounter::live_result(const std::uint64_t counter_index) const noexcept
 {
-  return double(this->_hardware_live_counters[counter_index].read_live());
+  return this->_hardware_live_counters[counter_index].read_live();
 }
 
-double
+std::optional<double>
 perf::EventCounter::live_result(const std::uint64_t counter_index, const std::uint64_t normalization) const noexcept
 {
-  return this->live_result(counter_index) / double(normalization);
+  if (const auto value = this->live_result(counter_index); value.has_value()) {
+    return value.value() / double(normalization);
+  }
+
+  return std::nullopt;
 }
 
 std::vector<std::string_view>
@@ -494,7 +498,7 @@ perf::LiveEventCounter::LiveEventCounter(const perf::EventCounter& event_counter
   : _event_counter(event_counter)
   , _event_names(event_counter.live_event_names())
 {
-  this->_counter_values.resize(this->_event_names.size(), { .0, .0 });
+  this->_counter_values.resize(this->_event_names.size(), { std::nullopt, std::nullopt });
 }
 
 void
@@ -521,8 +525,14 @@ perf::LiveEventCounter::get(const std::string_view event_name) const noexcept
   for (auto event_index = 0U; event_index < this->_event_names.size(); ++event_index) {
     /// Find the event matching the given name.
     if (this->_event_names[event_index] == event_name) {
-      /// Calculate the difference by <stop value> - <start value>.
-      return this->_counter_values[event_index].second - this->_counter_values[event_index].first;
+
+      if (const auto [start_value, stop_value] = this->_counter_values[event_index];
+          start_value.has_value() && stop_value.has_value()) {
+        /// Calculate the difference by <stop value> - <start value>.
+        return stop_value.value() - start_value.value();
+      }
+
+      return .0;
     }
   }
 

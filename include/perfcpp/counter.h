@@ -261,9 +261,15 @@ public:
    *
    * @return The current value of the counter.
    */
-  [[nodiscard]] double read_live() const noexcept
+  [[nodiscard]] std::optional<double> read_live() const noexcept
   {
-    return _mmap_buffer != nullptr ? (double(_mmap_buffer->read_performance_monitoring_counter()) * this->scale()) : .0;
+    if (_mmap_buffer != nullptr) {
+      if (const auto value = _mmap_buffer->read_performance_monitoring_counter(); value.has_value()) {
+        return double(value.value()) * this->scale();
+      }
+    }
+
+    return std::nullopt;
   }
 
   /**
@@ -348,8 +354,11 @@ private:
    * Configures the perf event read format.
    *
    * @param is_include_time If true, time is included.
+   * @param is_include_group If true, will enable group reading to read multiple events from one physical hardware
+   * counter.
    */
-  [[nodiscard]] static std::uint64_t create_perf_event_read_format(bool is_include_time) noexcept;
+  [[nodiscard]] static std::uint64_t create_perf_event_read_format(bool is_include_time,
+                                                                   bool is_include_group) noexcept;
 
   /**
    * Reads the counter's id.

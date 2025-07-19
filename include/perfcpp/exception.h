@@ -61,11 +61,59 @@ private:
 class CannotReadCounter final : public std::runtime_error
 {
 public:
-  explicit CannotReadCounter()
+  CannotReadCounter()
     : std::runtime_error(std::string{ "Cannot read from event counter." })
   {
   }
   ~CannotReadCounter() override = default;
+};
+
+class IoctlError : public std::runtime_error
+{
+public:
+  explicit IoctlError(const std::int64_t error_code, std::string&& error_message)
+    : std::runtime_error(error_message.append(" (error no ")
+                           .append(std::to_string(error_code))
+                           .append("): ")
+                           .append(IoctlError::create_error_message_from_code(error_code))
+                           .append("."))
+  {
+  }
+
+  ~IoctlError() override = default;
+
+protected:
+  [[nodiscard]] static std::string create_error_message_from_code(std::int64_t error_code);
+};
+
+class CannotEnableCounter final : public IoctlError
+{
+public:
+  explicit CannotEnableCounter(const std::int64_t error_code)
+    : IoctlError(error_code, "Cannot enable counter")
+  {
+  }
+  ~CannotEnableCounter() override = default;
+};
+
+class CannotDisableCounter final : public IoctlError
+{
+public:
+  explicit CannotDisableCounter(const std::int64_t error_code)
+    : IoctlError(error_code, "Cannot disable counter")
+  {
+  }
+  ~CannotDisableCounter() override = default;
+};
+
+class CannotReadCounterId final : public IoctlError
+{
+public:
+  explicit CannotReadCounterId(const std::int64_t error_code)
+    : IoctlError(error_code, "Cannot open counter")
+  {
+  }
+  ~CannotReadCounterId() override = default;
 };
 
 class MmapError final : public std::runtime_error
@@ -324,32 +372,59 @@ public:
   ~DataTypeNotRegisteredError() override = default;
 };
 
-class CannotParseExpressionError final : public std::runtime_error
+class CannotParseMetricExpressionError final : public std::runtime_error
 {
 public:
-  explicit CannotParseExpressionError(const std::string_view input)
+  explicit CannotParseMetricExpressionError(const std::string_view input)
     : std::runtime_error(std::string{ "Cannot parse expression from '" }.append(input).append("'."))
   {
   }
 
-  CannotParseExpressionError(const std::string_view input, const std::string_view reason)
+  CannotParseMetricExpressionError(const std::string_view input, const std::string_view reason)
     : std::runtime_error(
         std::string{ "Cannot parse expression from '" }.append(input).append("': ").append(reason).append("."))
   {
   }
 
-  ~CannotParseExpressionError() override = default;
+  ~CannotParseMetricExpressionError() override = default;
 };
 
-class CannotEvaluateExpressionError final : public std::runtime_error
+class CannotParseMetricExpressionUnknownFunctionError final : public std::runtime_error
 {
 public:
-  explicit CannotEvaluateExpressionError(const std::string_view input)
-    : std::runtime_error(std::string{ "Cannot evaluate expression '" }.append(input).append("'."))
+  explicit CannotParseMetricExpressionUnknownFunctionError(const std::string_view input,
+                                                           const std::string_view function_name)
+    : std::runtime_error(std::string{ "Cannot parse expression. Unknown function '" }
+                           .append(function_name)
+                           .append("' in expression '")
+                           .append(input)
+                           .append("'."))
   {
   }
 
-  ~CannotEvaluateExpressionError() override = default;
+  ~CannotParseMetricExpressionUnknownFunctionError() override = default;
+};
+
+class CannotParseMetricExpressionUnexpectedFunctionArgumentsError final : public std::runtime_error
+{
+public:
+  explicit CannotParseMetricExpressionUnexpectedFunctionArgumentsError(const std::string_view input,
+                                                                       const std::string_view function_name,
+                                                                       const std::size_t expected_arguments,
+                                                                       const std::size_t arguments)
+    : std::runtime_error(std::string{ "Cannot parse expression. Function '" }
+                           .append(function_name)
+                           .append("' takes ")
+                           .append(std::to_string(expected_arguments))
+                           .append(" arguments, got ")
+                           .append(std::to_string(arguments))
+                           .append(" in expression '")
+                           .append(input)
+                           .append("'."))
+  {
+  }
+
+  ~CannotParseMetricExpressionUnexpectedFunctionArgumentsError() override = default;
 };
 
 class CannotCreateEventFileDescriptor final : public std::runtime_error

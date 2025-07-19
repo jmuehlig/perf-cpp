@@ -39,13 +39,17 @@ set(PERF_CPP_SRC
     src/exception.cpp
     src/group.cpp
     src/hardware_info.cpp
-    src/metric_expression.cpp
     src/requested_event.cpp
     src/sampler.cpp
     src/sample_decoder.cpp
     src/util/table.cpp
     src/mmap_buffer.cpp
     src/symbol_resolver.cpp
+    src/metric/expression/token.cpp
+    src/metric/expression/tokenizer.cpp
+    src/metric/expression/parser.cpp
+    src/metric/expression/function.cpp
+    src/metric/expression/expression.cpp
     src/analyzer/memory_access.cpp
     src/analyzer/flame_graph_generator.cpp
 )

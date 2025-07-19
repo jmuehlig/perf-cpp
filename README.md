@@ -192,6 +192,7 @@ This is a non-exhaustive list of academic research papers and blog articles (fee
 - [Analyzing memory accesses with modern processors](https://dl.acm.org/doi/abs/10.1145/3399666.3399896) (2020)
 - [Precise Event Sampling on AMD Versus Intel: Quantitative and Qualitative Comparison](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10068807&tag=1) (2023)
 - [Multi-level Memory-Centric Profiling on ARM Processors with ARM SPE](https://arxiv.org/html/2410.01514v1) (2024)
+- [Breaking the Cycle - A Short Overview of Memory-Access Sampling Differences on Modern x86 CPUs](https://dl.acm.org/doi/pdf/10.1145/3736227.3736241) (2025)
 
 ### Blog Posts
 - [C2C - False Sharing Detection in Linux Perf](https://joemario.github.io/blog/2016/09/01/c2c-blog/) (2016)

@@ -35,3 +35,18 @@ perf::CannotOpenCounterError::create_error_message_from_code(const std::int64_t 
       return "perf_event_open failed with unknown error";
   }
 }
+
+std::string
+perf::IoctlError::create_error_message_from_code(const std::int64_t error_code)
+{
+  switch (error_code) {
+    case EBADF:
+      return "file descriptor is not valid";
+    case EFAULT:
+      return "references inaccessible memory area";
+    case ENOTTY:
+      return "file descriptor cannot be used";
+    default:
+      return "::ioctl failed with unknown error";
+  }
+}

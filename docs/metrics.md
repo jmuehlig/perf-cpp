@@ -1,41 +1,39 @@
 # Metrics
-Performance metrics are critical for evaluating the efficiency of computer hardware using specific, user-defined calculations based on hardware events. 
-One key metric frequently used is the "Cycles per Instruction" (CPI). 
-This metric helps to measure how many CPU cycles are consumed for executiong an instruction, providing insight into the system's efficiency—the fewer the cycles needed per instruction, the more efficient the system.
+Performance metrics provide essential insights into hardware efficiency by combining multiple hardware events into meaningful calculations. 
+A commonly used metric is "Cycles per Instruction" (CPI), which measures how many CPU cycles are required to execute an instruction. 
+This metric reveals system efficiency–fewer cycles per instruction indicates better performance.
+
 
 > [!TIP]
-> Our examples include a working code-example: **[statistics/metric.cpp](../examples/statistics/metric.cpp)**.
+> Our examples include a working code example: **[statistics/metric.cpp](../examples/statistics/metric.cpp)**.
 > 
-> When [defining custom metrics](#creating-custom-metrics), you should take a look at the list of metrics in the [Likwid project](https://github.com/RRZE-HPC/likwid/tree/master/groups).
-
-> [!NOTE]
-> Metrics are not applicable for [live events](recording-live-events.md).
+> When [defining custom metrics](#creating-custom-metrics), consider reviewing the comprehensive metric definitions in the [Likwid project](https://github.com/RRZE-HPC/likwid/tree/master/groups).
 
 ---
 ## Table of Contents
 - [Built-in Metrics](#built-in-metrics)
-- [Utilizing Metrics](#utilizing-metrics)
+- [Using Metrics](#using-metrics)
 - [Defining Metrics](#creating-custom-metrics)
 ---
 
 ## Built-in Metrics
-*perf-cpp* comes pre-equipped with several built-in metrics which can be used analogously to events. 
-To employ these metrics, include their names in the `perf::EventCounter` instance as shown in the [Utilizing Metrics](#utilizing-metrics) section:
+*perf-cpp* includes several pre-defined metrics that you can use just like hardware events. 
+Simply include their names in your `perf::EventCounter` by treating them as standard events (e.g., `event_counter.add("gigahertz");`):
 
-| Metric name              | Description                                                           |
-|--------------------------|-----------------------------------------------------------------------|
-| `gigahertz`              | Processor speed during the measurement (`cycles/seconds*1e+09`).      |
-| `cycles-per-instruction` | Represents the number of cycles required per instruction.             |
-| `instructions-per-cycle` | Represents the number of instructions executed per cycle.             |
-| `cache-hit-ratio`        | Indicates the ratio of cache hits to total cache accesses.            |
-| `cache-miss-ratio`       | Indicates the ratio of cache misses to total cache accesses.          |
-| `dTLB-miss-ratio`        | The ratio of data TLB misses to data TLB accesses.                    |
-| `iTLB-miss-ratio`        | The ratio of instruction TLB misses to instruction TLB accesses.      |
-| `L1-data-miss-ratio`     | Reflects the ratio of L1 data cache misses to L1 data cache accesses. |
-| `branch-miss-ratio`      | Reflects the ratio of branch misses to executed branches.             |
+| Metric name              | Description                                                          |
+|--------------------------|----------------------------------------------------------------------|
+| `gigahertz`              | Processor frequency during the measurement (`cycles/seconds*1e+09`). |
+| `cycles-per-instruction` | Number of cycles required per instruction.                           |
+| `instructions-per-cycle` | Number of instructions executed per cycle.                           |
+| `cache-hit-ratio`        | Ratio of cache hits to total cache accesses.                         |
+| `cache-miss-ratio`       | Ratio of cache misses to total cache accesses.                       |
+| `dTLB-miss-ratio`        | Ratio of data TLB misses to data TLB accesses.                       |
+| `iTLB-miss-ratio`        | Ratio of instruction TLB misses to instruction TLB accesses.         |
+| `L1-data-miss-ratio`     | Ratio of L1 data cache misses to L1 data cache accesses.             |
+| `branch-miss-ratio`      | Ratio of branch mispredictions to total executed branches.           |
 
-## Utilizing Metrics
-Metrics function similarly to hardware events in the  `perf::EventCounter`:
+## Using Metrics
+Metrics work exactly like hardware events within the `perf::EventCounter`:
 
 ```cpp
 #include <perfcpp/event_counter.h>
@@ -56,21 +54,15 @@ const auto result = event_counter.result();
 const auto cycles_per_instruction = result.get("cycles-per-instruction");
 ```
 
-When metrics are used, *perf-cpp* internally counts the required hardware events (like cycles and instructions for CPI) and displays only the specified metrics and events.
+When you use metrics, *perf-cpp* automatically counts the necessary hardware events (such as *cycles* and *instructions* for the *cycles-per-instruction* metric) and presents only the requested metrics and events in the results.
 
 ## Creating Custom Metrics
-Metrics are often based on the performance counters supported by the underlying hardware.
-You can create custom metrics to tailor them to your specific hardware. 
+Custom metrics allow you to leverage the specific performance counters available on your hardware platform.
 
-> [!TIP]
-> The [Likwid project](https://github.com/RRZE-HPC/likwid/tree/master) gives an excellent and extensive list of available metrics for various CPUs. 
-> Take a look at their [groups/ directory](https://github.com/RRZE-HPC/likwid/tree/master/groups).
-
-There are two ways to define custom metrics.
-For both, you will need to create your own instance of the `perf::CounterDefinition` and pass it to the `perf::EventCounter` or `perf::Sampler`.
+*perf-cpp* offers two approaches for defining custom metrics: *formula-based* definitions using text expressions, or implementing custom classes that inherit from the `perf::Metric` interface.
 
 ### Using Formulas
-The first option is to express a metric as a calculation of several hardware and time events, for example:
+The simplest approach is to define metrics using mathematical expressions that combine hardware events and timing data:
 
 ```cpp
 auto counter_definition = perf::CounterDefinition{};
@@ -80,17 +72,32 @@ counter_definition.add("stalls-by-mem-loads",
 auto event_counter = perf::EventCounter{ counter_definition };
 ```
 
-The formular can use the following **operators**: `+`, `-`, `*`, and `/`.
+This example uses Intel SkylakeX architecture events and is adapted from [Likwid](https://github.com/RRZE-HPC/likwid/blob/master/groups/skylakeX/CYCLE_STALLS.txt).
 
-In addition, **scientific numbers** (e.g., `1E5`, `1e-5`) can be used. 
+#### Operators
+Formulas support the following **mathematical operators**: `+`, `-`, `*`, and `/`.
+You can also use **scientific notation** (e.g., `1E5`, `1e-5`) for constants.
+
+#### Functions
+Formulas provide built-in functions for common calculations:
+
+| Function                       | Description                                                                                                                                            |
+|--------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ratio(a,b)` or `d_ratio(a,b)` | Calculates the ratio between to operands, e.g., `ratio('branch-misses', 'branches')` calculates the *branch-miss ratio*                                |
+| `sum(a,b,...)`                 | Adds together two or more operands, e.g., `sum('mem_load_retired.l1_hit', 'mem_load_retired.l2_hit', 'mem_load_retired.l3_hit')` totals all cache hits |
+
+Functions can be combined within metric expressions:
+
+```cpp
+counter_definition.add("cache-miss-ratio", 
+                        "ratio( sum('mem_load_retired.l1_miss', 'mem_load_retired.l2_miss', 'mem_load_retired.l3_miss'), sum('mem_load_retired.l1_hit', 'mem_load_retired.l2_hit', 'mem_load_retired.l3_hit') )");
+```
 
 > [!NOTE]
-> In formulas, event names that contain *operators* (like `-` in `L1D-misses`) need to be **escaped** using single quotes, e.g., `'L1D-misses'`.
-
-The example depends on events from the Intel SkylakeX architecture and is taken from [Likwid](https://github.com/RRZE-HPC/likwid/blob/master/groups/skylakeX/CYCLE_STALLS.txt).
+> Event names containing **mathematical operators** (such as the `-` in `L1D-misses`) must be **enclosed in single quotes**, e.g., `'L1D-misses'`.
 
 ### Implementing Metrics using the Interface
-The second option is to define metrics by implementing the `perf::Metric` interface, for example:
+For more complex calculations, you can create custom metric classes by implementing the `perf::Metric` interface:
 
 ```cpp
 #include <perfcpp/metric.h>
@@ -126,7 +133,7 @@ public:
 };
 ````
 
-After implementing custom metrics, incorporate them into the `perf::CounterDefinition` to utilize them effectively:
+After implementing your custom metric, register it with the `perf::CounterDefinition`:
 
 ```cpp
 auto counter_definition = perf::CounterDefinition{};

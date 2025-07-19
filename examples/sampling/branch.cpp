@@ -52,11 +52,9 @@ main()
   for (auto index = 0U; index < benchmark.size(); ++index) {
     value += branchy_function(benchmark[index]);
   }
-  asm volatile(""
-               : "+r,m"(value)
-               :
-               : "memory"); /// We do not want the compiler to optimize away
-                            /// this unused value.
+
+  /// We do not want the compiler to optimize away this (otherwise) unused value (and consequently the loop above).
+  benchmark.pretend_to_use(value);
 
   /// Stop sampling.
   sampler.stop();

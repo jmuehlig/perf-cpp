@@ -69,6 +69,21 @@ public:
   [[nodiscard]] const std::vector<std::uint64_t>& indices() const noexcept { return _indices; }
   [[nodiscard]] const std::vector<cache_line>& data_to_read() const noexcept { return _data_to_read; }
 
+  /**
+   * Makes the compiler think that the result is used – consequently, the optimizer cannot optimize the value away.
+   *
+   * @param result Value that should not be optimized away.
+   */
+  template<typename T>
+  inline void pretend_to_use(T& result) const noexcept
+  {
+#ifdef __clang__
+    asm volatile("" : "+r,m"(result) : : "memory");
+#else
+    asm volatile("" : "+m,r"(value) : : "memory");
+#endif
+  }
+
 private:
   /// Indices, defining the order in which the memory chunk is accessed.
   std::vector<std::uint64_t> _indices;

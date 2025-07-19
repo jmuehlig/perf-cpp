@@ -159,6 +159,11 @@ def main():
 
     args = parser.parse_args()
 
+    if os.path.exists(args.output):
+        print(f"[GEN_PROCESSOR_EVENTS] Source file with processor-specific events exists: {args.output}")
+        print(f"[GEN_PROCESSOR_EVENTS] Skipped generation")
+        sys.exit(0)
+
     events_to_generate = []
 
     architecture = get_architecture()

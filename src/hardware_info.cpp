@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <errno.h>
+#include <cerrno>
 #include <filesystem>
 #include <perfcpp/counter_definition.h>
 #include <perfcpp/group.h>
@@ -60,27 +60,28 @@ perf::HardwareInfo::is_intel_12th_generation_or_newer()
     return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer, false);
   }
 
-  // Get processor family/model information
-  std::uint32_t eax, ebx, ecx, edx;
-  if (__get_cpuid(1, &eax, &ebx, &ecx, &edx) == 0) {
-    return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer, false);
+  /// Get processor family/model information
+  if (const auto model_info = HardwareInfo::cpuid(0x1); model_info.has_value()) {
+    /// Check the family.
+    const auto family_id = (model_info->eax >> 8) & 0xF;
+    const auto extended_family_id = (model_info->eax >> 20) & 0xFF;
+
+    /// Families < 6 are older than Alder Lake (12th generation); families > 6 are newer (and do not exist up to now).
+    if (const auto display_family = family_id + extended_family_id;
+        display_family != /* 6U is the line between 12th and earlier generations */ 6U) {
+      return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer, display_family > 6U);
+    }
+
+    /// For family 6, check the model.
+    const auto model = (model_info->eax >> 4) & 0xF;
+    const auto extended_model = (model_info->eax >> 16) & 0xF;
+
+    const auto display_model = (extended_model << 4) + model;
+    return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer,
+                                     display_model >= /* 12th generation */ 143U);
   }
 
-  // Check the family.
-  const auto family_id = (eax >> 8) & 0xF;
-  const auto extended_family_id = (eax >> 20) & 0xFF;
-
-  /// Families < 6 are older than Alder Lake (12th generation); families > 6 are newer (and do not exist up to now).
-  if (const auto display_family = family_id + extended_family_id; display_family != 6U) {
-    return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer, display_family > 6U);
-  }
-
-  /// For family 6, check the model.
-  const auto model = (eax >> 4) & 0xF;
-  const auto extended_model = (eax >> 16) & 0xF;
-
-  const auto display_model = (extended_model << 4) + model;
-  return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer, display_model >= 143U);
+  return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer, false);
 
 #else
   return false;
@@ -100,10 +101,9 @@ perf::HardwareInfo::is_amd_ibs_supported() noexcept
   }
 
   /// See https://github.com/jlgreathouse/AMD_IBS_Toolkit/blob/master/ibs_with_perf_events.txt
-  std::uint32_t eax, ebx, ecx, edx;
-  if (__get_cpuid_count(0x80000001, 0, &eax, &ebx, &ecx, &edx) > 0) {
+  if (const auto extended_processor_info = HardwareInfo::cpuid(0x80000001); extended_processor_info.has_value()) {
     return HardwareInfo::cache_value(HardwareInfo::_is_amd_ibs_supported,
-                                     static_cast<bool>(ecx & (std::uint32_t(1U) << 10)));
+                                     static_cast<bool>(extended_processor_info->ecx & (std::uint32_t(1U) << 10)));
   }
 
   return HardwareInfo::cache_value(HardwareInfo::_is_amd_ibs_supported, false);
@@ -124,9 +124,8 @@ perf::HardwareInfo::is_ibs_l3_filter_supported() noexcept
     return HardwareInfo::cache_value(HardwareInfo::_is_ibs_l3_filter_supported, false);
   }
 
-  std::uint32_t eax, ebx, ecx, edx;
-  if (__get_cpuid_count(0x8000001b, 0, &eax, &ebx, &ecx, &edx) > 0) {
-    const auto is_ibs_l3_filter_supported = static_cast<bool>(eax & (std::uint32_t(1U) << 11));
+  if (const auto ibs_info = HardwareInfo::cpuid(0x8000001b); ibs_info.has_value()) {
+    const auto is_ibs_l3_filter_supported = static_cast<bool>(ibs_info->eax & (std::uint32_t(1U) << 11));
     return HardwareInfo::cache_value(HardwareInfo::_is_ibs_l3_filter_supported, is_ibs_l3_filter_supported);
   }
 
@@ -143,6 +142,7 @@ perf::HardwareInfo::memory_page_size()
     return HardwareInfo::_memory_page_size.value();
   }
 
+  /// Read memory page size from sysconf (see https://man7.org/linux/man-pages/man3/sysconf.3.html).
   const auto memory_page_size = std::uint64_t(std::max(0L, ::sysconf(_SC_PAGESIZE)));
   return HardwareInfo::cache_value(HardwareInfo::_memory_page_size, memory_page_size);
 }
@@ -156,12 +156,10 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
 
 #if defined(__x86_64__) || defined(__i386__)
   if (HardwareInfo::is_intel()) {
-    std::uint32_t eax, ebx, ecx, edx;
-
     /// Read CPUID information with 0x0A (see https://www.felixcloutier.com/x86/cpuid).
-    if (__get_cpuid_count(0x0A, 0, &eax, &ebx, &ecx, &edx) > 0) {
+    if (const auto pmu_info = HardwareInfo::cpuid(0x0A); pmu_info.has_value()) {
       /// Number of general-purpose performance monitoring counter per logical processor is in bits 15-08.
-      const auto performance_counters_per_logical_core = (eax >> 8) & 0xFF;
+      const auto performance_counters_per_logical_core = (pmu_info->eax >> 8) & 0xFF;
 
       return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
                                        std::uint8_t(performance_counters_per_logical_core));
@@ -169,12 +167,19 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
   }
 
   if (HardwareInfo::is_amd()) {
-    std::uint32_t eax, ebx, ecx, edx;
+    /// Check the Extended Processor Information (0x80000001), see
+    /// http://www.flounder.com/cpuid_explorer2.htm#CPUID(0x80000001):ECX.
+    if (const auto extended_processor_info = HardwareInfo::cpuid(0x80000001);
+        extended_processor_info.has_value() && (extended_processor_info->ecx & (std::uint32_t(1U) << 23))) {
 
-    if (__get_cpuid_count(0x80000001, 0, &eax, &ebx, &ecx, &edx) > 0 && ecx & (std::uint32_t(1U) << 23)) {
-      if (__get_cpuid_count(0x80000000, 0, &eax, &ebx, &ecx, &edx) > 0 && eax >= 0x80000022) {
-        if (__get_cpuid_count(0x80000022, 0, &eax, &ebx, &ecx, &edx) > 0) {
-          const auto performance_counters_per_logical_core = eax & 0xFF;
+      /// Check the Extended Information (0x80000000), see
+      /// http://www.flounder.com/cpuid_explorer2.htm#CPUID(0x80000000).
+      if (const auto extended_info = HardwareInfo::cpuid(0x80000000);
+          extended_info.has_value() && extended_info->eax >= 0x80000022) {
+
+        /// Check the Performance Monitoring Unit Information (0x80000022).
+        if (const auto pmu_info = HardwareInfo::cpuid(0x80000022); pmu_info.has_value()) {
+          const auto performance_counters_per_logical_core = pmu_info->eax & 0xFF;
 
           return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
                                            std::uint8_t(performance_counters_per_logical_core));
@@ -185,8 +190,7 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
 #endif
 
   /// Try to find the number of hardware counters per logical core.
-  const auto hardware_counters =
-    HardwareInfo::identify_hardware_counters_per_cpu_or_events_per_hardware_counter_experimentally(true);
+  const auto hardware_counters = HardwareInfo::explore_hardware_counters_experimentally(true);
 
   /// Fallback: Set to one, if the experiment failed.
   if (!hardware_counters.has_value()) {
@@ -197,6 +201,19 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
                                    hardware_counters.value());
 }
 
+std::optional<perf::HardwareInfo::CPUIDResult>
+perf::HardwareInfo::cpuid(const std::uint32_t leaf, const std::uint32_t sub_leaf) noexcept
+{
+#if defined(__x86_64__) || defined(__i386__)
+  auto result = CPUIDResult{};
+  if (__get_cpuid_count(leaf, sub_leaf, &result.eax, &result.ebx, &result.ecx, &result.edx) > 0) {
+    return result;
+  }
+#endif
+
+  return std::nullopt;
+}
+
 std::uint8_t
 perf::HardwareInfo::events_per_physical_performance_counter()
 {
@@ -205,21 +222,18 @@ perf::HardwareInfo::events_per_physical_performance_counter()
   }
 
   /// Try to find the number of events per physical performance counter.
-  const auto events_per_physical_performance_counter =
-    HardwareInfo::identify_hardware_counters_per_cpu_or_events_per_hardware_counter_experimentally(false);
-
-  /// Fallback: Set to one, if the experiment failed.
-  if (!events_per_physical_performance_counter.has_value()) {
-    return HardwareInfo::cache_value(HardwareInfo::_events_per_physical_performance_counter, std::uint8_t(1U));
+  if (const auto events_per_hardware_counter = HardwareInfo::explore_hardware_counters_experimentally(false);
+      events_per_hardware_counter.has_value()) {
+    return HardwareInfo::cache_value(HardwareInfo::_events_per_physical_performance_counter,
+                                     events_per_hardware_counter.value());
   }
 
-  return HardwareInfo::cache_value(HardwareInfo::_events_per_physical_performance_counter,
-                                   events_per_physical_performance_counter.value());
+  /// Fallback: Set to one, if the experiment failed.
+  return HardwareInfo::cache_value(HardwareInfo::_events_per_physical_performance_counter, std::uint8_t(1U));
 }
 
 std::optional<std::uint8_t>
-perf::HardwareInfo::identify_hardware_counters_per_cpu_or_events_per_hardware_counter_experimentally(
-  const bool is_identify_hardware_counters)
+perf::HardwareInfo::explore_hardware_counters_experimentally(const bool is_identify_hardware_counters)
 {
   /// Translate event names into codes.
   auto events = HardwareInfo::generate_events_for_counter_identification();

@@ -2,6 +2,7 @@
 
 #include "counter.h"
 #include "counter_definition.h"
+#include "util/graph.h"
 #include <cstdint>
 #include <optional>
 #include <string_view>
@@ -251,5 +252,13 @@ private:
            bool is_shown_in_results,
            RequestedEvent::Type type,
            std::optional<RequestedEvent::ScheduledHardwareCounterGroup> scheduled_group);
+
+  /**
+   * Build a directed dependency graph for all metrics available in the requested event set.
+   *
+   * @param counter_definition Counter definition to lookup metrics.
+   * @return A directed graph, connecting dependent metrics.
+   */
+  [[nodiscard]] util::DirectedGraph<std::string_view> build_metric_graph(const CounterDefinition& counter_definition) const;
 };
 }

@@ -27,10 +27,7 @@ auto event_counter = perf::EventCounter{ counter_definition };
 
 try {
     /// Events for live monitoring.
-    event_counter.add_live({"cache-misses", "cache-references"});
-    
-    /// Traditional events for post-processing analysis.
-    event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
+    event_counter.add_live({"cache-misses", "cache-references", "branches"});
 } catch (std::runtime_error& e) {
     std::cerr << e.what() << std::endl;
 }
@@ -40,6 +37,11 @@ try {
 > The `perf::CounterDefinition` instance is used to store event configurations (e.g., names) and passed as a reference.
 > Consequently, the instance needs to be alive while using the `EventCounter`.
 
+> [!IMPORTANT]
+> We experienced that not mixing live with "traditional" events leads to more consistent results.
+
+> [!NOTE]
+> Live events can only capture hardware events but not metrics.
 
 ## Initializing the Hardware Counters *(optional)*
 Optionally, preparing the hardware counters ahead of time to exclude configuration time from your measurements, though this is also handled automatically at the start if skipped:
@@ -114,17 +116,11 @@ for (auto i = 0U; i < runs; ++i) {
 ```
 
 ## Finalizing and Retrieving Results
-Upon completion, stop the counters and fetch final results for non-live events:
+Upon completion, stop the counters:
 
 ```cpp
 /// Stop the counter after processing.
 event_counter.stop();
-
-/// Calculate the result.
-const auto result = event_counter.result();
-
-//// Or print the results as table.
-std::cout << result.to_string() << std::endl;
 ```
 
 For further information, refer to the [recording basics documentation](recording.md) and the [code example](../examples/statistics/live_events.cpp).

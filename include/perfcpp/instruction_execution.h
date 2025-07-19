@@ -358,7 +358,7 @@ public:
    * Set whether the instruction is locked.
    * @param is_locked Lock indicator.
    */
-  void is_locked(const bool is_locked) noexcept { _is_locked = is_locked; }
+  void is_locked(const std::optional<bool> is_locked) noexcept { _is_locked = is_locked; }
 
   /**
    * Set the latency information.

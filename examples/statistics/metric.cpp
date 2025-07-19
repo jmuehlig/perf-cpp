@@ -42,7 +42,16 @@ main()
   auto counter_definition = perf::CounterDefinition{};
 
   /// Define a metric that returns the number of cache misses per cache reference:
-  counter_definition.add("cache-misses-per-reference", "`cache-misses` / `cache-references`");
+  counter_definition.add("cache-misses-per-reference", "d_ratio(`cache-misses`, `cache-references`)");
+
+  /// Define a metric that sums up all L1 loads:
+  counter_definition.add("l1-loads", "`L1-dcache-loads` + `L1-icache-loads`");
+
+  /// Define a metric that sums up all L1 load misses:
+  counter_definition.add("l1-load-misses", "sum(`L1-dcache-load-misses`, `L1-icache-load-misses`)");
+
+  /// Define a metric that calculates the ratio between L1 load misses and L1 loads:
+  counter_definition.add("l1-misses-per-load", "`l1-load-misses` / `l1-loads`");
 
   /// Initialize the above defined metric that returns the number of branch misses per branch instruction.
   counter_definition.add(std::make_unique<BranchMissesPerBranchInstruction>());
@@ -52,7 +61,11 @@ main()
 
   /// Add the new defined metrics.
   try {
-    event_counter.add(std::vector<std::string>{ "cache-misses-per-reference", "branch-misses-per-branch-instruction" });
+    event_counter.add(std::vector<std::string>{ "cache-misses-per-reference",
+                                                "branch-misses-per-branch-instruction",
+                                                "l1-loads",
+                                                "l1-load-misses",
+                                                "l1-misses-per-load" });
   } catch (std::runtime_error& e) {
     std::cerr << e.what() << std::endl;
     return 1;
@@ -75,11 +88,9 @@ main()
   for (auto index = 0U; index < benchmark.size(); ++index) {
     value += benchmark[index].value;
   }
-  asm volatile(""
-               : "+r,m"(value)
-               :
-               : "memory"); /// We do not want the compiler to optimize away
-                            /// this unused value.
+
+  /// We do not want the compiler to optimize away this (otherwise) unused value (and consequently the loop above).
+  benchmark.pretend_to_use(value);
 
   /// Stop recording counters.
   event_counter.stop();

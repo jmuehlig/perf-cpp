@@ -287,6 +287,35 @@ TEST_CASE("calculating", "[Metric][Formula]")
   {
     REQUIRE_THROWS(perf::FormulaMetric{ "scientific-formular", "'event-a' * 1e2e5" });
   }
+
+  SECTION("d_ratio function")
+  {
+    REQUIRE_THROWS(perf::FormulaMetric{ "d-ratio-formular", "d_ratio()" });
+    REQUIRE_THROWS(perf::FormulaMetric{ "d-ratio-formular", "d_ratio('event-a')" });
+    REQUIRE_THROWS(perf::FormulaMetric{ "d-ratio-formular", "d_ratio('event-a', )" });
+    REQUIRE_THROWS(perf::FormulaMetric{ "d-ratio-formular", "d_ratio('event-a', 'event-b', 'event-c')" });
+
+    auto d_ratio_metric = perf::FormulaMetric{ "d-ratio-formular", "d_ratio('event-a', 'event-b')" };
+
+    auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
+      std::make_pair("event-a", 100U), std::make_pair("event-b", 20U) } };
+    REQUIRE(d_ratio_metric.calculate(counter_result).has_value());
+    REQUIRE(d_ratio_metric.calculate(counter_result).value() == 5.);
+  }
+
+  SECTION("sum function")
+  {
+    REQUIRE_THROWS(perf::FormulaMetric{ "sum-formular", "sum()" });
+    REQUIRE_THROWS(perf::FormulaMetric{ "sum-formular", "sum('event-a')" });
+    REQUIRE_THROWS(perf::FormulaMetric{ "sum-formular", "sum('event-a',)" });
+
+    auto sum_metric = perf::FormulaMetric{ "sum-formular", "sum(10, 'event-a', 10, 'event-b', 10)" };
+
+    auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
+      std::make_pair("event-a", 100U), std::make_pair("event-b", 20U) } };
+    REQUIRE(sum_metric.calculate(counter_result).has_value());
+    REQUIRE(sum_metric.calculate(counter_result).value() == (10 + 100 + 10 + 20 + 10));
+  }
 }
 
 TEST_CASE("calculating", "[Metric][NestedMetrics]")

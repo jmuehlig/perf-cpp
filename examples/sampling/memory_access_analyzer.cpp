@@ -15,7 +15,7 @@ main()
 
   /// Setup which counters trigger the writing of samples (depends on the underlying hardware substrate).
   if (perf::HardwareInfo::is_amd_ibs_supported()) {
-    sampler.trigger("ibs_op_uops", perf::Precision::MustHaveZeroSkid, perf::Period{ 8000U });
+    sampler.trigger("ibs_op_uops", perf::Precision::MustHaveZeroSkid, perf::Period{ 4000U });
   } else if (perf::HardwareInfo::is_intel()) {
     sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid, perf::Period{ 2000U });
   } else {
@@ -32,7 +32,7 @@ main()
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
-                                                   /* create benchmark of 2 GB */ 2024U };
+                                                   /* create benchmark of 2 GB */ 2048 };
 
   /// Start sampling.
   try {
@@ -47,11 +47,9 @@ main()
   for (auto index = 0U; index < benchmark.size(); ++index) {
     value += benchmark[index].value;
   }
-  asm volatile(""
-               : "+r,m"(value)
-               :
-               : "memory"); /// We do not want the compiler to optimize away
-                            /// this unused value.
+
+  /// We do not want the compiler to optimize away this (otherwise) unused value (and consequently the loop above).
+  benchmark.pretend_to_use(value);
 
   /// Stop sampling.
   sampler.stop();

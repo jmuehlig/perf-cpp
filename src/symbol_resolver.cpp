@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cstring>
-#include <elf.h>
 #include <fcntl.h>
 #include <fstream>
 #include <perfcpp/exception.h>
@@ -9,6 +8,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <perfcpp/util/unique_file_descriptor.h>
 
 perf::SymbolResolver::SymbolResolver()
 {
@@ -101,78 +101,77 @@ perf::SymbolResolver::parse_maps()
 std::vector<perf::SymbolResolver::Symbol>
 perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& module)
 {
-  const auto file_descriptor = ::open(module.path().c_str(), O_RDONLY);
-  if (file_descriptor < 0) {
+  const auto file_descriptor = util::UniqueFileDescriptor{::open(module.path().c_str(), O_RDONLY)};
+  if (!file_descriptor.has_value()) {
     throw CannotReadSymbolsForModule{ module.name(), module.path() };
   }
 
-  struct stat stat_
-  {};
-  if (::fstat(file_descriptor, &stat_) < 0) {
-    ::close(file_descriptor);
+  struct stat stat_ {};
+  if (::fstat(file_descriptor.value(), &stat_) < 0) {
     throw CannotReadFstatForModule{ module.name(), module.path() };
   }
 
   const auto stat_size = std::size_t(stat_.st_size);
 
-  /// Read ELF data.
-  auto* elf_data = ::mmap(nullptr, stat_size, PROT_READ, MAP_PRIVATE, file_descriptor, 0);
+  /// MMap ELF data.
+  auto* elf_data = ::mmap(nullptr, stat_size, PROT_READ, MAP_PRIVATE, file_descriptor.value(), 0);
   if (elf_data == MAP_FAILED) {
-    ::close(file_descriptor);
     throw CannotReadElfForModule{ module.name(), module.path() };
   }
-
-  auto* ehdr = static_cast<Elf64_Ehdr*>(elf_data);
+  auto* elf_header = static_cast<const Elf64_Ehdr*>(elf_data);
 
   /// Verify ELF magic.
-  if (std::memcmp(ehdr->e_ident, ELFMAG, SELFMAG) != 0) {
+  if (std::memcmp(elf_header->e_ident, ELFMAG, SELFMAG) != 0) {
     ::munmap(elf_data, stat_size);
-    ::close(file_descriptor);
     throw CannotVerifyElfMagicForModule{ module.name(), module.path() };
   }
 
-  auto* shdr = reinterpret_cast<Elf64_Shdr*>(static_cast<char*>(elf_data) + ehdr->e_shoff);
-  Elf64_Shdr* symtab = nullptr;
-  Elf64_Shdr* strtab = nullptr;
+  /// Find the symbol and string tables.
+  const auto* section_header_table = reinterpret_cast<const Elf64_Shdr*>(static_cast<const char*>(elf_data) + elf_header->e_shoff);
+  const auto [symbol_table, string_table] = SymbolResolver::find_symbol_and_string_tables(section_header_table, elf_header->e_shnum);
 
-  /// Find symbol table and string table.
-  for (auto i = 0U; i < ehdr->e_shnum; ++i) {
-    if (shdr[i].sh_type == SHT_SYMTAB) {
-      symtab = &shdr[i];
-      strtab = &shdr[shdr[i].sh_link];
-      break;
-    }
-  }
-
-  if (!symtab || !strtab) {
+  if (!symbol_table || !string_table) {
     ::munmap(elf_data, stat_size);
-    ::close(file_descriptor);
     return {};
   }
 
-  auto* syms = reinterpret_cast<Elf64_Sym*>(static_cast<char*>(elf_data) + symtab->sh_offset);
-  auto* strings = static_cast<char*>(elf_data) + strtab->sh_offset;
-  const auto sym_count = symtab->sh_size / sizeof(Elf64_Sym);
+  /// Access symbols.
+  const auto* symbols = reinterpret_cast<const Elf64_Sym*>(static_cast<char*>(elf_data) + symbol_table->sh_offset);
+  const auto* strings = static_cast<char*>(elf_data) + string_table->sh_offset;
+  const auto symbols_size = symbol_table->sh_size / sizeof(Elf64_Sym);
 
-  auto symbols = std::vector<Symbol>{};
-  symbols.reserve(sym_count);
+  auto extracted_symbols = std::vector<Symbol>{};
+  extracted_symbols.reserve(symbols_size);
 
-  /// Read symbols.
-  for (auto i = 0ULL; i < sym_count; ++i) {
-    if (ELF64_ST_TYPE(syms[i].st_info) == STT_FUNC && syms[i].st_name) {
-      if (auto name = std::string(strings + syms[i].st_name); !name.empty()) {
-        symbols.emplace_back(std::move(name), syms[i].st_value, syms[i].st_size);
+  /// Read symbols and transform to Symbol instances.
+  for (auto i = 0ULL; i < symbols_size; ++i) {
+    if (ELF64_ST_TYPE(symbols[i].st_info) == STT_FUNC && symbols[i].st_name) {
+      if (auto name = std::string(strings + symbols[i].st_name); !name.empty()) {
+        extracted_symbols.emplace_back(std::move(name), symbols[i].st_value, symbols[i].st_size);
       }
     }
   }
 
+  /// Unmap ELF data.
   ::munmap(elf_data, stat_size);
-  ::close(file_descriptor);
 
   /// Sort the symbols to enable an upper bound search later.
-  std::sort(symbols.begin(), symbols.end(), [](const Symbol& first, const Symbol& second) {
+  std::sort(extracted_symbols.begin(), extracted_symbols.end(), [](const Symbol& first, const Symbol& second) {
     return first.address() < second.address();
   });
 
-  return symbols;
+  return extracted_symbols;
+}
+
+std::pair<const Elf64_Shdr*, const Elf64_Shdr*>
+perf::SymbolResolver::find_symbol_and_string_tables(const Elf64_Shdr* section_header_table, const std::uint16_t size) noexcept
+{
+  for (auto i = 0U; i < size; ++i) {
+    if (section_header_table[i].sh_type == SHT_SYMTAB) {
+      return std::make_pair(
+        &section_header_table[i], &section_header_table[section_header_table[i].sh_link]);
+    }
+  }
+
+  return std::make_pair(nullptr, nullptr);
 }

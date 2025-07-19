@@ -1,6 +1,6 @@
-#include "perfcpp/util/table.h"
-#include "perfcpp/exception.h"
 #include <numeric>
+#include <perfcpp/exception.h>
+#include <perfcpp/util/table.h>
 #include <sstream>
 
 void
@@ -11,10 +11,10 @@ perf::util::Table::add(std::vector<perf::util::Table::Header>&& header_row)
       return count + header.span();
     });
 
-  if (!_count_columns.has_value()) {
-    _count_columns = count_columns;
-  } else if (count_columns != _count_columns.value()) {
-    throw CannotAddHeaderToTable{ count_columns, _count_columns.value() };
+  if (!this->_count_columns.has_value()) {
+    this->_count_columns = count_columns;
+  } else if (count_columns != this->_count_columns.value()) {
+    throw CannotAddHeaderToTable{ count_columns, this->_count_columns.value() };
   }
 
   _header_row.push_back(std::move(header_row));
@@ -25,10 +25,10 @@ perf::util::Table::add(perf::util::Table::Row&& row)
 {
   const auto count_columns = row.columns().size();
 
-  if (!_count_columns.has_value()) {
-    _count_columns = count_columns;
-  } else if (count_columns != _count_columns.value()) {
-    throw CannotAddRowToTable{ count_columns, _count_columns.value() };
+  if (!this->_count_columns.has_value()) {
+    this->_count_columns = count_columns;
+  } else if (count_columns != this->_count_columns.value()) {
+    throw CannotAddRowToTable{ count_columns, this->_count_columns.value() };
   }
 
   /// Add the row.
@@ -63,8 +63,8 @@ perf::util::Table::to_string() const
 
   /// Calculate the separator by any of the headers having a separator. Plus, calculate the alignment by using any
   /// header that spans over only a single column.
-  auto is_column_separator = std::vector<bool>(_count_columns.value(), false);
-  auto column_alignment = std::vector<Alignment>(_count_columns.value(), Alignment::Left);
+  auto is_column_separator = std::vector<bool>(this->_count_columns.value(), false);
+  auto column_alignment = std::vector<Alignment>(this->_count_columns.value(), Alignment::Left);
   for (const auto& header_row : this->_header_row) {
     auto column_id = 0U;
     for (const auto& header : header_row) {
