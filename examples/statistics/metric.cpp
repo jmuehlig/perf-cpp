@@ -53,7 +53,6 @@ main()
   /// Define a metric that calculates the ratio between L1 load misses and L1 loads:
   counter_definition.add("l1-misses-per-load", "`l1-load-misses` / `l1-loads`");
 
-
   /// Initialize the above defined metric that returns the number of branch misses per branch instruction.
   counter_definition.add(std::make_unique<BranchMissesPerBranchInstruction>());
 
@@ -62,7 +61,11 @@ main()
 
   /// Add the new defined metrics.
   try {
-    event_counter.add(std::vector<std::string>{ "cache-misses-per-reference", "branch-misses-per-branch-instruction", "l1-loads", "l1-load-misses", "l1-misses-per-load" });
+    event_counter.add(std::vector<std::string>{ "cache-misses-per-reference",
+                                                "branch-misses-per-branch-instruction",
+                                                "l1-loads",
+                                                "l1-load-misses",
+                                                "l1-misses-per-load" });
   } catch (std::runtime_error& e) {
     std::cerr << e.what() << std::endl;
     return 1;
@@ -85,11 +88,9 @@ main()
   for (auto index = 0U; index < benchmark.size(); ++index) {
     value += benchmark[index].value;
   }
-  asm volatile(""
-               : "+r,m"(value)
-               :
-               : "memory"); /// We do not want the compiler to optimize away
-                            /// this unused value.
+
+  /// We do not want the compiler to optimize away this (otherwise) unused value (and consequently the loop above).
+  benchmark.pretend_to_use(value);
 
   /// Stop recording counters.
   event_counter.stop();

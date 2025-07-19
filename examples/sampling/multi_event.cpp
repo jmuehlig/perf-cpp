@@ -55,11 +55,9 @@ main()
     /// Also write a value to get store events.
     benchmark.set(index, value);
   }
-  asm volatile(""
-               : "+r,m"(value)
-               :
-               : "memory"); /// We do not want the compiler to optimize away
-                            /// this unused value.
+
+  /// We do not want the compiler to optimize away this (otherwise) unused value.
+  benchmark.pretend_to_use(value);
 
   /// Stop sampling.
   sampler.stop();

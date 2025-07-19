@@ -15,10 +15,10 @@ main()
 
   try {
     /// Add counters that are recorded over the entire period (from start to end).
-    //event_counter.add({ "cycles", "instructions", "cache-references", "cache-misses", "branches" });
+    // event_counter.add({ "cycles", "instructions", "cache-references", "cache-misses", "branches" });
 
     /// Add live counters that can be read without stopping the EventCounter.
-    event_counter.add_live(std::vector<std::string>{ "cache-references", "cache-misses", "branches"});
+    event_counter.add_live(std::vector<std::string>{ "cache-references", "cache-misses", "branches" });
   } catch (std::runtime_error& e) {
     std::cerr << e.what() << std::endl;
     return 1;
@@ -50,11 +50,9 @@ main()
     for (auto index = 0U; index < benchmark.size(); ++index) {
       value += benchmark[index].value;
     }
-    asm volatile(""
-                 : "+r,m"(value)
-                 :
-                 : "memory"); /// We do not want the compiler to optimize away
-                              /// this unused value.
+
+    /// We do not want the compiler to optimize away this (otherwise) unused value (and consequently the loop above).
+    benchmark.pretend_to_use(value);
 
     /// Read the current counter value after the benchmark.
     live_events.stop();
@@ -62,8 +60,7 @@ main()
     /// Print the live values.
     std::cout << "Live results: " << live_events.get("cache-references", benchmark.size()) << " cache-references, "
               << live_events.get("cache-misses", benchmark.size()) << " cache-misses, "
-              << live_events.get("branches", benchmark.size()) << " branches" <<
-            std::endl;
+              << live_events.get("branches", benchmark.size()) << " branches" << std::endl;
   }
 
   /// Stop recording counters.
