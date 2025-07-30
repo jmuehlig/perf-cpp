@@ -331,8 +331,8 @@ TEST_CASE("calculating", "[Metric][NestedMetrics]")
 
     /// Add metric-a before metric-b and access the metrics in that order.
     auto requested_event_set = perf::RequestedEventSet{};
-    requested_event_set.add("metric-a", perf::RequestedEvent::Type::Metric, true);
-    requested_event_set.add("metric-b", perf::RequestedEvent::Type::Metric, true);
+    requested_event_set.add(perf::RequestedEvent{ "metric-a", true, perf::RequestedEvent::Type::Metric });
+    requested_event_set.add(perf::RequestedEvent{ "metric-b", true, perf::RequestedEvent::Type::Metric });
 
     const auto final_result = requested_event_set.result(counter_definition, std::move(counter_result), 1U);
     REQUIRE(final_result.get("metric-a").has_value());
@@ -348,8 +348,8 @@ TEST_CASE("calculating", "[Metric][NestedMetrics]")
 
     /// Add metric-b before metric-a and access the metrics in the opposite order.
     auto requested_event_set = perf::RequestedEventSet{};
-    requested_event_set.add("metric-b", perf::RequestedEvent::Type::Metric, true);
-    requested_event_set.add("metric-a", perf::RequestedEvent::Type::Metric, true);
+    requested_event_set.add(perf::RequestedEvent{ "metric-b", true, perf::RequestedEvent::Type::Metric });
+    requested_event_set.add(perf::RequestedEvent{ "metric-a", true, perf::RequestedEvent::Type::Metric });
 
     const auto final_result = requested_event_set.result(counter_definition, std::move(counter_result), 1U);
     REQUIRE(final_result.get("metric-a").has_value());
@@ -369,8 +369,8 @@ TEST_CASE("calculating", "[Metric][NestedMetrics]")
 
     /// Add metric-b before metric-a and access the metrics in the opposite order.
     auto requested_event_set = perf::RequestedEventSet{};
-    requested_event_set.add("metric-c", perf::RequestedEvent::Type::Metric, true);
-    requested_event_set.add("metric-d", perf::RequestedEvent::Type::Metric, true);
+    requested_event_set.add(perf::RequestedEvent{ "metric-c", true, perf::RequestedEvent::Type::Metric });
+    requested_event_set.add(perf::RequestedEvent{ "metric-d", true, perf::RequestedEvent::Type::Metric });
 
     /// Evaluation must throw an exception since the metrics are cyclic.
     REQUIRE_THROWS(requested_event_set.result(counter_definition, std::move(counter_result), 1U));

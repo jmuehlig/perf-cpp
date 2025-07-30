@@ -82,7 +82,8 @@ TEST_CASE("RequestedEventSet with requested events", "[RequestedEventSet]")
     auto event_set = perf::RequestedEventSet{};
 
     /// Add the "instructions" event as a hardware event
-    REQUIRE(event_set.add("cpu", "instructions", perf::RequestedEvent::Type::HardwareEvent, true));
+    REQUIRE(
+      event_set.add(perf::RequestedEvent{ "cpu", "instructions", true, perf::RequestedEvent::Type::HardwareEvent }));
 
     /// Verify the event set is no longer empty
     REQUIRE_FALSE(event_set.empty());
@@ -115,7 +116,8 @@ TEST_CASE("RequestedEventSet with requested events", "[RequestedEventSet]")
     auto event_set = perf::RequestedEventSet{};
 
     /// Add the "instructions" event as a hardware event
-    REQUIRE(event_set.add("cpu", "instructions", perf::RequestedEvent::Type::HardwareEvent, true));
+    REQUIRE(
+      event_set.add(perf::RequestedEvent{ "cpu", "instructions", true, perf::RequestedEvent::Type::HardwareEvent }));
 
     /// Create hardware result NOT containing instructions
     auto hardware_result =
@@ -134,7 +136,8 @@ TEST_CASE("RequestedEventSet with requested events", "[RequestedEventSet]")
     auto event_set = perf::RequestedEventSet{};
 
     /// Add the "instructions" event as a hardware event
-    REQUIRE(event_set.add("cpu", "instructions", perf::RequestedEvent::Type::HardwareEvent, true));
+    REQUIRE(
+      event_set.add(perf::RequestedEvent{ "cpu", "instructions", true, perf::RequestedEvent::Type::HardwareEvent }));
 
     /// Create hardware result containing instructions
     auto hardware_result =

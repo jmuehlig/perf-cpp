@@ -52,12 +52,39 @@ public:
                  const std::string_view event_name,
                  const bool is_shown_in_results,
                  const Type type,
-                 const std::optional<ScheduledHardwareCounterGroup> scheduled_group) noexcept
+                 const std::optional<ScheduledHardwareCounterGroup> scheduled_group = std::nullopt) noexcept
     : _pmu_name(pmu_name)
     , _event_name(event_name)
     , _is_shown_in_results(is_shown_in_results)
     , _type(type)
     , _scheduled_hardware_counter_group(scheduled_group)
+  {
+  }
+
+  RequestedEvent(const std::optional<std::string_view> pmu_name,
+                 const std::string_view event_name,
+                 const bool is_shown_in_results,
+                 const std::uint8_t group_id,
+                 const std::uint8_t position) noexcept
+    : RequestedEvent(pmu_name,
+                     event_name,
+                     is_shown_in_results,
+                     Type::HardwareEvent,
+                     ScheduledHardwareCounterGroup{ group_id, position })
+  {
+  }
+
+  RequestedEvent(const std::optional<std::string_view> pmu_name,
+                 const std::string_view event_name,
+                 const std::uint8_t group_id) noexcept
+    : RequestedEvent(pmu_name, event_name, true, group_id, 0U)
+  {
+  }
+
+  RequestedEvent(const std::string_view event_name, const bool is_shown_in_results, const Type type) noexcept
+    : _event_name(event_name)
+    , _is_shown_in_results(is_shown_in_results)
+    , _type(type)
   {
   }
 
@@ -75,10 +102,14 @@ public:
   }
 
   void is_shown_in_results(const bool is_shown_in_results) noexcept { _is_shown_in_results = is_shown_in_results; }
+  void scheduled_group(const std::uint8_t group_id, const std::uint8_t position) noexcept
+  {
+    _scheduled_hardware_counter_group = { group_id, position };
+  }
 
 private:
   /// Name of the PMU for hardware events. May be nullopt for metrics and time events.
-  std::optional<std::string_view> _pmu_name;
+  std::optional<std::string_view> _pmu_name{ std::nullopt };
 
   /// Name of the event (references a string in the CounterDefinition).
   std::string_view _event_name;
@@ -113,76 +144,35 @@ public:
    * The event will be interpreted as a hardware event (since it is scheduled to a group) and marked as shown in
    * results.
    *
-   * @param pmu_name Name of the PMU.
-   * @param event_name Name of the event.
-   * @param in_group_position Position of the event within the group.
+   * @param event Requested event.
    * @return True, if the event was added. False, if the event was already in the event set.
    */
-  bool add(const std::string_view pmu_name, const std::string_view event_name, const std::uint8_t in_group_position)
-  {
-    return add(pmu_name,
-               event_name,
-               true,
-               RequestedEvent::Type::HardwareEvent,
-               RequestedEvent::ScheduledHardwareCounterGroup{ in_group_position });
-  }
+  bool add(RequestedEvent&& event) { return add(event); }
 
   /**
    * Appends an event to the event set, if not present.
-   * If present and the event was marked as hidden for the results, but is_shown_in_results is true, the visibility will
-   * change to true. Since the event is scheduled to a hardware counter group, the event will be interpreted as a
-   * hardware event.
+   * The event will be interpreted as a hardware event (since it is scheduled to a group) and marked as shown in
+   * results.
    *
-   * @param pmu_name Name of the PMU.
-   * @param event_name Name of the event.
-   * @param is_shown_in_results True, if the event should be visible in the results.
+   * @param event Requested event.
+   * @return True, if the event was added. False, if the event was already in the event set.
+   */
+  bool add(RequestedEvent& event);
+
+  /**
+   * Appends an event to the event set, if not present.
+   * The event will be interpreted as a hardware event (since it is scheduled to a group) and marked as shown in
+   * results.
+   *
+   * @param event Requested event.
    * @param group_id Id of the group the event was scheduled to.
-   * @param in_group_position Position of the event within the group.
+   * @param position Position within the group the event was scheduled to.
    * @return True, if the event was added. False, if the event was already in the event set.
    */
-  bool add(const std::string_view pmu_name,
-           const std::string_view event_name,
-           const bool is_shown_in_results,
-           const std::uint8_t group_id,
-           const std::uint8_t in_group_position)
+  bool add(RequestedEvent& event, const std::uint8_t group_id, const std::uint8_t position)
   {
-    return add(pmu_name,
-               event_name,
-               is_shown_in_results,
-               RequestedEvent::Type::HardwareEvent,
-               RequestedEvent::ScheduledHardwareCounterGroup{ group_id, in_group_position });
-  }
-
-  /**
-   * Appends an event to the event set, if not present.
-   * The event will be interpreted as a metric (since it is not scheduled to any hardware counter group).
-   *
-   * @param pmu_name Name of the PMU.
-   * @param event_name Name of the event.
-   * @param type Type of the event (e.g., metric or time)
-   * @param is_shown_in_results True, if the event should be visible in the results.
-   * @return True, if the event was added. False, if the event was already in the event set.
-   */
-  bool add(std::optional<std::string_view> pmu_name,
-           const std::string_view event_name,
-           const RequestedEvent::Type type,
-           const bool is_shown_in_results)
-  {
-    return add(pmu_name, event_name, is_shown_in_results, type, std::nullopt);
-  }
-
-  /**
-   * Appends an event to the event set, if not present.
-   * The event will be interpreted as a metric (since it is not scheduled to any hardware counter group).
-   *
-   * @param event_name Name of the event.
-   * @param type Type of the event (e.g., metric or time)
-   * @param is_shown_in_results True, if the event should be visible in the results.
-   * @return True, if the event was added. False, if the event was already in the event set.
-   */
-  bool add(const std::string_view event_name, const RequestedEvent::Type type, const bool is_shown_in_results)
-  {
-    return add(std::nullopt, event_name, is_shown_in_results, type, std::nullopt);
+    event.scheduled_group(group_id, position);
+    return add(event);
   }
 
   /**
@@ -235,30 +225,12 @@ private:
   std::vector<RequestedEvent> _requested_events;
 
   /**
-   * Appends an event to the event set, if not present.
-   * If present and the event was marked as hidden for the results, but is_shown_in_results is true, the visibility will
-   * change to true.
-   *
-   * @param pmu_name Name of the PMU.
-   * @param event_name Name of the event.
-   * @param is_shown_in_results True, if the event should be visible in the results.
-   * @param type Type, e.g., hardware event, metric, or time event.
-   * @param scheduled_group Group id and position within the group the hardware event is scheduled to (if the event is a
-   * hardware event).
-   * @return True, if the event was added. False, if the event was already in the event set.
-   */
-  bool add(std::optional<std::string_view> pmu_name,
-           std::string_view event_name,
-           bool is_shown_in_results,
-           RequestedEvent::Type type,
-           std::optional<RequestedEvent::ScheduledHardwareCounterGroup> scheduled_group);
-
-  /**
    * Build a directed dependency graph for all metrics available in the requested event set.
    *
    * @param counter_definition Counter definition to lookup metrics.
    * @return A directed graph, connecting dependent metrics.
    */
-  [[nodiscard]] util::DirectedGraph<std::string_view> build_metric_graph(const CounterDefinition& counter_definition) const;
+  [[nodiscard]] util::DirectedGraph<std::string_view> build_metric_graph(
+    const CounterDefinition& counter_definition) const;
 };
 }

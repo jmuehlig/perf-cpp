@@ -221,7 +221,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
 
       /// Notice the event name of the trigger event.
       if (this->_values.is_set(PERF_SAMPLE_READ)) {
-        requested_events.add(pmu_name, event_name, 0U);
+        requested_events.add(RequestedEvent{ pmu_name, event_name, 0U });
       }
     } else {
       throw CannotFindEventError{ pmu_name, event_name };
@@ -236,8 +236,8 @@ perf::Sampler::transform_trigger_to_sample_counter(
       if (auto event_config = this->_counter_definitions.counter(pmu_name, event_name); event_config.has_value()) {
         /// Add the event to the requested event set.
         /// If the request returns true, the event as indeed added and needs to be added to the group.
-        const auto is_added =
-          requested_events.add(pmu_name, std::get<1>(event_config.value()), std::uint8_t(group.size()));
+        const auto is_added = requested_events.add(
+          RequestedEvent{ pmu_name, std::get<1>(event_config.value()), std::uint8_t(group.size()) });
         if (is_added) {
           group.add(std::get<2>(event_config.value()));
         }
@@ -286,8 +286,8 @@ perf::Sampler::add(const std::pair<std::string_view, Metric&> metric,
 
       /// Add the event to the requested event set.
       /// If the request returns true, the event is indeed added and needs to be added to the group.
-      const auto is_added =
-        requested_event_set.add(pmu_name, std::get<1>(depending_event_config.value()), std::uint8_t(group.size()));
+      const auto is_added = requested_event_set.add(
+        RequestedEvent{ pmu_name, std::get<1>(depending_event_config.value()), std::uint8_t(group.size()) });
       if (is_added) {
         group.add(std::get<2>(depending_event_config.value()));
       }
@@ -302,7 +302,7 @@ perf::Sampler::add(const std::pair<std::string_view, Metric&> metric,
   }
 
   /// Add the metric to the list of scheduled events.
-  requested_event_set.add(metric_name, RequestedEvent::Type::Metric, true);
+  requested_event_set.add(RequestedEvent{ metric_name, true, RequestedEvent::Type::Metric });
 }
 
 std::pair<bool, bool>
