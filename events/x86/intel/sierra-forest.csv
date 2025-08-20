@@ -46,7 +46,15 @@ fp_inst_retired.128b_sp, 0x4c7
 fp_inst_retired.256b_dp, 0x20c7
 fp_inst_retired.32b_sp, 0x1c7
 fp_inst_retired.64b_dp, 0x2c7
+frontend_retired.all, 0xc6
+frontend_retired.branch_detect, 0x2c6
+frontend_retired.branch_resteer, 0x40c6
+frontend_retired.cisc, 0x1c6
+frontend_retired.decode, 0x8c6
+frontend_retired.icache, 0x20c6
 frontend_retired.itlb_miss, 0x10c6
+frontend_retired.other, 0x80c6
+frontend_retired.predecode, 0x4c6
 icache.accesses, 0x380
 icache.misses, 0x280
 inst_retired.any_p, 0xc0
@@ -698,6 +706,7 @@ unc_iio_iommu3.num_inval_int_cache, 0x2043
 unc_iio_iommu3.num_inval_iotlb, 0x443
 unc_iio_iommu3.num_inval_pasid_cache, 0x1043
 unc_iio_num_oustanding_req_from_cpu.to_io, 0x8c5
+unc_iio_num_outstanding_req_from_cpu.to_io, 0x8c5
 unc_iio_num_outstanding_req_of_cpu.data, 0x2088
 unc_iio_num_outstanding_req_of_cpu.final_rd_wr, 0x888
 unc_iio_num_outstanding_req_of_cpu.iommu_hit, 0x288
@@ -712,6 +721,7 @@ unc_iio_num_req_of_cpu_by_tgt.mem, 0x88e
 unc_iio_num_req_of_cpu_by_tgt.msgb, 0x18e
 unc_iio_num_req_of_cpu_by_tgt.rem_p2p, 0x108e
 unc_iio_num_req_of_cpu_by_tgt.ubox, 0x48e
+unc_iio_num_req_of_cpu_by_tgt.ubox_posted, 0x48e
 unc_iio_pwt_occupancy, 0x42
 unc_iio_txn_req_by_cpu.mem_read.all_parts, 0x4c1
 unc_iio_txn_req_by_cpu.mem_read.part0, 0x4c1
@@ -859,6 +869,11 @@ unc_p_power_state_occupancy_cores_c3, 0x36
 unc_p_power_state_occupancy_cores_c6, 0x37
 unc_p_prochot_external_cycles, 0xa
 unc_p_prochot_internal_cycles, 0x9
+unc_u_event_msg.doorbell_rcvd, 0x842
+unc_u_event_msg.int_prio, 0x1042
+unc_u_event_msg.ipi_rcvd, 0x442
+unc_u_event_msg.msi_rcvd, 0x242
+unc_u_event_msg.vlw_rcvd, 0x142
 unc_upi_clockticks, 0x1
 unc_upi_l1_power_cycles, 0x21
 unc_upi_rxl_basic_hdr_match.ncb, 0xe05
@@ -926,8 +941,6 @@ unc_upi_txl_flits.prothdr, 0x8002
 unc_upi_txl_flits.slot0, 0x102
 unc_upi_txl_flits.slot1, 0x202
 unc_upi_txl_flits.slot2, 0x402
-unc_upi_txl_inserts, 0x40
-unc_upi_txl_occupancy, 0x42
 uops_issued.any, 0xe
 uops_retired.all, 0xc2
 uops_retired.fpdiv, 0x8c2

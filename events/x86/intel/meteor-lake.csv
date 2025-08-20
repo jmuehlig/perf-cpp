@@ -139,9 +139,15 @@ fp_inst_retired.256b_dp, 0x20c7
 fp_inst_retired.32b_sp, 0x1c7
 fp_inst_retired.64b_dp, 0x2c7
 fp_vint_uops_executed.std, 0x1b2
+frontend_retired.all, 0xc6
 frontend_retired.any_ant, 0x3c6, 0x9
 frontend_retired.any_dsb_miss, 0x3c6, 0x1
+frontend_retired.branch_detect, 0x2c6
+frontend_retired.branch_resteer, 0x40c6
+frontend_retired.cisc, 0x1c6
+frontend_retired.decode, 0x8c6
 frontend_retired.dsb_miss, 0x3c6, 0x11
+frontend_retired.icache, 0x20c6
 frontend_retired.itlb_miss, 0x10c6
 frontend_retired.itlb_miss, 0x3c6, 0x14
 frontend_retired.l1i_miss, 0x3c6, 0x12
@@ -159,6 +165,8 @@ frontend_retired.latency_ge_64, 0x3c6, 0x604006
 frontend_retired.latency_ge_8, 0x3c6, 0x600806
 frontend_retired.misp_ant, 0x2c6, 0x9
 frontend_retired.ms_flows, 0x3c6, 0x8
+frontend_retired.other, 0x80c6
+frontend_retired.predecode, 0x4c6
 frontend_retired.stlb_miss, 0x3c6, 0x15
 frontend_retired.unknown_branch, 0x3c6, 0x17
 icache.accesses, 0x380
