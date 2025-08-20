@@ -261,16 +261,7 @@ public:
    *
    * @return The current value of the counter.
    */
-  [[nodiscard]] std::optional<double> read_live() const noexcept
-  {
-    if (_mmap_buffer != nullptr) {
-      if (const auto value = _mmap_buffer->read_performance_monitoring_counter(); value.has_value()) {
-        return double(value.value()) * this->scale();
-      }
-    }
-
-    return std::nullopt;
-  }
+  [[nodiscard]] std::optional<double> read_live() const noexcept;
 
   /**
    * @return The sample buffer that manages the mmap-ed buffer for storing samples and/or live events.

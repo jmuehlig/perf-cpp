@@ -31,14 +31,17 @@ perf::CounterDefinition::CounterDefinition(const std::string& config_file)
 std::shared_ptr<perf::CounterDefinition>
 perf::CounterDefinition::make_global()
 {
+  /// Create the global counter definition.
   auto global_counter_definition = std::make_shared<CounterDefinition>();
 
-  /// Collect all generic event providers.
   auto event_providers = std::vector<std::unique_ptr<EventProvider>>{};
+  event_providers.reserve(8U);
+
+  /// Collect all generic event providers.
   event_providers.push_back(std::make_unique<PerfSubsystemEventProvider>());
-  event_providers.push_back(std::make_unique<TimeEventProvider>());
-  event_providers.push_back(std::make_unique<MetricEventProvider>());
   event_providers.push_back(std::make_unique<SystemSpecificEventProvider>());
+  event_providers.push_back(std::make_unique<MetricEventProvider>());
+  event_providers.push_back(std::make_unique<TimeEventProvider>());
 
 #ifdef PERFCPP_HAS_PROCESSOR_SPECIFIC_EVENTS
   /// Hardware-specific events.
@@ -186,10 +189,12 @@ perf::CounterDefinition::pmu(const std::string& pmu_name) const
 bool
 perf::CounterDefinition::is_metric(const std::string& name) const noexcept
 {
+  /// Check if the metric is registered in this instance.
   if (this->_metrics.find(name) != this->_metrics.end()) {
     return true;
   }
 
+  /// Check if the metric is registered in the parent's instance.
   if (this->_parent_counter_definition != nullptr) {
     return this->_parent_counter_definition->is_metric(name);
   }
@@ -200,10 +205,12 @@ perf::CounterDefinition::is_metric(const std::string& name) const noexcept
 bool
 perf::CounterDefinition::is_time_event(const std::string& name) const noexcept
 {
+  /// Check if the time event is registered in this instance.
   if (this->_time_events.find(name) != this->_time_events.end()) {
     return true;
   }
 
+  /// Check if the time event is registered in the parent's instance.
   if (this->_parent_counter_definition != nullptr) {
     return this->_parent_counter_definition->is_time_event(name);
   }
@@ -221,6 +228,8 @@ std::vector<std::string>
 perf::CounterDefinition::pmu_names() const
 {
   auto names = std::vector<std::string>{};
+
+  /// Map the events hash table to PMU names (i.e., the key).
   std::transform(this->_performance_monitoring_unit_events.begin(),
                  this->_performance_monitoring_unit_events.end(),
                  std::back_inserter(names),
@@ -228,8 +237,7 @@ perf::CounterDefinition::pmu_names() const
 
   /// Append parent PMU names, if there is a parent.
   if (this->_parent_counter_definition != nullptr) {
-    auto parent_pmu_names = this->_parent_counter_definition->pmu_names();
-    if (!parent_pmu_names.empty()) {
+    if (auto parent_pmu_names = this->_parent_counter_definition->pmu_names(); !parent_pmu_names.empty()) {
       std::move(parent_pmu_names.begin(), parent_pmu_names.end(), std::back_inserter(names));
     }
   }
@@ -241,14 +249,15 @@ std::vector<std::string>
 perf::CounterDefinition::metric_names() const
 {
   auto names = std::vector<std::string>{};
+
+  /// Map metrics to names.
   std::transform(this->_metrics.begin(), this->_metrics.end(), std::back_inserter(names), [](const auto& config) {
     return config.first;
   });
 
   /// Append parent PMU names, if there is a parent.
   if (this->_parent_counter_definition != nullptr) {
-    auto parent_metric_names = this->_parent_counter_definition->metric_names();
-    if (!parent_metric_names.empty()) {
+    if (auto parent_metric_names = this->_parent_counter_definition->metric_names(); !parent_metric_names.empty()) {
       std::move(parent_metric_names.begin(), parent_metric_names.end(), std::back_inserter(names));
     }
   }
@@ -260,6 +269,8 @@ std::vector<std::string>
 perf::CounterDefinition::time_event_names() const
 {
   auto names = std::vector<std::string>{};
+
+  /// Map time events to names.
   std::transform(this->_time_events.begin(),
                  this->_time_events.end(),
                  std::back_inserter(names),
@@ -267,8 +278,8 @@ perf::CounterDefinition::time_event_names() const
 
   /// Append parent PMU names, if there is a parent.
   if (this->_parent_counter_definition != nullptr) {
-    auto parent_time_event_names = this->_parent_counter_definition->time_event_names();
-    if (!parent_time_event_names.empty()) {
+    if (auto parent_time_event_names = this->_parent_counter_definition->time_event_names();
+        !parent_time_event_names.empty()) {
       std::move(parent_time_event_names.begin(), parent_time_event_names.end(), std::back_inserter(names));
     }
   }
@@ -286,6 +297,7 @@ perf::CounterDefinition::to_string() const
     return stream.str();
   };
 
+  /// Lambda to turn a decimal value into a scientific value.
   const auto double_to_scientific = [](const auto decimal) -> std::string {
     if (decimal == 1.) {
       return "1";
