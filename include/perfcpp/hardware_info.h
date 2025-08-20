@@ -72,6 +72,7 @@ private:
   static std::optional<std::uint8_t> _physical_performance_counters_per_logical_core;
   static std::optional<std::uint8_t> _events_per_physical_performance_counter;
 
+#if defined(__x86_64__) || defined(__i386__)
   /**
    * Result of a __get_cpuid call.
    */
@@ -96,6 +97,7 @@ private:
    * @return Register values (eax, ebx, ecx, edx) in case the cpuid request was successful.
    */
   static std::optional<CPUIDResult> cpuid(std::uint32_t leaf, std::uint32_t sub_leaf = 0U) noexcept;
+#endif
 
   /**
    * Writes a value into the cache variable and returns the value.

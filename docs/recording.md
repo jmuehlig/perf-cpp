@@ -26,8 +26,7 @@ The `perf::EventCounter` instances requires a `perf::CounterDefinition` as a ref
 
 ```cpp
 #include <perfcpp/event_counter.h>
-const auto counter_definition = perf::CounterDefinition{};
-auto event_counter = perf::EventCounter{ counter_definition };
+auto event_counter = perf::EventCounter{ };
 
 try {
     event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
@@ -200,8 +199,7 @@ struct alignas(64U) cache_line { std::int64_t value; };
 int main()
 {
     /// Initialize performance counters.
-    const auto counter_definition = perf::CounterDefinition{};
-    auto event_counter = perf::EventCounter{ counter_definition };
+    auto event_counter = perf::EventCounter{ };
     try {
         event_counter.add({"instructions", "cycles", "branches", "cache-misses", "cycles-per-instruction"});
     } catch (std::runtime_error& e) {
@@ -278,7 +276,7 @@ Utilize *perf-cpp*'s debugging features to gain insights into the internal worki
 auto config = perf::Config{};
 config.is_debug(true);
 
-auto event_counter = perf::EventCounter{ counter_definitions, config };
+auto event_counter = perf::EventCounter{ config };
 ```
 
 The idea is borrowed from *Linux Perf*, which can be asked to print counter configurations as follows:

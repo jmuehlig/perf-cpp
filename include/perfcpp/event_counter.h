@@ -46,6 +46,12 @@ public:
     , _config(config)
   {
   }
+
+  explicit EventCounter(Config config = {})
+    : EventCounter(CounterDefinition::global(), config)
+  {
+  }
+
   EventCounter(EventCounter&&) noexcept = default;
 
   ~EventCounter();
@@ -308,7 +314,6 @@ private:
    * @param event Event to append.
    * @param event_config Configuration of the event.
    * @param is_keep_open If true, further events can be added in the future. Otherwise, the event will be the only one.
-   * @return True, if the event could be appended to any hardware counter. False, otherwise.
    */
   void create_new_group(RequestedEvent& event, const CounterConfig& event_config, bool is_keep_open);
 };
@@ -469,6 +474,11 @@ class MultiThreadEventCounter final : public MultiEventCounterBase
 public:
   MultiThreadEventCounter(const CounterDefinition& counter_definition, std::uint16_t num_threads, Config config = {});
 
+  MultiThreadEventCounter(const std::uint16_t num_threads, const Config config = {})
+    : MultiThreadEventCounter(CounterDefinition::global(), num_threads, config)
+  {
+  }
+
   MultiThreadEventCounter(EventCounter&& event_counter, std::uint16_t num_threads);
 
   MultiThreadEventCounter(const EventCounter& event_counter, const std::uint16_t num_threads)
@@ -525,6 +535,11 @@ class MultiProcessEventCounter final : public StartableMultiEventCounterBase
 public:
   MultiProcessEventCounter(const CounterDefinition& counter_list, std::vector<pid_t>&& process_ids, Config config = {});
 
+  explicit MultiProcessEventCounter(std::vector<pid_t>&& process_ids, const Config config = {})
+    : MultiProcessEventCounter(CounterDefinition::global(), std::move(process_ids), config)
+  {
+  }
+
   MultiProcessEventCounter(EventCounter&& event_counter, std::vector<pid_t>&& process_ids);
 
   MultiProcessEventCounter(const EventCounter& event_counter, std::vector<pid_t>&& process_ids)
@@ -555,6 +570,11 @@ public:
   MultiCoreEventCounter(const CounterDefinition& counter_definition,
                         std::vector<std::uint16_t>&& cpu_ids,
                         Config config = {});
+
+  explicit MultiCoreEventCounter(std::vector<std::uint16_t>&& cpu_ids, const Config config = {})
+    : MultiCoreEventCounter(CounterDefinition::global(), std::move(cpu_ids), config)
+  {
+  }
 
   MultiCoreEventCounter(EventCounter&& event_counter, std::vector<std::uint16_t>&& cpu_ids);
 

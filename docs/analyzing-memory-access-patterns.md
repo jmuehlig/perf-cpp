@@ -13,10 +13,10 @@ The Memory Access Analyzer helps identify which specific memory addresses experi
 
 ---
 ## Table of Contents
-- [Describing Data Types](#describing-data-types)
-- [Registering Data Type Instances](#registering-data-type-instances)
-- [Mapping Samples to Data Type Instances](#mapping-samples-to-data-type-instances)
-- [Processing the Result](#processing-the-result)
+- [Describing Data Types](#step-1-describing-data-types)
+- [Registering Data Type Instances](#step-2-registering-data-type-instances)
+- [Mapping Samples to Data Type Instances](#step-3-mapping-samples-to-data-type-instances)
+- [Processing the Result](#step-4-processing-the-result)
 ---
 
 ## Step 1: Describing Data Types
@@ -74,8 +74,7 @@ To collect memory access data, use *perf-cpp*'s [sampling mechanism](sampling.md
 #include <perfcpp/sampler.h>
 #include <perfcpp/analyzer/memory_access.h>
 
-const auto counter_definition = perf::CounterDefinition{};
-auto sampler = perf::Sampler{ counter_definition };
+auto sampler = perf::Sampler{};
 
 /// Set trigger that enables memory sampling.
 sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid, perf::Period{ 1000U });

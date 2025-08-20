@@ -4,12 +4,34 @@
 #include <perfcpp/util/table.h>
 #include <sstream>
 
+/// The global CounterDefinition instance is used as a default one for EventCounter and Sampler. This instance detectes
+/// counters from the perf subsystem and (if activated) processor-specific events. Further (child) counter definitions
+/// will inherit the registered events, metrics, and time events.
+std::shared_ptr<perf::CounterDefinition> perf::CounterDefinition::_global = perf::CounterDefinition::make_global();
+
 perf::CounterDefinition::CounterDefinition(std::unique_ptr<EventProvider>&& event_provider)
+  : _parent_counter_definition(CounterDefinition::_global)
 {
   /// Reserve space for events.
   this->_performance_monitoring_unit_events.reserve(8U);
   this->_metrics.reserve(32U);
   this->_time_events.reserve(8U);
+
+  /// Additional event provider, if specified. For example, this could be a provider adding events from a file.
+  if (event_provider != nullptr) {
+    event_provider->add_events(*this);
+  }
+}
+
+perf::CounterDefinition::CounterDefinition(const std::string& config_file)
+  : CounterDefinition(std::make_unique<CsvFileEventProvider>(config_file))
+{
+}
+
+std::shared_ptr<perf::CounterDefinition>
+perf::CounterDefinition::make_global()
+{
+  auto global_counter_definition = std::make_shared<CounterDefinition>();
 
   /// Collect all generic event providers.
   auto event_providers = std::vector<std::unique_ptr<EventProvider>>{};
@@ -28,20 +50,12 @@ perf::CounterDefinition::CounterDefinition(std::unique_ptr<EventProvider>&& even
     event_providers.push_back(std::make_unique<AMDIbsEventProvider>());
   }
 
-  /// Additional event provider, if specified. For example, this could be a provider adding events from a file.
-  if (event_provider != nullptr) {
-    event_providers.push_back(std::move(event_provider));
-  }
-
   /// Let the event providers add events.
   for (const auto& provider : event_providers) {
-    provider->add_events(*this);
+    provider->add_events(*global_counter_definition);
   }
-}
 
-perf::CounterDefinition::CounterDefinition(const std::string& config_file)
-  : CounterDefinition(std::make_unique<CsvFileEventProvider>(config_file))
-{
+  return global_counter_definition;
 }
 
 void
@@ -80,6 +94,16 @@ perf::CounterDefinition::counter(const std::string& name) const noexcept
     }
   }
 
+  /// Scan all PMUs of parent counter definition.
+  if (this->_parent_counter_definition != nullptr) {
+    auto parent_event_configurations = this->_parent_counter_definition->counter(name);
+    if (!parent_event_configurations.empty()) {
+      std::move(parent_event_configurations.begin(),
+                parent_event_configurations.end(),
+                std::back_inserter(event_configurations));
+    }
+  }
+
   return event_configurations;
 }
 
@@ -98,6 +122,11 @@ perf::CounterDefinition::counter(const std::string& pmu_name, const std::string&
     }
   }
 
+  /// If the counter wasn't found, try to find it in the parent's list.
+  if (this->_parent_counter_definition != nullptr) {
+    return this->_parent_counter_definition->counter(pmu_name, event_name);
+  }
+
   return std::nullopt;
 }
 
@@ -108,6 +137,11 @@ perf::CounterDefinition::metric(const std::string& name) const noexcept
     return std::make_optional(std::make_pair(std::string_view(iterator->first), std::ref(*iterator->second)));
   }
 
+  /// If the metric wasn't found, try to find it in the parent's list.
+  if (this->_parent_counter_definition != nullptr) {
+    return this->_parent_counter_definition->metric(name);
+  }
+
   return std::nullopt;
 }
 
@@ -116,6 +150,11 @@ perf::CounterDefinition::time_event(const std::string& name) const noexcept
 {
   if (auto iterator = this->_time_events.find(name); iterator != this->_time_events.end()) {
     return std::make_optional(std::make_pair(std::string_view(iterator->first), std::ref(*iterator->second)));
+  }
+
+  /// If the time event wasn't found, try to find it in the parent's list.
+  if (this->_parent_counter_definition != nullptr) {
+    return this->_parent_counter_definition->time_event(name);
   }
 
   return std::nullopt;
@@ -133,13 +172,108 @@ perf::CounterDefinition::pmu(const std::string& pmu_name) const
     });
   }
 
+  /// Append parent PMU names, if there is a parent.
+  if (this->_parent_counter_definition != nullptr) {
+    auto parent_counters = this->_parent_counter_definition->pmu(pmu_name);
+    if (!parent_counters.empty()) {
+      std::move(parent_counters.begin(), parent_counters.end(), std::back_inserter(events));
+    }
+  }
+
   return events;
+}
+
+bool
+perf::CounterDefinition::is_metric(const std::string& name) const noexcept
+{
+  if (this->_metrics.find(name) != this->_metrics.end()) {
+    return true;
+  }
+
+  if (this->_parent_counter_definition != nullptr) {
+    return this->_parent_counter_definition->is_metric(name);
+  }
+
+  return false;
+}
+
+bool
+perf::CounterDefinition::is_time_event(const std::string& name) const noexcept
+{
+  if (this->_time_events.find(name) != this->_time_events.end()) {
+    return true;
+  }
+
+  if (this->_parent_counter_definition != nullptr) {
+    return this->_parent_counter_definition->is_time_event(name);
+  }
+
+  return false;
 }
 
 void
 perf::CounterDefinition::read_counter_configuration(const std::string& csv_filename)
 {
   CsvFileEventProvider{ csv_filename }.add_events(*this);
+}
+
+std::vector<std::string>
+perf::CounterDefinition::pmu_names() const
+{
+  auto names = std::vector<std::string>{};
+  std::transform(this->_performance_monitoring_unit_events.begin(),
+                 this->_performance_monitoring_unit_events.end(),
+                 std::back_inserter(names),
+                 [](const auto& config) { return config.first; });
+
+  /// Append parent PMU names, if there is a parent.
+  if (this->_parent_counter_definition != nullptr) {
+    auto parent_pmu_names = this->_parent_counter_definition->pmu_names();
+    if (!parent_pmu_names.empty()) {
+      std::move(parent_pmu_names.begin(), parent_pmu_names.end(), std::back_inserter(names));
+    }
+  }
+
+  return names;
+}
+
+std::vector<std::string>
+perf::CounterDefinition::metric_names() const
+{
+  auto names = std::vector<std::string>{};
+  std::transform(this->_metrics.begin(), this->_metrics.end(), std::back_inserter(names), [](const auto& config) {
+    return config.first;
+  });
+
+  /// Append parent PMU names, if there is a parent.
+  if (this->_parent_counter_definition != nullptr) {
+    auto parent_metric_names = this->_parent_counter_definition->metric_names();
+    if (!parent_metric_names.empty()) {
+      std::move(parent_metric_names.begin(), parent_metric_names.end(), std::back_inserter(names));
+    }
+  }
+
+  return names;
+}
+
+std::vector<std::string>
+perf::CounterDefinition::time_event_names() const
+{
+  auto names = std::vector<std::string>{};
+  std::transform(this->_time_events.begin(),
+                 this->_time_events.end(),
+                 std::back_inserter(names),
+                 [](const auto& config) { return config.first; });
+
+  /// Append parent PMU names, if there is a parent.
+  if (this->_parent_counter_definition != nullptr) {
+    auto parent_time_event_names = this->_parent_counter_definition->time_event_names();
+    if (!parent_time_event_names.empty()) {
+      std::move(parent_time_event_names.begin(), parent_time_event_names.end(), std::back_inserter(names));
+    }
+  }
+
+  return names;
 }
 
 std::string
@@ -172,12 +306,21 @@ perf::CounterDefinition::to_string() const
               util::Table::Header{ "config2", util::Table::Alignment::Left },
               util::Table::Header{ "scale", util::Table::Alignment::Left } });
 
-  /// Add all events to the table.
-  for (const auto& [pmu, events] : this->_performance_monitoring_unit_events) {
+  /// Read all PMUs from all (parent) definitions.
+  auto pmu_names = this->pmu_names();
+  std::sort(pmu_names.begin(), pmu_names.end());
+
+  /// Print all events from all PMUs.
+  for (const auto& pmu_name : pmu_names) {
+    auto events = this->pmu(pmu_name);
+    std::sort(events.begin(), events.end(), [](const auto& left, const auto& right) {
+      return std::get<0>(left) < std::get<0>(right);
+    });
+
     for (const auto& [name, config] : events) {
       auto row = util::Table::Row{};
 
-      row << pmu << name << config.type() << decimal_to_hex_string(config.configs()[0U])
+      row << pmu_name << std::string{ name } << config.type() << decimal_to_hex_string(config.configs()[0U])
           << decimal_to_hex_string(config.configs()[1U]) << decimal_to_hex_string(config.configs()[2U])
           << double_to_scientific(config.scale());
       table.add(std::move(row));
@@ -185,14 +328,18 @@ perf::CounterDefinition::to_string() const
   }
 
   /// Add all metrics to the table.
-  for (const auto& [name, _] : this->_metrics) {
+  auto metric_names = this->metric_names();
+  std::sort(metric_names.begin(), metric_names.end());
+  for (const auto& name : metric_names) {
     auto row = util::Table::Row{};
     row << "metric" << name << "" << "" << "" << "" << "";
     table.add(std::move(row));
   }
 
   /// Add all virtual time events to the table.
-  for (const auto& [name, _] : this->_time_events) {
+  auto time_event_names = this->time_event_names();
+  std::sort(time_event_names.begin(), time_event_names.end());
+  for (const auto& name : time_event_names) {
     auto row = util::Table::Row{};
     row << "time" << name << "" << "" << "" << "" << "";
     table.add(std::move(row));

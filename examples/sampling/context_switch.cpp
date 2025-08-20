@@ -10,8 +10,7 @@ main()
                "access to an in-memory array."
             << std::endl;
 
-  const auto counter_definition = perf::CounterDefinition{};
-  auto sampler = perf::Sampler{ counter_definition };
+  auto sampler = perf::Sampler{};
 
   /// Event that generates an overflow which is samples.
   sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 50000 });

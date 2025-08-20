@@ -35,9 +35,7 @@ Initialize a sampler for each thread to monitor specific events:
 auto sample_config = perf::SampleConfig{};
 sample_config.period(50000U);
 
-const auto counter_definition = perf::CounterDefinition{};
 auto sampler = perf::MultiThreadSampler{ 
-    counter_definition,
     /* number of threads */ 4U,
     sample_config
 };
@@ -124,9 +122,7 @@ auto cpus_to_watch = std::vector<std::uint16_t>{0U, 1U, 2U, 3U};
 auto sample_config = perf::SampleConfig{};
 sample_config.period(50000U);
 
-const auto counter_definition = perf::CounterDefinition{};
 auto sampler = perf::MultiCoreSampler{
-    counter_definitio,
     std::move(cpus_to_watch), /// List of CPUs to sample
     sample_config
 };

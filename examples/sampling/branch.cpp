@@ -21,14 +21,10 @@ main()
             << std::endl;
 
   /// Initialize sampler.
-  const auto counter_definition = perf::CounterDefinition{};
-  auto perf_config = perf::SampleConfig{};
-  perf_config.period(1000000U); /// Record every 1,000,000th event.
-
-  auto sampler = perf::Sampler{ counter_definition, perf_config };
+  auto sampler = perf::Sampler{};
 
   /// Setup which counters trigger the writing of samples.
-  sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid);
+  sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid, perf::Period{ 1000000U });
 
   /// Setup which data will be included into samples (timestamp and stack of branches).
   sampler.values().timestamp(true).branch_stack(

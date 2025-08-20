@@ -13,18 +13,14 @@ main()
             << std::endl;
 
   /// Initialize sampler.
-  auto perf_config = perf::SampleConfig{};
-  perf_config.period(8000U); /// Record every 8,000th event.
-
-  const auto counter_definition = perf::CounterDefinition{};
-  auto sampler = perf::Sampler{ counter_definition, perf_config };
+  auto sampler = perf::Sampler{};
 
   if (perf::HardwareInfo::is_intel()) {
     sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
       {
-        perf::Sampler::Trigger{ "mem-loads", perf::Precision::RequestZeroSkid } /// Loads
+        perf::Sampler::Trigger{ "mem-loads", perf::Precision::RequestZeroSkid, perf::Period{ 8000U } } /// Loads
       },
-      { perf::Sampler::Trigger{ "mem-stores", perf::Precision::MustHaveZeroSkid } } /// Stores
+      { perf::Sampler::Trigger{ "mem-stores", perf::Precision::MustHaveZeroSkid, perf::Period{ 8000U } } } /// Stores
     });
   } else {
     std::cout << "Error: Memory sampling with multiple triggers is not supported on this CPU." << std::endl;

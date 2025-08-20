@@ -22,8 +22,7 @@ Define which events to monitor live and which to read post-computation using the
 ```cpp
 #include <perfcpp/event_counter.h>
 
-const auto counter_definition = perf::CounterDefinition{};
-auto event_counter = perf::EventCounter{ counter_definition };
+auto event_counter = perf::EventCounter{};
 
 try {
     /// Events for live monitoring.
@@ -32,10 +31,6 @@ try {
     std::cerr << e.what() << std::endl;
 }
 ```
-
-> [!IMPORTANT]
-> The `perf::CounterDefinition` instance is used to store event configurations (e.g., names) and passed as a reference.
-> Consequently, the instance needs to be alive while using the `EventCounter`.
 
 > [!IMPORTANT]
 > We experienced that not mixing live with "traditional" events leads to more consistent results.

@@ -55,15 +55,10 @@ In the following example, a timestamp and the current instruction pointer are re
 auto sample_config = perf::SampleConfig{};
 sample_config.period(50000U);
 
-const auto counter_definition = perf::CounterDefinition{};
-auto sampler = perf::Sampler{ counter_definition, sample_config };
+auto sampler = perf::Sampler{ sample_config };
 sampler.trigger("cycles");
 sampler.values().timestamp(true).instruction_pointer(true);
 ```
-
-> [!IMPORTANT]
-> The `perf::CounterDefinition` instance is used to store event configurations (e.g., names) and passed as a reference.
-> Consequently, the instance needs to be alive while using the `Sampler`.
 
 ## Initializing the Sampler *(optional)*
 The sampler is initialized using `sampler.start()`, if it is not already done.
@@ -179,8 +174,7 @@ If you do not set any precision level through the `.trigger()` interface, you ca
 auto sample_config = perf::SampleConfig{};
 sample_config.precision(perf::Precision::RequestZeroSkid);
 
-const auto counter_definition = perf::CounterDefinition{};
-auto sampler = perf::Sampler{ counter_definition, sample_config };
+auto sampler = perf::Sampler{ sample_config };
 sampler.trigger("cycles");
 ```
 
@@ -218,7 +212,7 @@ sample_config.period(50000U /* trigger event, e.g., cycle */);
 /// xor:
 sample_config.frequency(1000U /* Hz */);
 
-auto sampler = perf::Sampler{ counter_definitions, sample_config };
+auto sampler = perf::Sampler{ sample_config };
 sampler.trigger("cycles");
 ```
 
@@ -687,10 +681,9 @@ You can configure the size of this buffer using the `SampleConfig` class as demo
 
 ```cpp
 auto sample_config = perf::SampleConfig{};
-sample_config.buffer_pages(4096U); // This sets the buffer to 16MB (4096 pages x 4kB per page).
+sample_config.buffer_pages(4096U); /// This sets the buffer to 16MB (4096 pages x 4kB per page).
 
-const auto counter_definition = perf::CounterDefinition{};
-auto sampler = perf::Sampler{ counter_definition, sample_config };
+auto sampler = perf::Sampler{ sample_config };
 ```
 
 Because the ring buffer has a finite size, it needs to be drained before it becomes full.
@@ -709,8 +702,7 @@ Utilize *perf-cpp*'s debugging features to gain insights into the internal worki
 auto config = perf::SampleConfig{};
 config.is_debug(true);
 
-const auto counter_definition = perf::CounterDefinition{};
-auto sampler = perf::Sampler{ counter_definition, config };
+auto sampler = perf::Sampler{ config };
 ```
 
 The idea is borrowed from *Linux Perf*, which can be asked to print counter configurations as follows:

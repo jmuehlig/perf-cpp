@@ -201,18 +201,19 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
                                    hardware_counters.value());
 }
 
+#if defined(__x86_64__) || defined(__i386__)
 std::optional<perf::HardwareInfo::CPUIDResult>
 perf::HardwareInfo::cpuid(const std::uint32_t leaf, const std::uint32_t sub_leaf) noexcept
 {
-#if defined(__x86_64__) || defined(__i386__)
+
   auto result = CPUIDResult{};
   if (__get_cpuid_count(leaf, sub_leaf, &result.eax, &result.ebx, &result.ecx, &result.edx) > 0) {
     return result;
   }
-#endif
 
   return std::nullopt;
 }
+#endif
 
 std::uint8_t
 perf::HardwareInfo::events_per_physical_performance_counter()
@@ -279,10 +280,8 @@ perf::HardwareInfo::generate_events_for_counter_identification()
   auto event_codes = std::vector<CounterConfig>{};
   event_codes.reserve(Group::MAX_MEMBERS);
 
-  const auto counter_definition = CounterDefinition{};
-
   /// Fetch all PMU names that are registered.
-  const auto pmu_names = counter_definition.pmu_names();
+  const auto pmu_names = CounterDefinition::global().pmu_names();
 
   /// Check if ARM events are registered. Some ARM CPUs do not support all events provided by the perf subsystem. Hence,
   /// we rely on the events coming from the ARM pmu.
@@ -291,7 +290,7 @@ perf::HardwareInfo::generate_events_for_counter_identification()
                      pmu_names.end(),
                      [](const std::string& name) { return name.length() >= 3 && name.substr(0, 3) == "arm"; });
       arm_pmu_name != pmu_names.end()) {
-    const auto events = counter_definition.pmu(*arm_pmu_name);
+    const auto events = CounterDefinition::global().pmu(*arm_pmu_name);
 
     /// Translate events into codes.
     for (auto i = 0U; i < std::max<std::size_t>(events.size(), Group::MAX_MEMBERS); ++i) {
@@ -302,7 +301,7 @@ perf::HardwareInfo::generate_events_for_counter_identification()
   }
 
   /// If we could not detect an ARM PMU, we use events provided "cpu" PMU.
-  for (const auto& [name, config] : counter_definition.pmu("cpu")) {
+  for (const auto& [name, config] : CounterDefinition::global().pmu("cpu")) {
 
     /// Try to open the event on a physical performance counter.
     try {
