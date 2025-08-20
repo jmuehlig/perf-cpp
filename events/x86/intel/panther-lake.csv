@@ -1,32 +1,20 @@
 br_inst_retired.all_branches, 0xc4
-br_inst_retired.all_branches, 0xc4
-br_misp_retired.all_branches, 0xc5
 br_misp_retired.all_branches, 0xc5
 cpu_clk_unhalted.core_p, 0x3c
-cpu_clk_unhalted.core_p, 0x3c
 cpu_clk_unhalted.ref_tsc_p, 0x13c
-cpu_clk_unhalted.ref_tsc_p, 0x13c
-cpu_clk_unhalted.thread_p, 0x3c
 cpu_clk_unhalted.thread_p, 0x3c
 dtlb_load_misses.walk_completed, 0xe08
-dtlb_load_misses.walk_completed, 0xe12
 dtlb_store_misses.walk_completed, 0xe49
-dtlb_store_misses.walk_completed, 0xe13
 icache.accesses, 0x380
 icache.misses, 0x280
 idq_bubbles.core, 0x19c
 inst_retired.any_p, 0xc0
-inst_retired.any_p, 0xc0
 itlb_misses.walk_completed, 0xe85
-itlb_misses.walk_completed, 0xe11
 l2_request.all, 0x1ff24
 l2_rqsts.all_code_rd, 0xe424
 l2_rqsts.all_demand_data_rd, 0xe124
 ld_blocks.store_forward, 0x203
-ld_blocks.store_forward, 0x8203
 longest_lat_cache.miss, 0x412e
-longest_lat_cache.miss, 0x412e
-longest_lat_cache.reference, 0x4f2e
 longest_lat_cache.reference, 0x4f2e
 mem_inst_retired.all_loads, 0x81d0
 mem_inst_retired.all_stores, 0x82d0
@@ -54,7 +42,6 @@ mem_uops_retired.load_latency_gt_512, 0x5d0, 0x200
 mem_uops_retired.load_latency_gt_64, 0x5d0, 0x40
 mem_uops_retired.load_latency_gt_8, 0x5d0, 0x8
 mem_uops_retired.store_latency, 0x6d0
-misc_retired.lbr_inserts, 0x1e4
 misc_retired.lbr_inserts, 0x1e4
 ocr.demand_data_rd.any_response, 0x1b7, 0x10001
 ocr.demand_data_rd.any_response_0, 0x12a, 0x10001

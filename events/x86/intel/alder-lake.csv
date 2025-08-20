@@ -1,14 +1,11 @@
 arith.div_active, 0x3cd
-arith.div_active, 0x9b0
 arith.div_occupancy, 0x3cd
 arith.div_uops, 0xccd
 arith.divider_active, 0x9b0
 arith.fp_divider_active, 0x1b0
 arith.fpdiv_active, 0x2cd
-arith.fpdiv_active, 0x1b0
 arith.fpdiv_uops, 0x8cd
 arith.idiv_active, 0x1cd
-arith.idiv_active, 0x8b0
 arith.idiv_occupancy, 0x1cd
 arith.idiv_uops, 0x4cd
 arith.int_divider_active, 0x8b0
@@ -18,47 +15,32 @@ assists.hardware, 0x4c1
 assists.page_fault, 0x8c1
 assists.sse_avx_mix, 0x10c1
 baclears.any, 0x1e6
-baclears.any, 0x160
-br_inst_retired.all_branches, 0xc4
 br_inst_retired.all_branches, 0xc4
 br_inst_retired.call, 0xf9c4
 br_inst_retired.cond, 0x7ec4
-br_inst_retired.cond, 0x11c4
 br_inst_retired.cond_ntaken, 0x10c4
 br_inst_retired.cond_taken, 0xfec4
-br_inst_retired.cond_taken, 0x1c4
 br_inst_retired.far_branch, 0xbfc4
-br_inst_retired.far_branch, 0x40c4
 br_inst_retired.ind_call, 0xfbc4
 br_inst_retired.indirect, 0xebc4
-br_inst_retired.indirect, 0x80c4
 br_inst_retired.indirect_call, 0xfbc4
 br_inst_retired.jcc, 0x7ec4
 br_inst_retired.near_call, 0xf9c4
-br_inst_retired.near_call, 0x2c4
 br_inst_retired.near_return, 0xf7c4
-br_inst_retired.near_return, 0x8c4
 br_inst_retired.near_taken, 0xc0c4
-br_inst_retired.near_taken, 0x20c4
 br_inst_retired.non_return_ind, 0xebc4
 br_inst_retired.rel_call, 0xfdc4
 br_inst_retired.return, 0xf7c4
 br_inst_retired.taken_jcc, 0xfec4
 br_misp_retired.all_branches, 0xc5
-br_misp_retired.all_branches, 0xc5
 br_misp_retired.cond, 0x7ec5
-br_misp_retired.cond, 0x11c5
 br_misp_retired.cond_ntaken, 0x10c5
 br_misp_retired.cond_taken, 0xfec5
-br_misp_retired.cond_taken, 0x1c5
 br_misp_retired.ind_call, 0xfbc5
 br_misp_retired.indirect, 0xebc5
-br_misp_retired.indirect, 0x80c5
 br_misp_retired.indirect_call, 0xfbc5
-br_misp_retired.indirect_call, 0x2c5
 br_misp_retired.jcc, 0x7ec5
 br_misp_retired.near_taken, 0x80c5
-br_misp_retired.near_taken, 0x20c5
 br_misp_retired.non_return_ind, 0xebc5
 br_misp_retired.ret, 0x8c5
 br_misp_retired.return, 0xf7c5
@@ -77,8 +59,6 @@ cpu_clk_unhalted.pause_inst, 0x40ec
 cpu_clk_unhalted.ref, 0x13c
 cpu_clk_unhalted.ref_distributed, 0x83c
 cpu_clk_unhalted.ref_tsc_p, 0x13c
-cpu_clk_unhalted.ref_tsc_p, 0x13c
-cpu_clk_unhalted.thread_p, 0x3c
 cpu_clk_unhalted.thread_p, 0x3c
 cycle_activity.cycles_l1d_miss, 0x8a3
 cycle_activity.cycles_l2_miss, 0x1a3
@@ -93,7 +73,6 @@ dsb2mite_switches.penalty_cycles, 0x261
 dtlb_load_misses.stlb_hit, 0x2012
 dtlb_load_misses.walk_active, 0x1012
 dtlb_load_misses.walk_completed, 0xe08
-dtlb_load_misses.walk_completed, 0xe12
 dtlb_load_misses.walk_completed_1g, 0x812
 dtlb_load_misses.walk_completed_2m_4m, 0x412
 dtlb_load_misses.walk_completed_4k, 0x212
@@ -101,7 +80,6 @@ dtlb_load_misses.walk_pending, 0x1012
 dtlb_store_misses.stlb_hit, 0x2013
 dtlb_store_misses.walk_active, 0x1013
 dtlb_store_misses.walk_completed, 0xe49
-dtlb_store_misses.walk_completed, 0xe13
 dtlb_store_misses.walk_completed_1g, 0x813
 dtlb_store_misses.walk_completed_2m_4m, 0x413
 dtlb_store_misses.walk_completed_4k, 0x213
@@ -170,7 +148,6 @@ idq_uops_not_delivered.cycles_0_uops_deliv.core, 0x19c
 idq_uops_not_delivered.cycles_fe_was_ok, 0x19c
 inst_decoded.decoders, 0x175
 inst_retired.any_p, 0xc0
-inst_retired.any_p, 0xc0
 inst_retired.macro_fused, 0x10c0
 inst_retired.nop, 0x2c0
 inst_retired.rep_iteration, 0x8c0
@@ -192,7 +169,6 @@ itlb_misses.pde_cache_miss, 0x8085
 itlb_misses.stlb_hit, 0x2011
 itlb_misses.walk_active, 0x1011
 itlb_misses.walk_completed, 0xe85
-itlb_misses.walk_completed, 0xe11
 itlb_misses.walk_completed_2m_4m, 0x411
 itlb_misses.walk_completed_4k, 0x211
 itlb_misses.walk_pending, 0x1011
@@ -209,10 +185,8 @@ l2_lines_out.non_silent, 0x226
 l2_lines_out.silent, 0x126
 l2_lines_out.useless_hwpf, 0x426
 l2_request.all, 0x24
-l2_request.all, 0xff24
 l2_request.hit, 0x224
 l2_request.miss, 0x124
-l2_request.miss, 0x3f24
 l2_rqsts.all_code_rd, 0xe424
 l2_rqsts.all_demand_data_rd, 0xe124
 l2_rqsts.all_demand_miss, 0x2724
@@ -233,7 +207,6 @@ l2_trans.l2_wb, 0x4023
 lbr_inserts.any, 0x1e4
 ld_blocks.4k_alias, 0x403
 ld_blocks.address_alias, 0x403
-ld_blocks.address_alias, 0x403
 ld_blocks.data_unknown, 0x103
 ld_blocks.no_sr, 0x8803
 ld_blocks.store_forward, 0x8203
@@ -246,8 +219,6 @@ ld_head.pgwalk_at_ret, 0xa005
 ld_head.st_addr_at_ret, 0x8405
 load_hit_prefetch.swpf, 0x14c
 longest_lat_cache.miss, 0x412e
-longest_lat_cache.miss, 0x412e
-longest_lat_cache.reference, 0x4f2e
 longest_lat_cache.reference, 0x4f2e
 lsd.cycles_active, 0x1a8
 lsd.cycles_ok, 0x1a8
@@ -256,12 +227,10 @@ machine_clears.count, 0x1c3
 machine_clears.disambiguation, 0x8c3
 machine_clears.fp_assist, 0x4c3
 machine_clears.memory_ordering, 0x2c3
-machine_clears.memory_ordering, 0x2c3
 machine_clears.mrn_nuke, 0x80c3
 machine_clears.page_fault, 0x20c3
 machine_clears.slow, 0x6fc3
 machine_clears.smc, 0x1c3
-machine_clears.smc, 0x4c3
 mem_bound_stalls.ifetch, 0x3834
 mem_bound_stalls.ifetch_dram_hit, 0x2034
 mem_bound_stalls.ifetch_l2_hit, 0x834
@@ -344,7 +313,6 @@ memory_activity.stalls_l2_miss, 0x547
 memory_activity.stalls_l3_miss, 0x947
 misc2_retired.lfence, 0x20e0
 misc_retired.lbr_inserts, 0x1e4
-misc_retired.lbr_inserts, 0x20cc
 ocr.corewb_m.any_response, 0x1b7, 0x10008
 ocr.demand_code_rd.any_response, 0x1b7, 0x10004
 ocr.demand_code_rd.dram, 0x1b7, 0x784000004
@@ -514,7 +482,6 @@ uops_executed.stalls, 0x1b1
 uops_executed.thread, 0x1b1
 uops_executed.x87, 0x10b1
 uops_issued.any, 0xe
-uops_issued.any, 0x1ae
 uops_issued.cycles, 0x1ae
 uops_retired.all, 0xc2
 uops_retired.cycles, 0x2c2
@@ -522,7 +489,6 @@ uops_retired.fpdiv, 0x8c2
 uops_retired.heavy, 0x1c2
 uops_retired.idiv, 0x10c2
 uops_retired.ms, 0x1c2
-uops_retired.ms, 0x4c2, 0x8
 uops_retired.slots, 0x2c2
 uops_retired.stall_cycles, 0x2c2
 uops_retired.stalls, 0x2c2

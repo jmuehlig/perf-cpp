@@ -1,8 +1,5 @@
 arith.div_active, 0x3cd
-arith.div_active, 0x9b0
-arith.div_active, 0x3cd
 arith.fpdiv_active, 0x1b0
-arith.fpdiv_active, 0x2cd
 arith.idiv_active, 0x8b0
 assists.any, 0x1fc1
 assists.fp, 0x2c1
@@ -10,53 +7,28 @@ assists.hardware, 0x4c1
 assists.page_fault, 0x8c1
 assists.sse_avx_mix, 0x10c1
 baclears.any, 0x1e6
-baclears.any, 0x160
-baclears.any, 0x1e6
 be_stalls.scoreboard, 0x2a2
 br_inst_retired.all_branches, 0xc4
-br_inst_retired.all_branches, 0xc4
-br_inst_retired.all_branches, 0xc4
-br_inst_retired.cond, 0x7ec4
-br_inst_retired.cond, 0x111c4
 br_inst_retired.cond, 0x7ec4
 br_inst_retired.cond_ntaken, 0x10c4
-br_inst_retired.cond_taken, 0xfec4
-br_inst_retired.cond_taken, 0x101c4
 br_inst_retired.cond_taken, 0xfec4
 br_inst_retired.cond_taken_bwd, 0x1c4
 br_inst_retired.cond_taken_fwd, 0x102c4
 br_inst_retired.far_branch, 0xbfc4
-br_inst_retired.far_branch, 0x40c4
-br_inst_retired.far_branch, 0xbfc4
 br_inst_retired.indirect, 0xebc4
-br_inst_retired.indirect, 0x80c4
-br_inst_retired.indirect, 0xebc4
-br_inst_retired.indirect_call, 0xfbc4
 br_inst_retired.indirect_call, 0xfbc4
 br_inst_retired.indirect_jmp, 0xefc4
 br_inst_retired.near_call, 0xf9c4
-br_inst_retired.near_call, 0x2c4
-br_inst_retired.near_call, 0xf9c4
-br_inst_retired.near_return, 0xf7c4
-br_inst_retired.near_return, 0x8c4
 br_inst_retired.near_return, 0xf7c4
 br_inst_retired.near_taken, 0x20c4
-br_inst_retired.near_taken, 0xc0c4
-br_inst_retired.rel_call, 0xfdc4
 br_inst_retired.rel_call, 0xfdc4
 br_inst_retired.rel_jmp, 0xdfc4
 br_misp_retired.all_branches, 0xc5
-br_misp_retired.all_branches, 0xc5
-br_misp_retired.all_branches, 0xc5
 br_misp_retired.all_branches_cost, 0x44c5
-br_misp_retired.cond, 0x7ec5
-br_misp_retired.cond, 0x111c5
 br_misp_retired.cond, 0x7ec5
 br_misp_retired.cond_cost, 0x151c5
 br_misp_retired.cond_ntaken, 0x10c5
 br_misp_retired.cond_ntaken_cost, 0x50c5
-br_misp_retired.cond_taken, 0xfec5
-br_misp_retired.cond_taken, 0x101c5
 br_misp_retired.cond_taken, 0xfec5
 br_misp_retired.cond_taken_bwd, 0x1c5
 br_misp_retired.cond_taken_bwd_cost, 0x8001c5
@@ -64,35 +36,23 @@ br_misp_retired.cond_taken_cost, 0x141c5
 br_misp_retired.cond_taken_fwd, 0xc5
 br_misp_retired.cond_taken_fwd_cost, 0x8002c5
 br_misp_retired.indirect, 0xebc5
-br_misp_retired.indirect, 0x80c5
-br_misp_retired.indirect, 0xebc5
-br_misp_retired.indirect_call, 0xfbc5
-br_misp_retired.indirect_call, 0x2c5
 br_misp_retired.indirect_call, 0xfbc5
 br_misp_retired.indirect_call_cost, 0x42c5
 br_misp_retired.indirect_cost, 0xc0c5
 br_misp_retired.indirect_jmp, 0xefc5
 br_misp_retired.near_taken, 0x20c5
-br_misp_retired.near_taken, 0x80c5
 br_misp_retired.near_taken_cost, 0x60c5
 br_misp_retired.ret, 0x8c5
 br_misp_retired.ret_cost, 0x48c5
-br_misp_retired.return, 0xf7c5
 br_misp_retired.return, 0xf7c5
 core_reject_l2q.any, 0x31
 cpu_clk_unhalted.c01, 0x10ec
 cpu_clk_unhalted.c02, 0x20ec
 cpu_clk_unhalted.c0_wait, 0x70ec
 cpu_clk_unhalted.core_p, 0x3c
-cpu_clk_unhalted.core_p, 0x3c
-cpu_clk_unhalted.core_p, 0x3c
 cpu_clk_unhalted.pause, 0x40ec
 cpu_clk_unhalted.pause_inst, 0x40ec
 cpu_clk_unhalted.ref_tsc_p, 0x13c
-cpu_clk_unhalted.ref_tsc_p, 0x13c
-cpu_clk_unhalted.ref_tsc_p, 0x13c
-cpu_clk_unhalted.thread_p, 0x3c
-cpu_clk_unhalted.thread_p, 0x3c
 cpu_clk_unhalted.thread_p, 0x3c
 cycle_activity.cycles_mem_any, 0x10a3
 cycle_activity.stalls_total, 0x4a3
@@ -103,36 +63,19 @@ dl1.dirty_eviction, 0x151
 dsb2mite_switches.penalty_cycles, 0x261
 dtlb_load_misses.miss_caused_walk, 0x108
 dtlb_load_misses.stlb_hit, 0x2008
-dtlb_load_misses.stlb_hit, 0x32012
-dtlb_load_misses.stlb_hit, 0x2008
 dtlb_load_misses.walk_active, 0x1012
 dtlb_load_misses.walk_completed, 0xe12
-dtlb_load_misses.walk_completed, 0xe08
 dtlb_load_misses.walk_completed_1g, 0x812
 dtlb_load_misses.walk_completed_2m_4m, 0x408
-dtlb_load_misses.walk_completed_2m_4m, 0x412
-dtlb_load_misses.walk_completed_2m_4m, 0x408
 dtlb_load_misses.walk_completed_4k, 0x208
-dtlb_load_misses.walk_completed_4k, 0x212
-dtlb_load_misses.walk_completed_4k, 0x208
-dtlb_load_misses.walk_pending, 0x1008
-dtlb_load_misses.walk_pending, 0x1012
 dtlb_load_misses.walk_pending, 0x1008
 dtlb_store_misses.miss_caused_walk, 0x149
 dtlb_store_misses.stlb_hit, 0x2049
-dtlb_store_misses.stlb_hit, 0x32013
-dtlb_store_misses.stlb_hit, 0x2049
 dtlb_store_misses.walk_active, 0x1013
 dtlb_store_misses.walk_completed, 0xe13
-dtlb_store_misses.walk_completed, 0xe49
 dtlb_store_misses.walk_completed_1g, 0x813
 dtlb_store_misses.walk_completed_2m_4m, 0x413
-dtlb_store_misses.walk_completed_2m_4m, 0x449
 dtlb_store_misses.walk_completed_4k, 0x249
-dtlb_store_misses.walk_completed_4k, 0x213
-dtlb_store_misses.walk_completed_4k, 0x249
-dtlb_store_misses.walk_pending, 0x1049
-dtlb_store_misses.walk_pending, 0x1013
 dtlb_store_misses.walk_pending, 0x1049
 exe_activity.1_ports_util, 0x2a6
 exe_activity.2_3_ports_util, 0xca6
@@ -169,44 +112,28 @@ fp_arith_ops_retired.vector, 0x3cc7
 fp_arith_ops_retired.vector_128b, 0xcc7
 fp_arith_ops_retired.vector_256b, 0x30c7
 fp_flops_retired.all, 0x3c8
-fp_flops_retired.all, 0x3c8
 fp_flops_retired.dp, 0x1c8
 fp_flops_retired.fp32, 0x2c8
-fp_flops_retired.fp32, 0x2c8
-fp_flops_retired.fp64, 0x1c8
 fp_flops_retired.fp64, 0x1c8
 fp_flops_retired.sp, 0x2c8
 fp_inst_retired.128b_dp, 0x8c7
-fp_inst_retired.128b_dp, 0x8c7
 fp_inst_retired.128b_sp, 0x4c7
-fp_inst_retired.128b_sp, 0x4c7
-fp_inst_retired.256b_dp, 0x20c7
 fp_inst_retired.256b_dp, 0x20c7
 fp_inst_retired.256b_sp, 0x10c7
 fp_inst_retired.32b_sp, 0x1c7
-fp_inst_retired.32b_sp, 0x1c7
-fp_inst_retired.64b_dp, 0x2c7
 fp_inst_retired.64b_dp, 0x2c7
 fp_inst_retired.all, 0x3fc7
 fp_vint_uops_executed.primary, 0x1eb2
 fp_vint_uops_executed.std, 0x1b2
 frontend_retired.all, 0xc6
-frontend_retired.all, 0xc6
 frontend_retired.any_ant, 0x3c6, 0x9
 frontend_retired.any_dsb_miss, 0x3c6, 0x1
 frontend_retired.branch_detect, 0x2c6
-frontend_retired.branch_detect, 0x2c6
-frontend_retired.branch_resteer, 0x40c6
 frontend_retired.branch_resteer, 0x40c6
 frontend_retired.cisc, 0x1c6
-frontend_retired.cisc, 0x1c6
-frontend_retired.decode, 0x8c6
 frontend_retired.decode, 0x8c6
 frontend_retired.dsb_miss, 0x3c6, 0x11
 frontend_retired.icache, 0x20c6
-frontend_retired.icache, 0x20c6
-frontend_retired.itlb_miss, 0x10c6
-frontend_retired.itlb_miss, 0x3c6, 0x14
 frontend_retired.itlb_miss, 0x10c6
 frontend_retired.l1i_miss, 0x3c6, 0x12
 frontend_retired.l2_miss, 0x3c6, 0x13
@@ -223,8 +150,6 @@ frontend_retired.latency_ge_8, 0x3c6, 0x600806
 frontend_retired.misp_ant, 0x2c6, 0x9
 frontend_retired.ms_flows, 0x3c6, 0x8
 frontend_retired.other, 0x80c6
-frontend_retired.other, 0x80c6
-frontend_retired.predecode, 0x4c6
 frontend_retired.predecode, 0x4c6
 frontend_retired.stlb_miss, 0x3c6, 0x15
 frontend_retired.unknown_branch, 0x3c6, 0x17
@@ -234,9 +159,7 @@ frontend_retired_source.icache_l3_hit, 0x6c9
 frontend_retired_source.itlb_stlb_hit, 0x10c9
 frontend_retired_source.itlb_stlb_miss, 0x20c9
 icache.accesses, 0x380
-icache.accesses, 0x380
 icache.hit, 0x180
-icache.misses, 0x280
 icache.misses, 0x280
 icache_data.stall_periods, 0x480
 icache_data.stalls, 0x480
@@ -256,8 +179,6 @@ idq_bubbles.cycles_fe_was_ok, 0x19c
 idq_bubbles.fetch_latency, 0x49c
 idq_bubbles.starvation_cycles, 0x19c
 inst_decoded.decoders, 0x175
-inst_retired.any_p, 0xc0
-inst_retired.any_p, 0xc0
 inst_retired.any_p, 0xc0
 inst_retired.br_fused, 0x10c0
 inst_retired.macro_fused, 0x30c0
@@ -283,22 +204,11 @@ int_vec_retired.shuffles, 0x40e7
 int_vec_retired.vnni_128, 0x10e7
 int_vec_retired.vnni_256, 0x20e7
 itlb_misses.miss_caused_walk, 0x185
-itlb_misses.miss_caused_walk, 0x185
-itlb_misses.stlb_hit, 0x2085
-itlb_misses.stlb_hit, 0x12011
 itlb_misses.stlb_hit, 0x2085
 itlb_misses.walk_active, 0x1011
 itlb_misses.walk_completed, 0xe85
-itlb_misses.walk_completed, 0xe11
-itlb_misses.walk_completed, 0xe85
-itlb_misses.walk_completed_2m_4m, 0x485
-itlb_misses.walk_completed_2m_4m, 0x411
 itlb_misses.walk_completed_2m_4m, 0x485
 itlb_misses.walk_completed_4k, 0x285
-itlb_misses.walk_completed_4k, 0x211
-itlb_misses.walk_completed_4k, 0x285
-itlb_misses.walk_pending, 0x1085
-itlb_misses.walk_pending, 0x1011
 itlb_misses.walk_pending, 0x1085
 l1d.l0_replacement, 0x151
 l1d.replacement, 0x551
@@ -313,15 +223,12 @@ l2_lines_in.f, 0x1025
 l2_lines_in.m, 0x825
 l2_lines_in.s, 0x225
 l2_lines_out.non_silent, 0x226
-l2_lines_out.non_silent, 0x226
-l2_lines_out.silent, 0x126
 l2_lines_out.silent, 0x126
 l2_lines_out.useless_hwpf, 0x426
 l2_reject_xq.any, 0x30
 l2_request.all, 0xff24
 l2_request.hit, 0x224
 l2_request.miss, 0x3f24
-l2_request.miss, 0x124
 l2_request.rejects, 0x424
 l2_rqsts.all_code_rd, 0xe424
 l2_rqsts.all_demand_data_rd, 0xe124
@@ -336,33 +243,20 @@ l2_rqsts.rfo_hit, 0x4224
 l2_rqsts.rfo_miss, 0x2224
 lbr_inserts.any, 0x1e4
 ld_blocks.address_alias, 0x403
-ld_blocks.address_alias, 0x403
-ld_blocks.address_alias, 0x403
-ld_blocks.data_unknown, 0x103
 ld_blocks.data_unknown, 0x103
 ld_blocks.no_sr, 0x8803
 ld_blocks.store_forward, 0x203
-ld_blocks.store_forward, 0x8203
-ld_blocks.store_forward, 0x203
-ld_head.any_at_ret, 0xff05
 ld_head.any_at_ret, 0xff05
 ld_head.dtlb_miss_at_ret, 0x9005
-ld_head.dtlb_miss_at_ret, 0x9005
-ld_head.l1_bound_at_ret, 0xf405
 ld_head.l1_bound_at_ret, 0xf405
 ld_head.l1_miss, 0x105
 ld_head.l1_miss_at_ret, 0x8105
-ld_head.l1_miss_at_ret, 0x8105
-ld_head.other_at_ret, 0xc005
 ld_head.other_at_ret, 0xc005
 ld_head.pgwalk_at_ret, 0xa005
-ld_head.pgwalk_at_ret, 0xa005
-ld_head.st_addr_at_ret, 0x8405
 ld_head.st_addr_at_ret, 0x8405
 ld_head.wcb_full_at_ret, 0x8205
 lock_cycles.cache_lock_duration, 0x242
 longest_lat_cache.miss, 0x412e
-longest_lat_cache.reference, 0x4f2e
 longest_lat_cache.reference, 0x4f2e
 lsd.cycles_active, 0x1a8
 lsd.cycles_ok, 0x1a8
@@ -370,32 +264,20 @@ lsd.uops, 0x1a8
 machine_clears.any, 0xc3
 machine_clears.count, 0x1c3
 machine_clears.disambiguation, 0x8c3
-machine_clears.disambiguation, 0x8c3
 machine_clears.fp_assist, 0x4c3
-machine_clears.fp_assist, 0x4c3
-machine_clears.memory_ordering, 0x2c3
-machine_clears.memory_ordering, 0x2c3
 machine_clears.memory_ordering, 0x2c3
 machine_clears.mrn_nuke, 0x10c3
 machine_clears.page_fault, 0x20c3
-machine_clears.page_fault, 0x20c3
 machine_clears.slow, 0x6ec3
-machine_clears.slow, 0x6fc3
 machine_clears.smc, 0x4c3
-machine_clears.smc, 0x1c3
 mem_bound_stalls_ifetch.all, 0x7f35
-mem_bound_stalls_ifetch.l2_hit, 0x135
 mem_bound_stalls_ifetch.l2_hit, 0x135
 mem_bound_stalls_ifetch.l2_miss, 0x7e35
 mem_bound_stalls_ifetch.llc_hit, 0x635
 mem_bound_stalls_load.all, 0x7f34
-mem_bound_stalls_load.all, 0x7f34
 mem_bound_stalls_load.l2_hit, 0x134
-mem_bound_stalls_load.l2_hit, 0x134
-mem_bound_stalls_load.l2_miss, 0x7e34
 mem_bound_stalls_load.l2_miss, 0x7e34
 mem_bound_stalls_load.llc_hit, 0x634
-mem_bound_stalls_load.llc_miss, 0x7834
 mem_bound_stalls_load.llc_miss, 0x7834
 mem_bound_stalls_load.sbfull, 0x8034
 mem_inst_retired.all_loads, 0x81d0
@@ -424,23 +306,14 @@ mem_load_retired.l2_miss, 0x10d1
 mem_load_retired.l3_hit, 0x4d1
 mem_load_retired.l3_miss, 0x20d1
 mem_load_uops_retired.l1_hit, 0x1d1
-mem_load_uops_retired.l1_hit, 0x1d1
-mem_load_uops_retired.l1_miss, 0x40d1
 mem_load_uops_retired.l1_miss, 0x40d1
 mem_load_uops_retired.l2_hit, 0x2d1
-mem_load_uops_retired.l2_hit, 0x2d1
-mem_load_uops_retired.l2_miss, 0x80d1
 mem_load_uops_retired.l2_miss, 0x80d1
 mem_load_uops_retired.l3_hit, 0x1cd1
 mem_load_uops_retired.wcb_hit, 0x20d1
-mem_load_uops_retired.wcb_hit, 0x20d1
-mem_scheduler_block.all, 0x704
 mem_scheduler_block.all, 0x704
 mem_scheduler_block.ld_buf, 0x204
-mem_scheduler_block.ld_buf, 0x204
 mem_scheduler_block.rsv, 0x404
-mem_scheduler_block.rsv, 0x404
-mem_scheduler_block.st_buf, 0x104
 mem_scheduler_block.st_buf, 0x104
 mem_store_retired.l2_hit, 0x144
 mem_trans_retired.load_latency_gt_1024, 0x1cd, 0x400
@@ -456,50 +329,32 @@ mem_trans_retired.load_latency_gt_8, 0x1cd, 0x8
 mem_trans_retired.store_sample, 0x2cd
 mem_uop_retired.any, 0xfe5
 mem_uops_retired.all_loads, 0x81d0
-mem_uops_retired.all_loads, 0x81d0
-mem_uops_retired.all_stores, 0x82d0
 mem_uops_retired.all_stores, 0x82d0
 mem_uops_retired.load_latency_gt_1024, 0x5d0, 0x400
 mem_uops_retired.load_latency_gt_128, 0x5d0, 0x80
-mem_uops_retired.load_latency_gt_128, 0x5d0, 0x80
-mem_uops_retired.load_latency_gt_16, 0x5d0, 0x10
 mem_uops_retired.load_latency_gt_16, 0x5d0, 0x10
 mem_uops_retired.load_latency_gt_2048, 0x5d0, 0x800
 mem_uops_retired.load_latency_gt_256, 0x5d0, 0x100
-mem_uops_retired.load_latency_gt_256, 0x5d0, 0x100
-mem_uops_retired.load_latency_gt_32, 0x5d0, 0x20
 mem_uops_retired.load_latency_gt_32, 0x5d0, 0x20
 mem_uops_retired.load_latency_gt_4, 0x5d0, 0x4
-mem_uops_retired.load_latency_gt_4, 0x5d0, 0x4
-mem_uops_retired.load_latency_gt_512, 0x5d0, 0x200
 mem_uops_retired.load_latency_gt_512, 0x5d0, 0x200
 mem_uops_retired.load_latency_gt_64, 0x5d0, 0x40
-mem_uops_retired.load_latency_gt_64, 0x5d0, 0x40
-mem_uops_retired.load_latency_gt_8, 0x5d0, 0x8
 mem_uops_retired.load_latency_gt_8, 0x5d0, 0x8
 mem_uops_retired.lock_loads, 0x21d0
-mem_uops_retired.lock_loads, 0x21d0
-mem_uops_retired.split, 0x43d0
 mem_uops_retired.split, 0x43d0
 mem_uops_retired.split_loads, 0x41d0
-mem_uops_retired.split_loads, 0x41d0
-mem_uops_retired.split_stores, 0x42d0
 mem_uops_retired.split_stores, 0x42d0
 mem_uops_retired.stlb_miss, 0x13d0
 mem_uops_retired.stlb_miss_loads, 0x11d0
 mem_uops_retired.stlb_miss_stores, 0x12d0
-mem_uops_retired.store_latency, 0x6d0
 mem_uops_retired.store_latency, 0x6d0
 memory_stalls.l1, 0x146
 memory_stalls.l2, 0x246
 memory_stalls.l3, 0x446
 memory_stalls.mem, 0x846
 misalign_mem_ref.load_page_split, 0x213
-misalign_mem_ref.load_page_split, 0x213
-misalign_mem_ref.store_page_split, 0x413
 misalign_mem_ref.store_page_split, 0x413
 misc2_retired.lfence, 0x20e0
-misc_retired.lbr_inserts, 0x1e4
 misc_retired.lbr_inserts, 0x1e4
 ms_decoded.ms_busy, 0x4e7
 ocr.demand_data_rd.any_response_0, 0x12a, 0x10001
@@ -543,7 +398,6 @@ rs.empty, 0x7a5
 rs.empty_count, 0x7a5
 rs.empty_resource, 0x1a5
 serialization.c01_ms_scb, 0x475
-serialization.c01_ms_scb, 0x475
 serialization.iq_jeu_scb, 0x175
 serialization.non_c01_ms_scb, 0x275
 sq_misc.bus_lock, 0x102c
@@ -558,55 +412,31 @@ topdown.br_mispredict_slots, 0x8a4
 topdown.memory_bound_slots, 0x10a4
 topdown.slots_p, 0x1a4
 topdown_bad_speculation.all_p, 0x73
-topdown_bad_speculation.all_p, 0x73
-topdown_bad_speculation.fastnuke, 0x273
 topdown_bad_speculation.fastnuke, 0x273
 topdown_bad_speculation.machine_clears, 0x373
-topdown_bad_speculation.machine_clears, 0x373
 topdown_bad_speculation.mispredict, 0x473
-topdown_bad_speculation.mispredict, 0x473
-topdown_bad_speculation.nuke, 0x173
 topdown_bad_speculation.nuke, 0x173
 topdown_be_bound.all, 0x2a4
 topdown_be_bound.all_p, 0x2a4
-topdown_be_bound.all_p, 0x74
-topdown_be_bound.alloc_restrictions, 0x174
 topdown_be_bound.alloc_restrictions, 0x174
 topdown_be_bound.mem_scheduler, 0x274
-topdown_be_bound.mem_scheduler, 0x274
-topdown_be_bound.non_mem_scheduler, 0x874
 topdown_be_bound.non_mem_scheduler, 0x874
 topdown_be_bound.register, 0x2074
-topdown_be_bound.register, 0x2074
 topdown_be_bound.reorder_buffer, 0x4074
-topdown_be_bound.reorder_buffer, 0x4074
-topdown_be_bound.serialization, 0x1074
 topdown_be_bound.serialization, 0x1074
 topdown_fe_bound.all_p, 0x19c
-topdown_fe_bound.all_p, 0x71
-topdown_fe_bound.branch_detect, 0x271
 topdown_fe_bound.branch_detect, 0x271
 topdown_fe_bound.branch_resteer, 0x4071
-topdown_fe_bound.branch_resteer, 0x4071
-topdown_fe_bound.cisc, 0x171
 topdown_fe_bound.cisc, 0x171
 topdown_fe_bound.decode, 0x871
-topdown_fe_bound.decode, 0x871
-topdown_fe_bound.frontend_bandwidth, 0x8d71
 topdown_fe_bound.frontend_bandwidth, 0x8d71
 topdown_fe_bound.frontend_latency, 0x7271
-topdown_fe_bound.frontend_latency, 0x7271
-topdown_fe_bound.icache, 0x2071
 topdown_fe_bound.icache, 0x2071
 topdown_fe_bound.itlb, 0x1071
 topdown_fe_bound.itlb_miss, 0x1071
-topdown_fe_bound.itlb_miss, 0x1071
 topdown_fe_bound.other, 0x8071
-topdown_fe_bound.other, 0x8071
-topdown_fe_bound.predecode, 0x471
 topdown_fe_bound.predecode, 0x471
 topdown_retiring.all_p, 0x2c2
-topdown_retiring.all_p, 0x72
 unc_clock.socket, 0xff
 unc_hac_arb_req_trk_request.drd, 0x281
 unc_hac_arb_transactions.all, 0x18a
@@ -650,22 +480,15 @@ uops_executed.stalls, 0x1b1
 uops_executed.thread, 0x1b1
 uops_executed.x87, 0x10b1
 uops_issued.any, 0xe
-uops_issued.any, 0x1ae
-uops_issued.any, 0xe
 uops_issued.cycles, 0x1ae
 uops_retired.all, 0xc2
 uops_retired.cycles, 0x2c2
 uops_retired.fpdiv, 0x8c2
-uops_retired.fpdiv, 0x8c2
 uops_retired.heavy, 0x1c2
 uops_retired.idiv, 0x10c2
-uops_retired.idiv, 0x10c2
-uops_retired.ms, 0x1c2
-uops_retired.ms, 0x4c2, 0x8
 uops_retired.ms, 0x1c2
 uops_retired.ms_switches, 0x4c2, 0x8
 uops_retired.slots, 0x2c2
 uops_retired.stalls, 0x2c2
 uops_retired.x87, 0x20c2
-uops_retired.x87, 0x2c2
 xq.full, 0x12d
