@@ -149,31 +149,28 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
   }
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_READ)) {
-    auto event_result = SampleDecoder::decode_hardware_events_values(entry, requested_event_set, event_group);
-    if (event_result.has_value()) {
+    if (auto event_result = SampleDecoder::decode_hardware_events_values(entry, requested_event_set, event_group); event_result.has_value()) {
       sample.counter(std::move(event_result.value()));
     }
   }
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_CALLCHAIN)) {
-    auto callchain = SampleDecoder::decode_callchain(entry);
-    if (callchain.has_value()) {
+    if (auto callchain = SampleDecoder::decode_callchain(entry); callchain.has_value()) {
       sample.instruction_execution().callchain(std::move(callchain.value()));
     }
   }
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_RAW)) {
     /// Read the size of the raw sample.
-    const auto raw_data_size = entry.read<std::uint32_t>();
-
-    /// Read the raw data.
-    const auto* raw_sample_data = entry.read<std::byte>(raw_data_size);
-    sample.raw(std::vector<std::byte>{ raw_sample_data, raw_sample_data + raw_data_size });
+    if (const auto raw_data_size = entry.read<std::uint32_t>(); raw_data_size > 0U) {
+      /// Read the raw data.
+      const auto* raw_sample_data = entry.read<std::byte>(raw_data_size);
+      sample.raw(std::vector<std::byte>{ raw_sample_data, raw_sample_data + raw_data_size });
+    }
   }
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_BRANCH_STACK)) {
-    auto branch_stack = SampleDecoder::decode_branch_stack(entry);
-    if (branch_stack.has_value()) {
+    if (auto branch_stack = SampleDecoder::decode_branch_stack(entry); branch_stack.has_value()) {
       sample.branch_stack(std::move(branch_stack.value()));
     }
   }
@@ -187,9 +184,13 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
     const auto* stack_data = entry.read<std::byte>(size);
     const auto dyn_size = size > 0ULL ? entry.read<std::uint64_t>() : 0ULL;
 
-    sample.user_stack(std::vector<std::byte>{ stack_data, stack_data + dyn_size });
+    if (dyn_size > 0ULL) {
+      /// Read the stack.
+      sample.user_stack(std::vector<std::byte>{ stack_data, stack_data + dyn_size });
+    }
   }
 
+  /// Read a single weight value (i.e., a latency, depending on the underlying hardware).
   if (this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT)) {
     const auto weight = static_cast<std::uint32_t>(entry.read<std::uint64_t>());
     if (HardwareInfo::is_intel()) {
