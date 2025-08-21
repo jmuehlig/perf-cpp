@@ -224,7 +224,7 @@ For instance:
 
 ```cpp
 sampler.values()
-    .time(true)
+    .timestamp(true)
     .instruction_pointer(true);
 ```
 
@@ -259,7 +259,7 @@ All metadata fields are returned as `std::optional`.
 | **Period**     | Indicates the event count threshold that triggered the sample.                                                                 | `sampler.values().period(true)`     | `record.metadata().period()`     | `std::optional<std::uint64_t>`        |
 | **CPU ID**     | Identifies the CPU core where the sample was recorded.                                                                         | `sampler.values().cpu_id(true)`     | `record.metadata().cpu_id()`     | `std::optional<std::uint32_t>`        |
 | **Process ID** | Identifies the process context in which the sample was recorded.                                                               | `sampler.values().process_id(true)` | `record.metadata().process_id()` | `std::optional<std::uint32_t>`        |
-| **Thread ID**  | Identifies the thread context in which the sample was recorded.                                                                | `sampler.values().thread_id(true)`  | `record.metadata().thread_id()`  | `std::optional<std::uint34_t>`        |
+| **Thread ID**  | Identifies the thread context in which the sample was recorded.                                                                | `sampler.values().thread_id(true)`  | `record.metadata().thread_id()`  | `std::optional<std::uint32_t>`        |
 
 ### Instruction Execution
 

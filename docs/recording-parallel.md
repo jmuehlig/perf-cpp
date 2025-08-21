@@ -169,7 +169,8 @@ This action is optional and will occur automatically upon object deconstruction 
 The `perf::MultiCoreEventCounter` class allows you record performance counters on specified CPU cores.
 Please note that you may record events of other applications running on that CPU cores.
 
-According to the [`perf_event_open` documentation](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), this option needs a `/proc/sys/kernel/perf_event_paranoid` value of `< 1`.
+> [!NOTE]
+> According to the [`perf_event_open` documentation](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), this option needs a `/proc/sys/kernel/perf_event_paranoid` value of `< 1`.
 
 ### Define CPU cores to watch
 ```cpp

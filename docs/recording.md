@@ -223,7 +223,7 @@ int main()
 
     /// Start recording.
     try {
-        event_counter.start()
+        event_counter.start();
     } catch (std::runtime_error& e) {
         std::cerr << e.what() << std::endl;
     }
