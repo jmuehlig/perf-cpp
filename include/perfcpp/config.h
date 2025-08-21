@@ -61,16 +61,16 @@ class Config
 public:
   Config() noexcept;
   Config(const std::uint8_t max_groups, const std::uint8_t max_counters_per_group) noexcept
-    : _max_groups(max_groups)
-    , _max_counters_per_group(max_counters_per_group)
+    : _max_physical_counters(max_groups)
+    , _max_events_per_physical_counter(max_counters_per_group)
   {
   }
   ~Config() noexcept = default;
   Config(const Config&) noexcept = default;
   Config& operator=(const Config&) noexcept = default;
 
-  [[nodiscard]] std::uint8_t max_groups() const noexcept { return _max_groups; }
-  [[nodiscard]] std::uint8_t max_counters_per_group() const noexcept { return _max_counters_per_group; }
+  [[nodiscard]] std::uint8_t max_groups() const noexcept { return _max_physical_counters; }
+  [[nodiscard]] std::uint8_t max_counters_per_group() const noexcept { return _max_events_per_physical_counter; }
 
   [[nodiscard]] bool is_include_child_threads() const noexcept { return _is_include_child_threads; }
   [[nodiscard]] bool is_include_kernel() const noexcept { return _is_include_kernel; }
@@ -89,7 +89,7 @@ public:
    *
    * @param max_groups Number of maximum groups.
    */
-  void max_groups(const std::uint8_t max_groups) noexcept { _max_groups = max_groups; }
+  void max_groups(const std::uint8_t max_groups) noexcept { _max_physical_counters = max_groups; }
 
   /**
    * Specify the maximum number of counters per group.
@@ -98,7 +98,7 @@ public:
    */
   void max_counters_per_group(const std::uint8_t max_counters_per_group) noexcept
   {
-    _max_counters_per_group = max_counters_per_group;
+    _max_events_per_physical_counter = max_counters_per_group;
   }
 
   /**
@@ -216,8 +216,8 @@ public:
   }
 
 private:
-  std::uint8_t _max_groups{ 5U };
-  std::uint8_t _max_counters_per_group{ 4U };
+  std::uint8_t _max_physical_counters{ 5U };
+  std::uint8_t _max_events_per_physical_counter{ 4U };
 
   bool _is_include_child_threads{ false };
   bool _is_include_kernel{ true };

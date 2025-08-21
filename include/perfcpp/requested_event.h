@@ -76,8 +76,16 @@ public:
 
   RequestedEvent(const std::optional<std::string_view> pmu_name,
                  const std::string_view event_name,
+                 const std::uint8_t group_id,
+                 const std::uint8_t position) noexcept
+    : RequestedEvent(pmu_name, event_name, true, group_id, position)
+  {
+  }
+
+  RequestedEvent(const std::optional<std::string_view> pmu_name,
+                 const std::string_view event_name,
                  const std::uint8_t group_id) noexcept
-    : RequestedEvent(pmu_name, event_name, true, group_id, 0U)
+    : RequestedEvent(pmu_name, event_name, group_id, 0U)
   {
   }
 
