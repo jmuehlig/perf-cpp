@@ -178,8 +178,8 @@ perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
   } while (this->_ringbuffer_header->lock != lock);
 
   /// Scale the value if it was not counted the entire time.
-  if (running && (enabled > running)) {
-    count *= (enabled / running);
+  if (running > 0ULL && enabled > running) {
+    count = static_cast<std::int64_t>(double(count) * (double(enabled) / double(running)));
   }
 
   return static_cast<std::uint64_t>(count);

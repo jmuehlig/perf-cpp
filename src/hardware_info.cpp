@@ -34,6 +34,7 @@ std::optional<std::uint8_t> perf::HardwareInfo::_events_per_physical_performance
 bool
 perf::HardwareInfo::is_intel_aux_counter_required()
 {
+#if defined(__x86_64__) || defined(__i386__)
   if (HardwareInfo::_is_intel_aux_event_required.has_value()) {
     return HardwareInfo::_is_intel_aux_event_required.value();
   }
@@ -46,6 +47,9 @@ perf::HardwareInfo::is_intel_aux_counter_required()
     std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu/events/mem-loads-aux")) ||
     std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu_core/events/mem-loads-aux"));
   return HardwareInfo::cache_value(HardwareInfo::_is_intel_aux_event_required, is_aux_event_required);
+#else
+  return false;
+#endif
 }
 
 bool
@@ -293,7 +297,7 @@ perf::HardwareInfo::generate_events_for_counter_identification()
     const auto events = CounterDefinition::global().pmu(*arm_pmu_name);
 
     /// Translate events into codes.
-    for (auto i = 0U; i < std::max<std::size_t>(events.size(), Group::MAX_MEMBERS); ++i) {
+    for (auto i = 0U; i < std::min<std::size_t>(events.size(), Group::MAX_MEMBERS); ++i) {
       event_codes.push_back(std::get<1>(events[i]));
     }
 

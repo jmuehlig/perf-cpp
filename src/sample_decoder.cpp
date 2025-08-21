@@ -54,17 +54,17 @@ perf::SampleDecoder::decode(std::vector<std::vector<std::byte>>&& sample_buffers
         break;
       }
 
-      if (entry.is_sample_event()) { /// Read "normal" samples.
+      if (entry.is_sample_event()) { /// Read sample event.
         samples.push_back(this->decode_sample_event(
           std::move(entry), has_amd_ibs_op_pmu, has_amd_ibs_fetch_pmu, requested_event_set, event_group));
-      } else if (entry.is_loss_event()) { /// Read lost samples.
+      } else if (entry.is_loss_event()) { /// Read lost event.
         samples.push_back(this->decode_loss_event(std::move(entry)));
-      } else if (entry.is_context_switch_event()) { /// Read context switch.
+      } else if (entry.is_context_switch_event()) { /// Read context switch event.
         samples.push_back(this->decode_context_switch_event(std::move(entry)));
-      } else if (entry.is_cgroup_event()) { /// Read cgroup samples.
+      } else if (entry.is_cgroup_event()) { /// Read cgroup event.
         samples.push_back(SampleDecoder::decode_cgroup_event(std::move(entry)));
       } else if (entry.is_throttle_event() &&
-                 this->_sampler_values.is_include_throttle()) { /// Read (un-) throttle samples.
+                 this->_sampler_values.is_include_throttle()) { /// Read (un-) throttle event.
         samples.push_back(this->decode_throttle_event(std::move(entry)));
       }
 
@@ -149,7 +149,8 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
   }
 
   if (this->_sampler_values.is_set(PERF_SAMPLE_READ)) {
-    if (auto event_result = SampleDecoder::decode_hardware_events_values(entry, requested_event_set, event_group); event_result.has_value()) {
+    if (auto event_result = SampleDecoder::decode_hardware_events_values(entry, requested_event_set, event_group);
+        event_result.has_value()) {
       sample.counter(std::move(event_result.value()));
     }
   }
@@ -220,7 +221,7 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
         sample.instruction_execution().latency().instruction_retirement(weight.var1_dw);
       }
     } else if (HardwareInfo::is_amd()) {
-      /// See https://github.com/torvalds/linux/blob/master/arch/x86/events/amd/ibs.c#L1119
+      /// See https://github.com/torvalds/linux/blob/v6.16/arch/x86/events/amd/ibs.c#L1120
       sample.data_access().latency().cache_miss(weight.var1_dw);
       sample.instruction_execution().latency().uop_tag_to_retirement(weight.var2_w);
     }
@@ -268,9 +269,13 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
   /// Enrich AMD IBS samples with information that is not accessible through the perf_event_open interface by
   /// interpreting the raw data, if enabled.
   if (this->_sampler_values.is_set(PERF_SAMPLE_RAW) && sample.raw().has_value() && HardwareInfo::is_amd()) {
+    /// Depending on the used PMU, we enrich the sample by Fetch data...
     if (has_amd_ibs_fetch_pmu) {
       this->enrich_sample_with_ibs_fetch_data_from_raw(sample);
-    } else if (has_amd_ibs_op_pmu) {
+    }
+
+    /// ... or Op data.
+    else if (has_amd_ibs_op_pmu) {
       this->enrich_sample_with_ibs_op_data_from_raw(sample);
     }
   }
@@ -290,21 +295,22 @@ perf::SampleDecoder::decode_registers(SampleIterator& entry, const Registers& re
 
   const auto count_registers = registers.size();
 
-  /// Map holding all register values.
-  auto register_values = std::unordered_map<std::uint8_t, std::int64_t>{};
-  register_values.reserve(count_registers);
-
   /// Read raw register values from perf data.
   const auto* perf_registers = entry.read<std::int64_t>(count_registers);
 
   /// Transform raw perf register array into register value map by linking values to specified registers. Note that
   /// registers can be a vector of x86, arm, arm64, etc.
-  std::visit(
-    [count_registers, perf_registers, &register_values](const auto& specified_registers) {
+  auto register_values = std::visit(
+    [count_registers, perf_registers](const auto& specified_registers) {
+      auto values = std::unordered_map<std::uint8_t, std::int64_t>{};
+      values.reserve(count_registers);
+
       for (auto register_id = 0U; register_id < count_registers; ++register_id) {
-        register_values.insert(
+        values.insert(
           std::make_pair(static_cast<std::uint8_t>(specified_registers[register_id]), perf_registers[register_id]));
       }
+
+      return values;
     },
     registers.registers());
 
@@ -561,16 +567,15 @@ perf::SampleDecoder::decode_data_access_remote_hops([[maybe_unused]] const std::
 #endif
 
 #ifndef PERFCPP_NO_MEM_HOPS_1_3 /// Remote Hops 1-3 were introduced in Linux 5.17
-  if (hops_code == PERF_MEM_HOPS_1) {
-    return 1U;
-  }
-
-  if (hops_code == PERF_MEM_HOPS_2) {
-    return 2U;
-  }
-
-  if (hops_code == PERF_MEM_HOPS_3) {
-    return 3U;
+  switch (hops_code) {
+    case PERF_MEM_HOPS_1:
+      return 1U;
+    case PERF_MEM_HOPS_2:
+      return 2U;
+    case PERF_MEM_HOPS_3:
+      return 3U;
+    default:
+      return std::nullopt;
   }
 #else /// Use LVL_REM before 5.17
   if ((memory_level_code & PERF_MEM_LVL_REM_RAM1) || (memory_level_code & PERF_MEM_LVL_REM_CCE1)) {
@@ -580,9 +585,9 @@ perf::SampleDecoder::decode_data_access_remote_hops([[maybe_unused]] const std::
   if ((memory_level_code & PERF_MEM_LVL_REM_RAM2) || (memory_level_code & PERF_MEM_LVL_REM_CCE2)) {
     return 2U;
   }
-#endif
 
   return std::nullopt;
+#endif
 }
 
 std::optional<perf::DataAccess::Source>
@@ -655,7 +660,7 @@ perf::SampleDecoder::decode_hardware_transaction_abort(const std::uint64_t abort
 void
 perf::SampleDecoder::enrich_sample_with_ibs_fetch_data_from_raw(perf::Sample& sample) const noexcept
 {
-  auto ibs_fetch_decoder = IBSFetchDecoder{ sample.raw().value() };
+  const auto ibs_fetch_decoder = IBSFetchDecoder{ sample.raw().value() };
 
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT
   if (this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT) || this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT)) {
@@ -691,7 +696,7 @@ perf::SampleDecoder::enrich_sample_with_ibs_fetch_data_from_raw(perf::Sample& sa
 void
 perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(perf::Sample& sample) const noexcept
 {
-  auto ibs_op_decoder = IBSOpDecoder{ sample.raw().value() };
+  const auto ibs_op_decoder = IBSOpDecoder{ sample.raw().value() };
 
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT
   if (this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT_STRUCT) || this->_sampler_values.is_set(PERF_SAMPLE_WEIGHT)) {
@@ -793,6 +798,7 @@ perf::SampleDecoder::decode_tlb_page_size(const bool is_1g, const bool is_2m) no
     return 1024ULL * 1024ULL * 2ULL;
   }
 
+  /// Of not 1G and 2M, it is 4K
   return 1024ULL * 4ULL;
 }
 
