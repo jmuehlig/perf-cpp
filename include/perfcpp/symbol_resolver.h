@@ -1,10 +1,10 @@
 #pragma once
 #include <cstdint>
+#include <elf.h>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <elf.h>
 
 namespace perf {
 class SymbolResolver
@@ -168,6 +168,8 @@ private:
    * @param size Size of the section header table.
    * @return Pointer pair (symbol table, string table).
    */
-  [[nodiscard]] static std::pair<const Elf64_Shdr*, const Elf64_Shdr*> find_symbol_and_string_tables(const Elf64_Shdr* section_header_table, std::uint16_t size) noexcept;
+  [[nodiscard]] static std::pair<const Elf64_Shdr*, const Elf64_Shdr*> find_symbol_and_string_tables(
+    const Elf64_Shdr* section_header_table,
+    std::uint16_t size) noexcept;
 };
 }

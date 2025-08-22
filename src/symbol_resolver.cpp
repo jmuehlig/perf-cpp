@@ -4,11 +4,11 @@
 #include <fstream>
 #include <perfcpp/exception.h>
 #include <perfcpp/symbol_resolver.h>
+#include <perfcpp/util/unique_file_descriptor.h>
 #include <regex>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <perfcpp/util/unique_file_descriptor.h>
 
 perf::SymbolResolver::SymbolResolver()
 {
@@ -101,12 +101,12 @@ perf::SymbolResolver::parse_maps()
 std::vector<perf::SymbolResolver::Symbol>
 perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& module)
 {
-  const auto file_descriptor = util::UniqueFileDescriptor{::open(module.path().c_str(), O_RDONLY)};
+  const auto file_descriptor = util::UniqueFileDescriptor{ ::open(module.path().c_str(), O_RDONLY) };
   if (!file_descriptor.has_value()) {
     throw CannotReadSymbolsForModule{ module.name(), module.path() };
   }
 
-  struct stat stat_ {};
+  struct stat stat_{};
   if (::fstat(file_descriptor.value(), &stat_) < 0) {
     throw CannotReadFstatForModule{ module.name(), module.path() };
   }
@@ -127,8 +127,10 @@ perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& mod
   }
 
   /// Find the symbol and string tables.
-  const auto* section_header_table = reinterpret_cast<const Elf64_Shdr*>(static_cast<const char*>(elf_data) + elf_header->e_shoff);
-  const auto [symbol_table, string_table] = SymbolResolver::find_symbol_and_string_tables(section_header_table, elf_header->e_shnum);
+  const auto* section_header_table =
+    reinterpret_cast<const Elf64_Shdr*>(static_cast<const char*>(elf_data) + elf_header->e_shoff);
+  const auto [symbol_table, string_table] =
+    SymbolResolver::find_symbol_and_string_tables(section_header_table, elf_header->e_shnum);
 
   if (!symbol_table || !string_table) {
     ::munmap(elf_data, stat_size);
@@ -164,12 +166,12 @@ perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& mod
 }
 
 std::pair<const Elf64_Shdr*, const Elf64_Shdr*>
-perf::SymbolResolver::find_symbol_and_string_tables(const Elf64_Shdr* section_header_table, const std::uint16_t size) noexcept
+perf::SymbolResolver::find_symbol_and_string_tables(const Elf64_Shdr* section_header_table,
+                                                    const std::uint16_t size) noexcept
 {
   for (auto i = 0U; i < size; ++i) {
     if (section_header_table[i].sh_type == SHT_SYMTAB) {
-      return std::make_pair(
-        &section_header_table[i], &section_header_table[section_header_table[i].sh_link]);
+      return std::make_pair(&section_header_table[i], &section_header_table[section_header_table[i].sh_link]);
     }
   }
 

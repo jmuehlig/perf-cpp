@@ -61,16 +61,30 @@ class Config
 public:
   Config() noexcept;
   Config(const std::uint8_t max_groups, const std::uint8_t max_counters_per_group) noexcept
-    : _max_groups(max_groups)
-    , _max_counters_per_group(max_counters_per_group)
+    : _num_physical_counters(max_groups)
+    , _num_events_per_physical_counter(max_counters_per_group)
   {
   }
   ~Config() noexcept = default;
   Config(const Config&) noexcept = default;
   Config& operator=(const Config&) noexcept = default;
 
-  [[nodiscard]] std::uint8_t max_groups() const noexcept { return _max_groups; }
-  [[nodiscard]] std::uint8_t max_counters_per_group() const noexcept { return _max_counters_per_group; }
+  [[deprecated("Will be removed in v0.13. Use num_physical_counters() instead.")]] [[nodiscard]] std::uint8_t
+  max_groups() const noexcept
+  {
+    return _num_physical_counters;
+  }
+  [[deprecated("Will be removed in v0.13. Use num_events_per_physical_counter() instead.")]] [[nodiscard]] std::uint8_t
+  max_counters_per_group() const noexcept
+  {
+    return _num_events_per_physical_counter;
+  }
+
+  [[nodiscard]] std::uint8_t num_physical_counters() const noexcept { return _num_physical_counters; }
+  [[nodiscard]] std::uint8_t num_events_per_physical_counter() const noexcept
+  {
+    return _num_events_per_physical_counter;
+  }
 
   [[nodiscard]] bool is_include_child_threads() const noexcept { return _is_include_child_threads; }
   [[nodiscard]] bool is_include_kernel() const noexcept { return _is_include_kernel; }
@@ -85,20 +99,45 @@ public:
   [[nodiscard]] Process process() const noexcept { return _process; }
 
   /**
+   * Specify the number of maximum physical hardware counters.
+   *
+   * @param num_physical_counters Number of maximum physical hardware counters.
+   */
+  void num_physical_counters(const std::uint8_t num_physical_counters) noexcept
+  {
+    _num_physical_counters = num_physical_counters;
+  }
+
+  /**
+   * Specify the maximum number of events per physical performance counter.
+   *
+   * @param num_events_per_physical_counter Number of events per physical performance counter.
+   */
+  void num_events_per_physical_counter(const std::uint8_t num_events_per_physical_counter) noexcept
+  {
+    _num_events_per_physical_counter = num_events_per_physical_counter;
+  }
+
+  /**
    * Specify the number of maximum groups per EventCounter.
    *
    * @param max_groups Number of maximum groups.
    */
-  void max_groups(const std::uint8_t max_groups) noexcept { _max_groups = max_groups; }
+  [[deprecated("Will be removed in v0.13. Use num_physical_counters(X) instead.")]] void max_groups(
+    const std::uint8_t max_groups) noexcept
+  {
+    _num_physical_counters = max_groups;
+  }
 
   /**
    * Specify the maximum number of counters per group.
    *
    * @param max_counters_per_group Number of maximum hardware event counters per group.
    */
-  void max_counters_per_group(const std::uint8_t max_counters_per_group) noexcept
+  [[deprecated("Will be removed in v0.13. Use num_events_per_physical_counter(X) instead.")]] void
+  max_counters_per_group(const std::uint8_t max_counters_per_group) noexcept
   {
-    _max_counters_per_group = max_counters_per_group;
+    _num_events_per_physical_counter = max_counters_per_group;
   }
 
   /**
@@ -216,8 +255,8 @@ public:
   }
 
 private:
-  std::uint8_t _max_groups{ 5U };
-  std::uint8_t _max_counters_per_group{ 4U };
+  std::uint8_t _num_physical_counters{ 5U };
+  std::uint8_t _num_events_per_physical_counter{ 4U };
 
   bool _is_include_child_threads{ false };
   bool _is_include_kernel{ true };

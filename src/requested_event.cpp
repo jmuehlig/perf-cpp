@@ -1,17 +1,13 @@
 #include <perfcpp/requested_event.h>
 
 bool
-perf::RequestedEventSet::add(const std::optional<std::string_view> pmu_name,
-                             const std::string_view event_name,
-                             const bool is_shown_in_results,
-                             RequestedEvent::Type type,
-                             std::optional<RequestedEvent::ScheduledHardwareCounterGroup> scheduled_group)
+perf::RequestedEventSet::add(perf::RequestedEvent& event)
 {
   /// If the event is not already added (in that case adjust_visibility_if_present() will return false), add it.
   /// If the event is already in the set, adjust_visibility_if_present() will adjust the visibility to true, if
   /// is_shown_in_results is true.
-  if (!this->adjust_visibility_if_present(pmu_name, event_name, is_shown_in_results)) {
-    this->_requested_events.emplace_back(pmu_name, event_name, is_shown_in_results, type, scheduled_group);
+  if (!this->adjust_visibility_if_present(event.pmu_name(), event.event_name(), event.is_shown_in_results())) {
+    this->_requested_events.push_back(event);
     return true;
   }
 

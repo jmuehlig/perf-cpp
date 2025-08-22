@@ -46,6 +46,12 @@ public:
     , _config(config)
   {
   }
+
+  explicit EventCounter(Config config = {})
+    : EventCounter(CounterDefinition::global(), config)
+  {
+  }
+
   EventCounter(EventCounter&&) noexcept = default;
 
   ~EventCounter();
@@ -260,16 +266,12 @@ private:
    *
    * @param name Name of the event to add.
    * @param is_visible_in_results Indicates if the added event/metric/time should be visible in the results.
-   * @param result_vector List of information about the event. If the event is a single hardware event, the list will
+   * @param events List to extend the requested events. If the event is a single hardware event, the list will
    * have one entry. If the event is a metric, the list will have multiple entries.
    */
   void unfold(const std::string& name,
               bool is_visible_in_results,
-              std::vector<std::tuple<std::optional<std::string_view>,
-                                     std::string_view,
-                                     RequestedEvent::Type,
-                                     std::optional<CounterConfig>,
-                                     bool>>& result_vector) const;
+              std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>& events) const;
 
   /**
    * Adds the provided event to the given result vector.
@@ -279,17 +281,13 @@ private:
    * @param event_name Name of the event.
    * @param event_config Configuration of the counter.
    * @param is_shown_in_results Visibility.
-   * @param result_vector Result vector to add the results.
+   * @param requested_events List of requested events.
    */
   static void add(std::string_view pmu_name,
                   std::string_view event_name,
                   const CounterConfig& event_config,
                   bool is_shown_in_results,
-                  std::vector<std::tuple<std::optional<std::string_view>,
-                                         std::string_view,
-                                         RequestedEvent::Type,
-                                         std::optional<CounterConfig>,
-                                         bool>>& result_vector);
+                  std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>& requested_events);
 
   /**
    * Schedules the given events based on the request into hardware groups and places the event names in the
@@ -299,26 +297,25 @@ private:
    * @param events List of events to schedule.
    * @param schedule Request of the user.
    */
-  void schedule(std::vector<std::tuple<std::optional<std::string_view>,
-                                       std::string_view,
-                                       RequestedEvent::Type,
-                                       std::optional<CounterConfig>,
-                                       bool>>&& events,
-                Schedule schedule);
+  void schedule(std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>&& events, Schedule schedule);
 
   /**
    * Try to append the given event to any hardware counter.
    *
-   * @param pmu_name Name of the PMU.
-   * @param event_name Name of the event.
+   * @param event Event to append.
    * @param event_config Configuration of the event.
-   * @param is_shown_in_results Visibility.
    * @return True, if the event could be appended to any hardware counter. False, otherwise.
    */
-  [[nodiscard]] bool append_to_any_hardware_counter(std::string_view pmu_name,
-                                                    std::string_view event_name,
-                                                    const CounterConfig& event_config,
-                                                    bool is_shown_in_results);
+  [[nodiscard]] bool append_to_any_hardware_counter(RequestedEvent& event, const CounterConfig& event_config);
+
+  /**
+   * Tries to create a new group and appends the given event.
+   *
+   * @param event Event to append.
+   * @param event_config Configuration of the event.
+   * @param is_keep_open If true, further events can be added in the future. Otherwise, the event will be the only one.
+   */
+  void create_new_group(RequestedEvent& event, const CounterConfig& event_config, bool is_keep_open);
 };
 
 /**
@@ -477,6 +474,11 @@ class MultiThreadEventCounter final : public MultiEventCounterBase
 public:
   MultiThreadEventCounter(const CounterDefinition& counter_definition, std::uint16_t num_threads, Config config = {});
 
+  MultiThreadEventCounter(const std::uint16_t num_threads, const Config config = {})
+    : MultiThreadEventCounter(CounterDefinition::global(), num_threads, config)
+  {
+  }
+
   MultiThreadEventCounter(EventCounter&& event_counter, std::uint16_t num_threads);
 
   MultiThreadEventCounter(const EventCounter& event_counter, const std::uint16_t num_threads)
@@ -533,6 +535,11 @@ class MultiProcessEventCounter final : public StartableMultiEventCounterBase
 public:
   MultiProcessEventCounter(const CounterDefinition& counter_list, std::vector<pid_t>&& process_ids, Config config = {});
 
+  explicit MultiProcessEventCounter(std::vector<pid_t>&& process_ids, const Config config = {})
+    : MultiProcessEventCounter(CounterDefinition::global(), std::move(process_ids), config)
+  {
+  }
+
   MultiProcessEventCounter(EventCounter&& event_counter, std::vector<pid_t>&& process_ids);
 
   MultiProcessEventCounter(const EventCounter& event_counter, std::vector<pid_t>&& process_ids)
@@ -563,6 +570,11 @@ public:
   MultiCoreEventCounter(const CounterDefinition& counter_definition,
                         std::vector<std::uint16_t>&& cpu_ids,
                         Config config = {});
+
+  explicit MultiCoreEventCounter(std::vector<std::uint16_t>&& cpu_ids, const Config config = {})
+    : MultiCoreEventCounter(CounterDefinition::global(), std::move(cpu_ids), config)
+  {
+  }
 
   MultiCoreEventCounter(EventCounter&& event_counter, std::vector<std::uint16_t>&& cpu_ids);
 

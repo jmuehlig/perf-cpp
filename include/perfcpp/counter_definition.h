@@ -21,6 +21,8 @@ namespace perf {
 class CounterDefinition
 {
 public:
+  [[nodiscard]] static const CounterDefinition& global() noexcept { return *_global; }
+
   explicit CounterDefinition(std::unique_ptr<EventProvider>&& event_provider = nullptr);
   explicit CounterDefinition(const std::string& config_file);
   explicit CounterDefinition(std::string&& config_file)
@@ -227,7 +229,7 @@ public:
    * @param name Name of the requested query.
    * @return True, if the metric exists.
    */
-  [[nodiscard]] bool is_metric(const std::string& name) const noexcept { return _metrics.find(name) != _metrics.end(); }
+  [[nodiscard]] bool is_metric(const std::string& name) const noexcept;
 
   /**
    * Checks if a metric with the given name is registered.
@@ -276,10 +278,7 @@ public:
    * @param name Name of the requested time event.
    * @return True, if the time event exists.
    */
-  [[nodiscard]] bool is_time_event(const std::string& name) const noexcept
-  {
-    return _time_events.find(name) != _time_events.end();
-  }
+  [[nodiscard]] bool is_time_event(const std::string& name) const noexcept;
 
   /**
    * Checks if a time event with the given name is registered.
@@ -335,15 +334,7 @@ public:
   /**
    * @return List of names of all available performance monitoring units.
    */
-  [[nodiscard]] std::vector<std::string> pmu_names() const
-  {
-    auto names = std::vector<std::string>{};
-    std::transform(_performance_monitoring_unit_events.begin(),
-                   _performance_monitoring_unit_events.end(),
-                   std::back_inserter(names),
-                   [](const auto& config) { return config.first; });
-    return names;
-  }
+  [[nodiscard]] std::vector<std::string> pmu_names() const;
 
   /**
    * Reads and adds counters from the provided CSV file with counter configurations.
@@ -359,6 +350,13 @@ public:
   [[nodiscard]] std::string to_string() const;
 
 private:
+  /// Global instance of the counter definition that is used by "child" instances. Child instances can augment the
+  /// global instance by more metrics and counters (e.g., from files).
+  static std::shared_ptr<CounterDefinition> _global;
+
+  /// CounterDefinitions can be layerd.
+  std::shared_ptr<CounterDefinition> _parent_counter_definition{ nullptr };
+
   /// List of added counter configurations for different PMUs. Each PMU can have multiple counters; but different PMUs
   /// can have the same counter name with different configurations.
   std::unordered_map<std::string, std::unordered_map<std::string, CounterConfig>> _performance_monitoring_unit_events;
@@ -368,5 +366,20 @@ private:
 
   /// List of time events.
   std::unordered_map<std::string, std::unique_ptr<TimeEvent>> _time_events;
+
+  /**
+   * @return All metric names, also from parent definitions.
+   */
+  [[nodiscard]] std::vector<std::string> metric_names() const;
+
+  /**
+   * @return All time event names, also from parent definitions.
+   */
+  [[nodiscard]] std::vector<std::string> time_event_names() const;
+
+  /**
+   * @return A CounterDefinition object that has no parent and is supposed to be the "global" instance.
+   */
+  [[nodiscard]] static std::shared_ptr<CounterDefinition> make_global();
 };
 }

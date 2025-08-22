@@ -3,8 +3,8 @@
 #include "config.h"
 #include "counter.h"
 #include <cstdint>
-#include <vector>
 #include <optional>
+#include <vector>
 
 namespace perf {
 

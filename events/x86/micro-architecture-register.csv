@@ -40,6 +40,7 @@ GenuineIntel-6-A[DE],intel,granite-rapids
 GenuineIntel-6-B6,intel,grand-ridge
 GenuineIntel-6-BD,intel,lunar-lake
 GenuineIntel-6-BE,intel,alder-lake-n
+GenuineIntel-6-CC,intel,panther-lake
 GenuineIntel-6-CF,intel,emerald-rapids
 GenuineIntel-6-C[56],intel,arrow-lake
 GenuineIntel-6-DD,intel,clearwater-forest

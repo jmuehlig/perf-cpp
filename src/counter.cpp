@@ -236,6 +236,21 @@ perf::Counter::disable() const
   }
 }
 
+std::optional<double>
+perf::Counter::read_live() const noexcept
+{
+  if (this->_mmap_buffer != nullptr) {
+    /// Read the value from mmap-ed buffer (via rdpmc instruction).
+    if (const auto value = this->_mmap_buffer->read_performance_monitoring_counter(); value.has_value()) {
+      /// Adjust the value via scale if the value is available.
+      return double(value.value()) * this->scale();
+    }
+  }
+
+  /// If there is no mmap-ed buffer or the value cannot be read, return nullopt.
+  return std::nullopt;
+}
+
 std::uint64_t
 perf::Counter::read_id() const
 {

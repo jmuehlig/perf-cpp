@@ -12,8 +12,7 @@ main()
             << std::endl;
 
   /// Initialize sampler.
-  const auto counter_definition = perf::CounterDefinition{};
-  auto sampler = perf::Sampler{ counter_definition };
+  auto sampler = perf::Sampler{};
 
   /// Setup which counters trigger the writing of samples (depends on the underlying hardware substrate).
   if (perf::HardwareInfo::is_amd_ibs_supported()) {

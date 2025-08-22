@@ -1384,6 +1384,7 @@ unc_iio_num_req_of_cpu_by_tgt.mem, 0x88e
 unc_iio_num_req_of_cpu_by_tgt.msgb, 0x18e
 unc_iio_num_req_of_cpu_by_tgt.rem_p2p, 0x108e
 unc_iio_num_req_of_cpu_by_tgt.ubox, 0x48e
+unc_iio_num_req_of_cpu_by_tgt.ubox_posted, 0x48e
 unc_iio_num_tgt_matched_req_of_cpu, 0x8f
 unc_iio_outbound_cl_reqs_issued.to_io, 0x8d0
 unc_iio_outbound_tlp_reqs_issued.to_io, 0x8d1
@@ -2315,6 +2316,7 @@ unc_m_cas_issued_req_len.wr_32b, 0xe006
 unc_m_cas_issued_req_len.wr_64b, 0xc406
 unc_m_clockticks, 0x101
 unc_m_dram_pre_all, 0x344
+unc_m_ecc_correctable_errors, 0x9
 unc_m_hclockticks, 0x1
 unc_m_pcls.rd, 0x5a0
 unc_m_pcls.total, 0xfa0
@@ -2473,6 +2475,7 @@ unc_mchbm_cas_issued_req_len.rd_ufill_64b, 0xc206
 unc_mchbm_cas_issued_req_len.wr_32b, 0xe006
 unc_mchbm_cas_issued_req_len.wr_64b, 0xc406
 unc_mchbm_clockticks, 0x101
+unc_mchbm_ecc_correctable_errors, 0x9
 unc_mchbm_hbm_pre_all, 0x344
 unc_mchbm_hbm_preall.pch0, 0x144
 unc_mchbm_hbm_preall.pch1, 0x244

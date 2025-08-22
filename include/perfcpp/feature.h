@@ -7,7 +7,7 @@
 /// errors at compile- and runtime.
 /// The documentation for the perf_event_open system call (https://man7.org/linux/man-pages/man2/perf_event_open.2.html)
 /// has a great overview of features added in various versions.
-/// For the moment, we support Linux 4.0 and newer.
+/// For the time being, we support Linux 4.0 and newer.
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
 #define PERFCPP_NO_ERROR_EBUSY

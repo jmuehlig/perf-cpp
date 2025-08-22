@@ -10,8 +10,7 @@ main()
                "access to an in-memory array."
             << std::endl;
 
-  const auto counter_definition = perf::CounterDefinition{};
-  auto sampler = perf::Sampler{ counter_definition };
+  auto sampler = perf::Sampler{};
   sampler.trigger("cycles", perf::Period{ 100000 });
   sampler.values()
     .timestamp(true)

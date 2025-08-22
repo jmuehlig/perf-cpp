@@ -17,8 +17,7 @@ main()
   /// only record the main-thread.
   auto config = perf::Config{};
   config.include_child_threads(true);
-  const auto counter_definition = perf::CounterDefinition{};
-  auto event_counter = perf::EventCounter{ counter_definition, config };
+  auto event_counter = perf::EventCounter{ config };
 
   /// Add all the performance counters we want to record.
   try {

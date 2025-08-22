@@ -355,6 +355,7 @@ offcore_requests.demand_code_rd, 0x221
 offcore_requests.demand_data_rd, 0x121
 offcore_requests.demand_rfo, 0x421
 offcore_requests.l3_miss_demand_data_rd, 0x1021
+offcore_requests.mem_uc, 0x2021
 offcore_requests_outstanding.cycles_with_data_rd, 0x820
 offcore_requests_outstanding.cycles_with_demand_code_rd, 0x220
 offcore_requests_outstanding.cycles_with_demand_data_rd, 0x120
@@ -953,6 +954,7 @@ unc_iio_iommu3.num_inval_int_cache, 0x2043
 unc_iio_iommu3.num_inval_iotlb, 0x443
 unc_iio_iommu3.num_inval_pasid_cache, 0x1043
 unc_iio_num_oustanding_req_from_cpu.to_io, 0x8c5
+unc_iio_num_outstanding_req_from_cpu.to_io, 0x8c5
 unc_iio_num_outstanding_req_of_cpu.data, 0x2088
 unc_iio_num_outstanding_req_of_cpu.final_rd_wr, 0x888
 unc_iio_num_outstanding_req_of_cpu.iommu_hit, 0x288
@@ -967,6 +969,7 @@ unc_iio_num_req_of_cpu_by_tgt.mem, 0x88e
 unc_iio_num_req_of_cpu_by_tgt.msgb, 0x18e
 unc_iio_num_req_of_cpu_by_tgt.rem_p2p, 0x108e
 unc_iio_num_req_of_cpu_by_tgt.ubox, 0x48e
+unc_iio_num_req_of_cpu_by_tgt.ubox_posted, 0x48e
 unc_iio_pwt_occupancy, 0x42
 unc_iio_txn_req_by_cpu.mem_read.all_parts, 0x4c1
 unc_iio_txn_req_by_cpu.mem_read.part0, 0x4c1
@@ -1222,8 +1225,6 @@ unc_upi_txl_flits.prothdr, 0x8002
 unc_upi_txl_flits.slot0, 0x102
 unc_upi_txl_flits.slot1, 0x202
 unc_upi_txl_flits.slot2, 0x402
-unc_upi_txl_inserts, 0x40
-unc_upi_txl_occupancy, 0x42
 uops_decoded.dec0_uops, 0x176
 uops_dispatched.port_0, 0x1b2
 uops_dispatched.port_1, 0x2b2

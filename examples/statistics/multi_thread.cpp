@@ -17,8 +17,7 @@ main()
   constexpr auto count_threads = 2U;
 
   /// Initialize performance counters.#
-  const auto counter_definition = perf::CounterDefinition{};
-  auto multithread_event_counter = perf::MultiThreadEventCounter{ counter_definition, count_threads };
+  auto multithread_event_counter = perf::MultiThreadEventCounter{ count_threads };
 
   /// Add all the performance counters we want to record.
   try {

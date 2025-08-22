@@ -702,6 +702,11 @@ public:
   {
   }
 
+  explicit Sampler(SampleConfig config = {})
+    : Sampler(CounterDefinition::global(), config)
+  {
+  }
+
   Sampler(Sampler&&) noexcept = default;
   Sampler(const Sampler&) = default;
 
@@ -956,7 +961,7 @@ private:
    * @param requested_event_set Requested event set.
    * @param group Group.
    */
-  void add(const std::pair<std::string_view, Metric&> metric,
+  void add(std::pair<std::string_view, Metric&> metric,
            std::string_view pmu_name,
            RequestedEventSet& requested_event_set,
            Group& group) const;
@@ -1121,6 +1126,11 @@ class MultiThreadSampler final : public MultiSamplerBase
 {
 public:
   MultiThreadSampler(const CounterDefinition& counter_definition, std::uint16_t num_threads, SampleConfig config = {});
+
+  explicit MultiThreadSampler(const std::uint16_t num_threads, SampleConfig config = {})
+    : MultiThreadSampler(CounterDefinition::global(), num_threads, config)
+  {
+  }
 
   MultiThreadSampler(MultiThreadSampler&&) noexcept = default;
 
@@ -1297,6 +1307,11 @@ public:
   MultiCoreSampler(const CounterDefinition& counter_definition,
                    std::vector<std::uint16_t>&& core_ids,
                    SampleConfig config = {});
+
+  explicit MultiCoreSampler(std::vector<std::uint16_t>&& core_ids, SampleConfig config = {})
+    : MultiCoreSampler(CounterDefinition::global(), std::move(core_ids), config)
+  {
+  }
 
   MultiCoreSampler(MultiCoreSampler&&) noexcept = default;
 

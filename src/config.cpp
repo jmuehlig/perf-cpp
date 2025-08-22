@@ -7,9 +7,11 @@ perf::CpuCore perf::CpuCore::Any = perf::CpuCore{ -1 };
 
 perf::Config::Config() noexcept
 {
+  /// Try to read the number of physical performance counters from the hardware (either from cpuid or by trying).
   if (const auto physical_performance_counters = HardwareInfo::physical_performance_counters_per_logical_core();
       physical_performance_counters > 0U) {
-    this->_max_groups = physical_performance_counters;
-    this->_max_counters_per_group = HardwareInfo::events_per_physical_performance_counter();
+    /// If that worked, also read the number of events per physical performance counter.
+    this->_num_physical_counters = physical_performance_counters;
+    this->_num_events_per_physical_counter = HardwareInfo::events_per_physical_performance_counter();
   }
 }

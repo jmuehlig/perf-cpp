@@ -80,7 +80,7 @@ public:
 #ifdef __clang__
     asm volatile("" : "+r,m"(result) : : "memory");
 #else
-    asm volatile("" : "+m,r"(value) : : "memory");
+    asm volatile("" : "+m,r"(result) : : "memory");
 #endif
   }
 

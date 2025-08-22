@@ -480,6 +480,7 @@ unc_iio_num_req_of_cpu_by_tgt.mcast, 0x28e
 unc_iio_num_req_of_cpu_by_tgt.mem, 0x88e
 unc_iio_num_req_of_cpu_by_tgt.msgb, 0x18e
 unc_iio_num_req_of_cpu_by_tgt.ubox, 0x48e
+unc_iio_num_req_of_cpu_by_tgt.ubox_posted, 0x48e
 unc_iio_pwt_occupancy, 0x42
 unc_iio_txn_req_by_cpu.mem_read.part0, 0x4c1
 unc_iio_txn_req_by_cpu.mem_read.part1, 0x4c1
@@ -602,6 +603,7 @@ unc_m_wpq_occupancy_sch0_pch1, 0x85
 unc_m_wpq_occupancy_sch1_pch0, 0x86
 unc_m_wpq_occupancy_sch1_pch1, 0x87
 unc_p_clockticks, 0x1
+unc_u_event_msg.msi_rcvd, 0x242
 uops_issued.any, 0xe
 uops_retired.all, 0xc2
 uops_retired.fpdiv, 0x8c2

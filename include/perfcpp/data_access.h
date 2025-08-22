@@ -510,7 +510,7 @@ public:
   /**
    * @return Snoop information associated with this access.
    */
-  [[nodiscard]] const std::optional<Snoop>& snoop() noexcept { return _snoop; }
+  [[nodiscard]] const std::optional<Snoop>& snoop() const noexcept { return _snoop; }
 
   /**
    * @return True if a misalignment penalty was incurred.
