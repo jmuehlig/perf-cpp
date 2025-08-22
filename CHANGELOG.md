@@ -1,7 +1,11 @@
 # *perf-cpp*: Changelog
 
-## v0.12.2
+## v0.12.3
+This update simplifies the handling of counter definitions by introducing a default instance.
 
+- **Default Counter Definitions**: Supplying a user-defined `perf::CounterDefinition` to each `perf::EventCounter` or `perf::Sampler` is no longer required. If none is provided, a default instance is used automatically. Custom definitions now extend the default set of events instead of duplicating them.
+
+## v0.12.2
 - **Metric Functions**: Metrics now support built-in functions such as `ratio(A, B)` and `sum(A, B, C, ...)`, enabling more expressive and reusable formulas (see the [documentation](docs/metrics.md#functions)).
 - **Optimized Compile-time Event Injection**: The generated runtime event registration class is now only created if it does not already exist, reducing unnecessary recompilation.
 - **Improved Live Event Accuracy**: Live event values now account for partial runtime durations via time scaling, improving accuracy when counters were not active for the full measurement window.
