@@ -167,15 +167,16 @@ config.process(perf::Process::Any);     /// Monitor events from all processes.
 > Certain hardware events (e.g., Intel's off-core events) may require monitoring all processes on a specific CPU core, as the hardware does not attribute these events to individual processes.
 
 ## Adjusting Hardware Settings to the Underlying System
-*perf-cpp* cannot identify the underlying hardware settings and assumes **four** groups (i.e., *physical* hardware counters) and **five** events per group.
-However, some CPUs (e.g., ARM Cortex-A72) do not implement multiplexing at all.
+Every CPU has a limited number of physical performance counters—special registers that track events. 
+Modern processors typically have `4` to `8` counters per core (e.g., see the specs for [Intel Sapphire Rapids](https://github.com/RRZE-HPC/likwid/wiki/SapphireRapids#general-purpose-counters)), and some allow measuring multiple events per counter through time-multiplexing.
 
-You can specify the settings using the `perf::Config` configuration as follows:
+*perf-cpp* automatically detects these hardware limits on most systems. 
+But if you're working with unusual hardware or embedded systems where auto-detection fails, you can specify the limits manually:
 
 ```cpp
 auto config = perf::Config{};
-config.max_groups(2U);             /// Only two hardware counters
-config.max_counters_per_group(1U); /// Only one event per counter.
+config.num_physical_counters(2U);           // This CPU only has 2 hardware counters
+config.num_events_per_physical_counter(1U); // Each counter tracks just one event at a time
 
 auto event_counter = perf::EventCounter{ config };
 ```

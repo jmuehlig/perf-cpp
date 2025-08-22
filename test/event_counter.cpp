@@ -18,8 +18,8 @@ TEST_CASE("configuration", "[EventCounter]")
   SECTION("limited counters")
   {
     auto config = perf::Config{};
-    config.max_counters_per_group(1U);
-    config.max_groups(2U);
+    config.num_events_per_physical_counter(1U);
+    config.num_physical_counters(2U);
     auto event_counter = perf::EventCounter{ counter_definition, config };
 
     event_counter.add(std::vector<std::string>{ "instructions", "cycles" });
@@ -35,8 +35,8 @@ TEST_CASE("configuration", "[EventCounter]")
   SECTION("too many counters")
   {
     auto config = perf::Config{};
-    config.max_counters_per_group(1U);
-    config.max_groups(2U);
+    config.num_events_per_physical_counter(1U);
+    config.num_physical_counters(2U);
     auto event_counter = perf::EventCounter{ counter_definition, config };
 
     REQUIRE_THROWS(event_counter.add({ "instructions", "cycles", "branches" }));

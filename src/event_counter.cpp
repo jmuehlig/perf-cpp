@@ -165,17 +165,16 @@ perf::EventCounter::schedule(std::vector<std::pair<RequestedEvent, std::optional
     }
   } else if (schedule == Schedule::Group) {
     /// Test if we can add another group.
-    if (this->size() == this->_config.max_groups()) {
-      throw MaxGroupsReachedError{ this->_config.max_groups() };
+    if (this->size() == this->_config.num_physical_counters()) {
+      throw MaxGroupsReachedError{ this->_config.num_physical_counters() };
     }
 
     /// Test, if all the hardware events fit into a single group.
     const auto count_hardware_events = std::count_if(events.begin(), events.end(), [](const auto& requested_event) {
       return std::get<1>(requested_event).has_value();
     });
-    if (count_hardware_events > this->_config.max_counters_per_group()) {
-      throw CannotAddCountersToSingleGroupError{ std::uint64_t(count_hardware_events),
-                                                 this->_config.max_counters_per_group() };
+    if (count_hardware_events > this->_config.num_events_per_physical_counter()) {
+      throw CannotAddEventToSingleGroupError{ this->_config.num_events_per_physical_counter() };
     }
 
     /// Create a new group and add the event, if we did not raise an exception.
@@ -226,7 +225,7 @@ perf::EventCounter::append_to_any_hardware_counter(perf::RequestedEvent& event, 
       this->_requested_event_set.add(event, std::uint8_t(group_id), in_group_position);
 
       /// Close the group if full.
-      if (group.size() == this->_config.max_counters_per_group()) {
+      if (group.size() == this->_config.num_events_per_physical_counter()) {
         std::get<1>(this->_hardware_event_groups[group_id]) = false;
       }
 
@@ -243,12 +242,12 @@ perf::EventCounter::create_new_group(perf::RequestedEvent& event,
                                      bool is_keep_open)
 {
   /// Test if we can add another group.
-  if (this->size() == this->_config.max_groups()) {
-    throw MaxGroupsReachedError{ this->_config.max_groups() };
+  if (this->size() == this->_config.num_physical_counters()) {
+    throw MaxGroupsReachedError{ this->_config.num_physical_counters() };
   }
 
   /// Only keep the group open if more than one event is allowed per group.
-  is_keep_open &= this->_config.max_counters_per_group() > 1U;
+  is_keep_open &= this->_config.num_events_per_physical_counter() > 1U;
 
   /// Create a new group and add the event, if we did not raise an exception.
   auto& group_and_flag = this->_hardware_event_groups.emplace_back(Group{}, is_keep_open);
@@ -262,15 +261,15 @@ perf::EventCounter::create_new_group(perf::RequestedEvent& event,
 void
 perf::EventCounter::add_live(const std::string& event_name)
 {
-  if (this->size() == this->_config.max_groups()) {
-    throw MaxCountersReachedError{ this->_config.max_groups() };
+  if (this->size() == this->_config.num_physical_counters()) {
+    throw MaxCountersReachedError{ this->_config.num_physical_counters() };
   }
 
   /// If the given name references one or multiple existing counters, add it.
   if (auto event_configurations = this->_counter_definitions.counter(event_name); !event_configurations.empty()) {
     for (auto [pmu_name, name, event_configuration] : event_configurations) {
-      if (this->size() == this->_config.max_groups()) {
-        throw MaxCountersReachedError{ this->_config.max_groups() };
+      if (this->size() == this->_config.num_physical_counters()) {
+        throw MaxCountersReachedError{ this->_config.num_physical_counters() };
       }
 
       this->_hardware_live_counters.emplace_back(event_configuration);

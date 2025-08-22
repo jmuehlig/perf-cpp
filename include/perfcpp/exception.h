@@ -162,27 +162,27 @@ public:
 class MaxGroupsReachedError final : public std::runtime_error
 {
 public:
-  explicit MaxGroupsReachedError(const std::uint64_t max_groups)
-    : std::runtime_error(std::string{ "Cannot add more events: reached maximum number of hardware counters (" }.append(
-        std::to_string(max_groups).append("). Try to increase via perf::Config::max_groups(X).")))
+  explicit MaxGroupsReachedError(const std::uint64_t num_physical_counters)
+    : std::runtime_error(
+        std::string{ "Cannot add more events: reached maximum number of physical performance counters (" }.append(
+          std::to_string(num_physical_counters)
+            .append("). Try to increase via perf::Config::num_physical_counters(X).")))
   {
   }
   ~MaxGroupsReachedError() override = default;
 };
 
-class CannotAddCountersToSingleGroupError final : public std::runtime_error
+class CannotAddEventToSingleGroupError final : public std::runtime_error
 {
 public:
-  explicit CannotAddCountersToSingleGroupError(const std::uint64_t counters, const std::uint64_t max_counters_per_group)
-    : std::runtime_error(
-        std::string{ "Cannot add " }
-          .append(std::to_string(counters))
-          .append(" counters to a single hardware counter, the maximum counters per hardware counter is ")
-          .append(std::to_string(max_counters_per_group))
-          .append(". Try to increase via perf::Config::max_counters_per_group(X)."))
+  explicit CannotAddEventToSingleGroupError(const std::uint64_t num_events_per_physical_counter)
+    : std::runtime_error(std::string{ "Cannot add more than " }
+                           .append(std::to_string(num_events_per_physical_counter))
+                           .append(" events to a single physical counter. Try to increase via "
+                                   "perf::Config::num_events_per_physical_counter(X)."))
   {
   }
-  ~CannotAddCountersToSingleGroupError() override = default;
+  ~CannotAddEventToSingleGroupError() override = default;
 };
 
 class CannotFindEventForMetricError final : public std::runtime_error
