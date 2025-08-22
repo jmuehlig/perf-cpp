@@ -274,8 +274,11 @@ perf::EventCounter::add_live(const std::string& event_name)
       }
 
       this->_hardware_live_counters.emplace_back(event_configuration);
-      this->_requested_live_event_set.add(
-        RequestedEvent{ pmu_name, name, std::uint8_t(this->_hardware_live_counters.size() - 1U) });
+
+      /// Add the event to the requested event set. Since every live event is scheduled to a dedicated physical hardware
+      /// counter, every event will be the first in the group.
+      this->_requested_live_event_set.add(RequestedEvent{
+        pmu_name, name, std::uint8_t(this->_hardware_live_counters.size() - 1U), /* position in group */ 0U });
     }
 
     return;

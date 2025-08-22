@@ -82,13 +82,6 @@ public:
   {
   }
 
-  RequestedEvent(const std::optional<std::string_view> pmu_name,
-                 const std::string_view event_name,
-                 const std::uint8_t group_id) noexcept
-    : RequestedEvent(pmu_name, event_name, group_id, 0U)
-  {
-  }
-
   RequestedEvent(const std::string_view event_name, const bool is_shown_in_results, const Type type) noexcept
     : _event_name(event_name)
     , _is_shown_in_results(is_shown_in_results)
