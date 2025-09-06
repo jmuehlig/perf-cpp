@@ -25,7 +25,7 @@ private:
   public:
     explicit SampleIterator(const std::uintptr_t address) noexcept
       : _header(reinterpret_cast<perf_event_header*>(address))
-      , _data(std::uintptr_t(_header + 1U))
+      , _data(address + sizeof(perf_event_header))
     {
     }
 
@@ -177,6 +177,7 @@ private:
   /**
    * Reads the sample_id struct from the data located at sample_ptr into the provided sample.
    *
+   * @param entry Entry from the sample iterator.
    * @param sample Sample to read the data into.
    */
   void decode_sample_id_all(SampleIterator& entry, Sample& sample) const noexcept;
@@ -201,7 +202,8 @@ private:
    * Reads registers from the current buffer entry.
    *
    * @param entry Current position at the buffer.
-   * @return Registers.
+   * @param registers Set registers.
+   * @return Register values.
    */
   [[nodiscard]] static RegisterValues decode_registers(SampleIterator& entry, const Registers& registers);
 
@@ -306,9 +308,9 @@ private:
   [[nodiscard]] static std::optional<bool> decode_data_access_is_locked(std::uint64_t lock) noexcept;
 
   /**
-   * Reads the hardware transaction abort from the current buffer entry.
+   * Translates the abort code.
    *
-   * @param entry Current position at the buffer.
+   * @param abort Code of the abort.
    * @return Hardware transaction abort.
    */
   [[nodiscard]] static InstructionExecution::HardwareTransactionAbort decode_hardware_transaction_abort(

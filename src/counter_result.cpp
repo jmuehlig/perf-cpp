@@ -78,8 +78,8 @@ perf::CounterResult::to_string() const
   auto table_stream = std::stringstream{};
   table_stream
     /// Print the header.
-    << "| Value" << std::setw(std::int32_t(max_value_length) - 4) << " " << "| Counter"
-    << std::setw(std::int32_t(max_name_length) - 6) << " "
+    << "| Value" << std::setw(static_cast<std::int32_t>(max_value_length) - 4) << " " << "| Counter"
+    << std::setw(static_cast<std::int32_t>(max_name_length) - 6) << " "
     << "|\n"
 
     /// Print the separator line.
@@ -87,8 +87,8 @@ perf::CounterResult::to_string() const
 
   /// Print the results as columns.
   for (const auto& [name, value] : result) {
-    table_stream << "\n| " << std::setw(std::int32_t(max_value_length)) << value << " | " << name
-                 << std::setw(std::int32_t(max_name_length - name.size()) + 1) << " " << "|";
+    table_stream << "\n| " << std::setw(static_cast<std::int32_t>(max_value_length)) << value << " | " << name
+                 << std::setw(static_cast<std::int32_t>(max_name_length - name.size()) + 1) << " " << "|";
   }
 
   table_stream << std::flush;

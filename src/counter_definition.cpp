@@ -4,7 +4,7 @@
 #include <perfcpp/util/table.h>
 #include <sstream>
 
-/// The global CounterDefinition instance is used as a default one for EventCounter and Sampler. This instance detectes
+/// The global CounterDefinition instance is used as a default one for EventCounter and Sampler. This instance detects
 /// counters from the perf subsystem and (if activated) processor-specific events. Further (child) counter definitions
 /// will inherit the registered events, metrics, and time events.
 std::shared_ptr<perf::CounterDefinition> perf::CounterDefinition::_global = perf::CounterDefinition::make_global();

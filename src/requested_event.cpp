@@ -1,7 +1,7 @@
 #include <perfcpp/requested_event.h>
 
 bool
-perf::RequestedEventSet::add(perf::RequestedEvent& event)
+perf::RequestedEventSet::add(const perf::RequestedEvent& event)
 {
   /// If the event is not already added (in that case adjust_visibility_if_present() will return false), add it.
   /// If the event is already in the set, adjust_visibility_if_present() will adjust the visibility to true, if
@@ -83,7 +83,7 @@ perf::RequestedEventSet::result(const perf::CounterDefinition& counter_definitio
 
         /// Normalize hardware and time events.
         if (requested_event.is_hardware_event() || requested_event.is_time_event()) {
-          event_results.emplace_back(requested_event.event_name(), result.value() / double(normalization));
+          event_results.emplace_back(requested_event.event_name(), result.value() / static_cast<double>(normalization));
         }
 
         /// Add metrics without normalization.

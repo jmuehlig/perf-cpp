@@ -118,7 +118,7 @@ public:
      *
      * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#performance-counter-values
      *
-     * @param include True, if hardware counter values should be included.
+     * @param counter_names List of counter names to record.
      * @return The Values instance.
      */
     Values& counter(std::vector<std::string>&& counter_names) noexcept
@@ -1009,7 +1009,7 @@ private:
 class MultiSamplerBase
 {
 public:
-  ~MultiSamplerBase() = default;
+  virtual ~MultiSamplerBase() = default;
 
   /**
    * @return Configurations to enable values that will be sampled.
@@ -1079,7 +1079,7 @@ protected:
    * Initializes the given trigger(s) for the given list of samplers.
    *
    * @param samplers List of samplers.
-   * @param trigger_names List of triggers.
+   * @param triggers List of triggers.
    */
   static void trigger(std::vector<Sampler>& samplers, std::vector<std::vector<Sampler::Trigger>>&& triggers);
 
@@ -1134,7 +1134,7 @@ public:
 
   MultiThreadSampler(MultiThreadSampler&&) noexcept = default;
 
-  ~MultiThreadSampler() = default;
+  ~MultiThreadSampler() override = default;
 
   /**
    * Set the trigger for sampling to a single counter.
@@ -1204,7 +1204,7 @@ public:
   /**
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
    *
-   * @param trigger_name Name of the counters that "triggers" sample recording.
+   * @param trigger_names Names of the counters that "triggers" sample recording.
    * @return MultiThreadSampler
    */
   MultiThreadSampler& trigger(std::vector<std::string>&& trigger_names)
@@ -1228,7 +1228,7 @@ public:
    * Counters of the outer list will be grouped together, to enable auxiliary counter (e.g., needed
    * for Intel's Sapphire Rapids architecture).
    *
-   * @param trigger_name Group of names of the counters that "triggers" sample recording.
+   * @param trigger_names Group of names of the counters that "triggers" sample recording.
    * @return MultiThreadSampler
    */
   MultiThreadSampler& trigger(std::vector<std::vector<std::string>>&& trigger_names)
@@ -1315,7 +1315,7 @@ public:
 
   MultiCoreSampler(MultiCoreSampler&&) noexcept = default;
 
-  ~MultiCoreSampler() = default;
+  ~MultiCoreSampler() override = default;
 
   /**
    * Set the trigger for sampling to a single counter.
@@ -1385,7 +1385,7 @@ public:
   /**
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
    *
-   * @param trigger_name Name of the counters that "triggers" sample recording.
+   * @param trigger_names Names of the counters that "triggers" sample recording.
    * @return MultiCoreSampler
    */
   MultiCoreSampler& trigger(std::vector<std::string>&& trigger_names)
@@ -1409,7 +1409,7 @@ public:
    * Counters of the outer list will be grouped together, to enable auxiliary counter (e.g., needed
    * for Intel's Sapphire Rapids architecture).
    *
-   * @param trigger_name Group of names of the counters that "triggers" sample recording.
+   * @param trigger_names Group of names of the counters that "triggers" sample recording.
    * @return MultiCoreSampler
    */
   MultiCoreSampler& trigger(std::vector<std::vector<std::string>>&& trigger_names)
@@ -1506,7 +1506,8 @@ public:
   }
   ~CounterComparator() noexcept = default;
 
-  [[nodiscard]] bool operator()(const std::tuple<std::string_view, std::string_view, CounterConfig>& event_descriptor)
+  [[nodiscard]] bool operator()(
+    const std::tuple<std::string_view, std::string_view, CounterConfig>& event_descriptor) const
   {
     return _counter == std::get<2>(event_descriptor);
   }

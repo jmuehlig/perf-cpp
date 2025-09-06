@@ -124,7 +124,7 @@ public:
 
   /**
    * Adds a header row to the table.
-   * @param header Header row to add.
+   * @param header_row Header row to add.
    */
   void add(std::vector<Header>&& header_row);
 

@@ -106,8 +106,9 @@ perf::HardwareInfo::is_amd_ibs_supported() noexcept
 
   /// See https://github.com/jlgreathouse/AMD_IBS_Toolkit/blob/master/ibs_with_perf_events.txt
   if (const auto extended_processor_info = HardwareInfo::cpuid(0x80000001); extended_processor_info.has_value()) {
-    return HardwareInfo::cache_value(HardwareInfo::_is_amd_ibs_supported,
-                                     static_cast<bool>(extended_processor_info->ecx & (std::uint32_t(1U) << 10)));
+    return HardwareInfo::cache_value(
+      HardwareInfo::_is_amd_ibs_supported,
+      static_cast<bool>(extended_processor_info->ecx & (static_cast<std::uint32_t>(1U) << 10)));
   }
 
   return HardwareInfo::cache_value(HardwareInfo::_is_amd_ibs_supported, false);
@@ -129,7 +130,7 @@ perf::HardwareInfo::is_ibs_l3_filter_supported() noexcept
   }
 
   if (const auto ibs_info = HardwareInfo::cpuid(0x8000001b); ibs_info.has_value()) {
-    const auto is_ibs_l3_filter_supported = static_cast<bool>(ibs_info->eax & (std::uint32_t(1U) << 11));
+    const auto is_ibs_l3_filter_supported = static_cast<bool>(ibs_info->eax & (static_cast<std::uint32_t>(1U) << 11));
     return HardwareInfo::cache_value(HardwareInfo::_is_ibs_l3_filter_supported, is_ibs_l3_filter_supported);
   }
 
@@ -147,7 +148,7 @@ perf::HardwareInfo::memory_page_size()
   }
 
   /// Read memory page size from sysconf (see https://man7.org/linux/man-pages/man3/sysconf.3.html).
-  const auto memory_page_size = std::uint64_t(std::max(0L, ::sysconf(_SC_PAGESIZE)));
+  const auto memory_page_size = static_cast<std::uint64_t>(std::max(0L, ::sysconf(_SC_PAGESIZE)));
   return HardwareInfo::cache_value(HardwareInfo::_memory_page_size, memory_page_size);
 }
 
@@ -166,7 +167,7 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
       const auto performance_counters_per_logical_core = (pmu_info->eax >> 8) & 0xFF;
 
       return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
-                                       std::uint8_t(performance_counters_per_logical_core));
+                                       static_cast<std::uint8_t>(performance_counters_per_logical_core));
     }
   }
 
@@ -174,7 +175,8 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
     /// Check the Extended Processor Information (0x80000001), see
     /// http://www.flounder.com/cpuid_explorer2.htm#CPUID(0x80000001):ECX.
     if (const auto extended_processor_info = HardwareInfo::cpuid(0x80000001);
-        extended_processor_info.has_value() && (extended_processor_info->ecx & (std::uint32_t(1U) << 23))) {
+        extended_processor_info.has_value() &&
+        (extended_processor_info->ecx & (static_cast<std::uint32_t>(1U) << 23))) {
 
       /// Check the Extended Information (0x80000000), see
       /// http://www.flounder.com/cpuid_explorer2.htm#CPUID(0x80000000).
@@ -186,7 +188,7 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
           const auto performance_counters_per_logical_core = pmu_info->eax & 0xFF;
 
           return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
-                                           std::uint8_t(performance_counters_per_logical_core));
+                                           static_cast<std::uint8_t>(performance_counters_per_logical_core));
         }
       }
     }
@@ -198,7 +200,8 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
 
   /// Fallback: Set to one, if the experiment failed.
   if (!hardware_counters.has_value()) {
-    return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core, std::uint8_t(0U));
+    return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
+                                     static_cast<std::uint8_t>(0U));
   }
 
   return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
@@ -234,7 +237,8 @@ perf::HardwareInfo::events_per_physical_performance_counter()
   }
 
   /// Fallback: Set to one, if the experiment failed.
-  return HardwareInfo::cache_value(HardwareInfo::_events_per_physical_performance_counter, std::uint8_t(1U));
+  return HardwareInfo::cache_value(HardwareInfo::_events_per_physical_performance_counter,
+                                   static_cast<std::uint8_t>(1U));
 }
 
 std::optional<std::uint8_t>
@@ -243,7 +247,8 @@ perf::HardwareInfo::explore_hardware_counters_experimentally(const bool is_ident
   /// Translate event names into codes.
   auto events = HardwareInfo::generate_events_for_counter_identification();
 
-  for (auto number_events = std::uint8_t(1U); number_events <= std::uint8_t(events.size()); ++number_events) {
+  for (auto number_events = static_cast<std::uint8_t>(1U); number_events <= static_cast<std::uint8_t>(events.size());
+       ++number_events) {
     auto group = Group{};
 
     /// Depending on what we want to find, we use either (a) only one event per hardware counter or (b) only one
@@ -268,7 +273,7 @@ perf::HardwareInfo::explore_hardware_counters_experimentally(const bool is_ident
       }
 
       return std::nullopt;
-    } catch (const std::runtime_error& error) {
+    } catch (const std::runtime_error& /*error*/) {
       /// For every other error, we cannot tell the reason.
       return std::nullopt;
     }

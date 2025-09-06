@@ -17,7 +17,7 @@ public:
   [[nodiscard]] double calculate(const std::chrono::steady_clock::time_point start,
                                  const std::chrono::steady_clock::time_point end) const noexcept override
   {
-    return double(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()) / 1000000000.;
+    return static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()) / 1000000000.;
   }
 };
 
@@ -27,7 +27,7 @@ public:
   [[nodiscard]] double calculate(const std::chrono::steady_clock::time_point start,
                                  const std::chrono::steady_clock::time_point end) const noexcept override
   {
-    return double(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()) / 1000000.;
+    return static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()) / 1000000.;
   }
 };
 
@@ -37,7 +37,7 @@ public:
   [[nodiscard]] double calculate(const std::chrono::steady_clock::time_point start,
                                  const std::chrono::steady_clock::time_point end) const noexcept override
   {
-    return double(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()) / 1000.;
+    return static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()) / 1000.;
   }
 };
 
@@ -47,7 +47,7 @@ public:
   [[nodiscard]] double calculate(const std::chrono::steady_clock::time_point start,
                                  const std::chrono::steady_clock::time_point end) const noexcept override
   {
-    return double(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
+    return static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
   }
 };
 }

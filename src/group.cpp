@@ -175,7 +175,7 @@ perf::Group::get(const std::size_t index) const noexcept
     if (const auto start_value = this->_start_value.value(event.id()); start_value.has_value()) {
       /// Correct and return the result, if the event was found.
       if (const auto end_value = this->_end_value.value(event.id()); end_value.has_value()) {
-        const auto result = double(end_value.value() - start_value.value()) * event.scale();
+        const auto result = static_cast<double>(end_value.value() - start_value.value()) * event.scale();
 
         /// Fall back to zero, of the event value is 0 (or lower).
         return std::max(.0, result) * this->_multiplexing_correction;

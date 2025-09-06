@@ -82,12 +82,12 @@ perf::MmapBuffer::MmapBuffer(const util::UniqueFileDescriptor& file_descriptor, 
   /// buffers.
   const auto prod_flags = PROT_READ | (static_cast<decltype(PROT_WRITE)>(is_handle_overflow) * PROT_WRITE);
   this->_ringbuffer_header =
-    reinterpret_cast<perf_event_mmap_page*>(::mmap(nullptr,
-                                                   this->_count_pages * HardwareInfo::memory_page_size(),
-                                                   prod_flags,
-                                                   MAP_SHARED,
-                                                   file_descriptor.value(),
-                                                   0));
+    static_cast<perf_event_mmap_page*>(::mmap(nullptr,
+                                              this->_count_pages * HardwareInfo::memory_page_size(),
+                                              prod_flags,
+                                              MAP_SHARED,
+                                              file_descriptor.value(),
+                                              0));
 
   /// Notify the caller if buffer-allocation via ::mmap() failed.
   if (this->_ringbuffer_header == MAP_FAILED) {
@@ -179,7 +179,8 @@ perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
 
   /// Scale the value if it was not counted the entire time.
   if (running > 0ULL && enabled > running) {
-    count = static_cast<std::int64_t>(double(count) * (double(enabled) / double(running)));
+    count = static_cast<std::int64_t>(static_cast<double>(count) *
+                                      (static_cast<double>(enabled) / static_cast<double>(running)));
   }
 
   return static_cast<std::uint64_t>(count);

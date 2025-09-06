@@ -214,7 +214,7 @@ public:
     const CounterValues<MAX_MEMBERS>::time_t time_enabled,
     const CounterValues<MAX_MEMBERS>::time_t time_running) noexcept
   {
-    return time_running > 0ULL ? double(time_enabled) / double(time_running) : 1.;
+    return time_running > 0ULL ? static_cast<double>(time_enabled) / static_cast<double>(time_running) : 1.;
   }
 
   /**

@@ -474,7 +474,7 @@ class MultiThreadEventCounter final : public MultiEventCounterBase
 public:
   MultiThreadEventCounter(const CounterDefinition& counter_definition, std::uint16_t num_threads, Config config = {});
 
-  MultiThreadEventCounter(const std::uint16_t num_threads, const Config config = {})
+  explicit MultiThreadEventCounter(const std::uint16_t num_threads, const Config config = {})
     : MultiThreadEventCounter(CounterDefinition::global(), num_threads, config)
   {
   }

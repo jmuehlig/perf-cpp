@@ -182,7 +182,7 @@ perf::EventCounter::schedule(std::vector<std::pair<RequestedEvent, std::optional
       Group{}, /* only this events should be scheduled to the group; close it */ false);
 
     /// Add all events.
-    const auto group_id = std::uint8_t(this->_hardware_event_groups.size() - 1U);
+    const auto group_id = static_cast<std::uint8_t>(this->_hardware_event_groups.size() - 1U);
     for (auto& [requested_event, event_configuration] : events) {
       /// Metrics and time events (indicated by no hardware event config) do not need to be scheduled to hardware
       /// counter groups; just add it to the event set.
@@ -199,7 +199,7 @@ perf::EventCounter::schedule(std::vector<std::pair<RequestedEvent, std::optional
       }
 
       /// Add the hardware event to the group.
-      const auto in_group_position = std::uint8_t(group.size());
+      const auto in_group_position = static_cast<std::uint8_t>(group.size());
       group.add(event_configuration.value());
 
       /// Add to the request set.
@@ -212,17 +212,16 @@ bool
 perf::EventCounter::append_to_any_hardware_counter(perf::RequestedEvent& event, const perf::CounterConfig& event_config)
 {
   for (auto group_id = 0U; group_id < this->_hardware_event_groups.size(); ++group_id) {
-    const auto is_group_open = std::get<1>(this->_hardware_event_groups[group_id]);
-    if (is_group_open) {
+    if (const auto is_group_open = std::get<1>(this->_hardware_event_groups[group_id]); is_group_open) {
       /// We found a matching group that has space.
       auto& group = std::get<0>(this->_hardware_event_groups[group_id]);
-      const auto in_group_position = std::uint8_t(group.size());
+      const auto in_group_position = static_cast<std::uint8_t>(group.size());
 
       /// Add to the hardware counter group.
       group.add(event_config);
 
       /// Add to the request set.
-      this->_requested_event_set.add(event, std::uint8_t(group_id), in_group_position);
+      this->_requested_event_set.add(event, static_cast<std::uint8_t>(group_id), in_group_position);
 
       /// Close the group if full.
       if (group.size() == this->_config.num_events_per_physical_counter()) {
@@ -254,7 +253,7 @@ perf::EventCounter::create_new_group(perf::RequestedEvent& event,
   std::get<0>(group_and_flag).add(event_config);
 
   /// Add to the request set.
-  const auto group_id = std::uint8_t(this->_hardware_event_groups.size() - 1U);
+  const auto group_id = static_cast<std::uint8_t>(this->_hardware_event_groups.size() - 1U);
   this->_requested_event_set.add(event, group_id, /* the event is the first in the group */ 0U);
 }
 
@@ -276,8 +275,11 @@ perf::EventCounter::add_live(const std::string& event_name)
 
       /// Add the event to the requested event set. Since every live event is scheduled to a dedicated physical hardware
       /// counter, every event will be the first in the group.
-      this->_requested_live_event_set.add(RequestedEvent{
-        pmu_name, name, std::uint8_t(this->_hardware_live_counters.size() - 1U), /* position in group */ 0U });
+      this->_requested_live_event_set.add(
+        RequestedEvent{ pmu_name,
+                        name,
+                        static_cast<std::uint8_t>(this->_hardware_live_counters.size() - 1U),
+                        /* position in group */ 0U });
     }
 
     return;
@@ -443,7 +445,7 @@ std::optional<double>
 perf::EventCounter::live_result(const std::uint64_t counter_index, const std::uint64_t normalization) const noexcept
 {
   if (const auto value = this->live_result(counter_index); value.has_value()) {
-    return value.value() / double(normalization);
+    return value.value() / static_cast<double>(normalization);
   }
 
   return std::nullopt;
@@ -508,7 +510,7 @@ perf::LiveEventCounter::get(const std::string_view event_name) const noexcept
 double
 perf::LiveEventCounter::get(const std::string_view event_name, const std::uint64_t normalization) const noexcept
 {
-  return this->get(event_name) / double(normalization);
+  return this->get(event_name) / static_cast<double>(normalization);
 }
 
 bool

@@ -261,7 +261,7 @@ public:
    * Annotates the given objects with the given type.
    *
    * @param data_type_name Name of the (registered) data type.
-   * @param data_object Array of data objects to annotate.
+   * @param data_objects Array of data objects to annotate.
    * @param size Size of the array.
    * @param instance_name Tag to differentiate multiple instances of the same type (optional).
    */
@@ -397,7 +397,7 @@ private:
    * Fills up the data objects with members in wholes (e.g., space between to members or space between the last member
    * and the end of the data object). This might highlight data objects that are not specified entirely.
    *
-   * @param dataType Data type to fill up.
+   * @param data_type Data type to fill up.
    */
   static void add_empty_attributes(DataType& data_type);
 
@@ -408,7 +408,7 @@ private:
      * Operator used for performing lower_bound in (instance, data_type) pairs.
      */
     bool operator()(const std::pair<std::uintptr_t, std::reference_wrapper<DataType>>& item,
-                    const std::uintptr_t address)
+                    const std::uintptr_t address) const
     {
       return std::get<0>(item) <= address;
     }
@@ -417,7 +417,7 @@ private:
      * Operator used for sorting the (instance, data_type) pairs.
      */
     bool operator()(const std::pair<std::uintptr_t, std::reference_wrapper<DataType>>& left,
-                    const std::pair<std::uintptr_t, std::reference_wrapper<DataType>>& right)
+                    const std::pair<std::uintptr_t, std::reference_wrapper<DataType>>& right) const
     {
       return std::get<0>(left) < std::get<0>(right);
     }

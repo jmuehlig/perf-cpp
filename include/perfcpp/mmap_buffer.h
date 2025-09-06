@@ -39,7 +39,7 @@ private:
 
   /**
    * Worker function that waits for an overflow within the mmap-ed buffer–calling the mmap buffer to handle the
-   * overflow–and a cancel signal to shutdown the worker thread.
+   * overflow–and a cancel signal to shut down the worker thread.
    *
    * @param mmap_buffer Mmap buffer that will be triggered to handle the overflow.
    * @param counter_file_descriptor File descriptor of the counter that is used to mmap the buffer; used to await the

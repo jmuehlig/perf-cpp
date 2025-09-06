@@ -278,8 +278,8 @@ public:
    *
    * @param is_group_leader Flag, if the counter is the leader of the group.
    * @param group_leader_file_descriptor File descriptor of the group leader.
-   * @param process_id Process ID the counter is tied to.
-   * @param cpu_id CPU ID the counter is tied to.
+   * @param process Process the counter is tied to.
+   * @param cpu_core CPU core the counter is tied to.
    * @return A string representing all configurations of this counter.
    */
   [[nodiscard]] std::string to_string(bool is_group_leader,
@@ -375,7 +375,7 @@ private:
    * or reaching zero but the opening call still fails.
    *
    * @param configuration Configuration for the perf subsystem, including CPU core id and process id.
-   * @param precise_ip Precision for sampling.
+   * @param precision Precision for sampling.
    * @param group_leader_file_descriptor View to the group leader's file descriptor.
    * @return File descriptor and error code, which is valid when the file descriptor has no value.
    */

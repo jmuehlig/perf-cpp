@@ -347,7 +347,8 @@ perf::SampleDecoder::decode_hardware_events_values(SampleIterator& entry,
       const auto& event = event_group.member(event_index);
 
       /// Counter value (corrected).
-      const auto event_value = double(raw_event_values[event_index].value()) * event.scale() * multiplexing_correction;
+      const auto event_value =
+        static_cast<double>(raw_event_values[event_index].value()) * event.scale() * multiplexing_correction;
       event_results.emplace_back(requested_event.event_name(), event_value);
     }
   }
@@ -759,7 +760,7 @@ perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(perf::Sample& sampl
 
       /// Translate memory width into number of bytes.
       if (const auto access_width = ibs_op_decoder.access_mem_width(); access_width > 0U && access_width <= 7U) {
-        sample.data_access().access_width(std::uint8_t(1U << (access_width - 1U)));
+        sample.data_access().access_width(static_cast<std::uint8_t>(1U << (access_width - 1U)));
       }
     }
   }

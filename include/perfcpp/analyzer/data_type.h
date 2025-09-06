@@ -116,7 +116,7 @@ public:
   /**
    * Adds a member with a given name to the data type. The Size will be derived from the type in the template.
    *
-   * @param member_name Name of the member.
+   * @param name Name of the member.
    */
   template<typename T>
   void add(std::string&& name)
@@ -127,7 +127,7 @@ public:
   /**
    * Adds a member with a given name to the data type. The Size will be derived from the type in the template.
    *
-   * @param member_name Name of the member.
+   * @param name Name of the member.
    */
   template<typename T>
   void add(const std::string& name)

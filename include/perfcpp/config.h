@@ -214,7 +214,7 @@ public:
   /**
    * If specified, the EventCounter or Sampler will monitor only that specified CPU.
    *
-   * @param cpu_core CPU core to monitor.
+   * @param cpu_core_id CPU core to monitor.
    */
   void cpu_core(const std::uint16_t cpu_core_id) noexcept { _cpu_core = CpuCore{ cpu_core_id }; }
 
@@ -228,7 +228,7 @@ public:
   /**
    * If specified, the EventCounter or Sampler will only monitor that specified process.
    *
-   * @param process Process to monitor.
+   * @param process_id Process to monitor.
    */
   void process(const pid_t process_id) noexcept { _process = Process{ process_id }; }
 
@@ -339,7 +339,7 @@ public:
    *
    * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#precision
    *
-   * @param precision Default precision for sampling.
+   * @param precise_ip Default precision for sampling.
    */
   [[deprecated("Will be removed with v0.13. Use precision(Precision) instead.")]] void precise_ip(
     const std::uint8_t precise_ip) noexcept

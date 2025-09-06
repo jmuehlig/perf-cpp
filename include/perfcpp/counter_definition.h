@@ -104,6 +104,7 @@ public:
    *
    * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/counters.md
    *
+   * @param name Name of the event.
    * @param config Config of the event.
    */
   void add(std::string&& name, CounterConfig config) { add("cpu", std::move(name), config); }

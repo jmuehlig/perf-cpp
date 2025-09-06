@@ -103,7 +103,8 @@ perf::metric::expression::Tokenizer::read_constant(const std::size_t begin) cons
     ++position;
 
     /// Include possible +/- sign after scientific e.
-    position += static_cast<std::size_t>( position < this->_input.length() && (this->_input[position] == '+' || this->_input[position] == '-'));
+    position += static_cast<std::size_t>(position < this->_input.length() &&
+                                         (this->_input[position] == '+' || this->_input[position] == '-'));
 
     /// Again, read all digits after the scientific e.
     while (position < this->_input.length() && std::isdigit(this->_input[position])) {
@@ -117,7 +118,8 @@ perf::metric::expression::Tokenizer::read_constant(const std::size_t begin) cons
     /// Parse the number to decimal.
     return std::make_pair(std::stod(number), position);
   } catch (std::invalid_argument& e) {
-    throw CannotParseMetricExpressionError{ this->_input, std::string{"Cannot parse number ("}.append(e.what()).append(")") };
+    throw CannotParseMetricExpressionError{ this->_input,
+                                            std::string{ "Cannot parse number (" }.append(e.what()).append(")") };
   }
 }
 

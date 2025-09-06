@@ -158,7 +158,7 @@ public:
    * @param event Requested event.
    * @return True, if the event was added. False, if the event was already in the event set.
    */
-  bool add(RequestedEvent& event);
+  bool add(const RequestedEvent& event);
 
   /**
    * Appends an event to the event set, if not present.

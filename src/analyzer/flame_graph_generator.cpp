@@ -26,8 +26,9 @@ perf::analyzer::FlameGraphGenerator::SymbolCache::symbol(const std::uintptr_t lo
 std::vector<std::pair<std::vector<std::string>, std::uint64_t>>
 perf::analyzer::FlameGraphGenerator::map(const std::vector<Sample>& samples) const
 {
-  return this->map(samples,
-                   [](const auto begin, const auto end) { return std::uint64_t(std::distance(begin, end)) + 1U; });
+  return this->map(samples, [](const auto begin, const auto end) {
+    return static_cast<std::uint64_t>(std::distance(begin, end)) + 1U;
+  });
 }
 
 std::vector<std::pair<std::vector<std::string>, std::uint64_t>>

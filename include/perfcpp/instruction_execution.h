@@ -311,14 +311,14 @@ public:
     [[nodiscard]] std::uint32_t user_specified_code() const noexcept { return _user_specified_code; }
 
   private:
-    bool _is_elision_transaction;
-    bool _is_generic_transaction;
-    bool _is_synchronous_abort;
-    bool _is_retryable;
-    bool _is_due_to_memory_conflict;
-    bool _is_due_to_write_capacity_conflict;
-    bool _is_due_to_read_capacity_conflict;
-    std::uint32_t _user_specified_code;
+    bool _is_elision_transaction{ false };
+    bool _is_generic_transaction{ false };
+    bool _is_synchronous_abort{ false };
+    bool _is_retryable{ false };
+    bool _is_due_to_memory_conflict{ false };
+    bool _is_due_to_write_capacity_conflict{ false };
+    bool _is_due_to_read_capacity_conflict{ false };
+    std::uint32_t _user_specified_code{ false };
   };
 
   /**
@@ -470,7 +470,7 @@ public:
   /**
    * @return Branch type, if the instruction was a branch.
    */
-  [[nodiscard]] std::optional<BranchType> branch_type() noexcept { return _branch_type; }
+  [[nodiscard]] std::optional<BranchType> branch_type() const noexcept { return _branch_type; }
 
   /**
    * @return Hardware transaction abort information, if available. std::nullopt otherwise.

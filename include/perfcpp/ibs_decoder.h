@@ -29,7 +29,7 @@ public:
   [[nodiscard]] bool is_l2_tlb_miss() const noexcept { return _fetch_data->_fetch_control.is_l2_tlb_miss; }
   [[nodiscard]] std::uint8_t l1_tlb_page_size() const noexcept
   {
-    return std::uint8_t(_fetch_data->_fetch_control.l1_tlb_page_size);
+    return static_cast<std::uint8_t>(_fetch_data->_fetch_control.l1_tlb_page_size);
   }
   [[nodiscard]] bool is_complete() const noexcept { return _fetch_data->_fetch_control.is_fetch_complete; }
   [[nodiscard]] std::uint16_t latency() const noexcept { return _fetch_data->_fetch_control.fetch_latency; }
@@ -169,11 +169,11 @@ public:
   [[nodiscard]] bool is_l2_miss() const noexcept { return _execution_data->_op_data3.is_l2_miss; }
   [[nodiscard]] std::uint8_t access_mem_width() const noexcept
   {
-    return std::uint8_t(_execution_data->_op_data3.op_mem_width);
+    return static_cast<std::uint8_t>(_execution_data->_op_data3.op_mem_width);
   }
   [[nodiscard]] std::uint8_t num_open_mem_requests() const noexcept
   {
-    return std::uint8_t(_execution_data->_op_data3.num_op_data_cache_miss_open_mem_requests);
+    return static_cast<std::uint8_t>(_execution_data->_op_data3.num_op_data_cache_miss_open_mem_requests);
   }
   [[nodiscard]] std::uint16_t data_cache_miss_latency() const noexcept
   {

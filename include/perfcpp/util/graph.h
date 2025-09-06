@@ -132,7 +132,7 @@ private:
    * DFS helper function for cycle detection.
    *
    * @param node Current node being explored.
-   * @param color Color map tracking node states.
+   * @param node_color Color map tracking node states.
    * @return True if a cycle is found during this DFS traversal.
    */
   [[nodiscard]] bool dfs_has_cycle(const N& node, std::unordered_map<N, std::uint8_t>& node_color) const noexcept

@@ -71,7 +71,7 @@ private:
   [[nodiscard]] std::unique_ptr<ExpressionInterface> parse_additive_expression();
 
   /**
-   * Parses an multiplicative expression (with "*" and "/" operations).
+   * Parses a multiplicative expression (with "*" and "/" operations).
    *
    * @return The parsed expression.
    */

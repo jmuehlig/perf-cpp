@@ -120,7 +120,7 @@ perf::Counter::open(const perf::Config& config,
                                                              max_callstack_size,
                                                              is_include_context_switch);
 
-  if (static_cast<bool>(sample_type | std::uint64_t(PERF_SAMPLE_READ))) {
+  if (static_cast<bool>(sample_type | static_cast<std::uint64_t>(PERF_SAMPLE_READ))) {
     /// Enable the read format including timing.
     this->_event_attribute.read_format = Counter::create_perf_event_read_format(true, true);
   }
@@ -175,7 +175,7 @@ perf::Counter::open(const perf::Config& config,
                                                              max_callstack_size,
                                                              is_include_context_switch);
 
-  if (static_cast<bool>(sample_type | std::uint64_t(PERF_SAMPLE_READ))) {
+  if (static_cast<bool>(sample_type | static_cast<std::uint64_t>(PERF_SAMPLE_READ))) {
     /// Enable the read format including timing.
     this->_event_attribute.read_format = Counter::create_perf_event_read_format(false, true);
   }
@@ -243,7 +243,7 @@ perf::Counter::read_live() const noexcept
     /// Read the value from mmap-ed buffer (via rdpmc instruction).
     if (const auto value = this->_mmap_buffer->read_performance_monitoring_counter(); value.has_value()) {
       /// Adjust the value via scale if the value is available.
-      return double(value.value()) * this->scale();
+      return static_cast<double>(value.value()) * this->scale();
     }
   }
 
@@ -326,7 +326,7 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled,
     attribute.context_switch = is_include_context_switch;
 #endif
 #ifndef PERFCPP_NO_RECORD_CGROUP /// Recording cgroup is supported since Linux 5.7.
-    attribute.cgroup = static_cast<bool>(sample_type & std::uint64_t(PERF_SAMPLE_CGROUP));
+    attribute.cgroup = static_cast<bool>(sample_type & static_cast<std::uint64_t>(PERF_SAMPLE_CGROUP));
 #endif
   }
 
