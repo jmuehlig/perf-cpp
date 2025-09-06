@@ -88,7 +88,7 @@ perf::Counter::open(const perf::Config& configuration,
 
   /// Print debug output, if requested.
   if (configuration.is_debug()) {
-    std::cout << this->to_string(false, this->_file_descriptor, configuration.process(), configuration.cpu_core())
+    std::cout << this->to_string(false, group_leader_file_descriptor, configuration.process(), configuration.cpu_core())
               << std::flush;
   }
 
@@ -193,7 +193,7 @@ perf::Counter::open(const perf::Config& config,
 
   /// Print debug output, if requested.
   if (config.is_debug()) {
-    std::cout << this->to_string(false, this->_file_descriptor, config.process(), config.cpu_core()) << std::flush;
+    std::cout << this->to_string(false, group_leader_file_descriptor, config.process(), config.cpu_core()) << std::flush;
   }
 
   /// Notify the caller that opening the counter via the perf subsystem failed.
