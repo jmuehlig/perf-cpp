@@ -22,22 +22,23 @@ The examples will be built to `build/examples/bin/`.
 
 ## List of Examples
 ### Counting Hardware Events
-* [statistics/single_thread.cpp](statistics/single_thread.cpp) provides an example to record and read performance counters for a specific code segment on a **single** thread.
-* [statistics/inherit_thread.cpp](statistics/inherit_thread.cpp) advances the example to record counter statistics not only from one but also for its **child-threads**.
-* [statistics/multi_thread.cpp](statistics/multi_thread.cpp) shows how to record performance counter statistics on **multiple** threads.
-* [statistics/multi_cpu.cpp](statistics/multi_cpu.cpp) shows how to pin performance counters to **specific CPU cores** instead of focussing on threads and processes.
-* [statistics/live_events.cpp](statistics/live_events.cpp) shows how to access hardware counters with **low latency**.
-* [statistics/metric.cpp](statistics/metric.cpp) shows how define new metrics.
+- [statistics/single_thread.cpp](statistics/single_thread.cpp) provides an example to record and read performance counters for a specific code segment on a **single** thread.
+- [statistics/inherit_thread.cpp](statistics/inherit_thread.cpp) advances the example to record counter statistics not only from one but also for its **child-threads**.
+- [statistics/multi_thread.cpp](statistics/multi_thread.cpp) shows how to record performance counter statistics on **multiple** threads.
+- [statistics/multi_cpu.cpp](statistics/multi_cpu.cpp) shows how to pin performance counters to **specific CPU cores** instead of focussing on threads and processes.
+- [statistics/live_events.cpp](statistics/live_events.cpp) shows how to access hardware counters with **low latency**.
+- [statistics/metric.cpp](statistics/metric.cpp) shows how define new metrics.
 
 
 ### Sampling
-* [sampling/instruction_pointer.cpp](sampling/instruction_pointer.cpp) provides an example to sample instruction pointers on a single thread.
-* [sampling/flame_graph.cpp](sampling/flame_graph.cpp) provides an example to generate a format that can be used by flamegraph generators.
-* [sampling/memory_address.cpp](sampling/memory_address.cpp) provides an example to sample virtual memory addresses, their latency, and their origin.
-* [sampling/counter.cpp](sampling/counter.cpp) shows how to include values of further hardware performance counters into samples.
-* [sampling/branch.cpp](sampling/branch.cpp) exemplifies sampling for last branch records and their prediction success.
-* [sampling/register.cpp](sampling/register.cpp) provides an example on how to include values of specific registers into samples.
-* [sampling/context_switch.cpp](sampling/context_switch.cpp) provides an example that samples context switches on a single thread.
-* [sampling/multi_event.cpp](sampling/multi_event.cpp) exemplifies how to use multiple events as a trigger using Intel counters as an example.
-* [sampling/multi_thread.cpp)](sampling/multi_thread.cpp) explains how to sample data on multiple threads at the same time.
-* [sampling/multi_cpu.cpp](sampling/multi_cpu.cpp) provides an example that monitors multiple CPU cores and records samples.
+- [sampling/instruction_pointer.cpp](sampling/instruction_pointer.cpp) provides an example to sample instruction pointers on a single thread.
+- [sampling/flame_graph.cpp](sampling/flame_graph.cpp) provides an example to generate a format that can be used by flamegraph generators.
+- [sampling/perf_record.cpp](sampling/perf_record.cpp) generates a `perf.data` file that can be read and analyzed via the *Linux perf* tool using `perf report` or `perf mem report`.
+- [sampling/memory_address.cpp](sampling/memory_address.cpp) provides an example to sample virtual memory addresses, their latency, and their origin.
+- [sampling/counter.cpp](sampling/counter.cpp) shows how to include values of further hardware performance counters into samples.
+- [sampling/branch.cpp](sampling/branch.cpp) exemplifies sampling for last branch records and their prediction success.
+- [sampling/register.cpp](sampling/register.cpp) provides an example on how to include values of specific registers into samples.
+- [sampling/context_switch.cpp](sampling/context_switch.cpp) provides an example that samples context switches on a single thread.
+- [sampling/multi_event.cpp](sampling/multi_event.cpp) exemplifies how to use multiple events as a trigger using Intel counters as an example.
+- [sampling/multi_thread.cpp)](sampling/multi_thread.cpp) explains how to sample data on multiple threads at the same time.
+- [sampling/multi_cpu.cpp](sampling/multi_cpu.cpp) provides an example that monitors multiple CPU cores and records samples.

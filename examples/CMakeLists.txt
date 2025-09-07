@@ -71,6 +71,11 @@ add_executable(flame-graph EXCLUDE_FROM_ALL examples/sampling/flame_graph.cpp ex
 target_compile_options(flame-graph PUBLIC "-g3")
 target_link_libraries(flame-graph perf-cpp)
 
+## Analyze Samples with the perf tool
+add_executable(perf-record EXCLUDE_FROM_ALL examples/sampling/perf_record.cpp examples/access_benchmark.cpp)
+target_link_libraries(perf-record perf-cpp)
+
+## List counters
 add_executable(counter-definition EXCLUDE_FROM_ALL examples/counter_definition.cpp)
 target_link_libraries(counter-definition perf-cpp)
 
@@ -81,4 +86,4 @@ add_dependencies(examples
         metric instruction-pointer-sampling counter-sampling branch-sampling
         memory-address-sampling register-sampling multi-thread-sampling multi-cpu-sampling
         multi-event-sampling context-switch-sampling
-        memory-access-analyzer live-events flame-graph counter-definition)
+        memory-access-analyzer live-events flame-graph perf-record counter-definition)
