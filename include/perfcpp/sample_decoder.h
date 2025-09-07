@@ -1,5 +1,6 @@
 #pragma once
 #include "feature.h"
+#include "ibs_decoder.h"
 #include "metadata.h"
 #include "requested_event.h"
 #include "sampler.h"
@@ -11,139 +12,135 @@
 
 namespace perf {
 /**
+ * The UserLevelBufferEntry represents an entry in the user-level buffer filled by the perf subsystem by parsing the
+ * hardware-related samples. This helper assists in consuming data from the buffer and turning it into Samples.
+ */
+class SampleIterator
+{
+public:
+  explicit SampleIterator(const std::uintptr_t address) noexcept
+    : _header(reinterpret_cast<perf_event_header*>(address))
+    , _data(address + sizeof(perf_event_header))
+  {
+  }
+
+  SampleIterator(SampleIterator&& other) noexcept
+    : _header(std::exchange(other._header, nullptr))
+    , _data(std::exchange(other._data, 0ULL))
+  {
+  }
+
+  ~SampleIterator() noexcept = default;
+
+  [[nodiscard]] std::optional<Metadata::Mode> mode() const noexcept;
+  [[nodiscard]] std::uint16_t size() const noexcept { return _header->size; }
+
+  template<typename T>
+  [[nodiscard]] T read() noexcept
+  {
+    const auto data = *reinterpret_cast<T*>(_data);
+    _data += sizeof(T);
+
+    return data;
+  }
+
+  template<typename T>
+  [[nodiscard]] const T* read(const std::size_t size) noexcept
+  {
+    auto* begin = reinterpret_cast<T*>(_data);
+    _data += sizeof(T) * size;
+
+    return begin;
+  }
+
+  template<typename T>
+  void skip() noexcept
+  {
+    _data += sizeof(T);
+  }
+
+  template<typename T>
+  void skip(const std::size_t size) noexcept
+  {
+    _data += sizeof(T) * size;
+  }
+
+  template<typename T>
+  T as() const noexcept
+  {
+    return reinterpret_cast<T>(_data);
+  }
+
+  [[nodiscard]] bool is_sample_event() const noexcept { return _header->type == PERF_RECORD_SAMPLE; }
+  [[nodiscard]] bool is_loss_event() const noexcept
+  {
+#ifndef PERFCPP_NO_RECORD_LOST_SAMPLES /// PERF_RECORD_LOST_SAMPLES is supported since Linux 4.2
+    return _header->type == PERF_RECORD_LOST_SAMPLES;
+#else
+    return false;
+#endif
+  }
+  [[nodiscard]] bool is_context_switch_event() const noexcept
+  {
+#ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3
+    return _header->type == PERF_RECORD_SWITCH || _header->type == PERF_RECORD_SWITCH_CPU_WIDE;
+#else
+    return false;
+#endif
+  }
+  [[nodiscard]] bool is_context_switch_cpu_wide() const noexcept
+  {
+#ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3
+    return _header->type == PERF_RECORD_SWITCH_CPU_WIDE;
+#else
+    return false;
+#endif
+  }
+  [[nodiscard]] bool is_cgroup_event() const noexcept
+  {
+#ifndef PERFCPP_NO_RECORD_CGROUP /// cgroup events is supported since Linux 5.7
+    return _header->type == PERF_RECORD_CGROUP;
+#else
+    return false;
+#endif
+  }
+  [[nodiscard]] bool is_throttle_event() const noexcept
+  {
+    return _header->type == PERF_RECORD_THROTTLE || _header->type == PERF_RECORD_UNTHROTTLE;
+  }
+  [[nodiscard]] bool is_throttle() const noexcept { return _header->type == PERF_RECORD_THROTTLE; }
+
+  [[nodiscard]] bool is_instruction_pointer_exact() const noexcept { return _header->misc & PERF_RECORD_MISC_EXACT_IP; }
+  [[nodiscard]] bool is_context_switch_out() const noexcept
+  {
+#ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3
+    return _header->misc & PERF_RECORD_MISC_SWITCH_OUT;
+#else
+    return false;
+#endif
+  }
+  [[nodiscard]] bool is_context_switch_out_preempt() const noexcept
+  {
+#ifndef PERFCPP_NO_RECORD_MISC_SWITCH_OUT_PREEMPT /// Preempt flag of switch events is supported since Linux 4.3
+    return _header->misc & PERF_RECORD_MISC_SWITCH_OUT_PREEMPT;
+#else
+    return false;
+#endif
+  }
+
+private:
+  /// Header of the event.
+  perf_event_header* _header;
+
+  /// Data (located directly after the header).
+  std::uintptr_t _data;
+};
+
+/**
  * The SampleDecoder translates raw values emitted by the perf subsystem into Samples.
  */
 class SampleDecoder
 {
-private:
-  /**
-   * The UserLevelBufferEntry represents an entry in the user-level buffer filled by the perf subsystem by parsing the
-   * hardware-related samples. This helper assists in consuming data from the buffer and turning it into Samples.
-   */
-  class SampleIterator
-  {
-  public:
-    explicit SampleIterator(const std::uintptr_t address) noexcept
-      : _header(reinterpret_cast<perf_event_header*>(address))
-      , _data(address + sizeof(perf_event_header))
-    {
-    }
-
-    SampleIterator(SampleIterator&& other) noexcept
-      : _header(std::exchange(other._header, nullptr))
-      , _data(std::exchange(other._data, 0ULL))
-    {
-    }
-
-    ~SampleIterator() noexcept = default;
-
-    [[nodiscard]] std::optional<Metadata::Mode> mode() const noexcept;
-    [[nodiscard]] std::uint16_t size() const noexcept { return _header->size; }
-
-    template<typename T>
-    [[nodiscard]] T read() noexcept
-    {
-      const auto data = *reinterpret_cast<T*>(_data);
-      _data += sizeof(T);
-
-      return data;
-    }
-
-    template<typename T>
-    [[nodiscard]] const T* read(const std::size_t size) noexcept
-    {
-      auto* begin = reinterpret_cast<T*>(_data);
-      _data += sizeof(T) * size;
-
-      return begin;
-    }
-
-    template<typename T>
-    void skip() noexcept
-    {
-      _data += sizeof(T);
-    }
-
-    template<typename T>
-    void skip(const std::size_t size) noexcept
-    {
-      _data += sizeof(T) * size;
-    }
-
-    template<typename T>
-    T as() const noexcept
-    {
-      return reinterpret_cast<T>(_data);
-    }
-
-    [[nodiscard]] bool is_sample_event() const noexcept { return _header->type == PERF_RECORD_SAMPLE; }
-    [[nodiscard]] bool is_loss_event() const noexcept
-    {
-#ifndef PERFCPP_NO_RECORD_LOST_SAMPLES /// PERF_RECORD_LOST_SAMPLES is supported since Linux 4.2
-      return _header->type == PERF_RECORD_LOST_SAMPLES;
-#else
-      return false;
-#endif
-    }
-    [[nodiscard]] bool is_context_switch_event() const noexcept
-    {
-#ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3
-      return _header->type == PERF_RECORD_SWITCH || _header->type == PERF_RECORD_SWITCH_CPU_WIDE;
-#else
-      return false;
-#endif
-    }
-    [[nodiscard]] bool is_context_switch_cpu_wide() const noexcept
-    {
-#ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3
-      return _header->type == PERF_RECORD_SWITCH_CPU_WIDE;
-#else
-      return false;
-#endif
-    }
-    [[nodiscard]] bool is_cgroup_event() const noexcept
-    {
-#ifndef PERFCPP_NO_RECORD_CGROUP /// cgroup events is supported since Linux 5.7
-      return _header->type == PERF_RECORD_CGROUP;
-#else
-      return false;
-#endif
-    }
-    [[nodiscard]] bool is_throttle_event() const noexcept
-    {
-      return _header->type == PERF_RECORD_THROTTLE || _header->type == PERF_RECORD_UNTHROTTLE;
-    }
-    [[nodiscard]] bool is_throttle() const noexcept { return _header->type == PERF_RECORD_THROTTLE; }
-
-    [[nodiscard]] bool is_instruction_pointer_exact() const noexcept
-    {
-      return _header->misc & PERF_RECORD_MISC_EXACT_IP;
-    }
-    [[nodiscard]] bool is_context_switch_out() const noexcept
-    {
-#ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3
-      return _header->misc & PERF_RECORD_MISC_SWITCH_OUT;
-#else
-      return false;
-#endif
-    }
-    [[nodiscard]] bool is_context_switch_out_preempt() const noexcept
-    {
-#ifndef PERFCPP_NO_RECORD_MISC_SWITCH_OUT_PREEMPT /// Preempt flag of switch events is supported since Linux 4.3
-      return _header->misc & PERF_RECORD_MISC_SWITCH_OUT_PREEMPT;
-#else
-      return false;
-#endif
-    }
-
-  private:
-    /// Header of the event.
-    perf_event_header* _header;
-
-    /// Data (located directly after the header).
-    std::uintptr_t _data;
-  };
-
 public:
   SampleDecoder(const CounterDefinition& counter_definition, const Sampler::Values& values)
     : _counter_definition(counter_definition)
@@ -162,11 +159,11 @@ public:
    * @param event_group Group of hardware events.
    * @return List of decoded samples.
    */
-  [[nodiscard]] std::vector<Sample> decode(std::vector<std::vector<std::byte>>&& sample_buffers,
+  [[nodiscard]] std::vector<Sample> decode(const std::vector<std::vector<std::byte>>& sample_buffers,
                                            bool has_amd_ibs_op_pmu,
                                            bool has_amd_ibs_fetch_pmu,
                                            const RequestedEventSet& requested_event_set,
-                                           const Group& event_group);
+                                           const Group& event_group) const;
 
 private:
   const CounterDefinition& _counter_definition;

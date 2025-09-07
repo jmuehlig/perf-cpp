@@ -33,7 +33,8 @@ perf::Counter::open(const perf::Config& configuration, const bool is_live)
                                                                /* kernel registers */ std::nullopt,
                                                                /* max user stack size */ std::nullopt,
                                                                /* max callstack size */ std::nullopt,
-                                                               /* include context switch */ false);
+                                                               /* include context switch */ false,
+                                                               /* include extended mmap information */ false);
   }
 
   /// Enable the read format including timing.
@@ -107,7 +108,8 @@ perf::Counter::open(const perf::Config& config,
                     const std::optional<std::uint64_t> kernel_registers,
                     const std::optional<std::uint32_t> max_user_stack_size,
                     const std::optional<std::uint16_t> max_callstack_size,
-                    const bool is_include_context_switch)
+                    const bool is_include_context_switch,
+                    const bool is_include_extended_mmap_information)
 {
   /// Configure the perf event attribute for sampling.
   this->_event_attribute = this->create_perf_event_attribute(true,
@@ -118,7 +120,8 @@ perf::Counter::open(const perf::Config& config,
                                                              kernel_registers,
                                                              max_user_stack_size,
                                                              max_callstack_size,
-                                                             is_include_context_switch);
+                                                             is_include_context_switch,
+                                                             is_include_extended_mmap_information);
 
   if (static_cast<bool>(sample_type | static_cast<std::uint64_t>(PERF_SAMPLE_READ))) {
     /// Enable the read format including timing.
@@ -162,6 +165,7 @@ perf::Counter::open(const perf::Config& config,
                     const std::optional<std::uint32_t> max_user_stack_size,
                     const std::optional<std::uint16_t> max_callstack_size,
                     const bool is_include_context_switch,
+                    const bool is_included_extended_mmap_information,
                     const perf::util::UniqueFileDescriptor& group_leader_file_descriptor)
 {
   /// Configure the perf event attribute for sampling.
@@ -173,7 +177,8 @@ perf::Counter::open(const perf::Config& config,
                                                              kernel_registers,
                                                              max_user_stack_size,
                                                              max_callstack_size,
-                                                             is_include_context_switch);
+                                                             is_include_context_switch,
+                                                             is_included_extended_mmap_information);
 
   if (static_cast<bool>(sample_type | static_cast<std::uint64_t>(PERF_SAMPLE_READ))) {
     /// Enable the read format including timing.
@@ -193,7 +198,8 @@ perf::Counter::open(const perf::Config& config,
 
   /// Print debug output, if requested.
   if (config.is_debug()) {
-    std::cout << this->to_string(false, group_leader_file_descriptor, config.process(), config.cpu_core()) << std::flush;
+    std::cout << this->to_string(false, group_leader_file_descriptor, config.process(), config.cpu_core())
+              << std::flush;
   }
 
   /// Notify the caller that opening the counter via the perf subsystem failed.
@@ -289,15 +295,17 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled, const perf::C
 }
 
 perf_event_attr
-perf::Counter::create_perf_event_attribute(const bool is_disabled,
-                                           const perf::Config& configuration,
-                                           const std::uint64_t sample_type,
-                                           const std::optional<std::uint64_t> branch_type,
-                                           const std::optional<std::uint64_t> user_registers,
-                                           const std::optional<std::uint64_t> kernel_registers,
-                                           const std::optional<std::uint32_t> max_user_stack_size,
-                                           [[maybe_unused]] const std::optional<std::uint16_t> max_callstack_size,
-                                           [[maybe_unused]] const bool is_include_context_switch) const noexcept
+perf::Counter::create_perf_event_attribute(
+  const bool is_disabled,
+  const perf::Config& configuration,
+  const std::uint64_t sample_type,
+  const std::optional<std::uint64_t> branch_type,
+  const std::optional<std::uint64_t> user_registers,
+  const std::optional<std::uint64_t> kernel_registers,
+  const std::optional<std::uint32_t> max_user_stack_size,
+  [[maybe_unused]] const std::optional<std::uint16_t> max_callstack_size,
+  [[maybe_unused]] const bool is_include_context_switch,
+  [[maybe_unused]] const bool is_included_extended_mmap_information) const noexcept
 {
   auto attribute = this->create_perf_event_attribute(is_disabled, configuration);
 
@@ -328,6 +336,11 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled,
 #ifndef PERFCPP_NO_RECORD_CGROUP /// Recording cgroup is supported since Linux 5.7.
     attribute.cgroup = static_cast<bool>(sample_type & static_cast<std::uint64_t>(PERF_SAMPLE_CGROUP));
 #endif
+
+    if (is_included_extended_mmap_information) {
+      attribute.mmap = true;
+      attribute.mmap2 = true;
+    }
   }
 
   return attribute;
@@ -508,6 +521,26 @@ perf::Counter::to_string(const bool is_group_leader,
 
   if (this->_event_attribute.sample_id_all > 0U) {
     stream << "        sample_id_all: " << this->_event_attribute.sample_id_all << "\n";
+  }
+
+  if (this->_event_attribute.mmap2) {
+    stream << "        mmap2: " << this->_event_attribute.mmap2 << "\n";
+  }
+
+  if (this->_event_attribute.comm) {
+    stream << "        comm: " << this->_event_attribute.comm << "\n";
+  }
+
+  if (this->_event_attribute.comm_exec) {
+    stream << "        comm_exec: " << this->_event_attribute.comm_exec << "\n";
+  }
+
+  if (this->_event_attribute.task) {
+    stream << "        task: " << this->_event_attribute.task << "\n";
+  }
+
+  if (this->_event_attribute.enable_on_exec) {
+    stream << "        enable_on_exec: " << this->_event_attribute.enable_on_exec << "\n";
   }
 
   /// Read format

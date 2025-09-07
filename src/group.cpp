@@ -43,7 +43,8 @@ perf::Group::open(const perf::Config& config,
                   const std::optional<std::uint64_t> kernel_registers,
                   const std::optional<std::uint32_t> max_user_stack_size,
                   const std::optional<std::uint16_t> max_callstack_size,
-                  const bool is_include_context_switch)
+                  const bool is_include_context_switch,
+                  bool is_include_extended_mmap_information)
 {
   if (this->_members.empty()) {
     return;
@@ -60,7 +61,8 @@ perf::Group::open(const perf::Config& config,
                               kernel_registers,
                               max_user_stack_size,
                               max_callstack_size,
-                              is_include_context_switch);
+                              is_include_context_switch,
+                              is_include_extended_mmap_information);
 
   /// The group leader's file descriptor will be passed to further counters.
   const auto& group_leader_file_descriptor = this->_members.front().file_descriptor();
@@ -85,6 +87,7 @@ perf::Group::open(const perf::Config& config,
                                   max_user_stack_size,
                                   max_callstack_size,
                                   is_include_context_switch,
+                                  is_include_extended_mmap_information,
                                   group_leader_file_descriptor);
   }
 }

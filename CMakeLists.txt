@@ -45,6 +45,7 @@ set(PERF_CPP_SRC
     src/util/table.cpp
     src/mmap_buffer.cpp
     src/symbol_resolver.cpp
+    src/record_file_writer.cpp
     src/metric/expression/token.cpp
     src/metric/expression/tokenizer.cpp
     src/metric/expression/parser.cpp

@@ -2,6 +2,7 @@
 #include <perfcpp/exception.h>
 #include <perfcpp/hardware_info.h>
 #include <perfcpp/ibs_decoder.h>
+#include <perfcpp/record_file_writer.h>
 #include <perfcpp/sample_decoder.h>
 #include <perfcpp/sampler.h>
 #include <stdexcept>
@@ -126,13 +127,17 @@ perf::Sampler::open()
                                                   : std::nullopt,
       this->_values.is_set(PERF_SAMPLE_STACK_USER) ? std::make_optional(this->_values.max_user_stack()) : std::nullopt,
       this->_values.is_set(PERF_SAMPLE_CALLCHAIN) ? std::make_optional(this->_values.max_call_stack()) : std::nullopt,
-      this->_values._is_include_context_switch);
+      this->_values._is_include_context_switch,
+      this->_values._is_include_extended_mmap_information);
   }
 }
 
 bool
 perf::Sampler::start()
 {
+  /// Clear the sample data.
+  this->_sample_data.clear();
+
   /// Open the groups, if not already done.
   this->open();
 
@@ -160,6 +165,9 @@ perf::Sampler::close() noexcept
     /// Clear all buffers, groups, and event names
     /// in order to enable opening again.
     this->_sample_counter.clear();
+
+    /// Clear the sample data.
+    this->_sample_data.clear();
   }
 }
 
@@ -353,17 +361,22 @@ perf::Sampler::is_auxiliary_event_needed_and_already_included(
 std::vector<perf::Sample>
 perf::Sampler::result(const bool sort_by_time)
 {
-  auto sample_decoder = SampleDecoder{ this->_counter_definitions, this->_values };
-
   auto result = std::vector<Sample>{};
 
-  for (auto& sample_counter : this->_sample_counter) {
+  /// Consume the sample data, when not already consumed.
+  this->consume_sample_data();
 
-    /// Get all buffers: the current mmap-ed ringbuffer and the application-level buffers used to copy the ringbuffer to
-    auto buffer_ranges = sample_counter.consume_samples();
+  if (this->_sample_counter.size() != this->_sample_data.size()) {
+    return result;
+  }
+
+  auto sample_decoder = SampleDecoder{ this->_counter_definitions, this->_values };
+  for (auto sample_counter_id = 0U; sample_counter_id < this->_sample_counter.size(); ++sample_counter_id) {
+    const auto& sample_counter = this->_sample_counter[sample_counter_id];
+    const auto& sample_data = this->_sample_data[sample_counter_id];
 
     /// Decode all samples from the buffers.
-    auto samples = sample_decoder.decode(std::move(buffer_ranges),
+    auto samples = sample_decoder.decode(sample_data,
                                          sample_counter.has_amd_op_pmu_counter(),
                                          sample_counter.has_amd_fetch_pmu_counter(),
                                          sample_counter.requested_events(),
@@ -379,6 +392,28 @@ perf::Sampler::result(const bool sort_by_time)
   }
 
   return result;
+}
+
+void
+perf::Sampler::to_perf_file(const std::string_view output_file_name)
+{
+  /// Consume the sample data, when not already consumed.
+  this->consume_sample_data();
+
+  RecordFileWriter::write(this->_values, this->_sample_counter, this->_sample_data, output_file_name);
+}
+
+void
+perf::Sampler::consume_sample_data()
+{
+  /// Check if the sample data is not yet consumed (i.e., we store a vector of data equal to the size of the sample
+  /// counters).
+  if (this->_sample_data.size() != this->_sample_counter.size()) {
+    this->_sample_data.reserve(this->_sample_counter.size());
+    for (auto& sample_counter : this->_sample_counter) {
+      this->_sample_data.push_back(sample_counter.consume_samples());
+    }
+  }
 }
 
 std::vector<std::vector<std::byte>>

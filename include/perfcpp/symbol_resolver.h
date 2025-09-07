@@ -28,6 +28,23 @@ public:
     {
     }
 
+    Module(std::string&& name,
+           const std::uintptr_t start,
+           const std::uintptr_t end,
+           const std::size_t offset,
+           std::string&& path,
+           std::string&& permission,
+           std::vector<std::uint8_t>&& build_id) noexcept
+      : _name(std::move(name))
+      , _start(start)
+      , _end(end)
+      , _offset(offset)
+      , _path(std::move(path))
+      , _permissions(std::move(permission))
+      , _build_id(std::move(build_id))
+    {
+    }
+
     ~Module() = default;
 
     [[nodiscard]] const std::string& name() const noexcept { return _name; }
@@ -36,6 +53,7 @@ public:
     [[nodiscard]] std::size_t offset() const noexcept { return _offset; }
     [[nodiscard]] const std::string& path() const noexcept { return _path; }
     [[nodiscard]] const std::string& permission() const noexcept { return _permissions; }
+    [[nodiscard]] const std::vector<std::uint8_t>& build_id() const noexcept { return _build_id; }
 
     [[nodiscard]] bool operator==(const Module& other) const { return _path == other._path; }
 
@@ -46,6 +64,7 @@ public:
     std::uintptr_t _offset;
     std::string _path;
     std::string _permissions;
+    std::vector<std::uint8_t> _build_id;
   };
 
   class ModuleHash
@@ -130,6 +149,19 @@ public:
    */
   [[nodiscard]] std::optional<ResolvedSymbol> resolve(std::uintptr_t logical_instruction_pointer) const noexcept;
 
+  /**
+   * Parses the /proc/self/maps table.
+   *
+   * @return List of all modules found in /proc/self/maps.
+   */
+  [[nodiscard]] static std::vector<Module> read_modules();
+
+  /**
+   * Reads the process name from /proc/self/comm.
+   * @return Name of the process, if it can be read.
+   */
+  [[nodiscard]] static std::optional<std::string> read_process_name();
+
 private:
   /// List of all modules and linked symbols.
   std::unordered_map<Module, std::vector<Symbol>, ModuleHash> _modules;
@@ -145,13 +177,6 @@ private:
   [[nodiscard]] static std::optional<ResolvedSymbol> resolve(const Module& module,
                                                              const std::vector<Symbol>& symbols,
                                                              std::uintptr_t logical_instruction_pointer) noexcept;
-
-  /**
-   * Parses the /proc/self/maps table.
-   *
-   * @return List of all modules found in /proc/self/maps.
-   */
-  [[nodiscard]] static std::vector<Module> parse_maps();
 
   /**
    * Parses the symbol table for the given module (path).
@@ -171,5 +196,13 @@ private:
   [[nodiscard]] static std::pair<const Elf64_Shdr*, const Elf64_Shdr*> find_symbol_and_string_tables(
     const Elf64_Shdr* section_header_table,
     std::uint16_t size) noexcept;
+
+  /**
+   * Extracts the build ID from an ELF file.
+   *
+   * @param path Path of the module.
+   * @return Build ID as a vector of bytes, or empty if not found.
+   */
+  [[nodiscard]] static std::vector<std::uint8_t> extract_build_id(const std::string& path) noexcept;
 };
 }

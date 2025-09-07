@@ -3,7 +3,7 @@
 #include <perfcpp/sample_decoder.h>
 
 std::optional<perf::Metadata::Mode>
-perf::SampleDecoder::SampleIterator::mode() const noexcept
+perf::SampleIterator::mode() const noexcept
 {
   const auto misc = this->_header->misc;
 
@@ -31,11 +31,11 @@ perf::SampleDecoder::SampleIterator::mode() const noexcept
 }
 
 std::vector<perf::Sample>
-perf::SampleDecoder::decode(std::vector<std::vector<std::byte>>&& sample_buffers,
+perf::SampleDecoder::decode(const std::vector<std::vector<std::byte>>& sample_buffers,
                             const bool has_amd_ibs_op_pmu,
                             const bool has_amd_ibs_fetch_pmu,
                             const perf::RequestedEventSet& requested_event_set,
-                            const Group& event_group)
+                            const Group& event_group) const
 {
   auto samples = std::vector<perf::Sample>{};
   samples.reserve(sample_buffers.size() * 2048UL);

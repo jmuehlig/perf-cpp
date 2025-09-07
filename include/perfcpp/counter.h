@@ -165,6 +165,8 @@ public:
    * @param max_user_stack_size Maximal size of sampled user stack, std::nullopt of sampling is disabled.
    * @param max_callstack_size Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
    * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
+   * @param is_include_extended_mmap_information True, if extended mmap information should be sampled, ignored if
+   * sampling is disabled.
    */
   void open(const perf::Config& config,
             std::uint64_t buffer_pages,
@@ -174,7 +176,8 @@ public:
             std::optional<std::uint64_t> kernel_registers,
             std::optional<std::uint32_t> max_user_stack_size,
             std::optional<std::uint16_t> max_callstack_size,
-            bool is_include_context_switch);
+            bool is_include_context_switch,
+            bool is_include_extended_mmap_information);
 
   /**
    * Opens the counter using via the perf subsystem.
@@ -191,6 +194,8 @@ public:
    * @param max_user_stack_size Maximal size of sampled user stack, std::nullopt of sampling is disabled.
    * @param max_callstack_size Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
    * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
+   * @param is_include_extended_mmap_information True, if extended mmap information should be included, ignored if
+   * sampling is disabled.
    * @param group_leader_file_descriptor File descriptor of the group leader.
    */
   void open(const perf::Config& config,
@@ -202,6 +207,7 @@ public:
             std::optional<std::uint32_t> max_user_stack_size,
             std::optional<std::uint16_t> max_callstack_size,
             bool is_include_context_switch,
+            bool is_include_extended_mmap_information,
             const util::UniqueFileDescriptor& group_leader_file_descriptor);
 
   /**
@@ -225,6 +231,8 @@ public:
    * @param max_user_stack_size Maximal size of sampled user stack, std::nullopt of sampling is disabled.
    * @param max_callstack_size Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
    * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
+   * @param is_include_extended_mmap_information True, if extended mmap information should be included, ignored if
+   * sampling is disabled.
    */
   void open(const perf::Config& config,
             bool is_group_leader,
@@ -238,7 +246,8 @@ public:
             std::optional<std::uint64_t> kernel_registers,
             std::optional<std::uint32_t> max_user_stack_size,
             std::optional<std::uint16_t> max_callstack_size,
-            bool is_include_context_switch);
+            bool is_include_context_switch,
+            bool is_include_extended_mmap_information);
 
   /**
    * Closes the counter and resets the file descriptor.
@@ -272,6 +281,11 @@ public:
    * @return Scale of the event, provided by the event configuration.
    */
   [[nodiscard]] double scale() const noexcept { return _config.scale(); }
+
+  /**
+   * @return The event attribute of the perf subsystem.
+   */
+  [[nodiscard]] const perf_event_attr& perf_event_attribute() const noexcept { return _event_attribute; }
 
   /**
    * Prints the configuration of the counter, borrowing the format of Linux perf.
@@ -328,6 +342,7 @@ private:
    * @param max_user_stack_size The maximal user stack size to configure.
    * @param max_callstack_size The maximal call stack size to configure.
    * @param is_include_context_switch True, if context switches should be included into samples.
+   * @param is_include_extended_mmap_information True, if extended mmap information should be included into samples.
    * @return The initialized perf_event_attr.
    */
   [[nodiscard]] perf_event_attr create_perf_event_attribute(
@@ -339,7 +354,8 @@ private:
     std::optional<std::uint64_t> kernel_registers,
     std::optional<std::uint32_t> max_user_stack_size,
     [[maybe_unused]] std::optional<std::uint16_t> max_callstack_size,
-    [[maybe_unused]] bool is_include_context_switch) const noexcept;
+    [[maybe_unused]] bool is_include_context_switch,
+    [[maybe_unused]] bool is_include_extended_mmap_information) const noexcept;
 
   /**
    * Configures the perf event read format.

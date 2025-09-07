@@ -549,6 +549,20 @@ public:
     }
 
     /**
+     * Manage to include extended mmap information into samples.
+     *
+     * See TODO
+     *
+     * @param include True, if extended mmap information should be included.
+     * @return The Values instance.
+     */
+    Values& extended_mmap_information(const bool include) noexcept
+    {
+      _is_include_extended_mmap_information = include;
+      return *this;
+    }
+
+    /**
      * Tests, if the given perf subsystem field is set for sampling.
      *
      * @param perf_subsystem_field Field of the perf subsystem.
@@ -563,6 +577,14 @@ public:
      * @return True, if throttle samples are requested by the user.
      */
     [[nodiscard]] bool is_include_throttle() const noexcept { return _is_include_throttle; }
+
+    /**
+     * @return True, if extended mmap information is requested by the user.
+     */
+    [[nodiscard]] bool is_include_extended_mmap_information() const noexcept
+    {
+      return _is_include_extended_mmap_information;
+    }
 
     /**
      * @return The set of requested user registers to include into the samples.
@@ -626,6 +648,9 @@ public:
 
     /// Flag if throttle events should be included.
     bool _is_include_throttle{ false };
+
+    /// Flag if extended mmap information (mmap2) should be included.
+    bool _is_include_extended_mmap_information{ false };
 
     /**
      * En- or disables a specific perf subsystem field for sampling.
@@ -694,6 +719,72 @@ public:
     std::string _name;
     std::optional<Precision> _precision{ std::nullopt };
     std::optional<PeriodOrFrequency> _period_or_frequency{ std::nullopt };
+  };
+
+  /**
+   * Represents a counter that is configured to sample;
+   * including the counter group (plus counter names) and the buffer
+   * user-level buffer that is used by the perf subsystem to store the samples.
+   */
+  class SampleCounter
+  {
+  public:
+    SampleCounter(Group&& group,
+                  const bool has_intel_auxiliary_counter,
+                  const bool has_amd_fetch_pmu_counter,
+                  const bool has_amd_op_pmu_counter)
+      : _group(std::move(group))
+      , _has_intel_auxiliary_event(has_intel_auxiliary_counter)
+      , _has_amd_ibs_fetch_pmu(has_amd_fetch_pmu_counter)
+      , _has_amd_ibs_op_pmu(has_amd_op_pmu_counter)
+    {
+    }
+    SampleCounter(Group&& group,
+                  RequestedEventSet&& requested_events,
+                  const bool has_auxiliary_counter,
+                  const bool has_amd_fetch_pmu_counter,
+                  const bool has_amd_op_pmu_counter)
+      : _group(std::move(group))
+      , _requested_events(std::move(requested_events))
+      , _has_intel_auxiliary_event(has_auxiliary_counter)
+      , _has_amd_ibs_fetch_pmu(has_amd_fetch_pmu_counter)
+      , _has_amd_ibs_op_pmu(has_amd_op_pmu_counter)
+    {
+    }
+    SampleCounter(SampleCounter&& other) noexcept = default;
+
+    ~SampleCounter();
+
+    [[nodiscard]] Group& group() noexcept { return _group; }
+    [[nodiscard]] const Group& group() const noexcept { return _group; }
+    [[nodiscard]] RequestedEventSet& requested_events() noexcept { return _requested_events; }
+    [[nodiscard]] const RequestedEventSet& requested_events() const noexcept { return _requested_events; }
+    [[nodiscard]] bool has_intel_auxiliary_event() const noexcept { return _has_intel_auxiliary_event; }
+    [[nodiscard]] bool has_amd_fetch_pmu_counter() const noexcept { return _has_amd_ibs_fetch_pmu; }
+    [[nodiscard]] bool has_amd_op_pmu_counter() const noexcept { return _has_amd_ibs_op_pmu; }
+
+    /**
+     * @return User-level buffer of the first counter (if not nullptr) or the second counter.
+     */
+    [[nodiscard]] std::vector<std::vector<std::byte>> consume_samples();
+
+  private:
+    /// Group including the leader that is responsible for sampling.
+    Group _group;
+
+    /// List of scheduled events if counter values are sampled.
+    RequestedEventSet _requested_events;
+
+    /// Indicates if this counter includes an auxiliary counter that is needed for some Intel architectures.
+    bool _has_intel_auxiliary_event{ false };
+
+    /// Indicates if the sampler uses the IbsFetch PMU by AMD's Instruction Based Sampling; this information is used for
+    /// parsing raw data.
+    bool _has_amd_ibs_fetch_pmu{ false };
+
+    /// Indicates if the sampler uses the IbsOp PMU by AMD's Instruction Based Sampling; this information is used for
+    /// parsing raw data.
+    bool _has_amd_ibs_op_pmu{ false };
   };
 
   explicit Sampler(const CounterDefinition& counter_list, SampleConfig config = {})
@@ -874,73 +965,14 @@ public:
    */
   [[nodiscard]] std::vector<Sample> result(bool sort_by_time = true);
 
-private:
   /**
-   * Represents a counter that is configured to sample;
-   * including the counter group (plus counter names) and the buffer
-   * user-level buffer that is used by the perf subsystem to store the samples.
+   * Writes the sampled result into a perf data file that can be read by the "perf report" subcommand.
+   *
+   * @param output_file_name Name of the perf data file.
    */
-  class SampleCounter
-  {
-  public:
-    SampleCounter(Group&& group,
-                  const bool has_intel_auxiliary_counter,
-                  const bool has_amd_fetch_pmu_counter,
-                  const bool has_amd_op_pmu_counter)
-      : _group(std::move(group))
-      , _has_intel_auxiliary_event(has_intel_auxiliary_counter)
-      , _has_amd_ibs_fetch_pmu(has_amd_fetch_pmu_counter)
-      , _has_amd_ibs_op_pmu(has_amd_op_pmu_counter)
-    {
-    }
-    SampleCounter(Group&& group,
-                  RequestedEventSet&& requested_events,
-                  const bool has_auxiliary_counter,
-                  const bool has_amd_fetch_pmu_counter,
-                  const bool has_amd_op_pmu_counter)
-      : _group(std::move(group))
-      , _requested_events(std::move(requested_events))
-      , _has_intel_auxiliary_event(has_auxiliary_counter)
-      , _has_amd_ibs_fetch_pmu(has_amd_fetch_pmu_counter)
-      , _has_amd_ibs_op_pmu(has_amd_op_pmu_counter)
-    {
-    }
-    SampleCounter(SampleCounter&& other) noexcept = default;
+  void to_perf_file(std::string_view output_file_name);
 
-    ~SampleCounter();
-
-    [[nodiscard]] Group& group() noexcept { return _group; }
-    [[nodiscard]] const Group& group() const noexcept { return _group; }
-    [[nodiscard]] RequestedEventSet& requested_events() noexcept { return _requested_events; }
-    [[nodiscard]] const RequestedEventSet& requested_events() const noexcept { return _requested_events; }
-    [[nodiscard]] bool has_intel_auxiliary_event() const noexcept { return _has_intel_auxiliary_event; }
-    [[nodiscard]] bool has_amd_fetch_pmu_counter() const noexcept { return _has_amd_ibs_fetch_pmu; }
-    [[nodiscard]] bool has_amd_op_pmu_counter() const noexcept { return _has_amd_ibs_op_pmu; }
-
-    /**
-     * @return User-level buffer of the first counter (if not nullptr) or the second counter.
-     */
-    [[nodiscard]] std::vector<std::vector<std::byte>> consume_samples();
-
-  private:
-    /// Group including the leader that is responsible for sampling.
-    Group _group;
-
-    /// List of scheduled events if counter values are sampled.
-    RequestedEventSet _requested_events;
-
-    /// Indicates if this counter includes an auxiliary counter that is needed for some Intel architectures.
-    bool _has_intel_auxiliary_event{ false };
-
-    /// Indicates if the sampler uses the IbsFetch PMU by AMD's Instruction Based Sampling; this information is used for
-    /// parsing raw data.
-    bool _has_amd_ibs_fetch_pmu{ false };
-
-    /// Indicates if the sampler uses the IbsOp PMU by AMD's Instruction Based Sampling; this information is used for
-    /// parsing raw data.
-    bool _has_amd_ibs_op_pmu{ false };
-  };
-
+private:
   /**
    * Transforms a list of trigger events into a single SampleCounter that includes a group of hardware events.
    *
@@ -980,6 +1012,12 @@ private:
     const std::vector<std::tuple<std::string_view, std::optional<Precision>, std::optional<PeriodOrFrequency>>>&
       trigger_group) const;
 
+  /**
+   * Consumes the sample data from the sample counters. This will only happen once; the sample data is reset when
+   * starting the sampler (again).
+   */
+  void consume_sample_data();
+
   const CounterDefinition& _counter_definitions;
 
   /// List of triggers. Each trigger will open an individual group of counters.
@@ -1001,6 +1039,10 @@ private:
   /// This enables the user to open the sampler specifically – or open the
   /// sampler when starting.
   bool _is_opened{ false };
+
+  /// Sample data per sample counter consumed from mmaped buffers. The data will be reset when starting the sampler and
+  /// consumed when needing the data the first time (e.g., when calculating the result).
+  std::vector<std::vector<std::vector<std::byte>>> _sample_data;
 };
 
 /**

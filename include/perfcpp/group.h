@@ -119,6 +119,8 @@ public:
    * @param max_user_stack_size Maximal size of sampled uer stack, std::nullopt of sampling is disabled.
    * @param max_callstack_size Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
    * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
+   * @param is_include_extended_mmap_information True, if extended mmap information should be included, ignored if
+   * sampling is disabled.
    */
   void open(const Config& config,
             bool has_auxiliary_event,
@@ -129,7 +131,8 @@ public:
             std::optional<std::uint64_t> kernel_registers,
             std::optional<std::uint32_t> max_user_stack_size,
             std::optional<std::uint16_t> max_callstack_size,
-            bool is_include_context_switch);
+            bool is_include_context_switch,
+            bool is_include_extended_mmap_information);
 
   /**
    * Closes all counters of the group.
