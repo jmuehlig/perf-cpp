@@ -149,6 +149,7 @@ cmake --build build --target examples
 - **Recording Samples**
     - [**Basics**](docs/sampling.md): Understand sampling mechanisms, which data to record, and how to access the results.
     - [**Parallel and Multithreaded**](docs/sampling-parallel.md): Learn how to record samples in multithreaded workloads.
+    - [**Use the Linux Perf Tool to Analyze Recorded Samples**](docs/analyzing-samples-with-perf-report.md): See how samples recorded via *perf-cpp* can be analyzed with `perf [mem] report`.
     - [**Translating Instruction Pointers into Symbols and Samples into flame graphs**](docs/sampling-symbols-and-flamegraphs.md): See how to translate instruction pointers into function names and prepare sampling results to transform them into flame graphs (e.g., using [FlameGraph](https://github.com/brendangregg/FlameGraph)).
     - [**Analyzing Memory Access Patterns**](docs/analyzing-memory-access-patterns.md): See how to link memory sampling data to specific data objects to profile detailed memory access characteristics.
 - [**Built-in and Hardware-specific Events**](docs/counters.md): Discover built-in events and learn how to define new ones tailored to your hardware.
