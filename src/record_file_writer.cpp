@@ -42,9 +42,9 @@ perf::RecordFileWriter::write(const Sampler::Values& sampler_values,
     std::any_of(modules.begin(), modules.end(), [](const auto& module) { return !module.build_id().empty(); });
 
   /// Write MMAP2 and COMM records to dedicated buffers.
-  const auto mmap2_samples = RecordFileWriter::generate_module_records(
+  auto mmap2_samples = RecordFileWriter::generate_module_records(
     std::move(modules), process_id, thread_id, timestamp, sample_id, stream_id, cpu_id);
-  const auto comm_sample =
+  auto comm_sample =
     RecordFileWriter::generate_comm_records(process_id, thread_id, timestamp, sample_id, stream_id, cpu_id);
 
   /// Get modules with build IDs and memory mappings.
@@ -52,20 +52,19 @@ perf::RecordFileWriter::write(const Sampler::Values& sampler_values,
   header.size = sizeof(FileHeader);
 
   /// Attributes section comes first after header and includes all attributes of all counters.
-  header.attrs.offset = sizeof(FileHeader);
-  header.attrs.size = sizeof(AttributeFileSection) * sample_counters.size();
+  header.attributes.offset = sizeof(FileHeader);
+  header.attributes.size = sizeof(AttributeFileSection) * sample_counters.size();
 
   /// Data section comes after attributes.
-  header.data.offset = header.attrs.offset + header.attrs.size;
+  header.data.offset = header.attributes.offset + header.attributes.size;
   header.data.size = sample_size + mmap2_samples.size() + comm_sample.size();
-  ;
 
   /// Event types section (size is empty by default).
   header.event_types.offset = header.data.offset + header.data.size;
 
   /// Set feature bits for build ID.
   if (has_build_id) {
-    RecordFileWriter::set_feature_bit(header.adds_features, HEADER_BUILD_ID);
+    RecordFileWriter::set_feature_bit(header.features, HEADER_BUILD_ID);
   }
 
   /// Write the header.
@@ -129,18 +128,16 @@ perf::RecordFileWriter::generate_build_ids_records(const std::vector<SymbolResol
 
       /// Write the build ID (padded to 24 bytes as per perf format).
       const auto copy_size = std::min<std::size_t>(module.build_id().size(), BUILD_ID_PADDED_SIZE);
-      auto build_id_padded = std::vector<std::uint8_t>(BUILD_ID_PADDED_SIZE);
-      std::copy_n(module.build_id().begin(), copy_size, build_id_padded.begin());
+      auto build_id_padded = std::vector<std::uint8_t>(module.build_id().begin(), module.build_id().begin() + static_cast<std::int32_t>(copy_size));
+      build_id_padded.resize(BUILD_ID_PADDED_SIZE);
       output_stream << std::move(build_id_padded);
 
       /// Write the filename with padding.
       output_stream << module.path() << '\0';
 
       /// Add padding to align to PERF_FILE_ALIGNMENT bytes.
-      if (const auto filename_padding = aligned_filename_length - filename_length; filename_padding > 0U) {
-        for (auto i = 0U; i < filename_padding; ++i) {
-          output_stream << static_cast<char>(0);
-        }
+      if (const auto padding = aligned_filename_length - filename_length; padding > 0U) {
+        output_stream << std::string(padding, '\0');
       }
     }
   }
@@ -221,9 +218,7 @@ perf::RecordFileWriter::generate_module_records(std::vector<SymbolResolver::Modu
 
     /// Add padding to align to 8 bytes.
     if (const auto padding = aligned_filename_length - filename_length; padding > 0U) {
-      for (auto i = 0U; i < padding; ++i) {
-        output_stream << static_cast<char>(0);
-      }
+      output_stream << std::string(padding, '\0');
     }
 
     /// Write sample_id values.
@@ -244,9 +239,11 @@ perf::RecordFileWriter::generate_comm_records(const std::optional<std::uint32_t>
   auto output_stream = BinaryStream<std::ostringstream>{};
 
   /// Create COMM record for process name
-  auto comm_name = std::string{ "unknown" };
+  std::string comm_name;
   if (auto process_name = SymbolResolver::read_process_name(); process_name.has_value()) {
     comm_name = std::move(process_name.value());
+  } else {
+    comm_name = "unknown";
   }
 
   const auto comm_length = comm_name.length() + /* null terminator */ 1U;
@@ -272,9 +269,7 @@ perf::RecordFileWriter::generate_comm_records(const std::optional<std::uint32_t>
 
   /// Add padding to align to 8 bytes
   if (const auto padding = aligned_comm_length - comm_length; padding > 0U) {
-    for (auto i = 0U; i < padding; ++i) {
-      output_stream << static_cast<char>(0);
-    }
+    output_stream << std::string(padding, '\0');
   }
 
   /// Write sample_id field.

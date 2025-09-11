@@ -364,19 +364,19 @@ perf::Sampler::result(const bool sort_by_time)
   auto result = std::vector<Sample>{};
 
   /// Consume the sample data, when not already consumed.
-  this->consume_sample_data();
+  const auto& sample_data = this->consume_sample_data();
 
-  if (this->_sample_counter.size() != this->_sample_data.size()) {
+  if (this->_sample_counter.size() != sample_data.size()) {
     return result;
   }
 
   auto sample_decoder = SampleDecoder{ this->_counter_definitions, this->_values };
   for (auto sample_counter_id = 0U; sample_counter_id < this->_sample_counter.size(); ++sample_counter_id) {
     const auto& sample_counter = this->_sample_counter[sample_counter_id];
-    const auto& sample_data = this->_sample_data[sample_counter_id];
+    const auto& counter_sample_data = this->_sample_data[sample_counter_id];
 
     /// Decode all samples from the buffers.
-    auto samples = sample_decoder.decode(sample_data,
+    auto samples = sample_decoder.decode(counter_sample_data,
                                          sample_counter.has_amd_op_pmu_counter(),
                                          sample_counter.has_amd_fetch_pmu_counter(),
                                          sample_counter.requested_events(),
@@ -397,13 +397,10 @@ perf::Sampler::result(const bool sort_by_time)
 void
 perf::Sampler::to_perf_file(const std::string_view output_file_name)
 {
-  /// Consume the sample data, when not already consumed.
-  this->consume_sample_data();
-
-  RecordFileWriter::write(this->_values, this->_sample_counter, this->_sample_data, output_file_name);
+  RecordFileWriter::write(this->_values, this->_sample_counter, this->consume_sample_data(), output_file_name);
 }
 
-void
+std::vector<std::vector<std::vector<std::byte>>>&
 perf::Sampler::consume_sample_data()
 {
   /// Check if the sample data is not yet consumed (i.e., we store a vector of data equal to the size of the sample
@@ -414,6 +411,8 @@ perf::Sampler::consume_sample_data()
       this->_sample_data.push_back(sample_counter.consume_samples());
     }
   }
+
+  return this->_sample_data;
 }
 
 std::vector<std::vector<std::byte>>
@@ -460,6 +459,34 @@ perf::MultiSamplerBase::result(std::vector<Sampler>& samplers, const bool is_sor
 
   return std::vector<perf::Sample>{};
 }
+
+void
+perf::MultiSamplerBase::to_perf_file(std::vector<Sampler>& samplers, std::string_view output_file_name)
+{
+  if (!samplers.empty()) {
+    /// Since we cannot modify any samplers data, we copy every sample into a new set.
+    auto accumulated_sample_data = samplers.front().consume_sample_data();
+
+    /// Merge the data from all samplers (the result of the first sampler is the start point).
+    for (auto i = 1U; i < samplers.size(); ++i) {
+      const auto &sample_data = samplers[i].consume_sample_data();
+
+      /// Verify that both samples contain the same number of counters.
+      if (accumulated_sample_data.size() == sample_data.size()) {
+        for (auto counter_id = 0U; counter_id < sample_data.size(); ++counter_id) {
+          const auto& counter_sample_data = sample_data[counter_id];
+
+          /// Append the data for every counter as different counters will have different sample data.
+          accumulated_sample_data[counter_id].insert(accumulated_sample_data[counter_id].end(), counter_sample_data.begin(), counter_sample_data.end());
+        }
+      }
+    }
+
+    /// Write the result using the first sampler as a template.
+    RecordFileWriter::write(samplers.front()._values, samplers.front()._sample_counter, accumulated_sample_data, output_file_name);
+  }
+}
+
 
 void
 perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std::vector<std::string>>&& trigger_names)

@@ -1015,8 +1015,10 @@ private:
   /**
    * Consumes the sample data from the sample counters. This will only happen once; the sample data is reset when
    * starting the sampler (again).
+   *
+   * @return Reference of the consumed sample data (either consumed now or by an ealier call).
    */
-  void consume_sample_data();
+  std::vector<std::vector<std::vector<std::byte>>>& consume_sample_data();
 
   const CounterDefinition& _counter_definitions;
 
@@ -1083,6 +1085,13 @@ public:
    */
   [[nodiscard]] std::vector<Sample> result(const bool sort_by_time = true) { return result(samplers(), sort_by_time); }
 
+  /**
+   * Writes the sampled result into a perf data file that can be read by the "perf report" subcommand.
+   *
+   * @param output_file_name Name of the perf data file.
+   */
+  void to_perf_file(std::string_view output_file_name) { to_perf_file(samplers(), output_file_name); }
+
 protected:
   explicit MultiSamplerBase(SampleConfig config)
     : _config(config)
@@ -1102,12 +1111,20 @@ protected:
   /**
    * Creates a single result from multiple samplers.
    *
-   * @param sampler List of samplers.
+   * @param samplers List of samplers.
    * @param is_sort_by_time Flag to sort the result by timestamp attribute (if sampled).
    *
    * @return Single list of results from all incoming samplers.
    */
-  [[nodiscard]] static std::vector<Sample> result(std::vector<Sampler>& sampler, bool is_sort_by_time);
+  [[nodiscard]] static std::vector<Sample> result(std::vector<Sampler>& samplers, bool is_sort_by_time);
+
+  /**
+   * Writes the sampled result into a perf data file that can be read by the "perf report" subcommand.
+   *
+   * @param samplers List of samplers.
+   * @param output_file_name Name of the perf data file.
+   */
+  static void to_perf_file(std::vector<Sampler>& samplers, std::string_view output_file_name);
 
   /**
    * Initializes the given trigger(s) for the given list of samplers.

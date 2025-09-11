@@ -24,8 +24,8 @@ main()
   }
 
   /// Setup which data will be included into samples (timestamp, virtual memory address, data source like L1d or RAM,
-  /// and latency).
-  sampler.values().timestamp(true).logical_memory_address(true).data_source(true).latency(true).instruction_pointer(true).thread_id(true);
+  /// latency, instruction address, thread id, and the callstack).
+  sampler.values().timestamp(true).logical_memory_address(true).data_source(true).latency(true).instruction_pointer(true).thread_id(true).callchain(true);
 
   /// Start sampling.
   try {

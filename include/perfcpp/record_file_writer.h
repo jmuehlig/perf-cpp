@@ -60,13 +60,13 @@ private:
    */
   struct FileHeader
   {
-    std::uint64_t magic = MAGIC;
+    std::uint64_t magic { MAGIC };
     std::uint64_t size{ 0U };
-    std::uint64_t attr_size = sizeof(perf_event_attr) + sizeof(FileSection);
-    FileSection attrs;
+    std::uint64_t attribute_size { sizeof(perf_event_attr) + sizeof(FileSection) };
+    FileSection attributes;
     FileSection data;
     FileSection event_types;
-    std::array<std::uint64_t, FEATURE_BITMAP_SIZE> adds_features = {};
+    std::array<std::uint64_t, FEATURE_BITMAP_SIZE> features {};
   };
 
   /**
