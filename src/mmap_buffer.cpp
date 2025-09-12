@@ -169,7 +169,7 @@ perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
       /// Adjust the value for the given width.
       value = (value << width) >> width;
 
-      count += value;
+      count += static_cast<std::int64_t>(value);
     } else {
       return std::nullopt;
     }

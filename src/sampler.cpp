@@ -245,8 +245,8 @@ perf::Sampler::transform_trigger_to_sample_counter(
         /// Add the event to the requested event set.
         /// If the request returns true, the event as indeed added and needs to be added to the group.
         /// The group id provided to the event set is 0 since there is only one group.
-        const auto is_added = requested_events.add(
-          RequestedEvent{ pmu_name, std::get<1>(event_config.value()), /* group_id */ 0U, std::uint8_t(group.size()) });
+        const auto is_added = requested_events.add(RequestedEvent{
+          pmu_name, std::get<1>(event_config.value()), /* group_id */ 0U, static_cast<std::uint8_t>(group.size()) });
         if (is_added) {
           group.add(std::get<2>(event_config.value()));
         }
@@ -296,8 +296,10 @@ perf::Sampler::add(const std::pair<std::string_view, Metric&> metric,
       /// Add the event to the requested event set.
       /// If the request returns true, the event is indeed added and needs to be added to the group.
       /// The group id provided to the event set is 0 since there is only one group.
-      const auto is_added = requested_event_set.add(RequestedEvent{
-        pmu_name, std::get<1>(depending_event_config.value()), /* group_id */ 0U, std::uint8_t(group.size()) });
+      const auto is_added = requested_event_set.add(RequestedEvent{ pmu_name,
+                                                                    std::get<1>(depending_event_config.value()),
+                                                                    /* group_id */ 0U,
+                                                                    static_cast<std::uint8_t>(group.size()) });
       if (is_added) {
         group.add(std::get<2>(depending_event_config.value()));
       }
@@ -332,10 +334,11 @@ perf::Sampler::is_auxiliary_event_needed_and_already_included(
         for (const auto& trigger : trigger_group) {
           if (auto trigger_event = this->_counter_definitions.counter(pmu_name, std::get<0>(trigger));
               trigger_event.has_value()) {
-            const auto is_mem_loads_event = std::get<2>(trigger_event.value()) == std::get<2>(mem_loads_event.value());
 
             /// If there is a mem-loads event we need the auxiliary event.
-            if (is_mem_loads_event) {
+            if (const auto is_mem_loads_event =
+                  std::get<2>(trigger_event.value()) == std::get<2>(mem_loads_event.value());
+                is_mem_loads_event) {
 
               /// Check if the first event in the group is already the mem-loads-aux event.
               if (const auto leading_trigger_event =
@@ -373,7 +376,7 @@ perf::Sampler::result(const bool sort_by_time)
   auto sample_decoder = SampleDecoder{ this->_counter_definitions, this->_values };
   for (auto sample_counter_id = 0U; sample_counter_id < this->_sample_counter.size(); ++sample_counter_id) {
     const auto& sample_counter = this->_sample_counter[sample_counter_id];
-    const auto& counter_sample_data = this->_sample_data[sample_counter_id];
+    const auto& counter_sample_data = sample_data[sample_counter_id];
 
     /// Decode all samples from the buffers.
     auto samples = sample_decoder.decode(counter_sample_data,
@@ -422,8 +425,8 @@ perf::Sampler::SampleCounter::consume_samples()
   /// architectures, an auxiliary event is needed before the "real" event – the "real" event controlling the
   /// buffer is the second one.
   const auto event_index = 0U + static_cast<std::uint8_t>(this->_has_intel_auxiliary_event);
-  auto& members = this->group().members();
-  if (members.size() > event_index && members[event_index].mmap_buffer() != nullptr) {
+  if (auto& members = this->group().members();
+      members.size() > event_index && members[event_index].mmap_buffer() != nullptr) {
     return members[event_index].mmap_buffer()->consume_data();
   }
 
@@ -469,7 +472,7 @@ perf::MultiSamplerBase::to_perf_file(std::vector<Sampler>& samplers, std::string
 
     /// Merge the data from all samplers (the result of the first sampler is the start point).
     for (auto i = 1U; i < samplers.size(); ++i) {
-      const auto &sample_data = samplers[i].consume_sample_data();
+      const auto& sample_data = samplers[i].consume_sample_data();
 
       /// Verify that both samples contain the same number of counters.
       if (accumulated_sample_data.size() == sample_data.size()) {
@@ -477,16 +480,17 @@ perf::MultiSamplerBase::to_perf_file(std::vector<Sampler>& samplers, std::string
           const auto& counter_sample_data = sample_data[counter_id];
 
           /// Append the data for every counter as different counters will have different sample data.
-          accumulated_sample_data[counter_id].insert(accumulated_sample_data[counter_id].end(), counter_sample_data.begin(), counter_sample_data.end());
+          accumulated_sample_data[counter_id].insert(
+            accumulated_sample_data[counter_id].end(), counter_sample_data.begin(), counter_sample_data.end());
         }
       }
     }
 
     /// Write the result using the first sampler as a template.
-    RecordFileWriter::write(samplers.front()._values, samplers.front()._sample_counter, accumulated_sample_data, output_file_name);
+    RecordFileWriter::write(
+      samplers.front()._values, samplers.front()._sample_counter, accumulated_sample_data, output_file_name);
   }
 }
-
 
 void
 perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std::vector<std::string>>&& trigger_names)
@@ -513,7 +517,7 @@ perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std:
 }
 
 void
-perf::MultiSamplerBase::open(perf::Sampler& sampler, const perf::SampleConfig config)
+perf::MultiSamplerBase::open(perf::Sampler& sampler, const perf::SampleConfig config) const
 {
   sampler._values = _values;
   sampler._config = config;
@@ -522,7 +526,7 @@ perf::MultiSamplerBase::open(perf::Sampler& sampler, const perf::SampleConfig co
 }
 
 void
-perf::MultiSamplerBase::start(perf::Sampler& sampler, const perf::SampleConfig config)
+perf::MultiSamplerBase::start(perf::Sampler& sampler, const perf::SampleConfig config) const
 {
   sampler._values = _values;
   sampler._config = config;

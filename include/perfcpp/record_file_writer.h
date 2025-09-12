@@ -60,13 +60,13 @@ private:
    */
   struct FileHeader
   {
-    std::uint64_t magic { MAGIC };
+    std::uint64_t magic{ MAGIC };
     std::uint64_t size{ 0U };
-    std::uint64_t attribute_size { sizeof(perf_event_attr) + sizeof(FileSection) };
+    std::uint64_t attribute_size{ sizeof(perf_event_attr) + sizeof(FileSection) };
     FileSection attributes;
     FileSection data;
     FileSection event_types;
-    std::array<std::uint64_t, FEATURE_BITMAP_SIZE> features {};
+    std::array<std::uint64_t, FEATURE_BITMAP_SIZE> features{};
   };
 
   /**
@@ -214,7 +214,7 @@ private:
    * @param modules List of modules with build IDs.
    * @return Written build ids.
    */
-  static std::string generate_build_ids_records(const std::vector<SymbolResolver::Module>& modules);
+  static std::optional<std::string> generate_build_ids_records(const std::vector<SymbolResolver::Module>& modules);
 
   /**
    * Writes MMAP records for process memory mappings.
@@ -229,12 +229,12 @@ private:
    * @return Modules written as MMAP2 records.
    */
   [[nodiscard]] static std::string generate_module_records(std::vector<SymbolResolver::Module>&& modules,
-                                                                     std::optional<std::uint32_t> process_id,
-                                                                     std::optional<std::uint32_t> thread_id,
-                                                                     std::optional<std::uint64_t> timestamp,
-                                                                     std::optional<std::uint64_t> sample_id,
-                                                                     std::optional<std::uint64_t> stream_id,
-                                                                     std::optional<std::uint32_t> cpu_id);
+                                                           std::optional<std::uint32_t> process_id,
+                                                           std::optional<std::uint32_t> thread_id,
+                                                           std::optional<std::uint64_t> timestamp,
+                                                           std::optional<std::uint64_t> sample_id,
+                                                           std::optional<std::uint64_t> stream_id,
+                                                           std::optional<std::uint32_t> cpu_id);
 
   /**
    * Writes COMM records for process name identification.

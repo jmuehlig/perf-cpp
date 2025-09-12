@@ -205,14 +205,15 @@ perf::analyzer::MemoryAccessResult::to_string() const
 
       category_headers.emplace_back("", 1U, true);
       category_headers.emplace_back(
-        "latency", std::uint8_t(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())), true);
+        "latency", static_cast<std::uint8_t>(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())), true);
       category_headers.emplace_back(
-        "cache hits", std::uint8_t(3U + static_cast<std::uint8_t>(HardwareInfo::is_intel())), true);
+        "cache hits", static_cast<std::uint8_t>(3U + static_cast<std::uint8_t>(HardwareInfo::is_intel())), true);
       category_headers.emplace_back("RAM hits", 2U, true);
       if (HardwareInfo::is_amd()) {
         category_headers.emplace_back("MAB", 2U, true);
       }
-      category_headers.emplace_back("TLB", std::uint8_t(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())), true);
+      category_headers.emplace_back(
+        "TLB", static_cast<std::uint8_t>(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())), true);
 
       row_headers.emplace_back("count");
       row_headers.emplace_back("cache");
@@ -256,12 +257,13 @@ perf::analyzer::MemoryAccessResult::to_string() const
       category_headers.emplace_back("", 1U, true);
       category_headers.emplace_back("latency", 2U, true);
       category_headers.emplace_back(
-        "cache hits", std::uint8_t(3U + static_cast<std::uint8_t>(HardwareInfo::is_intel())), true);
+        "cache hits", static_cast<std::uint8_t>(3U + static_cast<std::uint8_t>(HardwareInfo::is_intel())), true);
       category_headers.emplace_back("RAM hits", 2U, true);
       if (HardwareInfo::is_amd()) {
         category_headers.emplace_back("MAB", 2U, true);
       }
-      category_headers.emplace_back("TLB", std::uint8_t(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())), true);
+      category_headers.emplace_back(
+        "TLB", static_cast<std::uint8_t>(2U + static_cast<std::uint8_t>(HardwareInfo::is_amd())), true);
 
       row_headers.emplace_back("count");
       if (HardwareInfo::is_amd()) {

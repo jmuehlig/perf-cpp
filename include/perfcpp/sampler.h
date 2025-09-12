@@ -1147,7 +1147,7 @@ protected:
    *
    * @param sampler Sampler to open.
    */
-  void open(Sampler& sampler) { open(sampler, _config); }
+  void open(Sampler& sampler) const { open(sampler, _config); }
 
   /**
    * Initializes the given sampler with values and config.
@@ -1155,7 +1155,7 @@ protected:
    * @param sampler Sampler to open.
    * @param config Config for that sampler.
    */
-  void open(Sampler& sampler, SampleConfig config);
+  void open(Sampler& sampler, SampleConfig config) const;
 
   /**
    * Initializes the given sampler with values and config.
@@ -1163,7 +1163,7 @@ protected:
    *
    * @param sampler Sampler to start.
    */
-  void start(Sampler& sampler) { start(sampler, _config); }
+  void start(Sampler& sampler) const { start(sampler, _config); }
 
   /**
    * Initializes the given sampler with values and config.
@@ -1172,7 +1172,7 @@ protected:
    * @param sampler Sampler to start.
    * @param config Config for that sampler.
    */
-  void start(Sampler& sampler, SampleConfig config);
+  void start(Sampler& sampler, SampleConfig config) const;
 
   /// Values to record into every sample.
   Sampler::Values _values;

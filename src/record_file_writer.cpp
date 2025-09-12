@@ -38,8 +38,11 @@ perf::RecordFileWriter::write(const Sampler::Values& sampler_values,
   auto modules = SymbolResolver::read_modules();
 
   /// Test if any module has a build id. If so, we will enable the appropriate feature in the perf data.
-  const auto has_build_id =
-    std::any_of(modules.begin(), modules.end(), [](const auto& module) { return !module.build_id().empty(); });
+  auto build_ids = std::optional<std::string>{};
+  if (std::any_of(modules.begin(), modules.end(), [](const auto& module) { return !module.build_id().empty(); })) {
+    /// Generate the modules build ids.
+    build_ids = RecordFileWriter::generate_build_ids_records(modules);
+  }
 
   /// Write MMAP2 and COMM records to dedicated buffers.
   auto mmap2_samples = RecordFileWriter::generate_module_records(
@@ -63,7 +66,7 @@ perf::RecordFileWriter::write(const Sampler::Values& sampler_values,
   header.event_types.offset = header.data.offset + header.data.size;
 
   /// Set feature bits for build ID.
-  if (has_build_id) {
+  if (build_ids.has_value()) {
     RecordFileWriter::set_feature_bit(header.features, HEADER_BUILD_ID);
   }
 
@@ -92,23 +95,24 @@ perf::RecordFileWriter::write(const Sampler::Values& sampler_values,
   }
 
   /// Write feature sections, if we have any.
-  if (has_build_id) {
-    /// Generate the modules build ids.
-    auto build_ids = RecordFileWriter::generate_build_ids_records(modules);
-
+  if (build_ids.has_value()) {
     /// Write the BUILD_ID feature section header; the offset points to the position after the section.
     auto build_id_section = FileSection{};
-    build_id_section.size = build_ids.size();
+    build_id_section.size = build_ids->size();
     build_id_section.offset = static_cast<std::uint64_t>(output_stream.position()) + sizeof(FileSection);
 
     /// Write section and build id data.
-    output_stream << build_id_section << std::move(build_ids);
+    output_stream << build_id_section << std::move(build_ids.value());
   }
 }
 
-std::string
+std::optional<std::string>
 perf::RecordFileWriter::generate_build_ids_records(const std::vector<SymbolResolver::Module>& modules)
 {
+  if (modules.empty()) {
+    return std::nullopt;
+  }
+
   auto output_stream = BinaryStream{ std::ostringstream{ std::ios::binary } };
 
   for (const auto& module : modules) {
@@ -128,7 +132,8 @@ perf::RecordFileWriter::generate_build_ids_records(const std::vector<SymbolResol
 
       /// Write the build ID (padded to 24 bytes as per perf format).
       const auto copy_size = std::min<std::size_t>(module.build_id().size(), BUILD_ID_PADDED_SIZE);
-      auto build_id_padded = std::vector<std::uint8_t>(module.build_id().begin(), module.build_id().begin() + static_cast<std::int32_t>(copy_size));
+      auto build_id_padded = std::vector<std::uint8_t>(
+        module.build_id().begin(), module.build_id().begin() + static_cast<std::int32_t>(copy_size));
       build_id_padded.resize(BUILD_ID_PADDED_SIZE);
       output_stream << std::move(build_id_padded);
 
