@@ -534,8 +534,8 @@ perf::SampleDecoder::decode_data_access_snoop(const std::uint64_t snoop_code,
     if (snoopx_code > 0) {
 #ifndef PERFCPP_NO_MEM_SNOOPX_PEER /// Snoopx Peer was introduced in Linux 6.1.0
       snoop.is_forward(snoopx_code & PERF_MEM_SNOOPX_PEER);
-#endif
       snoop.is_transfer_from_peer(snoopx_code & PERF_MEM_SNOOPX_PEER);
+#endif
     }
 #endif
 
