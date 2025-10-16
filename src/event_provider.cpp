@@ -11,7 +11,6 @@
 #include <regex>
 #include <sstream>
 #include <cctype>
-#include <algorithm>
 
 void
 perf::PerfSubsystemEventProvider::add_events(perf::CounterDefinition& counter_definition)
