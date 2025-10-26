@@ -10,6 +10,7 @@
 #include <perfcpp/time_event.h>
 #include <regex>
 #include <sstream>
+#include <cctype>
 
 void
 perf::PerfSubsystemEventProvider::add_events(perf::CounterDefinition& counter_definition)
@@ -331,18 +332,21 @@ perf::SystemSpecificEventProvider::parse_event_file_descriptor_format(std::files
 std::optional<std::uint64_t>
 perf::SystemSpecificEventProvider::parse_integer(const std::string& value)
 {
-  if (value.empty()) {
+  std::string copied_str = value;
+  copied_str.erase(std::remove_if(copied_str.begin(), copied_str.end(), [](unsigned char c){return std::isspace(c);}), copied_str.end());
+
+  if (copied_str.empty()) {
     return std::nullopt;
   }
 
   /// Strings starting with '0x' are considered hex numbers.
-  if (value.rfind("0x", 0ULL) == 0ULL) {
-    return std::stoull(value.substr(2ULL), nullptr, 16);
+  if (copied_str.rfind("0x", 0ULL) == 0ULL) {
+    return std::stoull(copied_str.substr(2ULL), nullptr, 16);
   }
 
   /// Strings containing digits are considered dec numbers.
-  if (std::all_of(value.begin(), value.end(), [](const auto c) { return std::isdigit(c); })) {
-    return std::stoull(value, nullptr, 0);
+  if (std::all_of(copied_str.begin(), copied_str.end(), [](const auto c) { return std::isdigit(c); })) {
+    return std::stoull(copied_str, nullptr, 0);
   }
 
   return std::nullopt;
@@ -482,7 +486,7 @@ perf::CsvFileEventProvider::add_events(perf::CounterDefinition& counter_definiti
       auto line_stream = std::istringstream{ line };
 
       std::string name;
-
+      
       /// Read name.
       if (std::getline(line_stream, name, ','); !name.empty()) {
 
