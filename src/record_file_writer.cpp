@@ -75,7 +75,8 @@ perf::RecordFileWriter::write(const Sampler::Values& sampler_values,
 
   /// Write attributes with proper file structure.
   for (const auto& counter : sample_counters) {
-    const auto& perf_event_attribute = counter.group().member(0U).perf_event_attribute();
+    const auto event_index = 0U + static_cast<std::uint8_t>(counter.has_intel_auxiliary_event());
+    const auto& perf_event_attribute = counter.group().member(event_index).perf_event_attribute();
 
     /// Create attribute file section (offset and size are empty by default).
     auto attribute_section = AttributeFileSection{};

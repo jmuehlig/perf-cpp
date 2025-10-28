@@ -11,6 +11,10 @@ This gives you the best of both worlds:
 
 &rarr; [For a practical implementation, check out our perf data export example.](../examples/sampling/perf_record.cpp)
 
+> [!IMPORTANT]
+> This feature is considered as being **experimental**.
+
+
 ---
 ## Table of Contents
 - [Overview](#overview)

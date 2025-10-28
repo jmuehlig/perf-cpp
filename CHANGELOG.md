@@ -3,7 +3,10 @@
 ## v0.12.4
 This update enables exporting sampled data to the standard perf format for analysis with existing tools.
 
-- **Perf Data Export**: Samples can now be written as *perf data files* using `Sampler::to_perf_file()`, enabling analysis with standard perf ecosystem tools like perf report (see the [documentation](docs/analyzing-samples-with-perf-report.md)).
+- **Bugfix**: The library crashed when events loaded from an external CSV file contained empty spaces (see [#8](https://github.com/jmuehlig/perf-cpp/issues/8)). Thanks to [@Liteom](https://github.com/Liteom).
+- **Bugfix**: The library could not compile for specific Linux kernels not providing `PERF_MEM_LVLNUM_UNC` and `PERF_MEM_SNOOPX_PEER` (see [#7](https://github.com/jmuehlig/perf-cpp/issues/7)). Thanks to [@Raphalex46](https://github.com/Raphalex46) for pointing out. 
+- **Perf Data Export**: Samples can now be written as *perf data files* using `Sampler::to_perf_file()`, enabling analysis with standard perf ecosystem tools like perf report (see the [documentation](docs/analyzing-samples-with-perf-report.md)). **Note that this feature is experimental.**
+
 
 ## v0.12.3
 This update simplifies the handling of counter definitions by introducing a default instance.

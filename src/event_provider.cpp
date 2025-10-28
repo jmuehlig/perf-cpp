@@ -332,21 +332,25 @@ perf::SystemSpecificEventProvider::parse_event_file_descriptor_format(std::files
 std::optional<std::uint64_t>
 perf::SystemSpecificEventProvider::parse_integer(const std::string& value)
 {
-  std::string copied_str = value;
-  copied_str.erase(std::remove_if(copied_str.begin(), copied_str.end(), [](unsigned char c){return std::isspace(c);}), copied_str.end());
-
-  if (copied_str.empty()) {
+  if (value.empty()) {
     return std::nullopt;
   }
 
+  /// Remove all whitespaces if the value has at least one.
+  if (value.find_first_of(' ') != std::string::npos) {
+    auto value_without_leading_whitespace = value;
+    value_without_leading_whitespace.erase(std::remove_if(value_without_leading_whitespace.begin(), value_without_leading_whitespace.end(), ::isspace), value_without_leading_whitespace.end());
+    return SystemSpecificEventProvider::parse_integer(value_without_leading_whitespace);
+  }
+
   /// Strings starting with '0x' are considered hex numbers.
-  if (copied_str.rfind("0x", 0ULL) == 0ULL) {
-    return std::stoull(copied_str.substr(2ULL), nullptr, 16);
+  if (value.rfind("0x", 0ULL) == 0ULL) {
+    return std::stoull(value.substr(2ULL), nullptr, 16);
   }
 
   /// Strings containing digits are considered dec numbers.
-  if (std::all_of(copied_str.begin(), copied_str.end(), [](const auto c) { return std::isdigit(c); })) {
-    return std::stoull(copied_str, nullptr, 0);
+  if (std::all_of(value.begin(), value.end(), [](const auto c) { return std::isdigit(c); })) {
+    return std::stoull(value, nullptr, 0);
   }
 
   return std::nullopt;
