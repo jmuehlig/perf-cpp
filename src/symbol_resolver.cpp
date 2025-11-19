@@ -274,3 +274,24 @@ perf::SymbolResolver::extract_build_id(const std::string& path) noexcept
 
   return build_id;
 }
+
+perf::CachedSymbolResolver::CachedSymbolResolver()
+{
+  this->_resolved_symbols.reserve(1ULL << 11);
+}
+
+std::optional<perf::SymbolResolver::ResolvedSymbol>
+perf::CachedSymbolResolver::resolve(const std::uintptr_t logical_instruction_pointer)
+{
+  auto iterator = this->_resolved_symbols.find(logical_instruction_pointer);
+  if (iterator == this->_resolved_symbols.end()) {
+    if (const auto symbol = this->_symbol_resolver.resolve(logical_instruction_pointer); symbol != std::nullopt) {
+      std::tie(iterator, std::ignore) = this->_resolved_symbols.insert(std::make_pair(logical_instruction_pointer, symbol.value()));
+    } else {
+      return std::nullopt;
+    }
+  }
+
+  return iterator->second;
+}
+

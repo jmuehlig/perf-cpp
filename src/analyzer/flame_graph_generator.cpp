@@ -3,28 +3,8 @@
 #include <iterator>
 #include <perfcpp/analyzer/flame_graph_generator.h>
 
-std::optional<std::reference_wrapper<const perf::SymbolResolver::Symbol>>
-perf::analyzer::FlameGraphGenerator::SymbolCache::symbol(const std::uintptr_t logical_instruction_pointer)
-{
-  if (const auto symbol = this->_cache.find(logical_instruction_pointer); symbol != this->_cache.end()) {
-    return symbol->second;
-  }
-
-  /// Try to resolve the symbol and put also a nullop into the cache, if the symbol wasn't found.
-  const auto resolved_symbol = this->_symbol_resolver.resolve(logical_instruction_pointer);
-  if (!resolved_symbol.has_value()) {
-    this->_cache.insert(std::make_pair(logical_instruction_pointer, std::nullopt));
-    return std::nullopt;
-  }
-
-  /// Insert the symbol.
-  const auto [reference, _] =
-    this->_cache.insert(std::make_pair(logical_instruction_pointer, std::ref(resolved_symbol->symbol())));
-  return reference->second;
-}
-
 std::vector<std::pair<std::vector<std::string>, std::uint64_t>>
-perf::analyzer::FlameGraphGenerator::map(const std::vector<Sample>& samples) const
+perf::analyzer::FlameGraphGenerator::map(const std::vector<Sample>& samples)
 {
   return this->map(samples, [](const auto begin, const auto end) {
     return static_cast<std::uint64_t>(std::distance(begin, end)) + 1U;
@@ -34,10 +14,8 @@ perf::analyzer::FlameGraphGenerator::map(const std::vector<Sample>& samples) con
 std::vector<std::pair<std::vector<std::string>, std::uint64_t>>
 perf::analyzer::FlameGraphGenerator::map(
   const std::vector<Sample>& samples,
-  std::function<std::uint64_t(std::vector<Sample>::const_iterator, std::vector<Sample>::const_iterator)> mapper) const
+  std::function<std::uint64_t(std::vector<Sample>::const_iterator, std::vector<Sample>::const_iterator)> mapper)
 {
-  auto symbol_cache = SymbolCache{ this->_symbol_resolver };
-
   auto result = std::vector<std::pair<std::vector<std::string>, std::uint64_t>>{};
   result.reserve(samples.size());
 
@@ -47,7 +25,7 @@ perf::analyzer::FlameGraphGenerator::map(
     /// Find the first sample that does not share the same callchain (plus logical instruction pointer).
     auto next_iterator = std::next(iterator);
     for (; next_iterator != samples.end(); ++next_iterator) {
-      if (!FlameGraphGenerator::have_equal_callchains(symbol_cache, *iterator, *next_iterator)) {
+      if (!FlameGraphGenerator::have_equal_callchains(this->_symbol_resolver, *iterator, *next_iterator)) {
         break;
       }
     }
@@ -68,7 +46,7 @@ perf::analyzer::FlameGraphGenerator::map(
 }
 
 void
-perf::analyzer::FlameGraphGenerator::map(const std::vector<Sample>& samples, const std::string& out_file_path) const
+perf::analyzer::FlameGraphGenerator::map(const std::vector<Sample>& samples, const std::string& out_file_path)
 {
   this->map(samples, [](const auto begin, const auto end) { return std::distance(begin, end) + 1U; }, out_file_path);
 }
@@ -77,7 +55,7 @@ void
 perf::analyzer::FlameGraphGenerator::map(
   const std::vector<Sample>& samples,
   std::function<std::uint64_t(std::vector<Sample>::const_iterator, std::vector<Sample>::const_iterator)> mapper,
-  const std::string& out_file_path) const
+  const std::string& out_file_path)
 {
   /// Get the stacks.
   const auto stacks = this->map(samples, std::move(mapper));
@@ -103,7 +81,7 @@ perf::analyzer::FlameGraphGenerator::map(
 std::vector<std::string>
 perf::analyzer::FlameGraphGenerator::resolve_symbols(
   const std::optional<std::vector<std::uintptr_t>>& callchain,
-  const std::optional<std::uintptr_t> top_logical_instruction_pointer) const
+  const std::optional<std::uintptr_t> top_logical_instruction_pointer)
 {
   auto symbol_callchain = std::vector<std::string>{};
 
@@ -140,7 +118,7 @@ perf::analyzer::FlameGraphGenerator::resolve_symbols(
 }
 
 bool
-perf::analyzer::FlameGraphGenerator::have_equal_callchains(SymbolCache& symbol_cache,
+perf::analyzer::FlameGraphGenerator::have_equal_callchains(CachedSymbolResolver& symbol_cache,
                                                            const perf::Sample& original_sample,
                                                            const perf::Sample& follow_up_sample) noexcept
 {
@@ -168,9 +146,9 @@ perf::analyzer::FlameGraphGenerator::have_equal_callchains(SymbolCache& symbol_c
   if (original_sample.instruction_execution().logical_instruction_pointer().has_value() &&
       follow_up_sample.instruction_execution().logical_instruction_pointer().has_value()) {
     const auto original_symbol =
-      symbol_cache.symbol(original_sample.instruction_execution().logical_instruction_pointer().value());
+      symbol_cache.resolve(original_sample.instruction_execution().logical_instruction_pointer().value());
     const auto follow_up_symbol =
-      symbol_cache.symbol(follow_up_sample.instruction_execution().logical_instruction_pointer().value());
+      symbol_cache.resolve(follow_up_sample.instruction_execution().logical_instruction_pointer().value());
     if (!FlameGraphGenerator::have_equal_symbols(original_symbol, follow_up_symbol)) {
       return false;
     }
@@ -187,8 +165,8 @@ perf::analyzer::FlameGraphGenerator::have_equal_callchains(SymbolCache& symbol_c
 
     /// Compare entire callchain by resolving the symbols.
     for (auto index = 0U; index < original_callchain.size(); ++index) {
-      const auto original_symbol = symbol_cache.symbol(original_callchain[index]);
-      const auto follow_up_symbol = symbol_cache.symbol(follow_up_callchain[index]);
+      const auto original_symbol = symbol_cache.resolve(original_callchain[index]);
+      const auto follow_up_symbol = symbol_cache.resolve(follow_up_callchain[index]);
       if (!FlameGraphGenerator::have_equal_symbols(original_symbol, follow_up_symbol)) {
         return false;
       }
@@ -200,8 +178,8 @@ perf::analyzer::FlameGraphGenerator::have_equal_callchains(SymbolCache& symbol_c
 
 bool
 perf::analyzer::FlameGraphGenerator::have_equal_symbols(
-  std::optional<std::reference_wrapper<const SymbolResolver::Symbol>> first,
-  std::optional<std::reference_wrapper<const SymbolResolver::Symbol>> second) noexcept
+  const std::optional<SymbolResolver::ResolvedSymbol>& first,
+  const std::optional<SymbolResolver::ResolvedSymbol>& second) noexcept
 {
   if (first.has_value() && !second.has_value()) {
     return false;
@@ -215,5 +193,5 @@ perf::analyzer::FlameGraphGenerator::have_equal_symbols(
     return true;
   }
 
-  return first.value().get() == second.value().get();
+  return first->symbol() == second->symbol();
 }

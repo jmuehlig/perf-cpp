@@ -205,4 +205,17 @@ private:
    */
   [[nodiscard]] static std::vector<std::uint8_t> extract_build_id(const std::string& path) noexcept;
 };
+
+class CachedSymbolResolver
+{
+public:
+  CachedSymbolResolver();
+  ~CachedSymbolResolver() = default;
+
+  [[nodiscard]] std::optional<SymbolResolver::ResolvedSymbol> resolve(const std::uintptr_t logical_instruction_pointer);
+private:
+  SymbolResolver _symbol_resolver;
+
+  std::unordered_map<std::uintptr_t, SymbolResolver::ResolvedSymbol> _resolved_symbols;
+};
 }
