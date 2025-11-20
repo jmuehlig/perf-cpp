@@ -104,8 +104,8 @@ perf::SampleDecoder::decode_sample_id_all(SampleIterator& entry, Sample& sample)
 
 perf::Sample
 perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
-                                         bool has_amd_ibs_op_pmu,
-                                         bool has_amd_ibs_fetch_pmu,
+                                         const bool has_amd_ibs_op_pmu,
+                                         const bool has_amd_ibs_fetch_pmu,
                                          const RequestedEventSet& requested_event_set,
                                          const Group& event_group) const
 
@@ -183,9 +183,8 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
   if (this->_sampler_values.is_set(PERF_SAMPLE_STACK_USER)) {
     const auto size = entry.read<std::uint64_t>();
     const auto* stack_data = entry.read<std::byte>(size);
-    const auto dyn_size = size > 0ULL ? entry.read<std::uint64_t>() : 0ULL;
 
-    if (dyn_size > 0ULL) {
+    if (const auto dyn_size = size > 0ULL ? entry.read<std::uint64_t>() : 0ULL; dyn_size > 0ULL) {
       /// Read the stack.
       sample.user_stack(std::vector<std::byte>{ stack_data, stack_data + dyn_size });
     }

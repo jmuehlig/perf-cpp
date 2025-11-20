@@ -44,6 +44,9 @@ perf::RecordFileWriter::write(const Sampler::Values& sampler_values,
     build_ids = RecordFileWriter::generate_build_ids_records(modules);
   }
 
+  /// Generate symbol records for all modules.
+  auto symbols = RecordFileWriter::generate_symbol_records(modules);
+
   /// Write MMAP2 and COMM records to dedicated buffers.
   auto mmap2_samples = RecordFileWriter::generate_module_records(
     std::move(modules), process_id, thread_id, timestamp, sample_id, stream_id, cpu_id);
@@ -65,9 +68,12 @@ perf::RecordFileWriter::write(const Sampler::Values& sampler_values,
   /// Event types section (size is empty by default).
   header.event_types.offset = header.data.offset + header.data.size;
 
-  /// Set feature bits for build ID.
+  /// Set feature bits for build ID and symbols.
   if (build_ids.has_value()) {
     RecordFileWriter::set_feature_bit(header.features, HEADER_BUILD_ID);
+  }
+  if (symbols.has_value()) {
+    RecordFileWriter::set_feature_bit(header.features, HEADER_SYMBOL);
   }
 
   /// Write the header.
@@ -104,6 +110,16 @@ perf::RecordFileWriter::write(const Sampler::Values& sampler_values,
 
     /// Write section and build id data.
     output_stream << build_id_section << std::move(build_ids.value());
+  }
+
+  if (symbols.has_value()) {
+    /// Write the SYMBOL feature section header; the offset points to the position after the section.
+    auto symbol_section = FileSection{};
+    symbol_section.size = symbols->size();
+    symbol_section.offset = static_cast<std::uint64_t>(output_stream.position()) + sizeof(FileSection);
+
+    /// Write section and symbol data.
+    output_stream << symbol_section << std::move(symbols.value());
   }
 }
 
@@ -149,6 +165,46 @@ perf::RecordFileWriter::generate_build_ids_records(const std::vector<SymbolResol
   }
 
   return output_stream.to_string();
+}
+
+std::optional<std::string>
+perf::RecordFileWriter::generate_symbol_records(const std::vector<SymbolResolver::Module>& modules)
+{
+  if (modules.empty()) {
+    return std::nullopt;
+  }
+
+  auto output_stream = BinaryStream{ std::ostringstream{ std::ios::binary } };
+
+  /// Process each module and extract symbols.
+  for (const auto& module : modules) {
+    auto symbols = SymbolResolver::parse_symbol_table(module);
+
+    /// Skip modules without symbols.
+    if (symbols.empty()) {
+      continue;
+    }
+
+    /// Write the DSO name (module path) with length prefix.
+    const auto dso_name_length = static_cast<std::uint32_t>(module.path().length() + 1U);
+    output_stream << dso_name_length << module.path() << '\0';
+
+    /// Write the number of symbols.
+    output_stream << static_cast<std::uint32_t>(symbols.size());
+
+    /// Write each symbol.
+    for (const auto& symbol : symbols) {
+      /// Write symbol name with length prefix.
+      const auto symbol_name_length = static_cast<std::uint32_t>(symbol.name().length() + 1U);
+      output_stream << symbol_name_length << symbol.name() << '\0';
+
+      /// Write symbol address and size.
+      output_stream << static_cast<std::uint64_t>(symbol.address()) << static_cast<std::uint64_t>(symbol.size());
+    }
+  }
+
+  auto result = output_stream.to_string();
+  return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
 void

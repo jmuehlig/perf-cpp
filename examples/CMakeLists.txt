@@ -68,11 +68,12 @@ target_link_libraries(memory-access-analyzer perf-cpp)
 
 ## Flame graph
 add_executable(flame-graph EXCLUDE_FROM_ALL examples/sampling/flame_graph.cpp examples/access_benchmark.cpp)
-target_compile_options(flame-graph PUBLIC "-g3")
+target_compile_options(flame-graph PUBLIC "-g3" "-fno-omit-frame-pointer" "-fno-inline-functions")
 target_link_libraries(flame-graph perf-cpp)
 
 ## Analyze Samples with the perf tool
 add_executable(perf-record EXCLUDE_FROM_ALL examples/sampling/perf_record.cpp examples/access_benchmark.cpp)
+target_compile_options(perf-record PUBLIC "-g" "-fno-omit-frame-pointer" "-fno-inline-functions")
 target_link_libraries(perf-record perf-cpp)
 
 ## List counters

@@ -45,10 +45,9 @@ public:
            const std::string& out_file_path);
 
 private:
-  CachedSymbolResolver _symbol_resolver;
+  SymbolResolver _symbol_resolver;
 
-  [[nodiscard]] static bool have_equal_callchains(CachedSymbolResolver& symbol_cache,
-                                                  const Sample& original_sample,
+  [[nodiscard]] bool have_equal_callchains(const Sample& original_sample,
                                                   const Sample& follow_up_sample) noexcept;
 
   [[nodiscard]] static bool have_equal_symbols(

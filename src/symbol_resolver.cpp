@@ -2,8 +2,10 @@
 
 #include <algorithm>
 #include <cstring>
+#include <cxxabi.h>
 #include <fcntl.h>
 #include <fstream>
+#include <memory>
 #include <perfcpp/exception.h>
 #include <perfcpp/symbol_resolver.h>
 #include <perfcpp/util/unique_file_descriptor.h>
@@ -14,6 +16,8 @@
 
 perf::SymbolResolver::SymbolResolver()
 {
+  this->_resolved_symbols.reserve(1ULL << 10);
+
   for (auto& module : SymbolResolver::read_modules()) {
     if (auto symbols = SymbolResolver::parse_symbol_table(module); !symbols.empty()) {
       this->_modules.insert(std::make_pair(std::move(module), std::move(symbols)));
@@ -22,11 +26,25 @@ perf::SymbolResolver::SymbolResolver()
 }
 
 std::optional<perf::SymbolResolver::ResolvedSymbol>
-perf::SymbolResolver::resolve(const std::uintptr_t logical_instruction_pointer) const noexcept
+perf::SymbolResolver::resolve(const std::uintptr_t logical_instruction_pointer) noexcept
 {
+  /// Query the cache.
+  if (auto iterator = this->_resolved_symbols.find(logical_instruction_pointer); iterator != this->_resolved_symbols.end()) {
+    return iterator->second;
+  }
+
+  // Resolve the symbol and store in the cache, if it could be resolved,
   for (const auto& [module, symbols] : this->_modules) {
     if (logical_instruction_pointer >= module.start() && logical_instruction_pointer < module.end()) {
-      return SymbolResolver::resolve(module, symbols, logical_instruction_pointer);
+      /// Resolve the symbol.
+      auto symbol = SymbolResolver::resolve(module, symbols, logical_instruction_pointer);
+
+      /// Store the symbol in the cache.
+      if (symbol != std::nullopt) {
+        this->_resolved_symbols.insert(std::make_pair(logical_instruction_pointer, symbol.value()));
+      }
+
+      return symbol;
     }
   }
 
@@ -118,6 +136,34 @@ perf::SymbolResolver::read_process_name()
 }
 
 std::vector<perf::SymbolResolver::Symbol>
+perf::SymbolResolver::extract_symbols_from_table(void* elf_data,
+                                                 const Elf64_Shdr* symbol_table,
+                                                 const Elf64_Shdr* string_table)
+{
+  const auto* symbols = reinterpret_cast<const Elf64_Sym*>(static_cast<char*>(elf_data) + symbol_table->sh_offset);
+  const auto* strings = static_cast<char*>(elf_data) + string_table->sh_offset;
+  const auto symbols_size = symbol_table->sh_size / sizeof(Elf64_Sym);
+
+  auto extracted_symbols = std::vector<Symbol>{};
+  extracted_symbols.reserve(symbols_size);
+
+  /// Read symbols and transform to Symbol instances.
+  for (auto i = 0ULL; i < symbols_size; ++i) {
+    const auto symbol_type = ELF64_ST_TYPE(symbols[i].st_info);
+    /// Include regular functions (STT_FUNC) and indirect functions (STT_GNU_IFUNC).
+    if ((symbol_type == STT_FUNC || symbol_type == STT_GNU_IFUNC) && symbols[i].st_name) {
+      if (auto mangled_name = std::string(strings + symbols[i].st_name); !mangled_name.empty()) {
+        /// Demangle C++ symbol names for better readability.
+        auto demangled_name = SymbolResolver::demangle_symbol_name(std::move(mangled_name));
+        extracted_symbols.emplace_back(std::move(demangled_name), symbols[i].st_value, symbols[i].st_size);
+      }
+    }
+  }
+
+  return extracted_symbols;
+}
+
+std::vector<perf::SymbolResolver::Symbol>
 perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& module)
 {
   const auto file_descriptor = util::UniqueFileDescriptor{ ::open(module.path().c_str(), O_RDONLY) };
@@ -145,51 +191,71 @@ perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& mod
     throw CannotVerifyElfMagicForModule{ module.name(), module.path() };
   }
 
-  /// Find the symbol and string tables.
   const auto* section_header_table =
     reinterpret_cast<const Elf64_Shdr*>(static_cast<const char*>(elf_data) + elf_header->e_shoff);
-  const auto [symbol_table, string_table] =
-    SymbolResolver::find_symbol_and_string_tables(section_header_table, elf_header->e_shnum);
-
-  if (!symbol_table || !string_table) {
-    ::munmap(elf_data, stat_size);
-    return {};
-  }
-
-  /// Access symbols.
-  const auto* symbols = reinterpret_cast<const Elf64_Sym*>(static_cast<char*>(elf_data) + symbol_table->sh_offset);
-  const auto* strings = static_cast<char*>(elf_data) + string_table->sh_offset;
-  const auto symbols_size = symbol_table->sh_size / sizeof(Elf64_Sym);
 
   auto extracted_symbols = std::vector<Symbol>{};
-  extracted_symbols.reserve(symbols_size);
 
-  /// Read symbols and transform to Symbol instances.
-  for (auto i = 0ULL; i < symbols_size; ++i) {
-    if (ELF64_ST_TYPE(symbols[i].st_info) == STT_FUNC && symbols[i].st_name) {
-      if (auto name = std::string(strings + symbols[i].st_name); !name.empty()) {
-        extracted_symbols.emplace_back(std::move(name), symbols[i].st_value, symbols[i].st_size);
-      }
+  /// Extract symbols from SYMTAB (static symbol table) if available.
+  const auto [symtab_table, symtab_strings] =
+    SymbolResolver::find_symbol_and_string_tables(section_header_table, elf_header->e_shnum);
+  if (symtab_table && symtab_strings) {
+    extracted_symbols = SymbolResolver::extract_symbols_from_table(elf_data, symtab_table, symtab_strings);
+  }
+
+  /// Extract symbols from DYNSYM (dynamic symbol table) if available and merge with existing symbols.
+  for (auto i = 0U; i < elf_header->e_shnum; ++i) {
+    if (section_header_table[i].sh_type == SHT_DYNSYM) {
+      const auto* dynsym_table = &section_header_table[i];
+      const auto* dynsym_strings = &section_header_table[section_header_table[i].sh_link];
+      auto dynsym_symbols = SymbolResolver::extract_symbols_from_table(elf_data, dynsym_table, dynsym_strings);
+      extracted_symbols.insert(extracted_symbols.end(), std::make_move_iterator(dynsym_symbols.begin()), std::make_move_iterator(dynsym_symbols.end()));
+      break;
     }
   }
 
   /// Unmap ELF data.
   ::munmap(elf_data, stat_size);
 
-  /// Sort the symbols to enable an upper bound search later.
+  /// Sort symbols by address.
   std::sort(extracted_symbols.begin(), extracted_symbols.end(), [](const Symbol& first, const Symbol& second) {
     return first.address() < second.address();
   });
 
+  /// Remove duplicate symbols at the same address.
+  auto unique_end = std::unique(extracted_symbols.begin(), extracted_symbols.end(), [](const Symbol& a, const Symbol& b) {
+    return a.address() == b.address();
+  });
+  extracted_symbols.erase(unique_end, extracted_symbols.end());
+
   return extracted_symbols;
+}
+
+std::string
+perf::SymbolResolver::demangle_symbol_name(std::string &&symbol_name)
+{
+  auto status = 0;
+  auto demangled_name = std::unique_ptr<char, void (*)(void*)>(
+    abi::__cxa_demangle(symbol_name.c_str(), nullptr, nullptr, &status), std::free);
+
+  /// Return demangled name if successful, otherwise return the original mangled name.
+  return (status == 0 && demangled_name) ? std::string{ demangled_name.get() } : symbol_name;
 }
 
 std::pair<const Elf64_Shdr*, const Elf64_Shdr*>
 perf::SymbolResolver::find_symbol_and_string_tables(const Elf64_Shdr* section_header_table,
                                                     const std::uint16_t size) noexcept
 {
+  /// First, try to find the static symbol table (SHT_SYMTAB) which contains all symbols.
   for (auto i = 0U; i < size; ++i) {
     if (section_header_table[i].sh_type == SHT_SYMTAB) {
+      return std::make_pair(&section_header_table[i], &section_header_table[section_header_table[i].sh_link]);
+    }
+  }
+
+  /// If SHT_SYMTAB is not found (stripped binary/library), fallback to dynamic symbol table (SHT_DYNSYM).
+  for (auto i = 0U; i < size; ++i) {
+    if (section_header_table[i].sh_type == SHT_DYNSYM) {
       return std::make_pair(&section_header_table[i], &section_header_table[section_header_table[i].sh_link]);
     }
   }
@@ -274,24 +340,3 @@ perf::SymbolResolver::extract_build_id(const std::string& path) noexcept
 
   return build_id;
 }
-
-perf::CachedSymbolResolver::CachedSymbolResolver()
-{
-  this->_resolved_symbols.reserve(1ULL << 11);
-}
-
-std::optional<perf::SymbolResolver::ResolvedSymbol>
-perf::CachedSymbolResolver::resolve(const std::uintptr_t logical_instruction_pointer)
-{
-  auto iterator = this->_resolved_symbols.find(logical_instruction_pointer);
-  if (iterator == this->_resolved_symbols.end()) {
-    if (const auto symbol = this->_symbol_resolver.resolve(logical_instruction_pointer); symbol != std::nullopt) {
-      std::tie(iterator, std::ignore) = this->_resolved_symbols.insert(std::make_pair(logical_instruction_pointer, symbol.value()));
-    } else {
-      return std::nullopt;
-    }
-  }
-
-  return iterator->second;
-}
-

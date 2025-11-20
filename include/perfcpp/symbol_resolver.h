@@ -147,7 +147,7 @@ public:
    * @param logical_instruction_pointer Logical instruction pointer.
    * @return The resolved symbol, if the symbol can be resolved.
    */
-  [[nodiscard]] std::optional<ResolvedSymbol> resolve(std::uintptr_t logical_instruction_pointer) const noexcept;
+  [[nodiscard]] std::optional<ResolvedSymbol> resolve(std::uintptr_t logical_instruction_pointer) noexcept;
 
   /**
    * Parses the /proc/self/maps table.
@@ -155,6 +155,14 @@ public:
    * @return List of all modules found in /proc/self/maps.
    */
   [[nodiscard]] static std::vector<Module> read_modules();
+
+  /**
+   * Parses the symbol table for the given module (path).
+   *
+   * @param module Module to lookup.
+   * @return List of all symbols linked to the module.
+   */
+    [[nodiscard]] static std::vector<Symbol> parse_symbol_table(const perf::SymbolResolver::Module& module);
 
   /**
    * Reads the process name from /proc/self/comm.
@@ -165,6 +173,9 @@ public:
 private:
   /// List of all modules and linked symbols.
   std::unordered_map<Module, std::vector<Symbol>, ModuleHash> _modules;
+
+  /// Cache for already resolved symbols.
+  std::unordered_map<std::uintptr_t, SymbolResolver::ResolvedSymbol> _resolved_symbols;
 
   /**
    * Resolves the symbol within the given module (and symbols).
@@ -179,12 +190,12 @@ private:
                                                              std::uintptr_t logical_instruction_pointer) noexcept;
 
   /**
-   * Parses the symbol table for the given module (path).
+   * Demangles the given symbol name,
    *
-   * @param module Module to lookup.
-   * @return List of all symbols linked to the module.
+   * @param symbol_name Symbol name.
+   * @return Demangled symbol name.
    */
-  [[nodiscard]] static std::vector<Symbol> parse_symbol_table(const perf::SymbolResolver::Module& module);
+  [[nodiscard]] static std::string demangle_symbol_name(std::string&& symbol_name);
 
   /**
    * Scans the section header table for the symbol table and string table.
@@ -198,24 +209,23 @@ private:
     std::uint16_t size) noexcept;
 
   /**
+   * Extracts symbols from a given symbol table section.
+   *
+   * @param elf_data Pointer to the memory-mapped ELF file.
+   * @param symbol_table Pointer to the symbol table section header.
+   * @param string_table Pointer to the string table section header.
+   * @return Vector of extracted symbols.
+   */
+  [[nodiscard]] static std::vector<Symbol> extract_symbols_from_table(void* elf_data,
+                                                                       const Elf64_Shdr* symbol_table,
+                                                                       const Elf64_Shdr* string_table);
+
+  /**
    * Extracts the build ID from an ELF file.
    *
    * @param path Path of the module.
    * @return Build ID as a vector of bytes, or empty if not found.
    */
   [[nodiscard]] static std::vector<std::uint8_t> extract_build_id(const std::string& path) noexcept;
-};
-
-class CachedSymbolResolver
-{
-public:
-  CachedSymbolResolver();
-  ~CachedSymbolResolver() = default;
-
-  [[nodiscard]] std::optional<SymbolResolver::ResolvedSymbol> resolve(const std::uintptr_t logical_instruction_pointer);
-private:
-  SymbolResolver _symbol_resolver;
-
-  std::unordered_map<std::uintptr_t, SymbolResolver::ResolvedSymbol> _resolved_symbols;
 };
 }

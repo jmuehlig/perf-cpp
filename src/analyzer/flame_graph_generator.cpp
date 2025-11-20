@@ -25,7 +25,7 @@ perf::analyzer::FlameGraphGenerator::map(
     /// Find the first sample that does not share the same callchain (plus logical instruction pointer).
     auto next_iterator = std::next(iterator);
     for (; next_iterator != samples.end(); ++next_iterator) {
-      if (!FlameGraphGenerator::have_equal_callchains(this->_symbol_resolver, *iterator, *next_iterator)) {
+      if (!this->have_equal_callchains(*iterator, *next_iterator)) {
         break;
       }
     }
@@ -118,8 +118,7 @@ perf::analyzer::FlameGraphGenerator::resolve_symbols(
 }
 
 bool
-perf::analyzer::FlameGraphGenerator::have_equal_callchains(CachedSymbolResolver& symbol_cache,
-                                                           const perf::Sample& original_sample,
+perf::analyzer::FlameGraphGenerator::have_equal_callchains(const perf::Sample& original_sample,
                                                            const perf::Sample& follow_up_sample) noexcept
 {
   if (original_sample.instruction_execution().logical_instruction_pointer().has_value() &&
@@ -146,9 +145,9 @@ perf::analyzer::FlameGraphGenerator::have_equal_callchains(CachedSymbolResolver&
   if (original_sample.instruction_execution().logical_instruction_pointer().has_value() &&
       follow_up_sample.instruction_execution().logical_instruction_pointer().has_value()) {
     const auto original_symbol =
-      symbol_cache.resolve(original_sample.instruction_execution().logical_instruction_pointer().value());
+      this->_symbol_resolver.resolve(original_sample.instruction_execution().logical_instruction_pointer().value());
     const auto follow_up_symbol =
-      symbol_cache.resolve(follow_up_sample.instruction_execution().logical_instruction_pointer().value());
+      this->_symbol_resolver.resolve(follow_up_sample.instruction_execution().logical_instruction_pointer().value());
     if (!FlameGraphGenerator::have_equal_symbols(original_symbol, follow_up_symbol)) {
       return false;
     }
@@ -165,8 +164,8 @@ perf::analyzer::FlameGraphGenerator::have_equal_callchains(CachedSymbolResolver&
 
     /// Compare entire callchain by resolving the symbols.
     for (auto index = 0U; index < original_callchain.size(); ++index) {
-      const auto original_symbol = symbol_cache.resolve(original_callchain[index]);
-      const auto follow_up_symbol = symbol_cache.resolve(follow_up_callchain[index]);
+      const auto original_symbol = this->_symbol_resolver.resolve(original_callchain[index]);
+      const auto follow_up_symbol = this->_symbol_resolver.resolve(follow_up_callchain[index]);
       if (!FlameGraphGenerator::have_equal_symbols(original_symbol, follow_up_symbol)) {
         return false;
       }
