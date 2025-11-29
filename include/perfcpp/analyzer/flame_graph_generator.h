@@ -4,8 +4,6 @@
 #include <perfcpp/sample.h>
 #include <perfcpp/symbol_resolver.h>
 #include <string>
-#include <string_view>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -47,7 +45,7 @@ public:
 private:
   SymbolResolver _symbol_resolver;
 
-  [[nodiscard]] bool have_equal_callchains(const Sample& original_sample,
+  [[nodiscard]] bool have_equal_call_chains(const Sample& original_sample,
                                                   const Sample& follow_up_sample) noexcept;
 
   [[nodiscard]] static bool have_equal_symbols(
@@ -57,5 +55,7 @@ private:
   [[nodiscard]] std::vector<std::string> resolve_symbols(
     const std::optional<std::vector<std::uintptr_t>>& callchain,
     std::optional<std::uintptr_t> top_logical_instruction_pointer);
+
+  [[nodiscard]] static std::string to_hex(std::uintptr_t logical_instruction_pointer);
 };
 }

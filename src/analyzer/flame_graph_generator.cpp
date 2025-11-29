@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iterator>
+#include <sstream>
 #include <perfcpp/analyzer/flame_graph_generator.h>
 
 std::vector<std::pair<std::vector<std::string>, std::uint64_t>>
@@ -25,7 +26,7 @@ perf::analyzer::FlameGraphGenerator::map(
     /// Find the first sample that does not share the same callchain (plus logical instruction pointer).
     auto next_iterator = std::next(iterator);
     for (; next_iterator != samples.end(); ++next_iterator) {
-      if (!this->have_equal_callchains(*iterator, *next_iterator)) {
+      if (!this->have_equal_call_chains(*iterator, *next_iterator)) {
         break;
       }
     }
@@ -88,7 +89,7 @@ perf::analyzer::FlameGraphGenerator::resolve_symbols(
   if (callchain.has_value()) {
     symbol_callchain.reserve(callchain->size() + 1U);
 
-    /// Turn the list of instruction pointers from the call stack in symbols (or "??" if the symbol wasn't found).
+    /// Turn the list of instruction pointers from the call stack in symbols (or the address if the symbol wasn't found).
     std::transform(callchain->begin(),
                    callchain->end(),
                    std::back_inserter(symbol_callchain),
@@ -97,7 +98,7 @@ perf::analyzer::FlameGraphGenerator::resolve_symbols(
                        return symbol->symbol().name();
                      }
 
-                     return std::string{ "??" };
+                     return FlameGraphGenerator::to_hex(logical_instruction_pointer);
                    });
   }
 
@@ -108,7 +109,7 @@ perf::analyzer::FlameGraphGenerator::resolve_symbols(
         symbol.has_value()) {
       symbol_callchain.push_back(symbol->symbol().name());
     } else {
-      symbol_callchain.emplace_back("??");
+      symbol_callchain.emplace_back(FlameGraphGenerator::to_hex(top_logical_instruction_pointer.value()));
     }
   } else {
     symbol_callchain.emplace_back("??");
@@ -118,7 +119,7 @@ perf::analyzer::FlameGraphGenerator::resolve_symbols(
 }
 
 bool
-perf::analyzer::FlameGraphGenerator::have_equal_callchains(const perf::Sample& original_sample,
+perf::analyzer::FlameGraphGenerator::have_equal_call_chains(const perf::Sample& original_sample,
                                                            const perf::Sample& follow_up_sample) noexcept
 {
   if (original_sample.instruction_execution().logical_instruction_pointer().has_value() &&
@@ -193,4 +194,12 @@ perf::analyzer::FlameGraphGenerator::have_equal_symbols(
   }
 
   return first->symbol() == second->symbol();
+}
+
+std::string
+perf::analyzer::FlameGraphGenerator::to_hex(const std::uintptr_t logical_instruction_pointer)
+{
+  auto stream = std::stringstream{};
+  stream << "0x" << std::hex << logical_instruction_pointer;
+  return stream.str();
 }
