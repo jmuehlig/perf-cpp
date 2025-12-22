@@ -1,6 +1,10 @@
 #pragma once
 
 #include <linux/version.h>
+#ifdef PERFCPP_TEST_LINUX_VERSION_CODE
+#undef LINUX_VERSION_CODE
+#define LINUX_VERSION_CODE PERFCPP_TEST_LINUX_VERSION_CODE
+#endif
 
 /// The features of the perf subsystem have evolved over time (more precisely over Linux Kernel generations).
 /// In this file, we define some preprocessor variables to keep up with older Linux Kernel versions without yielding
