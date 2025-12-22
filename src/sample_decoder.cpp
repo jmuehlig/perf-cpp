@@ -616,7 +616,7 @@ perf::SampleDecoder::decode_data_access_source_and_remote(const perf_mem_data_sr
     const auto hops =
       SampleDecoder::decode_data_access_remote_hops(perf_data_source.mem_hops, /* memory level is not used */ 0ULL);
 #elif !defined(PERFCPP_NO_MEM_HOPS_0) && defined(PERFCPP_NO_MEM_HOPS_1_3)
-    const auto hops = SampleDecoder::read_data_access_remote_hops(perf_data_source.mem_hops, perf_data_source.mem_lvl);
+    const auto hops = SampleDecoder::decode_data_access_remote_hops(perf_data_source.mem_hops, perf_data_source.mem_lvl);
 #else
     const auto hops =
       SampleDecoder::decode_data_access_remote_hops(/** hops is not used */ 0ULL, perf_data_source.mem_lvl);
