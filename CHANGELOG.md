@@ -1,5 +1,9 @@
 # *perf-cpp*: Changelog
 
+## v0.12.5
+- **Bugfix**: The library could not compile for specific Linux kernels (see [#10](https://github.com/jmuehlig/perf-cpp/issues/10)).
+- **Symbol Translation**: Improved translation from instruction pointer to symbol.
+
 ## v0.12.4
 This update enables exporting sampled data to the standard perf format for analysis with existing tools.
 
