@@ -514,4 +514,16 @@ public:
   ~CannotVerifyElfMagicForModule() override = default;
 };
 
+class CannotReadMaxClockFrequency final : public std::runtime_error
+{
+public:
+  CannotReadMaxClockFrequency()
+    : std::runtime_error{
+      std::string{ "Cannot read max CPU clock frequency." }
+    }
+  {
+  }
+  ~CannotReadMaxClockFrequency() override = default;
+};
+
 }

@@ -63,6 +63,11 @@ public:
    */
   [[nodiscard]] static std::uint8_t events_per_physical_performance_counter();
 
+  /**
+   * @return The maximum clock frequency across all cores in Hz.
+   */
+  [[nodiscard]] static std::uint64_t max_cpu_clock_frequency();
+
 private:
   static std::optional<bool> _is_intel_aux_event_required;
   static std::optional<bool> _is_intel_12th_generation_or_newer;
@@ -71,6 +76,7 @@ private:
   static std::optional<std::uint64_t> _memory_page_size;
   static std::optional<std::uint8_t> _physical_performance_counters_per_logical_core;
   static std::optional<std::uint8_t> _events_per_physical_performance_counter;
+  static std::optional<std::uint64_t> _max_cpu_clock_frequency;
 
 #if defined(__x86_64__) || defined(__i386__)
   /**

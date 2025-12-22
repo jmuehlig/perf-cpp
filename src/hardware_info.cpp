@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <filesystem>
+#include <fstream>
 #include <perfcpp/counter_definition.h>
 #include <perfcpp/group.h>
 #include <perfcpp/hardware_info.h>
@@ -30,6 +31,9 @@ std::optional<std::uint8_t> perf::HardwareInfo::_physical_performance_counters_p
 
 /// Number of events that can be scheduled to the same physical performance counter.
 std::optional<std::uint8_t> perf::HardwareInfo::_events_per_physical_performance_counter{ std::nullopt };
+
+/// Maximal clock frequency across all cores in Hz.
+std::optional<std::uint64_t> perf::HardwareInfo::_max_cpu_clock_frequency{std::nullopt};
 
 bool
 perf::HardwareInfo::is_intel_aux_counter_required()
@@ -239,6 +243,34 @@ perf::HardwareInfo::events_per_physical_performance_counter()
   /// Fallback: Set to one, if the experiment failed.
   return HardwareInfo::cache_value(HardwareInfo::_events_per_physical_performance_counter,
                                    static_cast<std::uint8_t>(1U));
+}
+
+std::uint64_t
+perf::HardwareInfo::max_cpu_clock_frequency()
+{
+  if (HardwareInfo::_max_cpu_clock_frequency.has_value()) {
+    return HardwareInfo::_max_cpu_clock_frequency.value();
+  }
+
+  auto max_frequency_in_hz = 0UL;
+
+  for (const auto& entry : std::filesystem::directory_iterator("/sys/devices/system/cpu")) {
+    if (entry.is_directory()) {
+      if (auto cpu_directory_name = entry.path().filename().string(); cpu_directory_name.rfind("cpu", 0U) == 0U && std::isdigit(cpu_directory_name[3U])) {
+        auto freq_file= std::ifstream{entry.path() / "cpufreq/cpuinfo_max_freq"};
+        if (auto frequency_in_khz = 0UL; freq_file >> frequency_in_khz) {
+          max_frequency_in_hz = std::max(max_frequency_in_hz, frequency_in_khz * 1000UL);
+        }
+      }
+    }
+  }
+
+  if (max_frequency_in_hz == 0ULL) {
+    throw CannotReadMaxClockFrequency{};
+  }
+
+  return HardwareInfo::cache_value(HardwareInfo::_max_cpu_clock_frequency,
+                                   max_frequency_in_hz);
 }
 
 std::optional<std::uint8_t>
