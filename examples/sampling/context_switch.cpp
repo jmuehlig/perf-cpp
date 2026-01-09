@@ -47,14 +47,11 @@ main()
   const auto count_samples_before_filter = samples.size();
 
   /// Filter out samples without context switch.
-  samples.erase(std::remove_if(samples.begin(),
-                               samples.end(),
-                               [](const auto& sample) {
-                                 return !sample.metadata().cpu_id().has_value() ||
-                                        !sample.metadata().timestamp().has_value() ||
-                                        !sample.context_switch().has_value();
-                               }),
-                samples.end());
+  samples.filter([](const auto& sample) {
+    return sample.metadata().cpu_id().has_value() &&
+                                        sample.metadata().timestamp().has_value() &&
+                                        sample.context_switch().has_value();
+  });
 
   /// Print the first samples.
   const auto count_show_samples = std::min<std::size_t>(samples.size(), 40U);

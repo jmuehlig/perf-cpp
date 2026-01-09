@@ -58,40 +58,34 @@ perf::CounterResult::to_csv(const char delimiter, const bool print_header) const
 std::string
 perf::CounterResult::to_string() const
 {
-  auto result = std::vector<std::pair<std::string_view, std::string>>{};
-  result.reserve(this->_results.size());
+  if (this->_results.empty()) {
+    return "No results collected.";
+  }
 
-  /// Default column lengths, equal to the header.
-  auto max_name_length = 12UL, max_value_length = 5UL;
+  auto rows = std::vector<std::tuple<std::string_view, std::string>>{};
 
   /// Collect counter names and values as strings.
   for (const auto& [name, value] : this->_results) {
-    auto value_string = std::to_string(value);
-
-    max_name_length = std::max(max_name_length, name.size());
-    max_value_length = std::max(max_value_length, value_string.size());
-
-    result.emplace_back(name, std::move(value_string));
+    rows.emplace_back(name, std::to_string(value));
   }
 
-  /// Format the counters as a table.
-  auto table_stream = std::stringstream{};
-  table_stream
-    /// Print the header.
-    << "| Value" << std::setw(static_cast<std::int32_t>(max_value_length) - 4) << " " << "| Counter"
-    << std::setw(static_cast<std::int32_t>(max_name_length) - 6) << " "
-    << "|\n"
-
-    /// Print the separator line.
-    << "|" << std::string(max_value_length + 2U, '-') << "|" << std::string(max_name_length + 2U, '-') << "|";
-
-  /// Print the results as columns.
-  for (const auto& [name, value] : result) {
-    table_stream << "\n| " << std::setw(static_cast<std::int32_t>(max_value_length)) << value << " | " << name
-                 << std::setw(static_cast<std::int32_t>(max_name_length - name.size()) + 1) << " " << "|";
+  /// Find the max string lengths.
+  auto max_string_lengths =
+    std::tuple<std::size_t, std::size_t>{ std::get<0>(rows.front()).size(), std::get<1>(rows.front()).size() };
+  for (auto i = 1U; i < rows.size(); ++i) {
+    std::get<0>(max_string_lengths) = std::max(std::get<0>(max_string_lengths), std::get<0>(rows[i]).size());
+    std::get<1>(max_string_lengths) = std::max(std::get<1>(max_string_lengths), std::get<1>(rows[i]).size());
   }
 
-  table_stream << std::flush;
+  /// Print to stream.
+  auto out_stream = std::stringstream{};
+  out_stream << "Performance counter stats:\n";
+  for (const auto& [name, value] : rows) {
+    out_stream << '\n'
+               << std::string(8 + (std::get<1>(max_string_lengths) - value.size()), ' ') << value << std::string(6, ' ')
+               << name;
+  }
 
-  return table_stream.str();
+  out_stream << std::flush;
+  return out_stream.str();
 }

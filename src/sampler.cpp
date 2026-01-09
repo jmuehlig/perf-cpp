@@ -127,8 +127,8 @@ perf::Sampler::open()
                                                   : std::nullopt,
       this->_values.is_set(PERF_SAMPLE_STACK_USER) ? std::make_optional(this->_values.max_user_stack()) : std::nullopt,
       this->_values.is_set(PERF_SAMPLE_CALLCHAIN) ? std::make_optional(this->_values.max_call_stack()) : std::nullopt,
-      this->_values._is_include_context_switch,
-      this->_values._is_include_extended_mmap_information);
+      this->_values.is_include_context_switch(),
+      this->_values.is_include_extended_mmap_information());
   }
 }
 
@@ -361,17 +361,17 @@ perf::Sampler::is_auxiliary_event_needed_and_already_included(
   return std::make_pair(false, false);
 }
 
-std::vector<perf::Sample>
+perf::SampleResult
 perf::Sampler::result(const bool sort_by_time)
 {
-  auto result = std::vector<Sample>{};
-
   /// Consume the sample data, when not already consumed.
   const auto& sample_data = this->consume_sample_data();
 
   if (this->_sample_counter.size() != sample_data.size()) {
-    return result;
+    return SampleResult{};
   }
+
+  auto result = std::vector<Sample>{};
 
   auto sample_decoder = SampleDecoder{ this->_counter_definitions, this->_values };
   for (auto sample_counter_id = 0U; sample_counter_id < this->_sample_counter.size(); ++sample_counter_id) {
@@ -394,7 +394,7 @@ perf::Sampler::result(const bool sort_by_time)
     std::sort(result.begin(), result.end(), SampleTimestampComparator{});
   }
 
-  return result;
+  return SampleResult{std::move(result)};
 }
 
 void
@@ -433,7 +433,7 @@ perf::Sampler::SampleCounter::consume_samples()
   return {};
 }
 
-std::vector<perf::Sample>
+perf::SampleResult
 perf::MultiSamplerBase::result(std::vector<Sampler>& samplers, const bool is_sort_by_time)
 {
   if (!samplers.empty()) {
@@ -460,7 +460,7 @@ perf::MultiSamplerBase::result(std::vector<Sampler>& samplers, const bool is_sor
     return result;
   }
 
-  return std::vector<perf::Sample>{};
+  return SampleResult{};
 }
 
 void

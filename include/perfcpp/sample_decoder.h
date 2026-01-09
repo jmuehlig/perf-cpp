@@ -4,6 +4,7 @@
 #include "metadata.h"
 #include "requested_event.h"
 #include "sampler.h"
+#include "sample_recording_values.h"
 #include <cstddef>
 #include <cstdint>
 #include <linux/perf_event.h>
@@ -142,7 +143,7 @@ private:
 class SampleDecoder
 {
 public:
-  SampleDecoder(const CounterDefinition& counter_definition, const Sampler::Values& values)
+  SampleDecoder(const CounterDefinition& counter_definition, const SampleRecordingValues& values)
     : _counter_definition(counter_definition)
     , _sampler_values(values)
   {
@@ -169,7 +170,7 @@ private:
   const CounterDefinition& _counter_definition;
 
   /// Values (i.e., requested fields) passed to the sampler when initializing.
-  const Sampler::Values& _sampler_values;
+  const SampleRecordingValues& _sampler_values;
 
   /**
    * Reads the sample_id struct from the data located at sample_ptr into the provided sample.

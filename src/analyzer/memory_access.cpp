@@ -53,7 +53,7 @@ perf::analyzer::MemoryAccess::find(std::string_view data_type_name) noexcept
 }
 
 perf::analyzer::MemoryAccessResult
-perf::analyzer::MemoryAccess::map(const std::vector<Sample>& samples)
+perf::analyzer::MemoryAccess::map(const SampleResult& samples)
 {
   /// Copy of all data types; the result will contain a copy since we add the samples to the members.
   auto data_types = std::vector<DataType>{};

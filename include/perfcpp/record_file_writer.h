@@ -2,6 +2,7 @@
 
 #include "sampler.h"
 #include "symbol_resolver.h"
+#include "sample_recording_values.h"
 #include <array>
 #include <cstdint>
 #include <linux/perf_event.h>
@@ -203,7 +204,7 @@ public:
    * @param sample_data List of data that was sampled on different counters.
    * @param file_name Name of the file to write the perf data to.
    */
-  static void write(const Sampler::Values& sampler_values,
+  static void write(const SampleRecordingValues& sampler_values,
                     const std::vector<Sampler::SampleCounter>& sample_counters,
                     const std::vector<std::vector<std::vector<std::byte>>>& sample_data,
                     std::string_view file_name);
@@ -295,7 +296,7 @@ private:
                                   std::optional<std::uint64_t>,
                                   std::optional<std::uint64_t>,
                                   std::optional<std::uint32_t>>
-  read_first_sample_id(const Sampler::Values& sampler_values,
+  read_first_sample_id(const SampleRecordingValues& sampler_values,
                        const std::vector<std::vector<std::vector<std::byte>>>& sample_data);
 
   /**

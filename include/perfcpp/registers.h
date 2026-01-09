@@ -297,7 +297,7 @@ public:
 
 private:
   /// ABI of the registers.
-  ABI _abi;
+  ABI _abi {ABI::None};
 
   /// Map of Register -> Value.
   std::unordered_map<std::uint8_t, std::int64_t> _values;

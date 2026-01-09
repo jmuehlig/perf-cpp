@@ -14,7 +14,7 @@
 #define PERF_RECORD_HEADER_BUILD_ID 67
 
 void
-perf::RecordFileWriter::write(const Sampler::Values& sampler_values,
+perf::RecordFileWriter::write(const SampleRecordingValues& sampler_values,
                               const std::vector<Sampler::SampleCounter>& sample_counters,
                               const std::vector<std::vector<std::vector<std::byte>>>& sample_data,
                               const std::string_view file_name)
@@ -357,7 +357,7 @@ std::tuple<std::optional<std::uint32_t>,
            std::optional<std::uint64_t>,
            std::optional<std::uint64_t>,
            std::optional<std::uint32_t>>
-perf::RecordFileWriter::read_first_sample_id(const Sampler::Values& sampler_values,
+perf::RecordFileWriter::read_first_sample_id(const SampleRecordingValues& sampler_values,
                                              const std::vector<std::vector<std::vector<std::byte>>>& sample_data)
 {
   /// If none of the values was sampled, we can cancel early without scanning.

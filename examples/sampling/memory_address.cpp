@@ -57,13 +57,9 @@ main()
   const auto count_samples_before_filter = samples.size();
 
   /// Filter out samples without data source (AMD samples all instructions, not only data-related).
-  samples.erase(std::remove_if(samples.begin(),
-                               samples.end(),
-                               [](const auto& sample) {
-                                 return sample.count_loss().has_value() || !sample.data_access().source().has_value() ||
-                                        sample.data_access().logical_memory_address().value_or(0U) == 0U;
-                               }),
-                samples.end());
+  samples.filter([](const auto& sample) {
+    return !sample.count_loss().has_value() && sample.data_access().source().has_value() && sample.data_access().logical_memory_address().value_or(0UL) != 0UL;
+  });
 
   /// Print the first samples.
   const auto count_show_samples = std::min<std::size_t>(samples.size(), 40U);

@@ -5,6 +5,7 @@
 #include <perfcpp/analyzer/data_type.h>
 #include <perfcpp/hardware_info.h>
 #include <perfcpp/sample.h>
+#include <perfcpp/sample_result.h>
 #include <set>
 #include <string>
 #include <typeinfo>
@@ -376,7 +377,15 @@ public:
    * @param samples Samples to map.
    * @return A list of all data types enriched with samples that map to members of the data type.
    */
-  MemoryAccessResult map(const std::vector<Sample>& samples);
+  MemoryAccessResult map(const std::vector<Sample>& samples) { return map(SampleResult{std::vector<Sample>(samples)}); }
+
+  /**
+   * Maps the given samples (with memory addresses) to data object earlier added to the analyzer.
+   *
+   * @param sample_result Samples to map.
+   * @return A list of all data types enriched with samples that map to members of the data type.
+   */
+  MemoryAccessResult map(const SampleResult& sample_result);
 
 private:
   /// List of all data types and their instances.
