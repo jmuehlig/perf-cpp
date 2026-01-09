@@ -7,9 +7,16 @@
 #include <vector>
 
 namespace perf {
+/**
+ * The SymbolResolver resolves instruction pointers to symbolic names by parsing ELF files
+ * and mapping addresses to function symbols within loaded modules.
+ */
 class SymbolResolver
 {
 public:
+  /**
+   * The Module represents a loaded executable or library with its memory mapping information.
+   */
   class Module
   {
   public:
@@ -47,29 +54,84 @@ public:
 
     ~Module() = default;
 
+    /**
+     * @return The name of the module.
+     */
     [[nodiscard]] const std::string& name() const noexcept { return _name; }
+
+    /**
+     * @return The start address of the module in memory.
+     */
     [[nodiscard]] std::uintptr_t start() const noexcept { return _start; }
+
+    /**
+     * @return The end address of the module in memory.
+     */
     [[nodiscard]] std::uintptr_t end() const noexcept { return _end; }
+
+    /**
+     * @return The offset of the module mapping.
+     */
     [[nodiscard]] std::size_t offset() const noexcept { return _offset; }
+
+    /**
+     * @return The file path of the module.
+     */
     [[nodiscard]] const std::string& path() const noexcept { return _path; }
+
+    /**
+     * @return The memory permissions of the module.
+     */
     [[nodiscard]] const std::string& permission() const noexcept { return _permissions; }
+
+    /**
+     * @return Build ID as a vector of bytes.
+     */
     [[nodiscard]] const std::vector<std::uint8_t>& build_id() const noexcept { return _build_id; }
 
+    /**
+     * Compares two modules for equality based on their paths.
+     *
+     * @param other Module to compare with.
+     * @return True if both modules have the same path, false otherwise.
+     */
     [[nodiscard]] bool operator==(const Module& other) const { return _path == other._path; }
 
   private:
+    /// Name of the module.
     std::string _name;
+
+    /// Start address of the module in memory.
     std::uintptr_t _start;
+
+    /// End address of the module in memory.
     std::uintptr_t _end;
+
+    /// Offset of the module mapping.
     std::uintptr_t _offset;
+
+    /// File path of the module.
     std::string _path;
+
+    /// Memory permissions of the module.
     std::string _permissions;
+
+    /// Build ID of the module.
     std::vector<std::uint8_t> _build_id;
   };
 
+  /**
+   * The ModuleHash provides a hash function for Module objects based on their file path.
+   */
   class ModuleHash
   {
   public:
+    /**
+     * Computes the hash of a module based on its path.
+     *
+     * @param module Module to hash.
+     * @return Hash value of the module's path.
+     */
     std::size_t operator()(const Module& module) const { return std::hash<std::string>()(module.path()); }
   };
 

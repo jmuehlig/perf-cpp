@@ -345,6 +345,7 @@ private:
    * @param is_include_extended_mmap_information True, if extended mmap information should be included into samples.
    * @return The initialized perf_event_attr.
    */
+
   [[nodiscard]] perf_event_attr create_perf_event_attribute(
     bool is_disabled,
     const Config& configuration,

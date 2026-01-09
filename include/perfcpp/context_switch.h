@@ -3,6 +3,10 @@
 #include <optional>
 
 namespace perf {
+/**
+ * Represents a context switch event, indicating when a process or thread
+ * was switched in or out, and whether it was preempted.
+ */
 class ContextSwitch
 {
 public:
@@ -44,9 +48,16 @@ public:
   [[nodiscard]] std::optional<std::uint32_t> thread_id() const noexcept { return _thread_id; }
 
 private:
+  /// True if the process/thread was switched out.
   bool _is_out;
+
+  /// True if the process/thread was preempted.
   bool _is_preempt;
+
+  /// Process ID, if provided (currently only available on CPU-wide sampling).
   std::optional<std::uint32_t> _process_id{ std::nullopt };
+
+  /// Thread ID, if provided (currently only available on CPU-wide sampling).
   std::optional<std::uint32_t> _thread_id{ std::nullopt };
 };
 }
