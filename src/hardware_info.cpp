@@ -301,7 +301,7 @@ perf::HardwareInfo::explore_hardware_counters_experimentally(const bool is_ident
       /// If the perf subsystem fails with error code EINVAL, it is likely that we hit the number. However, if we only
       /// added a single counter, we another issue seems to cause the error.
       if (error.error_code() == EINVAL && number_events > 1U) {
-        return --number_events;
+        return number_events > 2U ? number_events - 2U : number_events;
       }
 
       return std::nullopt;
