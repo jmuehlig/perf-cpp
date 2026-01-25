@@ -31,9 +31,12 @@ public:
   }
 
   CounterDefinition(CounterDefinition&&) noexcept = default;
-  CounterDefinition& operator=(CounterDefinition&&) noexcept = default;
+  CounterDefinition(const CounterDefinition&) = delete;
 
   ~CounterDefinition() = default;
+
+  [[nodiscard]] CounterDefinition& operator=(const CounterDefinition&) = delete;
+  [[nodiscard]] CounterDefinition& operator=(CounterDefinition&&) = default;
 
   /**
    * Adds an event with the given name and configuration.

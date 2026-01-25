@@ -11,11 +11,15 @@ class IBSFetchDecoder
 {
 public:
   explicit IBSFetchDecoder(const std::vector<std::byte>& raw_data) noexcept
+    : _fetch_data(reinterpret_cast<const FetchData*>(raw_data.data() + /* 4 byte offset */ 4U))
   {
-    _fetch_data = reinterpret_cast<const FetchData*>(raw_data.data() + /* 4 byte offset */ 4U);
   }
 
+  IBSFetchDecoder(const IBSFetchDecoder&) = default;
+  IBSFetchDecoder(IBSFetchDecoder&&) noexcept = default;
   ~IBSFetchDecoder() noexcept = default;
+  IBSFetchDecoder& operator=(const IBSFetchDecoder&) = default;
+  IBSFetchDecoder& operator=(IBSFetchDecoder&&) noexcept = default;
 
   [[nodiscard]] bool is_valid() const noexcept { return _fetch_data->_fetch_control.is_fetch_valid; }
   [[nodiscard]] bool is_op_cache_miss() const noexcept { return _fetch_data->_fetch_control.is_fetch_op_cache_miss; }
@@ -82,11 +86,15 @@ class IBSOpDecoder
 {
 public:
   explicit IBSOpDecoder(const std::vector<std::byte>& raw_data) noexcept
+    : _execution_data(reinterpret_cast<const ExecutionData*>(raw_data.data() + /* 4 byte offset */ 4U))
   {
-    _execution_data = reinterpret_cast<const ExecutionData*>(raw_data.data() + /* 4 byte offset */ 4U);
   }
 
+  IBSOpDecoder(const IBSOpDecoder&) = default;
+  IBSOpDecoder(IBSOpDecoder&&) noexcept = default;
   ~IBSOpDecoder() noexcept = default;
+  IBSOpDecoder& operator=(const IBSOpDecoder&) = default;
+  IBSOpDecoder& operator=(IBSOpDecoder&&) noexcept = default;
 
   [[nodiscard]] std::uint16_t completion_to_retire_latency() const noexcept
   {

@@ -107,6 +107,9 @@ public:
   Config(const Config&) noexcept = default;
   Config& operator=(const Config&) noexcept = default;
 
+  Config& operator=(Config&&) noexcept = default;
+  Config(Config&&) noexcept = default;
+
   [[deprecated("Will be removed in v0.13. Use num_physical_counters() instead.")]] [[nodiscard]] std::uint8_t
   max_groups() const noexcept
   {
@@ -358,6 +361,12 @@ class SampleConfig final : public Config
 public:
   SampleConfig() noexcept = default;
   ~SampleConfig() noexcept = default;
+
+  SampleConfig(const SampleConfig&) noexcept = default;
+  SampleConfig(SampleConfig&&) noexcept = default;
+
+  SampleConfig& operator=(const SampleConfig&) noexcept = default;
+  SampleConfig& operator=(SampleConfig&&) noexcept = default;
 
   /**
    * @return Default precision for sampling.

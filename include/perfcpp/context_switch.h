@@ -20,7 +20,11 @@ public:
     , _thread_id(thread_id)
   {
   }
+  ContextSwitch(const ContextSwitch&) = default;
+  ContextSwitch(ContextSwitch&&) noexcept = default;
   ~ContextSwitch() noexcept = default;
+  ContextSwitch& operator=(const ContextSwitch&) = default;
+  ContextSwitch& operator=(ContextSwitch&&) noexcept = default;
 
   /**
    * @return True, if the process/thread was switched out.

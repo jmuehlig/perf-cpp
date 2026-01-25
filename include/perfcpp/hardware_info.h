@@ -21,7 +21,7 @@ public:
   /**
    * @return True, if the underlying hardware is an Intel processor.
    */
-  [[nodiscard]] static bool is_intel() noexcept { return static_cast<bool>(__builtin_cpu_is("intel")); }
+  [[nodiscard]] static bool is_intel() noexcept { return __builtin_cpu_is("intel"); }
 
   /**
    * @return True, if the underlying Intel processor requires an aux counter for memory sampling.
@@ -36,17 +36,17 @@ public:
   /**
    * @return True, if the underlying hardware is an AMD processor.
    */
-  [[nodiscard]] static bool is_amd() noexcept { return static_cast<bool>(__builtin_cpu_is("amd")); }
+  [[nodiscard]] static bool is_amd() noexcept { return __builtin_cpu_is("amd"); }
 
   /**
    * @return True, if the underlying AMD processor supports Instruction Based Sampling (IBS).
    */
-  [[nodiscard]] static bool is_amd_ibs_supported() noexcept;
+  [[nodiscard]] static bool is_amd_ibs_supported();
 
   /**
    * @return True, if the underlying AMD processor supports Instruction Based Sampling (IBS) with L3 filter.
    */
-  [[nodiscard]] static bool is_ibs_l3_filter_supported() noexcept;
+  [[nodiscard]] static bool is_ibs_l3_filter_supported();
 
   /**
    * @return The page size of memory of the underlying machine.
@@ -87,6 +87,12 @@ private:
   public:
     CPUIDResult() noexcept = default;
     ~CPUIDResult() noexcept = default;
+
+    CPUIDResult(const CPUIDResult&) noexcept = default;
+    CPUIDResult(CPUIDResult&&) noexcept = default;
+
+    [[nodiscard]] CPUIDResult& operator=(const CPUIDResult&) noexcept = default;
+    [[nodiscard]] CPUIDResult& operator=(CPUIDResult&&) noexcept = default;
 
     std::uint32_t eax;
     std::uint32_t ebx;

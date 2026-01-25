@@ -114,7 +114,7 @@ perf::util::Table::to_string() const
         for (auto i = column_id + 1U; i < column_id + header.span(); ++i) {
           span_columns_sizes += /* size of the spanned column */ column_max_sizes[i] +
                                 /* empty space for each column */ 2U +
-                                /* separator, if present */ is_column_separator[i];
+                                /* separator, if present */ static_cast<std::size_t>(is_column_separator[i]);
         }
 
         /// Calculate empty spaces to the left and to the right.

@@ -19,6 +19,14 @@ public:
   {
   }
 
+  Tokenizer(const Tokenizer&) = delete;
+  Tokenizer(Tokenizer&&) = delete;
+
+  ~Tokenizer() = default;
+
+  Tokenizer& operator=(const Tokenizer&) = delete;
+  Tokenizer& operator=(Tokenizer&&) = delete;
+
   /**
    * @return The original input.
    */
@@ -84,7 +92,7 @@ private:
    */
   [[nodiscard]] static bool is_identifier_char(const char char_) noexcept
   {
-    return std::isalnum(char_) || char_ == '_' || char_ == '.';
+    return (std::isalnum(char_) != 0) || char_ == '_' || char_ == '.';
   }
 
   /**

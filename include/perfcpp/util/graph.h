@@ -11,7 +11,11 @@ class DirectedGraph
 {
 public:
   DirectedGraph() = default;
+  DirectedGraph(const DirectedGraph&) = default;
+  DirectedGraph(DirectedGraph&&) noexcept = default;
   ~DirectedGraph() = default;
+  DirectedGraph& operator=(const DirectedGraph&) = default;
+  DirectedGraph& operator=(DirectedGraph&&) noexcept = default;
 
   /**
    * Inserts a node into the graph.
@@ -56,7 +60,7 @@ public:
   {
     for (auto& [node, _] : _nodes_and_edges) {
       /// Check every node if the node is not a successor.
-      if (this->is_successor(node) == false) {
+      if (!this->is_successor(node)) {
 
         const auto node_without_successor = node;
 
@@ -86,18 +90,17 @@ public:
     auto node_color = std::unordered_map<N, std::uint8_t>{};
 
     // Initialize all nodes as white
-    for (const auto& [node, _] : _nodes_and_edges) {
-      node_color.insert(std::make_pair(node, 0U));
-    }
+    std::transform(_nodes_and_edges.begin(),
+                   _nodes_and_edges.end(),
+                   std::inserter(node_color, node_color.end()),
+                   [](const auto& node_and_edges) { return std::make_pair(std::get<0>(node_and_edges), 0U); });
 
     // Check each unvisited node
-    for (const auto& [node, _] : _nodes_and_edges) {
-      if (node_color[node] == 0U && dfs_has_cycle(node, node_color)) {
-        return true;
-      }
-    }
-
-    return false;
+    return std::any_of(
+      _nodes_and_edges.begin(), _nodes_and_edges.end(), [this, &node_color](const auto& node_and_edges) {
+        const auto& node = std::get<0>(node_and_edges);
+        return node_color[node] == 0U && this->dfs_has_cycle(node, node_color);
+      });
   }
 
 private:
@@ -112,13 +115,10 @@ private:
    */
   [[nodiscard]] bool is_successor(const N& node) const noexcept
   {
-    for (const auto& [_, successors] : _nodes_and_edges) {
-      if (successors.find(node) != successors.end()) {
-        return true;
-      }
-    }
-
-    return false;
+    return std::any_of(_nodes_and_edges.begin(), _nodes_and_edges.end(), [&node](const auto& node_and_edges) {
+      const auto& successors = std::get<1>(node_and_edges);
+      return successors.find(node) != successors.end();
+    });
   }
 
   /**

@@ -29,7 +29,8 @@ std::optional<perf::SymbolResolver::ResolvedSymbol>
 perf::SymbolResolver::resolve(const std::uintptr_t logical_instruction_pointer) noexcept
 {
   /// Query the cache.
-  if (auto iterator = this->_resolved_symbols.find(logical_instruction_pointer); iterator != this->_resolved_symbols.end()) {
+  if (auto iterator = this->_resolved_symbols.find(logical_instruction_pointer);
+      iterator != this->_resolved_symbols.end()) {
     return iterator->second;
   }
 
@@ -151,7 +152,7 @@ perf::SymbolResolver::extract_symbols_from_table(void* elf_data,
   for (auto i = 0ULL; i < symbols_size; ++i) {
     const auto symbol_type = ELF64_ST_TYPE(symbols[i].st_info);
     /// Include regular functions (STT_FUNC) and indirect functions (STT_GNU_IFUNC).
-    if ((symbol_type == STT_FUNC || symbol_type == STT_GNU_IFUNC) && symbols[i].st_name) {
+    if ((symbol_type == STT_FUNC || symbol_type == STT_GNU_IFUNC) && symbols[i].st_name != 0U) {
       if (auto mangled_name = std::string(strings + symbols[i].st_name); !mangled_name.empty()) {
         /// Demangle C++ symbol names for better readability.
         auto demangled_name = SymbolResolver::demangle_symbol_name(std::move(mangled_name));
@@ -183,10 +184,10 @@ perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& mod
   if (elf_data == MAP_FAILED) {
     throw CannotReadElfForModule{ module.name(), module.path() };
   }
-  auto* elf_header = static_cast<const Elf64_Ehdr*>(elf_data);
+  const auto* elf_header = static_cast<const Elf64_Ehdr*>(elf_data);
 
   /// Verify ELF magic.
-  if (std::memcmp(elf_header->e_ident, ELFMAG, SELFMAG) != 0) {
+  if (std::memcmp(&elf_header->e_ident[0], ELFMAG, SELFMAG) != 0) {
     ::munmap(elf_data, stat_size);
     throw CannotVerifyElfMagicForModule{ module.name(), module.path() };
   }
@@ -199,7 +200,7 @@ perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& mod
   /// Extract symbols from SYMTAB (static symbol table) if available.
   const auto [symtab_table, symtab_strings] =
     SymbolResolver::find_symbol_and_string_tables(section_header_table, elf_header->e_shnum);
-  if (symtab_table && symtab_strings) {
+  if (symtab_table != nullptr && symtab_strings != nullptr) {
     extracted_symbols = SymbolResolver::extract_symbols_from_table(elf_data, symtab_table, symtab_strings);
   }
 
@@ -209,7 +210,9 @@ perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& mod
       const auto* dynsym_table = &section_header_table[i];
       const auto* dynsym_strings = &section_header_table[section_header_table[i].sh_link];
       auto dynsym_symbols = SymbolResolver::extract_symbols_from_table(elf_data, dynsym_table, dynsym_strings);
-      extracted_symbols.insert(extracted_symbols.end(), std::make_move_iterator(dynsym_symbols.begin()), std::make_move_iterator(dynsym_symbols.end()));
+      extracted_symbols.insert(extracted_symbols.end(),
+                               std::make_move_iterator(dynsym_symbols.begin()),
+                               std::make_move_iterator(dynsym_symbols.end()));
       break;
     }
   }
@@ -223,16 +226,16 @@ perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& mod
   });
 
   /// Remove duplicate symbols at the same address.
-  auto unique_end = std::unique(extracted_symbols.begin(), extracted_symbols.end(), [](const Symbol& a, const Symbol& b) {
-    return a.address() == b.address();
-  });
+  auto unique_end = std::unique(extracted_symbols.begin(),
+                                extracted_symbols.end(),
+                                [](const Symbol& a, const Symbol& b) { return a.address() == b.address(); });
   extracted_symbols.erase(unique_end, extracted_symbols.end());
 
   return extracted_symbols;
 }
 
 std::string
-perf::SymbolResolver::demangle_symbol_name(std::string &&symbol_name)
+perf::SymbolResolver::demangle_symbol_name(std::string&& symbol_name)
 {
   auto status = 0;
   auto demangled_name = std::unique_ptr<char, void (*)(void*)>(
@@ -284,10 +287,10 @@ perf::SymbolResolver::extract_build_id(const std::string& path) noexcept
     return {};
   }
 
-  auto* elf_header = static_cast<const Elf64_Ehdr*>(elf_data);
+  const auto* elf_header = static_cast<const Elf64_Ehdr*>(elf_data);
 
   /// Verify ELF magic.
-  if (std::memcmp(elf_header->e_ident, ELFMAG, SELFMAG) != 0) {
+  if (std::memcmp(&elf_header->e_ident[0], ELFMAG, SELFMAG) != 0) {
     ::munmap(elf_data, stat_size);
     return {};
   }
@@ -320,7 +323,7 @@ perf::SymbolResolver::extract_build_id(const std::string& path) noexcept
         const auto* desc = name + name_size_aligned;
 
         /// Check if this is a build ID note (NT_GNU_BUILD_ID = 3).
-        if (note_header->n_type == 3 && note_header->n_namesz == 4 && std::strncmp(name, "GNU", 4) == 0 &&
+        if (note_header->n_type == 3 && note_header->n_namesz == 4 && std::strncmp(name, "GNU", 3) == 0 &&
             note_header->n_descsz > 0) {
           build_id.assign(desc, desc + note_header->n_descsz);
           break;

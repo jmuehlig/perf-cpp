@@ -52,7 +52,11 @@ public:
     {
     }
 
+    Module(const Module&) = default;
+    Module(Module&&) noexcept = default;
     ~Module() = default;
+    Module& operator=(const Module&) = default;
+    Module& operator=(Module&&) noexcept = default;
 
     /**
      * @return The name of the module.
@@ -144,7 +148,11 @@ public:
       , _size(size)
     {
     }
+    Symbol(const Symbol&) = default;
+    Symbol(Symbol&&) noexcept = default;
     ~Symbol() = default;
+    Symbol& operator=(const Symbol&) = default;
+    Symbol& operator=(Symbol&&) noexcept = default;
 
     [[nodiscard]] const std::string& name() const noexcept { return _name; }
     [[nodiscard]] std::uintptr_t address() const noexcept { return _address; }
@@ -182,7 +190,11 @@ public:
       , _offset(offset)
     {
     }
+    ResolvedSymbol(const ResolvedSymbol&) = default;
+    ResolvedSymbol(ResolvedSymbol&&) noexcept = default;
     ~ResolvedSymbol() noexcept = default;
+    ResolvedSymbol& operator=(const ResolvedSymbol&) = delete;
+    ResolvedSymbol& operator=(ResolvedSymbol&&) noexcept = delete;
 
     [[nodiscard]] const Module& module() const noexcept { return _module; }
     [[nodiscard]] const Symbol& symbol() const noexcept { return _symbol; }
@@ -201,7 +213,11 @@ public:
   };
 
   SymbolResolver();
+  SymbolResolver(const SymbolResolver&) = default;
+  SymbolResolver(SymbolResolver&&) noexcept = default;
   ~SymbolResolver() = default;
+  SymbolResolver& operator=(const SymbolResolver&) = default;
+  SymbolResolver& operator=(SymbolResolver&&) noexcept = default;
 
   /**
    * Resolves the symbol the given instruction points to.
@@ -224,7 +240,7 @@ public:
    * @param module Module to lookup.
    * @return List of all symbols linked to the module.
    */
-    [[nodiscard]] static std::vector<Symbol> parse_symbol_table(const perf::SymbolResolver::Module& module);
+  [[nodiscard]] static std::vector<Symbol> parse_symbol_table(const perf::SymbolResolver::Module& module);
 
   /**
    * Reads the process name from /proc/self/comm.
@@ -279,8 +295,8 @@ private:
    * @return Vector of extracted symbols.
    */
   [[nodiscard]] static std::vector<Symbol> extract_symbols_from_table(void* elf_data,
-                                                                       const Elf64_Shdr* symbol_table,
-                                                                       const Elf64_Shdr* string_table);
+                                                                      const Elf64_Shdr* symbol_table,
+                                                                      const Elf64_Shdr* string_table);
 
   /**
    * Extracts the build ID from an ELF file.

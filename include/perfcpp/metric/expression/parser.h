@@ -22,7 +22,13 @@ public:
   {
   }
 
+  Parser(const Parser&) = delete;
+  Parser(Parser&&) = delete;
+
   ~Parser() = default;
+
+  Parser& operator=(const Parser&) = delete;
+  Parser& operator=(Parser&&) = delete;
 
   /**
    * Builds an evaluable expression from the given expression-string.
@@ -106,7 +112,14 @@ private:
       : _parser(parser)
     {
     }
+
+    TokenVisitor(const TokenVisitor&) = delete;
+    TokenVisitor(TokenVisitor&&) = delete;
+
     ~TokenVisitor() noexcept = default;
+
+    TokenVisitor& operator=(const TokenVisitor&) = delete;
+    TokenVisitor& operator=(TokenVisitor&&) = delete;
 
     [[nodiscard]] std::unique_ptr<ExpressionInterface> operator()(std::string& identifier);
     [[nodiscard]] std::unique_ptr<ExpressionInterface> operator()(double constant);

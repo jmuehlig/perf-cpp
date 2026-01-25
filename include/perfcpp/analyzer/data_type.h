@@ -21,7 +21,11 @@ public:
       , _size(size)
     {
     }
+    Member(const Member&) = default;
+    Member(Member&&) noexcept = default;
     ~Member() = default;
+    Member& operator=(const Member&) = default;
+    Member& operator=(Member&&) noexcept = default;
 
     [[nodiscard]] const std::string& name() const noexcept { return _name; }
     [[nodiscard]] std::size_t offset() const noexcept { return _offset; }

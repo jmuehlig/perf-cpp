@@ -6,8 +6,8 @@
 #include "group.h"
 #include "requested_event.h"
 #include "sample.h"
-#include "sample_result.h"
 #include "sample_recording_values.h"
+#include "sample_result.h"
 #include <chrono>
 #include <functional>
 #include <optional>
@@ -22,6 +22,7 @@ class MultiCoreSampler;
 class Sampler
 {
   friend MultiSamplerBase;
+
 public:
   /**
    * Represents a trigger condition for initiating a sampling event.
@@ -53,7 +54,11 @@ public:
     {
     }
 
+    Trigger(const Trigger&) = default;
+    Trigger(Trigger&&) noexcept = default;
     ~Trigger() = default;
+    Trigger& operator=(const Trigger&) = default;
+    Trigger& operator=(Trigger&&) noexcept = default;
 
     /**
      * @return The name that identifies the trigger event.
@@ -106,9 +111,12 @@ public:
       , _has_amd_ibs_op_pmu(has_amd_op_pmu_counter)
     {
     }
+    SampleCounter(const SampleCounter&) = delete;
     SampleCounter(SampleCounter&& other) noexcept = default;
 
     ~SampleCounter();
+    SampleCounter& operator=(const SampleCounter&) = delete;
+    SampleCounter& operator=(SampleCounter&&) noexcept = default;
 
     [[nodiscard]] Group& group() noexcept { return _group; }
     [[nodiscard]] const Group& group() const noexcept { return _group; }
@@ -157,6 +165,8 @@ public:
   Sampler(const Sampler&) = default;
 
   ~Sampler() = default;
+  Sampler& operator=(const Sampler&) = delete;
+  Sampler& operator=(Sampler&&) noexcept = delete;
 
   /**
    * Set the trigger for sampling to a single counter.
@@ -263,10 +273,10 @@ public:
    * Counters of the outer list will be grouped together, to enable auxiliary counter (e.g., needed
    * for Intel's Sapphire Rapids architecture).
    *
-   * @param triggers Group of names of the counters that "trigger" sample recording.
+   * @param list_of_triggers Group of names of the counters that "trigger" sample recording.
    * @return Sampler
    */
-  Sampler& trigger(std::vector<std::vector<std::string>>&& triggers);
+  Sampler& trigger(std::vector<std::vector<std::string>>&& list_of_triggers);
 
   /**
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
@@ -408,7 +418,11 @@ private:
 class MultiSamplerBase
 {
 public:
+  MultiSamplerBase(const MultiSamplerBase&) = delete;
+  MultiSamplerBase(MultiSamplerBase&&) noexcept = default;
   virtual ~MultiSamplerBase() = default;
+  MultiSamplerBase& operator=(const MultiSamplerBase&) = delete;
+  MultiSamplerBase& operator=(MultiSamplerBase&&) noexcept = default;
 
   /**
    * @return Configurations to enable values that will be sampled.
@@ -546,9 +560,12 @@ public:
   {
   }
 
+  MultiThreadSampler(const MultiThreadSampler&) = delete;
   MultiThreadSampler(MultiThreadSampler&&) noexcept = default;
 
   ~MultiThreadSampler() override = default;
+  MultiThreadSampler& operator=(const MultiThreadSampler&) = delete;
+  MultiThreadSampler& operator=(MultiThreadSampler&&) noexcept = default;
 
   /**
    * Set the trigger for sampling to a single counter.
@@ -727,9 +744,12 @@ public:
   {
   }
 
+  MultiCoreSampler(const MultiCoreSampler&) = delete;
   MultiCoreSampler(MultiCoreSampler&&) noexcept = default;
 
   ~MultiCoreSampler() override = default;
+  MultiCoreSampler& operator=(const MultiCoreSampler&) = delete;
+  MultiCoreSampler& operator=(MultiCoreSampler&&) noexcept = default;
 
   /**
    * Set the trigger for sampling to a single counter.
@@ -893,17 +913,12 @@ private:
 class SampleTimestampComparator
 {
 public:
-  bool operator()(const Sample& left, const Sample& right) const noexcept
+  bool operator()(const Sample& left, const Sample& right) const
   {
-    if (!left.metadata().timestamp().has_value()) {
-      return right.metadata().timestamp().has_value();
-    }
+    const auto left_timestamp = left.metadata().timestamp().value_or(std::numeric_limits<std::uint64_t>::max());
+    const auto right_timestamp = right.metadata().timestamp().value_or(std::numeric_limits<std::uint64_t>::max());
 
-    if (!right.metadata().timestamp().has_value()) {
-      return false;
-    }
-
-    return left.metadata().timestamp().value() < right.metadata().timestamp().value();
+    return left_timestamp < right_timestamp;
   }
 };
 
@@ -918,7 +933,11 @@ public:
     : _counter(counter)
   {
   }
+  CounterComparator(const CounterComparator&) = default;
+  CounterComparator(CounterComparator&&) noexcept = default;
   ~CounterComparator() noexcept = default;
+  CounterComparator& operator=(const CounterComparator&) = delete;
+  CounterComparator& operator=(CounterComparator&&) noexcept = delete;
 
   [[nodiscard]] bool operator()(
     const std::tuple<std::string_view, std::string_view, CounterConfig>& event_descriptor) const

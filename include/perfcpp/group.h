@@ -22,18 +22,26 @@ public:
   {
   public:
     ValueAndIdentifier() noexcept = default;
+    ValueAndIdentifier(const ValueAndIdentifier&) = default;
+    ValueAndIdentifier(ValueAndIdentifier&&) noexcept = default;
     ~ValueAndIdentifier() noexcept = default;
+    ValueAndIdentifier& operator=(const ValueAndIdentifier&) = default;
+    ValueAndIdentifier& operator=(ValueAndIdentifier&&) noexcept = default;
 
     [[nodiscard]] std::uint64_t value() const noexcept { return _value; }
     [[nodiscard]] std::uint64_t id() const noexcept { return _id; }
 
   private:
-    std::uint64_t _value;
-    std::uint64_t _id;
+    std::uint64_t _value{ std::numeric_limits<std::uint64_t>::max() };
+    std::uint64_t _id{ std::numeric_limits<std::uint64_t>::max() };
   };
 
   CounterValues() noexcept = default;
+  CounterValues(const CounterValues&) = default;
+  CounterValues(CounterValues&&) noexcept = default;
   ~CounterValues() noexcept = default;
+  CounterValues& operator=(const CounterValues&) = default;
+  CounterValues& operator=(CounterValues&&) noexcept = default;
 
   [[nodiscard]] time_t time_enabled() const noexcept { return _time_enabled; }
   [[nodiscard]] time_t time_running() const noexcept { return _time_running; }
@@ -77,7 +85,7 @@ class Group
 {
 public:
   /// Number of maximal members per group.
-  constexpr static inline auto MAX_MEMBERS = 12U;
+  constexpr static auto MAX_MEMBERS = 12U;
 
   /**
    * Creates a copy of the given counter with the same counter configuration.
@@ -88,9 +96,13 @@ public:
   [[nodiscard]] static Group copy_from_template(const Group& other);
 
   Group() = default;
+  Group(const Group&) = delete;
   Group(Group&&) noexcept = default;
 
   ~Group() = default;
+
+  Group& operator=(const Group&) = delete;
+  Group& operator=(Group&&) noexcept = default;
 
   /**
    * Adds the given event to the group.
@@ -183,7 +195,7 @@ public:
    * @param index Index of the counter to read the result for.
    * @return Result of the counter.
    */
-  [[nodiscard]] double get(std::size_t index) const noexcept;
+  [[nodiscard]] double get(std::size_t index) const;
 
   /**
    * Grants access to the counter at the given index.
@@ -241,10 +253,10 @@ private:
   std::vector<Counter> _members;
 
   /// Start value of the hardware performance counters.
-  CounterValues<Group::MAX_MEMBERS> _start_value{};
+  CounterValues<Group::MAX_MEMBERS> _start_value;
 
   /// End value of the hardware performance counters.
-  CounterValues<Group::MAX_MEMBERS> _end_value{};
+  CounterValues<Group::MAX_MEMBERS> _end_value;
 
   /// After stopping the group, we calculate the multiplexing correction once from start- and end-values.
   double _multiplexing_correction{ 1. };

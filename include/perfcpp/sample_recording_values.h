@@ -1,8 +1,9 @@
 #pragma once
+#include "exception.h"
+#include "registers.h"
+#include "branch.h"
 #include <cstdint>
 #include <linux/perf_event.h>
-#include "registers.h"
-#include "exception.h"
 
 namespace perf {
 class SampleRecordingValues
@@ -471,7 +472,7 @@ public:
   SampleRecordingValues& weight_struct([[maybe_unused]] const bool include)
   {
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
-                                      /// Linux 5.12
+                                        /// Linux 5.12
     set(PERF_SAMPLE_WEIGHT_STRUCT, include);
 #else
     throw SamplingFeatureIsNotSupported{ "weight struct", "5.12" };
@@ -491,7 +492,7 @@ public:
   SampleRecordingValues& latency([[maybe_unused]] const bool include) noexcept
   {
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
-                                      /// Linux 5.12
+                                        /// Linux 5.12
     weight_struct(include);
 #else
     weight(include);
@@ -568,10 +569,7 @@ public:
   /**
    * @return True, if context switch is requested by the user.
    */
-  [[nodiscard]] bool is_include_context_switch() const noexcept
-  {
-    return _is_include_context_switch;
-  }
+  [[nodiscard]] bool is_include_context_switch() const noexcept { return _is_include_context_switch; }
 
   /**
    * @return The set of requested user registers to include into the samples.

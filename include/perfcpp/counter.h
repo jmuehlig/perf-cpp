@@ -28,7 +28,13 @@ public:
   {
   }
 
+  CounterConfig(const CounterConfig&) noexcept = default;
+  CounterConfig(CounterConfig&&) noexcept = default;
+
   ~CounterConfig() noexcept = default;
+
+  [[nodiscard]] CounterConfig& operator=(const CounterConfig&) noexcept = default;
+  [[nodiscard]] CounterConfig& operator=(CounterConfig&&) noexcept = default;
 
   /**
    * Set the scale for calculating the event result.
@@ -41,6 +47,12 @@ public:
    * @param precision Precision.
    */
   void precision(const std::uint8_t precision) noexcept { _precision = precision; }
+
+  /**
+   * Set the precision if the event is used for sampling.
+   * @param precision Precision.
+   */
+  void precision(const Precision precision) noexcept { _precision = static_cast<std::uint8_t>(precision); }
 
   /**
    * Set the period or frequency if the event is used for sampling.
@@ -115,8 +127,12 @@ public:
   }
 
   Counter(Counter&&) noexcept = default;
+  Counter(const Counter&) = delete;
 
   ~Counter();
+
+  [[nodiscard]] Counter& operator=(Counter&&) noexcept = default;
+  Counter& operator=(const Counter&) = delete;
 
   /**
    * @return ID of the counter.
@@ -356,7 +372,7 @@ private:
     std::optional<std::uint32_t> max_user_stack_size,
     [[maybe_unused]] std::optional<std::uint16_t> max_callstack_size,
     [[maybe_unused]] bool is_include_context_switch,
-    [[maybe_unused]] bool is_include_extended_mmap_information) const noexcept;
+    [[maybe_unused]] bool is_include_extended_mmap_information) const;
 
   /**
    * Configures the perf event read format.

@@ -15,6 +15,12 @@ public:
   }
   ~Period() noexcept = default;
 
+  Period(const Period&) noexcept = default;
+  Period(Period&&) noexcept = default;
+
+  [[nodiscard]] Period& operator=(const Period&) noexcept = default;
+  [[nodiscard]] Period& operator=(Period&&) noexcept = default;
+
   /**
    * Returns the sampling period value.
    *
@@ -38,6 +44,12 @@ public:
   {
   }
   ~Frequency() noexcept = default;
+
+  Frequency(const Frequency&) noexcept = default;
+  Frequency(Frequency&&) noexcept = default;
+
+  [[nodiscard]] Frequency& operator=(const Frequency&) noexcept = default;
+  [[nodiscard]] Frequency& operator=(Frequency&&) noexcept = default;
 
   /**
    * Returns the sampling frequency value.

@@ -10,7 +10,7 @@ namespace perf {
  *
  * For more information see "precise_ip" on https://man7.org/linux/man-pages/man2/perf_event_open.2.html.
  */
-enum Precision : std::uint8_t
+enum class Precision : std::uint8_t
 {
   /// The recorded instruction pointer may land anywhere within a broad, implementation-defined window around the real
   /// instruction.

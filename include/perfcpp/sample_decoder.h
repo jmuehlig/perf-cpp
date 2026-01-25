@@ -3,8 +3,8 @@
 #include "ibs_decoder.h"
 #include "metadata.h"
 #include "requested_event.h"
-#include "sampler.h"
 #include "sample_recording_values.h"
+#include "sampler.h"
 #include <cstddef>
 #include <cstdint>
 #include <linux/perf_event.h>
@@ -25,6 +25,7 @@ public:
   {
   }
 
+  SampleIterator(const SampleIterator&) = default;
   SampleIterator(SampleIterator&& other) noexcept
     : _header(std::exchange(other._header, nullptr))
     , _data(std::exchange(other._data, 0ULL))
@@ -32,6 +33,14 @@ public:
   }
 
   ~SampleIterator() noexcept = default;
+
+  SampleIterator& operator=(const SampleIterator&) = default;
+  SampleIterator& operator=(SampleIterator&& other) noexcept
+  {
+    _header = std::exchange(other._header, nullptr);
+    _data = std::exchange(other._data, 0ULL);
+    return *this;
+  }
 
   [[nodiscard]] std::optional<Metadata::Mode> mode() const noexcept;
   [[nodiscard]] std::uint16_t size() const noexcept { return _header->size; }
@@ -67,7 +76,7 @@ public:
   }
 
   template<typename T>
-  T as() const noexcept
+  [[nodiscard]] T as() const noexcept
   {
     return reinterpret_cast<T>(_data);
   }
@@ -111,7 +120,10 @@ public:
   }
   [[nodiscard]] bool is_throttle() const noexcept { return _header->type == PERF_RECORD_THROTTLE; }
 
-  [[nodiscard]] bool is_instruction_pointer_exact() const noexcept { return _header->misc & PERF_RECORD_MISC_EXACT_IP; }
+  [[nodiscard]] bool is_instruction_pointer_exact() const noexcept
+  {
+    return static_cast<bool>(_header->misc & PERF_RECORD_MISC_EXACT_IP);
+  }
   [[nodiscard]] bool is_context_switch_out() const noexcept
   {
 #ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3
@@ -148,7 +160,11 @@ public:
     , _sampler_values(values)
   {
   }
+  SampleDecoder(const SampleDecoder&) = default;
+  SampleDecoder(SampleDecoder&&) noexcept = default;
   ~SampleDecoder() noexcept = default;
+  SampleDecoder& operator=(const SampleDecoder&) = delete;
+  SampleDecoder& operator=(SampleDecoder&&) noexcept = delete;
 
   /**
    * Decodes the samples from the sample buffers and translates them into Samples.

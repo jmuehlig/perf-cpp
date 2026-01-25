@@ -10,7 +10,7 @@
 #include <x86intrin.h>
 #endif
 
-perf::MmapBufferOverflowWorker::MmapBufferOverflowWorker(perf::MmapBuffer& mmap_buffer,
+perf::MmapBufferOverflowWorker::MmapBufferOverflowWorker(MmapBuffer& mmap_buffer,
                                                          const util::UniqueFileDescriptor& counter_file_descriptor)
 {
   /// Create an event file descriptor to cancel the thread when closing the sample buffer.
@@ -92,7 +92,9 @@ perf::MmapBuffer::MmapBuffer(const util::UniqueFileDescriptor& file_descriptor, 
   /// Notify the caller if buffer-allocation via ::mmap() failed.
   if (this->_ringbuffer_header == MAP_FAILED) {
     throw MmapError{ errno };
-  } else if (this->_ringbuffer_header == nullptr) {
+  }
+
+  if (this->_ringbuffer_header == nullptr) {
     throw MmapNullError{};
   }
 
@@ -132,16 +134,17 @@ perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
 
 #if defined(__x86_64__) || defined(__i386__)
   /// Lock for sequentializing the read.
-  decltype(perf_event_mmap_page::lock) lock;
+  auto lock = decltype(perf_event_mmap_page::lock){};
 
   /// Index of the physical counter.
-  std::uint32_t index;
+  auto index = std::uint32_t{};
 
   /// Timing.
-  std::uint64_t enabled, running;
+  auto enabled = std::uint64_t{};
+  auto running = std::uint64_t{};
 
   /// Counter value.
-  std::int64_t count;
+  auto count = std::int64_t{};
 
   do {
     lock = this->_ringbuffer_header->lock;
@@ -159,7 +162,7 @@ perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
     enabled = this->_ringbuffer_header->time_enabled;
     running = this->_ringbuffer_header->time_running;
 
-    if (this->_ringbuffer_header->cap_user_rdpmc && index) {
+    if (this->_ringbuffer_header->cap_user_rdpmc && index > 0U) {
       /// Read the hardware counter value.
       auto value = _rdpmc(index - 1U);
 
@@ -194,7 +197,7 @@ perf::MmapBuffer::consume_data()
 {
   /// Lock the sample buffers vector. The thread polling for buffer overflows might copy data at the moment (or wants to
   /// do so while we are reading the data),
-  auto _ = std::lock_guard{ this->_overflow_data_mutex };
+  auto _ = std::scoped_lock{ this->_overflow_data_mutex };
 
   /// Move all the data out of the sample buffer into a buffer that will be passed to the caller of this function and
   /// create a new one that will be used for further sampling.
@@ -214,7 +217,7 @@ perf::MmapBuffer::handle_overflow()
 {
   /// Since this function is called from another thread (the overflow worker thread), we need to protect the overflow
   /// data.
-  auto _ = std::lock_guard{ this->_overflow_data_mutex };
+  auto _ = std::scoped_lock{ this->_overflow_data_mutex };
 
   /// Copy the ringbuffer and append to sample buffers if any data available.
   if (auto buffer = this->copy_data_from_ringbuffer(); !buffer.empty()) {
@@ -270,24 +273,22 @@ perf::MmapBuffer::copy_data_from_ringbuffer()
 
   /// When the ringbuffer wrapped inbetween, we need to copy the first part from tail to end and the second part from
   /// start to head.
-  else {
-    /// Allocate space for the data in the buffer.
-    const auto tail_rest_size = data_size - end;
-    auto buffer = std::vector<std::byte>(tail_rest_size + begin);
+  /// Allocate space for the data in the buffer.
+  const auto tail_rest_size = data_size - end;
+  auto buffer = std::vector<std::byte>(tail_rest_size + begin);
 
-    /// Copy the first part: from tail to end.
-    const auto start_tail = data_start + end;
-    std::memcpy(buffer.data(), reinterpret_cast<std::byte*>(start_tail), tail_rest_size);
+  /// Copy the first part: from tail to end.
+  const auto start_tail = data_start + end;
+  std::memcpy(buffer.data(), reinterpret_cast<std::byte*>(start_tail), tail_rest_size);
 
-    /// Copy the second part: from start to head.
-    std::memcpy(buffer.data() + tail_rest_size, reinterpret_cast<std::byte*>(data_start), begin);
+  /// Copy the second part: from start to head.
+  std::memcpy(buffer.data() + tail_rest_size, reinterpret_cast<std::byte*>(data_start), begin);
 
-    // Update the data_tail to the current head, marking the data as consumed.
-    __sync_synchronize();
-    __atomic_store_n(&this->_ringbuffer_header->data_tail, head, __ATOMIC_RELEASE);
+  // Update the data_tail to the current head, marking the data as consumed.
+  __sync_synchronize();
+  __atomic_store_n(&this->_ringbuffer_header->data_tail, head, __ATOMIC_RELEASE);
 
-    return buffer;
-  }
+  return buffer;
 }
 
 std::uint64_t

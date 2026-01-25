@@ -24,6 +24,8 @@ public:
   {
   }
 
+  UniqueFileDescriptor(const UniqueFileDescriptor&) = delete;
+
   /**
    * Closes the file descriptor underneath.
    */
@@ -39,6 +41,8 @@ public:
     _file_descriptor = std::exchange(other._file_descriptor, -1L);
     return *this;
   }
+
+  UniqueFileDescriptor& operator=(const UniqueFileDescriptor&) = delete;
 
   UniqueFileDescriptor& operator=(const std::int64_t file_descriptor) noexcept
   {
@@ -80,8 +84,12 @@ public:
   {
   }
   FileDescriptorView(const FileDescriptorView&) noexcept = default;
+  FileDescriptorView(FileDescriptorView&&) noexcept = default;
 
   ~FileDescriptorView() noexcept = default;
+
+  FileDescriptorView& operator=(const FileDescriptorView&) noexcept = default;
+  FileDescriptorView& operator=(FileDescriptorView&&) noexcept = default;
 
   /**
    * @return True, if the filter descriptor underneath is opened.

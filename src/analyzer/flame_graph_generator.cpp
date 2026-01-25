@@ -1,8 +1,8 @@
 #include <algorithm>
 #include <fstream>
 #include <iterator>
-#include <sstream>
 #include <perfcpp/analyzer/flame_graph_generator.h>
+#include <sstream>
 
 std::vector<std::pair<std::vector<std::string>, std::uint64_t>>
 perf::analyzer::FlameGraphGenerator::map(const std::vector<Sample>& samples)
@@ -15,7 +15,7 @@ perf::analyzer::FlameGraphGenerator::map(const std::vector<Sample>& samples)
 std::vector<std::pair<std::vector<std::string>, std::uint64_t>>
 perf::analyzer::FlameGraphGenerator::map(
   const std::vector<Sample>& samples,
-  std::function<std::uint64_t(std::vector<Sample>::const_iterator, std::vector<Sample>::const_iterator)> mapper)
+  std::function<std::uint64_t(std::vector<Sample>::const_iterator, std::vector<Sample>::const_iterator)>&& mapper)
 {
   auto result = std::vector<std::pair<std::vector<std::string>, std::uint64_t>>{};
   result.reserve(samples.size());
@@ -89,7 +89,8 @@ perf::analyzer::FlameGraphGenerator::resolve_symbols(
   if (callchain.has_value()) {
     symbol_callchain.reserve(callchain->size() + 1U);
 
-    /// Turn the list of instruction pointers from the call stack in symbols (or the address if the symbol wasn't found).
+    /// Turn the list of instruction pointers from the call stack in symbols (or the address if the symbol wasn't
+    /// found).
     std::transform(callchain->begin(),
                    callchain->end(),
                    std::back_inserter(symbol_callchain),
@@ -120,7 +121,7 @@ perf::analyzer::FlameGraphGenerator::resolve_symbols(
 
 bool
 perf::analyzer::FlameGraphGenerator::have_equal_call_chains(const perf::Sample& original_sample,
-                                                           const perf::Sample& follow_up_sample) noexcept
+                                                            const perf::Sample& follow_up_sample) noexcept
 {
   if (original_sample.instruction_execution().logical_instruction_pointer().has_value() &&
       !follow_up_sample.instruction_execution().logical_instruction_pointer().has_value()) {
@@ -143,32 +144,35 @@ perf::analyzer::FlameGraphGenerator::have_equal_call_chains(const perf::Sample& 
   }
 
   /// Check if the symbols are equal, if both have a instruction pointer.
-  if (original_sample.instruction_execution().logical_instruction_pointer().has_value() &&
-      follow_up_sample.instruction_execution().logical_instruction_pointer().has_value()) {
-    const auto original_symbol =
-      this->_symbol_resolver.resolve(original_sample.instruction_execution().logical_instruction_pointer().value());
-    const auto follow_up_symbol =
-      this->_symbol_resolver.resolve(follow_up_sample.instruction_execution().logical_instruction_pointer().value());
-    if (!FlameGraphGenerator::have_equal_symbols(original_symbol, follow_up_symbol)) {
-      return false;
+  if (const auto original_instruction_pointer = original_sample.instruction_execution().logical_instruction_pointer();
+      original_instruction_pointer.has_value()) {
+    if (const auto follow_up_instruction_pointer =
+          follow_up_sample.instruction_execution().logical_instruction_pointer();
+        follow_up_instruction_pointer.has_value()) {
+      const auto original_symbol = this->_symbol_resolver.resolve(original_instruction_pointer.value());
+      const auto follow_up_symbol = this->_symbol_resolver.resolve(follow_up_instruction_pointer.value());
+      if (!FlameGraphGenerator::have_equal_symbols(original_symbol, follow_up_symbol)) {
+        return false;
+      }
     }
   }
 
   /// Check if both have the same callchain.
-  if (original_sample.instruction_execution().callchain().has_value() &&
-      follow_up_sample.instruction_execution().callchain().has_value()) {
-    const auto& original_callchain = original_sample.instruction_execution().callchain().value();
-    const auto& follow_up_callchain = follow_up_sample.instruction_execution().callchain().value();
-    if (original_callchain.size() != follow_up_callchain.size()) {
-      return false;
-    }
-
-    /// Compare entire callchain by resolving the symbols.
-    for (auto index = 0U; index < original_callchain.size(); ++index) {
-      const auto original_symbol = this->_symbol_resolver.resolve(original_callchain[index]);
-      const auto follow_up_symbol = this->_symbol_resolver.resolve(follow_up_callchain[index]);
-      if (!FlameGraphGenerator::have_equal_symbols(original_symbol, follow_up_symbol)) {
+  if (const auto& original_callchain = original_sample.instruction_execution().callchain();
+      original_callchain.has_value()) {
+    if (const auto& follow_up_callchain = follow_up_sample.instruction_execution().callchain();
+        follow_up_callchain.has_value()) {
+      if (original_callchain->size() != follow_up_callchain->size()) {
         return false;
+      }
+
+      /// Compare entire callchain by resolving the symbols.
+      for (auto index = 0U; index < original_callchain->size(); ++index) {
+        const auto original_symbol = this->_symbol_resolver.resolve(original_callchain.value()[index]);
+        const auto follow_up_symbol = this->_symbol_resolver.resolve(follow_up_callchain.value()[index]);
+        if (!FlameGraphGenerator::have_equal_symbols(original_symbol, follow_up_symbol)) {
+          return false;
+        }
       }
     }
   }

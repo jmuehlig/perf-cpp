@@ -31,7 +31,11 @@ public:
       , _position(position)
     {
     }
+    ScheduledHardwareCounterGroup(const ScheduledHardwareCounterGroup&) = default;
+    ScheduledHardwareCounterGroup(ScheduledHardwareCounterGroup&&) noexcept = default;
     ~ScheduledHardwareCounterGroup() noexcept = default;
+    ScheduledHardwareCounterGroup& operator=(const ScheduledHardwareCounterGroup&) = default;
+    ScheduledHardwareCounterGroup& operator=(ScheduledHardwareCounterGroup&&) noexcept = default;
 
     [[nodiscard]] std::uint8_t id() const noexcept { return _id; }
     [[nodiscard]] std::uint8_t position() const noexcept { return _position; }
@@ -89,7 +93,13 @@ public:
   {
   }
 
+  RequestedEvent(const RequestedEvent&) = default;
+  RequestedEvent(RequestedEvent&&) noexcept = default;
+
   ~RequestedEvent() = default;
+
+  RequestedEvent& operator=(const RequestedEvent&) = default;
+  RequestedEvent& operator=(RequestedEvent&&) noexcept = default;
 
   [[nodiscard]] std::optional<std::string_view> pmu_name() const noexcept { return _pmu_name; }
   [[nodiscard]] std::string_view event_name() const noexcept { return _event_name; }
@@ -134,11 +144,14 @@ class RequestedEventSet
 {
 public:
   RequestedEventSet() = default;
-  RequestedEventSet(RequestedEventSet&&) noexcept = default;
   RequestedEventSet(const RequestedEventSet&) noexcept = default;
+  RequestedEventSet(RequestedEventSet&&) noexcept = default;
   explicit RequestedEventSet(const std::size_t capacity) { _requested_events.reserve(capacity); }
 
   ~RequestedEventSet() = default;
+
+  RequestedEventSet& operator=(const RequestedEventSet&) = default;
+  RequestedEventSet& operator=(RequestedEventSet&&) noexcept = default;
 
   /**
    * Appends an event to the event set, if not present.

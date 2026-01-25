@@ -14,6 +14,12 @@ public:
   }
   ~CGroup() = default;
 
+  CGroup(const CGroup&) noexcept = default;
+  CGroup(CGroup&&) noexcept = default;
+
+  CGroup& operator=(const CGroup&) noexcept = default;
+  CGroup& operator=(CGroup&&) noexcept = default;
+
   /**
    * @return Id of the CGgroup (as found in samples).
    */

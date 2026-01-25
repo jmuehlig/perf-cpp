@@ -33,7 +33,7 @@ std::optional<std::uint8_t> perf::HardwareInfo::_physical_performance_counters_p
 std::optional<std::uint8_t> perf::HardwareInfo::_events_per_physical_performance_counter{ std::nullopt };
 
 /// Maximal clock frequency across all cores in Hz.
-std::optional<std::uint64_t> perf::HardwareInfo::_max_cpu_clock_frequency{std::nullopt};
+std::optional<std::uint64_t> perf::HardwareInfo::_max_cpu_clock_frequency{ std::nullopt };
 
 bool
 perf::HardwareInfo::is_intel_aux_counter_required()
@@ -97,7 +97,7 @@ perf::HardwareInfo::is_intel_12th_generation_or_newer()
 }
 
 bool
-perf::HardwareInfo::is_amd_ibs_supported() noexcept
+perf::HardwareInfo::is_amd_ibs_supported()
 {
 #if defined(__x86_64__) || defined(__i386__)
   if (HardwareInfo::_is_amd_ibs_supported.has_value()) {
@@ -122,7 +122,7 @@ perf::HardwareInfo::is_amd_ibs_supported() noexcept
 }
 
 bool
-perf::HardwareInfo::is_ibs_l3_filter_supported() noexcept
+perf::HardwareInfo::is_ibs_l3_filter_supported()
 {
 #if defined(__x86_64__) || defined(__i386__)
   if (HardwareInfo::_is_ibs_l3_filter_supported.has_value()) {
@@ -180,7 +180,7 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
     /// http://www.flounder.com/cpuid_explorer2.htm#CPUID(0x80000001):ECX.
     if (const auto extended_processor_info = HardwareInfo::cpuid(0x80000001);
         extended_processor_info.has_value() &&
-        (extended_processor_info->ecx & (static_cast<std::uint32_t>(1U) << 23))) {
+        static_cast<bool>(extended_processor_info->ecx & (static_cast<std::uint32_t>(1U) << 23))) {
 
       /// Check the Extended Information (0x80000000), see
       /// http://www.flounder.com/cpuid_explorer2.htm#CPUID(0x80000000).
@@ -256,8 +256,9 @@ perf::HardwareInfo::max_cpu_clock_frequency()
 
   for (const auto& entry : std::filesystem::directory_iterator("/sys/devices/system/cpu")) {
     if (entry.is_directory()) {
-      if (auto cpu_directory_name = entry.path().filename().string(); cpu_directory_name.rfind("cpu", 0U) == 0U && std::isdigit(cpu_directory_name[3U])) {
-        auto freq_file= std::ifstream{entry.path() / "cpufreq/cpuinfo_max_freq"};
+      if (auto cpu_directory_name = entry.path().filename().string();
+          cpu_directory_name.rfind("cpu", 0U) == 0U && std::isdigit(cpu_directory_name[3U]) != 0) {
+        auto freq_file = std::ifstream{ entry.path() / "cpufreq/cpuinfo_max_freq" };
         if (auto frequency_in_khz = 0UL; freq_file >> frequency_in_khz) {
           max_frequency_in_hz = std::max(max_frequency_in_hz, frequency_in_khz * 1000UL);
         }
@@ -269,8 +270,7 @@ perf::HardwareInfo::max_cpu_clock_frequency()
     throw CannotReadMaxClockFrequency{};
   }
 
-  return HardwareInfo::cache_value(HardwareInfo::_max_cpu_clock_frequency,
-                                   max_frequency_in_hz);
+  return HardwareInfo::cache_value(HardwareInfo::_max_cpu_clock_frequency, max_frequency_in_hz);
 }
 
 std::optional<std::uint8_t>

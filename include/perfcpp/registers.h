@@ -19,47 +19,47 @@ class Registers
 public:
   enum class x86 : std::uint8_t
   {
-    AX,
-    BX,
-    CX,
-    DX,
-    SI,
-    DI,
-    BP,
-    SP,
-    IP,
-    FLAGS,
-    CS,
-    SS,
-    DS,
-    ES,
-    FS,
-    GS,
-    R8,
-    R9,
-    R10,
-    R11,
-    R12,
-    R13,
-    R14,
-    R15,
+    AX = 0U,
+    BX = 1U,
+    CX = 2U,
+    DX = 3U,
+    SI = 4U,
+    DI = 5U,
+    BP = 6U,
+    SP = 7U,
+    IP = 8U,
+    FLAGS = 9U,
+    CS = 10U,
+    SS = 11U,
+    DS = 12U,
+    ES = 13U,
+    FS = 14U,
+    GS = 15U,
+    R8 = 16U,
+    R9 = 17U,
+    R10 = 18U,
+    R11 = 19U,
+    R12 = 20U,
+    R13 = 21U,
+    R14 = 22U,
+    R15 = 23U,
 
-    XMM0 = 32,
-    XMM1 = 34,
-    XMM2 = 36,
-    XMM3 = 38,
-    XMM4 = 40,
-    XMM5 = 42,
-    XMM6 = 44,
-    XMM7 = 46,
-    XMM8 = 48,
-    XMM9 = 50,
-    XMM10 = 52,
-    XMM11 = 54,
-    XMM12 = 56,
-    XMM13 = 58,
-    XMM14 = 60,
-    XMM15 = 62
+    XMM0 = 32U,
+    XMM1 = 34U,
+    XMM2 = 36U,
+    XMM3 = 38U,
+    XMM4 = 40U,
+    XMM5 = 42U,
+    XMM6 = 44U,
+    XMM7 = 46U,
+    XMM8 = 48U,
+    XMM9 = 50U,
+    XMM10 = 52U,
+    XMM11 = 54U,
+    XMM12 = 56U,
+    XMM13 = 58U,
+    XMM14 = 60U,
+    XMM15 = 62U
   };
 
   enum class arm : std::uint8_t
@@ -85,41 +85,41 @@ public:
 
   enum class arm64 : std::uint8_t
   {
-    X0,
-    X1,
-    X2,
-    X3,
-    X4,
-    X5,
-    X6,
-    X7,
-    X8,
-    X9,
-    X10,
-    X11,
-    X12,
-    X13,
-    X14,
-    X15,
-    X16,
-    X17,
-    X18,
-    X19,
-    X20,
-    X21,
-    X22,
-    X23,
-    X24,
-    X25,
-    X26,
-    X27,
-    X28,
-    X29,
-    LR,
-    SP,
-    PC,
-    MAX,
-    VG = 46
+    X0 = 0U,
+    X1 = 1U,
+    X2 = 2U,
+    X3 = 3U,
+    X4 = 4U,
+    X5 = 5U,
+    X6 = 6U,
+    X7 = 7U,
+    X8 = 8U,
+    X9 = 9U,
+    X10 = 10U,
+    X11 = 11U,
+    X12 = 12U,
+    X13 = 13U,
+    X14 = 14U,
+    X15 = 15U,
+    X16 = 16U,
+    X17 = 17U,
+    X18 = 18U,
+    X19 = 19U,
+    X20 = 20U,
+    X21 = 21U,
+    X22 = 22U,
+    X23 = 23U,
+    X24 = 24U,
+    X25 = 25U,
+    X26 = 26U,
+    X27 = 27U,
+    X28 = 28U,
+    X29 = 29U,
+    LR = 30U,
+    SP = 31U,
+    PC = 32U,
+    MAX = 33U,
+    VG = 46U
   };
 
   enum class riscv : std::uint8_t
@@ -190,7 +190,7 @@ public:
 
   ~Registers() noexcept = default;
 
-  [[nodiscard]] std::uint64_t mask() const noexcept
+  [[nodiscard]] std::uint64_t mask() const
   {
     return std::visit(
       [](const auto& registers) {
@@ -203,12 +203,12 @@ public:
       _registers);
   }
 
-  [[nodiscard]] std::uint64_t size() const noexcept
+  [[nodiscard]] std::uint64_t size() const
   {
     return std::visit([](const auto& registers) { return registers.size(); }, _registers);
   }
 
-  [[nodiscard]] bool empty() const noexcept
+  [[nodiscard]] bool empty() const
   {
     return std::visit([](const auto& registers) { return registers.empty(); }, _registers);
   }
@@ -236,7 +236,13 @@ public:
   {
   }
 
+  RegisterValues(const RegisterValues&) = default;
+  RegisterValues(RegisterValues&&) noexcept = default;
+
   ~RegisterValues() = default;
+
+  RegisterValues& operator=(const RegisterValues&) = default;
+  RegisterValues& operator=(RegisterValues&&) noexcept = default;
 
   /**
    * @return The ABI for which these register values are valid.
@@ -297,7 +303,7 @@ public:
 
 private:
   /// ABI of the registers.
-  ABI _abi {ABI::None};
+  ABI _abi{ ABI::None };
 
   /// Map of Register -> Value.
   std::unordered_map<std::uint8_t, std::int64_t> _values;

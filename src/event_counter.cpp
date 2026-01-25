@@ -194,7 +194,7 @@ perf::EventCounter::schedule(std::vector<std::pair<RequestedEvent, std::optional
       /// If the event is already in the set, set the visibility to true (if is_shown_in_results == true), and return
       /// since we do not need to add the event twice.
       if (this->_requested_event_set.adjust_visibility_if_present(
-            requested_event.pmu_name().value(), requested_event.event_name(), requested_event.is_shown_in_results())) {
+            requested_event.pmu_name(), requested_event.event_name(), requested_event.is_shown_in_results())) {
         continue;
       }
 
@@ -396,11 +396,11 @@ perf::EventCounter::result(const std::uint64_t normalization) const
   for (const auto& event : this->_requested_event_set) {
     /// Hardware events are read from the hardware counter (groups).
     if (event.is_hardware_event()) {
-      const auto scheduled_group = event.scheduled_group().value();
-      const auto& group = std::get<0>(this->_hardware_event_groups[scheduled_group.id()]);
-      event_values.emplace_back(event.event_name(), group.get(scheduled_group.position()));
+      if (auto scheduled_group = event.scheduled_group(); scheduled_group.has_value()) {
+        const auto& group = std::get<0>(this->_hardware_event_groups[scheduled_group->id()]);
+        event_values.emplace_back(event.event_name(), group.get(scheduled_group->position()));
+      }
     }
-
     /// Time events are read using the event's start and stop time.
     else if (event.is_time_event()) {
       if (const auto& time_calculator = this->_counter_definitions.time_event(event.event_name());
@@ -488,7 +488,7 @@ perf::LiveEventCounter::stop() noexcept
 }
 
 double
-perf::LiveEventCounter::get(const std::string_view event_name) const noexcept
+perf::LiveEventCounter::get(const std::string_view event_name) const
 {
   for (auto event_index = 0U; event_index < this->_event_names.size(); ++event_index) {
     /// Find the event matching the given name.
@@ -508,7 +508,7 @@ perf::LiveEventCounter::get(const std::string_view event_name) const noexcept
 }
 
 double
-perf::LiveEventCounter::get(const std::string_view event_name, const std::uint64_t normalization) const noexcept
+perf::LiveEventCounter::get(const std::string_view event_name, const std::uint64_t normalization) const
 {
   return this->get(event_name) / static_cast<double>(normalization);
 }
@@ -574,22 +574,23 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
   for (const auto& event : reference_event_set) {
     /// Hardware events are read via hardware counter (groups).
     if (event.is_hardware_event()) {
+      if (auto scheduled_group = event.scheduled_group(); scheduled_group.has_value()) {
 
-      /// Add up the values from all individual EventCounters in event_counters.
-      const auto aggregated_value = std::accumulate(
-        this->event_counters().cbegin(),
-        this->event_counters().cend(),
-        .0,
-        [group_id = event.scheduled_group()->id(),
-         in_group_position = event.scheduled_group()->position()](const auto sum, const auto& event_counter) {
-          const auto& group = std::get<0>(event_counter._hardware_event_groups[group_id]);
-          return sum + group.get(in_group_position);
-        });
+        /// Add up the values from all individual EventCounters in event_counters.
+        const auto aggregated_value =
+          std::accumulate(this->event_counters().cbegin(),
+                          this->event_counters().cend(),
+                          .0,
+                          [group_id = scheduled_group->id(),
+                           in_group_position = scheduled_group->position()](const auto sum, const auto& event_counter) {
+                            const auto& group = std::get<0>(event_counter._hardware_event_groups[group_id]);
+                            return sum + group.get(in_group_position);
+                          });
 
-      /// Add to the aggregated results.
-      aggregated_event_values.emplace_back(event.event_name(), aggregated_value);
+        /// Add to the aggregated results.
+        aggregated_event_values.emplace_back(event.event_name(), aggregated_value);
+      }
     }
-
     /// Time events are read via event counter's start and stop timestamps.
     else if (event.is_time_event()) {
       if (const auto time_event = reference_event_counter._counter_definitions.time_event(event.event_name());

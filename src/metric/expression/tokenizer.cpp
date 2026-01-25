@@ -40,7 +40,7 @@ perf::metric::expression::Tokenizer::next()
 
   /// Check if the next character is a constant number (obviously a digit indicates a number – and so does a ".").
   /// If so, return a number token.
-  if (std::isdigit(current_character) || current_character == '.') {
+  if (std::isdigit(current_character) != 0 || current_character == '.') {
     auto [constant, new_position] = Tokenizer::read_constant(this->_position);
 
     /// The constant tokenizer calculates the next position.
@@ -52,7 +52,7 @@ perf::metric::expression::Tokenizer::next()
   /// Check if the next character is an alphabetical char, which indicates an identifier.
   /// Additionally, identifiers can start with single quotes to escape, for example, - operators as part of the
   /// identifier (e.g., the hardware counter "L1-cache-miss"). If so, return an identifier token.
-  if (std::isalpha(current_character) || Tokenizer::is_escape_char(current_character)) {
+  if (std::isalpha(current_character) != 0 || Tokenizer::is_escape_char(current_character)) {
     auto [identifier, new_position] = Tokenizer::read_identifier(this->_position);
 
     /// The identifier tokenizer calculates the next position.
@@ -69,7 +69,7 @@ perf::metric::expression::Tokenizer::skip_whitespaces() const noexcept
 {
   auto position = this->_position;
 
-  while (position < this->_input.length() && std::isspace(this->_input[position])) {
+  while (position < this->_input.length() && std::isspace(this->_input[position]) != 0) {
     ++position;
   }
 
@@ -84,7 +84,7 @@ perf::metric::expression::Tokenizer::read_constant(const std::size_t begin) cons
   auto position = begin + 1ULL;
 
   /// Read all digits.
-  while (position < this->_input.length() && std::isdigit(this->_input[position])) {
+  while (position < this->_input.length() && std::isdigit(this->_input[position]) != 0) {
     ++position;
   }
 
@@ -93,7 +93,7 @@ perf::metric::expression::Tokenizer::read_constant(const std::size_t begin) cons
     ++position;
 
     /// Again, read all digits after the decimal point.
-    while (position < this->_input.length() && std::isdigit(this->_input[position])) {
+    while (position < this->_input.length() && std::isdigit(this->_input[position]) != 0) {
       ++position;
     }
   }
@@ -107,7 +107,7 @@ perf::metric::expression::Tokenizer::read_constant(const std::size_t begin) cons
                                          (this->_input[position] == '+' || this->_input[position] == '-'));
 
     /// Again, read all digits after the scientific e.
-    while (position < this->_input.length() && std::isdigit(this->_input[position])) {
+    while (position < this->_input.length() && std::isdigit(this->_input[position]) != 0) {
       ++position;
     }
   }

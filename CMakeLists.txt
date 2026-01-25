@@ -89,6 +89,17 @@ else ()
 endif ()
 
 #############################################################
+#   clang-tidy integration                                  #
+#############################################################
+find_program(CLANG_TIDY NAMES "clang-tidy")
+if(CLANG_TIDY)
+    set(CLANG_TIDY_COMMAND "${CLANG_TIDY}" "--config-file=${CMAKE_SOURCE_DIR}/.clang-tidy")
+    set_target_properties(perf-cpp PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND}")
+else()
+    message(WARNING "clang-tidy not found")
+endif()
+
+#############################################################
 #   Examples definition                                     #
 #############################################################
 if(BUILD_EXAMPLES)

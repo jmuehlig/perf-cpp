@@ -17,7 +17,11 @@ public:
   {
   }
 
+  DRatioFunction(const DRatioFunction&) = delete;
+  DRatioFunction(DRatioFunction&&) noexcept = default;
   ~DRatioFunction() override = default;
+  DRatioFunction& operator=(const DRatioFunction&) = delete;
+  DRatioFunction& operator=(DRatioFunction&&) noexcept = default;
 
 protected:
   [[nodiscard]] std::optional<double> evaluate(std::optional<double> left, std::optional<double> right) const override;
@@ -31,7 +35,11 @@ public:
   {
   }
 
+  SumFunction(const SumFunction&) = delete;
+  SumFunction(SumFunction&&) noexcept = default;
   ~SumFunction() override = default;
+  SumFunction& operator=(const SumFunction&) = delete;
+  SumFunction& operator=(SumFunction&&) noexcept = default;
 
   /**
    * Sums up all arguments.

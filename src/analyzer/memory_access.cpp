@@ -53,7 +53,7 @@ perf::analyzer::MemoryAccess::find(std::string_view data_type_name) noexcept
 }
 
 perf::analyzer::MemoryAccessResult
-perf::analyzer::MemoryAccess::map(const SampleResult& samples)
+perf::analyzer::MemoryAccess::map(const SampleResult& sample_result)
 {
   /// Copy of all data types; the result will contain a copy since we add the samples to the members.
   auto data_types = std::vector<DataType>{};
@@ -93,7 +93,7 @@ perf::analyzer::MemoryAccess::map(const SampleResult& samples)
   std::sort(registered_addresses.begin(), registered_addresses.end(), DataTypeInstanceComp{});
 
   /// Scan the samples and annotate each sample to the member of a data type instance the sample may belong to.
-  for (const auto& sample : samples) {
+  for (const auto& sample : sample_result) {
     if (const auto memory_address = sample.data_access().logical_memory_address().value_or(0ULL);
         memory_address > 0ULL) {
 
@@ -199,7 +199,7 @@ perf::analyzer::MemoryAccessResult::to_string() const
 
     if (has_load) {
       access_type_headers.emplace_back("loads",
-                                       10U + static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 4U +
+                                       10U + (static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 4U) +
                                          static_cast<std::uint8_t>(HardwareInfo::is_intel()),
                                        true);
 
@@ -250,7 +250,7 @@ perf::analyzer::MemoryAccessResult::to_string() const
 
     if (has_software_prefetch) {
       access_type_headers.emplace_back("software prefetches",
-                                       10U + static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 3U +
+                                       10U + (static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 3U) +
                                          static_cast<std::uint8_t>(HardwareInfo::is_intel()),
                                        true);
 
@@ -299,7 +299,7 @@ perf::analyzer::MemoryAccessResult::to_string() const
     }
 
     if (has_store) {
-      access_type_headers.emplace_back("stores", 2U + static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 1U, true);
+      access_type_headers.emplace_back("stores", 2U + (static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 1U), true);
 
       category_headers.emplace_back("", 1U, true);
       category_headers.emplace_back("latency", 1U + static_cast<std::uint8_t>(HardwareInfo::is_amd()), true);

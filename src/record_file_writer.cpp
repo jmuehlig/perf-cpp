@@ -11,8 +11,6 @@
 #include <sys/sysmacros.h>
 #include <unistd.h>
 
-#define PERF_RECORD_HEADER_BUILD_ID 67
-
 void
 perf::RecordFileWriter::write(const SampleRecordingValues& sampler_values,
                               const std::vector<Sampler::SampleCounter>& sample_counters,
@@ -211,9 +209,10 @@ void
 perf::RecordFileWriter::set_feature_bit(std::array<std::uint64_t, FEATURE_BITMAP_SIZE>& bitmap,
                                         const std::uint8_t bit_index)
 {
-  const auto long_index = static_cast<std::size_t>(bit_index / 64U);
-  const auto bit_offset = bit_index % 64;
-  bitmap[long_index] |= (1ULL << bit_offset);
+  if (const auto long_index = static_cast<std::size_t>(bit_index / 64U); long_index < bitmap.size()) {
+    const auto bit_offset = bit_index % 64;
+    bitmap.at(long_index) |= (1ULL << bit_offset);
+  }
 }
 
 std::string
@@ -438,12 +437,12 @@ perf::RecordFileWriter::calculate_sample_id_all_size(std::optional<std::uint32_t
                                                      std::optional<std::uint64_t> stream_id,
                                                      std::optional<std::uint32_t> cpu_id)
 {
-  return sizeof(std::uint64_t) * static_cast<std::uint64_t>(process_id.has_value() || thread_id.has_value()) +
-         sizeof(std::uint64_t) * static_cast<std::uint64_t>(timestamp.has_value()) +
-         sizeof(std::uint64_t) * static_cast<std::uint64_t>(sample_id.has_value()) +
-         sizeof(std::uint64_t) * static_cast<std::uint64_t>(stream_id.has_value()) +
-         sizeof(std::uint64_t) * static_cast<std::uint64_t>(cpu_id.has_value()) +
-         sizeof(std::uint64_t) * static_cast<std::uint64_t>(sample_id.has_value());
+  return (sizeof(std::uint64_t) * static_cast<std::uint64_t>(process_id.has_value() || thread_id.has_value())) +
+         (sizeof(std::uint64_t) * static_cast<std::uint64_t>(timestamp.has_value())) +
+         (sizeof(std::uint64_t) * static_cast<std::uint64_t>(sample_id.has_value())) +
+         (sizeof(std::uint64_t) * static_cast<std::uint64_t>(stream_id.has_value())) +
+         (sizeof(std::uint64_t) * static_cast<std::uint64_t>(cpu_id.has_value())) +
+         (sizeof(std::uint64_t) * static_cast<std::uint64_t>(sample_id.has_value()));
 }
 
 void

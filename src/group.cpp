@@ -154,7 +154,7 @@ perf::Group::read(CounterValues<MAX_MEMBERS>& values)
 {
   if (!this->empty()) {
     const auto read_size = ::read(
-      this->_members.front().file_descriptor().value(), &values, sizeof(std::remove_reference<decltype(values)>::type));
+      this->_members.front().file_descriptor().value(), &values, sizeof(std::remove_reference_t<decltype(values)>));
 
     if (read_size < 0LL) {
       throw CannotReadCounter{};
@@ -169,7 +169,7 @@ perf::Group::add(const perf::CounterConfig event_config)
 }
 
 double
-perf::Group::get(const std::size_t index) const noexcept
+perf::Group::get(const std::size_t index) const
 {
   if (index < this->_members.size()) {
     const auto& event = this->_members[index];

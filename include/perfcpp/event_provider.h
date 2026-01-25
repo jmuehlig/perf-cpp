@@ -12,6 +12,11 @@ class CounterDefinition;
 class EventProvider
 {
 public:
+  EventProvider() = default;
+  EventProvider(const EventProvider&) = default;
+  EventProvider(EventProvider&&) noexcept = default;
+  EventProvider& operator=(const EventProvider&) = default;
+  EventProvider& operator=(EventProvider&&) noexcept = default;
   virtual ~EventProvider() noexcept = default;
 
   /**
@@ -27,6 +32,11 @@ public:
 class PerfSubsystemEventProvider final : public EventProvider
 {
 public:
+  PerfSubsystemEventProvider() = default;
+  PerfSubsystemEventProvider(const PerfSubsystemEventProvider&) = default;
+  PerfSubsystemEventProvider(PerfSubsystemEventProvider&&) noexcept = default;
+  PerfSubsystemEventProvider& operator=(const PerfSubsystemEventProvider&) = default;
+  PerfSubsystemEventProvider& operator=(PerfSubsystemEventProvider&&) noexcept = default;
   ~PerfSubsystemEventProvider() noexcept override = default;
 
   /**
@@ -42,6 +52,11 @@ public:
 class TimeEventProvider final : public EventProvider
 {
 public:
+  TimeEventProvider() = default;
+  TimeEventProvider(const TimeEventProvider&) = default;
+  TimeEventProvider(TimeEventProvider&&) noexcept = default;
+  TimeEventProvider& operator=(const TimeEventProvider&) = default;
+  TimeEventProvider& operator=(TimeEventProvider&&) noexcept = default;
   ~TimeEventProvider() noexcept override = default;
 
   /**
@@ -57,6 +72,11 @@ public:
 class MetricEventProvider final : public EventProvider
 {
 public:
+  MetricEventProvider() = default;
+  MetricEventProvider(const MetricEventProvider&) = default;
+  MetricEventProvider(MetricEventProvider&&) noexcept = default;
+  MetricEventProvider& operator=(const MetricEventProvider&) = default;
+  MetricEventProvider& operator=(MetricEventProvider&&) noexcept = default;
   ~MetricEventProvider() noexcept override = default;
 
   /**
@@ -72,6 +92,11 @@ public:
 class SystemSpecificEventProvider final : public EventProvider
 {
 public:
+  SystemSpecificEventProvider() = default;
+  SystemSpecificEventProvider(const SystemSpecificEventProvider&) = default;
+  SystemSpecificEventProvider(SystemSpecificEventProvider&&) noexcept = default;
+  SystemSpecificEventProvider& operator=(const SystemSpecificEventProvider&) = default;
+  SystemSpecificEventProvider& operator=(SystemSpecificEventProvider&&) noexcept = default;
   ~SystemSpecificEventProvider() noexcept override = default;
 
   /**
@@ -155,6 +180,11 @@ private:
 class AMDIbsEventProvider final : public EventProvider
 {
 public:
+  AMDIbsEventProvider() = default;
+  AMDIbsEventProvider(const AMDIbsEventProvider&) = default;
+  AMDIbsEventProvider(AMDIbsEventProvider&&) noexcept = default;
+  AMDIbsEventProvider& operator=(const AMDIbsEventProvider&) = default;
+  AMDIbsEventProvider& operator=(AMDIbsEventProvider&&) noexcept = default;
   ~AMDIbsEventProvider() noexcept override = default;
 
   /**
@@ -187,6 +217,10 @@ public:
     : _file_name(file_name)
   {
   }
+  CsvFileEventProvider(const CsvFileEventProvider&) = default;
+  CsvFileEventProvider(CsvFileEventProvider&&) noexcept = default;
+  CsvFileEventProvider& operator=(const CsvFileEventProvider&) = delete;
+  CsvFileEventProvider& operator=(CsvFileEventProvider&&) noexcept = delete;
   ~CsvFileEventProvider() noexcept override = default;
 
   /**
@@ -206,6 +240,11 @@ private:
 class ProcessorSpecificEventProvider final : public EventProvider
 {
 public:
+  ProcessorSpecificEventProvider() = default;
+  ProcessorSpecificEventProvider(const ProcessorSpecificEventProvider&) = default;
+  ProcessorSpecificEventProvider(ProcessorSpecificEventProvider&&) noexcept = default;
+  ProcessorSpecificEventProvider& operator=(const ProcessorSpecificEventProvider&) = default;
+  ProcessorSpecificEventProvider& operator=(ProcessorSpecificEventProvider&&) noexcept = default;
   ~ProcessorSpecificEventProvider() noexcept override = default;
 
   /**

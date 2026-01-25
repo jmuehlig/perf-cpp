@@ -2,12 +2,13 @@
 
 #include <cstdint>
 #include <optional>
+#include <string>
 
 namespace perf {
 class Metadata
 {
 public:
-  enum class Mode
+  enum class Mode : std::uint8_t
   {
     Kernel,
     User,
@@ -69,6 +70,31 @@ public:
    * @return Mode, if included in the sample. std::nullopt otherwise.
    */
   [[nodiscard]] std::optional<Mode> mode() const noexcept { return _mode; }
+
+  /**
+   * @return Mode, if included in the sample. std::nullopt otherwise.
+   */
+  [[nodiscard]] std::optional<std::string> mode_as_string() const
+  {
+    if (_mode.has_value()) {
+      switch (_mode.value()) {
+        case Mode::Kernel:
+          return "kernel";
+        case Mode::User:
+          return "user";
+        case Mode::Hypervisor:
+          return "hypervisor";
+        case Mode::GuestKernel:
+          return "guest_kernel";
+        case Mode::GuestUser:
+          return "guest_user";
+        default:
+          return "unknown";
+      }
+    }
+
+    return std::nullopt;
+  }
 
   /**
    * @return Sample ID, if included in the sample. std::nullopt otherwise.

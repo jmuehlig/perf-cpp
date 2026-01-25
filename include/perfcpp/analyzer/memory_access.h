@@ -23,7 +23,11 @@ public:
     : _data_types(std::move(result))
   {
   }
+  MemoryAccessResult(const MemoryAccessResult&) = default;
+  MemoryAccessResult(MemoryAccessResult&&) noexcept = default;
   ~MemoryAccessResult() = default;
+  MemoryAccessResult& operator=(const MemoryAccessResult&) = default;
+  MemoryAccessResult& operator=(MemoryAccessResult&&) noexcept = default;
 
   [[nodiscard]] const std::vector<DataType>& data_types() const noexcept { return _data_types; }
   [[nodiscard]] std::vector<DataType>& data_types() noexcept { return _data_types; }
@@ -50,7 +54,11 @@ private:
     {
     public:
       Group() noexcept = default;
+      Group(const Group&) = default;
+      Group(Group&&) noexcept = default;
       ~Group() noexcept = default;
+      Group& operator=(const Group&) = default;
+      Group& operator=(Group&&) noexcept = default;
 
       [[nodiscard]] std::uint64_t count() const noexcept { return _count; }
       [[nodiscard]] std::uint64_t average_cache_latency() const noexcept
@@ -81,32 +89,33 @@ private:
 
       Group& operator+=(const Sample& sample) noexcept
       {
-        const auto data_src = sample.data_access().source().value();
-        ++_count;
+        if (const auto data_src = sample.data_access().source(); data_src.has_value()) {
+          ++_count;
 
-        /// Instruction type and latency.
-        _count_l1_hits += static_cast<std::uint64_t>(data_src.is_l1_hit());
-        _count_mhb_hits += static_cast<std::uint64_t>(data_src.is_mhb_hit().value_or(false));
-        _count_l2_hits += static_cast<std::uint64_t>(data_src.is_l2_hit());
-        _count_l3_hits += static_cast<std::uint64_t>(data_src.is_l3_hit());
-        _count_local_ram_hits += static_cast<std::uint64_t>(data_src.is_memory_hit() && !data_src.is_remote());
-        _count_remote_ram_hits += static_cast<std::uint64_t>(data_src.is_memory_hit() && data_src.is_remote());
+          /// Instruction type and latency.
+          _count_l1_hits += static_cast<std::uint64_t>(data_src->is_l1_hit());
+          _count_mhb_hits += static_cast<std::uint64_t>(data_src->is_mhb_hit().value_or(false));
+          _count_l2_hits += static_cast<std::uint64_t>(data_src->is_l2_hit());
+          _count_l3_hits += static_cast<std::uint64_t>(data_src->is_l3_hit());
+          _count_local_ram_hits += static_cast<std::uint64_t>(data_src->is_memory_hit() && !data_src->is_remote());
+          _count_remote_ram_hits += static_cast<std::uint64_t>(data_src->is_memory_hit() && data_src->is_remote());
 
-        if (HardwareInfo::is_intel()) {
-          _cache_latency += sample.data_access().latency().cache_access().value_or(0U);
-          _instr_latency += sample.instruction_execution().latency().instruction_retirement().value_or(0U);
-        } else if (HardwareInfo::is_amd()) {
-          _cache_latency += sample.data_access().latency().cache_miss().value_or(0U);
-          _instr_latency += sample.instruction_execution().latency().uop_tag_to_completion().value_or(0U);
-          _dtlb_latency += sample.data_access().latency().dtlb_refill().value_or(0U);
+          if (HardwareInfo::is_intel()) {
+            _cache_latency += sample.data_access().latency().cache_access().value_or(0U);
+            _instr_latency += sample.instruction_execution().latency().instruction_retirement().value_or(0U);
+          } else if (HardwareInfo::is_amd()) {
+            _cache_latency += sample.data_access().latency().cache_miss().value_or(0U);
+            _instr_latency += sample.instruction_execution().latency().uop_tag_to_completion().value_or(0U);
+            _dtlb_latency += sample.data_access().latency().dtlb_refill().value_or(0U);
 
-          _alloc_mab_entries += data_src.num_mhb_slots_allocated().value_or(0U);
+            _alloc_mab_entries += data_src->num_mhb_slots_allocated().value_or(0U);
+          }
+
+          _dtlb_hits += static_cast<std::uint64_t>(sample.data_access().tlb().is_l1_hit().value_or(false));
+          _stlb_hits += static_cast<std::uint64_t>(sample.data_access().tlb().is_l2_hit().value_or(false));
+          _stlb_misses += static_cast<std::uint64_t>(!sample.data_access().tlb().is_l1_hit().value_or(true) &&
+                                                     !sample.data_access().tlb().is_l2_hit().value_or(true));
         }
-
-        _dtlb_hits += static_cast<std::uint64_t>(sample.data_access().tlb().is_l1_hit().value_or(false));
-        _stlb_hits += static_cast<std::uint64_t>(sample.data_access().tlb().is_l2_hit().value_or(false));
-        _stlb_misses += static_cast<std::uint64_t>(!sample.data_access().tlb().is_l1_hit().value_or(true) &&
-                                                   !sample.data_access().tlb().is_l2_hit().value_or(true));
 
         return *this;
       }
@@ -129,9 +138,13 @@ private:
     };
 
     MemberStatistic() noexcept = default;
+    MemberStatistic(const MemberStatistic&) = default;
+    MemberStatistic(MemberStatistic&&) noexcept = default;
     ~MemberStatistic() noexcept = default;
+    MemberStatistic& operator=(const MemberStatistic&) = default;
+    MemberStatistic& operator=(MemberStatistic&&) noexcept = default;
 
-    MemberStatistic& operator+=(const Sample& sample) noexcept
+    MemberStatistic& operator+=(const Sample& sample)
     {
       if (!sample.data_access().source().has_value()) {
         return *this;
@@ -171,7 +184,11 @@ class MemoryAccess
 public:
   MemoryAccess() { _data_type_instances.reserve(128U); }
 
+  MemoryAccess(const MemoryAccess&) = default;
+  MemoryAccess(MemoryAccess&&) noexcept = default;
   ~MemoryAccess() = default;
+  MemoryAccess& operator=(const MemoryAccess&) = default;
+  MemoryAccess& operator=(MemoryAccess&&) noexcept = default;
 
   /**
    * Adds a data type to the analyzer.
@@ -377,7 +394,10 @@ public:
    * @param samples Samples to map.
    * @return A list of all data types enriched with samples that map to members of the data type.
    */
-  MemoryAccessResult map(const std::vector<Sample>& samples) { return map(SampleResult{std::vector<Sample>(samples)}); }
+  MemoryAccessResult map(const std::vector<Sample>& samples)
+  {
+    return map(SampleResult{ std::vector<Sample>(samples) });
+  }
 
   /**
    * Maps the given samples (with memory addresses) to data object earlier added to the analyzer.

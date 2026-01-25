@@ -34,8 +34,8 @@ public:
    */
   using token_t = std::variant<std::string, double, Operator_, Punctuation>;
 
-  Token(Token&&) noexcept = default;
   Token(const Token&) = default;
+  Token(Token&&) noexcept = default;
 
   explicit Token(const Operator_ operator_)
     : _token(operator_)
@@ -59,12 +59,13 @@ public:
 
   ~Token() = default;
 
+  Token& operator=(const Token&) noexcept = default;
   Token& operator=(Token&&) noexcept = default;
 
   /**
    * @return True, if this token is a left parenthesis.
    */
-  [[nodiscard]] bool is_left_parenthesis() const noexcept
+  [[nodiscard]] bool is_left_parenthesis() const
   {
     return std::holds_alternative<Punctuation>(_token) && std::get<Punctuation>(_token) == Punctuation::LeftParentheses;
   }
@@ -72,7 +73,7 @@ public:
   /**
    * @return True, if this token is a right parenthesis.
    */
-  [[nodiscard]] bool is_right_parenthesis() const noexcept
+  [[nodiscard]] bool is_right_parenthesis() const
   {
     return std::holds_alternative<Punctuation>(_token) &&
            std::get<Punctuation>(_token) == Punctuation::RightParentheses;
@@ -81,7 +82,7 @@ public:
   /**
    * @return True, if this token is a comma.
    */
-  [[nodiscard]] bool is_comma() const noexcept
+  [[nodiscard]] bool is_comma() const
   {
     return std::holds_alternative<Punctuation>(_token) && std::get<Punctuation>(_token) == Punctuation::Comma;
   }
@@ -89,7 +90,7 @@ public:
   /**
    * @return True, if this token is an additive operator.
    */
-  [[nodiscard]] bool is_additive_operator() const noexcept
+  [[nodiscard]] bool is_additive_operator() const
   {
     return std::holds_alternative<Operator_>(_token) &&
            (std::get<Operator_>(_token) == Operator_::Plus || std::get<Operator_>(_token) == Operator_::Minus);
@@ -98,7 +99,7 @@ public:
   /**
    * @return True, if this token is a multiplicative operator.
    */
-  [[nodiscard]] bool is_multiplicative_operator() const noexcept
+  [[nodiscard]] bool is_multiplicative_operator() const
   {
     return std::holds_alternative<Operator_>(_token) &&
            (std::get<Operator_>(_token) == Operator_::Divide || std::get<Operator_>(_token) == Operator_::Times);
@@ -107,14 +108,14 @@ public:
   /**
    * @return The operator inside the token.
    */
-  [[nodiscard]] Operator_ operator_() const noexcept { return std::get<Operator_>(_token); }
+  [[nodiscard]] Operator_ operator_() const { return std::get<Operator_>(_token); }
 
   /**
    * @return Ownership of the underlying token data.
    */
   [[nodiscard]] token_t& data() noexcept { return _token; }
 
-  [[nodiscard]] bool operator==(const Punctuation punctuation) const noexcept
+  [[nodiscard]] bool operator==(const Punctuation punctuation) const
   {
     return std::holds_alternative<Punctuation>(_token) && std::get<Punctuation>(_token) == punctuation;
   }

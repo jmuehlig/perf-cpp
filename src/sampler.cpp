@@ -15,14 +15,14 @@ perf::Sampler::SampleCounter::~SampleCounter()
 }
 
 perf::Sampler&
-perf::Sampler::trigger(std::vector<std::vector<std::string>>&& list_of_trigger_names)
+perf::Sampler::trigger(std::vector<std::vector<std::string>>&& list_of_triggers)
 {
   auto triggers = std::vector<std::vector<Trigger>>{};
-  triggers.reserve(list_of_trigger_names.size());
+  triggers.reserve(list_of_triggers.size());
 
   /// Turn the list of event names in a list of Sampler::Trigger objects and continue processing (checking if the
   /// trigger is an existing event, not a metric, etc.) there.
-  for (auto& trigger_names : list_of_trigger_names) {
+  for (auto& trigger_names : list_of_triggers) {
     auto trigger_with_precision = std::vector<Trigger>{};
     std::transform(trigger_names.begin(),
                    trigger_names.end(),
@@ -35,7 +35,7 @@ perf::Sampler::trigger(std::vector<std::vector<std::string>>&& list_of_trigger_n
 }
 
 perf::Sampler&
-perf::Sampler::trigger(std::vector<std::vector<Trigger>>&& triggers)
+perf::Sampler::trigger(std::vector<std::vector<Trigger>>&& list_of_triggers)
 {
   /// Deny to modify triggers after the sampler was already opened.
   if (this->_is_opened) {
@@ -46,13 +46,13 @@ perf::Sampler::trigger(std::vector<std::vector<Trigger>>&& triggers)
   this->_triggers.clear();
 
   /// When no triggers provided, we're done.
-  if (triggers.empty()) {
+  if (list_of_triggers.empty()) {
     return *this;
   }
 
   /// Process all requested triggers.
-  this->_triggers.reserve(triggers.size());
-  for (auto& trigger_group : triggers) {
+  this->_triggers.reserve(list_of_triggers.size());
+  for (auto& trigger_group : list_of_triggers) {
     auto trigger_group_references =
       std::vector<std::tuple<std::string_view, std::optional<Precision>, std::optional<PeriodOrFrequency>>>{};
     trigger_group_references.reserve(trigger_group.size());
@@ -394,7 +394,7 @@ perf::Sampler::result(const bool sort_by_time)
     std::sort(result.begin(), result.end(), SampleTimestampComparator{});
   }
 
-  return SampleResult{std::move(result)};
+  return SampleResult{ this->_values, std::move(result) };
 }
 
 void
@@ -495,25 +495,21 @@ perf::MultiSamplerBase::to_perf_file(std::vector<Sampler>& samplers, std::string
 void
 perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std::vector<std::string>>&& trigger_names)
 {
-  for (auto sampler_id = 0U; sampler_id < samplers.size(); ++sampler_id) {
-    if (sampler_id < samplers.size() - 1U) {
-      samplers[sampler_id].trigger(std::vector<std::vector<std::string>>{ trigger_names });
-    } else {
-      samplers[sampler_id].trigger(std::move(trigger_names));
-    }
+  for (auto sampler_id = 0U; sampler_id < samplers.size() - 1U; ++sampler_id) {
+    samplers[sampler_id].trigger(std::vector<std::vector<std::string>>{ trigger_names });
   }
+
+  samplers.back().trigger(std::move(trigger_names));
 }
 
 void
 perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std::vector<Sampler::Trigger>>&& triggers)
 {
-  for (auto sampler_id = 0U; sampler_id < samplers.size(); ++sampler_id) {
-    if (sampler_id < samplers.size() - 1U) {
-      samplers[sampler_id].trigger(std::vector<std::vector<Sampler::Trigger>>{ triggers });
-    } else {
-      samplers[sampler_id].trigger(std::move(triggers));
-    }
+  for (auto sampler_id = 0U; sampler_id < samplers.size() - 1U; ++sampler_id) {
+    samplers[sampler_id].trigger(std::vector<std::vector<Sampler::Trigger>>{ triggers });
   }
+
+  samplers.back().trigger(std::move(triggers));
 }
 
 void

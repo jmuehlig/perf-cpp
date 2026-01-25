@@ -25,6 +25,9 @@ public:
   MmapBufferOverflowWorker(MmapBufferOverflowWorker&&) = delete;
   MmapBufferOverflowWorker(const MmapBufferOverflowWorker&) = delete;
 
+  MmapBufferOverflowWorker& operator=(const MmapBufferOverflowWorker&) = delete;
+  MmapBufferOverflowWorker& operator=(MmapBufferOverflowWorker&&) = delete;
+
   /**
    * Cancels the worker thread and awaits its shutdown.
    */
@@ -57,8 +60,11 @@ public:
   explicit MmapBuffer(const util::UniqueFileDescriptor& file_descriptor, std::uint64_t count_pages = 1ULL);
   ~MmapBuffer();
 
-  MmapBuffer(MmapBuffer&&) = delete;
   MmapBuffer(const MmapBuffer&) = delete;
+  MmapBuffer(MmapBuffer&&) = delete;
+
+  MmapBuffer& operator=(const MmapBuffer&) = delete;
+  MmapBuffer& operator=(MmapBuffer&&) = delete;
 
   /**
    * Reads a performance monitoring counter value from the mmap-ed buffer via the `rdpmc` instruction.

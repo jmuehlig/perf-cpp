@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cerrno>
 #include <cstdint>
 #include <perfcpp/feature.h>
 #include <stdexcept>
@@ -15,6 +14,10 @@ public:
     : std::runtime_error("Cannot monitor any process on any CPU core. This configuration is invalid.")
   {
   }
+  InvalidConfigAnyCpuCoreAndAnyProcess(const InvalidConfigAnyCpuCoreAndAnyProcess&) = default;
+  InvalidConfigAnyCpuCoreAndAnyProcess(InvalidConfigAnyCpuCoreAndAnyProcess&&) noexcept = default;
+  InvalidConfigAnyCpuCoreAndAnyProcess& operator=(const InvalidConfigAnyCpuCoreAndAnyProcess&) = default;
+  InvalidConfigAnyCpuCoreAndAnyProcess& operator=(InvalidConfigAnyCpuCoreAndAnyProcess&&) noexcept = default;
   ~InvalidConfigAnyCpuCoreAndAnyProcess() override = default;
 };
 
@@ -25,6 +28,10 @@ public:
     : std::runtime_error(std::string{ "Cannot open file '" }.append(file_name).append("'."))
   {
   }
+  CannotOpenFileError(const CannotOpenFileError&) = default;
+  CannotOpenFileError(CannotOpenFileError&&) noexcept = default;
+  CannotOpenFileError& operator=(const CannotOpenFileError&) = default;
+  CannotOpenFileError& operator=(CannotOpenFileError&&) noexcept = default;
   ~CannotOpenFileError() override = default;
 };
 
@@ -40,6 +47,10 @@ public:
     , _error_code(error_code)
   {
   }
+  CannotOpenCounterError(const CannotOpenCounterError&) = default;
+  CannotOpenCounterError(CannotOpenCounterError&&) noexcept = default;
+  CannotOpenCounterError& operator=(const CannotOpenCounterError&) = default;
+  CannotOpenCounterError& operator=(CannotOpenCounterError&&) noexcept = default;
   ~CannotOpenCounterError() override = default;
 
   /**
@@ -65,13 +76,17 @@ public:
     : std::runtime_error(std::string{ "Cannot read from event counter." })
   {
   }
+  CannotReadCounter(const CannotReadCounter&) = default;
+  CannotReadCounter(CannotReadCounter&&) noexcept = default;
+  CannotReadCounter& operator=(const CannotReadCounter&) = default;
+  CannotReadCounter& operator=(CannotReadCounter&&) noexcept = default;
   ~CannotReadCounter() override = default;
 };
 
 class IoctlError : public std::runtime_error
 {
 public:
-  explicit IoctlError(const std::int64_t error_code, std::string&& error_message)
+  explicit IoctlError(const std::int64_t error_code, std::string error_message)
     : std::runtime_error(error_message.append(" (error no ")
                            .append(std::to_string(error_code))
                            .append("): ")
@@ -80,6 +95,10 @@ public:
   {
   }
 
+  IoctlError(const IoctlError&) = default;
+  IoctlError(IoctlError&&) noexcept = default;
+  IoctlError& operator=(const IoctlError&) = default;
+  IoctlError& operator=(IoctlError&&) noexcept = default;
   ~IoctlError() override = default;
 
 protected:
@@ -93,6 +112,10 @@ public:
     : IoctlError(error_code, "Cannot enable counter")
   {
   }
+  CannotEnableCounter(const CannotEnableCounter&) = default;
+  CannotEnableCounter(CannotEnableCounter&&) noexcept = default;
+  CannotEnableCounter& operator=(const CannotEnableCounter&) = default;
+  CannotEnableCounter& operator=(CannotEnableCounter&&) noexcept = default;
   ~CannotEnableCounter() override = default;
 };
 
@@ -103,6 +126,10 @@ public:
     : IoctlError(error_code, "Cannot disable counter")
   {
   }
+  CannotDisableCounter(const CannotDisableCounter&) = default;
+  CannotDisableCounter(CannotDisableCounter&&) noexcept = default;
+  CannotDisableCounter& operator=(const CannotDisableCounter&) = default;
+  CannotDisableCounter& operator=(CannotDisableCounter&&) noexcept = default;
   ~CannotDisableCounter() override = default;
 };
 
@@ -113,6 +140,10 @@ public:
     : IoctlError(error_code, "Cannot open counter")
   {
   }
+  CannotReadCounterId(const CannotReadCounterId&) = default;
+  CannotReadCounterId(CannotReadCounterId&&) noexcept = default;
+  CannotReadCounterId& operator=(const CannotReadCounterId&) = default;
+  CannotReadCounterId& operator=(CannotReadCounterId&&) noexcept = default;
   ~CannotReadCounterId() override = default;
 };
 
@@ -124,6 +155,10 @@ public:
         std::string{ "Creating buffer via mmap() failed (error no: " }.append(std::to_string(error_code)).append(")."))
   {
   }
+  MmapError(const MmapError&) = default;
+  MmapError(MmapError&&) noexcept = default;
+  MmapError& operator=(const MmapError&) = default;
+  MmapError& operator=(MmapError&&) noexcept = default;
   ~MmapError() override = default;
 };
 
@@ -134,6 +169,10 @@ public:
     : std::runtime_error("Created buffer via mmap() is null.")
   {
   }
+  MmapNullError(const MmapNullError&) = default;
+  MmapNullError(MmapNullError&&) noexcept = default;
+  MmapNullError& operator=(const MmapNullError&) = default;
+  MmapNullError& operator=(MmapNullError&&) noexcept = default;
   ~MmapNullError() override = default;
 };
 
@@ -156,6 +195,10 @@ public:
         std::to_string(max_counters).append("). Try to increase via perf::Config::max_groups(X).")))
   {
   }
+  MaxCountersReachedError(const MaxCountersReachedError&) = default;
+  MaxCountersReachedError(MaxCountersReachedError&&) noexcept = default;
+  MaxCountersReachedError& operator=(const MaxCountersReachedError&) = default;
+  MaxCountersReachedError& operator=(MaxCountersReachedError&&) noexcept = default;
   ~MaxCountersReachedError() override = default;
 };
 
@@ -169,6 +212,10 @@ public:
             .append("). Try to increase via perf::Config::num_physical_counters(X).")))
   {
   }
+  MaxGroupsReachedError(const MaxGroupsReachedError&) = default;
+  MaxGroupsReachedError(MaxGroupsReachedError&&) noexcept = default;
+  MaxGroupsReachedError& operator=(const MaxGroupsReachedError&) = default;
+  MaxGroupsReachedError& operator=(MaxGroupsReachedError&&) noexcept = default;
   ~MaxGroupsReachedError() override = default;
 };
 
@@ -182,6 +229,10 @@ public:
                                    "perf::Config::num_events_per_physical_counter(X)."))
   {
   }
+  CannotAddEventToSingleGroupError(const CannotAddEventToSingleGroupError&) = default;
+  CannotAddEventToSingleGroupError(CannotAddEventToSingleGroupError&&) noexcept = default;
+  CannotAddEventToSingleGroupError& operator=(const CannotAddEventToSingleGroupError&) = default;
+  CannotAddEventToSingleGroupError& operator=(CannotAddEventToSingleGroupError&&) noexcept = default;
   ~CannotAddEventToSingleGroupError() override = default;
 };
 
@@ -196,6 +247,10 @@ public:
                            .append("'."))
   {
   }
+  CannotFindEventForMetricError(const CannotFindEventForMetricError&) = default;
+  CannotFindEventForMetricError(CannotFindEventForMetricError&&) noexcept = default;
+  CannotFindEventForMetricError& operator=(const CannotFindEventForMetricError&) = default;
+  CannotFindEventForMetricError& operator=(CannotFindEventForMetricError&&) noexcept = default;
   ~CannotFindEventForMetricError() override = default;
 };
 
@@ -206,6 +261,10 @@ public:
     : std::runtime_error(std::string{ "Cannot find an event or metric with name '" }.append(event_name).append("'."))
   {
   }
+  CannotFindEventOrMetricError(const CannotFindEventOrMetricError&) = default;
+  CannotFindEventOrMetricError(CannotFindEventOrMetricError&&) noexcept = default;
+  CannotFindEventOrMetricError& operator=(const CannotFindEventOrMetricError&) = default;
+  CannotFindEventOrMetricError& operator=(CannotFindEventOrMetricError&&) noexcept = default;
   ~CannotFindEventOrMetricError() override = default;
 };
 
@@ -216,6 +275,10 @@ public:
     : std::runtime_error(std::string{ "Cannot evaluate metrics because they are mutually (cyclically) dependent. " })
   {
   }
+  CannotEvaluateMetricsBecauseOfCycleError(const CannotEvaluateMetricsBecauseOfCycleError&) = default;
+  CannotEvaluateMetricsBecauseOfCycleError(CannotEvaluateMetricsBecauseOfCycleError&&) noexcept = default;
+  CannotEvaluateMetricsBecauseOfCycleError& operator=(const CannotEvaluateMetricsBecauseOfCycleError&) = default;
+  CannotEvaluateMetricsBecauseOfCycleError& operator=(CannotEvaluateMetricsBecauseOfCycleError&&) noexcept = default;
   ~CannotEvaluateMetricsBecauseOfCycleError() override = default;
 };
 
@@ -241,6 +304,10 @@ public:
   {
   }
 
+  CannotFindEventError(const CannotFindEventError&) = default;
+  CannotFindEventError(CannotFindEventError&&) noexcept = default;
+  CannotFindEventError& operator=(const CannotFindEventError&) = default;
+  CannotFindEventError& operator=(CannotFindEventError&&) noexcept = default;
   ~CannotFindEventError() override = default;
 };
 
@@ -252,6 +319,10 @@ public:
         "The Sampler was already opened. Cannot modify triggers after opening. Please create a new Sampler.")
   {
   }
+  CannotChangeTriggerWhenSamplerOpenedError(const CannotChangeTriggerWhenSamplerOpenedError&) = default;
+  CannotChangeTriggerWhenSamplerOpenedError(CannotChangeTriggerWhenSamplerOpenedError&&) noexcept = default;
+  CannotChangeTriggerWhenSamplerOpenedError& operator=(const CannotChangeTriggerWhenSamplerOpenedError&) = default;
+  CannotChangeTriggerWhenSamplerOpenedError& operator=(CannotChangeTriggerWhenSamplerOpenedError&&) noexcept = default;
   ~CannotChangeTriggerWhenSamplerOpenedError() override = default;
 };
 
@@ -264,6 +335,10 @@ public:
                            .append("' appears to be a metric. Metrics are not supported as sampling triggers."))
   {
   }
+  MetricNotSupportedAsSamplingTriggerError(const MetricNotSupportedAsSamplingTriggerError&) = default;
+  MetricNotSupportedAsSamplingTriggerError(MetricNotSupportedAsSamplingTriggerError&&) noexcept = default;
+  MetricNotSupportedAsSamplingTriggerError& operator=(const MetricNotSupportedAsSamplingTriggerError&) = default;
+  MetricNotSupportedAsSamplingTriggerError& operator=(MetricNotSupportedAsSamplingTriggerError&&) noexcept = default;
   ~MetricNotSupportedAsSamplingTriggerError() override = default;
 };
 
@@ -276,6 +351,10 @@ public:
                            .append("' appears to be a metric. Metrics are not supported as live events."))
   {
   }
+  MetricNotSupportedAsLiveEventError(const MetricNotSupportedAsLiveEventError&) = default;
+  MetricNotSupportedAsLiveEventError(MetricNotSupportedAsLiveEventError&&) noexcept = default;
+  MetricNotSupportedAsLiveEventError& operator=(const MetricNotSupportedAsLiveEventError&) = default;
+  MetricNotSupportedAsLiveEventError& operator=(MetricNotSupportedAsLiveEventError&&) noexcept = default;
   ~MetricNotSupportedAsLiveEventError() override = default;
 };
 
@@ -288,6 +367,10 @@ public:
                            .append("' appears to be a time event. Time events are not supported as live events."))
   {
   }
+  TimeEventNotSupportedAsLiveEventError(const TimeEventNotSupportedAsLiveEventError&) = default;
+  TimeEventNotSupportedAsLiveEventError(TimeEventNotSupportedAsLiveEventError&&) noexcept = default;
+  TimeEventNotSupportedAsLiveEventError& operator=(const TimeEventNotSupportedAsLiveEventError&) = default;
+  TimeEventNotSupportedAsLiveEventError& operator=(TimeEventNotSupportedAsLiveEventError&&) noexcept = default;
   ~TimeEventNotSupportedAsLiveEventError() override = default;
 };
 
@@ -300,6 +383,10 @@ public:
                            .append("' appears to be a time event. Time events are not supported for sampling."))
   {
   }
+  TimeEventNotSupportedForSamplingError(const TimeEventNotSupportedForSamplingError&) = default;
+  TimeEventNotSupportedForSamplingError(TimeEventNotSupportedForSamplingError&&) noexcept = default;
+  TimeEventNotSupportedForSamplingError& operator=(const TimeEventNotSupportedForSamplingError&) = default;
+  TimeEventNotSupportedForSamplingError& operator=(TimeEventNotSupportedForSamplingError&&) noexcept = default;
   ~TimeEventNotSupportedForSamplingError() override = default;
 };
 
@@ -310,6 +397,10 @@ public:
     : std::runtime_error("Cannot start an empty group. Please add at least one counter.")
   {
   }
+  CannotStartEmptyGroupError(const CannotStartEmptyGroupError&) = default;
+  CannotStartEmptyGroupError(CannotStartEmptyGroupError&&) noexcept = default;
+  CannotStartEmptyGroupError& operator=(const CannotStartEmptyGroupError&) = default;
+  CannotStartEmptyGroupError& operator=(CannotStartEmptyGroupError&&) noexcept = default;
   ~CannotStartEmptyGroupError() override = default;
 };
 
@@ -321,6 +412,10 @@ public:
         "Cannot start sampling without any trigger event. Please specify at least one trigger via Sampler::trigger().")
   {
   }
+  CannotStartEmptySamplerError(const CannotStartEmptySamplerError&) = default;
+  CannotStartEmptySamplerError(CannotStartEmptySamplerError&&) noexcept = default;
+  CannotStartEmptySamplerError& operator=(const CannotStartEmptySamplerError&) = default;
+  CannotStartEmptySamplerError& operator=(CannotStartEmptySamplerError&&) noexcept = default;
   ~CannotStartEmptySamplerError() override = default;
 };
 
@@ -336,6 +431,10 @@ public:
   {
   }
 
+  SamplingFeatureIsNotSupported(const SamplingFeatureIsNotSupported&) = default;
+  SamplingFeatureIsNotSupported(SamplingFeatureIsNotSupported&&) noexcept = default;
+  SamplingFeatureIsNotSupported& operator=(const SamplingFeatureIsNotSupported&) = default;
+  SamplingFeatureIsNotSupported& operator=(SamplingFeatureIsNotSupported&&) noexcept = default;
   ~SamplingFeatureIsNotSupported() override = default;
 };
 
@@ -347,6 +446,10 @@ public:
                          "auxiliary event cannot be found.")
   {
   }
+  AuxiliaryEventForSamplingNotFoundError(const AuxiliaryEventForSamplingNotFoundError&) = default;
+  AuxiliaryEventForSamplingNotFoundError(AuxiliaryEventForSamplingNotFoundError&&) noexcept = default;
+  AuxiliaryEventForSamplingNotFoundError& operator=(const AuxiliaryEventForSamplingNotFoundError&) = default;
+  AuxiliaryEventForSamplingNotFoundError& operator=(AuxiliaryEventForSamplingNotFoundError&&) noexcept = default;
   ~AuxiliaryEventForSamplingNotFoundError() override = default;
 };
 
@@ -359,6 +462,10 @@ public:
                            .append("' is already registered and cannot be registered twice."))
   {
   }
+  DataTypeAlreadyRegisteredError(const DataTypeAlreadyRegisteredError&) = default;
+  DataTypeAlreadyRegisteredError(DataTypeAlreadyRegisteredError&&) noexcept = default;
+  DataTypeAlreadyRegisteredError& operator=(const DataTypeAlreadyRegisteredError&) = default;
+  DataTypeAlreadyRegisteredError& operator=(DataTypeAlreadyRegisteredError&&) noexcept = default;
   ~DataTypeAlreadyRegisteredError() override = default;
 };
 
@@ -369,6 +476,10 @@ public:
     : std::runtime_error(std::string{ "The DataType '" }.append(data_type_name).append("' is was not found."))
   {
   }
+  DataTypeNotRegisteredError(const DataTypeNotRegisteredError&) = default;
+  DataTypeNotRegisteredError(DataTypeNotRegisteredError&&) noexcept = default;
+  DataTypeNotRegisteredError& operator=(const DataTypeNotRegisteredError&) = default;
+  DataTypeNotRegisteredError& operator=(DataTypeNotRegisteredError&&) noexcept = default;
   ~DataTypeNotRegisteredError() override = default;
 };
 
@@ -386,6 +497,10 @@ public:
   {
   }
 
+  CannotParseMetricExpressionError(const CannotParseMetricExpressionError&) = default;
+  CannotParseMetricExpressionError(CannotParseMetricExpressionError&&) noexcept = default;
+  CannotParseMetricExpressionError& operator=(const CannotParseMetricExpressionError&) = default;
+  CannotParseMetricExpressionError& operator=(CannotParseMetricExpressionError&&) noexcept = default;
   ~CannotParseMetricExpressionError() override = default;
 };
 
@@ -402,6 +517,12 @@ public:
   {
   }
 
+  CannotParseMetricExpressionUnknownFunctionError(const CannotParseMetricExpressionUnknownFunctionError&) = default;
+  CannotParseMetricExpressionUnknownFunctionError(CannotParseMetricExpressionUnknownFunctionError&&) noexcept = default;
+  CannotParseMetricExpressionUnknownFunctionError& operator=(const CannotParseMetricExpressionUnknownFunctionError&) =
+    default;
+  CannotParseMetricExpressionUnknownFunctionError& operator=(
+    CannotParseMetricExpressionUnknownFunctionError&&) noexcept = default;
   ~CannotParseMetricExpressionUnknownFunctionError() override = default;
 };
 
@@ -424,6 +545,14 @@ public:
   {
   }
 
+  CannotParseMetricExpressionUnexpectedFunctionArgumentsError(
+    const CannotParseMetricExpressionUnexpectedFunctionArgumentsError&) = default;
+  CannotParseMetricExpressionUnexpectedFunctionArgumentsError(
+    CannotParseMetricExpressionUnexpectedFunctionArgumentsError&&) noexcept = default;
+  CannotParseMetricExpressionUnexpectedFunctionArgumentsError& operator=(
+    const CannotParseMetricExpressionUnexpectedFunctionArgumentsError&) = default;
+  CannotParseMetricExpressionUnexpectedFunctionArgumentsError& operator=(
+    CannotParseMetricExpressionUnexpectedFunctionArgumentsError&&) noexcept = default;
   ~CannotParseMetricExpressionUnexpectedFunctionArgumentsError() override = default;
 };
 
@@ -435,6 +564,10 @@ public:
   {
   }
 
+  CannotCreateEventFileDescriptor(const CannotCreateEventFileDescriptor&) = default;
+  CannotCreateEventFileDescriptor(CannotCreateEventFileDescriptor&&) noexcept = default;
+  CannotCreateEventFileDescriptor& operator=(const CannotCreateEventFileDescriptor&) = default;
+  CannotCreateEventFileDescriptor& operator=(CannotCreateEventFileDescriptor&&) noexcept = default;
   ~CannotCreateEventFileDescriptor() override = default;
 };
 
@@ -449,6 +582,10 @@ public:
                             .append(".") }
   {
   }
+  CannotAddHeaderToTable(const CannotAddHeaderToTable&) = default;
+  CannotAddHeaderToTable(CannotAddHeaderToTable&&) noexcept = default;
+  CannotAddHeaderToTable& operator=(const CannotAddHeaderToTable&) = default;
+  CannotAddHeaderToTable& operator=(CannotAddHeaderToTable&&) noexcept = default;
   ~CannotAddHeaderToTable() override = default;
 };
 
@@ -463,6 +600,10 @@ public:
                             .append(".") }
   {
   }
+  CannotAddRowToTable(const CannotAddRowToTable&) = default;
+  CannotAddRowToTable(CannotAddRowToTable&&) noexcept = default;
+  CannotAddRowToTable& operator=(const CannotAddRowToTable&) = default;
+  CannotAddRowToTable& operator=(CannotAddRowToTable&&) noexcept = default;
   ~CannotAddRowToTable() override = default;
 };
 
@@ -475,6 +616,10 @@ public:
     }
   {
   }
+  CannotReadSymbolsForModule(const CannotReadSymbolsForModule&) = default;
+  CannotReadSymbolsForModule(CannotReadSymbolsForModule&&) noexcept = default;
+  CannotReadSymbolsForModule& operator=(const CannotReadSymbolsForModule&) = default;
+  CannotReadSymbolsForModule& operator=(CannotReadSymbolsForModule&&) noexcept = default;
   ~CannotReadSymbolsForModule() override = default;
 };
 
@@ -487,6 +632,10 @@ public:
     }
   {
   }
+  CannotReadFstatForModule(const CannotReadFstatForModule&) = default;
+  CannotReadFstatForModule(CannotReadFstatForModule&&) noexcept = default;
+  CannotReadFstatForModule& operator=(const CannotReadFstatForModule&) = default;
+  CannotReadFstatForModule& operator=(CannotReadFstatForModule&&) noexcept = default;
   ~CannotReadFstatForModule() override = default;
 };
 
@@ -499,6 +648,10 @@ public:
     }
   {
   }
+  CannotReadElfForModule(const CannotReadElfForModule&) = default;
+  CannotReadElfForModule(CannotReadElfForModule&&) noexcept = default;
+  CannotReadElfForModule& operator=(const CannotReadElfForModule&) = default;
+  CannotReadElfForModule& operator=(CannotReadElfForModule&&) noexcept = default;
   ~CannotReadElfForModule() override = default;
 };
 
@@ -511,6 +664,10 @@ public:
     }
   {
   }
+  CannotVerifyElfMagicForModule(const CannotVerifyElfMagicForModule&) = default;
+  CannotVerifyElfMagicForModule(CannotVerifyElfMagicForModule&&) noexcept = default;
+  CannotVerifyElfMagicForModule& operator=(const CannotVerifyElfMagicForModule&) = default;
+  CannotVerifyElfMagicForModule& operator=(CannotVerifyElfMagicForModule&&) noexcept = default;
   ~CannotVerifyElfMagicForModule() override = default;
 };
 
@@ -518,11 +675,13 @@ class CannotReadMaxClockFrequency final : public std::runtime_error
 {
 public:
   CannotReadMaxClockFrequency()
-    : std::runtime_error{
-      std::string{ "Cannot read max CPU clock frequency." }
-    }
+    : std::runtime_error{ std::string{ "Cannot read max CPU clock frequency." } }
   {
   }
+  CannotReadMaxClockFrequency(const CannotReadMaxClockFrequency&) = default;
+  CannotReadMaxClockFrequency(CannotReadMaxClockFrequency&&) noexcept = default;
+  CannotReadMaxClockFrequency& operator=(const CannotReadMaxClockFrequency&) = default;
+  CannotReadMaxClockFrequency& operator=(CannotReadMaxClockFrequency&&) noexcept = default;
   ~CannotReadMaxClockFrequency() override = default;
 };
 

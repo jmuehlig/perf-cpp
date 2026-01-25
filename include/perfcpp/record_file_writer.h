@@ -1,8 +1,8 @@
 #pragma once
 
+#include "sample_recording_values.h"
 #include "sampler.h"
 #include "symbol_resolver.h"
-#include "sample_recording_values.h"
 #include <array>
 #include <cstdint>
 #include <linux/perf_event.h>
@@ -20,6 +20,8 @@ namespace perf {
 class RecordFileWriter
 {
 private:
+  static constexpr auto PERF_RECORD_HEADER_BUILD_ID = 67UL;
+
   /// Magic number for perf.data files ("PERFILE2")
   static constexpr auto MAGIC = 0x32454c4946524550LL;
 
@@ -99,7 +101,11 @@ private:
       : _stream(std::move(stream))
     {
     }
+    BinaryStream(const BinaryStream&) = delete;
+    BinaryStream(BinaryStream&&) noexcept = default;
     ~BinaryStream() = default;
+    BinaryStream& operator=(const BinaryStream&) = delete;
+    BinaryStream& operator=(BinaryStream&&) noexcept = default;
 
     BinaryStream& operator<<(const FileHeader& header)
     {

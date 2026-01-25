@@ -113,7 +113,11 @@ public:
       , _is_l2_miss(is_l2_miss)
     {
     }
+    TLB(const TLB&) = default;
+    TLB(TLB&&) noexcept = default;
     ~TLB() noexcept = default;
+    TLB& operator=(const TLB&) = default;
+    TLB& operator=(TLB&&) noexcept = default;
 
     /**
      * @return True, if the fetch was an iTLB miss.
@@ -149,7 +153,11 @@ public:
     {
     }
 
+    Cache(const Cache&) = default;
+    Cache(Cache&&) noexcept = default;
     ~Cache() noexcept = default;
+    Cache& operator=(const Cache&) = default;
+    Cache& operator=(Cache&&) noexcept = default;
 
     /**
      * @return True, if the fetch was an iTLB miss in L1 cache.
@@ -184,7 +192,11 @@ public:
     {
     }
 
+    Fetch(const Fetch&) = default;
+    Fetch(Fetch&&) noexcept = default;
     ~Fetch() noexcept = default;
+    Fetch& operator=(const Fetch&) = default;
+    Fetch& operator=(Fetch&&) noexcept = default;
 
     /**
      * @return True, if the fetch operation has completed.
@@ -318,7 +330,7 @@ public:
     bool _is_due_to_memory_conflict{ false };
     bool _is_due_to_write_capacity_conflict{ false };
     bool _is_due_to_read_capacity_conflict{ false };
-    std::uint32_t _user_specified_code{ false };
+    std::uint32_t _user_specified_code{ 0U };
   };
 
   /**
@@ -415,6 +427,25 @@ public:
    * @return Instruction type, if available. std::nullopt otherwise.
    */
   [[nodiscard]] std::optional<InstructionType> type() const noexcept { return _type; }
+
+  /**
+   * @return Instruction type, if available. std::nullopt otherwise.
+   */
+  [[nodiscard]] std::optional<std::string> type_as_string() const
+  {
+    if (_type.has_value()) {
+      switch (_type.value()) {
+        case InstructionType::Branch:
+          return "branch";
+        case InstructionType::DataAccess:
+          return "data_access";
+        case InstructionType::Return:
+          return "return";
+      }
+    }
+
+    return std::nullopt;
+  }
 
   /**
    * @return Logical instruction pointer, if available. std::nullopt otherwise.

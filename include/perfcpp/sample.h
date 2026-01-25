@@ -18,6 +18,15 @@ namespace perf {
 class Sample
 {
 public:
+  Sample() = default;
+  ~Sample() = default;
+
+  Sample(const Sample&) = default;
+  Sample(Sample&&) noexcept = default;
+
+  Sample& operator=(const Sample&) = default;
+  Sample& operator=(Sample&&) noexcept = default;
+
   /**
    * Set the list of events and values for the sample.
    * @param counter_result Counter values.

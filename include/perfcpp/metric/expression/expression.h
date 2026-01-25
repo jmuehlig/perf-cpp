@@ -16,6 +16,10 @@ class ExpressionInterface
 {
 public:
   ExpressionInterface() noexcept = default;
+  ExpressionInterface(const ExpressionInterface&) = default;
+  ExpressionInterface(ExpressionInterface&&) noexcept = default;
+  ExpressionInterface& operator=(const ExpressionInterface&) = default;
+  ExpressionInterface& operator=(ExpressionInterface&&) noexcept = default;
   virtual ~ExpressionInterface() = default;
 
   /**
@@ -44,6 +48,10 @@ public:
   {
   }
 
+  ConstantExpression(const ConstantExpression&) = default;
+  ConstantExpression(ConstantExpression&&) noexcept = default;
+  ConstantExpression& operator=(const ConstantExpression&) = delete;
+  ConstantExpression& operator=(ConstantExpression&&) noexcept = delete;
   ~ConstantExpression() noexcept override = default;
 
   /**
@@ -71,6 +79,10 @@ public:
   {
   }
 
+  IdentifierExpression(const IdentifierExpression&) = default;
+  IdentifierExpression(IdentifierExpression&&) noexcept = default;
+  IdentifierExpression& operator=(const IdentifierExpression&) = delete;
+  IdentifierExpression& operator=(IdentifierExpression&&) noexcept = delete;
   ~IdentifierExpression() override = default;
 
   /**
@@ -109,6 +121,10 @@ public:
   {
   }
 
+  BinaryExpression(const BinaryExpression&) = delete;
+  BinaryExpression(BinaryExpression&&) noexcept = default;
+  BinaryExpression& operator=(const BinaryExpression&) = delete;
+  BinaryExpression& operator=(BinaryExpression&&) noexcept = default;
   ~BinaryExpression() override = default;
 
   /**
@@ -153,6 +169,10 @@ public:
   {
   }
 
+  AdditionExpression(const AdditionExpression&) = delete;
+  AdditionExpression(AdditionExpression&&) noexcept = default;
+  AdditionExpression& operator=(const AdditionExpression&) = delete;
+  AdditionExpression& operator=(AdditionExpression&&) noexcept = default;
   ~AdditionExpression() override = default;
 
 protected:
@@ -170,6 +190,10 @@ public:
   {
   }
 
+  SubtractionExpression(const SubtractionExpression&) = delete;
+  SubtractionExpression(SubtractionExpression&&) noexcept = default;
+  SubtractionExpression& operator=(const SubtractionExpression&) = delete;
+  SubtractionExpression& operator=(SubtractionExpression&&) noexcept = default;
   ~SubtractionExpression() override = default;
 
 protected:
@@ -187,6 +211,10 @@ public:
   {
   }
 
+  MultiplyExpression(const MultiplyExpression&) = delete;
+  MultiplyExpression(MultiplyExpression&&) noexcept = default;
+  MultiplyExpression& operator=(const MultiplyExpression&) = delete;
+  MultiplyExpression& operator=(MultiplyExpression&&) noexcept = default;
   ~MultiplyExpression() override = default;
 
 protected:
@@ -204,6 +232,10 @@ public:
   {
   }
 
+  DivideExpression(const DivideExpression&) = delete;
+  DivideExpression(DivideExpression&&) noexcept = default;
+  DivideExpression& operator=(const DivideExpression&) = delete;
+  DivideExpression& operator=(DivideExpression&&) noexcept = default;
   ~DivideExpression() override = default;
 
 protected:

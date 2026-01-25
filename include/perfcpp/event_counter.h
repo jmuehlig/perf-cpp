@@ -52,9 +52,13 @@ public:
   {
   }
 
+  EventCounter(const EventCounter&) = delete;
   EventCounter(EventCounter&&) noexcept = default;
 
   ~EventCounter();
+
+  EventCounter& operator=(const EventCounter&) = delete;
+  EventCounter& operator=(EventCounter&&) noexcept = delete;
 
   /**
    * Add the specified event to the list of countered performance events.
@@ -328,7 +332,11 @@ class LiveEventCounter
 {
 public:
   explicit LiveEventCounter(const EventCounter& event_counter);
+  LiveEventCounter(const LiveEventCounter&) = default;
+  LiveEventCounter(LiveEventCounter&&) noexcept = default;
   ~LiveEventCounter() = default;
+  LiveEventCounter& operator=(const LiveEventCounter&) = delete;
+  LiveEventCounter& operator=(LiveEventCounter&&) noexcept = delete;
 
   /**
    * Retrieves the current value for every live counter and mark them as "start" value.
@@ -347,7 +355,7 @@ public:
    * @param event_name Event to calculate the stop - start value for.
    * @return The difference between the stop and the start value, or 0 if the name was not found.
    */
-  [[nodiscard]] double get(std::string_view event_name) const noexcept;
+  [[nodiscard]] double get(std::string_view event_name) const;
 
   /**
    * Calculates the difference between the start- and the stop values for the live event with the given name.
@@ -358,7 +366,7 @@ public:
    * @return The difference between the stop and the start value divided by the normalization value; or 0 if the name
    * was not found.
    */
-  [[nodiscard]] double get(std::string_view event_name, std::uint64_t normalization) const noexcept;
+  [[nodiscard]] double get(std::string_view event_name, std::uint64_t normalization) const;
 
 private:
   /// EventCounter to access live events.
@@ -375,7 +383,11 @@ class MultiEventCounterBase
 {
 public:
   MultiEventCounterBase() noexcept = default;
+  MultiEventCounterBase(const MultiEventCounterBase&) = default;
+  MultiEventCounterBase(MultiEventCounterBase&&) noexcept = default;
   virtual ~MultiEventCounterBase() = default;
+  MultiEventCounterBase& operator=(const MultiEventCounterBase&) = default;
+  MultiEventCounterBase& operator=(MultiEventCounterBase&&) noexcept = default;
 
   /**
    * Add the specified event to the list of countered performance events.
@@ -404,27 +416,27 @@ public:
    * Add the specified counters to the list of monitored performance counters.
    * The counters must exist within the counter definitions.
    *
-   * @param counter_names List of names of the counters.
+   * @param event_names List of names of the counters.
    * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual), or as a
    * group (all to the same hardware counter).
    * @return True, if the counters could be added.
    */
-  bool add(std::vector<std::string>&& counter_names,
+  bool add(std::vector<std::string>&& event_names,
            const EventCounter::Schedule schedule = EventCounter::Schedule::Append)
   {
-    return add(counter_names, schedule);
+    return add(event_names, schedule);
   }
 
   /**
    * Add the specified counters to the list of monitored performance counters.
    * The counters must exist within the counter definitions.
    *
-   * @param counter_names List of names of the counters.
+   * @param event_names List of names of the counters.
    * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual), or as a
    * group (all to the same hardware counter).
    * @return True, if the counters could be added.
    */
-  bool add(const std::vector<std::string>& counter_names,
+  bool add(const std::vector<std::string>& event_names,
            EventCounter::Schedule schedule = EventCounter::Schedule::Append);
 
   /**
@@ -454,7 +466,11 @@ class StartableMultiEventCounterBase : public MultiEventCounterBase
 {
 public:
   StartableMultiEventCounterBase() noexcept = default;
+  StartableMultiEventCounterBase(const StartableMultiEventCounterBase&) = default;
+  StartableMultiEventCounterBase(StartableMultiEventCounterBase&&) noexcept = default;
   ~StartableMultiEventCounterBase() override = default;
+  StartableMultiEventCounterBase& operator=(const StartableMultiEventCounterBase&) = default;
+  StartableMultiEventCounterBase& operator=(StartableMultiEventCounterBase&&) noexcept = default;
 
   /**
    * Opens and starts all event counters.
@@ -486,7 +502,13 @@ public:
   {
   }
 
+  MultiThreadEventCounter(const MultiThreadEventCounter&) = delete;
+  MultiThreadEventCounter(MultiThreadEventCounter&&) noexcept = default;
+
   ~MultiThreadEventCounter() override { this->close(); }
+
+  MultiThreadEventCounter& operator=(const MultiThreadEventCounter&) = delete;
+  MultiThreadEventCounter& operator=(MultiThreadEventCounter&&) noexcept = default;
 
   /**
    * Opens and starts recording performance counters for the given thread.
@@ -547,7 +569,13 @@ public:
   {
   }
 
+  MultiProcessEventCounter(const MultiProcessEventCounter&) = delete;
+  MultiProcessEventCounter(MultiProcessEventCounter&&) noexcept = default;
+
   ~MultiProcessEventCounter() override { this->close(); }
+
+  MultiProcessEventCounter& operator=(const MultiProcessEventCounter&) = delete;
+  MultiProcessEventCounter& operator=(MultiProcessEventCounter&&) noexcept = default;
 
 private:
   std::vector<perf::EventCounter> _process_local_counter;
@@ -583,7 +611,13 @@ public:
   {
   }
 
+  MultiCoreEventCounter(const MultiCoreEventCounter&) = delete;
+  MultiCoreEventCounter(MultiCoreEventCounter&&) noexcept = default;
+
   ~MultiCoreEventCounter() override { this->close(); }
+
+  MultiCoreEventCounter& operator=(const MultiCoreEventCounter&) = delete;
+  MultiCoreEventCounter& operator=(MultiCoreEventCounter&&) noexcept = default;
 
 private:
   std::vector<perf::EventCounter> _cpu_local_counter;

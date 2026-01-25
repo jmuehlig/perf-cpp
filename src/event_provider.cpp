@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <linux/perf_event.h>
 #include <perfcpp/counter_definition.h>
@@ -10,7 +11,6 @@
 #include <perfcpp/time_event.h>
 #include <regex>
 #include <sstream>
-#include <cctype>
 
 void
 perf::PerfSubsystemEventProvider::add_events(perf::CounterDefinition& counter_definition)
@@ -267,7 +267,7 @@ perf::SystemSpecificEventProvider::parse_event_file_descriptor_type(std::filesys
 
   auto type_stream = std::ifstream{ path };
   if (type_stream.is_open()) {
-    std::uint32_t type;
+    auto type = std::uint32_t{};
     type_stream >> type;
 
     return type;
@@ -285,7 +285,7 @@ perf::SystemSpecificEventProvider::parse_event_file_descriptor_scale(std::filesy
 
   auto type_stream = std::ifstream{ path };
   if (type_stream.is_open()) {
-    double type;
+    auto type = double{};
     type_stream >> type;
 
     return type;
@@ -339,7 +339,9 @@ perf::SystemSpecificEventProvider::parse_integer(const std::string& value)
   /// Remove all whitespaces if the value has at least one.
   if (value.find_first_of(' ') != std::string::npos) {
     auto value_without_leading_whitespace = value;
-    value_without_leading_whitespace.erase(std::remove_if(value_without_leading_whitespace.begin(), value_without_leading_whitespace.end(), ::isspace), value_without_leading_whitespace.end());
+    value_without_leading_whitespace.erase(
+      std::remove_if(value_without_leading_whitespace.begin(), value_without_leading_whitespace.end(), ::isspace),
+      value_without_leading_whitespace.end());
     return SystemSpecificEventProvider::parse_integer(value_without_leading_whitespace);
   }
 
@@ -490,7 +492,7 @@ perf::CsvFileEventProvider::add_events(perf::CounterDefinition& counter_definiti
       auto line_stream = std::istringstream{ line };
 
       std::string name;
-      
+
       /// Read name.
       if (std::getline(line_stream, name, ','); !name.empty()) {
 

@@ -322,7 +322,12 @@ public:
   {
   public:
     Snoop() noexcept = default;
+    Snoop(const Snoop&) noexcept = default;
+    Snoop(Snoop&&) noexcept = default;
     ~Snoop() noexcept = default;
+
+    [[nodiscard]] Snoop& operator=(const Snoop&) noexcept = default;
+    [[nodiscard]] Snoop& operator=(Snoop&&) noexcept = default;
 
     /**
      * Set whether the snoop was a hit.
@@ -440,23 +445,17 @@ public:
   /**
    * @return True, if the access is a load.
    */
-  [[nodiscard]] bool is_load() const noexcept
-  {
-    return _access_type.has_value() && _access_type.value() == AccessType::Load;
-  }
+  [[nodiscard]] bool is_load() const { return _access_type.has_value() && _access_type.value() == AccessType::Load; }
 
   /**
    * @return True, if the access is a store.
    */
-  [[nodiscard]] bool is_store() const noexcept
-  {
-    return _access_type.has_value() && _access_type.value() == AccessType::Store;
-  }
+  [[nodiscard]] bool is_store() const { return _access_type.has_value() && _access_type.value() == AccessType::Store; }
 
   /**
    * @return True, if the access is a software prefetch.
    */
-  [[nodiscard]] bool is_software_prefetch() const noexcept
+  [[nodiscard]] bool is_software_prefetch() const
   {
     return _access_type.has_value() && _access_type.value() == AccessType::SoftwarePrefetch;
   }

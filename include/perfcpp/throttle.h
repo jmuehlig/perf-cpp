@@ -8,7 +8,11 @@ public:
     : _is_throttle(is_throttle)
   {
   }
+  Throttle(const Throttle&) = default;
+  Throttle(Throttle&&) noexcept = default;
   ~Throttle() noexcept = default;
+  Throttle& operator=(const Throttle&) = default;
+  Throttle& operator=(Throttle&&) noexcept = default;
 
   /**
    * @return True, if the event was a throttle event.

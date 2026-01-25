@@ -165,7 +165,7 @@ perf::Counter::open(const perf::Config& config,
                     const std::optional<std::uint32_t> max_user_stack_size,
                     const std::optional<std::uint16_t> max_callstack_size,
                     const bool is_include_context_switch,
-                    const bool is_included_extended_mmap_information,
+                    const bool is_include_extended_mmap_information,
                     const perf::util::UniqueFileDescriptor& group_leader_file_descriptor)
 {
   /// Configure the perf event attribute for sampling.
@@ -178,7 +178,7 @@ perf::Counter::open(const perf::Config& config,
                                                              max_user_stack_size,
                                                              max_callstack_size,
                                                              is_include_context_switch,
-                                                             is_included_extended_mmap_information);
+                                                             is_include_extended_mmap_information);
 
   if (static_cast<bool>(sample_type | static_cast<std::uint64_t>(PERF_SAMPLE_READ))) {
     /// Enable the read format including timing.
@@ -260,7 +260,7 @@ perf::Counter::read_live() const noexcept
 std::uint64_t
 perf::Counter::read_id() const
 {
-  std::uint64_t id;
+  auto id = std::uint64_t{};
   if (::ioctl(this->_file_descriptor.value(), PERF_EVENT_IOC_ID, &id) < 0) {
     throw CannotReadCounterId{ errno };
   }
@@ -295,17 +295,16 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled, const perf::C
 }
 
 perf_event_attr
-perf::Counter::create_perf_event_attribute(
-  const bool is_disabled,
-  const perf::Config& configuration,
-  const std::uint64_t sample_type,
-  const std::optional<std::uint64_t> branch_type,
-  const std::optional<std::uint64_t> user_registers,
-  const std::optional<std::uint64_t> kernel_registers,
-  const std::optional<std::uint32_t> max_user_stack_size,
-  [[maybe_unused]] const std::optional<std::uint16_t> max_callstack_size,
-  [[maybe_unused]] const bool is_include_context_switch,
-  [[maybe_unused]] const bool is_included_extended_mmap_information) const noexcept
+perf::Counter::create_perf_event_attribute(const bool is_disabled,
+                                           const perf::Config& configuration,
+                                           const std::uint64_t sample_type,
+                                           const std::optional<std::uint64_t> branch_type,
+                                           const std::optional<std::uint64_t> user_registers,
+                                           const std::optional<std::uint64_t> kernel_registers,
+                                           const std::optional<std::uint32_t> max_user_stack_size,
+                                           [[maybe_unused]] const std::optional<std::uint16_t> max_callstack_size,
+                                           [[maybe_unused]] const bool is_include_context_switch,
+                                           [[maybe_unused]] const bool is_include_extended_mmap_information) const
 {
   auto attribute = this->create_perf_event_attribute(is_disabled, configuration);
 
@@ -337,7 +336,7 @@ perf::Counter::create_perf_event_attribute(
     attribute.cgroup = static_cast<bool>(sample_type & static_cast<std::uint64_t>(PERF_SAMPLE_CGROUP));
 #endif
 
-    if (is_included_extended_mmap_information) {
+    if (is_include_extended_mmap_information) {
       attribute.mmap = true;
       attribute.mmap2 = true;
     }
@@ -375,7 +374,7 @@ perf::Counter::try_open_via_perf_subsystem(const perf::Config& configuration,
                                            const perf::util::FileDescriptorView group_leader_file_descriptor)
 {
   auto file_descriptor = util::UniqueFileDescriptor{};
-  std::int32_t error_code;
+  auto error_code = std::int32_t{};
 
   /// Try to open the counter. For sampling, we might try to adjust the precision configuration (see
   /// Counter::is_precise_ip_adjustable).
@@ -645,7 +644,7 @@ perf::Counter::print_type_to_stream(std::stringstream& stream,
   auto is_first = true;
 
   for (const auto& [type, name] : types) {
-    if (mask & type) {
+    if (static_cast<bool>(mask & type)) {
       if (!std::exchange(is_first, false)) {
         stream << " | ";
       }

@@ -9,7 +9,15 @@ namespace perf {
 class Metric
 {
 public:
+  Metric() noexcept = default;
+  Metric(const Metric&) noexcept = default;
+  Metric(Metric&&) noexcept = default;
+
   virtual ~Metric() = default;
+
+  Metric& operator=(const Metric&) noexcept = default;
+  Metric& operator=(Metric&&) noexcept = default;
+
   [[nodiscard]] virtual std::string name() const = 0;
   [[nodiscard]] virtual std::vector<std::string> required_counter_names() const = 0;
   [[nodiscard]] virtual std::optional<double> calculate(const CounterResult& result) const = 0;

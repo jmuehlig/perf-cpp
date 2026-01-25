@@ -32,7 +32,11 @@ public:
       , _has_separator(has_separator)
     {
     }
+    Header(const Header&) = default;
+    Header(Header&&) noexcept = default;
     ~Header() = default;
+    Header& operator=(const Header&) = default;
+    Header& operator=(Header&&) noexcept = default;
 
     [[nodiscard]] const std::string& text() const noexcept { return _text; }
     [[nodiscard]] Alignment alignment() const noexcept { return _alignment; }
@@ -50,7 +54,11 @@ public:
   {
   public:
     Row() { _columns.reserve(32U); }
+    Row(const Row&) = default;
+    Row(Row&&) noexcept = default;
     ~Row() = default;
+    Row& operator=(const Row&) = default;
+    Row& operator=(Row&&) noexcept = default;
 
     void add(std::string&& column) { _columns.push_back(std::move(column)); }
 
@@ -114,7 +122,11 @@ public:
     : _offset(offset)
   {
   }
+  Table(const Table&) = default;
+  Table(Table&&) noexcept = default;
   ~Table() = default;
+  Table& operator=(const Table&) = default;
+  Table& operator=(Table&&) noexcept = default;
 
   /**
    * Reserve space for the given number of rows.
