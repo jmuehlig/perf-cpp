@@ -360,9 +360,9 @@ perf::RecordFileWriter::read_first_sample_id(const SampleRecordingValues& sample
                                              const std::vector<std::vector<std::vector<std::byte>>>& sample_data)
 {
   /// If none of the values was sampled, we can cancel early without scanning.
-  if (sampler_values.is_set(PERF_SAMPLE_IDENTIFIER) || sampler_values.is_set(PERF_SAMPLE_TID) ||
-      sampler_values.is_set(PERF_SAMPLE_TIME) || sampler_values.is_set(PERF_SAMPLE_STREAM_ID) ||
-      sampler_values.is_set(PERF_SAMPLE_CPU)) {
+  if (sampler_values.is_set(SampleRecordingValues::Field::Id) || sampler_values.is_set(SampleRecordingValues::Field::ThreadId) ||
+      sampler_values.is_set(SampleRecordingValues::Field::Timestamp) || sampler_values.is_set(SampleRecordingValues::Field::StreamId) ||
+      sampler_values.is_set(SampleRecordingValues::Field::CpuId)) {
     for (const auto& sample_counter : sample_data) {
       /// Scan all the buffers to find the first sample_id.
       for (const auto& buffer : sample_counter) {
@@ -385,33 +385,33 @@ perf::RecordFileWriter::read_first_sample_id(const SampleRecordingValues& sample
             auto stream_id = std::optional<std::uint64_t>{};
             auto cpu_id = std::optional<std::uint32_t>{};
 
-            if (sampler_values.is_set(PERF_SAMPLE_IDENTIFIER)) {
+            if (sampler_values.is_set(SampleRecordingValues::Field::Id)) {
               sample_id = entry.read<std::uint64_t>();
             }
 
             /// Instruction pointer is not needed and consequently ignored.
-            if (sampler_values.is_set(PERF_SAMPLE_IP)) {
+            if (sampler_values.is_set(SampleRecordingValues::Field::LogicalInstructionPointer)) {
               entry.skip<std::uint64_t>();
             }
 
-            if (sampler_values.is_set(PERF_SAMPLE_TID)) {
+            if (sampler_values.is_set(SampleRecordingValues::Field::ThreadId)) {
               process_id = entry.read<std::uint32_t>();
               thread_id = entry.read<std::uint32_t>();
             }
 
-            if (sampler_values.is_set(PERF_SAMPLE_TIME)) {
+            if (sampler_values.is_set(SampleRecordingValues::Field::Timestamp)) {
               timestamp = entry.read<std::uint64_t>();
             }
 
-            if (sampler_values.is_set(PERF_SAMPLE_STREAM_ID)) {
+            if (sampler_values.is_set(SampleRecordingValues::Field::StreamId)) {
               stream_id = entry.read<std::uint64_t>();
             }
 
-            if (sampler_values.is_set(PERF_SAMPLE_ADDR)) {
+            if (sampler_values.is_set(SampleRecordingValues::Field::LogicalMemoryAddress)) {
               entry.skip<std::uint64_t>();
             }
 
-            if (sampler_values.is_set(PERF_SAMPLE_CPU)) {
+            if (sampler_values.is_set(SampleRecordingValues::Field::CpuId)) {
               cpu_id = entry.read<std::uint32_t>();
             }
 

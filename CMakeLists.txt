@@ -43,6 +43,7 @@ set(PERF_CPP_SRC
     src/sampler.cpp
     src/sample_decoder.cpp
     src/sample_result.cpp
+    src/sample_recording_values.cpp
     src/util/table.cpp
     src/mmap_buffer.cpp
     src/symbol_resolver.cpp

@@ -2,6 +2,7 @@
 
 #include "config.h"
 #include "counter.h"
+#include "sample_recording_values.h"
 #include <cstdint>
 #include <optional>
 #include <vector>
@@ -124,27 +125,12 @@ public:
    * @param config Configuration.
    * @param has_auxiliary_event True, if the group has an auxiliary event as a first event.
    * @param buffer_pages Number of pages allocated for user-level buffer.
-   * @param sample_type Mask of sampled values.
-   * @param branch_type Mask of sampled branch types, std::nullopt of sampling is disabled.
-   * @param user_registers Mask of sampled user registers, std::nullopt of sampling is disabled.
-   * @param kernel_registers Mask of sampled kernel registers, std::nullopt of sampling is disabled.
-   * @param max_user_stack_size Maximal size of sampled uer stack, std::nullopt of sampling is disabled.
-   * @param max_callstack_size Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
-   * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
-   * @param is_include_extended_mmap_information True, if extended mmap information should be included, ignored if
-   * sampling is disabled.
+   * @param sample_recording_values Values to record while sampling.
    */
   void open(const Config& config,
             bool has_auxiliary_event,
             std::uint64_t buffer_pages,
-            std::uint64_t sample_type,
-            std::optional<std::uint64_t> branch_type,
-            std::optional<std::uint64_t> user_registers,
-            std::optional<std::uint64_t> kernel_registers,
-            std::optional<std::uint32_t> max_user_stack_size,
-            std::optional<std::uint16_t> max_callstack_size,
-            bool is_include_context_switch,
-            bool is_include_extended_mmap_information);
+            const SampleRecordingValues& sample_recording_values);
 
   /**
    * Closes all counters of the group.

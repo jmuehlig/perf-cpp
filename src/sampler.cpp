@@ -119,16 +119,7 @@ perf::Sampler::open()
       this->_config,
       sample_counter.has_intel_auxiliary_event(),
       this->_config.buffer_pages(),
-      this->_values.get(),
-      this->_values.is_set(PERF_SAMPLE_BRANCH_STACK) ? std::make_optional(this->_values.branch_mask()) : std::nullopt,
-      this->_values.is_set(PERF_SAMPLE_REGS_USER) ? std::make_optional(this->_values.user_registers().mask())
-                                                  : std::nullopt,
-      this->_values.is_set(PERF_SAMPLE_REGS_INTR) ? std::make_optional(this->_values.kernel_registers().mask())
-                                                  : std::nullopt,
-      this->_values.is_set(PERF_SAMPLE_STACK_USER) ? std::make_optional(this->_values.max_user_stack()) : std::nullopt,
-      this->_values.is_set(PERF_SAMPLE_CALLCHAIN) ? std::make_optional(this->_values.max_call_stack()) : std::nullopt,
-      this->_values.is_include_context_switch(),
-      this->_values.is_include_extended_mmap_information());
+      this->_values);
   }
 }
 
@@ -228,7 +219,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
       group.add(event_config);
 
       /// Notice the event name of the trigger event.
-      if (this->_values.is_set(PERF_SAMPLE_READ)) {
+      if (this->_values.is_set(SampleRecordingValues::Field::PerformanceCounter)) {
         requested_events.add(RequestedEvent{ pmu_name, event_name, /* group_id */ 0U, /* position in group */ 0U });
       }
     } else {
@@ -237,7 +228,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
   }
 
   /// Add possible events as value to the sample.
-  if (this->_values.is_set(PERF_SAMPLE_READ)) {
+  if (this->_values.is_set(SampleRecordingValues::Field::PerformanceCounter)) {
     for (const auto& event_name : this->_values.counters()) {
 
       /// Check if the event is a true hardware event – if so, just add it to the list.
@@ -390,7 +381,7 @@ perf::Sampler::result(const bool sort_by_time)
   }
 
   /// Sort the samples if requested and we can sort by time.
-  if (this->_values.is_set(PERF_SAMPLE_TIME) && sort_by_time) {
+  if (this->_values.is_set(SampleRecordingValues::Field::Timestamp) && sort_by_time) {
     std::sort(result.begin(), result.end(), SampleTimestampComparator{});
   }
 
@@ -449,7 +440,7 @@ perf::MultiSamplerBase::result(std::vector<Sampler>& samplers, const bool is_sor
     if (is_sort_by_time) {
       /// Verify that all samplers recorded the timestamp that is needed to sort by time.
       const auto is_time_provided = std::all_of(
-        samplers.begin(), samplers.end(), [](const auto& sampler) { return sampler._values.is_set(PERF_SAMPLE_TIME); });
+        samplers.begin(), samplers.end(), [](const auto& sampler) { return sampler._values.is_set(SampleRecordingValues::Field::Timestamp); });
 
       /// Finally, sort if requested and the samples contain a timestamp.
       if (is_time_provided) {

@@ -173,7 +173,7 @@ private:
     CSVWriter& operator=(const CSVWriter&) = delete;
     CSVWriter& operator=(CSVWriter&&) = delete;
 
-    void write_header(const perf_event_sample_format field, std::string&& name)
+    void write_header(const SampleRecordingValues::Field field, std::string&& name)
     {
       if (this->_values.is_set(field)) {
         this->_csv_stream << "," << name;
@@ -181,7 +181,7 @@ private:
     }
 
     template<typename T>
-    void write_value(const perf_event_sample_format field, const std::optional<T> value, const bool is_hex = false)
+    void write_value(const SampleRecordingValues::Field field, const std::optional<T> value, const bool is_hex = false)
     {
       if (this->_values.is_set(field)) {
         this->_csv_stream << ",";
@@ -199,7 +199,7 @@ private:
       }
     }
 
-    void write_value(const perf_event_sample_format field, const bool value)
+    void write_value(const SampleRecordingValues::Field field, const bool value)
     {
       if (this->_values.is_set(field)) {
         this->_csv_stream << "," << (value ? "true" : "false");

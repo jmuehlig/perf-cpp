@@ -18,18 +18,18 @@ perf::SampleResult::to_csv(std::string&& file_name) const
 
   /// Header: Metadata
   file_stream << "mode";
-  csv_writer.write_header(PERF_SAMPLE_ID, "id");
-  csv_writer.write_header(PERF_SAMPLE_STREAM_ID, "stream_id");
-  csv_writer.write_header(PERF_SAMPLE_TIME, "timestamp");
-  csv_writer.write_header(PERF_SAMPLE_PERIOD, "period");
-  csv_writer.write_header(PERF_SAMPLE_CPU, "cpu_id");
-  csv_writer.write_header(PERF_SAMPLE_TID, "process_id");
-  csv_writer.write_header(PERF_SAMPLE_TID, "thread_id");
+  csv_writer.write_header(SampleRecordingValues::Field::Id, "id");
+  csv_writer.write_header(SampleRecordingValues::Field::StreamId, "stream_id");
+  csv_writer.write_header(SampleRecordingValues::Field::Timestamp, "timestamp");
+  csv_writer.write_header(SampleRecordingValues::Field::Period, "period");
+  csv_writer.write_header(SampleRecordingValues::Field::CpuId, "cpu_id");
+  csv_writer.write_header(SampleRecordingValues::Field::ThreadId, "process_id");
+  csv_writer.write_header(SampleRecordingValues::Field::ThreadId, "thread_id");
   /// Header: Instruction Execution
-  csv_writer.write_header(PERF_SAMPLE_IP, "logical_instruction_pointer");
-  csv_writer.write_header(PERF_SAMPLE_IP, "physical_instruction_pointer");
-  csv_writer.write_header(PERF_SAMPLE_IP, "is_instruction_pointer_exact");
-  csv_writer.write_header(PERF_SAMPLE_DATA_SRC, "is_instruction_locked");
+  csv_writer.write_header(SampleRecordingValues::Field::LogicalInstructionPointer, "logical_instruction_pointer");
+  csv_writer.write_header(SampleRecordingValues::Field::PhysicalInstructionPointer, "physical_instruction_pointer");
+  csv_writer.write_header(SampleRecordingValues::Field::LogicalInstructionPointer, "is_instruction_pointer_exact");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "is_instruction_locked");
 
   /// Samples
   for (const auto& sample : this->_samples) {
@@ -37,19 +37,19 @@ perf::SampleResult::to_csv(std::string&& file_name) const
 
     /// Metadata
     file_stream << sample.metadata().mode_as_string().value_or("");
-    csv_writer.write_value(PERF_SAMPLE_ID, sample.metadata().sample_id());
-    csv_writer.write_value(PERF_SAMPLE_STREAM_ID, sample.metadata().stream_id());
-    csv_writer.write_value(PERF_SAMPLE_TIME, sample.metadata().timestamp());
-    csv_writer.write_value(PERF_SAMPLE_PERIOD, sample.metadata().period());
-    csv_writer.write_value(PERF_SAMPLE_CPU, sample.metadata().cpu_id());
-    csv_writer.write_value(PERF_SAMPLE_TID, sample.metadata().process_id());
-    csv_writer.write_value(PERF_SAMPLE_TID, sample.metadata().thread_id());
+    csv_writer.write_value(SampleRecordingValues::Field::Id, sample.metadata().sample_id());
+    csv_writer.write_value(SampleRecordingValues::Field::StreamId, sample.metadata().stream_id());
+    csv_writer.write_value(SampleRecordingValues::Field::Timestamp, sample.metadata().timestamp());
+    csv_writer.write_value(SampleRecordingValues::Field::Period, sample.metadata().period());
+    csv_writer.write_value(SampleRecordingValues::Field::CpuId, sample.metadata().cpu_id());
+    csv_writer.write_value(SampleRecordingValues::Field::ThreadId, sample.metadata().process_id());
+    csv_writer.write_value(SampleRecordingValues::Field::ThreadId, sample.metadata().thread_id());
 
     /// Instruction execution
-    csv_writer.write_value(PERF_SAMPLE_IP, sample.instruction_execution().logical_instruction_pointer(), true);
-    csv_writer.write_value(PERF_SAMPLE_IP, sample.instruction_execution().physical_instruction_pointer(), true);
-    csv_writer.write_value(PERF_SAMPLE_IP, sample.instruction_execution().is_instruction_pointer_exact());
-    csv_writer.write_value(PERF_SAMPLE_DATA_SRC, sample.instruction_execution().is_locked());
+    csv_writer.write_value(SampleRecordingValues::Field::LogicalInstructionPointer, sample.instruction_execution().logical_instruction_pointer(), true);
+    csv_writer.write_value(SampleRecordingValues::Field::PhysicalInstructionPointer, sample.instruction_execution().physical_instruction_pointer(), true);
+    csv_writer.write_value(SampleRecordingValues::Field::LogicalInstructionPointer, sample.instruction_execution().is_instruction_pointer_exact());
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, sample.instruction_execution().is_locked());
   }
 
   file_stream << std::flush;

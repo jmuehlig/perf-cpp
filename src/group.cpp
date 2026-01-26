@@ -37,14 +37,7 @@ void
 perf::Group::open(const perf::Config& config,
                   const bool has_auxiliary_event,
                   const std::uint64_t buffer_pages,
-                  const std::uint64_t sample_type,
-                  const std::optional<std::uint64_t> branch_type,
-                  const std::optional<std::uint64_t> user_registers,
-                  const std::optional<std::uint64_t> kernel_registers,
-                  const std::optional<std::uint32_t> max_user_stack_size,
-                  const std::optional<std::uint16_t> max_callstack_size,
-                  const bool is_include_context_switch,
-                  bool is_include_extended_mmap_information)
+                  const SampleRecordingValues& sample_recording_values)
 {
   if (this->_members.empty()) {
     return;
@@ -55,14 +48,7 @@ perf::Group::open(const perf::Config& config,
   const auto group_leader_buffer_pages = !has_auxiliary_event ? buffer_pages : 0ULL;
   this->_members.front().open(config,
                               group_leader_buffer_pages,
-                              sample_type,
-                              branch_type,
-                              user_registers,
-                              kernel_registers,
-                              max_user_stack_size,
-                              max_callstack_size,
-                              is_include_context_switch,
-                              is_include_extended_mmap_information);
+                              sample_recording_values);
 
   /// The group leader's file descriptor will be passed to further counters.
   const auto& group_leader_file_descriptor = this->_members.front().file_descriptor();
@@ -80,14 +66,7 @@ perf::Group::open(const perf::Config& config,
     /// have a buffer.
     this->_members[event_id].open(config,
                                   event_buffer_pages,
-                                  sample_type,
-                                  branch_type,
-                                  user_registers,
-                                  kernel_registers,
-                                  max_user_stack_size,
-                                  max_callstack_size,
-                                  is_include_context_switch,
-                                  is_include_extended_mmap_information,
+                                  sample_recording_values,
                                   group_leader_file_descriptor);
   }
 }

@@ -5,6 +5,7 @@
 #include "mmap_buffer.h"
 #include "precision.h"
 #include "util/unique_file_descriptor.h"
+#include "sample_recording_values.h"
 #include <array>
 #include <cstdint>
 #include <linux/perf_event.h>
@@ -174,26 +175,11 @@ public:
    *
    * @param config Configuration.
    * @param buffer_pages Number of pages allocated for user-level buffer.
-   * @param sample_type Mask of sampled values.
-   * @param branch_type Mask of sampled branch types, std::nullopt of sampling is disabled.
-   * @param user_registers Mask of sampled user registers, std::nullopt of sampling is disabled.
-   * @param kernel_registers Mask of sampled kernel registers, std::nullopt of sampling is disabled.
-   * @param max_user_stack_size Maximal size of sampled user stack, std::nullopt of sampling is disabled.
-   * @param max_callstack_size Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
-   * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
-   * @param is_include_extended_mmap_information True, if extended mmap information should be sampled, ignored if
-   * sampling is disabled.
+   * @param sample_recording_values Values to record while sampling.
    */
   void open(const perf::Config& config,
             std::uint64_t buffer_pages,
-            std::uint64_t sample_type,
-            std::optional<std::uint64_t> branch_type,
-            std::optional<std::uint64_t> user_registers,
-            std::optional<std::uint64_t> kernel_registers,
-            std::optional<std::uint32_t> max_user_stack_size,
-            std::optional<std::uint16_t> max_callstack_size,
-            bool is_include_context_switch,
-            bool is_include_extended_mmap_information);
+            const SampleRecordingValues& sample_recording_values);
 
   /**
    * Opens the counter using via the perf subsystem.
@@ -203,27 +189,12 @@ public:
    *
    * @param config Configuration.
    * @param buffer_pages Number of pages allocated for user-level buffer.
-   * @param sample_type Mask of sampled values.
-   * @param branch_type Mask of sampled branch types, std::nullopt of sampling is disabled.
-   * @param user_registers Mask of sampled user registers, std::nullopt of sampling is disabled.
-   * @param kernel_registers Mask of sampled kernel registers, std::nullopt of sampling is disabled.
-   * @param max_user_stack_size Maximal size of sampled user stack, std::nullopt of sampling is disabled.
-   * @param max_callstack_size Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
-   * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
-   * @param is_include_extended_mmap_information True, if extended mmap information should be included, ignored if
-   * sampling is disabled.
+   * @param sample_recording_values Values to record while sampling.
    * @param group_leader_file_descriptor File descriptor of the group leader.
    */
   void open(const perf::Config& config,
             std::uint64_t buffer_pages,
-            std::uint64_t sample_type,
-            std::optional<std::uint64_t> branch_type,
-            std::optional<std::uint64_t> user_registers,
-            std::optional<std::uint64_t> kernel_registers,
-            std::optional<std::uint32_t> max_user_stack_size,
-            std::optional<std::uint16_t> max_callstack_size,
-            bool is_include_context_switch,
-            bool is_include_extended_mmap_information,
+            const SampleRecordingValues& sample_recording_values,
             const util::UniqueFileDescriptor& group_leader_file_descriptor);
 
   /**
@@ -351,28 +322,14 @@ private:
    *
    * @param is_disabled  True, if the counter is disabled (mostly true for the events but the first).
    * @param configuration Configuration to configure.
-   * @param sample_type The sample type to configure.
-   * @param branch_type The branch type to configure.
-   * @param user_registers The user registers to configure.
-   * @param kernel_registers The kernel registers to configure.
-   * @param max_user_stack_size The maximal user stack size to configure.
-   * @param max_callstack_size The maximal call stack size to configure.
-   * @param is_include_context_switch True, if context switches should be included into samples.
-   * @param is_include_extended_mmap_information True, if extended mmap information should be included into samples.
+   * @param sample_recording_values Values to record while sampling.
    * @return The initialized perf_event_attr.
    */
 
   [[nodiscard]] perf_event_attr create_perf_event_attribute(
     bool is_disabled,
     const Config& configuration,
-    std::uint64_t sample_type,
-    std::optional<std::uint64_t> branch_type,
-    std::optional<std::uint64_t> user_registers,
-    std::optional<std::uint64_t> kernel_registers,
-    std::optional<std::uint32_t> max_user_stack_size,
-    [[maybe_unused]] std::optional<std::uint16_t> max_callstack_size,
-    [[maybe_unused]] bool is_include_context_switch,
-    [[maybe_unused]] bool is_include_extended_mmap_information) const;
+    const SampleRecordingValues& sample_recording_values) const;
 
   /**
    * Configures the perf event read format.

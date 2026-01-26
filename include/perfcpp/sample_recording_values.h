@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include "exception.h"
 #include "registers.h"
 #include "branch.h"
@@ -9,17 +10,113 @@ namespace perf {
 class SampleRecordingValues
 {
 public:
+  enum class Field : std::uint8_t
+  {
+    // === Process/Thread Context ===
+    ProcessId,
+    ThreadId,
+    CpuId,
+    CGroup,
+
+    // === Timing ===
+    Timestamp,
+    Period,
+
+    // === Identifiers ===
+    Id,
+    StreamId,
+
+    // === Instruction Execution ===
+    LogicalInstructionPointer,
+    PhysicalInstructionPointer,
+    InstructionType,
+    BranchType,
+    Callchain,
+    CodePageSize,
+
+    // === Instruction Performance ===
+    InstructionLatency,
+    InstructionCache,
+    InstructionTLB,
+    InstructionFetch,
+
+    // === Data Access ===
+    LogicalMemoryAddress,
+    PhysicalMemoryAddress,
+    DataSource,
+    DataPageSize,
+    DataTLBPageSize,
+    DataAccessLatency,
+    DataTLBLatency,
+    DataAccessWidth,
+    DataAccessMisalignPenalty,
+    MHBAllocations,
+
+    // === Branch Sampling ===
+    BranchStack,
+
+    // === Registers & Stack ===
+    UserRegisters,
+    KernelRegisters,
+    UserStack,
+
+    // === Performance Counters ===
+    PerformanceCounter,
+
+    // === Hardware Transaction Memory ===
+    HardwareTransactionAbort,
+
+    // === Special Events ===
+    ContextSwitch,
+    Throttle,
+    MMapInformation,
+
+    // === Raw & Auxiliary ===
+    RawValues,
+    AuxValues,
+
+    // END
+    _Count
+  };
+
   /**
-   * Manage to include the instruction pointer into samples.
+   * Manage to include the logical instruction pointer into samples.
    *
    * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#instruction-pointer
    *
-   * @param include True, if the instruction pointer should be included.
+   * @param include True, if the logical instruction pointer should be included.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& instruction_pointer(const bool include) noexcept
+  [[deprecated("SampleRecordingValues::instruction_pointer(bool) will be removed from v0.14. Use logical_instruction_pointer(bool) instead.")]] SampleRecordingValues& instruction_pointer(const bool include) noexcept
   {
-    set(PERF_SAMPLE_IP, include);
+    return logical_instruction_pointer(include);
+  }
+
+  /**
+   * Manage to include the logical instruction pointer into samples.
+   *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#instruction-pointer
+   *
+   * @param include True, if the logical instruction pointer should be included.
+   * @return The SampleRecordingValues instance.
+   */
+  SampleRecordingValues& logical_instruction_pointer(const bool include) noexcept
+  {
+    set(Field::LogicalInstructionPointer, include);
+    return *this;
+  }
+
+  /**
+   * Manage to include the physical instruction pointer into samples.
+   *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#instruction-pointer
+   *
+   * @param include True, if the physical instruction pointer should be included.
+   * @return The SampleRecordingValues instance.
+   */
+  SampleRecordingValues& physical_instruction_pointer(const bool include) noexcept
+  {
+    set(Field::PhysicalInstructionPointer, include);
     return *this;
   }
 
@@ -33,7 +130,7 @@ public:
    */
   SampleRecordingValues& thread_id(const bool include) noexcept
   {
-    set(PERF_SAMPLE_TID, include);
+    set(Field::ThreadId, include);
     return *this;
   }
 
@@ -47,7 +144,7 @@ public:
    */
   SampleRecordingValues& timestamp(const bool include) noexcept
   {
-    set(PERF_SAMPLE_TIME, include);
+    set(Field::Timestamp, include);
     return *this;
   }
 
@@ -61,7 +158,7 @@ public:
    */
   SampleRecordingValues& logical_memory_address(const bool include) noexcept
   {
-    set(PERF_SAMPLE_ADDR, include);
+    set(Field::LogicalMemoryAddress, include);
     return *this;
   }
 
@@ -75,7 +172,7 @@ public:
    */
   SampleRecordingValues& stream_id(const bool include) noexcept
   {
-    set(PERF_SAMPLE_STREAM_ID, include);
+    set(Field::StreamId, include);
     return *this;
   }
 
@@ -89,7 +186,7 @@ public:
    */
   SampleRecordingValues& raw(const bool include) noexcept
   {
-    set(PERF_SAMPLE_RAW, include);
+    set(Field::RawValues, include);
     return *this;
   }
 
@@ -104,7 +201,7 @@ public:
   SampleRecordingValues& counter(std::vector<std::string>&& counter_names) noexcept
   {
     _counter_names = std::move(counter_names);
-    set(PERF_SAMPLE_READ, !_counter_names.empty());
+    set(Field::PerformanceCounter, !_counter_names.empty());
     return *this;
   }
 
@@ -118,7 +215,7 @@ public:
    */
   SampleRecordingValues& callchain(const bool include) noexcept
   {
-    set(PERF_SAMPLE_CALLCHAIN, include);
+    set(Field::Callchain, include);
     return *this;
   }
 
@@ -133,7 +230,7 @@ public:
   SampleRecordingValues& callchain(const std::uint16_t max_call_stack) noexcept
   {
     _max_call_stack = max_call_stack;
-    set(PERF_SAMPLE_CALLCHAIN, true);
+    set(Field::Callchain, true);
     return *this;
   }
 
@@ -147,7 +244,7 @@ public:
    */
   SampleRecordingValues& cpu_id(const bool include) noexcept
   {
-    set(PERF_SAMPLE_CPU, include);
+    set(Field::CpuId, include);
     return *this;
   }
 
@@ -161,7 +258,7 @@ public:
    */
   SampleRecordingValues& period(const bool include) noexcept
   {
-    set(PERF_SAMPLE_PERIOD, include);
+    set(Field::Period, include);
     return *this;
   }
 
@@ -180,7 +277,7 @@ public:
       this->_branch_mask |= static_cast<std::uint64_t>(branch_type);
     }
 
-    set(PERF_SAMPLE_BRANCH_STACK, this->_branch_mask != 0ULL);
+    set(Field::BranchStack, this->_branch_mask != 0ULL);
     return *this;
   }
 
@@ -195,7 +292,7 @@ public:
   SampleRecordingValues& user_registers(Registers&& registers) noexcept
   {
     _user_registers = std::move(registers);
-    set(PERF_SAMPLE_REGS_USER, !_user_registers.empty());
+    set(Field::UserRegisters, !_user_registers.empty());
     return *this;
   }
 
@@ -261,7 +358,7 @@ public:
    */
   SampleRecordingValues& weight(const bool include) noexcept
   {
-    set(PERF_SAMPLE_WEIGHT, include);
+    set(Field::DataAccessLatency, include);
     return *this;
   }
 
@@ -275,7 +372,7 @@ public:
    */
   SampleRecordingValues& data_source(const bool include) noexcept
   {
-    set(PERF_SAMPLE_DATA_SRC, include);
+    set(Field::DataSource, include);
     return *this;
   }
 
@@ -289,7 +386,7 @@ public:
    */
   SampleRecordingValues& hardware_transaction_abort(const bool include) noexcept
   {
-    set(PERF_SAMPLE_TRANSACTION, include);
+    set(Field::HardwareTransactionAbort, include);
     return *this;
   }
 
@@ -303,7 +400,7 @@ public:
    */
   SampleRecordingValues& identifier(const bool include) noexcept
   {
-    set(PERF_SAMPLE_IDENTIFIER, include);
+    set(Field::Id, include);
     return *this;
   }
 
@@ -318,7 +415,7 @@ public:
   SampleRecordingValues& kernel_registers(Registers&& registers) noexcept
   {
     _kernel_registers = std::move(registers);
-    set(PERF_SAMPLE_REGS_INTR, !_kernel_registers.empty());
+    set(Field::KernelRegisters, !_kernel_registers.empty());
     return *this;
   }
 
@@ -385,7 +482,7 @@ public:
   SampleRecordingValues& user_stack(const std::uint32_t max_stack_size) noexcept
   {
     _max_user_stack = max_stack_size;
-    set(PERF_SAMPLE_STACK_USER, max_stack_size > 0U);
+    set(Field::UserStack, max_stack_size > 0U);
     return *this;
   }
 
@@ -400,7 +497,7 @@ public:
   SampleRecordingValues& physical_memory_address([[maybe_unused]] const bool include)
   {
 #ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR /// Sampling for physical memory address is supported since Linux 4.13
-    set(PERF_SAMPLE_PHYS_ADDR, include);
+    set(Field::PhysicalMemoryAddress, include);
 #else
     throw SamplingFeatureIsNotSupported{ "physical memory address", "4.13" };
 #endif
@@ -418,7 +515,7 @@ public:
   SampleRecordingValues& cgroup([[maybe_unused]] const bool include)
   {
 #ifndef PERFCPP_NO_SAMPLE_CGROUP /// Sampling cgroup is supported since Linux 5.7
-    set(PERF_SAMPLE_CGROUP, include);
+    set(Field::CGroup, include);
 #else
     throw SamplingFeatureIsNotSupported{ "cgroup", "5.7" };
 #endif
@@ -436,7 +533,7 @@ public:
   SampleRecordingValues& data_page_size([[maybe_unused]] const bool include)
   {
 #ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE /// Sampling the data page size is supported since Linux 5.11
-    set(PERF_SAMPLE_DATA_PAGE_SIZE, include);
+    set(Field::DataPageSize, include);
 #else
     throw SamplingFeatureIsNotSupported{ "data page size", "5.11" };
 #endif
@@ -454,7 +551,7 @@ public:
   SampleRecordingValues& code_page_size([[maybe_unused]] const bool include)
   {
 #ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE /// Sampling the code page size is supported since Linux 5.11
-    set(PERF_SAMPLE_CODE_PAGE_SIZE, include);
+    set(Field::CodePageSize, include);
 #else
     throw SamplingFeatureIsNotSupported{ "code page size", "5.11" };
 #endif
@@ -473,7 +570,7 @@ public:
   {
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
                                         /// Linux 5.12
-    set(PERF_SAMPLE_WEIGHT_STRUCT, include);
+    set(Field::DataSource, include);
 #else
     throw SamplingFeatureIsNotSupported{ "weight struct", "5.12" };
 #endif
@@ -510,7 +607,7 @@ public:
    */
   SampleRecordingValues& context_switch(const bool include) noexcept
   {
-    _is_include_context_switch = include;
+    set(Field::ContextSwitch, include);
     return *this;
   }
 
@@ -524,7 +621,7 @@ public:
    */
   SampleRecordingValues& throttle(const bool include) noexcept
   {
-    _is_include_throttle = include;
+    set(Field::Throttle, include);
     return *this;
   }
 
@@ -538,38 +635,21 @@ public:
    */
   SampleRecordingValues& extended_mmap_information(const bool include) noexcept
   {
-    _is_include_extended_mmap_information = include;
+    set(Field::MMapInformation, include);
     return *this;
   }
 
   /**
-   * Tests, if the given perf subsystem field is set for sampling.
+   * Tests, if the given field is set for sampling.
    *
-   * @param perf_subsystem_field Field of the perf subsystem.
+   * @param field Field to sample.
    * @return True, if the flag is included into samples.
    */
-  [[nodiscard]] bool is_set(const std::uint64_t perf_subsystem_field) const noexcept
+  [[nodiscard]] bool is_set(const Field field) const noexcept
   {
-    return static_cast<bool>(_perf_subsystem_fields_mask & perf_subsystem_field);
+    const auto index = static_cast<std::size_t>(field);
+    return _activated_fields.at(index);
   }
-
-  /**
-   * @return True, if throttle samples are requested by the user.
-   */
-  [[nodiscard]] bool is_include_throttle() const noexcept { return _is_include_throttle; }
-
-  /**
-   * @return True, if extended mmap information is requested by the user.
-   */
-  [[nodiscard]] bool is_include_extended_mmap_information() const noexcept
-  {
-    return _is_include_extended_mmap_information;
-  }
-
-  /**
-   * @return True, if context switch is requested by the user.
-   */
-  [[nodiscard]] bool is_include_context_switch() const noexcept { return _is_include_context_switch; }
 
   /**
    * @return The set of requested user registers to include into the samples.
@@ -602,13 +682,22 @@ public:
   [[nodiscard]] std::uint16_t max_call_stack() const noexcept { return _max_call_stack; }
 
   /**
-   * @return The mask of sample flags, i.e., values to include into the sample.
+   * @return Turns the activated fields into a sample type that can be processed by the perf subsystem.
    */
-  [[nodiscard]] std::uint64_t get() const noexcept { return _perf_subsystem_fields_mask; }
+  [[nodiscard]] std::uint64_t to_perf_sample_type() const noexcept;
+
+  /**
+   * @return True, if raw values are needed for IBS decoding. This does not include the need if raw values are activated
+   * manually.
+   */
+  [[nodiscard]] bool is_need_raw_values_for_ibs_decoding() const noexcept
+  {
+    return is_set(Field::PhysicalInstructionPointer) || is_set(Field::InstructionType) || is_set(Field::BranchType) || is_set(Field::InstructionLatency) || is_set(Field::InstructionCache) || is_set(Field::InstructionTLB) || is_set(Field::InstructionType) || is_set(Field::DataAccessWidth) || is_set(Field::DataAccessMisalignPenalty) || is_set(Field::MHBAllocations);
+  }
 
 private:
-  /// Mask for fields to include into samples (as provided by the perf subsystem).
-  std::uint64_t _perf_subsystem_fields_mask{ 0ULL };
+  /// Bitmap for all fields.
+  std::array<bool, static_cast<std::size_t>(Field::_Count)> _activated_fields{};
 
   /// List of hardware counters and metrics to include into the sample.
   std::vector<std::string> _counter_names;
@@ -628,28 +717,25 @@ private:
   /// Size of the call stack to include into the sample.
   std::uint16_t _max_call_stack{ 0U };
 
-  /// Flag if context switches should be included.
-  bool _is_include_context_switch{ false };
-
-  /// Flag if throttle events should be included.
-  bool _is_include_throttle{ false };
-
-  /// Flag if extended mmap information (mmap2) should be included.
-  bool _is_include_extended_mmap_information{ false };
-
   /**
-   * En- or disables a specific perf subsystem field for sampling.
+   * En- or disables a specific field for sampling.
    *
-   * @param perf_subsystem_field Field to include or exclude.
+   * @param field Field to en- or disable.
    * @param is_enabled Flag, if the field should be included or excluded.
    */
-  void set(const std::uint64_t perf_subsystem_field, const bool is_enabled) noexcept
+  void set(const Field field, const bool is_enabled) noexcept
   {
-    if (is_enabled) {
-      _perf_subsystem_fields_mask |= perf_subsystem_field;
-    } else {
-      _perf_subsystem_fields_mask &= ~perf_subsystem_field;
+    const auto index = static_cast<std::size_t>(field);
+    _activated_fields.at(index) = is_enabled;
+  }
+
+  [[nodiscard]] std::uint64_t perf_sample_type_if_field_activates(const std::uint64_t perf_sample_type, const Field field) const noexcept
+  {
+    if (is_set(field)) {
+      return perf_sample_type;
     }
+
+    return 0UL;
   }
 };
 }

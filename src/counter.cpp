@@ -21,20 +21,12 @@ perf::Counter::~Counter()
 void
 perf::Counter::open(const perf::Config& configuration, const bool is_live)
 {
-  /// Configure the perf event attribute as a normal or live counter.
-  if (!is_live) {
-    this->_event_attribute = this->create_perf_event_attribute(true, configuration);
-  } else {
-    this->_event_attribute = this->create_perf_event_attribute(true,
-                                                               configuration,
-                                                               PERF_SAMPLE_READ,
-                                                               /* branch type */ std::nullopt,
-                                                               /* user registers */ std::nullopt,
-                                                               /* kernel registers */ std::nullopt,
-                                                               /* max user stack size */ std::nullopt,
-                                                               /* max callstack size */ std::nullopt,
-                                                               /* include context switch */ false,
-                                                               /* include extended mmap information */ false);
+  /// Configure the perf event attribute as a normal counter.
+  this->_event_attribute = this->create_perf_event_attribute(true, configuration);
+
+  /// Live counter need to set the READ type.
+  if (is_live) {
+    this->_event_attribute.sample_type = PERF_SAMPLE_READ;
   }
 
   /// Enable the read format including timing.
@@ -102,28 +94,14 @@ perf::Counter::open(const perf::Config& configuration,
 void
 perf::Counter::open(const perf::Config& config,
                     const std::uint64_t buffer_pages,
-                    const std::uint64_t sample_type,
-                    const std::optional<std::uint64_t> branch_type,
-                    const std::optional<std::uint64_t> user_registers,
-                    const std::optional<std::uint64_t> kernel_registers,
-                    const std::optional<std::uint32_t> max_user_stack_size,
-                    const std::optional<std::uint16_t> max_callstack_size,
-                    const bool is_include_context_switch,
-                    const bool is_include_extended_mmap_information)
+                    const SampleRecordingValues& sample_recording_values)
 {
   /// Configure the perf event attribute for sampling.
   this->_event_attribute = this->create_perf_event_attribute(true,
                                                              config,
-                                                             sample_type,
-                                                             branch_type,
-                                                             user_registers,
-                                                             kernel_registers,
-                                                             max_user_stack_size,
-                                                             max_callstack_size,
-                                                             is_include_context_switch,
-                                                             is_include_extended_mmap_information);
+                                                             sample_recording_values);
 
-  if (static_cast<bool>(sample_type | static_cast<std::uint64_t>(PERF_SAMPLE_READ))) {
+  if (sample_recording_values.is_set(SampleRecordingValues::Field::PerformanceCounter)) {
     /// Enable the read format including timing.
     this->_event_attribute.read_format = Counter::create_perf_event_read_format(true, true);
   }
@@ -158,29 +136,15 @@ perf::Counter::open(const perf::Config& config,
 void
 perf::Counter::open(const perf::Config& config,
                     const std::uint64_t buffer_pages,
-                    const std::uint64_t sample_type,
-                    const std::optional<std::uint64_t> branch_type,
-                    const std::optional<std::uint64_t> user_registers,
-                    const std::optional<std::uint64_t> kernel_registers,
-                    const std::optional<std::uint32_t> max_user_stack_size,
-                    const std::optional<std::uint16_t> max_callstack_size,
-                    const bool is_include_context_switch,
-                    const bool is_include_extended_mmap_information,
+                    const SampleRecordingValues& sample_recording_values,
                     const perf::util::UniqueFileDescriptor& group_leader_file_descriptor)
 {
   /// Configure the perf event attribute for sampling.
   this->_event_attribute = this->create_perf_event_attribute(false,
                                                              config,
-                                                             sample_type,
-                                                             branch_type,
-                                                             user_registers,
-                                                             kernel_registers,
-                                                             max_user_stack_size,
-                                                             max_callstack_size,
-                                                             is_include_context_switch,
-                                                             is_include_extended_mmap_information);
+                                                             sample_recording_values);
 
-  if (static_cast<bool>(sample_type | static_cast<std::uint64_t>(PERF_SAMPLE_READ))) {
+  if (sample_recording_values.is_set(SampleRecordingValues::Field::PerformanceCounter)) {
     /// Enable the read format including timing.
     this->_event_attribute.read_format = Counter::create_perf_event_read_format(false, true);
   }
@@ -269,7 +233,7 @@ perf::Counter::read_id() const
 }
 
 perf_event_attr
-perf::Counter::create_perf_event_attribute(const bool is_disabled, const perf::Config& configuration) const noexcept
+perf::Counter::create_perf_event_attribute(const bool is_disabled, const Config& configuration) const noexcept
 {
   auto attribute = perf_event_attr{};
 
@@ -296,20 +260,13 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled, const perf::C
 
 perf_event_attr
 perf::Counter::create_perf_event_attribute(const bool is_disabled,
-                                           const perf::Config& configuration,
-                                           const std::uint64_t sample_type,
-                                           const std::optional<std::uint64_t> branch_type,
-                                           const std::optional<std::uint64_t> user_registers,
-                                           const std::optional<std::uint64_t> kernel_registers,
-                                           const std::optional<std::uint32_t> max_user_stack_size,
-                                           [[maybe_unused]] const std::optional<std::uint16_t> max_callstack_size,
-                                           [[maybe_unused]] const bool is_include_context_switch,
-                                           [[maybe_unused]] const bool is_include_extended_mmap_information) const
+                                           const Config& configuration,
+                                           const SampleRecordingValues& sample_recording_values) const
 {
   auto attribute = this->create_perf_event_attribute(is_disabled, configuration);
 
   /// Set the sample type for the group leader (or the counter after the auxiliary-event).
-  attribute.sample_type = sample_type;
+  attribute.sample_type = sample_recording_values.to_perf_sample_type();
 
   /// Sampling is not only indicated by the sample_type since "live" events (read without stopping the counter) also
   /// have a sample type but are not truly sampling. We assume that true sampling is only requested when
@@ -322,21 +279,21 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled,
     std::visit(PeriodOrFrequencyVisitor{ attribute }, this->_config.period_or_frequency().value());
 
     /// Set sampled fields.
-    attribute.branch_sample_type = branch_type.value_or(0ULL);
+    attribute.branch_sample_type = sample_recording_values.branch_mask();
 #ifndef PERFCPP_NO_SAMPLE_MAX_STACK /// Max sample stack is only supported since Linux 4.8
     attribute.sample_max_stack = max_callstack_size.value_or(0U);
 #endif
-    attribute.sample_regs_user = user_registers.value_or(0ULL);
-    attribute.sample_regs_intr = kernel_registers.value_or(0ULL);
-    attribute.sample_stack_user = max_user_stack_size.value_or(0U);
+    attribute.sample_regs_user = sample_recording_values.user_registers().mask();
+    attribute.sample_regs_intr = sample_recording_values.kernel_registers().mask();
+    attribute.sample_stack_user = sample_recording_values.max_user_stack();
 #ifndef PERFCPP_NO_RECORD_SWITCH /// Record switch is supported since Linux 4.3.
-    attribute.context_switch = is_include_context_switch;
+    attribute.context_switch = sample_recording_values.is_set(SampleRecordingValues::Field::ContextSwitch);
 #endif
 #ifndef PERFCPP_NO_RECORD_CGROUP /// Recording cgroup is supported since Linux 5.7.
-    attribute.cgroup = static_cast<bool>(sample_type & static_cast<std::uint64_t>(PERF_SAMPLE_CGROUP));
+    attribute.cgroup = sample_recording_values.is_set(SampleRecordingValues::Field::CGroup);
 #endif
 
-    if (is_include_extended_mmap_information) {
+    if (sample_recording_values.is_set(SampleRecordingValues::Field::MMapInformation)) {
       attribute.mmap = true;
       attribute.mmap2 = true;
     }
