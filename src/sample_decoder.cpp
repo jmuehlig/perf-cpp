@@ -42,7 +42,7 @@ perf::SampleDecoder::decode(const std::vector<std::vector<std::byte>>& sample_bu
 
   /// Read samples from all the buffers (mmap-ed perf buffer and application-level buffers).
   for (const auto& buffer : sample_buffers) {
-    auto iterator = std::uintptr_t(buffer.data());
+    auto iterator = reinterpret_cast<std::uintptr_t>(buffer.data());
     const auto end = iterator + buffer.size();
 
     /// Scan over all samples stored in the user-level buffer.
@@ -79,7 +79,7 @@ perf::SampleDecoder::decode(const std::vector<std::vector<std::byte>>& sample_bu
 void
 perf::SampleDecoder::decode_sample_id_all(SampleIterator& entry, Sample& sample) const noexcept
 {
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::ThreadId)) {
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::ThreadId) || this->_sampler_values.is_set(SampleRecordingValues::Field::ProcessId)) {
     sample.metadata().process_id(entry.read<std::uint32_t>());
     sample.metadata().thread_id(entry.read<std::uint32_t>());
   }
@@ -112,17 +112,17 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
 {
   auto sample = Sample{};
   sample.metadata().mode(entry.mode());
-  sample.instruction_execution().is_instruction_pointer_exact(entry.is_instruction_pointer_exact());
 
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::Id)) {
     sample.metadata().sample_id(entry.read<std::uint64_t>());
   }
 
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::LogicalInstructionPointer)) {
+    sample.instruction_execution().is_instruction_pointer_exact(entry.is_instruction_pointer_exact());
     sample.instruction_execution().logical_instruction_pointer(entry.read<std::uintptr_t>());
   }
 
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::ThreadId)) {
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::ThreadId) || this->_sampler_values.is_set(SampleRecordingValues::Field::ProcessId)) {
     sample.metadata().process_id(entry.read<std::uint32_t>());
     sample.metadata().thread_id(entry.read<std::uint32_t>());
   }
@@ -192,47 +192,29 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
     }
   }
 
-  /// Read a single weight value (i.e., a latency, depending on the underlying hardware).
-  if (this->_sampler_values.is_set(
-        SampleRecordingValues::Field::DataAccessLatency)) { // TODO: Check also instruction latency
+  /// Data access and/or instruction latency.
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataAccessLatency) || this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionLatency)) {
+#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since Linux 5.12
     const auto weight = static_cast<std::uint32_t>(entry.read<std::uint64_t>());
-    if (HardwareInfo::is_intel()) {
-      /// Intel reports the instruction latency before th 12th generation–and cache access latency from that.
-      if (HardwareInfo::is_intel_12th_generation_or_newer()) {
-        sample.data_access().latency().cache_access(weight);
-      } else {
-        sample.instruction_execution().latency().instruction_retirement(weight);
-      }
-    } else if (HardwareInfo::is_amd()) {
-      /// AMD reports the cache miss latency; i.e., no latency for L1d hits is reported.
-      sample.data_access().latency().cache_miss(weight);
-    }
-  }
-
-#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
-                                        /// Linux 5.12
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataAccessLatency)) {
+    this->decode_latency(weight, sample);
+#else
     const auto weight = entry.read<perf_sample_weight>();
-
-    /// Parse the weight into latency information, depending on the underlying hardware.
-    if (HardwareInfo::is_intel()) {
-      if (HardwareInfo::is_intel_12th_generation_or_newer()) {
-        sample.data_access().latency().cache_access(weight.var1_dw);
-        sample.instruction_execution().latency().instruction_retirement(weight.var2_w);
-      } else {
-        sample.instruction_execution().latency().instruction_retirement(weight.var1_dw);
-      }
-    } else if (HardwareInfo::is_amd()) {
-      /// See https://github.com/torvalds/linux/blob/v6.16/arch/x86/events/amd/ibs.c#L1120
-      sample.data_access().latency().cache_miss(weight.var1_dw);
-      sample.instruction_execution().latency().uop_tag_to_retirement(weight.var2_w);
-    }
-  }
+    this->decode_latency(std::make_tuple(weight.var1_dw, weight.var2_w, weight.var3_w), sample);
 #endif
+  }
 
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataSource)) {
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataSource) || this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionType)) {
     const auto data_source = perf_mem_data_src{ entry.read<std::uint64_t>() };
-    SampleDecoder::decode_data_access(data_source, sample);
+
+    if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataSource)) {
+      this->decode_data_access(data_source, sample);
+    }
+
+    if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionType) && !sample.instruction_execution().type().has_value()) {
+      if (const auto access_type = SampleDecoder::decode_data_access_type(data_source); access_type.has_value()) {
+        sample.instruction_execution().type(InstructionExecution::InstructionType::DataAccess);
+      }
+    }
   }
 
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::HardwareTransactionAbort)) {
@@ -244,29 +226,21 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
     sample.kernel_registers(SampleDecoder::decode_registers(entry, this->_sampler_values.kernel_registers()));
   }
 
-#ifndef PERFCPP_NO_SAMPLE_PHYS_ADDR /// Sampling for physical memory address is supported since Linux 4.13
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::PhysicalInstructionPointer)) {
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::PhysicalMemoryAddress)) {
     sample.data_access().physical_memory_address(entry.read<std::uint64_t>());
   }
-#endif
 
-#ifndef PERFCPP_NO_SAMPLE_CGROUP /// Sampling cgroup is supported since Linux 5.7
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::CGroup)) {
     sample.cgroup_id(entry.read<std::uint64_t>());
   }
-#endif
 
-#ifndef PERFCPP_NO_SAMPLE_DATA_PAGE_SIZE /// Sampling the data page size is supported since Linux 5.11
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataPageSize)) {
     sample.data_access().page_size(entry.read<std::uint64_t>());
   }
-#endif
 
-#ifndef PERFCPP_NO_SAMPLE_CODE_PAGE_SIZE /// Sampling the code page size is supported since Linux 5.11
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::CodePageSize)) {
     sample.instruction_execution().page_size(entry.read<std::uint64_t>());
   }
-#endif
 
   /// Enrich AMD IBS samples with information that is not accessible through the perf_event_open interface by
   /// interpreting the raw data, if enabled.
@@ -405,9 +379,9 @@ perf::SampleDecoder::decode_branch_stack(SampleIterator& entry)
   for (auto i = 0U; i < count_branches; ++i) {
     const auto& branch = sampled_branches[i];
 #ifndef PERFCPP_NO_BRANCH_STACK_CYCLES /// Cycles in branch stacks is supported since Linux 4.3
-    const auto cycles = branch.cycles;
+    const auto cycles = branch.cycles > 0 ? std::make_optional<std::uint16_t>(branch.cycles) : std::nullopt;
 #else
-    const auto cycles = 0ULL;
+    constexpr auto cycles = std::optional<std::uint16_t>{std::nullopt};
 #endif
     branches.emplace_back(branch.from,
                           branch.to,
@@ -415,20 +389,75 @@ perf::SampleDecoder::decode_branch_stack(SampleIterator& entry)
                           branch.predicted,
                           branch.in_tx,
                           branch.abort,
-                          cycles > 0ULL ? std::make_optional(cycles) : std::nullopt);
+                          cycles);
   }
 
   return branches;
 }
 
 void
-perf::SampleDecoder::decode_data_access(const perf_mem_data_src data_source, Sample& sample)
+perf::SampleDecoder::decode_latency(const std::uint32_t latency, Sample& sample) const noexcept
+{
+  if (HardwareInfo::is_intel()) {
+    /// Intel reports the instruction latency before th 12th generation–and cache access latency from that.
+    if (HardwareInfo::is_intel_12th_generation_or_newer()) {
+      if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataAccessLatency)) {
+        sample.data_access().latency().cache_access(latency);
+      }
+    } else {
+      if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionLatency)) {
+        sample.instruction_execution().latency().instruction_retirement(latency);
+      }
+    }
+  } else if (HardwareInfo::is_amd()) {
+    if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataAccessLatency)) {
+      /// AMD reports the cache miss latency; i.e., no latency for L1d hits is reported.
+      sample.data_access().latency().cache_miss(latency);
+    }
+  }
+}
+
+void
+perf::SampleDecoder::decode_latency(const std::tuple<std::uint32_t, std::uint16_t, std::uint16_t> latency, Sample& sample) const noexcept
+{
+  if (HardwareInfo::is_intel()) {
+    // On Intel generations >= 12: The first latency is the data access latency, the second is the instruction latency.
+    if (HardwareInfo::is_intel_12th_generation_or_newer()) {
+      if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataAccessLatency)) {
+        sample.data_access().latency().cache_access(std::get<0>(latency));
+      }
+
+      if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionLatency)) {
+        sample.instruction_execution().latency().instruction_retirement(std::get<1>(latency));
+      }
+    }
+
+    // On Intel generations < 12: The first is the instruction latency.
+    else {
+      if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionLatency)) {
+        sample.instruction_execution().latency().instruction_retirement(std::get<0>(latency));
+      }
+    }
+  }
+
+  /// On AMD: The first is the cache miss latency (not including L1d), the second is the uop latency.
+  /// See https://github.com/torvalds/linux/blob/v6.16/arch/x86/events/amd/ibs.c#L1120
+  else if (HardwareInfo::is_amd()) {
+    if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataAccessLatency)) {
+      sample.data_access().latency().cache_miss(std::get<0>(latency));
+    }
+
+    if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionLatency)) {
+      sample.instruction_execution().latency().uop_tag_to_retirement(std::get<1>(latency));
+    }
+  }
+}
+
+void
+perf::SampleDecoder::decode_data_access(const perf_mem_data_src data_source, Sample& sample) const
 {
   /// Set access type and memory instruction type, if not already set.
   if (const auto access_type = SampleDecoder::decode_data_access_type(data_source); access_type.has_value()) {
-    if (!sample.instruction_execution().type().has_value()) {
-      sample.instruction_execution().type(InstructionExecution::InstructionType::DataAccess);
-    }
     sample.data_access().type(access_type.value());
 
     if (access_type.value() == DataAccess::AccessType::Store) {
@@ -439,7 +468,7 @@ perf::SampleDecoder::decode_data_access(const perf_mem_data_src data_source, Sam
 
       else if (HardwareInfo::is_intel() &&
                !sample.instruction_execution().latency().instruction_retirement().has_value()) {
-        if (auto cache_access_latency = sample.data_access().latency().cache_access();
+        if (const auto cache_access_latency = sample.data_access().latency().cache_access();
             cache_access_latency.has_value()) {
           /// On Intel hardware, store instructions do only provide instruction latency, not cache access latency.
           /// However, when parsing the latency information, we do not know if the instruction was a store.
@@ -447,7 +476,9 @@ perf::SampleDecoder::decode_data_access(const perf_mem_data_src data_source, Sam
           /// towards the instruction latency.
 
           /// Set instruction latency to data access latency.
-          sample.instruction_execution().latency().instruction_retirement(cache_access_latency.value());
+          if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionLatency)) {
+            sample.instruction_execution().latency().instruction_retirement(cache_access_latency.value());
+          }
 
           /// Remove cache access latency.
           sample.data_access().latency().cache_access(std::nullopt);
@@ -762,8 +793,7 @@ perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(Sample& sample,
       sample.instruction_execution().type(InstructionExecution::InstructionType::Branch);
 
       /// If the instruction is a branch, set the branch type.
-      const auto branch_type = SampleDecoder::decode_branch_type(ibs_op_decoder);
-      if (branch_type.has_value()) {
+      if (const auto branch_type = SampleDecoder::decode_branch_type(ibs_op_decoder); branch_type.has_value()) {
         sample.instruction_execution().branch_type(branch_type.value());
       }
     }

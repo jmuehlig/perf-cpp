@@ -226,7 +226,7 @@ private:
    *
    * @param entry Current position at the buffer.
    * @param requested_event_set Set of requested events
-   * @param event_group Group of hardwre events.
+   * @param event_group Group of hardware events.
    * @return Event values
    */
   [[nodiscard]] std::optional<CounterResult> decode_hardware_events_values(SampleIterator& entry,
@@ -250,12 +250,29 @@ private:
   [[nodiscard]] static std::optional<std::vector<Branch>> decode_branch_stack(SampleIterator& entry);
 
   /**
+   * Decodes and sets the data access and/or instruction latency (based on the underlying hardware) from a single
+   * latency value (coming from PERF_SAMPLE_WEIGHT).
+   *
+   * @param latency Latency value to decode.
+   * @param sample Sample to write the latency to.
+   */
+  void decode_latency(std::uint32_t latency, Sample& sample) const noexcept;
+
+  /**
+   * Decodes and sets the data access and/or instruction latency (based on the underlying hardware) from multiple latency values (coming from PERF_SAMPLE_WEIGHT_STRUCT).
+   *
+   * @param latency Latency value to decode.
+   * @param sample Sample to write the latency to.
+   */
+  void decode_latency(std::tuple<std::uint32_t, std::uint16_t, std::uint16_t> latency, Sample& sample) const noexcept;
+
+  /**
    * Decodes the data source and writes the data into the provided sample.
    *
    * @param data_source Perf data source to decode.
    * @param sample Sample to write the results to.
    */
-  static void decode_data_access(perf_mem_data_src data_source, Sample& sample);
+  void decode_data_access(perf_mem_data_src data_source, Sample& sample) const;
 
   /**
    * Translates the perf data source information into an AccessType.

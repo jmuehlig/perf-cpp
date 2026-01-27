@@ -10,7 +10,6 @@
 #include "registers.h"
 #include "throttle.h"
 #include <cstdint>
-#include <linux/perf_event.h>
 #include <optional>
 
 namespace perf {

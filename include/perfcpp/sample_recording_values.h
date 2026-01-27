@@ -447,6 +447,20 @@ public:
   }
 
   /**
+   * Manage to include data access latency information into samples.
+   *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#memory-access-latency
+   *
+   * @param include True, if latency information should be included.
+   * @return The SampleRecordingValues instance.
+   */
+  SampleRecordingValues& data_access_latency(const bool include) noexcept
+  {
+    set(Field::DataAccessLatency, include);
+    return *this;
+  }
+
+  /**
    * Manage to include latency information into samples.
    *
    * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#memory-access-latency
@@ -454,10 +468,9 @@ public:
    * @param include True, if latency information should be included.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& weight(const bool include) noexcept
+  [[deprecated("weight(bool) is deprecated and will be removed on v0.14. Please use data_access_latency(bool) instead.")]] SampleRecordingValues& weight(const bool include) noexcept
   {
-    set(Field::DataAccessLatency, include);
-    return *this;
+    return data_access_latency(include);
   }
 
   /**
@@ -468,7 +481,7 @@ public:
    * @param include True, if latency information should be included.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& weight_struct([[maybe_unused]] const bool include)
+  [[deprecated("weight_struct(bool) is deprecated and will be removed on v0.14. Please use data_access_latency(bool) instead.")]] SampleRecordingValues& weight_struct([[maybe_unused]] const bool include)
   {
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
                                         /// Linux 5.12
@@ -488,15 +501,9 @@ public:
    * @param include True, if latency information should be included.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& latency([[maybe_unused]] const bool include) noexcept
+  [[deprecated("latency(bool) is deprecated and will be removed on v0.14. Please use data_access_latency(bool) instead.")]] SampleRecordingValues& latency([[maybe_unused]] const bool include) noexcept
   {
-#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
-                                        /// Linux 5.12
-    weight_struct(include);
-#else
-    weight(include);
-#endif
-    return *this;
+    return data_access_latency(include);
   }
 
   /**

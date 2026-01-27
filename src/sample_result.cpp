@@ -25,6 +25,7 @@ perf::SampleResult::to_csv(std::string&& file_name) const
   csv_writer.write_header(SampleRecordingValues::Field::CpuId, "cpu_id");
   csv_writer.write_header(SampleRecordingValues::Field::ThreadId, "process_id");
   csv_writer.write_header(SampleRecordingValues::Field::ThreadId, "thread_id");
+
   /// Header: Instruction Execution
   csv_writer.write_header(SampleRecordingValues::Field::LogicalInstructionPointer, "logical_instruction_pointer");
   csv_writer.write_header(SampleRecordingValues::Field::PhysicalInstructionPointer, "physical_instruction_pointer");
