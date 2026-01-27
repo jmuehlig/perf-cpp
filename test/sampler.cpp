@@ -31,7 +31,7 @@ TEST_CASE("config", "[Sampler]")
   SECTION("empty sampler")
   {
     auto sampler = perf::Sampler{};
-    sampler.values().instruction_pointer(true);
+    sampler.values().logical_instruction_pointer(true);
 
     REQUIRE_THROWS(sampler.open());
   }
@@ -46,7 +46,7 @@ TEST_CASE("sampling", "[Sampler]")
   {
     auto sampler = perf::Sampler{};
     REQUIRE_NOTHROW(sampler.trigger("cycles"));
-    sampler.values().instruction_pointer(true);
+    sampler.values().logical_instruction_pointer(true);
 
     REQUIRE_NOTHROW(sampler.open());
     REQUIRE_NOTHROW(sampler.start());
@@ -69,7 +69,7 @@ TEST_CASE("sampling", "[Sampler]")
   {
     auto sampler = perf::Sampler{};
     REQUIRE_NOTHROW(sampler.trigger("cycles"));
-    sampler.values().instruction_pointer(true).timestamp(true);
+    sampler.values().logical_instruction_pointer(true).timestamp(true);
 
     REQUIRE_NOTHROW(sampler.open());
 
@@ -99,7 +99,7 @@ TEST_CASE("sampling", "[Sampler]")
     auto sampler1 = perf::Sampler{};
 
     REQUIRE_NOTHROW(sampler1.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 200000 }));
-    sampler1.values().instruction_pointer(true).timestamp(true);
+    sampler1.values().logical_instruction_pointer(true).timestamp(true);
 
     REQUIRE_NOTHROW(sampler1.open());
 
@@ -114,7 +114,7 @@ TEST_CASE("sampling", "[Sampler]")
     auto sampler2 = perf::Sampler{};
 
     REQUIRE_NOTHROW(sampler2.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 800000 }));
-    sampler2.values().instruction_pointer(true).timestamp(true);
+    sampler2.values().logical_instruction_pointer(true).timestamp(true);
 
     REQUIRE_NOTHROW(sampler2.open());
 
