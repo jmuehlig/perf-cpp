@@ -97,9 +97,7 @@ perf::Counter::open(const perf::Config& config,
                     const SampleRecordingValues& sample_recording_values)
 {
   /// Configure the perf event attribute for sampling.
-  this->_event_attribute = this->create_perf_event_attribute(true,
-                                                             config,
-                                                             sample_recording_values);
+  this->_event_attribute = this->create_perf_event_attribute(true, config, sample_recording_values);
 
   if (sample_recording_values.is_set(SampleRecordingValues::Field::PerformanceCounter)) {
     /// Enable the read format including timing.
@@ -140,9 +138,7 @@ perf::Counter::open(const perf::Config& config,
                     const perf::util::UniqueFileDescriptor& group_leader_file_descriptor)
 {
   /// Configure the perf event attribute for sampling.
-  this->_event_attribute = this->create_perf_event_attribute(false,
-                                                             config,
-                                                             sample_recording_values);
+  this->_event_attribute = this->create_perf_event_attribute(false, config, sample_recording_values);
 
   if (sample_recording_values.is_set(SampleRecordingValues::Field::PerformanceCounter)) {
     /// Enable the read format including timing.

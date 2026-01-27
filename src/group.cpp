@@ -1,14 +1,13 @@
 #include <iostream>
 #include <perfcpp/exception.h>
 #include <perfcpp/group.h>
-#include <stdexcept>
 #include <type_traits>
 #include <unistd.h>
 
 perf::Group
 perf::Group::copy_from_template(const perf::Group& other)
 {
-  auto copy = perf::Group{};
+  auto copy = Group{};
   copy._members.reserve(other._members.size());
   for (const auto& event : other._members) {
     copy._members.push_back(Counter::copy_from_template(event));
@@ -34,7 +33,7 @@ perf::Group::open(const perf::Config& config)
 }
 
 void
-perf::Group::open(const perf::Config& config,
+perf::Group::open(const Config& config,
                   const bool has_auxiliary_event,
                   const std::uint64_t buffer_pages,
                   const SampleRecordingValues& sample_recording_values)
@@ -46,9 +45,7 @@ perf::Group::open(const perf::Config& config,
   /// Open the group leader. If the group contains an auxiliary event, the group leader will not contain a buffer (i.e.,
   /// no buffer pages).
   const auto group_leader_buffer_pages = !has_auxiliary_event ? buffer_pages : 0ULL;
-  this->_members.front().open(config,
-                              group_leader_buffer_pages,
-                              sample_recording_values);
+  this->_members.front().open(config, group_leader_buffer_pages, sample_recording_values);
 
   /// The group leader's file descriptor will be passed to further counters.
   const auto& group_leader_file_descriptor = this->_members.front().file_descriptor();
@@ -64,10 +61,7 @@ perf::Group::open(const perf::Config& config,
 
     /// Open the event as a secondary counter after the group leader. Only the event after an auxiliary event will
     /// have a buffer.
-    this->_members[event_id].open(config,
-                                  event_buffer_pages,
-                                  sample_recording_values,
-                                  group_leader_file_descriptor);
+    this->_members[event_id].open(config, event_buffer_pages, sample_recording_values, group_leader_file_descriptor);
   }
 }
 
@@ -142,7 +136,7 @@ perf::Group::read(CounterValues<MAX_MEMBERS>& values)
 }
 
 void
-perf::Group::add(const perf::CounterConfig event_config)
+perf::Group::add(const CounterConfig event_config)
 {
   this->_members.emplace_back(event_config);
 }

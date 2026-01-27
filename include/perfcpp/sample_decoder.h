@@ -337,7 +337,8 @@ private:
    * @param sample Sample to enrich.
    * @param raw_values Raw data to decode.
    */
-  void enrich_sample_with_ibs_fetch_data_from_raw(Sample& sample, const std::vector<std::byte>& raw_values) const noexcept;
+  void enrich_sample_with_ibs_fetch_data_from_raw(Sample& sample,
+                                                  const std::vector<std::byte>& raw_values) const noexcept;
 
   /**
    * Enriches the given sample with information that is present in the IBS Op PMU raw data but cannot be accessed by the

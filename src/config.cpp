@@ -1,9 +1,9 @@
 #include <perfcpp/config.h>
 #include <perfcpp/hardware_info.h>
 
-perf::Process perf::Process::Any = perf::Process{ -1 };
-perf::Process perf::Process::Calling = perf::Process{ 0 };
-perf::CpuCore perf::CpuCore::Any = perf::CpuCore{ -1 };
+perf::Process perf::Process::Any = Process{ -1 };
+perf::Process perf::Process::Calling = Process{ 0 };
+perf::CpuCore perf::CpuCore::Any = CpuCore{ -1 };
 
 perf::Config::Config() noexcept
 {

@@ -116,10 +116,7 @@ perf::Sampler::open()
   for (auto& sample_counter : this->_sample_counter) {
     /// Open the group.
     sample_counter.group().open(
-      this->_config,
-      sample_counter.has_intel_auxiliary_event(),
-      this->_config.buffer_pages(),
-      this->_values);
+      this->_config, sample_counter.has_intel_auxiliary_event(), this->_config.buffer_pages(), this->_values);
   }
 }
 
@@ -439,8 +436,9 @@ perf::MultiSamplerBase::result(std::vector<Sampler>& samplers, const bool is_sor
     /// Sort, if requested and supported by all samplers.
     if (is_sort_by_time) {
       /// Verify that all samplers recorded the timestamp that is needed to sort by time.
-      const auto is_time_provided = std::all_of(
-        samplers.begin(), samplers.end(), [](const auto& sampler) { return sampler._values.is_set(SampleRecordingValues::Field::Timestamp); });
+      const auto is_time_provided = std::all_of(samplers.begin(), samplers.end(), [](const auto& sampler) {
+        return sampler._values.is_set(SampleRecordingValues::Field::Timestamp);
+      });
 
       /// Finally, sort if requested and the samples contain a timestamp.
       if (is_time_provided) {

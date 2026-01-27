@@ -344,23 +344,24 @@ perf::HardwareInfo::generate_events_for_counter_identification()
   /// If we could not detect an ARM PMU, we use events provided "cpu" PMU.
   for (const auto& [name, config] : CounterDefinition::global().pmu("cpu")) {
 
+    auto counter = Counter{ config };
+
     /// Try to open the event on a physical performance counter.
     try {
-      auto counter = Counter{ config };
-
       /// Open as a single (non-live) event on a performance counter.
       counter.open(Config{ 1U, 1U }, false);
-
-      /// If the open() call did not throw an exception, we can use the event.
-      event_codes.push_back(config);
-
-      /// Check if we reached the limit.
-      if (event_codes.size() == Group::MAX_MEMBERS) {
-        return event_codes;
-      }
     } catch (CannotOpenCounterError&) {
       /// We do not handle the counter as some events will definitely lead to an exception, as not all events provided
       /// by the perf subsystem are supported on any hardware.
+      continue;
+    }
+
+    /// If the open() call did not throw an exception, we can use the event.
+    event_codes.push_back(config);
+
+    /// Check if we reached the limit.
+    if (event_codes.size() == Group::MAX_MEMBERS) {
+      return event_codes;
     }
   }
 

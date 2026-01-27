@@ -162,12 +162,13 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
   }
 
   auto raw_values = std::vector<std::byte>{};
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::RawValues) || this->_sampler_values.is_need_raw_values_for_ibs_decoding()) {
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::RawValues) ||
+      this->_sampler_values.is_need_raw_values_for_ibs_decoding()) {
     /// Read the size of the raw sample.
     if (const auto raw_data_size = entry.read<std::uint32_t>(); raw_data_size > 0U) {
       /// Read the raw data.
       const auto* raw_sample_data = entry.read<std::byte>(raw_data_size);
-      raw_values = std::vector<std::byte>{raw_sample_data, raw_sample_data + raw_data_size};
+      raw_values = std::vector<std::byte>{ raw_sample_data, raw_sample_data + raw_data_size };
     }
   }
 
@@ -192,7 +193,8 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
   }
 
   /// Read a single weight value (i.e., a latency, depending on the underlying hardware).
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataAccessLatency)) { // TODO: Check also instruction latency
+  if (this->_sampler_values.is_set(
+        SampleRecordingValues::Field::DataAccessLatency)) { // TODO: Check also instruction latency
     const auto weight = static_cast<std::uint32_t>(entry.read<std::uint64_t>());
     if (HardwareInfo::is_intel()) {
       /// Intel reports the instruction latency before th 12th generation–and cache access latency from that.
@@ -678,46 +680,47 @@ perf::SampleDecoder::decode_hardware_transaction_abort(const std::uint64_t abort
 }
 
 void
-perf::SampleDecoder::enrich_sample_with_ibs_fetch_data_from_raw(Sample& sample, const std::vector<std::byte>& raw_values) const noexcept
+perf::SampleDecoder::enrich_sample_with_ibs_fetch_data_from_raw(Sample& sample,
+                                                                const std::vector<std::byte>& raw_values) const noexcept
 {
-    const auto ibs_fetch_decoder = IBSFetchDecoder{ raw_values };
+  const auto ibs_fetch_decoder = IBSFetchDecoder{ raw_values };
 
-    /// Fetch latency.
-    if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionLatency)) {
-      sample.instruction_execution().latency().fetch(ibs_fetch_decoder.latency());
-    }
+  /// Fetch latency.
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionLatency)) {
+    sample.instruction_execution().latency().fetch(ibs_fetch_decoder.latency());
+  }
 
-    /// Fetch information.
-    if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionFetch)) {
-      sample.instruction_execution().fetch(
-        InstructionExecution::Fetch{ ibs_fetch_decoder.is_valid(), ibs_fetch_decoder.is_complete() });
-    }
+  /// Fetch information.
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionFetch)) {
+    sample.instruction_execution().fetch(
+      InstructionExecution::Fetch{ ibs_fetch_decoder.is_valid(), ibs_fetch_decoder.is_complete() });
+  }
 
-    /// Instruction cache.
-    if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionCache)) {
-      sample.instruction_execution().cache(InstructionExecution::Cache{ ibs_fetch_decoder.is_instruction_cache_miss(),
-                                                                        ibs_fetch_decoder.is_l2_miss(),
-                                                                        ibs_fetch_decoder.is_l3_miss() });
-    }
+  /// Instruction cache.
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionCache)) {
+    sample.instruction_execution().cache(InstructionExecution::Cache{
+      ibs_fetch_decoder.is_instruction_cache_miss(), ibs_fetch_decoder.is_l2_miss(), ibs_fetch_decoder.is_l3_miss() });
+  }
 
-    /// Instruction TLB.
-    if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionTLB)) {
-      auto l1_tlb_size = std::optional<std::uint64_t>{ std::nullopt };
-      if (ibs_fetch_decoder.is_physical_instruction_address_valid()) {
-        l1_tlb_size = SampleDecoder::decode_tlb_page_size(ibs_fetch_decoder.l1_tlb_page_size());
-      }
-      sample.instruction_execution().tlb(InstructionExecution::TLB{
-        ibs_fetch_decoder.is_l1_tlb_miss(), l1_tlb_size, ibs_fetch_decoder.is_l2_tlb_miss() });
+  /// Instruction TLB.
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionTLB)) {
+    auto l1_tlb_size = std::optional<std::uint64_t>{ std::nullopt };
+    if (ibs_fetch_decoder.is_physical_instruction_address_valid()) {
+      l1_tlb_size = SampleDecoder::decode_tlb_page_size(ibs_fetch_decoder.l1_tlb_page_size());
     }
+    sample.instruction_execution().tlb(
+      InstructionExecution::TLB{ ibs_fetch_decoder.is_l1_tlb_miss(), l1_tlb_size, ibs_fetch_decoder.is_l2_tlb_miss() });
+  }
 
-    /// Physical instruction address.
-    if (this->_sampler_values.is_set(SampleRecordingValues::Field::PhysicalInstructionPointer)) {
-      sample.instruction_execution().physical_instruction_pointer(ibs_fetch_decoder.physical_instruction_address());
-    }
+  /// Physical instruction address.
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::PhysicalInstructionPointer)) {
+    sample.instruction_execution().physical_instruction_pointer(ibs_fetch_decoder.physical_instruction_address());
+  }
 }
 
 void
-perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(Sample& sample, const std::vector<std::byte>& raw_values) const noexcept
+perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(Sample& sample,
+                                                             const std::vector<std::byte>& raw_values) const noexcept
 {
   const auto ibs_op_decoder = IBSOpDecoder{ raw_values };
 
@@ -771,21 +774,21 @@ perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(Sample& sample, con
     sample.data_access().is_misalign_penalty(ibs_op_decoder.is_data_cache_misaligned_access());
   }
 
-    /// Source information.
-    if (auto& data_source = sample.data_access().source(); data_source.has_value()) {
-      /// MHB Allocations.
-      if (this->_sampler_values.is_set(SampleRecordingValues::Field::MHBAllocations)) {
-        if (ibs_op_decoder.is_data_cache_miss()) {
-          data_source->num_mhb_slots_allocated(ibs_op_decoder.num_open_mem_requests());
-          data_source->is_mhb_hit(ibs_op_decoder.is_data_cache_miss_no_mab_allocation());
-        }
-      }
-
-      /// Write-combine memory access.
-      if (ibs_op_decoder.is_load_operation() || ibs_op_decoder.is_store_operation()) {
-        data_source->is_write_combine_memory(ibs_op_decoder.is_data_cache_write_combine_access());
+  /// Source information.
+  if (auto& data_source = sample.data_access().source(); data_source.has_value()) {
+    /// MHB Allocations.
+    if (this->_sampler_values.is_set(SampleRecordingValues::Field::MHBAllocations)) {
+      if (ibs_op_decoder.is_data_cache_miss()) {
+        data_source->num_mhb_slots_allocated(ibs_op_decoder.num_open_mem_requests());
+        data_source->is_mhb_hit(ibs_op_decoder.is_data_cache_miss_no_mab_allocation());
       }
     }
+
+    /// Write-combine memory access.
+    if (ibs_op_decoder.is_load_operation() || ibs_op_decoder.is_store_operation()) {
+      data_source->is_write_combine_memory(ibs_op_decoder.is_data_cache_write_combine_access());
+    }
+  }
 
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataAccessWidth)) {
     /// Translate memory width into number of bytes.

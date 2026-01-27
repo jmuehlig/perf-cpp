@@ -7,7 +7,7 @@
 /// The global CounterDefinition instance is used as a default one for EventCounter and Sampler. This instance detects
 /// counters from the perf subsystem and (if activated) processor-specific events. Further (child) counter definitions
 /// will inherit the registered events, metrics, and time events.
-std::shared_ptr<perf::CounterDefinition> perf::CounterDefinition::_global = perf::CounterDefinition::make_global();
+std::shared_ptr<perf::CounterDefinition> perf::CounterDefinition::_global = CounterDefinition::make_global();
 
 perf::CounterDefinition::CounterDefinition(std::unique_ptr<EventProvider>&& event_provider)
   : _parent_counter_definition(CounterDefinition::_global)
@@ -62,10 +62,10 @@ perf::CounterDefinition::make_global()
 }
 
 void
-perf::CounterDefinition::add(std::string&& pmu_name, std::string&& event_name, const perf::CounterConfig config)
+perf::CounterDefinition::add(std::string&& pmu_name, std::string&& event_name, const CounterConfig config)
 {
   /// When the PMU (identified by the name) already exists, add the event.
-  if (auto pmu_iterator = this->_performance_monitoring_unit_events.find(pmu_name);
+  if (const auto pmu_iterator = this->_performance_monitoring_unit_events.find(pmu_name);
       pmu_iterator != this->_performance_monitoring_unit_events.end()) {
     auto& event_config_map = pmu_iterator->second;
     event_config_map.insert_or_assign(std::move(event_name), config);
@@ -99,8 +99,7 @@ perf::CounterDefinition::counter(const std::string& name) const noexcept
 
   /// Scan all PMUs of parent counter definition.
   if (this->_parent_counter_definition != nullptr) {
-    auto parent_event_configurations = this->_parent_counter_definition->counter(name);
-    if (!parent_event_configurations.empty()) {
+    if (auto parent_event_configurations = this->_parent_counter_definition->counter(name); !parent_event_configurations.empty()) {
       std::move(parent_event_configurations.begin(),
                 parent_event_configurations.end(),
                 std::back_inserter(event_configurations));
@@ -114,12 +113,12 @@ std::optional<std::tuple<std::string_view, std::string_view, perf::CounterConfig
 perf::CounterDefinition::counter(const std::string& pmu_name, const std::string& event_name) const noexcept
 {
   /// Find all events of the PMU.
-  if (auto pmu_iterator = this->_performance_monitoring_unit_events.find(pmu_name);
+  if (const auto pmu_iterator = this->_performance_monitoring_unit_events.find(pmu_name);
       pmu_iterator != this->_performance_monitoring_unit_events.end()) {
     const auto& pmu_events = pmu_iterator->second;
 
     /// Find the event in the PMU event list.
-    if (auto event_iterator = pmu_events.find(event_name); event_iterator != pmu_events.end()) {
+    if (const auto event_iterator = pmu_events.find(event_name); event_iterator != pmu_events.end()) {
       return std::make_optional(std::make_tuple(
         std::string_view{ pmu_iterator->first }, std::string_view{ event_iterator->first }, event_iterator->second));
     }
@@ -136,7 +135,7 @@ perf::CounterDefinition::counter(const std::string& pmu_name, const std::string&
 std::optional<std::pair<std::string_view, perf::Metric&>>
 perf::CounterDefinition::metric(const std::string& name) const noexcept
 {
-  if (auto iterator = this->_metrics.find(name); iterator != this->_metrics.end()) {
+  if (const auto iterator = this->_metrics.find(name); iterator != this->_metrics.end()) {
     return std::make_optional(std::make_pair(std::string_view(iterator->first), std::ref(*iterator->second)));
   }
 
@@ -151,7 +150,7 @@ perf::CounterDefinition::metric(const std::string& name) const noexcept
 std::optional<std::pair<std::string_view, perf::TimeEvent&>>
 perf::CounterDefinition::time_event(const std::string& name) const noexcept
 {
-  if (auto iterator = this->_time_events.find(name); iterator != this->_time_events.end()) {
+  if (const auto iterator = this->_time_events.find(name); iterator != this->_time_events.end()) {
     return std::make_optional(std::make_pair(std::string_view(iterator->first), std::ref(*iterator->second)));
   }
 
@@ -177,8 +176,7 @@ perf::CounterDefinition::pmu(const std::string& pmu_name) const
 
   /// Append parent PMU names, if there is a parent.
   if (this->_parent_counter_definition != nullptr) {
-    auto parent_counters = this->_parent_counter_definition->pmu(pmu_name);
-    if (!parent_counters.empty()) {
+    if (auto parent_counters = this->_parent_counter_definition->pmu(pmu_name); !parent_counters.empty()) {
       std::move(parent_counters.begin(), parent_counters.end(), std::back_inserter(events));
     }
   }

@@ -1,7 +1,7 @@
 #include <perfcpp/requested_event.h>
 
 bool
-perf::RequestedEventSet::add(const perf::RequestedEvent& event)
+perf::RequestedEventSet::add(const RequestedEvent& event)
 {
   /// If the event is not already added (in that case adjust_visibility_if_present() will return false), add it.
   /// If the event is already in the set, adjust_visibility_if_present() will adjust the visibility to true, if
@@ -38,8 +38,8 @@ perf::RequestedEventSet::adjust_visibility_if_present(const std::optional<std::s
 }
 
 perf::CounterResult
-perf::RequestedEventSet::result(const perf::CounterDefinition& counter_definition,
-                                perf::CounterResult&& hardware_events_result,
+perf::RequestedEventSet::result(const CounterDefinition& counter_definition,
+                                CounterResult&& hardware_events_result,
                                 const std::uint64_t normalization) const
 {
   /// Combine all hardware events and metrics into a single result, showing only the requested events and metrics, in
@@ -98,7 +98,7 @@ perf::RequestedEventSet::result(const perf::CounterDefinition& counter_definitio
 }
 
 perf::util::DirectedGraph<std::string_view>
-perf::RequestedEventSet::build_metric_graph(const perf::CounterDefinition& counter_definition) const
+perf::RequestedEventSet::build_metric_graph(const CounterDefinition& counter_definition) const
 {
   auto metric_graph = util::DirectedGraph<std::string_view>{};
   for (const auto& requested_event : this->_requested_events) {

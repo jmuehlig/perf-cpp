@@ -4,8 +4,8 @@
 #include "counter_result.h"
 #include "mmap_buffer.h"
 #include "precision.h"
-#include "util/unique_file_descriptor.h"
 #include "sample_recording_values.h"
+#include "util/unique_file_descriptor.h"
 #include <array>
 #include <cstdint>
 #include <linux/perf_event.h>
@@ -326,10 +326,9 @@ private:
    * @return The initialized perf_event_attr.
    */
 
-  [[nodiscard]] perf_event_attr create_perf_event_attribute(
-    bool is_disabled,
-    const Config& configuration,
-    const SampleRecordingValues& sample_recording_values) const;
+  [[nodiscard]] perf_event_attr create_perf_event_attribute(bool is_disabled,
+                                                            const Config& configuration,
+                                                            const SampleRecordingValues& sample_recording_values) const;
 
   /**
    * Configures the perf event read format.

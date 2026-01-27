@@ -46,9 +46,14 @@ perf::SampleResult::to_csv(std::string&& file_name) const
     csv_writer.write_value(SampleRecordingValues::Field::ThreadId, sample.metadata().thread_id());
 
     /// Instruction execution
-    csv_writer.write_value(SampleRecordingValues::Field::LogicalInstructionPointer, sample.instruction_execution().logical_instruction_pointer(), true);
-    csv_writer.write_value(SampleRecordingValues::Field::PhysicalInstructionPointer, sample.instruction_execution().physical_instruction_pointer(), true);
-    csv_writer.write_value(SampleRecordingValues::Field::LogicalInstructionPointer, sample.instruction_execution().is_instruction_pointer_exact());
+    csv_writer.write_value(SampleRecordingValues::Field::LogicalInstructionPointer,
+                           sample.instruction_execution().logical_instruction_pointer(),
+                           true);
+    csv_writer.write_value(SampleRecordingValues::Field::PhysicalInstructionPointer,
+                           sample.instruction_execution().physical_instruction_pointer(),
+                           true);
+    csv_writer.write_value(SampleRecordingValues::Field::LogicalInstructionPointer,
+                           sample.instruction_execution().is_instruction_pointer_exact());
     csv_writer.write_value(SampleRecordingValues::Field::DataSource, sample.instruction_execution().is_locked());
   }
 
