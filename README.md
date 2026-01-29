@@ -13,7 +13,7 @@ Built around Linux's powerful [*perf subsystem*](https://man7.org/linux/man-page
 - **Measure exactly what you want** – utilize *performance counters* to count hardware events, similar to `perf stat`, but around specific code paths, not an entire binary ([documentation](docs/recording.md)). 
 - **Calculate metrics** such as *cycles per instruction* and *cache miss to access ratio* based on hardware events and timing ([documentation](docs/metrics.md)). 
 - **Low-latency performance counters access** without starting/stopping the counters, for micro-benchmarks or adaptive tuning ([documentation](docs/recording-live-events.md)).
-- **Record instruction and memory samples**, just like `perf [mem] record` – but from inside your application ([documentation](docs/recording-live-events.md)).
+- **Record instruction and memory samples**, just like `perf [mem] record` – but from inside your application ([documentation](docs/sampling.md)).
 - **Correlate samples with data structures and symbols** to generate [per-class access statistics](docs/analyzing-memory-access-patterns.md) and [flame graphs](docs/sampling-symbols-and-flamegraphs.md).
 - Mix built-in events (e.g., *cycles*, *instructions*, *cache misses*, ...) with processor-specific counters ([documentation](docs/counters.md)).
 
