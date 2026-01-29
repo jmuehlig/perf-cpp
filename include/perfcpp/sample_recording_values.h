@@ -210,6 +210,7 @@ public:
 
   /**
    * Manage to include the physical instruction pointer into samples.
+   * Note: This field is only available on AMD's IBS Fetch PMU.
    *
    * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#instruction-pointer
    *
@@ -224,8 +225,9 @@ public:
 
   /**
    * Manage to include the instruction type into samples.
+   * Note: Return and Branch instruction types are only available on AMD's IBS Op PMU.
    *
-   * See TODO
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#instruction-execution
    *
    * @param include True, if the instruction type should be included.
    * @return The SampleRecordingValues instance.
@@ -238,8 +240,9 @@ public:
 
   /**
    * Manage to include the branch type into samples.
+   * Note: This field is only available on AMD's IBS Op PMU.
    *
-   * See TODO
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#instruction-execution
    *
    * @param include True, if the branch type should be included.
    * @return The SampleRecordingValues instance.
@@ -299,8 +302,12 @@ public:
 
   /**
    * Manage to include instruction latency into samples.
+   * Note: Available fields vary by hardware:
+   *       - Intel: instruction_retirement
+   *       - AMD IBS Op PMU: uop_tag_to_retirement, uop_completion_to_retirement, uop_tag_to_completion
+   *       - AMD IBS Fetch PMU: fetch
    *
-   * See TODO
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#instruction-latency
    *
    * @param include True, if the instruction latency should be included.
    * @return The SampleRecordingValues instance.
@@ -313,8 +320,9 @@ public:
 
   /**
    * Manage to include instruction cache information into samples.
+   * Note: This field is only available on AMD's IBS Fetch PMU.
    *
-   * See TODO
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#instruction-cache
    *
    * @param include True, if instruction cache information should be included.
    * @return The SampleRecordingValues instance.
@@ -327,8 +335,9 @@ public:
 
   /**
    * Manage to include instruction TLB information into samples.
+   * Note: This field is only available on AMD's IBS Fetch PMU.
    *
-   * See TODO
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#instruction-tlb
    *
    * @param include True, if instruction TLB information should be included.
    * @return The SampleRecordingValues instance.
@@ -341,8 +350,9 @@ public:
 
   /**
    * Manage to include instruction fetch information into samples.
+   * Note: This field is only available on AMD's IBS Fetch PMU.
    *
-   * See TODO
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#instruction-fetch
    *
    * @param include True, if instruction fetch information should be included.
    * @return The SampleRecordingValues instance.
@@ -419,8 +429,9 @@ public:
 
   /**
    * Manage to include the data TLB page size into samples.
+   * Note: This field is only available on AMD's IBS Op PMU.
    *
-   * See TODO
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#data-tlb
    *
    * @param include True, if the data TLB page size should be included.
    * @return The SampleRecordingValues instance.
@@ -433,6 +444,9 @@ public:
 
   /**
    * Manage to include data access latency information into samples.
+   * Note: Available fields vary by hardware:
+   *       - Intel: cache_access (with mem-load trigger)
+   *       - AMD IBS Op PMU: cache_miss
    *
    * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#memory-access-latency
    *
@@ -499,8 +513,9 @@ public:
 
   /**
    * Manage to include data TLB latency into samples.
+   * Note: This field is only available on AMD's IBS Op PMU.
    *
-   * See TODO
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#data-latency
    *
    * @param include True, if data TLB latency should be included.
    * @return The SampleRecordingValues instance.
@@ -513,8 +528,9 @@ public:
 
   /**
    * Manage to include data access width into samples.
+   * Note: This field is only available on AMD's IBS Op PMU.
    *
-   * See TODO
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#data-access
    *
    * @param include True, if data access width should be included.
    * @return The SampleRecordingValues instance.
@@ -527,8 +543,9 @@ public:
 
   /**
    * Manage to include data access misalign penalty into samples.
+   * Note: This field is only available on AMD's IBS Op PMU.
    *
-   * See TODO
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#data-access
    *
    * @param include True, if data access misalign penalty should be included.
    * @return The SampleRecordingValues instance.
@@ -541,8 +558,9 @@ public:
 
   /**
    * Manage to include MHB allocations into samples.
+   * Note: This field is only available on AMD's IBS Op PMU (MAB slots).
    *
-   * See TODO
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#data-source
    *
    * @param include True, if MHB allocations should be included.
    * @return The SampleRecordingValues instance.
@@ -575,7 +593,7 @@ public:
   /**
    * Manage to include user-level registers into samples.
    *
-   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-user-level
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers
    *
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
@@ -590,7 +608,7 @@ public:
   /**
    * Manage to include user-level registers into samples.
    *
-   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-user-level
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers
    *
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
@@ -603,7 +621,7 @@ public:
   /**
    * Manage to include user-level registers into samples.
    *
-   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-user-level
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers
    *
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
@@ -616,7 +634,7 @@ public:
   /**
    * Manage to include user-level registers into samples.
    *
-   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-user-level
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers
    *
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
@@ -629,7 +647,7 @@ public:
   /**
    * Manage to include user-level registers into samples.
    *
-   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-user-level
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers
    *
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
@@ -642,7 +660,7 @@ public:
   /**
    * Manage to include kernel-level registers into samples.
    *
-   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-kernel-level
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers
    *
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
@@ -657,7 +675,7 @@ public:
   /**
    * Manage to include kernel-level registers into samples.
    *
-   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-kernel-level
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers
    *
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
@@ -670,7 +688,7 @@ public:
   /**
    * Manage to include kernel-level registers into samples.
    *
-   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-kernel-level
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers
    *
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
@@ -683,7 +701,7 @@ public:
   /**
    * Manage to include kernel-level registers into samples.
    *
-   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-kernel-level
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers
    *
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
@@ -696,7 +714,7 @@ public:
   /**
    * Manage to include kernel-level registers into samples.
    *
-   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers-in-kernel-level
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#registers
    *
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
@@ -738,6 +756,7 @@ public:
 
   /**
    * Manage to include hardware transaction abort reasons into samples.
+   * Note: This field is only available on Intel.
    *
    * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#transaction-abort
    *
@@ -781,8 +800,6 @@ public:
   /**
    * Manage to include extended mmap information into samples.
    *
-   * See TODO
-   *
    * @param include True, if extended mmap information should be included.
    * @return The SampleRecordingValues instance.
    */
@@ -808,8 +825,6 @@ public:
 
   /**
    * Manage to include auxiliary data into samples.
-   *
-   * See TODO
    *
    * @param include True, if auxiliary data should be included.
    * @return The SampleRecordingValues instance.
