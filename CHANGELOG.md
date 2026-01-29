@@ -1,5 +1,21 @@
 # *perf-cpp*: Changelog
 
+## v0.12.6 (WIP)
+- **Fine-Grained Sampling Configuration**: The sampling API now provides more granular control over which data fields are recorded. Previously coarse-grained options have been split into specific setters, allowing precise selection of hardware-specific metrics. New setters include:
+  - **Physical Instruction Pointer** (*AMD IBS Fetch PMU* only)
+  - **Instruction Type** (*AMD IBS Op PMU* for `Return` and `Branch` types)
+  - **Branch Type** (*AMD IBS Op PMU* only)
+  - **Instruction Latency** (*Intel*: instruction retirement cycles; *AMD IBS Op PMU*: uOp tag-to-retirement, completion-to-retirement, tag-to-completion; *AMD IBS Fetch PMU*: fetch latency)
+  - **Instruction Cache** (*AMD IBS Fetch PMU* only)
+  - **Instruction TLB** (*AMD IBS Fetch PMU* only)
+  - **Instruction Fetch** (*AMD IBS Fetch PMU* only)
+  - **Data TLB Page Size** (*AMD IBS Op PMU* only)
+  - **Data TLB Latency** (*AMD IBS Op PMU* only)
+  - **Data Access Width** (*AMD IBS Op PMU* only)
+  - **Data Access Misalignment Penalty** (*AMD IBS Op PMU* only)
+  - **MHB/MAB Allocations** (*AMD IBS Op PMU* only)
+  - **Auxiliary Values**
+
 ## v0.12.5
 - **Bugfix**: The library could not compile for specific Linux kernels (see [#10](https://github.com/jmuehlig/perf-cpp/issues/10)).
 - **Symbol Translation**: Improved translation from instruction pointer to symbol.
@@ -10,7 +26,6 @@ This update enables exporting sampled data to the standard perf format for analy
 - **Bugfix**: The library crashed when events loaded from an external CSV file contained empty spaces (see [#8](https://github.com/jmuehlig/perf-cpp/issues/8)). Thanks to [@Liteom](https://github.com/Liteom).
 - **Bugfix**: The library could not compile for specific Linux kernels not providing `PERF_MEM_LVLNUM_UNC` and `PERF_MEM_SNOOPX_PEER` (see [#7](https://github.com/jmuehlig/perf-cpp/issues/7)). Thanks to [@Raphalex46](https://github.com/Raphalex46) for pointing out. 
 - **Perf Data Export**: Samples can now be written as *perf data files* using `Sampler::to_perf_file()`, enabling analysis with standard perf ecosystem tools like perf report (see the [documentation](docs/analyzing-samples-with-perf-report.md)). **Note that this feature is experimental.**
-
 
 ## v0.12.3
 This update simplifies the handling of counter definitions by introducing a default instance.
