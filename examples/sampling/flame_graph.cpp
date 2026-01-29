@@ -16,7 +16,7 @@ main()
   sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 50000U });
 
   /// Include Timestamp, period, instruction pointer, and CPU number into samples.
-  sampler.values().timestamp(true).instruction_pointer(true).callchain(true);
+  sampler.values().timestamp(true).logical_instruction_pointer(true).callchain(true);
 
   /// Start sampling.
   try {

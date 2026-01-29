@@ -20,7 +20,7 @@ main()
   sampler.trigger("cycles", perf::Period{ 50000 });
 
   /// Setup what data the samples should include (timestamp, instruction pointer, CPU id, thread id).
-  sampler.values().timestamp(true).instruction_pointer(true).cpu_id(true).thread_id(true);
+  sampler.values().timestamp(true).logical_instruction_pointer(true).cpu_id(true).thread_id(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,

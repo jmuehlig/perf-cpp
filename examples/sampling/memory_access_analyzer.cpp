@@ -24,7 +24,7 @@ main()
 
   /// Setup which data will be included into samples (timestamp, virtual memory address, data source like L1d or RAM,
   /// and latency).
-  sampler.values().logical_memory_address(true).data_source(true).latency(true);
+  sampler.values().logical_memory_address(true).data_source(true).data_access_latency(true);
   if (perf::HardwareInfo::is_amd()) {
     sampler.values().raw(true);
   }

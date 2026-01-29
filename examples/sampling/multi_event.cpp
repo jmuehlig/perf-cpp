@@ -28,7 +28,7 @@ main()
   }
 
   /// Define what to sample.
-  sampler.values().timestamp(true).logical_memory_address(true).data_source(true).latency(true);
+  sampler.values().timestamp(true).logical_memory_address(true).data_source(true).data_access_latency(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
