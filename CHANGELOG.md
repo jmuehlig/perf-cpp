@@ -1,7 +1,7 @@
 # *perf-cpp*: Changelog
 
 ## v0.12.6 (WIP)
-- **Fine-Grained Sampling Configuration**: The sampling API now provides more granular control over which data fields are recorded. Previously coarse-grained options have been split into specific setters, allowing precise selection of hardware-specific metrics. New setters include:
+- **Fine-Grained Sampling Configuration**: The sampling API now provides more granular control over which data fields are recorded. Previously coarse-grained options have been split into specific setters, allowing precise selection of hardware-specific metrics. See the [sampling documentation](docs/sampling.md) for more information. New setters include:
   - **Physical Instruction Pointer** (*AMD IBS Fetch PMU* only)
   - **Instruction Type** (*AMD IBS Op PMU* for `Return` and `Branch` types)
   - **Branch Type** (*AMD IBS Op PMU* only)
