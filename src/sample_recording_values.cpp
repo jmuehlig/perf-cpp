@@ -6,7 +6,6 @@ perf::SampleRecordingValues::to_perf_sample_type() const noexcept
   auto sample_type = std::uint64_t{ 0U };
 
   // === Process/Thread Context ===
-  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_TID, Field::ProcessId);
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_TID, Field::ThreadId);
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_CPU, Field::CpuId);
 #ifndef PERFCPP_NO_SAMPLE_CGROUP /// Sampling cgroup is supported since Linux 5.7
@@ -64,14 +63,10 @@ perf::SampleRecordingValues::to_perf_sample_type() const noexcept
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_WEIGHT, Field::DataAccessLatency);
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_WEIGHT | PERF_SAMPLE_RAW, Field::DataTLBLatency);
 #endif
-  sample_type |=
-    this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::DataTLBPageSize);
-  sample_type |=
-    this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::DataAccessWidth);
-  sample_type |=
-    this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::DataAccessMisalignPenalty);
-  sample_type |=
-    this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::MHBAllocations);
+  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::DataTLBPageSize);
+  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::DataAccessWidth);
+  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::DataAccessMisalignPenalty);
+  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::MHBAllocations);
 
   // === Branch Sampling ===
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_BRANCH_STACK, Field::BranchStack);

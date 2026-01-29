@@ -72,31 +72,6 @@ public:
   [[nodiscard]] std::optional<Mode> mode() const noexcept { return _mode; }
 
   /**
-   * @return Mode, if included in the sample. std::nullopt otherwise.
-   */
-  [[nodiscard]] std::optional<std::string> mode_as_string() const
-  {
-    if (_mode.has_value()) {
-      switch (_mode.value()) {
-        case Mode::Kernel:
-          return "kernel";
-        case Mode::User:
-          return "user";
-        case Mode::Hypervisor:
-          return "hypervisor";
-        case Mode::GuestKernel:
-          return "guest_kernel";
-        case Mode::GuestUser:
-          return "guest_user";
-        default:
-          return "unknown";
-      }
-    }
-
-    return std::nullopt;
-  }
-
-  /**
    * @return Sample ID, if included in the sample. std::nullopt otherwise.
    */
   [[nodiscard]] std::optional<std::uint64_t> sample_id() const noexcept { return _sample_id; }
@@ -141,4 +116,33 @@ private:
   std::optional<std::uint32_t> _process_id;
   std::optional<std::uint32_t> _thread_id;
 };
+
+/**
+ * Convert Mode to its string representation.
+ *
+ * @param mode The mode to convert.
+ * @return String representation of the mode.
+ */
+[[nodiscard]] inline std::string
+to_string(const std::optional<Metadata::Mode> mode)
+{
+  if (mode.has_value()) {
+    switch (mode.value()) {
+      case Metadata::Mode::Kernel:
+        return "kernel";
+      case Metadata::Mode::User:
+        return "user";
+      case Metadata::Mode::Hypervisor:
+        return "hypervisor";
+      case Metadata::Mode::GuestKernel:
+        return "guest_kernel";
+      case Metadata::Mode::GuestUser:
+        return "guest_user";
+      default:
+        return "unknown";
+    }
+  }
+
+  return "";
+}
 }

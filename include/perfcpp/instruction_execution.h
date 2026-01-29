@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace perf {
@@ -127,7 +128,7 @@ public:
     /**
      * @return Size of the iTLB page (in bytes), if available.
      */
-    [[nodiscard]] std::optional<std::uint64_t> is_l1_page_size() const noexcept { return _l1_page_size; }
+    [[nodiscard]] std::optional<std::uint64_t> l1_page_size() const noexcept { return _l1_page_size; }
 
     /**
      * @return True, if the fetch was an sTLB miss.
@@ -429,25 +430,6 @@ public:
   [[nodiscard]] std::optional<InstructionType> type() const noexcept { return _type; }
 
   /**
-   * @return Instruction type, if available. std::nullopt otherwise.
-   */
-  [[nodiscard]] std::optional<std::string> type_as_string() const
-  {
-    if (_type.has_value()) {
-      switch (_type.value()) {
-        case InstructionType::Branch:
-          return "branch";
-        case InstructionType::DataAccess:
-          return "data_access";
-        case InstructionType::Return:
-          return "return";
-      }
-    }
-
-    return std::nullopt;
-  }
-
-  /**
    * @return Logical instruction pointer, if available. std::nullopt otherwise.
    */
   [[nodiscard]] std::optional<std::uintptr_t> logical_instruction_pointer() const noexcept
@@ -471,7 +453,12 @@ public:
   /**
    * @return Lock indicator, if available. std::nullopt otherwise.
    */
-  [[nodiscard]] std::optional<bool> is_locked() const noexcept { return _is_locked; }
+  [[deprecated(".instruction_execution().is_locked() will be removed in v0.13. Please use "
+               ".data_access().is_locked()")]] [[nodiscard]] std::optional<bool>
+  is_locked() const noexcept
+  {
+    return _is_locked;
+  }
 
   /**
    * @return Cache object.
@@ -536,4 +523,46 @@ private:
   std::optional<std::vector<std::uintptr_t>> _callchain{ std::nullopt };
   std::optional<std::uint64_t> _page_size{ std::nullopt };
 };
+
+/**
+ * Convert InstructionType to its string representation.
+ *
+ * @param type The instruction type to convert.
+ * @return String representation of the instruction type.
+ */
+[[nodiscard]] inline std::string
+to_string(const InstructionExecution::InstructionType type)
+{
+  switch (type) {
+    case InstructionExecution::InstructionType::DataAccess:
+      return "data_access";
+    case InstructionExecution::InstructionType::Branch:
+      return "branch";
+    case InstructionExecution::InstructionType::Return:
+      return "return";
+  }
+  return "unknown";
+}
+
+/**
+ * Convert BranchType to its string representation.
+ *
+ * @param type The branch type to convert.
+ * @return String representation of the branch type.
+ */
+[[nodiscard]] inline std::string
+to_string(const InstructionExecution::BranchType type)
+{
+  switch (type) {
+    case InstructionExecution::BranchType::Taken:
+      return "taken";
+    case InstructionExecution::BranchType::Retired:
+      return "retired";
+    case InstructionExecution::BranchType::Mispredicted:
+      return "mispredicted";
+    case InstructionExecution::BranchType::Fuse:
+      return "fuse";
+  }
+  return "unknown";
+}
 }

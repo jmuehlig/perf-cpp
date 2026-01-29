@@ -12,7 +12,6 @@ public:
   enum class Field : std::uint8_t
   {
     // === Process/Thread Context ===
-    ProcessId,
     ThreadId,
     CpuId,
     CGroup,
@@ -77,20 +76,6 @@ public:
     // END
     CountFields
   };
-
-  /**
-   * Manage to include the process id into samples.
-   *
-   * See TODO
-   *
-   * @param include True, if the process id should be included.
-   * @return The SampleRecordingValues instance.
-   */
-  SampleRecordingValues& process_id(const bool include) noexcept
-  {
-    set(Field::ProcessId, include);
-    return *this;
-  }
 
   /**
    * Manage to include the thread id into samples.
@@ -468,7 +453,9 @@ public:
    * @param include True, if latency information should be included.
    * @return The SampleRecordingValues instance.
    */
-  [[deprecated("weight(bool) is deprecated and will be removed on v0.14. Please use data_access_latency(bool) instead.")]] SampleRecordingValues& weight(const bool include) noexcept
+  [[deprecated("weight(bool) is deprecated and will be removed on v0.14. Please use data_access_latency(bool) "
+               "instead.")]] SampleRecordingValues&
+  weight(const bool include) noexcept
   {
     return data_access_latency(include);
   }
@@ -481,7 +468,9 @@ public:
    * @param include True, if latency information should be included.
    * @return The SampleRecordingValues instance.
    */
-  [[deprecated("weight_struct(bool) is deprecated and will be removed on v0.14. Please use data_access_latency(bool) instead.")]] SampleRecordingValues& weight_struct([[maybe_unused]] const bool include)
+  [[deprecated("weight_struct(bool) is deprecated and will be removed on v0.14. Please use data_access_latency(bool) "
+               "instead.")]] SampleRecordingValues&
+  weight_struct([[maybe_unused]] const bool include)
   {
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
                                         /// Linux 5.12
@@ -501,7 +490,9 @@ public:
    * @param include True, if latency information should be included.
    * @return The SampleRecordingValues instance.
    */
-  [[deprecated("latency(bool) is deprecated and will be removed on v0.14. Please use data_access_latency(bool) instead.")]] SampleRecordingValues& latency([[maybe_unused]] const bool include) noexcept
+  [[deprecated("latency(bool) is deprecated and will be removed on v0.14. Please use data_access_latency(bool) "
+               "instead.")]] SampleRecordingValues&
+  latency([[maybe_unused]] const bool include) noexcept
   {
     return data_access_latency(include);
   }

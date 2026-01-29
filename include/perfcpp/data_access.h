@@ -11,7 +11,7 @@ namespace perf {
 class DataAccess
 {
 public:
-  enum AccessType : std::uint8_t
+  enum class AccessType : std::uint8_t
   {
     Load,
     Store,
@@ -390,6 +390,12 @@ public:
   void type(const AccessType access_type) noexcept { _access_type = access_type; }
 
   /**
+   * Set whether the daa access is locked.
+   * @param is_locked Lock indicator.
+   */
+  void is_locked(const std::optional<bool> is_locked) noexcept { _is_locked = is_locked; }
+
+  /**
    * Set the logical memory address of the access.
    * @param logical_memory_address Virtual/logical memory address.
    */
@@ -441,6 +447,11 @@ public:
    * @return Type of the access.
    */
   [[nodiscard]] std::optional<AccessType> type() const noexcept { return _access_type; }
+
+  /**
+   * @return Lock indicator, if available. std::nullopt otherwise.
+   */
+  [[nodiscard]] std::optional<bool> is_locked() const noexcept { return _is_locked; }
 
   /**
    * @return True, if the access is a load.
@@ -528,6 +539,7 @@ public:
 
 private:
   std::optional<AccessType> _access_type;
+  std::optional<bool> _is_locked{ std::nullopt };
   std::optional<std::uintptr_t> _logical_memory_address;
   std::optional<std::uintptr_t> _physical_memory_address;
   std::optional<Source> _source;

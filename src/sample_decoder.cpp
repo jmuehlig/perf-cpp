@@ -79,7 +79,7 @@ perf::SampleDecoder::decode(const std::vector<std::vector<std::byte>>& sample_bu
 void
 perf::SampleDecoder::decode_sample_id_all(SampleIterator& entry, Sample& sample) const noexcept
 {
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::ThreadId) || this->_sampler_values.is_set(SampleRecordingValues::Field::ProcessId)) {
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::ThreadId)) {
     sample.metadata().process_id(entry.read<std::uint32_t>());
     sample.metadata().thread_id(entry.read<std::uint32_t>());
   }
@@ -122,7 +122,7 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
     sample.instruction_execution().logical_instruction_pointer(entry.read<std::uintptr_t>());
   }
 
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::ThreadId) || this->_sampler_values.is_set(SampleRecordingValues::Field::ProcessId)) {
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::ThreadId)) {
     sample.metadata().process_id(entry.read<std::uint32_t>());
     sample.metadata().thread_id(entry.read<std::uint32_t>());
   }
@@ -193,8 +193,10 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
   }
 
   /// Data access and/or instruction latency.
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataAccessLatency) || this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionLatency)) {
-#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since Linux 5.12
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataAccessLatency) ||
+      this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionLatency)) {
+#ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
+                                        /// Linux 5.12
     const auto weight = static_cast<std::uint32_t>(entry.read<std::uint64_t>());
     this->decode_latency(weight, sample);
 #else
@@ -203,14 +205,16 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
 #endif
   }
 
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataSource) || this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionType)) {
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataSource) ||
+      this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionType)) {
     const auto data_source = perf_mem_data_src{ entry.read<std::uint64_t>() };
 
     if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataSource)) {
       this->decode_data_access(data_source, sample);
     }
 
-    if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionType) && !sample.instruction_execution().type().has_value()) {
+    if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionType) &&
+        !sample.instruction_execution().type().has_value()) {
       if (const auto access_type = SampleDecoder::decode_data_access_type(data_source); access_type.has_value()) {
         sample.instruction_execution().type(InstructionExecution::InstructionType::DataAccess);
       }
@@ -381,15 +385,9 @@ perf::SampleDecoder::decode_branch_stack(SampleIterator& entry)
 #ifndef PERFCPP_NO_BRANCH_STACK_CYCLES /// Cycles in branch stacks is supported since Linux 4.3
     const auto cycles = branch.cycles > 0 ? std::make_optional<std::uint16_t>(branch.cycles) : std::nullopt;
 #else
-    constexpr auto cycles = std::optional<std::uint16_t>{std::nullopt};
+    constexpr auto cycles = std::optional<std::uint16_t>{ std::nullopt };
 #endif
-    branches.emplace_back(branch.from,
-                          branch.to,
-                          branch.mispred,
-                          branch.predicted,
-                          branch.in_tx,
-                          branch.abort,
-                          cycles);
+    branches.emplace_back(branch.from, branch.to, branch.mispred, branch.predicted, branch.in_tx, branch.abort, cycles);
   }
 
   return branches;
@@ -418,7 +416,8 @@ perf::SampleDecoder::decode_latency(const std::uint32_t latency, Sample& sample)
 }
 
 void
-perf::SampleDecoder::decode_latency(const std::tuple<std::uint32_t, std::uint16_t, std::uint16_t> latency, Sample& sample) const noexcept
+perf::SampleDecoder::decode_latency(const std::tuple<std::uint32_t, std::uint16_t, std::uint16_t> latency,
+                                    Sample& sample) const noexcept
 {
   if (HardwareInfo::is_intel()) {
     // On Intel generations >= 12: The first latency is the data access latency, the second is the instruction latency.
@@ -505,7 +504,9 @@ perf::SampleDecoder::decode_data_access(const perf_mem_data_src data_source, Sam
   }
 
   /// Set is_locked information.
-  sample.instruction_execution().is_locked(SampleDecoder::decode_data_access_is_locked(data_source.mem_lock));
+  const auto is_locked = SampleDecoder::decode_data_access_is_locked(data_source.mem_lock);
+  sample.instruction_execution().is_locked(is_locked);
+  sample.data_access().is_locked(is_locked);
 }
 
 std::optional<perf::DataAccess::AccessType>
