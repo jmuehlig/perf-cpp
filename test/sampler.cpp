@@ -139,7 +139,7 @@ TEST_CASE("sampling", "[Sampler]")
       REQUIRE_NOTHROW(sampler.trigger("ibs_op_uops", perf::Precision::RequestZeroSkid, perf::Period{ 16000 }));
     }
 
-    REQUIRE_NOTHROW(sampler.values().logical_memory_address(true).data_source(true).latency(true));
+    REQUIRE_NOTHROW(sampler.values().logical_memory_address(true).data_source(true).data_access_latency(true));
     REQUIRE_NOTHROW(sampler.open());
 
     REQUIRE_NOTHROW(sampler.start());

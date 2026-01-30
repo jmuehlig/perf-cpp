@@ -209,7 +209,8 @@ private:
     void write_value(const SampleRecordingValues::Field field, const bool value)
     {
       if (this->_values.is_set(field)) {
-        this->_csv_stream << _delimiter << (value ? "true" : "false");
+        this->_csv_stream << _delimiter;
+        write_raw_value(value);
       }
     }
 
@@ -227,17 +228,7 @@ private:
       if (this->_values.is_set(field)) {
         this->_csv_stream << _delimiter;
         if (value.has_value()) {
-          if constexpr (std::is_same_v<T, bool>) {
-            this->_csv_stream << (value.value() ? "true" : "false");
-          } else if constexpr (has_to_string_v<T>) {
-            this->_csv_stream << to_string(value.value());
-          } else {
-            if (is_hex) {
-              this->_csv_stream << std::hex << "0x" << value.value() << std::dec;
-            } else {
-              this->_csv_stream << value.value();
-            }
-          }
+          write_raw_value(value.value(), is_hex);
         }
       }
     }
@@ -293,17 +284,12 @@ private:
       if (this->_values.is_set(field)) {
         this->_csv_stream << _delimiter;
         if (container.has_value() && !container->empty()) {
-          bool first = true;
+          auto write_delimiter = false;
           for (const auto& item : *container) {
-            if (!first) {
+            if (!std::exchange(write_delimiter, true)) {
               this->_csv_stream << _list_delimiter;
             }
-            first = false;
-            if (is_hex) {
-              this->_csv_stream << std::hex << "0x" << item << std::dec;
-            } else {
-              this->_csv_stream << item;
-            }
+            write_raw_value(item, is_hex);
           }
         }
       }
@@ -333,6 +319,29 @@ private:
 
     template<typename T>
     static constexpr bool has_to_string_v = has_to_string<T>::value;
+
+    /**
+     * Writes a single value to the stream without field checking or delimiter.
+     * Handles bool, types with to_string(), and numeric types with hex formatting.
+     *
+     * @param value The value to write.
+     * @param is_hex If true, format numeric output as hexadecimal.
+     */
+    template<typename T>
+    void write_raw_value(const T& value, const bool is_hex = false)
+    {
+      if constexpr (std::is_same_v<T, bool>) {
+        this->_csv_stream << (value ? "true" : "false");
+      } else if constexpr (has_to_string_v<T>) {
+        this->_csv_stream << to_string(value);
+      } else {
+        if (is_hex) {
+          this->_csv_stream << std::hex << "0x" << value << std::dec;
+        } else {
+          this->_csv_stream << value;
+        }
+      }
+    }
 
     /// Output stream for writing CSV data.
     std::ofstream& _csv_stream;

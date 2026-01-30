@@ -61,6 +61,40 @@ perf::SampleResult::to_csv(std::string&& file_name, const char delimiter, const 
   csv_writer.write_header(SampleRecordingValues::Field::CodePageSize, "code_page_size");
   csv_writer.write_header(SampleRecordingValues::Field::Callchain, "callchain");
 
+  /// Header: Data Access
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "data_access_type");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "is_locked");
+  csv_writer.write_header(SampleRecordingValues::Field::LogicalMemoryAddress, "logical_memory_address");
+  csv_writer.write_header(SampleRecordingValues::Field::PhysicalMemoryAddress, "physical_memory_address");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "data_access_is_l1d_hit");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "data_access_is_mhb_hit");
+  csv_writer.write_header(SampleRecordingValues::Field::MHBAllocations, "mhb_slots_allocated");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "data_access_is_l2_hit");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "data_access_is_l3_hit");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "data_access_is_memory_hit");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "data_access_is_remote");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "data_access_is_same_node_remote_core");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "data_access_is_same_socket_remote_node");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "data_access_is_same_board_remote_socket");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "data_access_is_remote_board");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "dtlb_hit");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "stlb_hit");
+  csv_writer.write_header(SampleRecordingValues::Field::DataTLBPageSize, "dtlb_page_size");
+  csv_writer.write_header(SampleRecordingValues::Field::DataTLBPageSize, "stlb_page_size");
+  if (HardwareInfo::is_intel()) {
+    csv_writer.write_header(SampleRecordingValues::Field::DataAccessLatency, "cache_access_latency");
+  } else if (HardwareInfo::is_amd()) {
+    csv_writer.write_header(SampleRecordingValues::Field::DataAccessLatency, "cache_miss_latency");
+  }
+  csv_writer.write_header(SampleRecordingValues::Field::DataTLBLatency, "dtlb_refill_latency");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "snoop_is_hit");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "snoop_is_hit_modified");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "snoop_is_forward");
+  csv_writer.write_header(SampleRecordingValues::Field::DataSource, "snoop_is_transfer_from_peer");
+  csv_writer.write_header(SampleRecordingValues::Field::DataAccessMisalignPenalty, "is_misalign_penalty");
+  csv_writer.write_header(SampleRecordingValues::Field::DataAccessWidth, "data_access_width");
+  csv_writer.write_header(SampleRecordingValues::Field::DataPageSize, "data_page_size");
+
   /// Samples
   for (const auto& sample : this->_samples) {
     file_stream << '\n';
@@ -146,6 +180,47 @@ perf::SampleResult::to_csv(std::string&& file_name, const char delimiter, const 
 
     csv_writer.write_value(SampleRecordingValues::Field::Callchain, sample.instruction_execution().callchain(), true);
     csv_writer.write_value(SampleRecordingValues::Field::CodePageSize, sample.instruction_execution().page_size());
+
+    /// Data Access
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, sample.data_access().type());
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, sample.data_access().is_locked());
+    csv_writer.write_value(SampleRecordingValues::Field::LogicalMemoryAddress, sample.data_access().logical_memory_address(), true);
+    csv_writer.write_value(SampleRecordingValues::Field::PhysicalMemoryAddress, sample.data_access().physical_memory_address(), true);
+
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, sample.data_access().source(), [](const auto& s) { return s.is_l1_hit(); });
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, sample.data_access().source(), [](const auto& s) { return s.is_mhb_hit(); });
+    csv_writer.write_value(SampleRecordingValues::Field::MHBAllocations, sample.data_access().source(), [](const auto& s) { return s.num_mhb_slots_allocated(); });
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, sample.data_access().source(), [](const auto& s) { return s.is_l2_hit(); });
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, sample.data_access().source(), [](const auto& s) { return s.is_l3_hit(); });
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, sample.data_access().source(), [](const auto& s) { return s.is_memory_hit(); });
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, sample.data_access().source(), [](const auto& s) { return s.is_remote(); });
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, sample.data_access().source(),[](const auto& s) { return s.is_same_node_remote_core(); });
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, sample.data_access().source(),[](const auto& s) { return s.is_same_socket_remote_node(); });
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, sample.data_access().source(),[](const auto& s) { return s.is_same_board_remote_socket(); });
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, sample.data_access().source(),[](const auto& s) { return s.is_remote_board(); });
+
+    const auto& data_tlb = sample.data_access().tlb();
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, data_tlb.is_l1_hit());
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, data_tlb.is_l2_hit());
+    csv_writer.write_value(SampleRecordingValues::Field::DataTLBPageSize, data_tlb.l1_page_size());
+    csv_writer.write_value(SampleRecordingValues::Field::DataTLBPageSize, data_tlb.l2_page_size());
+
+    if (HardwareInfo::is_intel()) {
+      csv_writer.write_value(SampleRecordingValues::Field::DataAccessLatency, sample.data_access().latency().cache_access());
+    } else if (HardwareInfo::is_amd()) {
+      csv_writer.write_value(SampleRecordingValues::Field::DataAccessLatency, sample.data_access().latency().cache_miss());
+    }
+    csv_writer.write_value(SampleRecordingValues::Field::DataTLBLatency, sample.data_access().latency().dtlb_refill());
+
+    const auto& snoop = sample.data_access().snoop();
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, snoop, [](const auto& s) { return s.is_hit(); });
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, snoop, [](const auto& s) { return s.is_hit_modified(); });
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, snoop, [](const auto& s) { return s.is_forward(); });
+    csv_writer.write_value(SampleRecordingValues::Field::DataSource, snoop, [](const auto& s) { return s.is_transfer_from_peer(); });
+
+    csv_writer.write_value(SampleRecordingValues::Field::DataAccessMisalignPenalty, sample.data_access().is_misalign_penalty());
+    csv_writer.write_value(SampleRecordingValues::Field::DataAccessWidth, sample.data_access().access_width());
+    csv_writer.write_value(SampleRecordingValues::Field::DataPageSize, sample.data_access().page_size());
   }
 
   file_stream << std::flush;

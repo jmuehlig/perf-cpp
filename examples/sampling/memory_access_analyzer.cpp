@@ -74,6 +74,7 @@ main()
 
   /// 4) Get all the recorded samples.
   const auto samples = sampler.result();
+  samples.to_csv("memory.csv");
 
   /// 5) Map the samples to data type instances.
   const auto result = data_analyzer.map(samples);

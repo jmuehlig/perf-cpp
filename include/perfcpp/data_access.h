@@ -441,7 +441,7 @@ public:
    * Set the page size backing the accessed memory.
    * @param page_size Page size in bytes.
    */
-  void page_size(const std::uint64_t page_size) noexcept { _data_page_site = page_size; }
+  void page_size(const std::uint64_t page_size) noexcept { _data_page_size = page_size; }
 
   /**
    * @return Type of the access.
@@ -535,7 +535,7 @@ public:
   /**
    * @return Backing memory page size.
    */
-  [[nodiscard]] std::optional<std::uint64_t> page_size() const noexcept { return _data_page_site; }
+  [[nodiscard]] std::optional<std::uint64_t> page_size() const noexcept { return _data_page_size; }
 
 private:
   std::optional<AccessType> _access_type;
@@ -548,7 +548,27 @@ private:
   std::optional<Snoop> _snoop{ std::nullopt };
   std::optional<bool> _is_misalign_penalty{ std::nullopt };
   std::optional<std::uint8_t> _access_width{ std::nullopt };
-  std::optional<std::uint64_t> _data_page_site{ std::nullopt };
+  std::optional<std::uint64_t> _data_page_size{ std::nullopt };
 };
+
+/**
+ * Convert AccessType to its string representation.
+ *
+ * @param type The access type to convert.
+ * @return String representation of the access type.
+ */
+[[nodiscard]] inline std::string
+to_string(const DataAccess::AccessType type)
+{
+  switch (type) {
+    case DataAccess::AccessType::Load:
+      return "load";
+    case DataAccess::AccessType::Store:
+      return "store";
+    case DataAccess::AccessType::SoftwarePrefetch:
+      return "sw_prefetch";
+  }
+  return "unknown";
+}
 
 } // namespace perf
