@@ -259,7 +259,8 @@ private:
   void decode_latency(std::uint32_t latency, Sample& sample) const noexcept;
 
   /**
-   * Decodes and sets the data access and/or instruction latency (based on the underlying hardware) from multiple latency values (coming from PERF_SAMPLE_WEIGHT_STRUCT).
+   * Decodes and sets the data access and/or instruction latency (based on the underlying hardware) from multiple
+   * latency values (coming from PERF_SAMPLE_WEIGHT_STRUCT).
    *
    * @param latency Latency value to decode.
    * @param sample Sample to write the latency to.

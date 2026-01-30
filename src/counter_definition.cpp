@@ -99,7 +99,8 @@ perf::CounterDefinition::counter(const std::string& name) const noexcept
 
   /// Scan all PMUs of parent counter definition.
   if (this->_parent_counter_definition != nullptr) {
-    if (auto parent_event_configurations = this->_parent_counter_definition->counter(name); !parent_event_configurations.empty()) {
+    if (auto parent_event_configurations = this->_parent_counter_definition->counter(name);
+        !parent_event_configurations.empty()) {
       std::move(parent_event_configurations.begin(),
                 parent_event_configurations.end(),
                 std::back_inserter(event_configurations));
