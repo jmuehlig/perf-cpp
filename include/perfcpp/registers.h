@@ -3,6 +3,7 @@
 #include <bitset>
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -320,5 +321,334 @@ private:
     return std::nullopt;
   }
 };
+
+/**
+ * Convert ABI to its string representation.
+ *
+ * @param abi The ABI to convert.
+ * @return String representation of the ABI.
+ */
+[[nodiscard]] inline std::string
+to_string(const ABI abi)
+{
+  switch (abi) {
+    case ABI::None:
+      return "none";
+    case ABI::Regs32:
+      return "32bit";
+    case ABI::Regs64:
+      return "64bit";
+    default:
+      return "unknown";
+  }
+}
+
+/**
+ * Convert x86 register to its string representation.
+ *
+ * @param reg The register to convert.
+ * @return String representation of the register.
+ */
+[[nodiscard]] inline std::string
+to_string(const Registers::x86 reg)
+{
+  switch (reg) {
+    case Registers::x86::AX:
+      return "ax";
+    case Registers::x86::BX:
+      return "bx";
+    case Registers::x86::CX:
+      return "cx";
+    case Registers::x86::DX:
+      return "dx";
+    case Registers::x86::SI:
+      return "si";
+    case Registers::x86::DI:
+      return "di";
+    case Registers::x86::BP:
+      return "bp";
+    case Registers::x86::SP:
+      return "sp";
+    case Registers::x86::IP:
+      return "ip";
+    case Registers::x86::FLAGS:
+      return "flags";
+    case Registers::x86::CS:
+      return "cs";
+    case Registers::x86::SS:
+      return "ss";
+    case Registers::x86::DS:
+      return "ds";
+    case Registers::x86::ES:
+      return "es";
+    case Registers::x86::FS:
+      return "fs";
+    case Registers::x86::GS:
+      return "gs";
+    case Registers::x86::R8:
+      return "r8";
+    case Registers::x86::R9:
+      return "r9";
+    case Registers::x86::R10:
+      return "r10";
+    case Registers::x86::R11:
+      return "r11";
+    case Registers::x86::R12:
+      return "r12";
+    case Registers::x86::R13:
+      return "r13";
+    case Registers::x86::R14:
+      return "r14";
+    case Registers::x86::R15:
+      return "r15";
+    case Registers::x86::XMM0:
+      return "xmm0";
+    case Registers::x86::XMM1:
+      return "xmm1";
+    case Registers::x86::XMM2:
+      return "xmm2";
+    case Registers::x86::XMM3:
+      return "xmm3";
+    case Registers::x86::XMM4:
+      return "xmm4";
+    case Registers::x86::XMM5:
+      return "xmm5";
+    case Registers::x86::XMM6:
+      return "xmm6";
+    case Registers::x86::XMM7:
+      return "xmm7";
+    case Registers::x86::XMM8:
+      return "xmm8";
+    case Registers::x86::XMM9:
+      return "xmm9";
+    case Registers::x86::XMM10:
+      return "xmm10";
+    case Registers::x86::XMM11:
+      return "xmm11";
+    case Registers::x86::XMM12:
+      return "xmm12";
+    case Registers::x86::XMM13:
+      return "xmm13";
+    case Registers::x86::XMM14:
+      return "xmm14";
+    case Registers::x86::XMM15:
+      return "xmm15";
+    default:
+      return "unknown";
+  }
+}
+
+/**
+ * Convert ARM register to its string representation.
+ *
+ * @param reg The register to convert.
+ * @return String representation of the register.
+ */
+[[nodiscard]] inline std::string
+to_string(const Registers::arm reg)
+{
+  switch (reg) {
+    case Registers::arm::R0:
+      return "r0";
+    case Registers::arm::R1:
+      return "r1";
+    case Registers::arm::R2:
+      return "r2";
+    case Registers::arm::R3:
+      return "r3";
+    case Registers::arm::R4:
+      return "r4";
+    case Registers::arm::R5:
+      return "r5";
+    case Registers::arm::R6:
+      return "r6";
+    case Registers::arm::R7:
+      return "r7";
+    case Registers::arm::R8:
+      return "r8";
+    case Registers::arm::R9:
+      return "r9";
+    case Registers::arm::R10:
+      return "r10";
+    case Registers::arm::FP:
+      return "fp";
+    case Registers::arm::IP:
+      return "ip";
+    case Registers::arm::SP:
+      return "sp";
+    case Registers::arm::LR:
+      return "lr";
+    case Registers::arm::PC:
+      return "pc";
+    case Registers::arm::MAX:
+      return "max";
+    default:
+      return "unknown";
+  }
+}
+
+/**
+ * Convert ARM64 register to its string representation.
+ *
+ * @param reg The register to convert.
+ * @return String representation of the register.
+ */
+[[nodiscard]] inline std::string
+to_string(const Registers::arm64 reg)
+{
+  switch (reg) {
+    case Registers::arm64::X0:
+      return "x0";
+    case Registers::arm64::X1:
+      return "x1";
+    case Registers::arm64::X2:
+      return "x2";
+    case Registers::arm64::X3:
+      return "x3";
+    case Registers::arm64::X4:
+      return "x4";
+    case Registers::arm64::X5:
+      return "x5";
+    case Registers::arm64::X6:
+      return "x6";
+    case Registers::arm64::X7:
+      return "x7";
+    case Registers::arm64::X8:
+      return "x8";
+    case Registers::arm64::X9:
+      return "x9";
+    case Registers::arm64::X10:
+      return "x10";
+    case Registers::arm64::X11:
+      return "x11";
+    case Registers::arm64::X12:
+      return "x12";
+    case Registers::arm64::X13:
+      return "x13";
+    case Registers::arm64::X14:
+      return "x14";
+    case Registers::arm64::X15:
+      return "x15";
+    case Registers::arm64::X16:
+      return "x16";
+    case Registers::arm64::X17:
+      return "x17";
+    case Registers::arm64::X18:
+      return "x18";
+    case Registers::arm64::X19:
+      return "x19";
+    case Registers::arm64::X20:
+      return "x20";
+    case Registers::arm64::X21:
+      return "x21";
+    case Registers::arm64::X22:
+      return "x22";
+    case Registers::arm64::X23:
+      return "x23";
+    case Registers::arm64::X24:
+      return "x24";
+    case Registers::arm64::X25:
+      return "x25";
+    case Registers::arm64::X26:
+      return "x26";
+    case Registers::arm64::X27:
+      return "x27";
+    case Registers::arm64::X28:
+      return "x28";
+    case Registers::arm64::X29:
+      return "x29";
+    case Registers::arm64::LR:
+      return "lr";
+    case Registers::arm64::SP:
+      return "sp";
+    case Registers::arm64::PC:
+      return "pc";
+    case Registers::arm64::MAX:
+      return "max";
+    case Registers::arm64::VG:
+      return "vg";
+    default:
+      return "unknown";
+  }
+}
+
+/**
+ * Convert RISC-V register to its string representation.
+ *
+ * @param reg The register to convert.
+ * @return String representation of the register.
+ */
+[[nodiscard]] inline std::string
+to_string(const Registers::riscv reg)
+{
+  switch (reg) {
+    case Registers::riscv::PC:
+      return "pc";
+    case Registers::riscv::RA:
+      return "ra";
+    case Registers::riscv::SP:
+      return "sp";
+    case Registers::riscv::GP:
+      return "gp";
+    case Registers::riscv::TP:
+      return "tp";
+    case Registers::riscv::T0:
+      return "t0";
+    case Registers::riscv::T1:
+      return "t1";
+    case Registers::riscv::T2:
+      return "t2";
+    case Registers::riscv::S0:
+      return "s0";
+    case Registers::riscv::S1:
+      return "s1";
+    case Registers::riscv::A0:
+      return "a0";
+    case Registers::riscv::A1:
+      return "a1";
+    case Registers::riscv::A2:
+      return "a2";
+    case Registers::riscv::A3:
+      return "a3";
+    case Registers::riscv::A4:
+      return "a4";
+    case Registers::riscv::A5:
+      return "a5";
+    case Registers::riscv::A6:
+      return "a6";
+    case Registers::riscv::A7:
+      return "a7";
+    case Registers::riscv::S2:
+      return "s2";
+    case Registers::riscv::S3:
+      return "s3";
+    case Registers::riscv::S4:
+      return "s4";
+    case Registers::riscv::S5:
+      return "s5";
+    case Registers::riscv::S6:
+      return "s6";
+    case Registers::riscv::S7:
+      return "s7";
+    case Registers::riscv::S8:
+      return "s8";
+    case Registers::riscv::S9:
+      return "s9";
+    case Registers::riscv::S10:
+      return "s10";
+    case Registers::riscv::S11:
+      return "s11";
+    case Registers::riscv::T3:
+      return "t3";
+    case Registers::riscv::T4:
+      return "t4";
+    case Registers::riscv::T5:
+      return "t5";
+    case Registers::riscv::T6:
+      return "t6";
+    default:
+      return "unknown";
+  }
+}
 
 }
