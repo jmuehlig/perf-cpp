@@ -54,6 +54,10 @@ main()
 
   /// Get all the recorded samples.
   auto samples = sampler.result();
+
+  samples.to_csv("samples_memory_address.csv");
+  std::cout << "Wrote samples to `samples_memory_address.csv`." << std::endl;
+
   const auto count_samples_before_filter = samples.size();
 
   /// Filter out samples without data source (AMD samples all instructions, not only data-related).

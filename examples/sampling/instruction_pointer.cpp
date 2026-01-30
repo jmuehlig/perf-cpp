@@ -46,8 +46,8 @@ main()
   /// Get all the recorded samples.
   const auto samples = sampler.result();
 
-  std::cout << "\nWrite " << samples.size() << " samples to 'instruction_pointer_samples.csv'." << std::endl;
-  samples.to_csv("instruction_pointer_samples.csv");
+  samples.to_csv("samples_instruction_pointer.csv");
+  std::cout << "Wrote samples to `samples_instruction_pointer.csv`." << std::endl;
 
   auto symbol_resolver = perf::SymbolResolver{};
 

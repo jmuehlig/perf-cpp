@@ -51,6 +51,8 @@ main()
 
   /// Get all the recorded samples.
   const auto samples = sampler.result();
+  samples.to_csv("samples_performance_counters.csv");
+  std::cout << "Wrote samples to `samples_performance_counters.csv`." << std::endl;
 
   /// Print the first samples.
   const auto count_show_samples = std::min<std::size_t>(samples.size(), 40U);
