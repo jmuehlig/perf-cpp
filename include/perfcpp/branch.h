@@ -9,7 +9,11 @@ namespace perf {
 /**
  * Branch types that can be filtered when recording branches via sampling.
  */
+#if defined(PERFCPP_NO_SAMPLE_BRANCH_CALL) || defined(PERFCPP_NO_SAMPLE_BRANCH_IND_JUMP)
 enum class BranchType : std::uint64_t
+#else
+enum class BranchType : std::uint16_t
+#endif
 {
   None = 0ULL,
 
