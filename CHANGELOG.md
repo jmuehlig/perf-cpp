@@ -1,6 +1,7 @@
 # *perf-cpp*: Changelog
 
 ## v0.12.6 (WIP)
+- **CSV Export**: Samples can now be exported to CSV format using `SampleResult::to_csv()`, enabling custom analysis with statistical tools, spreadsheets, or data processing pipelines (see the [documentation](docs/analyzing-samples-with-csv.md)).
 - **Fine-Grained Sampling Configuration**: The sampling API now provides more granular control over which data fields are recorded. Previously coarse-grained options have been split into specific setters, allowing precise selection of hardware-specific metrics. See the [sampling documentation](docs/sampling.md) for more information. New setters include:
   - **Physical Instruction Pointer** (*AMD IBS Fetch PMU* only)
   - **Instruction Type** (*AMD IBS Op PMU* for `Return` and `Branch` types)
@@ -33,7 +34,7 @@ This update simplifies the handling of counter definitions by introducing a defa
 - **Default Counter Definitions**: Supplying a user-defined `perf::CounterDefinition` to each `perf::EventCounter` or `perf::Sampler` is no longer required. If none is provided, a default instance is used automatically. Custom definitions now extend the default set of events instead of duplicating them.
 
 ## v0.12.2
-- **Metric Functions**: Metrics now support built-in functions such as `ratio(A, B)` and `sum(A, B, C, ...)`, enabling more expressive and reusable formulas (see the [documentation](docs/metrics.md#functions)).
+- **Metric Functions**: Metrics now support built-in functions such as `ratio(A, B)` and `sum(A, B, C, ...)`, enabling more expressive and reusable formulas (see the [documentation](docs/metrics.md#built-in-functions)).
 - **Optimized Compile-time Event Injection**: The generated runtime event registration class is now only created if it does not already exist, reducing unnecessary recompilation.
 - **Improved Live Event Accuracy**: Live event values now account for partial runtime durations via time scaling, improving accuracy when counters were not active for the full measurement window.
 
@@ -50,7 +51,7 @@ This release expands symbolic analysis capabilities, introduces FlameGraph gener
 - **Symbol Resolution**: Instruction pointers captured during sampling can now be resolved to function names using `perf::SymbolResolver` (see the [documentation](docs/sampling-symbols-and-flamegraphs.md#translating-instruction-pointers-into-symbols)).
 - **FlameGraph Export**: Sampling data can be converted into formats compatible with visualization tools such as [Brendan Gregg's FlameGraph](https://github.com/brendangregg/FlameGraph), [Speedscope](https://www.speedscope.app/), and [flamegraph.com](https://flamegraph.com/) using `perf::analyzer::FlameGraphGenerator` (see the [documentation](docs/sampling-symbols-and-flamegraphs.md#translating-sampler-results-into-flame-graphs)).
 - **Built-in Event Definitions**: A set of `x86`-specific hardware events is now bundled in [events/x86](events/x86) and can be loaded at runtime using `perf::CounterDefinition`. This serves as an alternative to the `make perf-list` target.
-- **Compile-time Event Injection**: Processor-specific event definitions can now be embedded directly at build time by configuring CMake with `-DGEN_PROCESSOR_EVENTS=1`. These are immediately available via `perf::CounterDefinition` (see the [documentation](docs/counters.md#generating-processor-specific-events-at-compile-time)).
+- **Compile-time Event Injection**: Processor-specific event definitions can now be embedded directly at build time by configuring CMake with `-DGEN_PROCESSOR_EVENTS=1`. These are immediately available via `perf::CounterDefinition` (see the [documentation](docs/counters.md#auto-generating-events-at-compile-time)).
 - **Automatic Event Discovery**: Additional event types—including RAPL energy counters and AMD IO MMU events—are now automatically detected during the creation of a `perf::CounterDefinition` instance ([issue #6](https://github.com/jmuehlig/perf-cpp/issues/6)).
 
 ## v0.11.1
@@ -76,10 +77,10 @@ The previous flat API is still available but deprecated and will be removed in `
 * Removed deprecated warnings about the sampling interface (and the *old* sampling interface).
 * New feature: Access interim results from counters without stopping the counter using [live counters](docs/recording-live-events.md).
 * New feature: Sampling the user stack (see the [documentation](docs/sampling.md#user-stack)).
-* New feature: Create custom metrics using expressions, e.g., `"instructions/cycles"` (see the [documentation](docs/metrics.md#using-formulas)).
+* New feature: Create custom metrics using expressions, e.g., `"instructions/cycles"` (see the [documentation](docs/metrics.md#formula-based-metrics)).
 * New feature: Use [metric](docs/metrics.md) when sampling [counter values](docs/sampling.md#counter-values).
 * New feature: Control scheduling of events to *physical* hardware counters (see the [documentation](docs/recording.md#control-scheduling-of-events-to-hardware-counters)).
-* New feature: Added time events (e.g., `seconds`, `milliseconds`, etc.) as *virtual* counters (see the [documentation](docs/counters.md#built-in-events)).
+* New feature: Added time events (e.g., `seconds`, `milliseconds`, etc.) as *virtual* counters (see the [documentation](docs/counters.md#working-with-built-in-events)).
 
 ## v0.8.3
 * Fixed multiple compatibility issues where the code relied on Linux kernel features that might not available on different versions.

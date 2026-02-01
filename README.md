@@ -80,8 +80,12 @@ sampler.start();
 code_to_profile(); /// <-- Samples recorded while execution
 sampler.stop();
 
-/// Print the samples to the console
 const auto samples = sampler.result();
+
+/// Materialize samples as CSV ...
+samples.to_csv("samples.csv");
+
+/// ... or print the samples to the console
 for (const auto& record : samples)
 {
     const auto timestamp = record.metadata().timestamp().value();
@@ -147,11 +151,13 @@ cmake --build build --target examples
     - [**Metrics**](docs/metrics.md):  Learn how to combine hardware events into meaningful metrics for clearer performance insights.
     - [**Live Access**](docs/recording-live-events.md): See how events can be accessed without stopping the recording, ideal for profiling tight loops and small functions.
 - **Recording Samples**
-    - [**Basics**](docs/sampling.md): Understand sampling mechanisms, which data to record, and how to access the results.
-    - [**Parallel and Multithreaded**](docs/sampling-parallel.md): Learn how to record samples in multithreaded workloads.
-    - [**Use the Linux Perf Tool to Analyze Recorded Samples**](docs/analyzing-samples-with-perf-report.md): See how samples recorded via *perf-cpp* can be analyzed with `perf [mem] report`.
-    - [**Translating Instruction Pointers into Symbols and Samples into flame graphs**](docs/sampling-symbols-and-flamegraphs.md): See how to translate instruction pointers into function names and prepare sampling results to transform them into flame graphs (e.g., using [FlameGraph](https://github.com/brendangregg/FlameGraph)).
-    - [**Analyzing Memory Access Patterns**](docs/analyzing-memory-access-patterns.md): See how to link memory sampling data to specific data objects to profile detailed memory access characteristics.
+    - [**Basics**](docs/sampling.md): Configure sampling triggers, select data to record, and access results.
+    - [**Parallel and Multithreaded**](docs/sampling-parallel.md): Record samples across multiple threads and CPU cores.
+- **Analyzing Samples**
+    - [**CSV Export**](docs/analyzing-samples-with-csv.md): Export samples for analysis with statistical tools, spreadsheets, or custom scripts.
+    - [**Linux Perf Tools**](docs/analyzing-samples-with-perf-report.md): Analyze samples with `perf report` and `perf mem report`.
+    - [**Flame Graphs**](docs/sampling-symbols-and-flamegraphs.md): Translate instruction pointers to symbols and generate flame graphs.
+    - [**Memory Access Patterns**](docs/analyzing-memory-access-patterns.md): Link samples to data objects for per-instance memory profiling.
 - [**Built-in and Hardware-specific Events**](docs/counters.md): Discover built-in events and learn how to define new ones tailored to your hardware.
 - [**Perf Paranoid**](docs/perf-paranoid.md): Learn how to configure perf permissions.
 
