@@ -1,7 +1,6 @@
+#include "perfcpp/hardware_info.h"
 #include <algorithm>
 #include <perfcpp/sample_result.h>
-
-#include "perfcpp/hardware_info.h"
 
 void
 perf::SampleResult::filter(std::function<bool(const Sample&)> filter)
@@ -133,6 +132,13 @@ perf::SampleResult::to_csv(std::string&& file_name, const char delimiter, const 
   /// Header: Throttle
   csv_writer.write_header(SampleRecordingValues::Field::Throttle, "is_throttle");
   csv_writer.write_header(SampleRecordingValues::Field::Throttle, "is_unthrottle");
+
+  /// Header: Loss event (if any sample contains a loss count).
+  const auto has_loss_event = std::any_of(
+    this->_samples.begin(), this->_samples.end(), [](const auto& sample) { return sample.count_loss().has_value(); });
+  if (has_loss_event) {
+    file_stream << ",loss_count";
+  }
 
   /// Samples
   for (const auto& sample : this->_samples) {
@@ -345,6 +351,11 @@ perf::SampleResult::to_csv(std::string&& file_name, const char delimiter, const 
       SampleRecordingValues::Field::Throttle, throttle, [](const auto& t) { return t.is_throttle(); });
     csv_writer.write_value(
       SampleRecordingValues::Field::Throttle, throttle, [](const auto& t) { return t.is_unthrottle(); });
+
+    /// Loss event (if any sample contains a loss count).
+    if (has_loss_event) {
+      file_stream << "," << sample.count_loss().value_or(0U);
+    }
   }
 
   file_stream << std::flush;
