@@ -45,7 +45,7 @@ for version in "${VERSIONS[@]}"; do
 
     # Configure with overridden kernel version
     echo "Configuring..."
-    if ! cmake . -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS} -DPERFCPP_TEST_LINUX_VERSION_CODE=$VERSION_CODE" -DBUILD_EXAMPLES=1; then
+    if ! cmake . -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS} -DPERFCPP_TEST_LINUX_VERSION_CODE=$VERSION_CODE" -DBUILD_EXAMPLES=1 -DBUILD_TESTS=0; then
         echo ""
         echo "ERROR: Configuration failed for kernel version $version"
         exit 1
@@ -53,7 +53,7 @@ for version in "${VERSIONS[@]}"; do
 
     # Build
     echo "Building..."
-    if ! make examples; then
+    if ! make examples -j8; then
         echo ""
         echo "ERROR: Build failed for kernel version $version"
         exit 1
