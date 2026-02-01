@@ -127,7 +127,7 @@ public:
   [[nodiscard]] bool is_context_switch_out() const noexcept
   {
 #ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3
-    return _header->misc & PERF_RECORD_MISC_SWITCH_OUT;
+    return static_cast<bool>(_header->misc & PERF_RECORD_MISC_SWITCH_OUT);
 #else
     return false;
 #endif
@@ -135,7 +135,7 @@ public:
   [[nodiscard]] bool is_context_switch_out_preempt() const noexcept
   {
 #ifndef PERFCPP_NO_RECORD_MISC_SWITCH_OUT_PREEMPT /// Preempt flag of switch events is supported since Linux 4.3
-    return _header->misc & PERF_RECORD_MISC_SWITCH_OUT_PREEMPT;
+    return static_cast<bool>(_header->misc & PERF_RECORD_MISC_SWITCH_OUT_PREEMPT);
 #else
     return false;
 #endif

@@ -580,8 +580,8 @@ perf::SampleDecoder::decode_data_access_snoop(const std::uint64_t snoop_code,
 #ifndef PERFCPP_NO_MEM_SNOOPX /// Snoopx was introduced in Linux 4.14.0
     if (snoopx_code > 0) {
 #ifndef PERFCPP_NO_MEM_SNOOPX_PEER /// Snoopx Peer was introduced in Linux 6.1.0
-      snoop.is_forward(snoopx_code & PERF_MEM_SNOOPX_PEER);
-      snoop.is_transfer_from_peer(snoopx_code & PERF_MEM_SNOOPX_PEER);
+      snoop.is_forward(static_cast<bool>(snoopx_code & PERF_MEM_SNOOPX_PEER));
+      snoop.is_transfer_from_peer(static_cast<bool>(snoopx_code & PERF_MEM_SNOOPX_PEER));
 #endif
     }
 #endif
@@ -655,7 +655,7 @@ perf::SampleDecoder::decode_data_access_source_and_remote(const perf_mem_data_sr
 
   /// Set the remote flag, depending on the available information.
 #ifndef PERFCPP_NO_MEM_REMOTE // Remote field is supported since Linux 4.14
-  data_access_source.is_remote(perf_data_source.mem_remote & PERF_MEM_REMOTE_REMOTE);
+  data_access_source.is_remote(static_cast<bool>(perf_data_source.mem_remote & PERF_MEM_REMOTE_REMOTE));
 #else /// Use lvl before Linux 4.14
   data_access_source.is_remote(static_cast<bool>(perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM1) ||
                                static_cast<bool>(perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM2) ||

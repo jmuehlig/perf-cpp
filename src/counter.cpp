@@ -277,7 +277,7 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled,
     /// Set sampled fields.
     attribute.branch_sample_type = sample_recording_values.branch_mask();
 #ifndef PERFCPP_NO_SAMPLE_MAX_STACK /// Max sample stack is only supported since Linux 4.8
-    attribute.sample_max_stack = max_callstack_size.value_or(0U);
+    attribute.sample_max_stack = sample_recording_values.max_call_stack();
 #endif
     attribute.sample_regs_user = sample_recording_values.user_registers().mask();
     attribute.sample_regs_intr = sample_recording_values.kernel_registers().mask();
