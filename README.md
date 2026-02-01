@@ -4,24 +4,30 @@
 
 [Quick Start](#quick-start) | [How to Build](#building) | [Documentation](#full-documentation) | [System Requirements](#system-requirements) 
 
-**perf-cpp** embeds Linux's hardware performance monitoring directly into your code, letting you profile exactly what matters and process the results in your application.
-Tools like [Linux Perf](https://perfwiki.github.io/main/), [Intel® VTune™](https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html), and [AMD uProf](https://www.amd.com/en/developer/uprof.html) are powerful but monitor entire programs – and high-performance applications need surgical precision.
+**perf-cpp** lets you profile for specific parts of your code, *not the entire program*.
+
+Tools like [Linux Perf](https://perfwiki.github.io/main/), [Intel® VTune™](https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html), and [AMD uProf](https://www.amd.com/en/developer/uprof.html) profile everything: application startup, configuration parsing, data loading, and all your helper functions.
+**perf-cpp** is different: place `start()` and `stop()` **around exactly the code you want to measure**. 
+Profile one sorting algorithm. 
+Measure cache misses in your hash table lookup. 
+Compare two memory allocators. 
+*Skip all the noise.*
 
 ## What can perf-cpp do?
-Built around Linux's powerful [*perf subsystem*](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), **perf-cpp** provides a clean interface for *counting* and *sampling* hardware events – without the complexity of low-level APIs.
+Built around Linux's [*perf subsystem*](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), **perf-cpp** lets you count and sample hardware events for specific code blocks:
 
-- **Measure exactly what you want** – utilize *performance counters* to count hardware events, similar to `perf stat`, but around specific code paths, not an entire binary ([documentation](docs/recording.md)). 
-- **Calculate metrics** such as *cycles per instruction* and *cache miss to access ratio* based on hardware events and timing ([documentation](docs/metrics.md)). 
-- **Low-latency performance counters access** without starting/stopping the counters, for micro-benchmarks or adaptive tuning ([documentation](docs/recording-live-events.md)).
-- **Record instruction and memory samples**, just like `perf [mem] record` – but from inside your application ([documentation](docs/sampling.md)).
-- **Correlate samples with data structures and symbols** to generate [per-class access statistics](docs/analyzing-memory-access-patterns.md) and [flame graphs](docs/sampling-symbols-and-flamegraphs.md).
-- Mix built-in events (e.g., *cycles*, *instructions*, *cache misses*, ...) with processor-specific counters ([documentation](docs/counters.md)).
+- **Count hardware events** like `perf stat`, but only around the code you care about, *not the entire binary* ([documentation](docs/recording.md))
+- **Calculate metrics** like cycles per instruction or cache miss ratios from the counters ([documentation](docs/metrics.md))
+- **Read counter values without stopping** for low-overhead measurements in tight loops ([documentation](docs/recording-live-events.md))
+- **Sample instructions and memory accesses** like `perf [mem] record`, but targeted at specific functions ([documentation](docs/sampling.md))
+- **Export and analyze results** in your code: [write samples to CSV](docs/analyzing-samples-with-csv.md), [generate flame graphs](docs/sampling-symbols-and-flamegraphs.md), or [correlate memory accesses with specific data structures](docs/analyzing-memory-access-patterns.md)
+- **Mix built-in and processor-specific events** like cycles, cache misses, or vendor PMU features ([documentation](docs/counters.md))
 
 See various **[practical examples](examples/README.md)** and the **[documentation](#full-documentation)** for more details.
 
 ## Quick Start
 ### Record Hardware Event Statistics
-Recording hardware event statistics operates much like `perf stat`: it quantifies critical events–such as executed *instructions*, CPU *cycles*, and *cache misses*–throughout a code segment's execution.
+Count hardware events like `perf stat`—instructions, cycles, cache misses—while your code runs.
 
 ```cpp
 #include <perfcpp/event_counter.h>
@@ -54,11 +60,11 @@ cache-misses: 1.35633e+07
 ```
 
 > [!NOTE]
-> For additional insights please refer to the guides on **[recording event statistics](docs/recording.md)** and **[event statistics on multiple CPUs/threads](docs/recording-parallel.md)**. 
-> Also, check out the **[hardware events](docs/counters.md)** documentation for details on both built-in and processor-specific events.
+> See the guides on **[recording event statistics](docs/recording.md)** and **[event statistics on multiple CPUs/threads](docs/recording-parallel.md)**.
+> Check out the **[hardware events](docs/counters.md)** documentation for built-in and processor-specific events.
 
 ### Record Samples
-Recording samples functions much like `perf [mem] record`: it captures execution snapshots, e.g., the *instruction pointer*, executing *CPU*, and *timestamp*, at regular intervals (here every `50,000`th CPU cycle).
+Record snapshots like `perf [mem] record`—instruction pointer, CPU, timestamp—every 50,000 cycles.
 
 ```cpp
 #include <perfcpp/sampler.h>
@@ -82,7 +88,7 @@ sampler.stop();
 
 const auto samples = sampler.result();
 
-/// Materialize samples as CSV ...
+/// Materialize samples as CSV (-> analyze with python etc) ...
 samples.to_csv("samples.csv");
 
 /// ... or print the samples to the console
@@ -108,13 +114,13 @@ Time = 365449131312005 | CPU = 8 | Instruction = 0x64af7417c75c
 ```
 
 > [!NOTE]
-> For additional details–such as the types of data that can be included in samples–please consult the **[sampling guide](docs/sampling.md)**.
-> Additionally, consult the **[sampling on multiple CPUs/threads guide](docs/sampling-parallel.md)** for instructions on parallel sampling. 
+> See the **[sampling guide](docs/sampling.md)** for what data you can record.
+> Also check out the **[sampling on multiple CPUs/threads guide](docs/sampling-parallel.md)** for parallel sampling. 
 
 ### More Examples
-We include a collection of [examples](examples/README.md) demonstrating the functionality and interface of *perf-cpp* in the `examples/` directory, including
-- examples for counting hardware events (`examples/statistics`)
-- and for sampling (`examples/sampling`).
+We have [examples](examples/README.md) showing how *perf-cpp* works in the `examples/` directory:
+- counting hardware events (`examples/statistics`)
+- sampling (`examples/sampling`)
 
 ## Building
 *perf-cpp* is designed as a library (static or shared) that can be linked to your application.
@@ -141,29 +147,29 @@ cmake --build build --target examples
 ```
 
 > [!NOTE]
-> Further information and detailed building instructions (e.g., how to integrate into *CMake* projects) are available in the **[building guide](docs/build.md)**.
+> See the **[building guide](docs/build.md)** for how to integrate *perf-cpp* into *CMake* projects.
 
 ## Full Documentation
-- [**Building**](docs/build.md): Integrate *perf-cpp* seamlessly into your C++ projects.
+- [**Building**](docs/build.md): Integrate *perf-cpp* into your C++ projects.
 - **Counting Performance Events**
-    - [**Basics**](docs/recording.md): Master recording hardware event statistics directly within your application.
-    - [**Parallel and Multithreaded**](docs/recording-parallel.md): Learn how to monitor events across threads and CPU cores.
-    - [**Metrics**](docs/metrics.md):  Learn how to combine hardware events into meaningful metrics for clearer performance insights.
-    - [**Live Access**](docs/recording-live-events.md): See how events can be accessed without stopping the recording, ideal for profiling tight loops and small functions.
+    - [**Basics**](docs/recording.md): Record hardware event statistics directly in your application (like `perf stat` but fine-grained).
+    - [**Parallel and Multithreaded**](docs/recording-parallel.md): Monitor events across threads and CPU cores.
+    - [**Metrics**](docs/metrics.md): Combine hardware events into metrics for better analysis.
+    - [**Live Access**](docs/recording-live-events.md): Read counters without stopping, great for tight loops.
 - **Recording Samples**
-    - [**Basics**](docs/sampling.md): Configure sampling triggers, select data to record, and access results.
+    - [**Basics**](docs/sampling.md): Record samples for specific code paths (like `perf record` and `perf mem record` but fine-grained).
     - [**Parallel and Multithreaded**](docs/sampling-parallel.md): Record samples across multiple threads and CPU cores.
 - **Analyzing Samples**
     - [**CSV Export**](docs/analyzing-samples-with-csv.md): Export samples for analysis with statistical tools, spreadsheets, or custom scripts.
     - [**Linux Perf Tools**](docs/analyzing-samples-with-perf-report.md): Analyze samples with `perf report` and `perf mem report`.
     - [**Flame Graphs**](docs/sampling-symbols-and-flamegraphs.md): Translate instruction pointers to symbols and generate flame graphs.
     - [**Memory Access Patterns**](docs/analyzing-memory-access-patterns.md): Link samples to data objects for per-instance memory profiling.
-- [**Built-in and Hardware-specific Events**](docs/counters.md): Discover built-in events and learn how to define new ones tailored to your hardware.
-- [**Perf Paranoid**](docs/perf-paranoid.md): Learn how to configure perf permissions.
+- [**Built-in and Hardware-specific Events**](docs/counters.md): Built-in events and how to add new ones for your CPU.
+- [**Perf Paranoid**](docs/perf-paranoid.md): Configure perf permissions.
 
 ## Further Reading
-- **[Examples](examples/README.md)**: Learn how to set up different features from code-examples.
-- **[Changelog](CHANGELOG.md)**: Stay updated with the latest changes and improvements.
+- **[Examples](examples/README.md)**: See how to set up different features.
+- **[Changelog](CHANGELOG.md)**: See what's new.
 
 ## System Requirements
 - *Clang* / *GCC* with support for **C++17** features.
@@ -181,18 +187,18 @@ Alternatively, you can email me: `jan.muehlig@tu-dortmund.de`.
 ---
 
 ## Further PMU-related Projects
-Below is a non-exhaustive list of some other valuable profiling projects:
+Other profiling tools:
 
-- [PAPI](https://github.com/icl-utk-edu/papi) offers access not only to CPU performance counters but also to a variety of other hardware components including GPUs, I/O systems, and more.
-- [Likwid](https://github.com/RRZE-HPC/likwid) is a collection of several command line tools for benchmarking, including an extensive [wiki](https://github.com/RRZE-HPC/likwid/wiki).
-- [PerfEvent](https://github.com/viktorleis/perfevent) provides lightweight access to performance counters, facilitating streamlined performance monitoring.
-- Intel's [Instrumentation and Tracing Technology](https://github.com/intel/ittapi) allows applications to manage the collection of trace data effectively when used in conjunction with [Intel VTune Profiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html).
-- For those who prefer a more hands-on approach, the [perf_event_open](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) system call can be utilized directly without any wrappers.
+- [PAPI](https://github.com/icl-utk-edu/papi) monitors CPU counters, GPUs, I/O, and more.
+- [Likwid](https://github.com/RRZE-HPC/likwid) is a set of command-line tools for benchmarking with an extensive [wiki](https://github.com/RRZE-HPC/likwid/wiki).
+- [PerfEvent](https://github.com/viktorleis/perfevent) is a lightweight wrapper for performance counters.
+- Intel's [Instrumentation and Tracing Technology](https://github.com/intel/ittapi) lets you control [Intel VTune Profiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html) from your code.
+- Want to go lower-level? Use [perf_event_open](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) directly.
 
 ## Resources about (Perf-) Profiling
-This is a non-exhaustive list of academic research papers and blog articles (feel free to add to it, e.g., via pull request – also your own work).
+Papers and articles about profiling (feel free to add your own via pull request):
 
-### Academical Papers
+### Academic Papers
 - [Quantitative Evaluation of Intel PEBS Overhead for Online System-Noise Analysis](https://soramichi.jp/pdf/ROSS2017.pdf) (2017)
 - [Analyzing memory accesses with modern processors](https://dl.acm.org/doi/abs/10.1145/3399666.3399896) (2020)
 - [Precise Event Sampling on AMD Versus Intel: Quantitative and Qualitative Comparison](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10068807&tag=1) (2023)
