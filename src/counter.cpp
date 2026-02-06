@@ -243,6 +243,7 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled, const Config&
   attribute.config1 = this->_config.configs()[1U];
   attribute.config2 = this->_config.configs()[2U];
   attribute.disabled = is_disabled;
+  attribute.pinned = configuration.is_pinned();
 
   attribute.inherit = configuration.is_include_child_threads();
   attribute.exclude_kernel = !configuration.is_include_kernel();
@@ -250,6 +251,7 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled, const Config&
   attribute.exclude_hv = !configuration.is_include_hypervisor();
   attribute.exclude_idle = !configuration.is_include_idle();
   attribute.exclude_guest = !configuration.is_include_guest();
+  attribute.exclude_host = !configuration.is_include_host();
 
   return attribute;
 }
@@ -557,6 +559,9 @@ perf::Counter::to_string(const bool is_group_leader,
   if (this->_event_attribute.disabled > 0U) {
     stream << "        disabled: " << this->_event_attribute.disabled << "\n";
   }
+  if (this->_event_attribute.pinned > 0U) {
+    stream << "        pinned: " << this->_event_attribute.pinned << "\n";
+  }
   if (this->_event_attribute.inherit > 0U) {
     stream << "        inherit: " << this->_event_attribute.inherit << "\n";
   }
@@ -574,6 +579,9 @@ perf::Counter::to_string(const bool is_group_leader,
   }
   if (this->_event_attribute.exclude_guest > 0U) {
     stream << "        exclude_guest: " << this->_event_attribute.exclude_guest << "\n";
+  }
+  if (this->_event_attribute.exclude_host > 0U) {
+    stream << "        exclude_host: " << this->_event_attribute.exclude_host << "\n";
   }
 #ifndef PERFCPP_NO_RECORD_SWITCH /// Context switch is supported since Linux 4.3
   if (this->_event_attribute.context_switch > 0U) {

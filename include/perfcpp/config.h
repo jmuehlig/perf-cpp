@@ -165,6 +165,16 @@ public:
   [[nodiscard]] bool is_include_guest() const noexcept { return _is_include_guest; }
 
   /**
+   * @return True if host-activity will be monitored, false otherwise.
+   */
+  [[nodiscard]] bool is_include_host() const noexcept { return _is_include_host; }
+
+  /**
+   * @return True if pinning enabled, false otherwise.
+   */
+  [[nodiscard]] bool is_pinned() const noexcept { return _is_pinned; }
+
+  /**
    * @return True if debug mode is enabled, false otherwise.
    */
   [[nodiscard]] bool is_debug() const noexcept { return _is_debug; }
@@ -270,9 +280,25 @@ public:
    *
    * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/perf-paranoid.md#adjusting-monitoring-configuration
    *
-   * @param is_include_guest Flag indicating that guest-activity should be monitored.
+   * @param is_include_host Flag indicating that guest-activity should be monitored.
    */
-  void include_guest(const bool is_include_guest) noexcept { _is_include_guest = is_include_guest; }
+  void include_guest(const bool is_include_host) noexcept { _is_include_guest = is_include_host; }
+
+  /**
+   * If set, host-activity will be monitored.
+   *
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/perf-paranoid.md#adjusting-monitoring-configuration
+   *
+   * @param is_include_host Flag indicating that guest-activity should be monitored.
+   */
+  void include_host(const bool is_include_host) noexcept { _is_include_host = is_include_host; }
+
+  /**
+   * If pinned is set to true (false by default), events will be kept on CPU if possible.
+   *
+   * @param is_pinned If set to true, events will be kept on CPU (if possible).
+   */
+  void is_pinned(const bool is_pinned) noexcept { _is_pinned = is_pinned; }
 
   /**
    * If debug is set to true (false by default), the counter configuration will be dumped to the console upon opening
@@ -345,6 +371,9 @@ private:
   bool _is_include_hypervisor{ true };
   bool _is_include_idle{ true };
   bool _is_include_guest{ true };
+  bool _is_include_host {true};
+
+  bool _is_pinned {false};
 
   bool _is_debug{ false };
 

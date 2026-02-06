@@ -16,6 +16,9 @@
   - **Data Access Misalignment Penalty** (*AMD IBS Op PMU* only)
   - **MHB/MAB Allocations** (*AMD IBS Op PMU* only)
   - **Auxiliary Values**
+- Added `perf::Config::include_host(bool)` to enable excluding host events when counting hardware events in virtual machines.
+- Added `perf::Config::is_pinned(bool)` to enable pinning events to the PMU.
+
 
 ## v0.12.5
 - **Bugfix**: The library could not compile for specific Linux kernels (see [#10](https://github.com/jmuehlig/perf-cpp/issues/10)).

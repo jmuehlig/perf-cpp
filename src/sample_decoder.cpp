@@ -57,8 +57,10 @@ perf::SampleDecoder::decode(const std::vector<std::vector<std::byte>>& sample_bu
       if (entry.is_sample_event()) { /// Read sample event.
         samples.push_back(this->decode_sample_event(
           std::move(entry), has_amd_ibs_op_pmu, has_amd_ibs_fetch_pmu, requested_event_set, event_group));
-      } else if (entry.is_loss_event()) { /// Read lost event.
-        samples.push_back(this->decode_loss_event(std::move(entry)));
+      } else if (entry.is_lost_samples_event()) { /// Read lost event.
+        samples.push_back(this->decode_lost_samples_event(std::move(entry), false));
+      } else if (entry.is_lost_event()) { /// Read lost event.
+        samples.push_back(this->decode_lost_samples_event(std::move(entry), true));
       } else if (entry.is_context_switch_event()) { /// Read context switch event.
         samples.push_back(this->decode_context_switch_event(std::move(entry)));
       } else if (entry.is_cgroup_event()) { /// Read cgroup event.
@@ -877,10 +879,15 @@ perf::SampleDecoder::decode_tlb_page_size(const std::uint8_t code) noexcept
 }
 
 perf::Sample
-perf::SampleDecoder::decode_loss_event(SampleIterator&& entry) const noexcept
+perf::SampleDecoder::decode_lost_samples_event(SampleIterator&& entry, const bool is_contains_event_id) const noexcept
 {
   auto sample = Sample{};
   sample.metadata().mode(entry.mode());
+
+  /// Skip the sample id.
+  if (is_contains_event_id) {
+    entry.skip<std::uint64_t>();
+  }
 
   /// Read the loss.
   sample.count_loss(entry.read<std::uint64_t>());
