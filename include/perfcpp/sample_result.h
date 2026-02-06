@@ -153,6 +153,13 @@ public:
    */
   void to_csv(std::string&& file_name, char delimiter = ',', char list_delimiter = ';') const;
 
+  /**
+   * Writes the sample results as flamegraphs input to the given file.
+   *
+   * @param file_name File to write the sample results in a format that can be read by flame graph generators.
+   */
+  void to_flamegraphs(std::string&& file_name) const;
+
 private:
   /// List of values recorded by the sample. These values are represented in the samples.
   SampleRecordingValues _sample_recording_values;

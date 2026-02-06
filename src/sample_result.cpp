@@ -1,6 +1,7 @@
 #include "perfcpp/hardware_info.h"
 #include <algorithm>
 #include <perfcpp/sample_result.h>
+#include <perfcpp/analyzer/flame_graph_generator.h>
 
 void
 perf::SampleResult::filter(std::function<bool(const Sample&)> filter)
@@ -359,4 +360,11 @@ perf::SampleResult::to_csv(std::string&& file_name, const char delimiter, const 
   }
 
   file_stream << std::flush;
+}
+
+void
+perf::SampleResult::to_flamegraphs(std::string&& file_name) const
+{
+  auto flame_graph_generator = analyzer::FlameGraphGenerator{};
+  flame_graph_generator.map(this->_samples, std::move(file_name));
 }

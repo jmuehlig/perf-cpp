@@ -46,8 +46,7 @@ main()
   const auto samples = sampler.result(true);
 
   /// Translate into frame graph entries.
-  auto flame_graph_generator = perf::analyzer::FlameGraphGenerator{};
-  flame_graph_generator.map(samples, "flamegraphs.txt");
+  samples.to_flamegraphs("flamegraphs.txt");
 
   std::cout << "Wrote samples into flamegraphs.txt" << std::endl;
   std::cout << "You can upload the flamgraphs.txt here: https://flamegraph.com/" << std::endl;

@@ -45,6 +45,7 @@ set(PERF_CPP_SRC
     src/sample_result.cpp
     src/sample_recording_values.cpp
     src/util/table.cpp
+    src/util/callchain_trie.cpp
     src/mmap_buffer.cpp
     src/symbol_resolver.cpp
     src/record_file_writer.cpp
