@@ -26,7 +26,7 @@ main()
   /// and latency).
   sampler.values().logical_memory_address(true).data_source(true).data_access_latency(true);
   if (perf::HardwareInfo::is_amd()) {
-    sampler.values().raw(true);
+    sampler.values().instruction_latency(true).data_tlb_latency(true).mhb_allocations(true);
   }
 
   /// Create random access benchmark.

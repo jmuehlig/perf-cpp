@@ -99,7 +99,7 @@ main()
   const auto result = event_counter.result();
 
   /// Print the metrics as table.
-  std::cout << "\nResults as table:\n" << result.to_string() << std::endl;
+  std::cout << "\n" << result.to_string() << std::endl;
 
   return 0;
 }

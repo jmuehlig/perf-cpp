@@ -51,7 +51,7 @@ auto sampler = perf::Sampler{};
 /// Configure sampling - example with instruction pointer and timing
 sampler.trigger("cycles", perf::Period{ 50000U });
 sampler.values()
-    .instruction_pointer(true)
+    .logical_instruction_pointer(true)
     .timestamp(true)
     .cpu_id(true);
 
@@ -80,7 +80,7 @@ auto sampler = perf::MultiCoreSampler{
 /// Configure sampling triggers and values
 sampler.trigger("cycles", perf::Period{ 50000U });
 sampler.values()
-    .instruction_pointer(true)
+    .logical_instruction_pointer(true)
     .timestamp(true)
     .cpu_id(true);
 

@@ -25,7 +25,7 @@ The `perf::SymbolResolver` allows to translate logical instruction pointers into
 
 auto sampler = perf::Sampler{ };
 sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 50000U });
-sampler.values().instruction_pointer(true);
+sampler.values().logical_instruction_pointer(true);
 
 sampler.start();
 /// Run some code
@@ -77,17 +77,15 @@ For more condensed outputs, it is also recommended to include the *timestamp* an
 auto sampler = perf::Sampler{ };
 sampler.trigger("cycles");
 sampler.values()
-    .instruction_pointer(true)
+    .logical_instruction_pointer(true)
     .callchain(true)
     .timestamp(true);
 ```
 
 #### Generating Flamegraphs
-After sampling, the `perf::analyzer::FlameGraphGenerator` can map the samples into a format that can be read by common used flamegraph generators:
+After sampling, the samples can be mapped into a format that can be read by common used flamegraph generators:
 
 ```cpp
-#include <perfcpp/analyzer/flame_graph_generator.h>
-
 sampler.start();
 /// Code to sample will be called here...
 sampler.stop();
@@ -97,8 +95,7 @@ sampler.stop();
 const auto samples = sampler.result(/*sort = */ true);
 
 /// Translate into a frame graph format and write the result to "flagraphs.txt".
-auto flame_graph_generator = perf::analyzer::FlameGraphGenerator{};
-flame_graph_generator.map(samples, "flamegraphs.txt");
+samples.to_flamegraphs("flamegraphs.txt");
 ```
 
 After writing the output, we can use that file as an input to flamegraph generators, for example:

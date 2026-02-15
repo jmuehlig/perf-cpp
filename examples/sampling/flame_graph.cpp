@@ -47,9 +47,8 @@ main()
 
   /// Translate into frame graph entries.
   samples.to_flamegraphs("flamegraphs.txt");
-
   std::cout << "Wrote samples into flamegraphs.txt" << std::endl;
-  std::cout << "You can upload the flamgraphs.txt here: https://flamegraph.com/" << std::endl;
+  std::cout << "You can upload the flamegraphs.txt here: https://flamegraph.com/" << std::endl;
 
   /// Close the sampler.
   /// Note that the sampler can only be closed after reading the samples.

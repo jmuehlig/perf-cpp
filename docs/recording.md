@@ -16,6 +16,8 @@ The library also supports [multi-threading and multi-CPU counting](recording-par
 - [Binding the Event Counter to a Specific CPU Core](#binding-the-event-counter-to-a-specific-cpu-core)
 - [Binding the Event Counter to a Specific Process](#binding-the-event-counter-to-a-specific-process)
 - [Control Scheduling of Events to Hardware Counters](#control-scheduling-of-events-to-hardware-counters)
+- [Adjusting Hardware Settings to the Underlying System](#adjusting-hardware-settings-to-the-underlying-system)
+- [Further Configuration Settings](#further-configuration-settings)
 - [Example: Analyzing Random Access Patterns](#example-analyzing-random-access-patterns)
 - [Troubleshooting Counter Configurations](#troubleshooting-counter-configurations)
 ---
@@ -180,6 +182,29 @@ config.num_events_per_physical_counter(1U); // Each counter tracks just one even
 
 auto event_counter = perf::EventCounter{ config };
 ```
+
+## Further Configuration Settings
+The `perf::Config` class provides additional settings to control the monitoring scope and behavior:
+
+```cpp
+auto config = perf::Config{};
+config.include_child_threads(true); /// Also monitor child threads.
+config.include_kernel(false);       /// Exclude kernel-activity from monitoring.
+config.is_pinned(true);             /// Pin events to the CPU.
+
+auto event_counter = perf::EventCounter{ config };
+```
+
+| Setting                       | Default | Description                                                                                                                                                                                                            |
+|-------------------------------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `include_child_threads(bool)` | `false` | If enabled, child threads spawned by the recording thread will also be monitored.                                                                                                                                      |
+| `include_kernel(bool)`        | `true`  | If enabled, events triggered by kernel-activity are included. Disabling this can be useful when only user-space performance matters or when the [perf paranoid setting](perf-paranoid.md) restricts kernel monitoring. |
+| `include_user(bool)`          | `true`  | If enabled, events triggered by user-space activity are included.                                                                                                                                                      |
+| `include_hypervisor(bool)`    | `true`  | If enabled, events triggered by hypervisor-activity are included.                                                                                                                                                      |
+| `include_idle(bool)`          | `true`  | If enabled, events triggered during CPU idle periods are included.                                                                                                                                                     |
+| `include_guest(bool)`         | `true`  | If enabled, events triggered by guest (virtual machine) activity are included.                                                                                                                                         |
+| `include_host(bool)`          | `true`  | If enabled, events triggered by host activity are included.                                                                                                                                                            |
+| `is_pinned(bool)`             | `false` | If enabled, events are kept on the CPU if possible, preventing them from being multiplexed off.                                                                                                                        |
 
 ---
 
