@@ -40,32 +40,47 @@ main()
   std::cout << "libperf-cpp example: Implementing new metrics." << std::endl;
 
   auto counter_definition = perf::CounterDefinition{};
+  auto metrics = std::vector<std::string>{};
 
   /// Define a metric that returns the number of cache misses per cache reference:
-  counter_definition.add("cache-misses-per-reference", "d_ratio(`cache-misses`, `cache-references`)");
+  if (!counter_definition.counter(std::string_view{ "cache-misses" }).empty() &&
+      !counter_definition.counter(std::string_view{ "cache-references" }).empty()) {
+    counter_definition.add("cache-misses-per-reference", "d_ratio(`cache-misses`, `cache-references`)");
+    metrics.push_back("cache-misses-per-reference");
+  }
 
   /// Define a metric that sums up all L1 loads:
-  counter_definition.add("l1-loads", "`L1-dcache-loads` + `L1-icache-loads`");
+  if (!counter_definition.counter(std::string_view{ "L1-dcache-loads" }).empty() &&
+      !counter_definition.counter(std::string_view{ "L1-icache-loads" }).empty()) {
+    counter_definition.add("l1-loads", "`L1-dcache-loads` + `L1-icache-loads`");
+    metrics.push_back("l1-loads");
+  }
 
   /// Define a metric that sums up all L1 load misses:
-  counter_definition.add("l1-load-misses", "sum(`L1-dcache-load-misses`, `L1-icache-load-misses`)");
+  if (!counter_definition.counter(std::string_view{ "L1-dcache-load-misses" }).empty() &&
+      !counter_definition.counter(std::string_view{ "L1-icache-load-misses" }).empty()) {
+    counter_definition.add("l1-load-misses", "sum(`L1-dcache-load-misses`, `L1-icache-load-misses`)");
+    metrics.push_back("l1-load-misses");
+  }
 
   /// Define a metric that calculates the ratio between L1 load misses and L1 loads:
-  counter_definition.add("l1-misses-per-load", "`l1-load-misses` / `l1-loads`");
+  if (!counter_definition.counter(std::string_view{ "L1-dcache-loads" }).empty() &&
+      !counter_definition.counter(std::string_view{ "L1-icache-loads" }).empty() &&
+      !counter_definition.counter(std::string_view{ "L1-dcache-load-misses" }).empty() &&
+      !counter_definition.counter(std::string_view{ "L1-icache-load-misses" }).empty()) {
+    counter_definition.add("l1-misses-per-load", "`l1-load-misses` / `l1-loads`");
+    metrics.push_back("l1-misses-per-load");
+  }
 
   /// Initialize the above defined metric that returns the number of branch misses per branch instruction.
   counter_definition.add(std::make_unique<BranchMissesPerBranchInstruction>());
+  metrics.push_back("branch-misses-per-branch-instruction");
 
   /// Initialize performance counters.
   auto event_counter = perf::EventCounter{ counter_definition };
 
-  /// Add the new defined metrics.
   try {
-    event_counter.add(std::vector<std::string>{ "cache-misses-per-reference",
-                                                "branch-misses-per-branch-instruction",
-                                                "l1-loads",
-                                                "l1-load-misses",
-                                                "l1-misses-per-load" });
+    event_counter.add(std::move(metrics));
   } catch (std::runtime_error& e) {
     std::cerr << e.what() << std::endl;
     return 1;
