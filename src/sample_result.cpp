@@ -4,60 +4,6 @@
 #include <perfcpp/sample_result.h>
 #include <perfcpp/util/callchain_trie.h>
 
-namespace {
-/**
- * Writes a JSON-escaped string (including surrounding quotes) to the stream.
- */
-void
-write_json_string(std::ofstream& stream, const std::string& str)
-{
-  stream << '"';
-  for (const auto character : str) {
-    switch (character) {
-      case '"':
-        stream << "\\\"";
-        break;
-      case '\\':
-        stream << "\\\\";
-        break;
-      case '\n':
-        stream << "\\n";
-        break;
-      case '\r':
-        stream << "\\r";
-        break;
-      case '\t':
-        stream << "\\t";
-        break;
-      default:
-        stream << character;
-    }
-  }
-  stream << '"';
-}
-
-/**
- * Builds a root-to-leaf address list from a sample's callchain and instruction pointer.
- * Reverses perf's leaf-to-root callchain order and appends the logical IP as the leaf.
- */
-std::vector<std::uintptr_t>
-build_callchain(const perf::Sample& sample)
-{
-  auto result = std::vector<std::uintptr_t>{};
-
-  if (const auto& callchain = sample.instruction_execution().callchain(); callchain.has_value()) {
-    result.reserve(callchain->size() + 1U);
-    result.assign(callchain->rbegin(), callchain->rend());
-  }
-
-  if (const auto ip = sample.instruction_execution().logical_instruction_pointer(); ip.has_value()) {
-    result.push_back(*ip);
-  }
-
-  return result;
-}
-}
-
 void
 perf::SampleResult::filter(std::function<bool(const Sample&)> filter)
 {
