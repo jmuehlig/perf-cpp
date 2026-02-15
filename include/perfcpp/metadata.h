@@ -15,7 +15,6 @@ public:
     Hypervisor,
     GuestKernel,
     GuestUser,
-    Unknown, /// DEPRECATED: Will be removed in v0.12
   };
 
   /**
