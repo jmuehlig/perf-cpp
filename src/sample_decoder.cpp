@@ -199,11 +199,11 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
       this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionLatency)) {
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
                                         /// Linux 5.12
-    const auto weight = static_cast<std::uint32_t>(entry.read<std::uint64_t>());
-    this->decode_latency(weight, sample);
-#else
     const auto weight = entry.read<perf_sample_weight>();
     this->decode_latency(std::make_tuple(weight.var1_dw, weight.var2_w, weight.var3_w), sample);
+#else
+    const auto weight = static_cast<std::uint32_t>(entry.read<std::uint64_t>());
+    this->decode_latency(weight, sample);
 #endif
   }
 
