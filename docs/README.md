@@ -14,6 +14,7 @@ Explore the sections below to gain insights and instructions tailored to your ne
 - **Sampling Techniques**
   - [Basics of Event Sampling](sampling.md)
   - [Multi-threading and Multi-CPU Event Sampling](sampling-parallel.md)
+  - [Exporting Samples to CSV format](analyzing-samples-with-csv.md)
   - [Use the Linux Perf Tool to Analyze Recorded Samples](analyzing-samples-with-perf-report.md)
   - [Symbols and Flamegraphs](sampling-symbols-and-flamegraphs.md)
   - [Analyzing Memory Access Patterns using Sampling](analyzing-memory-access-patterns.md)
