@@ -140,7 +140,7 @@ public:
     const auto references = result.get("cache-references");
 
     if (misses.has_value() && references.has_value()) {
-      return references.value() / misses.value();
+      return (references.value() - misses.value()) / references.value();
     }
 
     return std::nullopt;

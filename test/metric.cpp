@@ -80,7 +80,7 @@ TEST_CASE("calculating", "[Metric][CacheHitRatio]")
       std::make_pair("cache-references", 20U),
       std::make_pair("some-other-event", 500U) } };
     REQUIRE(chr_metric.calculate(counter_result).has_value());
-    REQUIRE(chr_metric.calculate(counter_result).value() == 2.);
+    REQUIRE(chr_metric.calculate(counter_result).value() == .5);
   }
 }
 
