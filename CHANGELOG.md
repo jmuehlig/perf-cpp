@@ -1,6 +1,6 @@
 # *perf-cpp*: Changelog
 
-## v0.12.6 (WIP)
+## v0.12.6
 - **CSV Export**: Samples can now be exported to CSV format using `SampleResult::to_csv()`, enabling custom analysis with statistical tools, spreadsheets, or data processing pipelines (see the [documentation](docs/analyzing-samples-with-csv.md)).
 - **Flamegraphs**: Samples can be exported to flamegraphs via `SampleResult::to_flamegraphs(std::string&&)` (see the [documentation](docs/sampling-symbols-and-flamegraphs.md)).
 - **Fine-Grained Sampling Configuration**: The sampling API now provides more granular control over which data fields are recorded. Previously coarse-grained options have been split into specific setters, allowing precise selection of hardware-specific metrics. See the [sampling documentation](docs/sampling.md) for more information. New setters include:
