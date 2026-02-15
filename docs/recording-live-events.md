@@ -69,12 +69,12 @@ auto end_values = std::vector<double>{/* cache-misses */ .0, /* cache-references
 
 for (auto i = 0U; i < runs; ++i) {
     /// Capture start values.
-    event_counter.live_results(start_values); 
+    event_counter.live_result(start_values); 
     
     /// Computation here...
     
     /// Capture end values after computation.
-    event_counter.live_results(end_values);  
+    event_counter.live_result(end_values);  
     
     std::cout << "Live Results: "
         << "cache-misses: " << end_values[0U] - start_values[0U] << ","

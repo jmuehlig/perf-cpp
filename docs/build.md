@@ -1,5 +1,5 @@
 # How to build and include *perf-cpp* in your project
-*perf-cpp* can be build manually or included into CMake projects.
+*perf-cpp* can be built manually or included into CMake projects.
 
 ## Table of Contents
 - [Building Manually](#building-manually)
@@ -82,7 +82,7 @@ cmake --build build --target examples
 The example binaries will be located in `build/examples/bin`.
 
 ### Building as a Dynamically Linked Library
-By default, *perf-cpp* is build as a **static** library.
+By default, *perf-cpp* is built as a **static** library.
 You can request to build a **shared** library with `-DBUILD_LIB_SHARED=1`:
 
 ```bash

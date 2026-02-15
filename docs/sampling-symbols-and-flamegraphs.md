@@ -33,7 +33,7 @@ sampler.stop();
 
 auto symbol_resolver = perf::SymbolResolver{};
 
-for (const auto& sample : sampler.results()) {
+for (const auto& sample : sampler.result()) {
   const auto instruction_pointer =   sample.instruction_execution().logical_instruction_pointer();
   if (instruction_pointer.has_value()) {
       
@@ -43,7 +43,7 @@ for (const auto& sample : sampler.results()) {
     /// Translate the symbol into a string.
     const auto symbol_name = symbol.has_value() ? symbol->to_string() : std::string{"??"};
 
-    std::cout " Instruction Pointer = 0x" << std::hex
+    std::cout << " Instruction Pointer = 0x" << std::hex
               << instruction_pointer.value() << std::dec
               << " | Symbol = " << symbol_name
               << "\n";
@@ -94,7 +94,7 @@ sampler.stop();
 /// (sorting via `true` flag is optional).
 const auto samples = sampler.result(/*sort = */ true);
 
-/// Translate into a frame graph format and write the result to "flagraphs.txt".
+/// Translate into a frame graph format and write the result to "flamegraphs.txt".
 samples.to_flamegraphs("flamegraphs.txt");
 ```
 

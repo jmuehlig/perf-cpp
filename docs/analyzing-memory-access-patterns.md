@@ -82,8 +82,8 @@ sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid, perf::Period{ 10
 /// Include addresses, data source, and latency.
 sampler.values()
     .logical_memory_address(true)
-    .data_src(true)
-    .weight_struct(true);
+    .data_source(true)
+    .data_access_latency(true);
 
 /// Run the workload while recording samples.
 sampler.start();

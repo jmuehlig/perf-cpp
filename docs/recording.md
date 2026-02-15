@@ -24,7 +24,7 @@ The library also supports [multi-threading and multi-CPU counting](recording-par
 
 ## Setting Up Event Counters
 Define the specific events you wish to record using the `perf::EventCounter` class.
-The `perf::EventCounter` instances requires a `perf::CounterDefinition` as a reference, containing all events, their configurations, and names.
+The `perf::EventCounter` instance requires a `perf::CounterDefinition` as a reference, containing all events, their configurations, and names.
 
 ```cpp
 #include <perfcpp/event_counter.h>
@@ -36,10 +36,6 @@ try {
     std::cerr << e.what() << std::endl;
 }
 ```
-
-> [!IMPORTANT] 
-> The `perf::CounterDefinition` instance is used to store event configurations (e.g., names) and passed as a reference.
-> Consequently, the instance needs to be alive while using the `EventCounter`.
 
 ## Initializing the Hardware Counters *(optional)*
 Optionally, preparing the hardware counters ahead of time to exclude configuration time from your measurements, though this is also handled automatically at the start if skipped:
@@ -100,7 +96,7 @@ To ultimately release resources such as file descriptors, consider closing the `
 event_counter.close();
 ```
 
-This action is optional and will occur automatically upon object deconstruction if `close()` is not invoked manually.
+This action is optional and will occur automatically upon object destruction if `close()` is not invoked manually.
 
 ## Control Scheduling of Events to Hardware Counters
 The number of *physical* hardware counters that can count low-level events is limited (around one handful on the most modern CPUs). 
@@ -138,7 +134,7 @@ config.cpu_core(5U); /// Bind to CPU core 5.
 To revert this and resume counting on all cores the thread executes on:
 
 ```cpp
-config.cpu_core(perf::CpuCore::Any); /// Count events an all CPU cores the thread is executed on.
+config.cpu_core(perf::CpuCore::Any); /// Count events on all CPU cores the thread is executed on.
 ```
 
 ## Binding the Event Counter to a Specific Process

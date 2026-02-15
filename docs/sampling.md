@@ -156,7 +156,7 @@ On AMD systems, the range of events that can trigger samples is more restricted:
 
 ## Precision
 Due to deeply pipelined processors, samples might not be precise, i.e., a sample might contain an instruction pointer or memory address that did not generate the overflow (&rarr; see [a blogpost on easyperf.net](https://easyperf.net/blog/2019/04/03/Precise-timing-of-machine-code-with-Linux-perf) and [the perf documentation](https://man7.org/linux/man-pages/man2/perf_event_open.2.html)).
-You can request a specific amount if skid through for each trigger, for example,
+You can request a specific amount of skid for each trigger, for example,
 
 ```cpp
 sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid);
@@ -204,7 +204,7 @@ You can also combine the configurations, for example, by
 sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{50000U});
 ```
 
-If you do not set any precision level through the `.trigger()` interface, you can control the *default* period of frequency through the sample config:
+If you do not set any precision level through the `.trigger()` interface, you can control the *default* period or frequency through the sample config:
 
 ```cpp
 auto sample_config = perf::SampleConfig{};
@@ -345,49 +345,49 @@ Note that `record.instruction_execution().hardware_transaction_abort()` returns 
 
 ### Data Access
 Provides information about memory, cache, and TLB behavior during data access.  
-All fields can be accessed via `record.data_source()`.  
+All fields can be accessed via `record.data_access()`.  
 Note that most fields are returned as `std::optional`.
 
 > [!IMPORTANT]
 > Sampling for memory accesses (memory address, cache information, etc.) is only supported using [**AMD's IBS Op PMU**](#ibs-op-pmu) and [**Intel PEBS `mem-load`/`mem-store` events**](#intel-processor-event-based-sampling).
 
-| Name                        | Description                                                                                          | How to record?                                        | How to access?                                    | Type                                      |
-|-----------------------------|------------------------------------------------------------------------------------------------------|-------------------------------------------------------|---------------------------------------------------|-------------------------------------------|
-| **Is load**                 | Indicates that the access was a load operation.                                                      | `sampler.values().data_source(true)`                  | `record.data_source().is_load()`                  | `bool`                                    |
-| **Is Store**                | Indicates that the access was a store operation.                                                     | `sampler.values().data_source(true)`                  | `record.data_source().is_store()`                 | `bool`                                    |
-| **Is Software Prefetch**    | Indicates that the access was a software prefetch ([**AMD's Op PMU**](#ibs-op-pmu) only).            | `sampler.values().instruction_type(true)`             | `record.data_source().is_software_prefetch()`     | `bool`                                    |
-| **Is Locked**               | Indicates that the sampled data access was a locked operation.                                       | `sampler.values().data_source(true)`                                      | `record.data_source().is_locked()`                    | `std::optional<bool>`                                                 |
-| **Logical Memory Address**  | The logical address of the accessed memory.                                                          | `sampler.values().logical_memory_address(true)`       | `record.data_source().logical_memory_address()`   | `std::optional<std::uintptr_t>`           |
-| **Physical Memory Address** | The physical address of the accessed memory (from Linux `4.13`).                                     | `sampler.values().physical_memory_address(true)`      | `record.data_source().physical_memory_address()`  | `std::optional<std::uintptr_t>`           |
-| **Source**                  | Provides information about the memory or cache source of the access.                                 | [See details below](#data-source)                     | `record.data_source().source()`                   | `std::optional<perf::DataAccess::Source>` |
-| **Latency**                 | Provides latency details for the data access.                                                        | [See details below](#data-latency)                    | `record.data_source().latency()`                  | `perf::DataAccess::Latency`               |
-| **TLB**                     | Provides TLB-related information for the access.                                                     | [See details below](#data-tlb)                        | `record.data_source().tlb()`                      | `perf::DataAccess::TLB`                   |
-| **Snoop**                   | Provides Snoop-related information for the access.                                                   | [See details below](#data-snoop)                      | `record.data_source().snoop()`                    | `std::optional<perf::DataAccess::Snoop>`  |
-| **Is Misalign Penalty**     | Indicates that the access incurred a misalignment penalty ([**AMD's Op PMU**](#ibs-op-pmu) only).    | `sampler.values().data_access_misalign_penalty(true)` | `record.data_source().is_misaligned_penalty()`    | `std::optional<bool>`                     |
-| **Access Width**            | The size (in bytes) of the accessed data ([**AMD's Op PMU**](#ibs-op-pmu) only).                     | `sampler.values().data_access_width(true)`            | `record.data_source().access_width()`             | `std::optional<std::uint8_t>`             |
-| **Data Page Size**          | The page size of the instruction pointer (from Linux `5.11`).                                        | `sampler.values().data_page_size(true)`               | `record.data_source().page_size()`                | `std::optional<std::uint64_t>`            |
+| Name                        | Description                                                                                          | How to record?                                        | How to access?                                   | Type                                      |
+|-----------------------------|------------------------------------------------------------------------------------------------------|-------------------------------------------------------|--------------------------------------------------|-------------------------------------------|
+| **Is load**                 | Indicates that the access was a load operation.                                                      | `sampler.values().data_source(true)`                  | `record.data_access().is_load()`                 | `bool`                                    |
+| **Is Store**                | Indicates that the access was a store operation.                                                     | `sampler.values().data_source(true)`                  | `record.data_access().is_store()`                | `bool`                                    |
+| **Is Software Prefetch**    | Indicates that the access was a software prefetch ([**AMD's Op PMU**](#ibs-op-pmu) only).            | `sampler.values().instruction_type(true)`             | `record.data_access().is_software_prefetch()`    | `bool`                                    |
+| **Is Locked**               | Indicates that the sampled data access was a locked operation.                                       | `sampler.values().data_source(true)`                  | `record.data_access().is_locked()`               | `std::optional<bool>`                                                 |
+| **Logical Memory Address**  | The logical address of the accessed memory.                                                          | `sampler.values().logical_memory_address(true)`       | `record.data_access().logical_memory_address()`  | `std::optional<std::uintptr_t>`           |
+| **Physical Memory Address** | The physical address of the accessed memory (from Linux `4.13`).                                     | `sampler.values().physical_memory_address(true)`      | `record.data_access().physical_memory_address()` | `std::optional<std::uintptr_t>`           |
+| **Source**                  | Provides information about the memory or cache source of the access.                                 | [See details below](#data-source)                     | `record.data_access().source()`                  | `std::optional<perf::DataAccess::Source>` |
+| **Latency**                 | Provides latency details for the data access.                                                        | [See details below](#data-latency)                    | `record.data_access().latency()`                 | `perf::DataAccess::Latency`               |
+| **TLB**                     | Provides TLB-related information for the access.                                                     | [See details below](#data-tlb)                        | `record.data_access().tlb()`                     | `perf::DataAccess::TLB`                   |
+| **Snoop**                   | Provides Snoop-related information for the access.                                                   | [See details below](#data-snoop)                      | `record.data_access().snoop()`                   | `std::optional<perf::DataAccess::Snoop>`  |
+| **Is Misalign Penalty**     | Indicates that the access incurred a misalignment penalty ([**AMD's Op PMU**](#ibs-op-pmu) only).    | `sampler.values().data_access_misalign_penalty(true)` | `record.data_access().is_misaligned_penalty()`   | `std::optional<bool>`                     |
+| **Access Width**            | The size (in bytes) of the accessed data ([**AMD's Op PMU**](#ibs-op-pmu) only).                     | `sampler.values().data_access_width(true)`            | `record.data_access().access_width()`            | `std::optional<std::uint8_t>`             |
+| **Data Page Size**          | The page size of the instruction pointer (from Linux `5.11`).                                        | `sampler.values().data_page_size(true)`               | `record.data_access().page_size()`               | `std::optional<std::uint64_t>`            |
 
 **Example:** [`examples/address_sampling.cpp`](../examples/sampling/memory_address.cpp)
 
 #### Data Source
 Provides detailed information about the memory or cache source involved in a data access.  
-Note that `record.data_source().source()` returns an `std::optional`.
+Note that `record.data_access().source()` returns an `std::optional`.
 
 | Name                              | Description                                                                                             | How to record?                             | How to access?                                                 | Type                          |
 |-----------------------------------|---------------------------------------------------------------------------------------------------------|--------------------------------------------|----------------------------------------------------------------|-------------------------------|
-| **Is L1 Hit**                     | Indicates that the access hit the L1 data cache (L1d).                                                  | `sampler.values().data_source(true)`       | `record.data_source().source()->is_l1_hit()`                   | `bool`                        |
-| **Is MHB Hit**                    | Indicates that the access hit the LFB (Intel) or MAB (AMD).                                             | `sampler.values().data_source(true)`       | `record.data_source().source()->is_mhb_hit()`                  | `std::optional<bool>`         |
-| **Number of Allocated MHB Slots** | The number of MAB (AMD) slots allocated at the time of sampling ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().mhb_allocations(true)`   | `record.data_source().source()->num_mhb_slots_allocated()`     | `std::optional<std::uint8_t>` |
-| **Is L2 Hit**                     | Indicates that the access hit the L2 cache.                                                             | `sampler.values().data_source(true)`       | `record.data_source().source()->is_l2_hit()`                   | `bool`                        |
-| **Is L3 Hit**                     | Indicates that the access hit the L3 cache.                                                             | `sampler.values().data_source(true)`       | `record.data_source().source()->is_l3_hit()`                   | `bool`                        |
-| **Is Memory Hit**                 | Indicates that the access missed all caches and was served from memory.                                 | `sampler.values().data_source(true)`       | `record.data_source().source()->is_memory_hit()`               | `bool`                        |
-| **Is Remote**                     | Indicates that the access was served by a remote core or node (cache or memory).                        | `sampler.values().data_source(true)`       | `record.data_source().source()->is_remote()`                   | `bool`                        |
-| **Is Same Node Remote Core**      | Indicates that the access was served by another core on the same node.                                  | `sampler.values().data_source(true)`       | `record.data_source().source()->is_same_node_remote_core()`    | `std::optional<bool>`         |
-| **Is Same Socket Remote Node**    | Indicates that the access was served by another node on the same socket.                                | `sampler.values().data_source(true)`       | `record.data_source().source()->is_same_socket_remote_node()`  | `std::optional<bool>`         |
-| **Is Same Board Remote Socket**   | Indicates that the access was served by another socket on the same board.                               | `sampler.values().data_source(true)`       | `record.data_source().source()->is_same_board_remote_socket()` | `std::optional<bool>`         |
-| **Is Remote Board**               | Indicates that the access was served by another board.                                                  | `sampler.values().data_source(true)`       | `record.data_source().source()->is_remote_board()`             | `std::optional<bool>`         |
-| **Is Uncachable Memory**          | Indicates that the access targeted uncachable memory.                                                   | `sampler.values().data_source(true)`       | `record.data_source().source()->is_uncachable_memory()`        | `std::optional<bool>`         |
-| **Is Write Combine Memory**       | Indicates that the access targeted write-combine memory.                                                | `sampler.values().data_source(true)`       | `record.data_source().source()->is_write_combine()`            | `std::optional<bool>`         |
+| **Is L1 Hit**                     | Indicates that the access hit the L1 data cache (L1d).                                                  | `sampler.values().data_source(true)`       | `record.data_access().source()->is_l1_hit()`                   | `bool`                        |
+| **Is MHB Hit**                    | Indicates that the access hit the LFB (Intel) or MAB (AMD).                                             | `sampler.values().data_source(true)`       | `record.data_access().source()->is_mhb_hit()`                  | `std::optional<bool>`         |
+| **Number of Allocated MHB Slots** | The number of MAB (AMD) slots allocated at the time of sampling ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().mhb_allocations(true)`   | `record.data_access().source()->num_mhb_slots_allocated()`     | `std::optional<std::uint8_t>` |
+| **Is L2 Hit**                     | Indicates that the access hit the L2 cache.                                                             | `sampler.values().data_source(true)`       | `record.data_access().source()->is_l2_hit()`                   | `bool`                        |
+| **Is L3 Hit**                     | Indicates that the access hit the L3 cache.                                                             | `sampler.values().data_source(true)`       | `record.data_access().source()->is_l3_hit()`                   | `bool`                        |
+| **Is Memory Hit**                 | Indicates that the access missed all caches and was served from memory.                                 | `sampler.values().data_source(true)`       | `record.data_access().source()->is_memory_hit()`               | `bool`                        |
+| **Is Remote**                     | Indicates that the access was served by a remote core or node (cache or memory).                        | `sampler.values().data_source(true)`       | `record.data_access().source()->is_remote()`                   | `bool`                        |
+| **Is Same Node Remote Core**      | Indicates that the access was served by another core on the same node.                                  | `sampler.values().data_source(true)`       | `record.data_access().source()->is_same_node_remote_core()`    | `std::optional<bool>`         |
+| **Is Same Socket Remote Node**    | Indicates that the access was served by another node on the same socket.                                | `sampler.values().data_source(true)`       | `record.data_access().source()->is_same_socket_remote_node()`  | `std::optional<bool>`         |
+| **Is Same Board Remote Socket**   | Indicates that the access was served by another socket on the same board.                               | `sampler.values().data_source(true)`       | `record.data_access().source()->is_same_board_remote_socket()` | `std::optional<bool>`         |
+| **Is Remote Board**               | Indicates that the access was served by another board.                                                  | `sampler.values().data_source(true)`       | `record.data_access().source()->is_remote_board()`             | `std::optional<bool>`         |
+| **Is Uncachable Memory**          | Indicates that the access targeted uncachable memory.                                                   | `sampler.values().data_source(true)`       | `record.data_access().source()->is_uncachable_memory()`        | `std::optional<bool>`         |
+| **Is Write Combine Memory**       | Indicates that the access targeted write-combine memory.                                                | `sampler.values().data_source(true)`       | `record.data_access().source()->is_write_combine()`            | `std::optional<bool>`         |
 
 #### Data Latency
 Provides latency measurements associated with data access operations.  
@@ -395,9 +395,9 @@ All fields are returned as `std::optional`.
 
 | Name             | Description                                                                                                                          | How to record?                               | How to access?                                  | Type                           |
 |------------------|--------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|-------------------------------------------------|--------------------------------|
-| **Cache Access** | The latency (in cycles) for completing the data access ([**Intel** `mem-load`](#intel-processor-event-based-sampling) trigger only). | `sampler.values().data_access_latency(true)` | `record.data_source().latency().cache_access()` | `std::optional<std::uint32_t>` |
-| **Cache Miss**   | The latency (in cycles) caused by an L1d cache miss ([**AMD's Op PMU**](#ibs-op-pmu) only).                                          | `sampler.values().data_access_latency(true)`             | `record.data_source().latency().cache_miss()`   | `std::optional<std::uint32_t>` |
-| **dTLB Refill**  | The latency (in cycles) for refilling the data TLB after a miss ([**AMD's Op PMU**](#ibs-op-pmu) only).                              | `sampler.values().data_tlb_latency(true)`    | `record.data_source().latency().dtlb_refill()`  | `std::optional<std::uint32_t>` |
+| **Cache Access** | The latency (in cycles) for completing the data access ([**Intel** `mem-load`](#intel-processor-event-based-sampling) trigger only). | `sampler.values().data_access_latency(true)` | `record.data_access().latency().cache_access()` | `std::optional<std::uint32_t>` |
+| **Cache Miss**   | The latency (in cycles) caused by an L1d cache miss ([**AMD's Op PMU**](#ibs-op-pmu) only).                                          | `sampler.values().data_access_latency(true)`             | `record.data_access().latency().cache_miss()`   | `std::optional<std::uint32_t>` |
+| **dTLB Refill**  | The latency (in cycles) for refilling the data TLB after a miss ([**AMD's Op PMU**](#ibs-op-pmu) only).                              | `sampler.values().data_tlb_latency(true)`    | `record.data_access().latency().dtlb_refill()`  | `std::optional<std::uint32_t>` |
 
 #### Data TLB
 Provides information about dTLB and STLB access behavior.  
@@ -405,10 +405,10 @@ All fields are returned as `std::optional`.
 
 | Name             | Description                                                                                           | How to record?                                | How to access?                              | Type                           |
 |------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------|---------------------------------------------|--------------------------------|
-| **Is L1 Hit**    | Indicates that the data access hit the L1 data TLB (dTLB).                                            | `sampler.values().data_source(true)`          | `record.data_source().tlb().is_l1_hit()`    | `std::optional<bool>`          |
-| **Is L2 Hit**    | Indicates that the data access hit the second-level TLB (STLB).                                       | `sampler.values().data_source(true)`          | `record.data_source().tlb().is_l2_hit()`    | `std::optional<bool>`          |
-| **L1 Page Size** | The page size of the translation associated with the dTLB hit ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().data_tlb_page_size(true)`   | `record.data_source().tlb().l1_page_size()` | `std::optional<std::uint64_t>` |
-| **L2 Page Size** | The page size of the translation associated with the STLB hit ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().data_tlb_page_size(true)`   | `record.data_source().tlb().l2_page_size()` | `std::optional<std::uint64_t>` |
+| **Is L1 Hit**    | Indicates that the data access hit the L1 data TLB (dTLB).                                            | `sampler.values().data_source(true)`          | `record.data_access().tlb().is_l1_hit()`    | `std::optional<bool>`          |
+| **Is L2 Hit**    | Indicates that the data access hit the second-level TLB (STLB).                                       | `sampler.values().data_source(true)`          | `record.data_access().tlb().is_l2_hit()`    | `std::optional<bool>`          |
+| **L1 Page Size** | The page size of the translation associated with the dTLB hit ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().data_tlb_page_size(true)`   | `record.data_access().tlb().l1_page_size()` | `std::optional<std::uint64_t>` |
+| **L2 Page Size** | The page size of the translation associated with the STLB hit ([**AMD's Op PMU**](#ibs-op-pmu) only). | `sampler.values().data_tlb_page_size(true)`   | `record.data_access().tlb().l2_page_size()` | `std::optional<std::uint64_t>` |
 
 > [!IMPORTANT]  
 > **Intel** systems do not distinguish between L1 and L2 TLB hits.  
@@ -420,10 +420,10 @@ All fields are returned as `std::optional`.
 
 | Name                      | Description                                                                 | How to record?                       | How to access?                                          | Type                  |
 |---------------------------|-----------------------------------------------------------------------------|--------------------------------------|---------------------------------------------------------|-----------------------|
-| **Is Hit**                | Indicates that the data access is a snoop hit (`true`) or a miss (`false`). | `sampler.values().data_source(true)` | `record.data_source().snoop()->is_hit()`                | `std::optional<bool>` |
-| **Is Hit Modified**       | `True` if the hit cache line is dirty.                                      | `sampler.values().data_source(true)` | `record.data_source().snoop()->is_hit_modified()`       | `std::optional<bool>` |
-| **Is Forward**            | Indicates that the cache line is forwarded.                                 | `sampler.values().data_source(true)` | `record.data_source().snoop()->is_fardwarded()`         | `std::optional<bool>` |
-| **Is Transfer from Peer** | Indicates that the cache line is transferred from another node.             | `sampler.values().data_source(true)` | `record.data_source().snoop()->is_transfer_from_peer()` | `std::optional<bool>` |
+| **Is Hit**                | Indicates that the data access is a snoop hit (`true`) or a miss (`false`). | `sampler.values().data_source(true)` | `record.data_access().snoop()->is_hit()`                | `std::optional<bool>` |
+| **Is Hit Modified**       | `True` if the hit cache line is dirty.                                      | `sampler.values().data_source(true)` | `record.data_access().snoop()->is_hit_modified()`       | `std::optional<bool>` |
+| **Is Forward**            | Indicates that the cache line is forwarded.                                 | `sampler.values().data_source(true)` | `record.data_access().snoop()->is_fardwarded()`         | `std::optional<bool>` |
+| **Is Transfer from Peer** | Indicates that the cache line is transferred from another node.             | `sampler.values().data_source(true)` | `record.data_access().snoop()->is_transfer_from_peer()` | `std::optional<bool>` |
 
 ### Counter Values
 Records hardware performance event values (e.g., `cycles`, `L1-dcache-loads`, etc.) and derived metrics at the time each sample is taken.  

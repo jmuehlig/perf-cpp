@@ -24,7 +24,9 @@ The `perf::MultiThreadEventCounter` class allows you to copy the measurement on 
 ```cpp
 #include <perfcpp/event_counter.h>
 
-auto multithread_event_counter = perf::MultiThreadEventCounter{};
+const auto count_threads = 4U;
+
+auto multithread_event_counter = perf::MultiThreadEventCounter{count_threads};
 try {
     multithread_event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
 } catch (std::runtime_error& e) {
@@ -86,7 +88,7 @@ To ultimately release resources such as file descriptors, consider closing the `
 multithread_event_counter.close();
 ```
 
-This action is optional and will occur automatically upon object deconstruction if `close()` is not invoked manually.
+This action is optional and will occur automatically upon object destruction if `close()` is not invoked manually.
 
 ---
 
@@ -114,7 +116,7 @@ try {
 auto threads = std::vector<std::thread>{};
 
 try {
-    event_counter.start()
+    event_counter.start();
 } catch (std::runtime_error& e) {
     std::cerr << e.what() << std::endl;
 }
@@ -161,7 +163,7 @@ To ultimately release resources such as file descriptors, consider closing the `
 event_counter.close();
 ```
 
-This action is optional and will occur automatically upon object deconstruction if `close()` is not invoked manually.
+This action is optional and will occur automatically upon object destruction if `close()` is not invoked manually.
 
 ---
 
@@ -176,8 +178,8 @@ Please note that you may record events of other applications running on that CPU
 ```cpp
 /// Create a list of (logical) cpu ids to record performance counters on.
 auto cpus_to_watch = std::vector<std::uint16_t>{};
-cpus_to_watch.add(0U);
-cpus_to_watch.add(1U);
+cpus_to_watch.push_back(0U);
+cpus_to_watch.push_back(1U);
 /// ... add more.
 ```
 
@@ -185,7 +187,7 @@ cpus_to_watch.add(1U);
 ```cpp
 #include <perfcpp/event_counter.h>
 
-auto multi_cpu_event_counter = perf::MultiCoreEventCounter{};
+auto multi_cpu_event_counter = perf::MultiCoreEventCounter{cpus_to_watch};
 try {
     multi_cpu_event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
 } catch (std::runtime_error& e) {
@@ -236,4 +238,4 @@ To ultimately release resources such as file descriptors, consider closing the `
 multi_cpu_event_counter.close();
 ```
 
-This action is optional and will occur automatically upon object deconstruction if `close()` is not invoked manually.
+This action is optional and will occur automatically upon object destruction if `close()` is not invoked manually.
