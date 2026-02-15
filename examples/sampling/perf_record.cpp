@@ -6,9 +6,10 @@
 int
 main()
 {
-  std::cout << "libperf-cpp example: Record perf samples including time, "
-               "logical memory address, latency, data source, and instruction and write as a perf data file `perf.dat`. "
-            << std::endl;
+  std::cout
+    << "libperf-cpp example: Record perf samples including time, "
+       "logical memory address, latency, data source, and instruction and write as a perf data file `perf.dat`. "
+    << std::endl;
 
   /// Initialize sampler.
   auto sampler = perf::Sampler{};
@@ -25,7 +26,14 @@ main()
 
   /// Setup which data will be included into samples (timestamp, virtual memory address, data source like L1d or RAM,
   /// latency, instruction address, thread id, and the callstack).
-  sampler.values().timestamp(true).logical_memory_address(true).data_source(true).data_access_latency(true).logical_instruction_pointer(true).thread_id(true).callchain(true);
+  sampler.values()
+    .timestamp(true)
+    .logical_memory_address(true)
+    .data_source(true)
+    .data_access_latency(true)
+    .logical_instruction_pointer(true)
+    .thread_id(true)
+    .callchain(true);
 
   /// Start sampling.
   try {
@@ -55,10 +63,8 @@ main()
   sampler.to_perf_file("perf.data");
 
   std::cout << "Wrote " << sampler.result().size() << " samples to `perf.data`."
-    << "\n    Run `perf report`     to show overhead per symbol"
-    << "\n    Run `perf mem report` to show overhead per data object"
-  << std::endl;
-
+            << "\n    Run `perf report`     to show overhead per symbol"
+            << "\n    Run `perf mem report` to show overhead per data object" << std::endl;
 
   /// Close the sampler.
   /// Note that the sampler can only be closed after reading the samples.

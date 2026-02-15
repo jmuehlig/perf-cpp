@@ -124,9 +124,8 @@ private:
    * @param path Accumulated call stack from root to the current node.
    * @param visitor Callback to invoke for nodes with count > 0.
    */
-  void for_each_stack(
-    node_id_t node_id,
-    std::vector<std::string>& path,
-    const std::function<void(const std::vector<std::string>&, std::uint64_t)>& visitor) const;
+  void for_each_stack(node_id_t node_id,
+                      std::vector<std::string>& path,
+                      const std::function<void(const std::vector<std::string>&, std::uint64_t)>& visitor) const;
 };
 }

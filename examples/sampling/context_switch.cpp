@@ -52,9 +52,8 @@ main()
 
   /// Filter out samples without context switch.
   samples.filter([](const auto& sample) {
-    return sample.metadata().cpu_id().has_value() &&
-                                        sample.metadata().timestamp().has_value() &&
-                                        sample.context_switch().has_value();
+    return sample.metadata().cpu_id().has_value() && sample.metadata().timestamp().has_value() &&
+           sample.context_switch().has_value();
   });
 
   /// Print the first samples.

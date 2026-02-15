@@ -90,10 +90,7 @@ public:
     return false;
 #endif
   }
-  [[nodiscard]] bool is_lost_event() const noexcept
-  {
-    return _header->type == PERF_RECORD_LOST;
-  }
+  [[nodiscard]] bool is_lost_event() const noexcept { return _header->type == PERF_RECORD_LOST; }
   [[nodiscard]] bool is_context_switch_event() const noexcept
   {
 #ifndef PERFCPP_NO_RECORD_SWITCH /// Switch events are supported since Linux 4.3
@@ -404,7 +401,8 @@ private:
    * @param is_contains_event_id If set, the entry contains the event ID field.
    * @return Sample containing the loss.
    */
-  [[nodiscard]] perf::Sample decode_lost_samples_event(SampleIterator&& entry, bool is_contains_event_id) const noexcept;
+  [[nodiscard]] perf::Sample decode_lost_samples_event(SampleIterator&& entry,
+                                                       bool is_contains_event_id) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a context switch sample.

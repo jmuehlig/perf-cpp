@@ -42,8 +42,8 @@ perf::analyzer::FlameGraphGenerator::map(
       ++j;
     }
 
-    const auto weight = mapper(samples.begin() + static_cast<std::ptrdiff_t>(i),
-                               samples.begin() + static_cast<std::ptrdiff_t>(j));
+    const auto weight =
+      mapper(samples.begin() + static_cast<std::ptrdiff_t>(i), samples.begin() + static_cast<std::ptrdiff_t>(j));
     result.emplace_back(this->_trie.path(leaf_ids[i]), weight);
     i = j;
   }

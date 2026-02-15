@@ -371,9 +371,9 @@ private:
   bool _is_include_hypervisor{ true };
   bool _is_include_idle{ true };
   bool _is_include_guest{ true };
-  bool _is_include_host {true};
+  bool _is_include_host{ true };
 
-  bool _is_pinned {false};
+  bool _is_pinned{ false };
 
   bool _is_debug{ false };
 

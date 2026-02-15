@@ -26,7 +26,12 @@ main()
 
   /// Setup which data will be included into samples (timestamp, virtual memory address, data source like L1d or RAM,
   /// and latency).
-  sampler.values().timestamp(true).logical_memory_address(true).data_source(true).data_access_latency(true).instruction_latency(true);
+  sampler.values()
+    .timestamp(true)
+    .logical_memory_address(true)
+    .data_source(true)
+    .data_access_latency(true)
+    .instruction_latency(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
@@ -62,7 +67,8 @@ main()
 
   /// Filter out samples without data source (AMD samples all instructions, not only data-related).
   samples.filter([](const auto& sample) {
-    return !sample.count_loss().has_value() && sample.data_access().source().has_value() && sample.data_access().logical_memory_address().value_or(0UL) != 0UL;
+    return !sample.count_loss().has_value() && sample.data_access().source().has_value() &&
+           sample.data_access().logical_memory_address().value_or(0UL) != 0UL;
   });
 
   /// Print the first samples.
