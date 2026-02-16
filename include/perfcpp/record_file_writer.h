@@ -31,9 +31,8 @@ private:
   /// Size of the bitmap using 8-byte fields.
   static constexpr auto FEATURE_BITMAP_SIZE = (FEATURE_BITS + 63U) / 64U;
 
-  /// Header feature constants
+  /// Header feature constant (matches Linux kernel's tools/perf/util/header.h enum)
   static constexpr std::uint8_t HEADER_BUILD_ID = 2U;
-  static constexpr std::uint8_t HEADER_SYMBOL = 6U;
 
   /// Standard 8-byte alignment for perf.data records
   static constexpr auto PERF_FILE_ALIGNMENT = 8U;
@@ -223,15 +222,6 @@ private:
    * @return Written build ids.
    */
   static std::optional<std::string> generate_build_ids_records(const std::vector<SymbolResolver::Module>& modules);
-
-  /**
-   * Generates symbol table records for all modules.
-   *
-   * @param modules List of modules to extract symbols from.
-   * @return Symbol table data in perf.data format.
-   */
-  [[nodiscard]] static std::optional<std::string> generate_symbol_records(
-    const std::vector<SymbolResolver::Module>& modules);
 
   /**
    * Writes MMAP records for process memory mappings.

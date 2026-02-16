@@ -42,9 +42,6 @@ perf::RecordFileWriter::write(const SampleRecordingValues& sampler_values,
     build_ids = RecordFileWriter::generate_build_ids_records(modules);
   }
 
-  /// Generate symbol records for all modules.
-  auto symbols = RecordFileWriter::generate_symbol_records(modules);
-
   /// Write MMAP2 and COMM records to dedicated buffers.
   auto mmap2_samples = RecordFileWriter::generate_module_records(
     std::move(modules), process_id, thread_id, timestamp, sample_id, stream_id, cpu_id);
@@ -66,12 +63,9 @@ perf::RecordFileWriter::write(const SampleRecordingValues& sampler_values,
   /// Event types section (size is empty by default).
   header.event_types.offset = header.data.offset + header.data.size;
 
-  /// Set feature bits for build ID and symbols.
+  /// Set feature bit for build ID.
   if (build_ids.has_value()) {
     RecordFileWriter::set_feature_bit(header.features, HEADER_BUILD_ID);
-  }
-  if (symbols.has_value()) {
-    RecordFileWriter::set_feature_bit(header.features, HEADER_SYMBOL);
   }
 
   /// Write the header.
@@ -99,25 +93,16 @@ perf::RecordFileWriter::write(const SampleRecordingValues& sampler_values,
     }
   }
 
-  /// Write feature sections, if we have any.
+  /// Write feature sections. The perf format requires all feature section headers (FileSection structs)
+  /// to be written contiguously first, followed by all feature data. perf reads all headers in a single
+  /// contiguous read (perf_header__process_sections in tools/perf/util/header.c).
   if (build_ids.has_value()) {
-    /// Write the BUILD_ID feature section header; the offset points to the position after the section.
     auto build_id_section = FileSection{};
-    build_id_section.size = build_ids->size();
     build_id_section.offset = static_cast<std::uint64_t>(output_stream.position()) + sizeof(FileSection);
+    build_id_section.size = build_ids->size();
 
-    /// Write section and build id data.
+    /// Write section header, then data.
     output_stream << build_id_section << std::move(build_ids.value());
-  }
-
-  if (symbols.has_value()) {
-    /// Write the SYMBOL feature section header; the offset points to the position after the section.
-    auto symbol_section = FileSection{};
-    symbol_section.size = symbols->size();
-    symbol_section.offset = static_cast<std::uint64_t>(output_stream.position()) + sizeof(FileSection);
-
-    /// Write section and symbol data.
-    output_stream << symbol_section << std::move(symbols.value());
   }
 }
 
@@ -163,46 +148,6 @@ perf::RecordFileWriter::generate_build_ids_records(const std::vector<SymbolResol
   }
 
   return output_stream.to_string();
-}
-
-std::optional<std::string>
-perf::RecordFileWriter::generate_symbol_records(const std::vector<SymbolResolver::Module>& modules)
-{
-  if (modules.empty()) {
-    return std::nullopt;
-  }
-
-  auto output_stream = BinaryStream{ std::ostringstream{ std::ios::binary } };
-
-  /// Process each module and extract symbols.
-  for (const auto& module : modules) {
-    auto symbols = SymbolResolver::parse_symbol_table(module);
-
-    /// Skip modules without symbols.
-    if (symbols.empty()) {
-      continue;
-    }
-
-    /// Write the DSO name (module path) with length prefix.
-    const auto dso_name_length = static_cast<std::uint32_t>(module.path().length() + 1U);
-    output_stream << dso_name_length << module.path() << '\0';
-
-    /// Write the number of symbols.
-    output_stream << static_cast<std::uint32_t>(symbols.size());
-
-    /// Write each symbol.
-    for (const auto& symbol : symbols) {
-      /// Write symbol name with length prefix.
-      const auto symbol_name_length = static_cast<std::uint32_t>(symbol.name().length() + 1U);
-      output_stream << symbol_name_length << symbol.name() << '\0';
-
-      /// Write symbol address and size.
-      output_stream << static_cast<std::uint64_t>(symbol.address()) << static_cast<std::uint64_t>(symbol.size());
-    }
-  }
-
-  auto result = output_stream.to_string();
-  return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }
 
 void
@@ -261,7 +206,6 @@ perf::RecordFileWriter::generate_module_records(std::vector<SymbolResolver::Modu
     auto device_major = 0U;
     auto device_minor = 0U;
     auto ino = static_cast<std::uint64_t>(0UL);
-    auto ino_generation = static_cast<std::uint64_t>(0UL);
 
     if (struct stat file_stat{}; ::stat(module.path().c_str(), &file_stat) == 0) {
       device_major = static_cast<std::uint32_t>(::major(file_stat.st_dev));
@@ -269,13 +213,15 @@ perf::RecordFileWriter::generate_module_records(std::vector<SymbolResolver::Modu
       ino = static_cast<std::uint64_t>(file_stat.st_ino);
     }
 
-    output_stream << device_major << device_minor << ino << ino_generation;
+    output_stream << device_major << device_minor << ino
+                  << static_cast<std::uint64_t>(0UL)
 
-    /// Write MMAP2 additional fields: prot, flags.
-    output_stream << static_cast<std::uint32_t>(PROT_READ | PROT_EXEC) << static_cast<std::uint32_t>(MAP_PRIVATE);
+                  /// Write MMAP2 additional fields: prot, flags.
+                  << static_cast<std::uint32_t>(PROT_READ | PROT_EXEC)
+                  << static_cast<std::uint32_t>(MAP_PRIVATE)
 
-    /// Write the filename with padding.
-    output_stream << module.path() << '\0';
+                  /// Write the filename with padding.
+                  << module.path() << '\0';
 
     /// Add padding to align to 8 bytes.
     if (const auto padding = aligned_filename_length - filename_length; padding > 0U) {
@@ -368,7 +314,7 @@ perf::RecordFileWriter::read_first_sample_id(const SampleRecordingValues& sample
     for (const auto& sample_counter : sample_data) {
       /// Scan all the buffers to find the first sample_id.
       for (const auto& buffer : sample_counter) {
-        auto iterator = std::uintptr_t(buffer.data());
+        auto iterator = reinterpret_cast<std::uintptr_t>(buffer.data());
         const auto end = iterator + buffer.size();
 
         /// Scan over all samples stored in the user-level buffer.
