@@ -213,6 +213,7 @@ int_misc.clears_count, 0x1ad
 int_misc.recovery_cycles, 0x1ad
 int_misc.unknown_branch_cycles, 0x40ad, 0x7
 int_misc.uop_dropping, 0x10ad
+int_uops_executed.2nd, 0x80b3
 int_uops_executed.all, 0xffb3
 int_uops_executed.ld, 0x1b3
 int_uops_executed.p0, 0x8b3
@@ -240,6 +241,7 @@ itlb_misses.walk_completed_2m_4m, 0x485
 itlb_misses.walk_completed_4k, 0x285
 itlb_misses.walk_pending, 0x1085
 l1d.l0_replacement, 0x151
+l1d.l1_replacement, 0x451
 l1d.replacement, 0x551
 l1d_miss.fb_full, 0x249
 l1d_miss.l2_stalls, 0x449
@@ -276,10 +278,11 @@ l2_rqsts.references, 0xff24
 l2_rqsts.rfo_hit, 0x4224
 l2_rqsts.rfo_miss, 0x2224
 ld_blocks.address_alias, 0x403
-ld_blocks.all, 0x1003
+ld_blocks.all, 0x1f03
 ld_blocks.data_unknown, 0x103
 ld_blocks.dtlb_miss, 0x803
 ld_blocks.no_sr, 0x8803
+ld_blocks.store_early, 0xa103
 ld_blocks.store_forward, 0x203
 ld_head.any, 0x7f05
 ld_head.any_at_ret, 0xff05
@@ -338,10 +341,14 @@ mem_inst_retired.any, 0x87d0
 mem_inst_retired.lock_loads, 0x21d0
 mem_inst_retired.split_loads, 0x41d0
 mem_inst_retired.split_stores, 0x42d0
+mem_inst_retired.stlb_hit_any, 0xfd0
 mem_inst_retired.stlb_hit_loads, 0x9d0
 mem_inst_retired.stlb_hit_stores, 0xad0
+mem_inst_retired.stlb_hit_swpf, 0xcd0
+mem_inst_retired.stlb_miss_any, 0x17d0
 mem_inst_retired.stlb_miss_loads, 0x11d0
 mem_inst_retired.stlb_miss_stores, 0x12d0
+mem_inst_retired.stlb_miss_swpf, 0x14d0
 mem_load_l3_hit_retired.xsnp_fwd, 0x10d2
 mem_load_l3_hit_retired.xsnp_hitm, 0x4d2
 mem_load_l3_hit_retired.xsnp_miss, 0x1d2
@@ -429,7 +436,11 @@ ms_decoded.ms_entry, 0x1e7
 ms_decoded.nano_code, 0x2e7
 ocr.all_requests.any_response, 0x1b7, 0xff0000001dfff
 ocr.corewb_m.any_response, 0x1b7, 0x10008
+ocr.corewb_m.l3_hit_0, 0x12a, 0x7e001e00008
+ocr.corewb_m.l3_hit_1, 0x12b, 0x7e001e00008
 ocr.corewb_nonm.any_response, 0x1b7, 0x11000
+ocr.corewb_nonm.l3_hit_0, 0x12a, 0x7e001e01000
+ocr.corewb_nonm.l3_hit_1, 0x12b, 0x7e001e01000
 ocr.demand_code_rd.any_response, 0x1b7, 0x10004
 ocr.demand_code_rd.dram, 0x1b7, 0x1fbc000004
 ocr.demand_code_rd.l3_miss, 0x1b7, 0x13fbfc00004
@@ -459,6 +470,8 @@ ocr.demand_rfo.l3_miss_0, 0x12a, 0x9e7fa000002
 ocr.demand_rfo.l3_miss_1, 0x12b, 0x9e7fa000002
 ocr.full_streaming_wr.any_response, 0x1b7, 0x800000010000
 ocr.partial_streaming_wr.any_response, 0x1b7, 0x400000010000
+ocr.reads_to_core.l3_hit_0, 0x12a, 0x7e001e04477
+ocr.reads_to_core.l3_hit_1, 0x12b, 0x7e001e04477
 ocr.streaming_wr.any_response, 0x1b7, 0x10800
 ocr.streaming_wr.any_response_0, 0x12a, 0x10800
 ocr.streaming_wr.any_response_1, 0x12b, 0x10800
@@ -485,6 +498,7 @@ rs.empty_count, 0x7a5
 rs.empty_resource, 0x1a5
 serialization.c01_ms_scb, 0x475
 serialization.color_stalls, 0x875
+serialization.iq_jeu_scb, 0x175
 serialization.non_c01_ms_scb, 0x275
 sq_misc.bus_lock, 0x102c
 sw_prefetch_access.any, 0xf40
@@ -526,10 +540,12 @@ topdown_fe_bound.other, 0x8071
 topdown_fe_bound.predecode, 0x471
 topdown_retiring.all_non_arch, 0x72
 topdown_retiring.all_p, 0x2c2
+unc_clock.socket, 0xff
 unc_m_cas_count_rd, 0x22
 unc_m_cas_count_wr, 0x23
 unc_m_dram_thermal_hot, 0x19
 unc_m_dram_thermal_warm, 0x1a
+unc_m_total_data, 0x3c
 uops_decoded.dec0_uops, 0x176
 uops_dispatched.alu, 0x2b2
 uops_dispatched.int_eu_all, 0x1b2
@@ -560,7 +576,7 @@ uops_retired.slots, 0x2c2
 uops_retired.stalls, 0x2c2
 uops_retired.x87, 0x20c2
 xq.full, 0x12d
-xq_promotion.all, 0xf4
+xq_promotion.all, 0x7f4
 xq_promotion.crds, 0x4f4
 xq_promotion.drds, 0x1f4
 xq_promotion.rfos, 0x2f4

@@ -314,6 +314,10 @@ memory_activity.stalls_l3_miss, 0x947
 misc2_retired.lfence, 0x20e0
 misc_retired.lbr_inserts, 0x1e4
 ocr.corewb_m.any_response, 0x1b7, 0x10008
+ocr.corewb_m.l3_hit_0, 0x12a, 0x1f803c0008
+ocr.corewb_m.l3_hit_1, 0x12b, 0x1f803c0008
+ocr.corewb_nonm.l3_hit_0, 0x12a, 0x1f803c1000
+ocr.corewb_nonm.l3_hit_1, 0x12b, 0x1f803c1000
 ocr.demand_code_rd.any_response, 0x1b7, 0x10004
 ocr.demand_code_rd.dram, 0x1b7, 0x784000004
 ocr.demand_code_rd.l3_hit, 0x1b7, 0x1f803c0004
@@ -355,6 +359,8 @@ ocr.demand_rfo.l3_miss_1, 0x12b, 0x3fbfc00002
 ocr.demand_rfo.l3_miss_local, 0x1b7, 0x3f84400002
 ocr.full_streaming_wr.any_response, 0x1b7, 0x800000010000
 ocr.partial_streaming_wr.any_response, 0x1b7, 0x400000010000
+ocr.reads_to_core.l3_hit_0, 0x12a, 0x1f803c4477
+ocr.reads_to_core.l3_hit_1, 0x12b, 0x1f803c4477
 ocr.streaming_wr.any_response, 0x1b7, 0x10800
 ocr.streaming_wr.any_response_0, 0x12a, 0x10800
 ocr.streaming_wr.any_response_1, 0x12b, 0x10800

@@ -123,6 +123,9 @@ frontend_retired.misp_ant, 0x2c6, 0x9
 frontend_retired.ms_flows, 0x3c6, 0x8
 frontend_retired.stlb_miss, 0x3c6, 0x15
 frontend_retired.unknown_branch, 0x3c6, 0x17
+hw_interrupts.masked, 0x2cb
+hw_interrupts.pending_and_masked, 0x4cb
+hw_interrupts.received, 0x1cb
 icache_data.stall_periods, 0x480
 icache_data.stalls, 0x480
 icache_tag.stalls, 0x483
@@ -227,6 +230,7 @@ mem_load_l3_hit_retired.xsnp_miss, 0x1d2
 mem_load_l3_hit_retired.xsnp_no_fwd, 0x2d2
 mem_load_l3_hit_retired.xsnp_none, 0x8d2
 mem_load_l3_miss_retired.local_dram, 0x1d3
+mem_load_l3_miss_retired.remote_cxl_mem, 0x10d3
 mem_load_l3_miss_retired.remote_dram, 0x2d3
 mem_load_l3_miss_retired.remote_fwd, 0x8d3
 mem_load_l3_miss_retired.remote_hitm, 0x4d3
@@ -238,6 +242,7 @@ mem_load_retired.l2_hit, 0x2d1
 mem_load_retired.l2_miss, 0x10d1
 mem_load_retired.l3_hit, 0x4d1
 mem_load_retired.l3_miss, 0x20d1
+mem_load_retired.local_cxl_mem, 0x80d1
 mem_store_retired.l2_hit, 0x144
 mem_trans_retired.load_latency_gt_1024, 0x1cd, 0x400
 mem_trans_retired.load_latency_gt_128, 0x1cd, 0x80
@@ -271,6 +276,8 @@ ocr.demand_code_rd.local_dram_0, 0x12a, 0x104000004
 ocr.demand_code_rd.local_dram_1, 0x12b, 0x104000004
 ocr.demand_data_rd.any_response_0, 0x12a, 0x10001
 ocr.demand_data_rd.any_response_1, 0x12b, 0x10001
+ocr.demand_data_rd.cxl_mem_0, 0x12a, 0x703c00001
+ocr.demand_data_rd.cxl_mem_1, 0x12b, 0x703c00001
 ocr.demand_data_rd.dram_0, 0x12a, 0x73c000001
 ocr.demand_data_rd.dram_1, 0x12b, 0x73c000001
 ocr.demand_data_rd.l3_hit.snoop_hit_no_fwd_0, 0x12a, 0x4003c0001
@@ -283,12 +290,16 @@ ocr.demand_data_rd.l3_hit_0, 0x12a, 0x3f803c0001
 ocr.demand_data_rd.l3_hit_1, 0x12b, 0x3f803c0001
 ocr.demand_data_rd.l3_miss_0, 0x12a, 0x3fbfc00001
 ocr.demand_data_rd.l3_miss_1, 0x12b, 0x3fbfc00001
+ocr.demand_data_rd.local_cxl_mem_0, 0x12a, 0x700c00001
+ocr.demand_data_rd.local_cxl_mem_1, 0x12b, 0x700c00001
 ocr.demand_data_rd.local_dram_0, 0x12a, 0x104000001
 ocr.demand_data_rd.local_dram_1, 0x12b, 0x104000001
 ocr.demand_data_rd.remote_cache.snoop_hit_with_fwd_0, 0x12a, 0x830000001
 ocr.demand_data_rd.remote_cache.snoop_hit_with_fwd_1, 0x12b, 0x830000001
 ocr.demand_data_rd.remote_cache.snoop_hitm_0, 0x12a, 0x1030000001
 ocr.demand_data_rd.remote_cache.snoop_hitm_1, 0x12b, 0x1030000001
+ocr.demand_data_rd.remote_cxl_mem_0, 0x12a, 0x703000001
+ocr.demand_data_rd.remote_cxl_mem_1, 0x12b, 0x703000001
 ocr.demand_data_rd.remote_dram_0, 0x12a, 0x730000001
 ocr.demand_data_rd.remote_dram_1, 0x12b, 0x730000001
 ocr.demand_data_rd.snc_cache.hit_with_fwd_0, 0x12a, 0x808000001
@@ -297,6 +308,8 @@ ocr.demand_data_rd.snc_cache.hitm_0, 0x12a, 0x1008000001
 ocr.demand_data_rd.snc_cache.hitm_1, 0x12b, 0x1008000001
 ocr.demand_rfo.any_response_0, 0x12a, 0x3f3ffc0002
 ocr.demand_rfo.any_response_1, 0x12b, 0x3f3ffc0002
+ocr.demand_rfo.cxl_mem_0, 0x12a, 0x703c00002
+ocr.demand_rfo.cxl_mem_1, 0x12b, 0x703c00002
 ocr.demand_rfo.dram_0, 0x12a, 0x73c000002
 ocr.demand_rfo.dram_1, 0x12b, 0x73c000002
 ocr.demand_rfo.l3_hit.snoop_hitm_0, 0x12a, 0x10003c0002
@@ -305,12 +318,18 @@ ocr.demand_rfo.l3_hit_0, 0x12a, 0x3f803c0002
 ocr.demand_rfo.l3_hit_1, 0x12b, 0x3f803c0002
 ocr.demand_rfo.l3_miss_0, 0x12a, 0x3f3fc00002
 ocr.demand_rfo.l3_miss_1, 0x12b, 0x3f3fc00002
+ocr.demand_rfo.local_cxl_mem_0, 0x12a, 0x700c00002
+ocr.demand_rfo.local_cxl_mem_1, 0x12b, 0x700c00002
 ocr.demand_rfo.local_dram_0, 0x12a, 0x104000002
 ocr.demand_rfo.local_dram_1, 0x12b, 0x104000002
+ocr.demand_rfo.remote_cxl_mem_0, 0x12a, 0x703000002
+ocr.demand_rfo.remote_cxl_mem_1, 0x12b, 0x703000002
 ocr.modified_write.any_response_0, 0x12a, 0x10808
 ocr.modified_write.any_response_1, 0x12b, 0x10808
 ocr.reads_to_core.any_response_0, 0x12a, 0x3f3ffc4477
 ocr.reads_to_core.any_response_1, 0x12b, 0x3f3ffc4477
+ocr.reads_to_core.cxl_mem_0, 0x12a, 0x703c04477
+ocr.reads_to_core.cxl_mem_1, 0x12b, 0x703c04477
 ocr.reads_to_core.dram_0, 0x12a, 0x73c004477
 ocr.reads_to_core.dram_1, 0x12b, 0x73c004477
 ocr.reads_to_core.l3_hit.snoop_hitm_0, 0x12a, 0x10003c4477
@@ -323,6 +342,8 @@ ocr.reads_to_core.l3_miss_local_0, 0x12a, 0x3f04c04477
 ocr.reads_to_core.l3_miss_local_1, 0x12b, 0x3f04c04477
 ocr.reads_to_core.l3_miss_local_socket_0, 0x12a, 0x70cc04477
 ocr.reads_to_core.l3_miss_local_socket_1, 0x12b, 0x70cc04477
+ocr.reads_to_core.local_cxl_mem_0, 0x12a, 0x700c04477
+ocr.reads_to_core.local_cxl_mem_1, 0x12b, 0x700c04477
 ocr.reads_to_core.local_dram_0, 0x12a, 0x104004477
 ocr.reads_to_core.local_dram_1, 0x12b, 0x104004477
 ocr.reads_to_core.local_socket_dram_0, 0x12a, 0x70c004477
@@ -335,6 +356,8 @@ ocr.reads_to_core.remote_cache.snoop_hit_with_fwd_0, 0x12a, 0x830004477
 ocr.reads_to_core.remote_cache.snoop_hit_with_fwd_1, 0x12b, 0x830004477
 ocr.reads_to_core.remote_cache.snoop_hitm_0, 0x12a, 0x1030004477
 ocr.reads_to_core.remote_cache.snoop_hitm_1, 0x12b, 0x1030004477
+ocr.reads_to_core.remote_cxl_mem_0, 0x12a, 0x703004477
+ocr.reads_to_core.remote_cxl_mem_1, 0x12b, 0x703004477
 ocr.reads_to_core.remote_dram_0, 0x12a, 0x730004477
 ocr.reads_to_core.remote_dram_1, 0x12b, 0x730004477
 ocr.reads_to_core.remote_memory_0, 0x12a, 0x733004477
@@ -840,6 +863,7 @@ unc_cha_tor_occupancy.loc_io, 0xc000ff0436
 unc_cha_tor_occupancy.rem_all, 0xc001ffc836
 unc_cha_tor_occupancy.rem_snps, 0xc001ff0836
 unc_chacms_clockticks, 0x1
+unc_chacms_distress_asserted, 0x35
 unc_chacms_ring_src_thrtl, 0x34
 unc_cxlcm_rxc_pack_buf_inserts.mem_data, 0x1041
 unc_cxldp_txc_agf_inserts.m2s_data, 0x2002
@@ -850,6 +874,7 @@ unc_i_faf_occupancy, 0x19
 unc_i_misc0.fast_rej, 0x21e
 unc_i_misc0.fast_req, 0x11e
 unc_i_misc1.lost_fwd, 0x101f
+unc_i_misc1.sec_rcvd_invld, 0x201f
 unc_i_snoop_resp.all_hit_es, 0x7412
 unc_i_snoop_resp.all_hit_i, 0x7212
 unc_i_snoop_resp.all_hit_m, 0x7812
@@ -1029,20 +1054,32 @@ unc_m_act_count.ufill, 0xf402
 unc_m_act_count.wr, 0xf202
 unc_m_cas_count_sch0.all, 0xff05
 unc_m_cas_count_sch0.rd, 0xcf05
+unc_m_cas_count_sch0.rd_non_underfill, 0xc305
+unc_m_cas_count_sch0.rd_pre_reg, 0xc205
+unc_m_cas_count_sch0.rd_pre_underfill, 0xc805
 unc_m_cas_count_sch0.rd_reg, 0xc105
 unc_m_cas_count_sch0.rd_underfill, 0xc405
+unc_m_cas_count_sch0.rd_underfill_all, 0xcc05
 unc_m_cas_count_sch0.wr, 0xf005
 unc_m_cas_count_sch0.wr_nonpre, 0xd005
 unc_m_cas_count_sch0.wr_pre, 0xe005
 unc_m_cas_count_sch1.all, 0xff06
 unc_m_cas_count_sch1.rd, 0xcf06
+unc_m_cas_count_sch1.rd_non_underfill, 0xc306
+unc_m_cas_count_sch1.rd_pre_reg, 0xc206
+unc_m_cas_count_sch1.rd_pre_underfill, 0xc806
 unc_m_cas_count_sch1.rd_reg, 0xc106
 unc_m_cas_count_sch1.rd_underfill, 0xc406
+unc_m_cas_count_sch1.rd_underfill_all, 0xcc06
 unc_m_cas_count_sch1.wr, 0xf006
 unc_m_cas_count_sch1.wr_nonpre, 0xd006
 unc_m_cas_count_sch1.wr_pre, 0xe006
 unc_m_clockticks, 0x101
 unc_m_hclockticks, 0x1
+unc_m_mntcmd_refrate.refab1x, 0x172
+unc_m_mntcmd_refrate.refab2x, 0x472
+unc_m_mntcmd_refrate.refsb1x, 0x272
+unc_m_mntcmd_refrate.refsb2x, 0x872
 unc_m_mr4_2xref_cycles.sch0_dimm0, 0x1a7
 unc_m_mr4_2xref_cycles.sch0_dimm1, 0x2a7
 unc_m_mr4_2xref_cycles.sch1_dimm0, 0x4a7

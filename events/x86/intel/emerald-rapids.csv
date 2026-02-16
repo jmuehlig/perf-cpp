@@ -26,6 +26,13 @@ br_misp_retired.indirect, 0x80c5
 br_misp_retired.indirect_call, 0x2c5
 br_misp_retired.near_taken, 0x20c5
 br_misp_retired.ret, 0x8c5
+core_snoop_response.i_fwd_fe, 0x2027
+core_snoop_response.i_fwd_m, 0x1027
+core_snoop_response.i_hit_fse, 0x227
+core_snoop_response.miss, 0x127
+core_snoop_response.s_fwd_fe, 0x4027
+core_snoop_response.s_fwd_m, 0x827
+core_snoop_response.s_hit_fse, 0x427
 cpu_clk_unhalted.c01, 0x10ec
 cpu_clk_unhalted.c02, 0x20ec
 cpu_clk_unhalted.c0_wait, 0x70ec
@@ -113,6 +120,9 @@ frontend_retired.latency_ge_8, 0x1c6, 0x600806
 frontend_retired.ms_flows, 0x1c6, 0x8
 frontend_retired.stlb_miss, 0x1c6, 0x15
 frontend_retired.unknown_branch, 0x1c6, 0x17
+hw_interrupts.masked, 0x2cb
+hw_interrupts.pending_and_masked, 0x4cb
+hw_interrupts.received, 0x1cb
 icache_data.stall_periods, 0x480
 icache_data.stalls, 0x480
 icache_tag.stalls, 0x483
@@ -448,6 +458,7 @@ unc_cha_direct_go_opc.go_pull, 0x86d
 unc_cha_direct_go_opc.idle_due_suppress, 0x806d
 unc_cha_direct_go_opc.nop, 0x406d
 unc_cha_direct_go_opc.pull, 0x26d
+unc_cha_distress_asserted.dpt_nonlocal, 0x8af
 unc_cha_egress_ordering.iv_snoopgo_dn, 0x4ba
 unc_cha_egress_ordering.iv_snoopgo_up, 0x1ba
 unc_cha_hitme_hit.ex_rds, 0x15f
@@ -2318,6 +2329,14 @@ unc_m_cas_issued_req_len.wr_32b, 0xe006
 unc_m_cas_issued_req_len.wr_64b, 0xc406
 unc_m_clockticks, 0x101
 unc_m_dram_pre_all, 0x344
+unc_m_dram_refresh.high, 0x2445
+unc_m_dram_refresh.high_all, 0x2445
+unc_m_dram_refresh.high_pch0, 0x445
+unc_m_dram_refresh.high_pch1, 0x2045
+unc_m_dram_refresh.panic, 0x1245
+unc_m_dram_refresh.panic_all, 0x1245
+unc_m_dram_refresh.panic_pch0, 0x245
+unc_m_dram_refresh.panic_pch1, 0x1045
 unc_m_ecc_correctable_errors, 0x9
 unc_m_hclockticks, 0x1
 unc_m_pcls.rd, 0x5a0
@@ -2345,6 +2364,8 @@ unc_m_power_cke_cycles.low_3, 0x847
 unc_m_power_crit_throttle_cycles.slot0, 0x186
 unc_m_power_crit_throttle_cycles.slot1, 0x286
 unc_m_power_self_refresh, 0x43
+unc_m_power_throttle_cycles.slot0, 0x146
+unc_m_power_throttle_cycles.slot1, 0x246
 unc_m_pre_count.all, 0xff03
 unc_m_pre_count.pgt, 0x8803
 unc_m_pre_count.pgt_pch0, 0x803
