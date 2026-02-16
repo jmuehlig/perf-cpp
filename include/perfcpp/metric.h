@@ -148,6 +148,72 @@ public:
 };
 
 /*
+ * Measures the power consumption of the entire CPU package in Watts using the RAPL energy-pkg counter.
+ */
+class WattsPkg final : public Metric
+{
+public:
+  [[nodiscard]] std::string name() const override { return "watts-pkg"; }
+  [[nodiscard]] std::vector<std::string> required_counter_names() const override { return { "energy-pkg", "seconds" }; }
+  [[nodiscard]] std::optional<double> calculate(const CounterResult& result) const override
+  {
+    const auto energy = result.get("energy-pkg");
+    const auto seconds = result.get("seconds");
+
+    if (energy.has_value() && seconds.has_value() && seconds.value() > 0.) {
+      return energy.value() / seconds.value();
+    }
+
+    return std::nullopt;
+  }
+};
+
+/*
+ * Measures the power consumption of the CPU cores in Watts using the RAPL energy-cores counter.
+ */
+class WattsCores final : public Metric
+{
+public:
+  [[nodiscard]] std::string name() const override { return "watts-cores"; }
+  [[nodiscard]] std::vector<std::string> required_counter_names() const override
+  {
+    return { "energy-cores", "seconds" };
+  }
+  [[nodiscard]] std::optional<double> calculate(const CounterResult& result) const override
+  {
+    const auto energy = result.get("energy-cores");
+    const auto seconds = result.get("seconds");
+
+    if (energy.has_value() && seconds.has_value() && seconds.value() > 0.) {
+      return energy.value() / seconds.value();
+    }
+
+    return std::nullopt;
+  }
+};
+
+/*
+ * Measures the power consumption of RAM in Watts using the RAPL energy-ram counter.
+ */
+class WattsRam final : public Metric
+{
+public:
+  [[nodiscard]] std::string name() const override { return "watts-ram"; }
+  [[nodiscard]] std::vector<std::string> required_counter_names() const override { return { "energy-ram", "seconds" }; }
+  [[nodiscard]] std::optional<double> calculate(const CounterResult& result) const override
+  {
+    const auto energy = result.get("energy-ram");
+    const auto seconds = result.get("seconds");
+
+    if (energy.has_value() && seconds.has_value() && seconds.value() > 0.) {
+      return energy.value() / seconds.value();
+    }
+
+    return std::nullopt;
+  }
+};
+
+/*
  * Determines the proportion of cache accesses that resulted in misses. A lower ratio indicates better cache
  * performance.
  */

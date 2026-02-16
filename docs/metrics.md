@@ -36,6 +36,14 @@ You don't need any special setup—just use them like regular events by adding t
 | `iTLB-miss-ratio`        | How often instruction address translation misses                     | `iTLB-load-misses / iTLB-loads`                        |
 | `L1-data-miss-ratio`     | L1 data cache miss rate                                              | `L1-dcache-load-misses / L1-dcache-loads`              |
 | `branch-miss-ratio`      | Branch prediction failure rate                                       | `branch-misses / branches`                             |
+| `watts-pkg`              | CPU package power consumption in Watts (requires RAPL)               | `energy-pkg / seconds`                                 |
+| `watts-cores`            | CPU core power consumption in Watts (requires RAPL)                  | `energy-cores / seconds`                               |
+| `watts-ram`              | RAM power consumption in Watts (requires RAPL)                       | `energy-ram / seconds`                                 |
+
+> [!NOTE]
+> The `watts-*` metrics require RAPL (Running Average Power Limit) support, which is available on most modern Intel and AMD processors.
+> Available RAPL domains vary by hardware: `energy-pkg` is widely supported, `energy-cores` and `energy-ram` depend on the processor model.
+> Reading RAPL counters may require `perf_event_paranoid <= 0` or `CAP_SYS_ADMIN`.
 
 ## Working with Metrics
 The beauty of metrics in *perf-cpp* is their simplicity–they work exactly like regular events. 

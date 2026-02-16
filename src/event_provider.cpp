@@ -116,6 +116,9 @@ perf::MetricEventProvider::add_events(perf::CounterDefinition& counter_definitio
   counter_definition.add(std::make_unique<ITLBMissRatio>());
   counter_definition.add(std::make_unique<L1DataMissRatio>());
   counter_definition.add(std::make_unique<BranchMissRatio>());
+  counter_definition.add(std::make_unique<WattsPkg>());
+  counter_definition.add(std::make_unique<WattsCores>());
+  counter_definition.add(std::make_unique<WattsRam>());
 }
 
 void

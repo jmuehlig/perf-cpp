@@ -3,6 +3,7 @@
 ## v0.13.0 (WIP)
 - **Perf File Export**: Fixed bugs in perf format when materializing samples into file that can be read via `perf [mem] report`.
 - **NMI Watchdog Detection**: Hardware counter detection now accounts for the NMI watchdog permanently consuming one hw-PMU counter, fixing incorrect counter counts on systems with the watchdog enabled.
+- **RAPL Power Metrics**: Added built-in `watts-pkg`, `watts-cores`, and `watts-ram` metrics for measuring power consumption via RAPL energy counters (see the [documentation](docs/metrics.md#available-built-in-metrics)).
 - **Conan Package**: Added Conan 2.x package recipe for easier integration.
 
 ## v0.12.6
