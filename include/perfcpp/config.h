@@ -110,17 +110,6 @@ public:
   Config& operator=(Config&&) noexcept = default;
   Config(Config&&) noexcept = default;
 
-  [[deprecated("Will be removed in v0.13. Use num_physical_counters() instead.")]] [[nodiscard]] std::uint8_t
-  max_groups() const noexcept
-  {
-    return _num_physical_counters;
-  }
-  [[deprecated("Will be removed in v0.13. Use num_events_per_physical_counter() instead.")]] [[nodiscard]] std::uint8_t
-  max_counters_per_group() const noexcept
-  {
-    return _num_events_per_physical_counter;
-  }
-
   /**
    * @return Number of physical hardware counters.
    */
@@ -207,28 +196,6 @@ public:
   void num_events_per_physical_counter(const std::uint8_t num_events_per_physical_counter) noexcept
   {
     _num_events_per_physical_counter = num_events_per_physical_counter;
-  }
-
-  /**
-   * Specify the number of maximum groups per EventCounter.
-   *
-   * @param max_groups Number of maximum groups.
-   */
-  [[deprecated("Will be removed in v0.13. Use num_physical_counters(X) instead.")]] void max_groups(
-    const std::uint8_t max_groups) noexcept
-  {
-    _num_physical_counters = max_groups;
-  }
-
-  /**
-   * Specify the maximum number of counters per group.
-   *
-   * @param max_counters_per_group Number of maximum hardware event counters per group.
-   */
-  [[deprecated("Will be removed in v0.13. Use num_events_per_physical_counter(X) instead.")]] void
-  max_counters_per_group(const std::uint8_t max_counters_per_group) noexcept
-  {
-    _num_events_per_physical_counter = max_counters_per_group;
   }
 
   /**
@@ -339,28 +306,6 @@ public:
    */
   void process(const pid_t process_id) noexcept { _process = Process{ process_id }; }
 
-  /**
-   * If specified, the EventCounter or Sampler will monitor only that specified CPU.
-   *
-   * @param cpu_id CPU to monitor.
-   */
-  [[deprecated("Will be removed with v0.13. Use cpu_core(perf::CpuCore) instead.")]] void cpu_id(
-    const std::uint16_t cpu_id) noexcept
-  {
-    _cpu_core = CpuCore{ cpu_id };
-  }
-
-  /**
-   * If specified, the EventCounter or Sampler will only monitor that specified process.
-   *
-   * @param process_id Process to monitor.
-   */
-  [[deprecated("Will be removed with v0.13. Use process(perf::Process) instead.")]] void process_id(
-    const pid_t process_id) noexcept
-  {
-    _process = Process{ process_id };
-  }
-
 private:
   std::uint8_t _num_physical_counters{ 5U };
   std::uint8_t _num_events_per_physical_counter{ 4U };
@@ -439,45 +384,7 @@ public:
    *
    * @param precision Default precision for sampling.
    */
-  [[deprecated("Will be removed with v0.13. Use precision(Precision) instead.")]] void precise_ip(
-    const Precision precision) noexcept
-  {
-    _precise_ip = precision;
-  }
-
-  /**
-   * Default precision for sampling, if not specified along with a trigger.
-   *
-   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#precision
-   *
-   * @param precision Default precision for sampling.
-   */
   void precision(const Precision precision) noexcept { _precise_ip = precision; }
-
-  /**
-   * Default precision for sampling, if not specified along with a trigger.
-   *
-   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#precision
-   *
-   * @param precise_ip Default precision for sampling.
-   */
-  [[deprecated("Will be removed with v0.13. Use precision(Precision) instead.")]] void precise_ip(
-    const std::uint8_t precise_ip) noexcept
-  {
-    switch (precise_ip) {
-      case 0U:
-        _precise_ip = Precision::AllowArbitrarySkid;
-        return;
-      case 1U:
-        _precise_ip = Precision::MustHaveConstantSkid;
-        return;
-      case 2U:
-        _precise_ip = Precision::RequestZeroSkid;
-        return;
-      default:
-        _precise_ip = Precision::MustHaveZeroSkid;
-    }
-  }
 
   /**
    * Specifies the number of pages allocated for the user-level buffer that receives samples.

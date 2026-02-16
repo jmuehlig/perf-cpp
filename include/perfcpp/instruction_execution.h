@@ -451,16 +451,6 @@ public:
   [[nodiscard]] bool is_instruction_pointer_exact() const noexcept { return _is_instruction_pointer_exact; }
 
   /**
-   * @return Lock indicator, if available. std::nullopt otherwise.
-   */
-  [[deprecated(".instruction_execution().is_locked() will be removed in v0.13. Please use "
-               ".data_access().is_locked()")]] [[nodiscard]] std::optional<bool>
-  is_locked() const noexcept
-  {
-    return _is_locked;
-  }
-
-  /**
    * @return Cache object.
    */
   [[nodiscard]] const std::optional<Cache>& cache() const noexcept { return _cache; }

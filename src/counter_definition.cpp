@@ -217,12 +217,6 @@ perf::CounterDefinition::is_time_event(const std::string& name) const noexcept
   return false;
 }
 
-void
-perf::CounterDefinition::read_counter_configuration(const std::string& csv_filename)
-{
-  CsvFileEventProvider{ csv_filename }.add_events(*this);
-}
-
 std::vector<std::string>
 perf::CounterDefinition::pmu_names() const
 {

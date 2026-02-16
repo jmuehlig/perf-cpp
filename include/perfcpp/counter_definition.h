@@ -341,14 +341,6 @@ public:
   [[nodiscard]] std::vector<std::string> pmu_names() const;
 
   /**
-   * Reads and adds counters from the provided CSV file with counter configurations.
-   * @param csv_filename CSV file with counter configurations.
-   */
-  [[deprecated("Adding events from a file after construction will be removed with v0.13. Use the constructor and "
-               "provide a file instead.")]] void
-  read_counter_configuration(const std::string& csv_filename);
-
-  /**
    * @return A table containing all events, metrics, and virtual time events.
    */
   [[nodiscard]] std::string to_string() const;
