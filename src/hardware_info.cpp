@@ -35,6 +35,9 @@ std::optional<std::uint8_t> perf::HardwareInfo::_events_per_physical_performance
 /// Maximal clock frequency across all cores in Hz.
 std::optional<std::uint64_t> perf::HardwareInfo::_max_cpu_clock_frequency{ std::nullopt };
 
+/// Cache variable to remember if NMI watchdog is enabled.
+std::optional<bool> perf::HardwareInfo::_is_nmi_watchdog_enabled{ std::nullopt };
+
 bool
 perf::HardwareInfo::is_intel_aux_counter_required()
 {
@@ -245,6 +248,22 @@ perf::HardwareInfo::events_per_physical_performance_counter()
                                    static_cast<std::uint8_t>(1U));
 }
 
+bool
+perf::HardwareInfo::is_nmi_watchdog_enabled()
+{
+  if (HardwareInfo::_is_nmi_watchdog_enabled.has_value()) {
+    return HardwareInfo::_is_nmi_watchdog_enabled.value();
+  }
+
+  /// Read NMI watchdog status from procfs (see https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt).
+  auto watchdog_file = std::ifstream{ "/proc/sys/kernel/nmi_watchdog" };
+  if (auto value = 0; watchdog_file >> value) {
+    return HardwareInfo::cache_value(HardwareInfo::_is_nmi_watchdog_enabled, value != 0);
+  }
+
+  return HardwareInfo::cache_value(HardwareInfo::_is_nmi_watchdog_enabled, false);
+}
+
 std::uint64_t
 perf::HardwareInfo::max_cpu_clock_frequency()
 {
@@ -298,10 +317,17 @@ perf::HardwareInfo::explore_hardware_counters_experimentally(const bool is_ident
       group.open(config);
     } catch (const CannotOpenCounterError& error) {
 
-      /// If the perf subsystem fails with error code EINVAL, it is likely that we hit the number. However, if we only
-      /// added a single counter, we another issue seems to cause the error.
+      /// If the perf subsystem fails with EINVAL, we likely exceeded the limit.
       if (error.error_code() == EINVAL && number_events > 1U) {
-        return number_events > 2U ? number_events - 2U : number_events;
+
+        /// When detecting events per counter and the NMI watchdog is enabled, it permanently consumes one hw-PMU
+        /// counter. The kernel accepts one event beyond the real limit (open succeeds but all counters read 0),
+        /// so we need to subtract 2 instead of 1.
+        if (!is_identify_hardware_counters && HardwareInfo::is_nmi_watchdog_enabled() && number_events > 2U) {
+          return static_cast<std::uint8_t>(number_events - 2U);
+        }
+
+        return static_cast<std::uint8_t>(number_events - 1U);
       }
 
       return std::nullopt;
@@ -345,6 +371,11 @@ perf::HardwareInfo::generate_events_for_counter_identification()
   for (const auto& [name, config] : CounterDefinition::global().pmu("cpu")) {
 
     auto counter = Counter{ config };
+
+    /// Ignore "cycles" and "instructions" events.
+    if (config.configs()[0U] == 0U || config.configs()[0U] == 1U) {
+      continue;
+    }
 
     /// Try to open the event on a physical performance counter.
     try {

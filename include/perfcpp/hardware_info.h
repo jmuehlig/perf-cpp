@@ -68,7 +68,13 @@ public:
    */
   [[nodiscard]] static std::uint64_t max_cpu_clock_frequency();
 
+  /**
+   * @return True, if the NMI watchdog is enabled and permanently consumes one hw-PMU counter.
+   */
+  [[nodiscard]] static bool is_nmi_watchdog_enabled();
+
 private:
+  static std::optional<bool> _is_nmi_watchdog_enabled;
   static std::optional<bool> _is_intel_aux_event_required;
   static std::optional<bool> _is_intel_12th_generation_or_newer;
   static std::optional<bool> _is_amd_ibs_supported;

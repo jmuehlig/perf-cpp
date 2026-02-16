@@ -8,3 +8,5 @@ cmake_install.cmake
 build/
 tests
 src/processor_specific_event_provider.cpp
+test_package/build/
+test_package/CMakeUserPresets.json

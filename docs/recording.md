@@ -168,8 +168,14 @@ config.process(perf::Process::Any);     /// Monitor events from all processes.
 Every CPU has a limited number of physical performance counters—special registers that track events. 
 Modern processors typically have `4` to `8` counters per core (e.g., see the specs for [Intel Sapphire Rapids](https://github.com/RRZE-HPC/likwid/wiki/SapphireRapids#general-purpose-counters)), and some allow measuring multiple events per counter through time-multiplexing.
 
-*perf-cpp* automatically detects these hardware limits on most systems. 
-But if you're working with unusual hardware or embedded systems where auto-detection fails, you can specify the limits manually:
+*perf-cpp* automatically detects these hardware limits on most systems.
+
+> [!IMPORTANT]
+> If the NMI watchdog is enabled (`cat /proc/sys/kernel/nmi_watchdog` returns `1`), it permanently consumes one hardware PMU counter. 
+> *perf-cpp* detects this and adjusts automatically. 
+> **However, if you need the extra counter**, you can disable the watchdog via `echo 0 > /proc/sys/kernel/nmi_watchdog` (requires root).
+
+If you're working with unusual hardware or embedded systems where auto-detection fails, you can specify the limits manually:
 
 ```cpp
 auto config = perf::Config{};

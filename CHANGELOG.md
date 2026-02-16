@@ -1,7 +1,9 @@
 # *perf-cpp*: Changelog
 
 ## v0.13.0 (WIP)
-- **Perf File Export**: Fixed bugs in perf format when materializing samples into file that can be read via `perf [mem] report`. 
+- **Perf File Export**: Fixed bugs in perf format when materializing samples into file that can be read via `perf [mem] report`.
+- **NMI Watchdog Detection**: Hardware counter detection now accounts for the NMI watchdog permanently consuming one hw-PMU counter, fixing incorrect counter counts on systems with the watchdog enabled.
+- **Conan Package**: Added Conan 2.x package recipe for easier integration.
 
 ## v0.12.6
 - **CSV Export**: Samples can now be exported to CSV format using `SampleResult::to_csv()`, enabling custom analysis with statistical tools, spreadsheets, or data processing pipelines (see the [documentation](docs/analyzing-samples-with-csv.md)).
