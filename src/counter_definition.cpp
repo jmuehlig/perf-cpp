@@ -280,6 +280,28 @@ perf::CounterDefinition::time_event_names() const
   return names;
 }
 
+bool
+perf::CounterDefinition::supports(const std::string_view name) const
+{
+  if (!this->counter(name).empty()) {
+    return true;
+  }
+
+  if (this->time_event(name).has_value()) {
+    return true;
+  }
+
+  if (const auto metric = this->metric(name); metric.has_value()) {
+    /// Check all events required by the metric.
+    const auto required_counter_names = std::get<1>(metric.value()).required_counter_names();
+    return std::all_of(required_counter_names.begin(), required_counter_names.end(), [this](const auto& counter_name) {
+      return this->supports(counter_name);
+    });
+  }
+
+  return false;
+}
+
 std::string
 perf::CounterDefinition::to_string() const
 {

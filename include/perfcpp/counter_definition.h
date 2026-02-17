@@ -341,6 +341,15 @@ public:
   [[nodiscard]] std::vector<std::string> pmu_names() const;
 
   /**
+   * Verifies if the given event, metric, or time event is supported.
+   * If the given name references a metric, all required events (or recursive metrics) are checked.
+   *
+   * @param name Name of an event, a metric, or a time event.
+   * @return True, if all required events are supported.
+   */
+  [[nodiscard]] bool supports(std::string_view name) const;
+
+  /**
    * @return A table containing all events, metrics, and virtual time events.
    */
   [[nodiscard]] std::string to_string() const;
