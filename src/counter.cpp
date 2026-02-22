@@ -517,7 +517,7 @@ perf::Counter::to_string(const bool is_group_leader,
   if (this->_event_attribute.branch_sample_type > 0U) {
     stream << "        branch_sample_type: ";
     Counter::print_type_to_stream(stream,
-                                  this->_event_attribute.sample_type,
+                                  this->_event_attribute.branch_sample_type,
                                   { { PERF_SAMPLE_BRANCH_USER, "BRANCH_USER" },
                                     { PERF_SAMPLE_BRANCH_KERNEL, "BRANCH_KERNEL" },
                                     { PERF_SAMPLE_BRANCH_HV, "BRANCH_HV" },
