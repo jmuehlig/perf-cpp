@@ -84,7 +84,7 @@ perf::SampleRecordingValues::to_perf_sample_type() const noexcept
 
   // === Raw & Auxiliary ===
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::RawValues);
-#ifndef PERFCPP_NO_SAMPLE_AUX /// Sampling of the aux buffer supported since Linux 5.5
+#ifndef PERFCPP_NO_SAMPLE_AUX /// Sampling of aux values supported since Linux 5.5
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_AUX, Field::AuxValues);
 #endif
 
