@@ -829,9 +829,13 @@ public:
    * @param include True, if auxiliary data should be included.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& aux_values(const bool include) noexcept
+  SampleRecordingValues& aux_values([[maybe_unused]] const bool include)
   {
+#ifndef PERFCPP_NO_SAMPLE_AUX /// Sampling aux values is supported since Linux 5.5
     set(Field::AuxValues, include);
+#else
+    throw SamplingFeatureIsNotSupported{ "aux values", "5.5" };
+#endif
     return *this;
   }
 
