@@ -230,7 +230,7 @@ private:
      * @param is_hex If true, format numeric output as hexadecimal.
      */
     template<typename T>
-    void write_value(const SampleRecordingValues::Field field, const std::optional<T> value, const bool is_hex = false)
+    void write_value(const SampleRecordingValues::Field field, const std::optional<T>& value, const bool is_hex = false)
     {
       if (this->_values.is_set(field)) {
         this->_csv_stream << _delimiter;
