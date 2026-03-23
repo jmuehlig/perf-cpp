@@ -1,6 +1,7 @@
 # *perf-cpp*: Changelog
 
 ## v0.13.0 (WIP)
+- **Compile Flag for AUX Buffer Support**: Added `PERFCPP_NO_SAMPLE_AUX` compile flag to disable auxiliary buffer sampling on systems with Linux kernels older than 5.5 that lack `PERF_SAMPLE_AUX` support. Thanks to [@rconnorlawson](https://github.com/rconnorlawson).
 - **Perf File Export**: Fixed bugs in perf format when materializing samples into file that can be read via `perf [mem] report`.
 - **NMI Watchdog Detection**: Hardware counter detection now accounts for the NMI watchdog permanently consuming one hw-PMU counter, fixing incorrect counter counts on systems with the watchdog enabled.
 - **RAPL Power Metrics**: Added built-in `watts-pkg`, `watts-cores`, and `watts-ram` metrics for measuring power consumption via RAPL energy counters (see the [documentation](docs/metrics.md#available-built-in-metrics)).
