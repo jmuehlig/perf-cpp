@@ -188,7 +188,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
 
       /// Set the event's period or frequency equal to the first trigger (or fall back to config if not configured).
       auto period_or_frequency = std::get<2>(trigger_group.front());
-      auxiliary_event_config.period_or_frequency(period_or_frequency.value_or(this->_config.period_for_frequency()));
+      auxiliary_event_config.period_or_frequency(period_or_frequency.value_or(this->_config.period_or_frequency()));
 
       /// Add the event to the group.
       group.add(auxiliary_event_config);
@@ -210,7 +210,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
       event_config.precision(static_cast<std::uint8_t>(precision.value_or(this->_config.precise_ip())));
 
       /// Set the event's period or frequency (fall back to config if empty).
-      event_config.period_or_frequency(period_or_frequency.value_or(this->_config.period_for_frequency()));
+      event_config.period_or_frequency(period_or_frequency.value_or(this->_config.period_or_frequency()));
 
       /// Add the event to the group.
       group.add(event_config);

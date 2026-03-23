@@ -249,7 +249,7 @@ public:
    *
    * @param is_include_host Flag indicating that guest-activity should be monitored.
    */
-  void include_guest(const bool is_include_host) noexcept { _is_include_guest = is_include_host; }
+  void include_guest(const bool is_include_guest) noexcept { _is_include_guest = is_include_guest; }
 
   /**
    * If set, host-activity will be monitored.
@@ -355,7 +355,7 @@ public:
   /**
    * @return Default period or frequency for sampling.
    */
-  [[nodiscard]] PeriodOrFrequency period_for_frequency() const noexcept { return _period_or_frequency; }
+  [[nodiscard]] PeriodOrFrequency period_or_frequency() const noexcept { return _period_or_frequency; }
 
   /**
    * Default frequency to sample, if not specified along with a trigger. The frequency denotes to samples per second.
