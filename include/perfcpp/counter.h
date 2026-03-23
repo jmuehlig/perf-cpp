@@ -198,45 +198,6 @@ public:
             const util::UniqueFileDescriptor& group_leader_file_descriptor);
 
   /**
-   * Opens the counter using the perf subsystem via the perf_event_open system call.
-   * The counter will be configured with the provided parameters.
-   * After successfully open the counter, the counter's file descriptor will be set.
-   * If the counter cannot be opened, it will throw an exception including the error number.
-   *
-   * @param config Configuration.
-   * @param is_group_leader True, if this counter is the group leader.
-   * @param is_secret_leader True, if this counter is not the group leader but the group leader is an auxiliary counter.
-   * @param group_leader_file_descriptor File descriptor of the group leader; may be -1 (or any other –unused– value),
-   * if this is the group leader.
-   * @param is_read_format True, if counters should be read.
-   * @param buffer_pages Number of pages allocated for user-level buffer, std::nullopt if counter should not allocated
-   * any pages.
-   * @param sample_type Mask of sampled values, std::nullopt of sampling is disabled.
-   * @param branch_type Mask of sampled branch types, std::nullopt of sampling is disabled.
-   * @param user_registers Mask of sampled user registers, std::nullopt of sampling is disabled.
-   * @param kernel_registers Mask of sampled kernel registers, std::nullopt of sampling is disabled.
-   * @param max_user_stack_size Maximal size of sampled user stack, std::nullopt of sampling is disabled.
-   * @param max_callstack_size Maximal size of sampled callstacks, std::nullopt of sampling is disabled.
-   * @param is_include_context_switch True, if context switches should be sampled, ignored if sampling is disabled.
-   * @param is_include_extended_mmap_information True, if extended mmap information should be included, ignored if
-   * sampling is disabled.
-   */
-  void open(const perf::Config& config,
-            bool is_group_leader,
-            bool is_secret_leader,
-            const util::UniqueFileDescriptor& group_leader_file_descriptor,
-            bool is_read_format,
-            std::optional<std::uint64_t> buffer_pages,
-            std::optional<std::uint64_t> sample_type,
-            std::optional<std::uint64_t> branch_type,
-            std::optional<std::uint64_t> user_registers,
-            std::optional<std::uint64_t> kernel_registers,
-            std::optional<std::uint32_t> max_user_stack_size,
-            std::optional<std::uint16_t> max_callstack_size,
-            bool is_include_context_switch,
-            bool is_include_extended_mmap_information);
-
-  /**
    * Closes the counter and resets the file descriptor.
    */
   void close();
