@@ -2,7 +2,6 @@
 #include <numeric>
 #include <perfcpp/event_counter.h>
 #include <perfcpp/exception.h>
-#include <stdexcept>
 #include <utility>
 
 perf::EventCounter
@@ -66,6 +65,24 @@ perf::EventCounter::unfold(const std::string& name,
                            const bool is_visible_in_results,
                            std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>& events) const
 {
+  /// If the event name contains a '/', it might be in the format "pmu/event". Probe the event list for this patter.
+  /// However, if we cannot detect a (pmu, event) pair, it might be metric or just an event containing a slash.
+  if (const auto pmu_delimiter_pos = name.find('/'); pmu_delimiter_pos != std::string::npos) {
+    const auto pmu_name = name.substr(0U, pmu_delimiter_pos);
+    const auto name_without_pmu = name.substr(pmu_delimiter_pos + 1U, name.length() - (pmu_delimiter_pos + 1U));
+
+    if (const auto event_configurations = this->_counter_definitions.counter(pmu_name, name_without_pmu); event_configurations.has_value()) {
+      auto [global_pmu_name, global_event_name, config] = event_configurations.value();
+      EventCounter::add(global_pmu_name,
+                          global_event_name,
+                          config,
+                          /* requested hardware events are visible */ is_visible_in_results,
+                          events);
+      return;
+    }
+  }
+
+  /// Find all events with the requested name.
   if (const auto event_configurations = this->_counter_definitions.counter(name); !event_configurations.empty()) {
     for (const auto& [pmu_name, event_name, config] : event_configurations) {
       EventCounter::add(pmu_name,
@@ -84,8 +101,8 @@ perf::EventCounter::unfold(const std::string& name,
     for (auto& dependent_event_name : metric_instance.required_counter_names()) {
 
       /// Check if the dependent event is already in the list.
-      if (std::find_if(events.begin(), events.end(), [&name](const auto& requested_event) {
-            return std::get<0>(requested_event).event_name() == name;
+      if (std::find_if(events.begin(), events.end(), [&dependent_event_name](const auto& requested_event) {
+            return std::get<0>(requested_event).event_name() == dependent_event_name;
           }) == events.end()) {
         /// Unfold dependent events recursively.
         this->unfold(dependent_event_name, false, events);
@@ -214,7 +231,7 @@ perf::EventCounter::append_to_any_hardware_counter(perf::RequestedEvent& event, 
   for (auto group_id = 0U; group_id < this->_hardware_event_groups.size(); ++group_id) {
     if (const auto is_group_open = std::get<1>(this->_hardware_event_groups[group_id]); is_group_open) {
       /// We found a matching group that has space.
-      auto& group = std::get<0>(this->_hardware_event_groups[group_id]);
+      auto& [group, is_keep_open] = this->_hardware_event_groups[group_id];
       const auto in_group_position = static_cast<std::uint8_t>(group.size());
 
       /// Add to the hardware counter group.
@@ -225,7 +242,7 @@ perf::EventCounter::append_to_any_hardware_counter(perf::RequestedEvent& event, 
 
       /// Close the group if full.
       if (group.size() == this->_config.num_events_per_physical_counter()) {
-        std::get<1>(this->_hardware_event_groups[group_id]) = false;
+        is_keep_open = false;
       }
 
       return true;
@@ -405,8 +422,7 @@ perf::EventCounter::result(const std::uint64_t normalization) const
     else if (event.is_time_event()) {
       if (const auto& time_calculator = this->_counter_definitions.time_event(event.event_name());
           time_calculator.has_value()) {
-        const auto start_timestamp = std::get<0>(this->_start_and_end_time);
-        const auto stop_timestamp = std::get<1>(this->_start_and_end_time);
+        const auto [start_timestamp, stop_timestamp] = this->_start_and_end_time;
         const auto time = std::get<1>(time_calculator.value()).calculate(start_timestamp, stop_timestamp);
         event_values.emplace_back(event.event_name(), time);
       }
@@ -601,8 +617,7 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
           this->event_counters().cend(),
           .0,
           [&time_calculator = std::get<1>(time_event.value())](const auto sum, const auto& event_counter) {
-            const auto start_timestamp = std::get<0>(event_counter._start_and_end_time);
-            const auto stop_timestamp = std::get<1>(event_counter._start_and_end_time);
+            const auto [start_timestamp, stop_timestamp] = event_counter._start_and_end_time;
             return sum + time_calculator.calculate(start_timestamp, stop_timestamp);
           });
 
@@ -643,11 +658,13 @@ perf::MultiThreadEventCounter::MultiThreadEventCounter(const perf::CounterDefini
 perf::MultiThreadEventCounter::MultiThreadEventCounter(perf::EventCounter&& event_counter,
                                                        const std::uint16_t num_threads)
 {
-  this->_thread_local_counter.reserve(num_threads);
-  for (auto threa_index = 0U; threa_index < num_threads - 1U; ++threa_index) {
-    this->_thread_local_counter.push_back(EventCounter::copy_from_template(event_counter));
+  if (num_threads > 0U) {
+    this->_thread_local_counter.reserve(num_threads);
+    for (auto thread_index = 0U; thread_index < num_threads - 1U; ++thread_index) {
+      this->_thread_local_counter.push_back(EventCounter::copy_from_template(event_counter));
+    }
+    this->_thread_local_counter.emplace_back(std::move(event_counter));
   }
-  this->_thread_local_counter.emplace_back(std::move(event_counter));
 }
 
 perf::MultiProcessEventCounter::MultiProcessEventCounter(const perf::CounterDefinition& counter_list,
@@ -665,24 +682,26 @@ perf::MultiProcessEventCounter::MultiProcessEventCounter(const perf::CounterDefi
 perf::MultiProcessEventCounter::MultiProcessEventCounter(perf::EventCounter&& event_counter,
                                                          std::vector<pid_t>&& process_ids)
 {
-  this->_process_local_counter.reserve(process_ids.size());
-  auto config = event_counter.config();
+  if (!process_ids.empty()) {
+    this->_process_local_counter.reserve(process_ids.size());
+    auto config = event_counter.config();
 
-  for (auto i = 0U; i < process_ids.size() - 1U; ++i) {
+    for (auto i = 0U; i < process_ids.size() - 1U; ++i) {
 
-    /// Create one counter for every process: Copy the config for every process and bind the EventCounter to that
-    /// process.
-    config.process(Process{ process_ids[i] });
-    auto process_local_counter = EventCounter::copy_from_template(event_counter);
-    process_local_counter.config(config);
+      /// Create one counter for every process: Copy the config for every process and bind the EventCounter to that
+      /// process.
+      config.process(Process{ process_ids[i] });
+      auto process_local_counter = EventCounter::copy_from_template(event_counter);
+      process_local_counter.config(config);
 
-    this->_process_local_counter.emplace_back(std::move(process_local_counter));
+      this->_process_local_counter.emplace_back(std::move(process_local_counter));
+    }
+
+    /// Re-use the given EventCounter for the last process in the list.
+    config.process(Process{ process_ids.back() });
+    event_counter.config(config);
+    this->_process_local_counter.emplace_back(std::move(event_counter));
   }
-
-  /// Re-use the given EventCounter for the last process in the list.
-  config.process(Process{ process_ids.back() });
-  event_counter.config(config);
-  this->_process_local_counter.emplace_back(std::move(event_counter));
 }
 
 perf::MultiCoreEventCounter::MultiCoreEventCounter(const perf::CounterDefinition& counter_definition,
@@ -706,18 +725,20 @@ perf::MultiCoreEventCounter::MultiCoreEventCounter(perf::EventCounter&& event_co
   auto config = event_counter.config();
   config.process(Process::Any); /// Record every thread/process on the given CPUs.
 
-  for (auto i = 0U; i < cpu_ids.size() - 1U; ++i) {
+  if (!cpu_ids.empty()) {
+    for (auto i = 0U; i < cpu_ids.size() - 1U; ++i) {
 
-    /// Create one EventCounter for every CPU core from the list via config.
-    config.cpu_core(CpuCore{ cpu_ids[i] });
-    auto process_local_counter = EventCounter::copy_from_template(event_counter);
-    process_local_counter.config(config);
+      /// Create one EventCounter for every CPU core from the list via config.
+      config.cpu_core(CpuCore{ cpu_ids[i] });
+      auto process_local_counter = EventCounter::copy_from_template(event_counter);
+      process_local_counter.config(config);
 
-    this->_cpu_local_counter.push_back(std::move(process_local_counter));
+      this->_cpu_local_counter.push_back(std::move(process_local_counter));
+    }
+
+    /// Re-use the given EventCounter for the last CPU Id in the list.
+    config.cpu_core(CpuCore{ cpu_ids.back() });
+    event_counter.config(config);
+    this->_cpu_local_counter.push_back(std::move(event_counter));
   }
-
-  /// Re-use the given EventCounter for the last CPU Id in the list.
-  config.cpu_core(CpuCore{ cpu_ids.back() });
-  event_counter.config(config);
-  this->_cpu_local_counter.push_back(std::move(event_counter));
 }

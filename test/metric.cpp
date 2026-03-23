@@ -316,6 +316,16 @@ TEST_CASE("calculating", "[Metric][Formula]")
     REQUIRE(sum_metric.calculate(counter_result).has_value());
     REQUIRE(sum_metric.calculate(counter_result).value() == (10 + 100 + 10 + 20 + 10));
   }
+
+  SECTION("formula with PMU name")
+  {
+    auto cpi_metric = perf::FormulaMetric{ "cpi", "'cpu/cycles' / instructions" };
+
+    auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
+      std::make_pair("cycles", 100U), std::make_pair("instructions", 20U) } };
+    REQUIRE(cpi_metric.calculate(counter_result).has_value());
+    REQUIRE(cpi_metric.calculate(counter_result).value() == (100U / 20U));
+  }
 }
 
 TEST_CASE("calculating", "[Metric][NestedMetrics]")

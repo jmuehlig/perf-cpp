@@ -86,6 +86,36 @@ TEST_CASE("counter scheduling", "[EventCounter]")
     REQUIRE(event_counter.result().get("instructions").value() > 100000000.);
     REQUIRE(event_counter.result().get("instructions").value() < 140000000.);
   }
+
+  SECTION("counter with pmu")
+  {
+    auto event_counter = perf::EventCounter{};
+
+    event_counter.add(std::vector<std::string>{ "cpu/cycles" }, perf::EventCounter::Schedule::Separate);
+
+    event_counter.start();
+    readonly_benchmark.run();
+    event_counter.stop();
+
+    REQUIRE(event_counter.result().get("cycles").has_value());
+  }
+
+  SECTION("counter with specific pmu")
+  {
+    // Add some non-existing "cycles" counter for a non-existing PMU; we will only add cpu/cycles.
+    auto counter_definition = perf::CounterDefinition{};
+    counter_definition.add("non-existing", "cycles", 10000U, 10000U);
+
+    auto event_counter = perf::EventCounter{counter_definition};
+
+    event_counter.add(std::vector<std::string>{ "cpu/cycles" }, perf::EventCounter::Schedule::Separate);
+
+    event_counter.start();
+    readonly_benchmark.run();
+    event_counter.stop();
+
+    REQUIRE(event_counter.result().get("cycles").has_value());
+  }
 }
 
 TEST_CASE("counting", "[EventCounter]")

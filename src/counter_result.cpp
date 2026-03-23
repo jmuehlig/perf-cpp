@@ -4,12 +4,18 @@
 #include <sstream>
 
 std::optional<double>
-perf::CounterResult::get(std::string_view name) const noexcept
+perf::CounterResult::get(const std::string_view name) const noexcept
 {
   if (const auto result_iterator = std::find_if(
         this->_results.begin(), this->_results.end(), [&name](const auto res) { return name == res.first; });
       result_iterator != this->_results.end()) {
     return result_iterator->second;
+  }
+
+  /// If the name is in '<package>/<event_name>' format, retry with just the event name.
+  if (const auto slash_pos = name.find('/');
+      slash_pos != std::string::npos && name.find('/', slash_pos + 1) == std::string::npos) {
+    return this->get(name.substr(slash_pos + 1));
   }
 
   return std::nullopt;
