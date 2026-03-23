@@ -50,7 +50,7 @@ private:
   std::vector<std::string> _required_counter_names;
 };
 
-/*
+/**
  * Measures the average number of cycles required to execute one instruction (CPI). Lower values indicate more efficient
  * instruction execution.
  */
@@ -72,7 +72,7 @@ public:
   }
 };
 
-/*
+/**
  * Measures the average number of cycles required to execute one instruction (CPI). Lower values indicate more efficient
  * instruction execution.
  */
@@ -97,7 +97,7 @@ public:
   }
 };
 
-/*
+/**
  * Calculates the average number of instructions executed per cycle (IPC). Higher values suggest better CPU utilization
  * and performance.
  */
@@ -122,7 +122,7 @@ public:
   }
 };
 
-/*
+/**
  * Computes the ratio of cache hits to total cache accesses (hits + misses). A higher ratio indicates better cache
  * utilization and efficiency.
  */
@@ -147,7 +147,7 @@ public:
   }
 };
 
-/*
+/**
  * Measures the power consumption of the entire CPU package in Watts using the RAPL energy-pkg counter.
  */
 class WattsPkg final : public Metric
@@ -168,7 +168,7 @@ public:
   }
 };
 
-/*
+/**
  * Measures the power consumption of the CPU cores in Watts using the RAPL energy-cores counter.
  */
 class WattsCores final : public Metric
@@ -192,7 +192,7 @@ public:
   }
 };
 
-/*
+/**
  * Measures the power consumption of RAM in Watts using the RAPL energy-ram counter.
  */
 class WattsRam final : public Metric
@@ -213,7 +213,7 @@ public:
   }
 };
 
-/*
+/**
  * Determines the proportion of cache accesses that resulted in misses. A lower ratio indicates better cache
  * performance.
  */
@@ -238,7 +238,7 @@ public:
   }
 };
 
-/*
+/**
  * Calculates the ratio of data Translation Lookaside Buffer (dTLB) misses to total dTLB accesses for data. Lower values
  * signify better dTLB efficiency.
  */
@@ -263,7 +263,7 @@ public:
   }
 };
 
-/*
+/**
  * Measures the ratio of instruction Translation Lookaside Buffer (iTLB) misses to total iTLB accesses for instructions.
  * A lower ratio indicates improved instruction fetching efficiency.
  */
@@ -288,7 +288,7 @@ public:
   }
 };
 
-/*
+/**
  * Computes the ratio of Level 1 (L1d) data cache misses to total L1 data cache accesses. Lower values suggest more
  * effective L1 cache performance.
  */
@@ -313,7 +313,7 @@ public:
   }
 };
 
-/*
+/**
  * Determines the ratio of incorrectly predicted branches to total branches. Lower values are indicative of more
  * accurate branch prediction.
  */
