@@ -20,7 +20,7 @@ For the latter, see [the recording basics documentation](recording.md).
 Define which events to monitor live and which to read post-computation using the `perf::EventCounter`:
 
 ```cpp
-#include <perfcpp/event_counter.h>
+#include <perfcpp/event_counter.hpp>
 
 auto event_counter = perf::EventCounter{};
 

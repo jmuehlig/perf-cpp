@@ -30,7 +30,7 @@ This guide will cover how to set up and utilize these sampling capabilities effe
 Initialize a sampler for each thread to monitor specific events:
 
 ```cpp
-#include <perfcpp/sampler.h>
+#include <perfcpp/sampler.hpp>
 
 auto sample_config = perf::SampleConfig{};
 sample_config.period(50000U);
@@ -115,7 +115,7 @@ For applications sensitive to the specific cores they run on, *perf-cpp* offers 
 The `MultiCoreSampler` needs to know which CPU cores will be sampled (see `cpus_to_watch` in the code example below).
 
 ```cpp
-#include <perfcpp/sampler.h>
+#include <perfcpp/sampler.hpp>
 /// Create a list of CPUS to monitor.
 auto cpus_to_watch = std::vector<std::uint16_t>{0U, 1U, 2U, 3U};
 

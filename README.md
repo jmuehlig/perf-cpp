@@ -30,7 +30,7 @@ See various **[practical examples](examples/README.md)** and the **[documentatio
 Count hardware events like `perf stat`—instructions, cycles, cache misses—while your code runs.
 
 ```cpp
-#include <perfcpp/event_counter.h>
+#include <perfcpp/event_counter.hpp>
 
 /// Initialize the counter
 auto event_counter = perf::EventCounter{};
@@ -67,7 +67,7 @@ cache-misses: 1.35633e+07
 Record snapshots like `perf [mem] record`—instruction pointer, CPU, timestamp—every 50,000 cycles.
 
 ```cpp
-#include <perfcpp/sampler.h>
+#include <perfcpp/sampler.hpp>
 
 /// Create the sampler
 auto sampler = perf::Sampler{};

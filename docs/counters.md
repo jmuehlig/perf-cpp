@@ -152,7 +152,7 @@ event_counter.add("ex_ret_instr");  // Use a Zen 4 specific event
 To see what events are available in your loaded configuration:
 
 ```cpp
-#include <perfcpp/counter_definition.h>
+#include <perfcpp/counter_definition.hpp>
 #include <iostream>
 
 const auto counter_definition = perf::CounterDefinition{ "events/x86/amd/zen-4.csv" };
@@ -258,7 +258,7 @@ Different processors support different features.
 The `perf::HardwareInfo` class lets you adapt your measurements to the running system:
 
 ```cpp
-#include <perfcpp/hardware_info.h>
+#include <perfcpp/hardware_info.hpp>
 
 if (perf::HardwareInfo::is_intel()) {
     /// Configure Intel-specific events

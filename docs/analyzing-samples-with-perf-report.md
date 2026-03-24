@@ -44,7 +44,7 @@ The `to_perf_file()` method transforms your application's sample data into the s
 For applications using a single `Sampler` instance, export samples after stopping the sampler:
 
 ```cpp
-#include <perfcpp/sampler.h>
+#include <perfcpp/sampler.hpp>
 
 auto sampler = perf::Sampler{};
 
@@ -68,7 +68,7 @@ sampler.to_perf_file("perf.data");
 For parallel sampling scenarios using `MultiThreadSampler`, `MultiCoreSampler`, or other multi-sampler classes:
 
 ```cpp
-#include <perfcpp/sampler.h>
+#include <perfcpp/sampler.hpp>
 
 /// Example: Multi-core sampling
 auto sampler = perf::MultiCoreSampler{

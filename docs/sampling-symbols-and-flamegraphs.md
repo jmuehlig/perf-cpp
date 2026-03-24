@@ -20,8 +20,8 @@ With just a few lines of code you can record samples, resolve symbols, and open 
 The `perf::SymbolResolver` allows to translate logical instruction pointers into symbols (i.e., the name if the module, the name of the function, and the offset within that function).
 
 ```cpp
-#include <perfcpp/sampler.h>
-#include <perfcpp/symbol_resolver.h>
+#include <perfcpp/sampler.hpp>
+#include <perfcpp/util/symbol_resolver.hpp>
 
 auto sampler = perf::Sampler{ };
 sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 50000U });
@@ -72,7 +72,7 @@ into samples.
 For more condensed outputs, it is also recommended to include the *timestamp* and sort the results afterward.
 
 ```cpp
-#include <perfcpp/sampler.h>
+#include <perfcpp/sampler.hpp>
 
 auto sampler = perf::Sampler{ };
 sampler.trigger("cycles");

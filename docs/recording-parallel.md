@@ -22,7 +22,7 @@ The `perf::MultiThreadEventCounter` class allows you to copy the measurement on 
 
 ### Define the events to record
 ```cpp
-#include <perfcpp/event_counter.h>
+#include <perfcpp/event_counter.hpp>
 
 const auto count_threads = 4U;
 
@@ -97,7 +97,7 @@ The `perf::Config` class allows you to inherit the measurement to all child thre
 
 ### Define inheritance and the counters to record
 ```cpp
-#include <perfcpp/event_counter.h>
+#include <perfcpp/event_counter.hpp>
 
 auto config = perf::Config{};
 config.include_child_threads(true);
@@ -185,7 +185,7 @@ cpus_to_watch.push_back(1U);
 
 ### Define the counters you want to record
 ```cpp
-#include <perfcpp/event_counter.h>
+#include <perfcpp/event_counter.hpp>
 
 auto multi_cpu_event_counter = perf::MultiCoreEventCounter{cpus_to_watch};
 try {

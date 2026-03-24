@@ -35,7 +35,7 @@ Unlike specialized formats like flame graphs or perf data files, CSV export give
 After recording samples with the `Sampler`, export them to CSV using the `to_csv()` method:
 
 ```cpp
-#include <perfcpp/sampler.h>
+#include <perfcpp/sampler.hpp>
 
 auto sampler = perf::Sampler{};
 

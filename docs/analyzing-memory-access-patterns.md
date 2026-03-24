@@ -33,7 +33,7 @@ class BinaryTreeNode {
 To analyze this structure, create a `perf::analyzer::DataType` definition:
 
 ```cpp
-#include <perfcpp/analyzer/memory_access.h>
+#include <perfcpp/analyzer/memory_access.hpp>
 
 auto binary_tree_node = perf::analyzer::DataType{"BinaryTreeNode", sizeof(BinaryTreeNode)};
 binary_tree_node.add("value", sizeof(std::uint64_t));         /// Describe the "value" attribute.
@@ -49,7 +49,7 @@ Since each instance of a data structure may exhibit different access patterns, t
 Here's how to register them:
 
 ```cpp
-#include <perfcpp/analyzer/memory_access.h>
+#include <perfcpp/analyzer/memory_access.hpp>
 auto memory_access_analyzer = perf::analyzer::MemoryAccess{};
 
 /// Expose the data type to the Analyzer.
@@ -71,8 +71,8 @@ To collect memory access data, use *perf-cpp*'s [sampling mechanism](sampling.md
 * Use a memory-address-capable sample trigger (e.g., `mem-loads` on Intel, `ibs_op` on AMD – see the [documentation](sampling.md#specific-notes-for-different-cpu-vendors))
 
 ```cpp
-#include <perfcpp/sampler.h>
-#include <perfcpp/analyzer/memory_access.h>
+#include <perfcpp/sampler.hpp>
+#include <perfcpp/analyzer/memory_access.hpp>
 
 auto sampler = perf::Sampler{};
 

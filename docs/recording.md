@@ -27,7 +27,7 @@ Define the specific events you wish to record using the `perf::EventCounter` cla
 The `perf::EventCounter` instance requires a `perf::CounterDefinition` as a reference, containing all events, their configurations, and names.
 
 ```cpp
-#include <perfcpp/event_counter.h>
+#include <perfcpp/event_counter.hpp>
 auto event_counter = perf::EventCounter{ };
 
 try {
@@ -219,7 +219,7 @@ Investigate the high costs associated with unpredictable memory access patterns 
 #include <cstdint>
 #include <vector>
 #include <algorithm>
-#include <perfcpp/event_counter.h>
+#include <perfcpp/event_counter.hpp>
 
 /// We want access one cache line per iteration.
 struct alignas(64U) cache_line { std::int64_t value; };

@@ -50,7 +50,7 @@ During sampling, the hardware captures a specified set of data fields when a con
 
 In the following example, a timestamp and the current instruction pointer are recorded every 50,000th cycle:
 ```cpp
-#include <perfcpp/sampler.h>
+#include <perfcpp/sampler.hpp>
 
 auto sample_config = perf::SampleConfig{};
 sample_config.period(50000U);

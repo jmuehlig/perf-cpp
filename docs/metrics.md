@@ -50,7 +50,7 @@ The beauty of metrics in *perf-cpp* is their simplicity–they work exactly like
 Add them, measure, and retrieve results using the same familiar interface:
 
 ```cpp
-#include <perfcpp/event_counter.h>
+#include <perfcpp/event_counter.hpp>
 
 auto event_counter = perf::EventCounter{ };
 
@@ -134,7 +134,7 @@ When your metric needs complex logic, validation, or stateful computation, imple
 This approach gives you full control over the calculation:
 
 ```cpp
-#include <perfcpp/metric.h>
+#include <perfcpp/metric/metric.hpp>
 
 class StallsPerCacheMiss final : public perf::Metric
 {
