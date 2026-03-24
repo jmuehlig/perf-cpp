@@ -1,6 +1,6 @@
 #include <algorithm>
 #include <iomanip>
-#include <perfcpp/counter_result.h>
+#include <perfcpp/counter/result.hpp>
 #include <sstream>
 
 std::optional<double>

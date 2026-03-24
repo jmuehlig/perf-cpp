@@ -1,8 +1,8 @@
 #include <algorithm>
 #include <numeric>
-#include <perfcpp/analyzer/memory_access.h>
-#include <perfcpp/exception.h>
-#include <perfcpp/util/table.h>
+#include <perfcpp/analyzer/memory_access.hpp>
+#include <perfcpp/exception.hpp>
+#include <perfcpp/util/table.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_set>

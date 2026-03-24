@@ -1,6 +1,6 @@
-#include <perfcpp/hardware_info.h>
-#include <perfcpp/ibs_decoder.h>
-#include <perfcpp/sample_decoder.h>
+#include <perfcpp/hardware_info.hpp>
+#include <perfcpp/sample/ibs_decoder.hpp>
+#include <perfcpp/sample/decoder.hpp>
 
 std::optional<perf::Metadata::Mode>
 perf::SampleIterator::mode() const noexcept

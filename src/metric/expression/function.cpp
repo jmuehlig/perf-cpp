@@ -1,5 +1,5 @@
 #include <numeric>
-#include <perfcpp/metric/expression/function.h>
+#include <perfcpp/metric/expression/function.hpp>
 
 std::optional<double>
 perf::metric::expression::DRatioFunction::evaluate(const std::optional<double> left,

@@ -1,4 +1,4 @@
-#include <perfcpp/sample_recording_values.h>
+#include <perfcpp/sample/recording_values.hpp>
 
 std::uint64_t
 perf::SampleRecordingValues::to_perf_sample_type() const noexcept

@@ -2,8 +2,8 @@
 #include <cerrno>
 #include <cstring>
 #include <iostream>
-#include <perfcpp/counter.h>
-#include <perfcpp/exception.h>
+#include <perfcpp/counter/counter.hpp>
+#include <perfcpp/exception.hpp>
 #include <perfcpp/feature.h>
 #include <sstream>
 #include <sys/ioctl.h>

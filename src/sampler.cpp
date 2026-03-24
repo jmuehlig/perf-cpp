@@ -1,10 +1,10 @@
 #include <algorithm>
-#include <perfcpp/exception.h>
-#include <perfcpp/hardware_info.h>
-#include <perfcpp/ibs_decoder.h>
-#include <perfcpp/record_file_writer.h>
-#include <perfcpp/sample_decoder.h>
-#include <perfcpp/sampler.h>
+#include <perfcpp/exception.hpp>
+#include <perfcpp/hardware_info.hpp>
+#include <perfcpp/sample/ibs_decoder.hpp>
+#include <perfcpp/sample/record_file_writer.hpp>
+#include <perfcpp/sample/decoder.hpp>
+#include <perfcpp/sampler.hpp>
 #include <stdexcept>
 #include <utility>
 

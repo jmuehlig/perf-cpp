@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <perfcpp/util/callchain_trie.h>
+#include <perfcpp/util/callchain_trie.hpp>
 #include <sstream>
 
 perf::util::CallchainTrie::CallchainTrie()

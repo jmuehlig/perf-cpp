@@ -1,7 +1,7 @@
 #include <cstring>
-#include <perfcpp/exception.h>
-#include <perfcpp/hardware_info.h>
-#include <perfcpp/mmap_buffer.h>
+#include <perfcpp/exception.hpp>
+#include <perfcpp/hardware_info.hpp>
+#include <perfcpp/sample/mmap_buffer.hpp>
 #include <sys/eventfd.h>
 #include <sys/mman.h>
 #include <sys/select.h>

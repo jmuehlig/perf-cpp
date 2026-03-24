@@ -1,4 +1,4 @@
-#include <perfcpp/requested_event.h>
+#include <perfcpp/counter/requested_event.hpp>
 
 bool
 perf::RequestedEventSet::add(const RequestedEvent& event)

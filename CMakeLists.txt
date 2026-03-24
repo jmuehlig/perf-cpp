@@ -31,24 +31,21 @@ message("Generating Processor-specific Events = ${GEN_PROCESSOR_EVENTS}")
 #############################################################
 set(PERF_CPP_SRC
     src/config.cpp
-    src/counter.cpp
     src/counter_definition.cpp
-    src/event_provider.cpp
-    src/counter_result.cpp
     src/event_counter.cpp
     src/exception.cpp
-    src/group.cpp
     src/hardware_info.cpp
-    src/requested_event.cpp
     src/sampler.cpp
-    src/sample_decoder.cpp
-    src/sample_result.cpp
-    src/sample_recording_values.cpp
-    src/util/table.cpp
-    src/util/callchain_trie.cpp
-    src/mmap_buffer.cpp
-    src/symbol_resolver.cpp
-    src/record_file_writer.cpp
+    src/counter/counter.cpp
+    src/counter/event_provider.cpp
+    src/counter/group.cpp
+    src/counter/requested_event.cpp
+    src/counter/result.cpp
+    src/sample/decoder.cpp
+    src/sample/mmap_buffer.cpp
+    src/sample/recording_values.cpp
+    src/sample/record_file_writer.cpp
+    src/sample/result.cpp
     src/metric/expression/token.cpp
     src/metric/expression/tokenizer.cpp
     src/metric/expression/parser.cpp
@@ -56,6 +53,9 @@ set(PERF_CPP_SRC
     src/metric/expression/expression.cpp
     src/analyzer/memory_access.cpp
     src/analyzer/flame_graph_generator.cpp
+    src/util/callchain_trie.cpp
+    src/util/symbol_resolver.cpp
+    src/util/table.cpp
 )
 
 #############################################################

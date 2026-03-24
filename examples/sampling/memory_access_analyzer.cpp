@@ -1,7 +1,7 @@
 #include "../access_benchmark.h"
-#include "perfcpp/analyzer/memory_access.h"
-#include "perfcpp/hardware_info.h"
-#include "perfcpp/sampler.h"
+#include <perfcpp/analyzer/memory_access.hpp>
+#include <perfcpp/hardware_info.hpp>
+#include <perfcpp/sampler.hpp>
 #include <iostream>
 
 int

@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <numeric>
-#include <perfcpp/event_counter.h>
-#include <perfcpp/exception.h>
+#include <perfcpp/event_counter.hpp>
+#include <perfcpp/exception.hpp>
 #include <utility>
 
 perf::EventCounter

@@ -1,5 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
-#include <perfcpp/hardware_info.h>
+#include <perfcpp/hardware_info.hpp>
 
 TEST_CASE("number of performance counters", "[HardwareInfo]")
 {

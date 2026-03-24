@@ -1,6 +1,6 @@
 #include <algorithm>
-#include <perfcpp/metric/expression/function.h>
-#include <perfcpp/metric/expression/parser.h>
+#include <perfcpp/metric/expression/function.hpp>
+#include <perfcpp/metric/expression/parser.hpp>
 
 std::unique_ptr<perf::metric::expression::ExpressionInterface>
 perf::metric::expression::Parser::parse()

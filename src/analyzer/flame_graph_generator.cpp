@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iterator>
-#include <perfcpp/analyzer/flame_graph_generator.h>
+#include <perfcpp/analyzer/flame_graph_generator.hpp>
 
 std::vector<std::pair<std::vector<std::string>, std::uint64_t>>
 perf::analyzer::FlameGraphGenerator::map(const std::vector<Sample>& samples)

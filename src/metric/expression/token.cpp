@@ -1,4 +1,4 @@
-#include <perfcpp/metric/expression/token.h>
+#include <perfcpp/metric/expression/token.hpp>
 
 std::string
 perf::metric::expression::Token::TokenToStringVisitor::operator()(

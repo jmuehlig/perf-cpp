@@ -1,4 +1,4 @@
-#include "perfcpp/record_file_writer.h"
+#include "perfcpp/sample/record_file_writer.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -6,27 +6,27 @@
 #include <fcntl.h>
 #include <fstream>
 #include <memory>
-#include <perfcpp/exception.h>
-#include <perfcpp/symbol_resolver.h>
-#include <perfcpp/util/unique_file_descriptor.h>
+#include <perfcpp/exception.hpp>
+#include <perfcpp/util/symbol_resolver.hpp>
+#include <perfcpp/util/unique_file_descriptor.hpp>
 #include <regex>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-perf::SymbolResolver::SymbolResolver()
+perf::util::SymbolResolver::SymbolResolver()
 {
   this->_resolved_symbols.reserve(1ULL << 10);
 
-  for (auto& module : SymbolResolver::read_modules()) {
-    if (auto symbols = SymbolResolver::parse_symbol_table(module); !symbols.empty()) {
+  for (auto& module : util::SymbolResolver::read_modules()) {
+    if (auto symbols = util::SymbolResolver::parse_symbol_table(module); !symbols.empty()) {
       this->_modules.insert(std::make_pair(std::move(module), std::move(symbols)));
     }
   }
 }
 
-std::optional<perf::SymbolResolver::ResolvedSymbol>
-perf::SymbolResolver::resolve(const std::uintptr_t logical_instruction_pointer) noexcept
+std::optional<perf::util::SymbolResolver::ResolvedSymbol>
+perf::util::SymbolResolver::resolve(const std::uintptr_t logical_instruction_pointer) noexcept
 {
   /// Query the cache.
   if (auto iterator = this->_resolved_symbols.find(logical_instruction_pointer);
@@ -38,7 +38,7 @@ perf::SymbolResolver::resolve(const std::uintptr_t logical_instruction_pointer) 
   for (const auto& [module, symbols] : this->_modules) {
     if (logical_instruction_pointer >= module.start() && logical_instruction_pointer < module.end()) {
       /// Resolve the symbol.
-      auto symbol = SymbolResolver::resolve(module, symbols, logical_instruction_pointer);
+      auto symbol = util::SymbolResolver::resolve(module, symbols, logical_instruction_pointer);
 
       /// Store the symbol in the cache.
       if (symbol != std::nullopt) {
@@ -52,8 +52,8 @@ perf::SymbolResolver::resolve(const std::uintptr_t logical_instruction_pointer) 
   return std::nullopt;
 }
 
-std::optional<perf::SymbolResolver::ResolvedSymbol>
-perf::SymbolResolver::resolve(const perf::SymbolResolver::Module& module,
+std::optional<perf::util::SymbolResolver::ResolvedSymbol>
+perf::util::SymbolResolver::resolve(const perf::util::SymbolResolver::Module& module,
                               const std::vector<Symbol>& symbols,
                               std::uintptr_t logical_instruction_pointer) noexcept
 {
@@ -80,8 +80,8 @@ perf::SymbolResolver::resolve(const perf::SymbolResolver::Module& module,
   return ResolvedSymbol{ module, *closest_symbol_iterator, relative_address - closest_symbol_iterator->address() };
 }
 
-std::vector<perf::SymbolResolver::Module>
-perf::SymbolResolver::read_modules()
+std::vector<perf::util::SymbolResolver::Module>
+perf::util::SymbolResolver::read_modules()
 {
   auto modules_stream = std::ifstream{ "/proc/self/maps" };
   if (!modules_stream.is_open()) {
@@ -107,7 +107,7 @@ perf::SymbolResolver::read_modules()
         auto module_name = (pos != std::string::npos) ? path.substr(pos + 1U) : path;
 
         /// Extract build ID for this module.
-        auto build_id = SymbolResolver::extract_build_id(path);
+        auto build_id = util::SymbolResolver::extract_build_id(path);
 
         modules.emplace_back(std::move(module_name),
                              std::stoull(match[1].str(), nullptr, 16),
@@ -124,7 +124,7 @@ perf::SymbolResolver::read_modules()
 }
 
 std::optional<std::string>
-perf::SymbolResolver::read_process_name()
+perf::util::SymbolResolver::read_process_name()
 {
   if (auto comm_file = std::ifstream{ "/proc/self/comm" }; comm_file.is_open()) {
     std::string name;
@@ -136,8 +136,8 @@ perf::SymbolResolver::read_process_name()
   return std::nullopt;
 }
 
-std::vector<perf::SymbolResolver::Symbol>
-perf::SymbolResolver::extract_symbols_from_table(void* elf_data,
+std::vector<perf::util::SymbolResolver::Symbol>
+perf::util::SymbolResolver::extract_symbols_from_table(void* elf_data,
                                                  const Elf64_Shdr* symbol_table,
                                                  const Elf64_Shdr* string_table)
 {
@@ -155,7 +155,7 @@ perf::SymbolResolver::extract_symbols_from_table(void* elf_data,
     if ((symbol_type == STT_FUNC || symbol_type == STT_GNU_IFUNC) && symbols[i].st_name != 0U) {
       if (auto mangled_name = std::string(strings + symbols[i].st_name); !mangled_name.empty()) {
         /// Demangle C++ symbol names for better readability.
-        auto demangled_name = SymbolResolver::demangle_symbol_name(std::move(mangled_name));
+        auto demangled_name = util::SymbolResolver::demangle_symbol_name(std::move(mangled_name));
         extracted_symbols.emplace_back(std::move(demangled_name), symbols[i].st_value, symbols[i].st_size);
       }
     }
@@ -164,8 +164,8 @@ perf::SymbolResolver::extract_symbols_from_table(void* elf_data,
   return extracted_symbols;
 }
 
-std::vector<perf::SymbolResolver::Symbol>
-perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& module)
+std::vector<perf::util::SymbolResolver::Symbol>
+perf::util::SymbolResolver::parse_symbol_table(const perf::util::SymbolResolver::Module& module)
 {
   const auto file_descriptor = util::UniqueFileDescriptor{ ::open(module.path().c_str(), O_RDONLY) };
   if (!file_descriptor.has_value()) {
@@ -199,9 +199,9 @@ perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& mod
 
   /// Extract symbols from SYMTAB (static symbol table) if available.
   const auto [symtab_table, symtab_strings] =
-    SymbolResolver::find_symbol_and_string_tables(section_header_table, elf_header->e_shnum);
+    util::SymbolResolver::find_symbol_and_string_tables(section_header_table, elf_header->e_shnum);
   if (symtab_table != nullptr && symtab_strings != nullptr) {
-    extracted_symbols = SymbolResolver::extract_symbols_from_table(elf_data, symtab_table, symtab_strings);
+    extracted_symbols = util::SymbolResolver::extract_symbols_from_table(elf_data, symtab_table, symtab_strings);
   }
 
   /// Extract symbols from DYNSYM (dynamic symbol table) if available and merge with existing symbols.
@@ -209,7 +209,7 @@ perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& mod
     if (section_header_table[i].sh_type == SHT_DYNSYM) {
       const auto* dynsym_table = &section_header_table[i];
       const auto* dynsym_strings = &section_header_table[section_header_table[i].sh_link];
-      auto dynsym_symbols = SymbolResolver::extract_symbols_from_table(elf_data, dynsym_table, dynsym_strings);
+      auto dynsym_symbols = util::SymbolResolver::extract_symbols_from_table(elf_data, dynsym_table, dynsym_strings);
       extracted_symbols.insert(extracted_symbols.end(),
                                std::make_move_iterator(dynsym_symbols.begin()),
                                std::make_move_iterator(dynsym_symbols.end()));
@@ -235,7 +235,7 @@ perf::SymbolResolver::parse_symbol_table(const perf::SymbolResolver::Module& mod
 }
 
 std::string
-perf::SymbolResolver::demangle_symbol_name(std::string&& symbol_name)
+perf::util::SymbolResolver::demangle_symbol_name(std::string&& symbol_name)
 {
   auto status = 0;
   auto demangled_name = std::unique_ptr<char, void (*)(void*)>(
@@ -246,7 +246,7 @@ perf::SymbolResolver::demangle_symbol_name(std::string&& symbol_name)
 }
 
 std::pair<const Elf64_Shdr*, const Elf64_Shdr*>
-perf::SymbolResolver::find_symbol_and_string_tables(const Elf64_Shdr* section_header_table,
+perf::util::SymbolResolver::find_symbol_and_string_tables(const Elf64_Shdr* section_header_table,
                                                     const std::uint16_t size) noexcept
 {
   /// First, try to find the static symbol table (SHT_SYMTAB) which contains all symbols.
@@ -267,7 +267,7 @@ perf::SymbolResolver::find_symbol_and_string_tables(const Elf64_Shdr* section_he
 }
 
 std::vector<std::uint8_t>
-perf::SymbolResolver::extract_build_id(const std::string& path) noexcept
+perf::util::SymbolResolver::extract_build_id(const std::string& path) noexcept
 {
   const auto file_descriptor = util::UniqueFileDescriptor{ ::open(path.c_str(), O_RDONLY) };
   if (!file_descriptor.has_value()) {

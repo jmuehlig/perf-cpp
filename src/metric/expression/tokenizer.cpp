@@ -1,5 +1,5 @@
-#include <perfcpp/exception.h>
-#include <perfcpp/metric/expression/tokenizer.h>
+#include <perfcpp/exception.hpp>
+#include <perfcpp/metric/expression/tokenizer.hpp>
 
 std::optional<perf::metric::expression::Token>
 perf::metric::expression::Tokenizer::next()

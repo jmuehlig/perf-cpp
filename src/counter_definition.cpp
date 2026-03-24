@@ -1,7 +1,7 @@
 #include <fstream>
-#include <perfcpp/counter_definition.h>
-#include <perfcpp/hardware_info.h>
-#include <perfcpp/util/table.h>
+#include <perfcpp/counter_definition.hpp>
+#include <perfcpp/hardware_info.hpp>
+#include <perfcpp/util/table.hpp>
 #include <sstream>
 
 /// The global CounterDefinition instance is used as a default one for EventCounter and Sampler. This instance detects

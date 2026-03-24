@@ -1,6 +1,6 @@
 #include "../access_benchmark.h"
-#include "perfcpp/hardware_info.h"
-#include "perfcpp/sampler.h"
+#include <perfcpp/hardware_info.hpp>
+#include <perfcpp/sampler.hpp>
 #include <iostream>
 
 int

@@ -1,5 +1,5 @@
 #include "../access_benchmark.h"
-#include "perfcpp/sampler.h"
+#include <perfcpp/sampler.hpp>
 #include <atomic>
 #include <iostream>
 #include <numeric>

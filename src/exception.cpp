@@ -1,4 +1,4 @@
-#include <perfcpp/exception.h>
+#include <perfcpp/exception.hpp>
 
 std::string
 perf::CannotOpenCounterError::create_error_message_from_code(const std::int64_t error_code)

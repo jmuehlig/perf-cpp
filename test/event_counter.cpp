@@ -1,6 +1,6 @@
 #include "access_benchmark.h"
 #include <catch2/catch_test_macros.hpp>
-#include <perfcpp/event_counter.h>
+#include <perfcpp/event_counter.hpp>
 
 TEST_CASE("configuration", "[EventCounter]")
 {

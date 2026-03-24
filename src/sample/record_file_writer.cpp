@@ -2,9 +2,9 @@
 #include <fstream>
 #include <iostream>
 #include <numeric>
-#include <perfcpp/record_file_writer.h>
-#include <perfcpp/sample_decoder.h>
-#include <perfcpp/sampler.h>
+#include <perfcpp/sample/record_file_writer.hpp>
+#include <perfcpp/sample/decoder.hpp>
+#include <perfcpp/sampler.hpp>
 #include <sstream>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -33,7 +33,7 @@ perf::RecordFileWriter::write(const SampleRecordingValues& sampler_values,
     RecordFileWriter::read_first_sample_id(sampler_values, sample_data);
 
   /// Read all modules from /proc/-system
-  auto modules = SymbolResolver::read_modules();
+  auto modules = util::SymbolResolver::read_modules();
 
   /// Test if any module has a build id. If so, we will enable the appropriate feature in the perf data.
   auto build_ids = std::optional<std::string>{};
@@ -107,7 +107,7 @@ perf::RecordFileWriter::write(const SampleRecordingValues& sampler_values,
 }
 
 std::optional<std::string>
-perf::RecordFileWriter::generate_build_ids_records(const std::vector<SymbolResolver::Module>& modules)
+perf::RecordFileWriter::generate_build_ids_records(const std::vector<util::SymbolResolver::Module>& modules)
 {
   if (modules.empty()) {
     return std::nullopt;
@@ -161,7 +161,7 @@ perf::RecordFileWriter::set_feature_bit(std::array<std::uint64_t, FEATURE_BITMAP
 }
 
 std::string
-perf::RecordFileWriter::generate_module_records(std::vector<SymbolResolver::Module>&& modules,
+perf::RecordFileWriter::generate_module_records(std::vector<util::SymbolResolver::Module>&& modules,
                                                 const std::optional<std::uint32_t> process_id,
                                                 const std::optional<std::uint32_t> thread_id,
                                                 const std::optional<std::uint64_t> timestamp,
@@ -247,7 +247,7 @@ perf::RecordFileWriter::generate_comm_records(const std::optional<std::uint32_t>
 
   /// Create COMM record for process name
   std::string comm_name;
-  if (auto process_name = SymbolResolver::read_process_name(); process_name.has_value()) {
+  if (auto process_name = util::SymbolResolver::read_process_name(); process_name.has_value()) {
     comm_name = std::move(process_name.value());
   } else {
     comm_name = "unknown";

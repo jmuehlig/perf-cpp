@@ -91,8 +91,8 @@ def read_events(events_file_path):
 
 def generate_cpp_content(events):
     """Generate the C++ implementation content."""
-    cpp_content = """#include <perfcpp/event_provider.h>
-#include <perfcpp/counter_definition.h>
+    cpp_content = """#include <perfcpp/counter_definition.hpp>
+#include <perfcpp/counter/event_provider.hpp>
 #include <linux/perf_event.h>
 
 void

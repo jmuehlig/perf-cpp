@@ -1,6 +1,6 @@
 #include <numeric>
-#include <perfcpp/exception.h>
-#include <perfcpp/util/table.h>
+#include <perfcpp/exception.hpp>
+#include <perfcpp/util/table.hpp>
 #include <sstream>
 
 void

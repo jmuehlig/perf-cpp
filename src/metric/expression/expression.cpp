@@ -1,4 +1,4 @@
-#include <perfcpp/metric/expression/expression.h>
+#include <perfcpp/metric/expression/expression.hpp>
 
 std::optional<double>
 perf::metric::expression::AdditionExpression::evaluate(const std::optional<double> left,

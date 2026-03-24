@@ -1,5 +1,5 @@
 #include "../access_benchmark.h"
-#include "perfcpp/event_counter.h"
+#include <perfcpp/event_counter.hpp>
 #include <iostream>
 
 int

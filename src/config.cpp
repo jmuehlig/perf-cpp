@@ -1,5 +1,5 @@
-#include <perfcpp/config.h>
-#include <perfcpp/hardware_info.h>
+#include <perfcpp/counter/config.hpp>
+#include <perfcpp/hardware_info.hpp>
 
 perf::Process perf::Process::Any = Process{ -1 };
 perf::Process perf::Process::Calling = Process{ 0 };

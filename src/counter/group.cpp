@@ -1,6 +1,6 @@
 #include <iostream>
-#include <perfcpp/exception.h>
-#include <perfcpp/group.h>
+#include <perfcpp/exception.hpp>
+#include <perfcpp/counter/group.hpp>
 #include <type_traits>
 #include <unistd.h>
 

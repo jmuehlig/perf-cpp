@@ -1,5 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
-#include <perfcpp/counter_definition.h>
+#include <perfcpp/counter_definition.hpp>
 
 TEST_CASE("adding new events and metrics", "[CounterDefinition]")
 {

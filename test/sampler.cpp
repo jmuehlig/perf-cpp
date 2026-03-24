@@ -3,8 +3,8 @@
 
 #if defined(__x86_64__) || defined(__i386__)
 #include <iostream>
-#include <perfcpp/hardware_info.h>
-#include <perfcpp/sampler.h>
+#include <perfcpp/hardware_info.hpp>
+#include <perfcpp/sampler.hpp>
 
 class AverageCounter
 {

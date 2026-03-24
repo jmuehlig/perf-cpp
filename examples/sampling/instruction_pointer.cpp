@@ -1,6 +1,6 @@
 #include "../access_benchmark.h"
-#include "perfcpp/sampler.h"
-#include "perfcpp/symbol_resolver.h"
+#include <perfcpp/sampler.hpp>
+#include <perfcpp/util/symbol_resolver.hpp>
 #include <iostream>
 
 int
@@ -49,7 +49,7 @@ main()
   samples.to_csv("samples_instruction_pointer.csv");
   std::cout << "Wrote samples to `samples_instruction_pointer.csv`." << std::endl;
 
-  auto symbol_resolver = perf::SymbolResolver{};
+  auto symbol_resolver = perf::util::SymbolResolver{};
 
   /// Print the first samples.
   const auto count_show_samples = std::min<std::size_t>(samples.size(), 400U);
