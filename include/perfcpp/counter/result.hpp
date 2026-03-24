@@ -56,6 +56,13 @@ public:
   [[nodiscard]] std::string to_json() const;
 
   /**
+   * Writes the result to a JSON file.
+   *
+   * @param file_name Path to the output file.
+   */
+  void to_json(std::string&& file_name) const;
+
+  /**
    * Converts the result to a CSV-formatted string.
    *
    * @param delimiter Char to separate columns (',' by default).
@@ -63,6 +70,15 @@ public:
    * @return Result in CSV format.
    */
   [[nodiscard]] std::string to_csv(char delimiter = ',', bool print_header = true) const;
+
+  /**
+   * Writes the result to a CSV file.
+   *
+   * @param file_name Path to the output file.
+   * @param delimiter Char to separate columns (',' by default).
+   * @param print_header If true, the header will be printed first (true by default).
+   */
+  void to_csv(std::string&& file_name, char delimiter = ',', bool print_header = true) const;
 
   /**
    * Converts the result to a table-formatted string.

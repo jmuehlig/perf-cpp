@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <fstream>
 #include <iomanip>
 #include <perfcpp/counter/result.hpp>
 #include <sstream>
@@ -59,6 +60,20 @@ perf::CounterResult::to_csv(const char delimiter, const bool print_header) const
   }
 
   return csv_stream.str();
+}
+
+void
+perf::CounterResult::to_json(std::string&& file_name) const
+{
+  auto json_file = std::ofstream{ file_name };
+  json_file << this->to_json();
+}
+
+void
+perf::CounterResult::to_csv(std::string&& file_name, const char delimiter, const bool print_header) const
+{
+  auto csv_file = std::ofstream{ file_name };
+  csv_file << this->to_csv(delimiter, print_header);
 }
 
 std::string
