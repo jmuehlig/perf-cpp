@@ -296,7 +296,7 @@ public:
   /**
    * @return Config of the sampler.
    */
-  [[nodiscard]] SampleConfig config() const noexcept { return _config; }
+  [[nodiscard]] const SampleConfig& config() const noexcept { return _config; }
 
   /**
    * @return Config of the sampler.
@@ -432,7 +432,7 @@ public:
   /**
    * @return Config of the sampler.
    */
-  [[nodiscard]] SampleConfig config() const noexcept { return _config; }
+  [[nodiscard]] const SampleConfig& config() const noexcept { return _config; }
 
   /**
    * @return Config of the sampler.
