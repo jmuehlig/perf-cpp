@@ -29,7 +29,7 @@ perf::EventCounter::~EventCounter()
   this->close();
 }
 
-bool
+void
 perf::EventCounter::add(const std::string& event_name, const Schedule schedule)
 {
   auto events = std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>{};
@@ -37,12 +37,9 @@ perf::EventCounter::add(const std::string& event_name, const Schedule schedule)
 
   /// Schedule the events to hardware counters.
   this->schedule(std::move(events), schedule);
-
-  /// If no exception was thrown, we are good to go. The bool is only returned for interface compatibility.
-  return true;
 }
 
-bool
+void
 perf::EventCounter::add(const std::vector<std::string>& event_names, const Schedule schedule)
 {
   auto events = std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>{};
@@ -55,9 +52,6 @@ perf::EventCounter::add(const std::vector<std::string>& event_names, const Sched
 
   /// Schedule the events to hardware counters.
   this->schedule(std::move(events), schedule);
-
-  /// If no exception was thrown, we are good to go. The bool is only returned for interface compatibility.
-  return true;
 }
 
 void
