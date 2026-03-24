@@ -8,7 +8,7 @@ perf::EventCounter
 perf::EventCounter::copy_from_template(const perf::EventCounter& other)
 {
   auto copy = EventCounter{
-    other._counter_definitions, other._config, other._requested_event_set, other._requested_live_event_set
+    other._counter_definition, other._config, other._requested_event_set, other._requested_live_event_set
   };
 
   copy._hardware_event_groups.reserve(other._hardware_event_groups.size());
@@ -71,7 +71,7 @@ perf::EventCounter::unfold(const std::string& name,
     const auto pmu_name = name.substr(0U, pmu_delimiter_pos);
     const auto name_without_pmu = name.substr(pmu_delimiter_pos + 1U, name.length() - (pmu_delimiter_pos + 1U));
 
-    if (const auto event_configurations = this->_counter_definitions.counter(pmu_name, name_without_pmu); event_configurations.has_value()) {
+    if (const auto event_configurations = this->_counter_definition.counter(pmu_name, name_without_pmu); event_configurations.has_value()) {
       auto [global_pmu_name, global_event_name, config] = event_configurations.value();
       EventCounter::add(global_pmu_name,
                           global_event_name,
@@ -83,7 +83,7 @@ perf::EventCounter::unfold(const std::string& name,
   }
 
   /// Find all events with the requested name.
-  if (const auto event_configurations = this->_counter_definitions.counter(name); !event_configurations.empty()) {
+  if (const auto event_configurations = this->_counter_definition.counter(name); !event_configurations.empty()) {
     for (const auto& [pmu_name, event_name, config] : event_configurations) {
       EventCounter::add(pmu_name,
                         event_name,
@@ -94,7 +94,7 @@ perf::EventCounter::unfold(const std::string& name,
   }
 
   /// If the given name references an existing metric, add the metric and all its required counters.
-  else if (const auto metric = this->_counter_definitions.metric(name); metric.has_value()) {
+  else if (const auto metric = this->_counter_definition.metric(name); metric.has_value()) {
     const auto& [metric_name, metric_instance] = metric.value();
 
     /// Add all hardware counters required by the metric..
@@ -115,7 +115,7 @@ perf::EventCounter::unfold(const std::string& name,
   }
 
   /// If the given name references an existing time event, add the time event.
-  else if (const auto& time_event = this->_counter_definitions.time_event(name); time_event.has_value()) {
+  else if (const auto& time_event = this->_counter_definition.time_event(name); time_event.has_value()) {
     events.emplace_back(
       RequestedEvent{ std::get<0>(time_event.value()), is_visible_in_results, RequestedEvent::Type::TimeEvent },
       std::nullopt);
@@ -282,7 +282,7 @@ perf::EventCounter::add_live(const std::string& event_name)
   }
 
   /// If the given name references one or multiple existing counters, add it.
-  if (auto event_configurations = this->_counter_definitions.counter(event_name); !event_configurations.empty()) {
+  if (auto event_configurations = this->_counter_definition.counter(event_name); !event_configurations.empty()) {
     for (auto [pmu_name, name, event_configuration] : event_configurations) {
       if (this->size() == this->_config.num_physical_counters()) {
         throw MaxCountersReachedError{ this->_config.num_physical_counters() };
@@ -303,13 +303,13 @@ perf::EventCounter::add_live(const std::string& event_name)
   }
 
   /// If the event does not exist, check if it is a metric, which is not supported for live events. Let the user know.
-  if (this->_counter_definitions.is_metric(event_name)) {
+  if (this->_counter_definition.is_metric(event_name)) {
     throw MetricNotSupportedAsLiveEventError{ event_name };
   }
 
   /// If the event does not exist, check if it is a time event, which is not supported for live events. Let the user
   /// know.
-  if (this->_counter_definitions.is_time_event(event_name)) {
+  if (this->_counter_definition.is_time_event(event_name)) {
     throw TimeEventNotSupportedAsLiveEventError{ event_name };
   }
 
@@ -420,7 +420,7 @@ perf::EventCounter::result(const std::uint64_t normalization) const
     }
     /// Time events are read using the event's start and stop time.
     else if (event.is_time_event()) {
-      if (const auto& time_calculator = this->_counter_definitions.time_event(event.event_name());
+      if (const auto& time_calculator = this->_counter_definition.time_event(event.event_name());
           time_calculator.has_value()) {
         const auto [start_timestamp, stop_timestamp] = this->_start_and_end_time;
         const auto time = std::get<1>(time_calculator.value()).calculate(start_timestamp, stop_timestamp);
@@ -432,7 +432,7 @@ perf::EventCounter::result(const std::uint64_t normalization) const
   /// Turn the result of only hardware events into a result containing requested hardware events and metrics (which are
   /// calculated from hardware events).
   return this->_requested_event_set.result(
-    this->_counter_definitions, CounterResult{ std::move(event_values) }, normalization);
+    this->_counter_definition, CounterResult{ std::move(event_values) }, normalization);
 }
 
 void
@@ -609,7 +609,7 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
     }
     /// Time events are read via event counter's start and stop timestamps.
     else if (event.is_time_event()) {
-      if (const auto time_event = reference_event_counter._counter_definitions.time_event(event.event_name());
+      if (const auto time_event = reference_event_counter._counter_definition.time_event(event.event_name());
           time_event.has_value()) {
         /// Aggregate the values from all individual EventCounters in event_counters.
         const auto aggregated_value = std::accumulate(
@@ -630,7 +630,7 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
   /// Turn the result of only aggregated hardware events into a result containing requested hardware events and metrics
   /// (which are calculated from hardware events).
   return reference_event_set.result(
-    reference_event_counter._counter_definitions, CounterResult{ std::move(aggregated_event_values) }, normalization);
+    reference_event_counter._counter_definition, CounterResult{ std::move(aggregated_event_values) }, normalization);
 }
 
 bool
@@ -667,7 +667,7 @@ perf::MultiThreadEventCounter::MultiThreadEventCounter(perf::EventCounter&& even
   }
 }
 
-perf::MultiProcessEventCounter::MultiProcessEventCounter(const perf::CounterDefinition& counter_list,
+perf::MultiProcessEventCounter::MultiProcessEventCounter(const perf::CounterDefinition& counter_definition,
                                                          std::vector<pid_t>&& process_ids,
                                                          perf::Config config)
 {
@@ -675,7 +675,7 @@ perf::MultiProcessEventCounter::MultiProcessEventCounter(const perf::CounterDefi
 
   for (const auto process_id : process_ids) {
     config.process(Process{ process_id });
-    this->_process_local_counter.emplace_back(counter_list, config);
+    this->_process_local_counter.emplace_back(counter_definition, config);
   }
 }
 

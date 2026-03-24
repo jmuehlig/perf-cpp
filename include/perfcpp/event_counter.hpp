@@ -42,7 +42,7 @@ public:
   [[nodiscard]] static EventCounter copy_from_template(const EventCounter& other);
 
   explicit EventCounter(const CounterDefinition& counter_definition, Config config = {})
-    : _counter_definitions(counter_definition)
+    : _counter_definition(counter_definition)
     , _config(config)
   {
   }
@@ -216,7 +216,7 @@ public:
 
 private:
   /// List of event names and codes.
-  const CounterDefinition& _counter_definitions;
+  const CounterDefinition& _counter_definition;
 
   /// The configuration of counters (include user, kernel, etc.).
   Config _config;
@@ -248,7 +248,7 @@ private:
                const Config config,
                RequestedEventSet requested_event_set,
                RequestedEventSet requested_live_event_set)
-    : _counter_definitions(counter_definition)
+    : _counter_definition(counter_definition)
     , _config(config)
     , _requested_event_set(std::move(requested_event_set))
     , _requested_live_event_set(std::move(requested_live_event_set))
@@ -555,7 +555,7 @@ private:
 class MultiProcessEventCounter final : public StartableMultiEventCounterBase
 {
 public:
-  MultiProcessEventCounter(const CounterDefinition& counter_list, std::vector<pid_t>&& process_ids, Config config = {});
+  MultiProcessEventCounter(const CounterDefinition& counter_definition, std::vector<pid_t>&& process_ids, Config config = {});
 
   explicit MultiProcessEventCounter(std::vector<pid_t>&& process_ids, const Config config = {})
     : MultiProcessEventCounter(CounterDefinition::global(), std::move(process_ids), config)

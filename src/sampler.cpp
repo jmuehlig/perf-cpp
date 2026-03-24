@@ -59,13 +59,13 @@ perf::Sampler::trigger(std::vector<std::vector<Trigger>>&& list_of_triggers)
 
     for (auto& trigger : trigger_group) {
       /// Reject metrics as trigger events as metrics consist of multiple events.
-      if (this->_counter_definitions.is_metric(trigger.name())) {
+      if (this->_counter_definition.is_metric(trigger.name())) {
         throw MetricNotSupportedAsSamplingTriggerError{ trigger.name() };
       }
 
       /// Read the config (like event id etc.) from every trigger name and verify that the trigger event exists in the
       /// CounterDefinition.
-      if (auto counter_config = this->_counter_definitions.counter(trigger.name()); !counter_config.empty()) {
+      if (auto counter_config = this->_counter_definition.counter(trigger.name()); !counter_config.empty()) {
         trigger_group_references.emplace_back(
           std::get<1>(counter_config.front()), trigger.precision(), trigger.period_or_frequency());
       } else {
@@ -100,7 +100,7 @@ perf::Sampler::open()
       /// As each event can be available on different, heterogeneous PMUs, we need to check if a trigger is available on
       /// multiple PMUs and add it multiple times – once per PMU.
       const auto event_name = std::get<0>(trigger_group.front());
-      for (const auto& hardware_events : this->_counter_definitions.counter(event_name)) {
+      for (const auto& hardware_events : this->_counter_definition.counter(event_name)) {
         auto sample_counter = this->transform_trigger_to_sample_counter(std::get<0>(hardware_events), trigger_group);
         this->_sample_counter.push_back(std::move(sample_counter));
       }
@@ -177,7 +177,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
 
   /// If the auxiliary event is needed but not included, add it.
   if (is_auxiliary_event_needed && !is_auxiliary_event_included) {
-    if (auto auxiliary_event = this->_counter_definitions.counter(pmu_name, "mem-loads-aux");
+    if (auto auxiliary_event = this->_counter_definition.counter(pmu_name, "mem-loads-aux");
         auxiliary_event.has_value()) {
 
       /// Read the event config (like event id, etc.).
@@ -200,7 +200,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
   /// Add the trigger(s) to the group. For the most time, this will be a single trigger.
   for (const auto& trigger : trigger_group) {
     const auto [event_name, precision, period_or_frequency] = trigger;
-    if (auto event_name_and_config = this->_counter_definitions.counter(pmu_name, event_name);
+    if (auto event_name_and_config = this->_counter_definition.counter(pmu_name, event_name);
         event_name_and_config.has_value()) {
 
       /// Read the event config (like event id, etc.).
@@ -229,7 +229,7 @@ perf::Sampler::transform_trigger_to_sample_counter(
     for (const auto& event_name : this->_values.counters()) {
 
       /// Check if the event is a true hardware event – if so, just add it to the list.
-      if (auto event_config = this->_counter_definitions.counter(pmu_name, event_name); event_config.has_value()) {
+      if (auto event_config = this->_counter_definition.counter(pmu_name, event_name); event_config.has_value()) {
         /// Add the event to the requested event set.
         /// If the request returns true, the event as indeed added and needs to be added to the group.
         /// The group id provided to the event set is 0 since there is only one group.
@@ -242,12 +242,12 @@ perf::Sampler::transform_trigger_to_sample_counter(
 
       /// Otherwise, check if the event is a metric. In that case, add all depending hardware events (if not already
       /// done).
-      else if (const auto metric = this->_counter_definitions.metric(event_name); metric.has_value()) {
+      else if (const auto metric = this->_counter_definition.metric(event_name); metric.has_value()) {
         this->add(metric.value(), pmu_name, requested_events, group);
       }
 
       /// Otherwise, check if the event is a time event. Time events are not supported for sampling; let the user know.
-      else if (this->_counter_definitions.is_time_event(event_name)) {
+      else if (this->_counter_definition.is_time_event(event_name)) {
         throw TimeEventNotSupportedForSamplingError{ event_name };
       }
 
@@ -278,7 +278,7 @@ perf::Sampler::add(const std::pair<std::string_view, Metric&> metric,
   const auto metric_name = std::get<0>(metric);
   /// For metrics, we need to add every hardware event the metric depends on (and check their existence).
   for (const auto& depending_event_name : std::get<1>(metric).required_counter_names()) {
-    if (const auto depending_event_config = this->_counter_definitions.counter(pmu_name, depending_event_name);
+    if (const auto depending_event_config = this->_counter_definition.counter(pmu_name, depending_event_name);
         depending_event_config.has_value()) {
 
       /// Add the event to the requested event set.
@@ -291,10 +291,10 @@ perf::Sampler::add(const std::pair<std::string_view, Metric&> metric,
       if (is_added) {
         group.add(std::get<2>(depending_event_config.value()));
       }
-    } else if (const auto depending_metric = this->_counter_definitions.metric(depending_event_name);
+    } else if (const auto depending_metric = this->_counter_definition.metric(depending_event_name);
                depending_metric.has_value()) {
       this->add(depending_metric.value(), pmu_name, requested_event_set, group);
-    } else if (this->_counter_definitions.is_time_event(depending_event_name)) {
+    } else if (this->_counter_definition.is_time_event(depending_event_name)) {
       throw TimeEventNotSupportedForSamplingError{ depending_event_name };
     } else {
       throw CannotFindEventForMetricError{ depending_event_name, metric_name };
@@ -312,15 +312,15 @@ perf::Sampler::is_auxiliary_event_needed_and_already_included(
     trigger_group) const
 {
   if (HardwareInfo::is_intel_aux_counter_required()) {
-    if (const auto mem_loads_event = this->_counter_definitions.counter(pmu_name, std::string_view{ "mem-loads" });
+    if (const auto mem_loads_event = this->_counter_definition.counter(pmu_name, std::string_view{ "mem-loads" });
         mem_loads_event.has_value()) {
       if (const auto mem_loads_aux_event =
-            this->_counter_definitions.counter(pmu_name, std::string_view{ "mem-loads-aux" });
+            this->_counter_definition.counter(pmu_name, std::string_view{ "mem-loads-aux" });
           mem_loads_aux_event.has_value()) {
 
         /// Check if any of the other triggers is a mem-loads event.
         for (const auto& trigger : trigger_group) {
-          if (auto trigger_event = this->_counter_definitions.counter(pmu_name, std::get<0>(trigger));
+          if (auto trigger_event = this->_counter_definition.counter(pmu_name, std::get<0>(trigger));
               trigger_event.has_value()) {
 
             /// If there is a mem-loads event we need the auxiliary event.
@@ -330,7 +330,7 @@ perf::Sampler::is_auxiliary_event_needed_and_already_included(
 
               /// Check if the first event in the group is already the mem-loads-aux event.
               if (const auto leading_trigger_event =
-                    this->_counter_definitions.counter(pmu_name, std::get<0>(trigger_group.front()));
+                    this->_counter_definition.counter(pmu_name, std::get<0>(trigger_group.front()));
                   leading_trigger_event.has_value()) {
                 const auto has_mem_loads_aux_event =
                   std::get<2>(leading_trigger_event.value()) == std::get<2>(mem_loads_aux_event.value());
@@ -361,7 +361,7 @@ perf::Sampler::result(const bool sort_by_time)
 
   auto result = std::vector<Sample>{};
 
-  auto sample_decoder = SampleDecoder{ this->_counter_definitions, this->_values };
+  auto sample_decoder = SampleDecoder{ this->_counter_definition, this->_values };
   for (auto sample_counter_id = 0U; sample_counter_id < this->_sample_counter.size(); ++sample_counter_id) {
     const auto& sample_counter = this->_sample_counter[sample_counter_id];
     const auto& counter_sample_data = sample_data[sample_counter_id];

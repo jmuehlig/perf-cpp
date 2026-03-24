@@ -150,8 +150,8 @@ public:
     bool _has_amd_ibs_op_pmu{ false };
   };
 
-  explicit Sampler(const CounterDefinition& counter_list, SampleConfig config = {})
-    : _counter_definitions(counter_list)
+  explicit Sampler(const CounterDefinition& counter_definition, SampleConfig config = {})
+    : _counter_definition(counter_definition)
     , _config(config)
   {
   }
@@ -385,7 +385,7 @@ private:
    */
   std::vector<std::vector<std::vector<std::byte>>>& consume_sample_data();
 
-  const CounterDefinition& _counter_definitions;
+  const CounterDefinition& _counter_definition;
 
   /// List of triggers. Each trigger will open an individual group of counters.
   /// "Normally", a 1-dimensional list would be enough, but since Intel Sapphire Rapids,
