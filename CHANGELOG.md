@@ -2,7 +2,7 @@
 
 ## v0.13.0 (WIP)
 - **Header Restructuring**: Headers have been reorganized into `counter/`, `sample/`, `metric/`, `analyzer/`, and `util/` subdirectories and renamed from `.h` to `.hpp`. The previous `.h` headers remain as forwarding includes with deprecation notices and will be removed in v1.0.
-- **Breaking**: `EventCounter::add()` now returns `void` instead of `bool`. The return value was unused and is no longer needed.
+- **Breaking**: `EventCounter::add()` and `start()` (including `Sampler::start()` and all multi-thread/core variants) now return `void` instead of `bool`. Errors are communicated via exceptions; the return values were unused.
 - **Compile Flag for AUX Buffer Support**: Added `PERFCPP_NO_SAMPLE_AUX` compile flag to disable auxiliary buffer sampling on systems with Linux kernels older than 5.5 that lack `PERF_SAMPLE_AUX` support. Thanks to [@rconnorlawson](https://github.com/rconnorlawson).
 - **Perf File Export**: Fixed bugs in perf format when materializing samples into file that can be read via `perf [mem] report`.
 - **NMI Watchdog Detection**: Hardware counter detection now accounts for the NMI watchdog permanently consuming one hw-PMU counter, fixing incorrect counter counts on systems with the watchdog enabled.

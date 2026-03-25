@@ -14,9 +14,9 @@ perf::SampleResult::filter(std::function<bool(const Sample&)> filter)
 }
 
 void
-perf::SampleResult::to_csv(std::string&& file_name, const char delimiter, const char list_delimiter) const
+perf::SampleResult::to_csv(const std::string_view file_name, const char delimiter, const char list_delimiter) const
 {
-  auto file_stream = std::ofstream(file_name);
+  auto file_stream = std::ofstream(std::string{ file_name });
   auto csv_writer = CSVWriter{ file_stream, this->_sample_recording_values, delimiter, list_delimiter };
 
   /// Header: Metadata
@@ -364,8 +364,8 @@ perf::SampleResult::to_csv(std::string&& file_name, const char delimiter, const 
 }
 
 void
-perf::SampleResult::to_flamegraphs(std::string&& file_name) const
+perf::SampleResult::to_flamegraphs(const std::string_view file_name) const
 {
   auto flame_graph_generator = analyzer::FlameGraphGenerator{};
-  flame_graph_generator.map(this->_samples, std::move(file_name));
+  flame_graph_generator.map(this->_samples, file_name);
 }

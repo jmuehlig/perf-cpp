@@ -340,7 +340,7 @@ perf::EventCounter::open()
   }
 }
 
-bool
+void
 perf::EventCounter::start()
 {
   /// Opens the hardware performance counters, if not already done specifically by calling EventCounter::open().
@@ -358,9 +358,6 @@ perf::EventCounter::start()
 
   /// Start timer.
   std::get<0>(this->_start_and_end_time) = std::chrono::steady_clock::now();
-
-  /// If no exception was thrown, we are good to go. The bool is only returned for interface compatibility.
-  return true;
 }
 
 void
@@ -621,16 +618,13 @@ perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
     reference_event_counter._counter_definition, CounterResult{ std::move(aggregated_event_values) }, normalization);
 }
 
-bool
+void
 perf::StartableMultiEventCounterBase::start()
 {
   /// Start every sub event counter.
   for (auto& event_counter : this->event_counters()) {
     event_counter.start();
   }
-
-  /// The bool is only returned for interface compatibility.
-  return true;
 }
 
 perf::MultiThreadEventCounter::MultiThreadEventCounter(const perf::CounterDefinition& counter_definition,

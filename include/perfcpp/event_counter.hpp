@@ -135,10 +135,8 @@ public:
 
   /**
    * Opens (if not already done) and starts recording performance counters.
-   *
-   * @return True, of the performance counters could be started.
    */
-  bool start();
+  void start();
 
   /**
    * Stops recording performance counters.
@@ -466,10 +464,8 @@ public:
 
   /**
    * Opens and starts all event counters.
-   *
-   * @return True, of the event counters could be started.
    */
-  bool start();
+  void start();
 };
 
 /**
@@ -506,9 +502,8 @@ public:
    * Opens and starts recording performance counters for the given thread.
    *
    * @param thread_id Id of the thread.
-   * @return True, of the performance counters could be started.
    */
-  bool start(std::uint16_t thread_id) { return this->_thread_local_counter[thread_id].start(); }
+  void start(std::uint16_t thread_id) { this->_thread_local_counter[thread_id].start(); }
 
   /**
    * Stops and closes recording performance counters.

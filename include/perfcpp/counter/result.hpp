@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -70,7 +71,7 @@ public:
    *
    * @param file_name Path to the output file.
    */
-  void to_json(std::string&& file_name) const;
+  void to_json(std::string_view file_name) const;
 
   /**
    * Converts the result to a CSV-formatted string.
@@ -88,7 +89,7 @@ public:
    * @param delimiter Char to separate columns (',' by default).
    * @param print_header If true, the header will be printed first (true by default).
    */
-  void to_csv(std::string&& file_name, char delimiter = ',', bool print_header = true) const;
+  void to_csv(std::string_view file_name, char delimiter = ',', bool print_header = true) const;
 
   /**
    * Converts the result to a table-formatted string.

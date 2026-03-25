@@ -4,6 +4,7 @@
 #include <perfcpp/sample/sample.hpp>
 #include <perfcpp/util/callchain_trie.hpp>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -25,22 +26,12 @@ public:
     std::function<std::uint64_t(std::vector<Sample>::const_iterator begin, std::vector<Sample>::const_iterator end)>&&
       mapper);
 
-  void map(const std::vector<Sample>& samples, std::string&& out_file_path) { map(samples, out_file_path); }
-
-  void map(const std::vector<Sample>& samples, const std::string& out_file_path);
-
-  void map(const std::vector<Sample>& samples,
-           std::function<std::uint64_t(std::vector<Sample>::const_iterator begin,
-                                       std::vector<Sample>::const_iterator end)>&& mapper,
-           std::string&& out_file_path)
-  {
-    map(samples, std::move(mapper), out_file_path);
-  }
+  void map(const std::vector<Sample>& samples, std::string_view out_file_path);
 
   void map(const std::vector<Sample>& samples,
            std::function<std::uint64_t(std::vector<Sample>::const_iterator begin,
                                        std::vector<Sample>::const_iterator end)> mapper,
-           const std::string& out_file_path);
+           std::string_view out_file_path);
 
 private:
   util::CallchainTrie _trie;

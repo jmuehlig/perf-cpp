@@ -513,7 +513,7 @@ perf::analyzer::MemoryAccessResult::to_json() const
 }
 
 std::string
-perf::analyzer::MemoryAccessResult::to_csv(const std::string& data_type_name,
+perf::analyzer::MemoryAccessResult::to_csv(const std::string_view data_type_name,
                                            const char delimiter,
                                            const bool print_header) const
 {

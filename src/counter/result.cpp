@@ -63,16 +63,16 @@ perf::CounterResult::to_csv(const char delimiter, const bool print_header) const
 }
 
 void
-perf::CounterResult::to_json(std::string&& file_name) const
+perf::CounterResult::to_json(const std::string_view file_name) const
 {
-  auto json_file = std::ofstream{ file_name };
+  auto json_file = std::ofstream{ std::string{ file_name } };
   json_file << this->to_json();
 }
 
 void
-perf::CounterResult::to_csv(std::string&& file_name, const char delimiter, const bool print_header) const
+perf::CounterResult::to_csv(const std::string_view file_name, const char delimiter, const bool print_header) const
 {
-  auto csv_file = std::ofstream{ file_name };
+  auto csv_file = std::ofstream{ std::string{ file_name } };
   csv_file << this->to_csv(delimiter, print_header);
 }
 

@@ -120,7 +120,7 @@ perf::Sampler::open()
   }
 }
 
-bool
+void
 perf::Sampler::start()
 {
   /// Clear the sample data.
@@ -133,8 +133,6 @@ perf::Sampler::start()
   for (const auto& sample_counter : this->_sample_counter) {
     sample_counter.group().enable();
   }
-
-  return true;
 }
 
 void
@@ -516,7 +514,7 @@ perf::MultiSamplerBase::start(perf::Sampler& sampler, const perf::SampleConfig c
   sampler._values = _values;
   sampler._config = config;
 
-  std::ignore = sampler.start();
+  sampler.start();
 }
 
 perf::MultiThreadSampler::MultiThreadSampler(const perf::CounterDefinition& counter_definition,

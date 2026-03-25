@@ -310,10 +310,8 @@ public:
 
   /**
    * Opens and starts recording performance counters.
-   *
-   * @return True, of the performance counters could be started.
    */
-  bool start();
+  void start();
 
   /**
    * Stops recording performance counters.

@@ -52,7 +52,7 @@ perf::analyzer::FlameGraphGenerator::map(
 }
 
 void
-perf::analyzer::FlameGraphGenerator::map(const std::vector<Sample>& samples, const std::string& out_file_path)
+perf::analyzer::FlameGraphGenerator::map(const std::vector<Sample>& samples, const std::string_view out_file_path)
 {
   this->map(samples, [](const auto begin, const auto end) { return std::distance(begin, end) + 1U; }, out_file_path);
 }
@@ -61,12 +61,12 @@ void
 perf::analyzer::FlameGraphGenerator::map(
   const std::vector<Sample>& samples,
   std::function<std::uint64_t(std::vector<Sample>::const_iterator, std::vector<Sample>::const_iterator)> mapper,
-  const std::string& out_file_path)
+  const std::string_view out_file_path)
 {
   /// Get the stacks.
   const auto stacks = this->map(samples, std::move(mapper));
 
-  auto out_file = std::ofstream{ out_file_path, std::ios_base::trunc };
+  auto out_file = std::ofstream{ std::string{ out_file_path }, std::ios_base::trunc };
 
   /// Write every symbol in the stack to the file.
   for (const auto& [symbols, count] : stacks) {
