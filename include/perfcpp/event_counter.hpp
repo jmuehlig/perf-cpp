@@ -70,7 +70,7 @@ public:
   void add(std::string&& event_name, const Schedule schedule = Schedule::Append) { add(event_name, schedule); }
 
   /**
-   * Add the specified event to the list of monitored countered events.
+   * Add the specified event to the list of monitored performance events.
    * The event must exist within the counter definitions.
    *
    * @param event_name Name of the event.
@@ -393,22 +393,22 @@ public:
   void add(std::string&& event_name, EventCounter::Schedule schedule = EventCounter::Schedule::Append);
 
   /**
-   * Add the specified counter to the list of monitored performance counters.
-   * The counter must exist within the counter definitions.
+   * Add the specified event to the list of monitored performance events.
+   * The event must exist within the counter definitions.
    *
-   * @param counter_name Name of the counter.
+   * @param event_name Name of the event.
    * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual).
    */
-  void add(const std::string& counter_name, const EventCounter::Schedule schedule = EventCounter::Schedule::Append)
+  void add(const std::string& event_name, const EventCounter::Schedule schedule = EventCounter::Schedule::Append)
   {
-    add(std::string{ counter_name }, schedule);
+    add(std::string{ event_name }, schedule);
   }
 
   /**
-   * Add the specified counters to the list of monitored performance counters.
-   * The counters must exist within the counter definitions.
+   * Add the specified events to the list of monitored performance events.
+   * The events must exist within the counter definitions.
    *
-   * @param event_names List of names of the counters.
+   * @param event_names List of names of the events.
    * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual), or as a
    * group (all to the same hardware counter).
    */
@@ -419,10 +419,10 @@ public:
   }
 
   /**
-   * Add the specified counters to the list of monitored performance counters.
-   * The counters must exist within the counter definitions.
+   * Add the specified events to the list of monitored performance events.
+   * The events must exist within the counter definitions.
    *
-   * @param event_names List of names of the counters.
+   * @param event_names List of names of the events.
    * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual), or as a
    * group (all to the same hardware counter).
    */
