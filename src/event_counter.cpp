@@ -523,19 +523,16 @@ perf::LiveEventCounter::get(const std::string_view event_name, const std::uint64
   return this->get(event_name) / static_cast<double>(normalization);
 }
 
-bool
+void
 perf::MultiEventCounterBase::add(std::string&& event_name, const perf::EventCounter::Schedule schedule)
 {
   /// Add the event to every event counter.
   for (auto& event_counter : this->event_counters()) {
     event_counter.add(event_name, schedule);
   }
-
-  /// The bool is only returned for interface compatibility.
-  return true;
 }
 
-bool
+void
 perf::MultiEventCounterBase::add(const std::vector<std::string>& event_names,
                                  const perf::EventCounter::Schedule schedule)
 {
@@ -543,9 +540,6 @@ perf::MultiEventCounterBase::add(const std::vector<std::string>& event_names,
   for (auto& event_counter : this->event_counters()) {
     event_counter.add(event_names, schedule);
   }
-
-  /// The bool is only returned for interface compatibility.
-  return true;
 }
 
 void

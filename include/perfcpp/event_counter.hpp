@@ -391,9 +391,8 @@ public:
    *
    * @param event_name Name of the event.
    * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual).
-   * @return True, if the event could be added.
    */
-  bool add(std::string&& event_name, EventCounter::Schedule schedule = EventCounter::Schedule::Append);
+  void add(std::string&& event_name, EventCounter::Schedule schedule = EventCounter::Schedule::Append);
 
   /**
    * Add the specified counter to the list of monitored performance counters.
@@ -401,11 +400,10 @@ public:
    *
    * @param counter_name Name of the counter.
    * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual).
-   * @return True, if the counter could be added.
    */
-  bool add(const std::string& counter_name, const EventCounter::Schedule schedule = EventCounter::Schedule::Append)
+  void add(const std::string& counter_name, const EventCounter::Schedule schedule = EventCounter::Schedule::Append)
   {
-    return add(std::string{ counter_name }, schedule);
+    add(std::string{ counter_name }, schedule);
   }
 
   /**
@@ -415,12 +413,11 @@ public:
    * @param event_names List of names of the counters.
    * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual), or as a
    * group (all to the same hardware counter).
-   * @return True, if the counters could be added.
    */
-  bool add(std::vector<std::string>&& event_names,
+  void add(std::vector<std::string>&& event_names,
            const EventCounter::Schedule schedule = EventCounter::Schedule::Append)
   {
-    return add(event_names, schedule);
+    add(event_names, schedule);
   }
 
   /**
@@ -430,9 +427,8 @@ public:
    * @param event_names List of names of the counters.
    * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual), or as a
    * group (all to the same hardware counter).
-   * @return True, if the counters could be added.
    */
-  bool add(const std::vector<std::string>& event_names,
+  void add(const std::vector<std::string>& event_names,
            EventCounter::Schedule schedule = EventCounter::Schedule::Append);
 
   /**
