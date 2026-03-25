@@ -42,6 +42,16 @@ public:
   [[nodiscard]] const_iterator end() const { return _results.end(); }
 
   /**
+   * @return Number of results.
+   */
+  [[nodiscard]] std::size_t size() const noexcept { return _results.size(); }
+
+  /**
+   * @return True if no results were collected.
+   */
+  [[nodiscard]] bool empty() const noexcept { return _results.empty(); }
+
+  /**
    * Adds the given result to the end of the results.
    *
    * @param name Name of the result.
