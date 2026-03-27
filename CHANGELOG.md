@@ -9,6 +9,7 @@
 - **RAPL Power Metrics**: Added built-in `watts-pkg`, `watts-cores`, and `watts-ram` metrics for measuring power consumption via RAPL energy counters (see the [documentation](docs/metrics.md#available-built-in-metrics)).
 - **Conan Package**: Added Conan 2.x package recipe for easier integration.
 - **Config Setter Naming**: Standardized `Config` setter naming — setters no longer use the `is_` prefix (e.g., `pinned(bool)` instead of `is_pinned(bool)`). The old `is_pinned(bool)` and `is_debug(bool)` setters are deprecated and will be removed in v1.0.
+- **SampleResult CSV Export**: Added `SampleResult::to_csv()` returning a `std::string`, complementing the existing file-based overload.
 
 ## v0.12.6
 - **CSV Export**: Samples can now be exported to CSV format using `SampleResult::to_csv()`, enabling custom analysis with statistical tools, spreadsheets, or data processing pipelines (see the [documentation](docs/analyzing-samples-with-csv.md)).

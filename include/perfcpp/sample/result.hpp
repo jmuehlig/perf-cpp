@@ -1,8 +1,9 @@
 #pragma once
 #include <perfcpp/sample/sample.hpp>
 #include <perfcpp/sample/recording_values.hpp>
-#include <fstream>
+#include <ostream>
 #include <functional>
+#include <string>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -146,6 +147,15 @@ public:
   void filter(std::function<bool(const Sample&)> filter);
 
   /**
+   * Returns the sample results as a CSV-formatted string.
+   *
+   * @param delimiter Character used to separate CSV columns (default: ',').
+   * @param list_delimiter Character used to separate list elements within a cell (default: ';').
+   * @return CSV-formatted string containing the sample results.
+   */
+  [[nodiscard]] std::string to_csv(char delimiter = ',', char list_delimiter = ';') const;
+
+  /**
    * Writes the sample results as CSV to the given file.
    *
    * @param file_name File to write the sample results in CSV format.
@@ -162,6 +172,9 @@ public:
   void to_flamegraphs(std::string_view file_name) const;
 
 private:
+  /// Writes all sample data as CSV to the given output stream.
+  void write_csv(std::ostream& stream, char delimiter, char list_delimiter) const;
+
   /// List of values recorded by the sample. These values are represented in the samples.
   SampleRecordingValues _sample_recording_values;
 
@@ -176,11 +189,11 @@ private:
   class CSVWriter
   {
   public:
-    CSVWriter(std::ofstream& file_stream,
+    CSVWriter(std::ostream& stream,
               const SampleRecordingValues& sample_recording_values,
               const char delimiter = ',',
               const char list_delimiter = ';') noexcept
-      : _csv_stream(file_stream)
+      : _csv_stream(stream)
       , _values(sample_recording_values)
       , _delimiter(delimiter)
       , _list_delimiter(list_delimiter)
@@ -352,7 +365,7 @@ private:
     }
 
     /// Output stream for writing CSV data.
-    std::ofstream& _csv_stream;
+    std::ostream& _csv_stream;
     /// Configuration indicating which fields are included in the samples.
     const SampleRecordingValues& _values;
     /// Character used to separate CSV columns (typically ',').

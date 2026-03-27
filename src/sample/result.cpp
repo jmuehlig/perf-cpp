@@ -1,8 +1,10 @@
 #include "perfcpp/hardware_info.hpp"
 #include <algorithm>
+#include <fstream>
 #include <perfcpp/analyzer/flame_graph_generator.hpp>
 #include <perfcpp/sample/result.hpp>
 #include <perfcpp/util/callchain_trie.hpp>
+#include <sstream>
 
 void
 perf::SampleResult::filter(std::function<bool(const Sample&)> filter)
@@ -13,14 +15,29 @@ perf::SampleResult::filter(std::function<bool(const Sample&)> filter)
                        this->_samples.end());
 }
 
+std::string
+perf::SampleResult::to_csv(const char delimiter, const char list_delimiter) const
+{
+  auto string_stream = std::ostringstream{};
+  this->write_csv(string_stream, delimiter, list_delimiter);
+  return string_stream.str();
+}
+
 void
 perf::SampleResult::to_csv(const std::string_view file_name, const char delimiter, const char list_delimiter) const
 {
-  auto file_stream = std::ofstream(std::string{ file_name });
-  auto csv_writer = CSVWriter{ file_stream, this->_sample_recording_values, delimiter, list_delimiter };
+  auto stream = std::ofstream(std::string{ file_name });
+  this->write_csv(stream, delimiter, list_delimiter);
+  stream << std::flush;
+}
+
+void
+perf::SampleResult::write_csv(std::ostream& stream, const char delimiter, const char list_delimiter) const
+{
+  auto csv_writer = CSVWriter{ stream, this->_sample_recording_values, delimiter, list_delimiter };
 
   /// Header: Metadata
-  file_stream << "mode";
+  stream << "mode";
   csv_writer.write_header(SampleRecordingValues::Field::Id, "id");
   csv_writer.write_header(SampleRecordingValues::Field::StreamId, "stream_id");
   csv_writer.write_header(SampleRecordingValues::Field::Timestamp, "timestamp");
@@ -139,15 +156,15 @@ perf::SampleResult::to_csv(const std::string_view file_name, const char delimite
   const auto has_loss_event = std::any_of(
     this->_samples.begin(), this->_samples.end(), [](const auto& sample) { return sample.count_loss().has_value(); });
   if (has_loss_event) {
-    file_stream << ",loss_count";
+    stream << ",loss_count";
   }
 
   /// Samples
   for (const auto& sample : this->_samples) {
-    file_stream << '\n';
+    stream << '\n';
 
     /// Metadata
-    file_stream << to_string(sample.metadata().mode());
+    stream << to_string(sample.metadata().mode());
     csv_writer.write_value(SampleRecordingValues::Field::Id, sample.metadata().sample_id());
     csv_writer.write_value(SampleRecordingValues::Field::StreamId, sample.metadata().stream_id());
     csv_writer.write_value(SampleRecordingValues::Field::Timestamp, sample.metadata().timestamp());
@@ -356,11 +373,9 @@ perf::SampleResult::to_csv(const std::string_view file_name, const char delimite
 
     /// Loss event (if any sample contains a loss count).
     if (has_loss_event) {
-      file_stream << "," << sample.count_loss().value_or(0U);
+      stream << "," << sample.count_loss().value_or(0U);
     }
   }
-
-  file_stream << std::flush;
 }
 
 void

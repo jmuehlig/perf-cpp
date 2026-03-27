@@ -118,6 +118,28 @@ The output may be something like this:
     Time = 124853765058918 | IP = 0x5794c991990c
     Time = 124853765256328 | IP = 0x5794c991990c
 
+#### Exporting to CSV
+Sample results can be exported to CSV, either as a string or directly to a file.
+Only fields configured via `sampler.values()` will contain data; unconfigured fields appear as empty cells.
+
+```cpp
+/// Export to a CSV-formatted string.
+const auto csv_string = result.to_csv();
+
+/// Export directly to a file.
+result.to_csv("samples.csv");
+```
+
+Both overloads accept optional delimiter parameters:
+
+```cpp
+/// Custom column delimiter and list delimiter.
+const auto csv_string = result.to_csv(/* delimiter = */ ';', /* list_delimiter = */ '|');
+result.to_csv("samples.csv", /* delimiter = */ ';', /* list_delimiter = */ '|');
+```
+
+&rarr; [See the full CSV field reference](analyzing-samples-with-csv.md)
+
 ### Closing the Sampler (*optional*)
 Closing the sampler releases and un-maps all buffers and deactivates all counters. 
 Additionally, the sampler automatically closes upon destruction. 

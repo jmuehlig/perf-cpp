@@ -57,7 +57,13 @@ const auto samples = sampler.result();
 samples.to_csv("samples.csv");
 ```
 
-This creates a CSV file where:
+Alternatively, retrieve the CSV data as a string for further processing:
+
+```cpp
+const auto csv_string = samples.to_csv();
+```
+
+This produces CSV data where:
 - **Each row** represents one sample
 - **Each column** represents a recorded field (only fields you configured via `sampler.values()` will contain data)
 - **Empty cells** indicate that a field was not configured or not available for that sample
