@@ -135,7 +135,7 @@ perf::EventCounter::add(const std::string_view pmu_name,
       RequestedEvent{ pmu_name, event_name, is_shown_in_results, RequestedEvent::Type::HardwareEvent }, event_config);
   } else if (is_shown_in_results) {
     /// Adjust visibility if the event should be shown.
-    iterator->first.is_shown_in_results(true);
+    iterator->first.shown_in_results(true);
   }
 }
 

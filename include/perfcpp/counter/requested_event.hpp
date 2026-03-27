@@ -112,7 +112,7 @@ public:
     return _scheduled_hardware_counter_group;
   }
 
-  void is_shown_in_results(const bool is_shown_in_results) noexcept { _is_shown_in_results = is_shown_in_results; }
+  void shown_in_results(const bool is_shown_in_results) noexcept { _is_shown_in_results = is_shown_in_results; }
   void scheduled_group(const std::uint8_t group_id, const std::uint8_t position) noexcept
   {
     _scheduled_hardware_counter_group = { group_id, position };

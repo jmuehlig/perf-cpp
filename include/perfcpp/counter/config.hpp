@@ -261,6 +261,12 @@ public:
    *
    * @param is_pinned If set to true, events will be kept on CPU (if possible).
    */
+  void pinned(const bool is_pinned) noexcept { _is_pinned = is_pinned; }
+
+  /**
+   * @deprecated Use pinned(bool) instead. Will be removed in v1.0.
+   */
+  [[deprecated("Use pinned(bool) instead. Will be removed in v1.0.")]]
   void is_pinned(const bool is_pinned) noexcept { _is_pinned = is_pinned; }
 
   /**
@@ -272,6 +278,12 @@ public:
    *
    * @param is_debug If set to true, counter configurations will be dumped to console.
    */
+  void debug(const bool is_debug) noexcept { _is_debug = is_debug; }
+
+  /**
+   * @deprecated Use debug(bool) instead. Will be removed in v1.0.
+   */
+  [[deprecated("Use debug(bool) instead. Will be removed in v1.0.")]]
   void is_debug(const bool is_debug) noexcept { _is_debug = is_debug; }
 
   /**

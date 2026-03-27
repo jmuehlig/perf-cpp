@@ -221,7 +221,7 @@ public:
      * Set whether this is an elision transaction.
      * @param is_elision_transaction Elision transaction indicator.
      */
-    void is_elision_transaction(const bool is_elision_transaction) noexcept
+    void elision_transaction(const bool is_elision_transaction) noexcept
     {
       _is_elision_transaction = is_elision_transaction;
     }
@@ -230,7 +230,7 @@ public:
      * Set whether this is a generic transaction.
      * @param is_generic_transaction Generic transaction indicator.
      */
-    void is_generic_transaction(const bool is_generic_transaction) noexcept
+    void generic_transaction(const bool is_generic_transaction) noexcept
     {
       _is_generic_transaction = is_generic_transaction;
     }
@@ -239,7 +239,7 @@ public:
      * Set whether this is a synchronous abort.
      * @param is_synchronous_abort Synchronous abort indicator.
      */
-    void is_synchronous_abort(const bool is_synchronous_abort) noexcept
+    void synchronous_abort(const bool is_synchronous_abort) noexcept
     {
       _is_synchronous_abort = is_synchronous_abort;
     }
@@ -248,13 +248,13 @@ public:
      * Set whether this is retryable.
      * @param is_retryable Retryable indicator.
      */
-    void is_retryable(const bool is_retryable) noexcept { _is_retryable = is_retryable; }
+    void retryable(const bool is_retryable) noexcept { _is_retryable = is_retryable; }
 
     /**
      * Set whether this is an abort due to memory conflict.
      * @param is_due_to_memory_conflict Memory conflict abort indicator.
      */
-    void is_due_to_memory_conflict(const bool is_due_to_memory_conflict) noexcept
+    void due_to_memory_conflict(const bool is_due_to_memory_conflict) noexcept
     {
       _is_due_to_memory_conflict = is_due_to_memory_conflict;
     }
@@ -263,7 +263,7 @@ public:
      * Set whether this is an abort due to write capacity conflict.
      * @param is_due_to_write_capacity_conflict Write capacity conflict abort indicator.
      */
-    void is_due_to_write_capacity_conflict(const bool is_due_to_write_capacity_conflict) noexcept
+    void due_to_write_capacity_conflict(const bool is_due_to_write_capacity_conflict) noexcept
     {
       _is_due_to_write_capacity_conflict = is_due_to_write_capacity_conflict;
     }
@@ -272,7 +272,7 @@ public:
      * Set whether this is an abort due to read capacity conflict.
      * @param is_due_to_read_capacity_conflict Read capacity conflict abort indicator.
      */
-    void is_due_to_read_capacity_conflict(const bool is_due_to_read_capacity_conflict) noexcept
+    void due_to_read_capacity_conflict(const bool is_due_to_read_capacity_conflict) noexcept
     {
       _is_due_to_read_capacity_conflict = is_due_to_read_capacity_conflict;
     }
@@ -362,7 +362,7 @@ public:
    * Set whether the instruction pointer is exact.
    * @param is_instruction_pointer_exact Instruction pointer exactness indicator.
    */
-  void is_instruction_pointer_exact(const bool is_instruction_pointer_exact) noexcept
+  void instruction_pointer_exact(const bool is_instruction_pointer_exact) noexcept
   {
     _is_instruction_pointer_exact = is_instruction_pointer_exact;
   }
@@ -371,7 +371,7 @@ public:
    * Set whether the instruction is locked.
    * @param is_locked Lock indicator.
    */
-  void is_locked(const std::optional<bool> is_locked) noexcept { _is_locked = is_locked; }
+  void locked(const std::optional<bool> is_locked) noexcept { _is_locked = is_locked; }
 
   /**
    * Set the latency information.

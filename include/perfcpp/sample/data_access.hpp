@@ -29,13 +29,13 @@ public:
      * Set whether the access hit in L1 cache.
      * @param is_l1_hit True if access hit in L1 cache.
      */
-    void is_l1_hit(const bool is_l1_hit) noexcept { _is_l1_hit = is_l1_hit; }
+    void l1_hit(const bool is_l1_hit) noexcept { _is_l1_hit = is_l1_hit; }
 
     /**
      * Set whether the access hit in the Memory Hierarchy Buffer (MHB).
      * @param is_mhb_hit True if MHB was hit.
      */
-    void is_mhb_hit(const bool is_mhb_hit) noexcept { _is_mhb_hit = is_mhb_hit; }
+    void mhb_hit(const bool is_mhb_hit) noexcept { _is_mhb_hit = is_mhb_hit; }
 
     /**
      * Set the number of MHB slots allocated.
@@ -50,31 +50,31 @@ public:
      * Set whether the access hit in L2 cache.
      * @param is_l2_hit True if access hit in L2 cache.
      */
-    void is_l2_hit(const bool is_l2_hit) noexcept { _is_l2_hit = is_l2_hit; }
+    void l2_hit(const bool is_l2_hit) noexcept { _is_l2_hit = is_l2_hit; }
 
     /**
      * Set whether the access hit in L3 cache.
      * @param is_l3_hit True if access hit in L3 cache.
      */
-    void is_l3_hit(const bool is_l3_hit) noexcept { _is_l3_hit = is_l3_hit; }
+    void l3_hit(const bool is_l3_hit) noexcept { _is_l3_hit = is_l3_hit; }
 
     /**
      * Set whether the access hit in L4 cache.
      * @param is_l4_hit True if access hit in L4 cache.
      */
-    void is_l4_hit(const bool is_l4_hit) noexcept { _is_l4_hit = is_l4_hit; }
+    void l4_hit(const bool is_l4_hit) noexcept { _is_l4_hit = is_l4_hit; }
 
     /**
      * Set whether the access hit in main memory.
      * @param is_memory_hit True if access hit DRAM.
      */
-    void is_memory_hit(const bool is_memory_hit) noexcept { _is_memory_hit = is_memory_hit; }
+    void memory_hit(const bool is_memory_hit) noexcept { _is_memory_hit = is_memory_hit; }
 
     /**
      * Set whether the accessed memory is located remotely.
      * @param is_remote True if remote node was accessed.
      */
-    void is_remote(const bool is_remote) noexcept { _is_remote = is_remote; }
+    void remote(const bool is_remote) noexcept { _is_remote = is_remote; }
 
     /**
      * Set the number of hops required to reach remote memory.
@@ -86,7 +86,7 @@ public:
      * Set whether the accessed memory is marked as uncachable.
      * @param is_uncachable_memory True if memory is uncachable.
      */
-    void is_uncachable_memory(const bool is_uncachable_memory) noexcept
+    void uncachable_memory(const bool is_uncachable_memory) noexcept
     {
       _is_uncachable_memory = is_uncachable_memory;
     }
@@ -95,7 +95,7 @@ public:
      * Set whether the accessed memory is write-combine.
      * @param is_write_combine_memory True if memory uses write-combine policy.
      */
-    void is_write_combine_memory(const bool is_write_combine_memory) noexcept
+    void write_combine_memory(const bool is_write_combine_memory) noexcept
     {
       _is_write_combine_memory = is_write_combine_memory;
     }
@@ -210,13 +210,13 @@ public:
      * Set whether L1 TLB resolved the access.
      * @param is_l1_hit True if L1 TLB hit.
      */
-    void is_l1_hit(const bool is_l1_hit) noexcept { _is_l1_hit = is_l1_hit; }
+    void l1_hit(const bool is_l1_hit) noexcept { _is_l1_hit = is_l1_hit; }
 
     /**
      * Set whether L2 TLB resolved the access.
      * @param is_l2_hit True if L2 TLB hit.
      */
-    void is_l2_hit(const bool is_l2_hit) noexcept { _is_l2_hit = is_l2_hit; }
+    void l2_hit(const bool is_l2_hit) noexcept { _is_l2_hit = is_l2_hit; }
 
     /**
      * Set the page size resolved by L1 TLB.
@@ -333,25 +333,25 @@ public:
      * Set whether the snoop was a hit.
      * @param is_hit True if the snoop found a matching cache line.
      */
-    void is_hit(const bool is_hit) noexcept { _is_hit = is_hit; }
+    void hit(const bool is_hit) noexcept { _is_hit = is_hit; }
 
     /**
      * Set whether the snoop hit a modified (dirty) cache line.
      * @param is_hit_modified True if the snoop found a modified copy.
      */
-    void is_hit_modified(const bool is_hit_modified) noexcept { _is_hit_modified = is_hit_modified; }
+    void hit_modified(const bool is_hit_modified) noexcept { _is_hit_modified = is_hit_modified; }
 
     /**
      * Set whether the line was forwarded to the requester.
      * @param is_forward True if a cache line was forwarded as part of the response.
      */
-    void is_forward(const bool is_forward) noexcept { _is_forward = is_forward; }
+    void forward(const bool is_forward) noexcept { _is_forward = is_forward; }
 
     /**
      * Set whether the line was transferred from another peer.
      * @param is_transfer_from_peer True if data was transferred from a peer cache.
      */
-    void is_transfer_from_peer(const bool is_transfer_from_peer) noexcept
+    void transfer_from_peer(const bool is_transfer_from_peer) noexcept
     {
       _is_transfer_from_peer = is_transfer_from_peer;
     }
@@ -393,7 +393,7 @@ public:
    * Set whether the daa access is locked.
    * @param is_locked Lock indicator.
    */
-  void is_locked(const std::optional<bool> is_locked) noexcept { _is_locked = is_locked; }
+  void locked(const std::optional<bool> is_locked) noexcept { _is_locked = is_locked; }
 
   /**
    * Set the logical memory address of the access.
@@ -429,7 +429,7 @@ public:
    * Set whether the access incurred a misalignment penalty.
    * @param is_misalign_penalty True if misaligned access penalized.
    */
-  void is_misalign_penalty(const bool is_misalign_penalty) noexcept { _is_misalign_penalty = is_misalign_penalty; }
+  void misalign_penalty(const bool is_misalign_penalty) noexcept { _is_misalign_penalty = is_misalign_penalty; }
 
   /**
    * Set the byte-width of the access.

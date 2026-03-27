@@ -120,7 +120,7 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
   }
 
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::LogicalInstructionPointer)) {
-    sample.instruction_execution().is_instruction_pointer_exact(entry.is_instruction_pointer_exact());
+    sample.instruction_execution().instruction_pointer_exact(entry.is_instruction_pointer_exact());
     sample.instruction_execution().logical_instruction_pointer(entry.read<std::uintptr_t>());
   }
 
@@ -501,14 +501,14 @@ perf::SampleDecoder::decode_data_access(const perf_mem_data_src data_source, Sam
 
   /// Set TLB hit.
   if (const auto tlb = SampleDecoder::decode_data_access_tlb(data_source.mem_dtlb); tlb.has_value()) {
-    sample.data_access().tlb().is_l1_hit(std::get<0>(tlb.value()));
-    sample.data_access().tlb().is_l2_hit(std::get<1>(tlb.value()));
+    sample.data_access().tlb().l1_hit(std::get<0>(tlb.value()));
+    sample.data_access().tlb().l2_hit(std::get<1>(tlb.value()));
   }
 
   /// Set is_locked information.
   const auto is_locked = SampleDecoder::decode_data_access_is_locked(data_source.mem_lock);
-  sample.instruction_execution().is_locked(is_locked);
-  sample.data_access().is_locked(is_locked);
+  sample.instruction_execution().locked(is_locked);
+  sample.data_access().locked(is_locked);
 }
 
 std::optional<perf::DataAccess::AccessType>
@@ -539,26 +539,26 @@ perf::SampleDecoder::decode_data_access_source(const std::uint64_t memory_level_
 
   /// Cache or RAM hit.
 #ifndef PERFCPP_NO_MEM_LVLNUM /// lvl_num field is supported since Linux 6.1
-  data_access_source.is_l1_hit(memory_level_code == PERF_MEM_LVLNUM_L1);
-  data_access_source.is_l2_hit(memory_level_code == PERF_MEM_LVLNUM_L2);
-  data_access_source.is_l3_hit(memory_level_code == PERF_MEM_LVLNUM_L3);
-  data_access_source.is_l4_hit(memory_level_code == PERF_MEM_LVLNUM_L4);
-  data_access_source.is_memory_hit(memory_level_code == PERF_MEM_LVLNUM_RAM);
-  data_access_source.is_mhb_hit(memory_level_code == PERF_MEM_LVLNUM_LFB);
-  data_access_source.is_uncachable_memory(memory_level_code == PERF_MEM_LVLNUM_UNC);
+  data_access_source.l1_hit(memory_level_code == PERF_MEM_LVLNUM_L1);
+  data_access_source.l2_hit(memory_level_code == PERF_MEM_LVLNUM_L2);
+  data_access_source.l3_hit(memory_level_code == PERF_MEM_LVLNUM_L3);
+  data_access_source.l4_hit(memory_level_code == PERF_MEM_LVLNUM_L4);
+  data_access_source.memory_hit(memory_level_code == PERF_MEM_LVLNUM_RAM);
+  data_access_source.mhb_hit(memory_level_code == PERF_MEM_LVLNUM_LFB);
+  data_access_source.uncachable_memory(memory_level_code == PERF_MEM_LVLNUM_UNC);
 #else /// Use lvl before Linux 6.1
-  data_access_source.is_l1_hit(static_cast<bool>(memory_level_code & PERF_MEM_LVL_L1) &&
+  data_access_source.l1_hit(static_cast<bool>(memory_level_code & PERF_MEM_LVL_L1) &&
                                static_cast<bool>(memory_level_code & PERF_MEM_LVL_HIT));
-  data_access_source.is_l2_hit(static_cast<bool>(memory_level_code & PERF_MEM_LVL_L2) &&
+  data_access_source.l2_hit(static_cast<bool>(memory_level_code & PERF_MEM_LVL_L2) &&
                                static_cast<bool>(memory_level_code & PERF_MEM_LVL_HIT));
-  data_access_source.is_l3_hit(static_cast<bool>(memory_level_code & PERF_MEM_LVL_L3) &&
+  data_access_source.l3_hit(static_cast<bool>(memory_level_code & PERF_MEM_LVL_L3) &&
                                static_cast<bool>(memory_level_code & PERF_MEM_LVL_HIT));
-  data_access_source.is_memory_hit(static_cast<bool>(memory_level_code & PERF_MEM_LVL_LOC_RAM) ||
+  data_access_source.memory_hit(static_cast<bool>(memory_level_code & PERF_MEM_LVL_LOC_RAM) ||
                                    static_cast<bool>(memory_level_code & PERF_MEM_LVL_REM_RAM1) ||
                                    static_cast<bool>(memory_level_code & PERF_MEM_LVL_REM_RAM2));
-  data_access_source.is_mhb_hit(static_cast<bool>(memory_level_code & PERF_MEM_LVL_LFB) &&
+  data_access_source.mhb_hit(static_cast<bool>(memory_level_code & PERF_MEM_LVL_LFB) &&
                                 static_cast<bool>(memory_level_code & PERF_MEM_LVL_HIT));
-  data_access_source.is_uncachable_memory(static_cast<bool>(memory_level_code & PERF_MEM_LVL_UNC));
+  data_access_source.uncachable_memory(static_cast<bool>(memory_level_code & PERF_MEM_LVL_UNC));
 #endif
 
   return data_access_source;
@@ -573,17 +573,17 @@ perf::SampleDecoder::decode_data_access_snoop(const std::uint64_t snoop_code,
     auto snoop = DataAccess::Snoop{};
 
     if (static_cast<bool>(snoop_code & PERF_MEM_SNOOP_HIT)) {
-      snoop.is_hit(true);
-      snoop.is_hit_modified(static_cast<bool>(snoop_code & PERF_MEM_SNOOP_HITM));
+      snoop.hit(true);
+      snoop.hit_modified(static_cast<bool>(snoop_code & PERF_MEM_SNOOP_HITM));
     } else if (static_cast<bool>(snoop_code & PERF_MEM_SNOOP_MISS)) {
-      snoop.is_hit(false);
+      snoop.hit(false);
     }
 
 #ifndef PERFCPP_NO_MEM_SNOOPX /// Snoopx was introduced in Linux 4.14.0
     if (snoopx_code > 0) {
 #ifndef PERFCPP_NO_MEM_SNOOPX_PEER /// Snoopx Peer was introduced in Linux 6.1.0
-      snoop.is_forward(static_cast<bool>(snoopx_code & PERF_MEM_SNOOPX_PEER));
-      snoop.is_transfer_from_peer(static_cast<bool>(snoopx_code & PERF_MEM_SNOOPX_PEER));
+      snoop.forward(static_cast<bool>(snoopx_code & PERF_MEM_SNOOPX_PEER));
+      snoop.transfer_from_peer(static_cast<bool>(snoopx_code & PERF_MEM_SNOOPX_PEER));
 #endif
     }
 #endif
@@ -657,9 +657,9 @@ perf::SampleDecoder::decode_data_access_source_and_remote(const perf_mem_data_sr
 
   /// Set the remote flag, depending on the available information.
 #ifndef PERFCPP_NO_MEM_REMOTE // Remote field is supported since Linux 4.14
-  data_access_source.is_remote(static_cast<bool>(perf_data_source.mem_remote & PERF_MEM_REMOTE_REMOTE));
+  data_access_source.remote(static_cast<bool>(perf_data_source.mem_remote & PERF_MEM_REMOTE_REMOTE));
 #else /// Use lvl before Linux 4.14
-  data_access_source.is_remote(static_cast<bool>(perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM1) ||
+  data_access_source.remote(static_cast<bool>(perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM1) ||
                                static_cast<bool>(perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM2) ||
                                static_cast<bool>(perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE1) ||
                                static_cast<bool>(perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE2));
@@ -701,13 +701,13 @@ perf::SampleDecoder::decode_hardware_transaction_abort(const std::uint64_t abort
 {
   /// Translate into the abort object.
   auto hardware_transaction_abort = InstructionExecution::HardwareTransactionAbort{};
-  hardware_transaction_abort.is_elision_transaction(static_cast<bool>(abort & PERF_TXN_ELISION));
-  hardware_transaction_abort.is_generic_transaction(static_cast<bool>(abort & PERF_TXN_TRANSACTION));
-  hardware_transaction_abort.is_synchronous_abort(static_cast<bool>(abort & PERF_TXN_SYNC));
-  hardware_transaction_abort.is_retryable(static_cast<bool>(abort & PERF_TXN_RETRY));
-  hardware_transaction_abort.is_due_to_memory_conflict(static_cast<bool>(abort & PERF_TXN_CONFLICT));
-  hardware_transaction_abort.is_due_to_write_capacity_conflict(static_cast<bool>(abort & PERF_TXN_CAPACITY_WRITE));
-  hardware_transaction_abort.is_due_to_read_capacity_conflict(static_cast<bool>(abort & PERF_TXN_CAPACITY_READ));
+  hardware_transaction_abort.elision_transaction(static_cast<bool>(abort & PERF_TXN_ELISION));
+  hardware_transaction_abort.generic_transaction(static_cast<bool>(abort & PERF_TXN_TRANSACTION));
+  hardware_transaction_abort.synchronous_abort(static_cast<bool>(abort & PERF_TXN_SYNC));
+  hardware_transaction_abort.retryable(static_cast<bool>(abort & PERF_TXN_RETRY));
+  hardware_transaction_abort.due_to_memory_conflict(static_cast<bool>(abort & PERF_TXN_CONFLICT));
+  hardware_transaction_abort.due_to_write_capacity_conflict(static_cast<bool>(abort & PERF_TXN_CAPACITY_WRITE));
+  hardware_transaction_abort.due_to_read_capacity_conflict(static_cast<bool>(abort & PERF_TXN_CAPACITY_READ));
   hardware_transaction_abort.user_specified_code((abort >> PERF_TXN_ABORT_SHIFT) & PERF_TXN_ABORT_MASK);
 
   return hardware_transaction_abort;
@@ -804,7 +804,7 @@ perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(Sample& sample,
 
   /// Misalgin penalty.
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataAccessMisalignPenalty)) {
-    sample.data_access().is_misalign_penalty(ibs_op_decoder.is_data_cache_misaligned_access());
+    sample.data_access().misalign_penalty(ibs_op_decoder.is_data_cache_misaligned_access());
   }
 
   /// Source information.
@@ -813,13 +813,13 @@ perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(Sample& sample,
     if (this->_sampler_values.is_set(SampleRecordingValues::Field::MHBAllocations)) {
       if (ibs_op_decoder.is_data_cache_miss()) {
         data_source->num_mhb_slots_allocated(ibs_op_decoder.num_open_mem_requests());
-        data_source->is_mhb_hit(ibs_op_decoder.is_data_cache_miss_no_mab_allocation());
+        data_source->mhb_hit(ibs_op_decoder.is_data_cache_miss_no_mab_allocation());
       }
     }
 
     /// Write-combine memory access.
     if (ibs_op_decoder.is_load_operation() || ibs_op_decoder.is_store_operation()) {
-      data_source->is_write_combine_memory(ibs_op_decoder.is_data_cache_write_combine_access());
+      data_source->write_combine_memory(ibs_op_decoder.is_data_cache_write_combine_access());
     }
   }
 

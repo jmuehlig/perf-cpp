@@ -31,7 +31,7 @@ perf::RequestedEventSet::adjust_visibility_if_present(const std::optional<std::s
 
   /// If the event should be included into the results, mark it accordingly.
   if (is_shown_in_results) {
-    iterator->is_shown_in_results(true);
+    iterator->shown_in_results(true);
   }
 
   return true;
