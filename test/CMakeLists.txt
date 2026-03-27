@@ -9,6 +9,7 @@ FetchContent_MakeAvailable(Catch2)
 set(PERF_CPP_TEST
         test/access_benchmark.cpp
         test/counter_definition.cpp
+        test/counter_result.cpp
         test/metric.cpp
         test/event_counter.cpp
         test/sampler.cpp
