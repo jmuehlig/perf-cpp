@@ -42,6 +42,14 @@ public:
    */
   [[nodiscard]] bool operator==(const Process other) const noexcept { return _process_id == other._process_id; }
 
+  /**
+   * Compares two processes for equality.
+   *
+   * @param process_id Process to compare with.
+   * @return True if both processes have the same process ID, false otherwise.
+   */
+  [[nodiscard]] bool operator==(const pid_t process_id) const noexcept { return _process_id == process_id; }
+
 private:
   pid_t _process_id;
 };
@@ -76,6 +84,14 @@ public:
    * @return True if both cores have the same CPU core ID, false otherwise.
    */
   [[nodiscard]] bool operator==(const CpuCore other) const noexcept { return _cpu_core_id == other._cpu_core_id; }
+
+  /**
+   * Compares two CPU cores for equality.
+   *
+   * @param other CPU core to compare with.
+   * @return True if both cores have the same CPU core ID, false otherwise.
+   */
+  [[nodiscard]] bool operator==(const std::uint16_t other) const noexcept { return _cpu_core_id == other; }
 
 private:
   std::int32_t _cpu_core_id;
