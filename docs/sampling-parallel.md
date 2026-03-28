@@ -1,20 +1,18 @@
-# Advanced Event Sampling for Multithreaded and Multi-core Environments
-In parallel computing environments, understanding the performance of code executed across multiple threads or CPU cores is crucial.
-*perf-cpp* facilitates this by providing tools to sample performance metrics either by individual threads or specific CPU cores. 
-This guide will cover how to set up and utilize these sampling capabilities effectively.
+# Sampling in Parallel
+
+Sampling can target specific threads or CPU cores:
+
+1. **[Per-thread sampling](#per-thread-sampling)**: Each thread gets its own sampler, results are combined afterward.
+2. **[Per-CPU-core sampling](#per-cpu-core-sampling)**: Monitor specific CPU cores regardless of which process runs on them.
 
 > [!TIP]
-> Our examples include several working code-examples, e.g., **[sampling/multi_cpu.cpp](../examples/sampling/multi_cpu.cpp)** and **[sampling/multi_thread.cpp](../examples/sampling/multi_thread.cpp)**.
+> See the examples: **[multi_thread.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/multi_thread.cpp)**, **[multi_cpu.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/multi_cpu.cpp)**.
 
 ---
 
-## Sample Separate Threads
-*perf-cpp* provides the `MultiThreadSampler` class to manage samplers for different threads, enabling precise performance measurements across thread-specific tasks.
+## Per-Thread Sampling
 
-&rarr; [See code example `multi_thread_sampling.cpp`](../examples/sampling/multi_thread.cpp)
-
-### Setting Up Multi-threaded Sampler
-Initialize a sampler for each thread to monitor specific events:
+`perf::MultiThreadSampler` creates one sampler per thread and combines the results:
 
 ```cpp
 #include <perfcpp/sampler.hpp>
@@ -22,160 +20,96 @@ Initialize a sampler for each thread to monitor specific events:
 auto sample_config = perf::SampleConfig{};
 sample_config.period(50000U);
 
-auto sampler = perf::MultiThreadSampler{ 
-    /* number of threads */ 4U,
-    sample_config
-};
-
+const auto count_threads = 4U;
+auto sampler = perf::MultiThreadSampler{ count_threads, sample_config };
 sampler.trigger("cycles");
 sampler.values().timestamp(true).thread_id(true);
-```
 
-### Starting and Stopping Sampler in Threads
-Each thread should manage its sampler instance:
+/// Optionally open before start() to exclude setup time from measurements.
+sampler.open();
 
-```cpp
+/// Start/stop per thread.
 auto threads = std::vector<std::thread>{};
-for (auto thread_index = 0U; thread_index < 4U; ++thread_index) {
-    threads.emplace_back([thread_index, &sampler /*,  ... more stuff .. */]() {
-        try {
-            sampler.start(thread_index);
-        } catch (std::runtime_error& e) {
-            std::cerr << e.what() << std::endl;
-        }
-
-      /// ... do some work that is sampled...
-
-      sampler.stop(thread_index);
+for (auto thread_id = 0U; thread_id < count_threads; ++thread_id) {
+    threads.emplace_back([thread_id, &sampler]() {
+        sampler.start(thread_id);
+        /// ... computation here ...
+        sampler.stop(thread_id);
     });
 }
 
 for (auto& thread : threads) {
     thread.join();
 }
-```
 
-### Retrieving and Analyzing Samples
-After the threads complete execution, collate and analyze the data:
-
-```cpp
-auto result = sampler.result(/* sort samples by time*/ true);
-
-/// Print the samples
-for (const auto& record : result)
+/// Combined results across all threads.
+for (const auto& record : sampler.result(/* sort by time */ true))
 {
     const auto timestamp = record.metadata().timestamp();
     const auto thread_id = record.metadata().thread_id();
     if (timestamp.has_value() && thread_id.has_value())
     {
-        std::cout 
-            << "Time = " << timestamp.value() 
+        std::cout
+            << "Time = " << timestamp.value()
             << " | Thread ID = " << thread_id.value() << std::endl;
     }
 }
+
+/// Release resources explicitly, or let the destructor handle it.
+sampler.close();
 ```
 
 The output may be something like this:
 
-    Time = 173058802647651 | Thread ID = 62803 
-    Time = 173058803163735 | Thread ID = 62802 
+    Time = 173058802647651 | Thread ID = 62803
+    Time = 173058803163735 | Thread ID = 62802
     Time = 173058803625986 | Thread ID = 62804
     Time = 173058804277715 | Thread ID = 62802
 
-### Releasing Sampler Resources *(optional)*
-Closing the sampler will free and un-map all resources like buffers and hardware counters.
-
-```cpp
-sampler.close();
-```
-
 ---
 
-## Sample on Specific CPU Cores
-For applications sensitive to the specific cores they run on, *perf-cpp* offers `MultiCoreSampler`.
+## Per-CPU-Core Sampling
 
-&rarr; [See code example `multi_cpu_sampling.cpp`](../examples/sampling/multi_cpu.cpp)
+`perf::MultiCoreSampler` records samples on specified CPU cores, capturing activity from all processes running there.
 
-**Note**: This records data of all processes running on the specified cores and needs specific permissions (i.e., a value of less than `1` in `/proc/sys/kernel/perf_event_paranoid`).
-
-### Setting Up Multi-Core Sampler
-The `MultiCoreSampler` needs to know which CPU cores will be sampled (see `cpus_to_watch` in the code example below).
+> [!NOTE]
+> This requires `perf_event_paranoid < 1`. See the [perf paranoid setting](perf-paranoid.md).
 
 ```cpp
 #include <perfcpp/sampler.hpp>
-/// Create a list of CPUS to monitor.
-auto cpus_to_watch = std::vector<std::uint16_t>{0U, 1U, 2U, 3U};
 
 auto sample_config = perf::SampleConfig{};
 sample_config.period(50000U);
 
-auto sampler = perf::MultiCoreSampler{
-    std::move(cpus_to_watch), /// List of CPUs to sample
-    sample_config
-};
-
+const auto cpu_core_ids = std::vector<std::uint16_t>{0U, 1U, 2U, 3U};
+auto sampler = perf::MultiCoreSampler{ cpu_core_ids, sample_config };
 sampler.trigger("cycles");
 sampler.values().timestamp(true).cpu_id(true).thread_id(true);
-```
 
-### Sampler Initialization *(optional)*
-Optionally, open the sampler before starting to separate configuration overhead from measurement:
+/// Optionally open before start() to exclude setup time from measurements.
+sampler.open();
 
-```cpp
-try {
-    sampler.open();
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-```
-
-### Starting and Stopping Samplers
-No matter for which threads, the sampler only needs to be started once.
-
-```cpp
-auto threads = std::vector<std::thread>{};
-for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
-    threads.emplace_back([thread_index, /*,  ... more stuff .. */]() {
-      /// ... do some work that is sampled...
-    });
-}
-
-/// Start sampling.
-try {
-    sampler.start();
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-
-/// Wait for all threads to finish.
-for (auto& thread : threads) {
-    thread.join();
-}
-
-/// Stop sampling after all threads have finished.
+sampler.start();
+/// ... computation runs on the monitored cores ...
 sampler.stop();
-```
 
-### Retrieving and Analyzing Samples
-Access and print the collected data:
-
-```cpp
-auto result = sampler.result(/* sort samples by time*/ true);
-
-/// Print the samples
-for (const auto& record : result)
+/// Combined results across all monitored cores.
+for (const auto& record : sampler.result(/* sort by time */ true))
 {
     const auto timestamp = record.metadata().timestamp();
     const auto cpu_id = record.metadata().cpu_id();
     const auto thread_id = record.metadata().thread_id();
     if (timestamp.has_value() && cpu_id.has_value() && thread_id.has_value())
     {
-        std::cout 
-            << "Time = " << timestamp.value() 
+        std::cout
+            << "Time = " << timestamp.value()
             << " | CPU ID = " << cpu_id.value()
             << " | Thread ID = " << thread_id.value() << std::endl;
     }
 }
+
+/// Release resources explicitly, or let the destructor handle it.
+sampler.close();
 ```
 
 The output may be something like this:
@@ -185,10 +119,3 @@ The output may be something like this:
     Time = 173058799826723 | CPU ID = 3 | Thread ID = 62802
     Time = 173058800426323 | CPU ID = 6 | Thread ID = 62803
     Time = 173058801403355 | CPU ID = 8 | Thread ID = 62804
-
-### Releasing Sampler Resources *(optional)*
-Closing the sampler will free and un-map all resources like buffers and hardware counters.
-
-```cpp
-sampler.close();
-```

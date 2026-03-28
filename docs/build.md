@@ -13,7 +13,7 @@ cmake --build build
 
 | Option | Default | Description |
 |---|---|---|
-| `-DBUILD_EXAMPLES=ON` | `OFF` | Build example binaries into `build/examples/bin` |
+| `-DBUILD_EXAMPLES=ON` | `OFF` | Build example binaries into `buihttps://github.com/jmuehlig/perf-cpp/tree/dev/examples/bin` |
 | `-DBUILD_LIB_SHARED=ON` | `OFF` | Build as shared library instead of static |
 | `-DBUILD_TESTS=ON` | `OFF` | Build unit tests |
 | `-DGEN_PROCESSOR_EVENTS=ON` | `OFF` | Embed processor-specific events at compile time (see [customizing events](counters.md)) |
@@ -25,7 +25,7 @@ cmake --build build
 ```
 
 > [!NOTE]
-> `-DGEN_PROCESSOR_EVENTS=ON` reads events from the [event library](./counters.md#loading-events-from-the-event-library) and generates a source file that can grow large, increasing compilation time significantly.
+> `-DGEN_PROCESSOR_EVENTS=ON` reads events from the [event library](./counters.md#loading-from-the-event-library) and generates a source file that can grow large, increasing compilation time significantly.
 
 ### Installing
 

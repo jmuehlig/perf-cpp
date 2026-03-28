@@ -10,6 +10,7 @@
 - **Conan Package**: Added Conan 2.x package recipe for easier integration.
 - **Config Setter Naming**: Standardized `Config` setter naming — setters no longer use the `is_` prefix (e.g., `pinned(bool)` instead of `is_pinned(bool)`). The old `is_pinned(bool)` and `is_debug(bool)` setters are deprecated and will be removed in v1.0.
 - **SampleResult CSV Export**: Added `SampleResult::to_csv()` returning a `std::string`, complementing the existing file-based overload.
+- **Per-Element Results**: Added `result_of_thread(thread_id)`, `result_of_process(process_id)`, and `result_of_core(core_id)` to query individual results from `MultiThreadEventCounter`, `MultiProcessEventCounter`, and `MultiCoreEventCounter`. Process and core variants return `std::optional<CounterResult>` since the ID may not be present.
 
 ## v0.12.6
 - **CSV Export**: Samples can now be exported to CSV format using `SampleResult::to_csv()`, enabling custom analysis with statistical tools, spreadsheets, or data processing pipelines (see the [documentation](docs/analyzing-samples-with-csv.md)).

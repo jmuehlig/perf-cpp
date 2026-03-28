@@ -1,10 +1,10 @@
 # Recording Hardware Events
 
 Record hardware performance counters for specific code regions using `perf::EventCounter`.
-See also [multi-thread and multi-core recording](recording-parallel.md) and [live counter access](recording-live-events.md).
+See also [multi-thread and multicore recording](recording-parallel.md) and [live counter access](recording-live-events.md).
 
 > [!TIP]
-> See **[statistics/single_thread.cpp](../examples/statistics/single_thread.cpp)** for a full working example.
+> See **[single_thread.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/single_thread.cpp)** for a full working example.
 
 ---
 

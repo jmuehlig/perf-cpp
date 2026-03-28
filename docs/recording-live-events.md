@@ -6,7 +6,7 @@ This is useful for measuring individual iterations or phases within a running co
 For standard (non-live) recording, see [recording basics](recording.md).
 
 > [!TIP]
-> See **[statistics/live_events.cpp](../examples/statistics/live_events.cpp)** for a full working example.
+> See **[live_events.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/live_events.cpp)** for a full working example.
 
 ---
 

@@ -3,7 +3,7 @@
 Metrics combine multiple hardware events into calculated values — knowing you had 1 million cache misses is less useful than knowing those misses represent a 5% miss rate.
 
 > [!TIP]
-> See the example: **[statistics/metric.cpp](../examples/statistics/metric.cpp)**.
+> See the example: **[metric.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/metric.cpp)**.
 > For inspiration when creating custom metrics, explore the [Likwid project](https://github.com/RRZE-HPC/likwid/tree/master/groups).
 
 ---
@@ -62,7 +62,7 @@ The required hardware events (e.g., `cycles` and `instructions` for CPI) are con
 Built-in metrics cover common cases, but your hardware likely supports hundreds of specialized counters that can yield deeper insights. 
 *perf-cpp* gives you two ways to define custom metrics, each with its own strengths.
 
-Custom metrics are registered via the `perf::CounterDefinition` that needs to be passed to the `EventCounter` (&rarr; [read more about adding custom events and metrics](counters.md#default-vs-custom-configurations)).
+Custom metrics are registered via the `perf::CounterDefinition` that needs to be passed to the `EventCounter` (&rarr; [read more about adding custom events and metrics](counters.md#the-counterdefinition-system)).
 
 ### Formula-Based Metrics
 For straightforward calculations, express your metric as a mathematical formula. 

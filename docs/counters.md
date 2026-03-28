@@ -1,55 +1,51 @@
-# Hardware Performance Counters and Events
+# Customizing Events
 
-Performance events are hardware and software counters that help you understand how your application behaves at the CPU level—tracking everything from cache misses to branch predictions. 
-Each CPU generation brings new events specific to its microarchitecture, making it essential to use the right events for your hardware.
+Performance events map human-readable names to hardware-specific event codes. *perf-cpp* ships with common events that work across most systems, but each CPU generation brings specialized events for its microarchitecture.
 
-This guide explains how *perf-cpp* handles performance events and how you can use both generic and processor-specific events in your measurements.
+1. **[The CounterDefinition System](#the-counterdefinition-system)**: How event name-to-code mapping works and how to extend it.
+2. **[Built-in Events](#built-in-events)**: Hardware, software, and virtual time events available out of the box.
+3. **[Processor-Specific Events](#processor-specific-events)**: Load from the event library, auto-generate at compile time, or add manually.
+4. **[Translating Event Names to Event Codes](#translating-event-names-to-event-codes)**: Using libpfm4 or perf debug output.
+5. **[Detecting Hardware Capabilities](#detecting-hardware-capabilities-at-runtime)**: Runtime checks for Intel/AMD features.
 
 ---
 
-## Understanding Event Storage and Management
-### The CounterDefinition System
-At its core, *perf-cpp* uses a simple but powerful concept: events are stored in a key-value store that maps human-readable event names to hardware-specific event codes. 
-This abstraction shields you from dealing with cryptic hexadecimal codes directly.
+## The CounterDefinition System
 
-The `perf::CounterDefinition` class manages this mapping. It acts as a dictionary that both `perf::EventCounter` and `perf::Sampler` use to translate the event names you provide into the codes that the perf subsystem understands.
+`perf::CounterDefinition` manages the mapping from event names to event codes. Both `perf::EventCounter` and `perf::Sampler` use it to translate names into codes the perf subsystem understands.
 
-### Default vs. Custom Configurations
-**The default approach** is straightforward–*perf-cpp* creates a global `CounterDefinition` instance automatically, preloaded with common events that work across most systems:
+By default, a global instance is created automatically with common events:
 
 ```cpp
-/// Using the default configuration – no setup needed
+/// Using the default configuration — no setup needed.
 auto event_counter = perf::EventCounter{};
 auto sampler = perf::Sampler{};
 ```
 
-**For custom needs**, you can create your own `CounterDefinition` instance. This doesn't replace the defaults—it extends them:
+For custom events, create your own instance. This extends (not replaces) the defaults:
 
 ```cpp
-/// Create a custom configuration that inherits all defaults
 auto counter_definitions = perf::CounterDefinition{};
 
-/// Add your specific event
-counter_definitions.add(
-    "cycle_activity.stalls_l3_miss",  // Human-readable name
-    0x65306a3                          // Hardware event code
-);
+/// Add a processor-specific event by name and hardware code.
+counter_definitions.add("cycle_activity.stalls_l3_miss", 0x65306a3);
 
-/// Use your extended configuration
+/// Use the extended configuration.
 auto event_counter = perf::EventCounter{ counter_definitions };
 auto sampler = perf::Sampler{ counter_definitions };
 ```
 
 > [!IMPORTANT]
-> Keep your `CounterDefinition` instance alive throughout your measurement session. 
-> Event names are stored only in this instance, so destroying it prematurely will cause issues when retrieving results.
+> Keep your `CounterDefinition` instance alive throughout your measurement session.
+> Event names are stored only in this instance — destroying it prematurely will cause issues when retrieving results.
 
-## Working with Built-in Events
-*perf-cpp* includes a comprehensive set of events that work reliably across different CPU architectures. 
-You can use these immediately without any configuration.
+---
+
+## Built-in Events
 
 ### Hardware Events
-These fundamental events are supported by most modern processors:
+
+Supported by most modern processors:
 
 ```
 branches                 # Total branch instructions
@@ -75,7 +71,8 @@ iTLB-load-misses         # Instruction TLB load misses
 ```
 
 ### Software Events
-These events come from the kernel rather than hardware counters:
+
+From the kernel, not hardware counters:
 
 ```
 cpu-clock             # High-resolution CPU timer
@@ -94,8 +91,8 @@ migrations            # Synonym for cpu-migrations
 ```
 
 ### Virtual Time Events
-*perf-cpp* provides virtual events that use `std::chrono` for wall-clock time measurements. 
-These are particularly useful when creating custom [metrics](metrics.md):
+
+Virtual events using `std::chrono` for wall-clock time, useful for [metrics](metrics.md):
 
 ```
 seconds         # Wall-clock seconds
@@ -109,74 +106,59 @@ ns              # Short form
 ```
 
 > [!TIP]
-> Time events are always measured *after opening* and *before stopping* performance counters, i.e., the overhead for accessing performance counters is **not** included.
+> Time events are measured *after opening* and *before stopping* performance counters — the overhead for accessing performance counters is **not** included.
 
-## Using Processor-Specific Events
-While built-in events provide good coverage, modern processors offer hundreds of specialized events that reveal deeper performance characteristics. 
-*perf-cpp* provides several ways to access these.
+---
+
+## Processor-Specific Events
 
 > [!TIP]
-> To discover available events on your system, use `perf list` for a quick overview. Intel users can explore the [Intel PerfMon website](https://perfmon-events.intel.com/) for detailed event descriptions and recommendations.
+> Use `perf list` to discover available events on your system. Intel users can explore the [Intel PerfMon website](https://perfmon-events.intel.com/) for detailed event descriptions.
 
-### Loading Events from the Event Library
-*perf-cpp* ships with curated event definitions for various processors in the [events/x86](../events/x86) directory. 
-Load them directly:
+### Loading from the Event Library
+
+*perf-cpp* ships with curated event definitions for various processors in [events/x86](https://github.com/jmuehlig/perf-cpp/tree/dev/events/x86):
 
 ```cpp
-/// Load AMD Zen 4 specific events
+/// Load AMD Zen 4 specific events.
 const auto counter_definition = perf::CounterDefinition{ "events/x86/amd/zen-4.csv" };
 
 auto event_counter = perf::EventCounter{ counter_definition };
-event_counter.add("ex_ret_instr");  // Use a Zen 4 specific event
+event_counter.add("ex_ret_instr");
 ```
 
-To see what events are available in your loaded configuration:
+To list all events in a loaded configuration:
 
 ```cpp
-#include <perfcpp/counter_definition.hpp>
-#include <iostream>
-
 const auto counter_definition = perf::CounterDefinition{ "events/x86/amd/zen-4.csv" };
 std::cout << counter_definition.to_string() << std::endl;
 ```
 
 ### Auto-Generating Events at Compile Time
-For the smoothest experience, *perf-cpp* can detect your processor and generate the appropriate event definitions automatically during compilation. 
-Enable this feature when building:
+
+*perf-cpp* can detect your processor and generate event definitions automatically during compilation:
 
 ```bash
 cmake . -B build -DGEN_PROCESSOR_EVENTS=1
 cmake --build build
 ```
 
-During build, you'll see confirmation that your processor was detected:
-
-```
-[GEN_PROCESSOR_EVENTS] Detected micro-architecture: amdzen4
-[GEN_PROCESSOR_EVENTS] Generated source file with 502 events.
-[GEN_PROCESSOR_EVENTS] Wrote source file with processor-specific events: src/processor_specific_event_provider.cpp
-```
-
-Once built this way, processor-specific events become available automatically–no manual loading required.
+Once built, processor-specific events are available automatically — no manual loading required.
 
 > [!IMPORTANT]
-> Auto-generation is experimental. 
-> Always validate your measurements, as event configurations may vary between processors or require specific kernel support.
+> Auto-generation is experimental. Validate your measurements, as event configurations may vary between processors or require specific kernel support.
 
 ### Adding Custom Events Programmatically
-You're not limited to predefined events. 
+
 Add any event if you know its code:
 
 ```cpp
 auto counter_definitions = perf::CounterDefinition{};
 
-/// Add a single event with its raw code
-counter_definitions.add(
-    "cycle_activity.stalls_l3_miss",
-    0x65306a3
-);
+/// Add a single event with its raw code.
+counter_definitions.add("cycle_activity.stalls_l3_miss", 0x65306a3);
 
-/// For complex events requiring additional configuration
+/// For events requiring additional configuration.
 counter_definitions.add(
     "complex_event_name",
     0x1234,     /// config
@@ -185,29 +167,25 @@ counter_definitions.add(
 );
 ```
 
-You can also create custom CSV files following the format: `name,config[,config1,type]` and load them the same way as the built-in event library files.
+Custom CSV files following the format `name,config[,config1,type]` can be loaded the same way as built-in event library files.
+
+---
 
 ## Translating Event Names to Event Codes
-When you find an interesting event in `perf list` or documentation, you need its raw code to use it in *perf-cpp*. 
-Here are two reliable methods.
 
 ### Using libpfm4
 
-The *libpfm4* library excels at translating event names to codes:
-
-1. Clone or download *libpfm4*: [https://github.com/wcohen/libpfm4](https://github.com/wcohen/libpfm4)
-2. Build with `make`
-3. Navigate to the `examples/` directory
-4. Use the `check_events` tool:
+The [libpfm4](https://github.com/wcohen/libpfm4) library translates event names to codes:
 
 ```bash
+git clone https://github.com/wcohen/libpfm4.git
+cd libpfm4
+make
+cd examples
 ./check_events cycle_activity.stalls_l3_miss
 ```
 
-The output provides the raw code you need for your configuration.
-
 ### Using perf with Debug Output
-The Linux perf tool itself can reveal event codes using debug mode:
 
 ```bash
 perf --debug perf-event-open stat -e ex_ret_instr ls
@@ -220,43 +198,36 @@ perf_event_attr:
   type                             4 (cpu)
   size                             136
   config                           0xc0 (ex_ret_instr)
-  sample_type                      IDENTIFIER
-  read_format                      TOTAL_TIME_ENABLED|TOTAL_TIME_RUNNING
-  disabled                         1
-  inherit                          1
-  enable_on_exec                   1
-  exclude_guest                    1
+  ...
 ```
 
-The `config` value (0xc0 in this example) is your event code:
+The `config` value (`0xc0`) and `type` (`4`) are your event code and PMU type:
 
 ```cpp
-counter_definitions.add("ex_ret_instr", 0xc0);
+counter_definitions.add("ex_ret_instr", 0xc0, /* config1 = */ 0x0, /* type = */ 4);
 ```
 
+---
+
 ## Detecting Hardware Capabilities at Runtime
-Different processors support different features. 
-The `perf::HardwareInfo` class lets you adapt your measurements to the running system:
+
+`perf::HardwareInfo` lets you adapt measurements to the running system:
 
 ```cpp
 #include <perfcpp/hardware_info.hpp>
 
 if (perf::HardwareInfo::is_intel()) {
-    /// Configure Intel-specific events
-    /// Use Intel-optimized sampling configurations
+    /// Configure Intel-specific events.
 }
 
 if (perf::HardwareInfo::is_amd()) {
-    /// Configure AMD-specific events
-    
+    /// Configure AMD-specific events.
+
     if (perf::HardwareInfo::is_amd_ibs_supported()) {
-        /// IBS (Instruction-Based Sampling) is available
-        /// Can use ibs_op and related AMD sampling features
-        /// See sampling documentation for details
+        /// IBS available — can use ibs_op and related sampling features.
     }
 }
 ```
 
-This runtime detection enables you to write portable code that automatically uses the best available events for each system.
-
-&rarr; [See complete example](../examples/sampling/memory_address.cpp)
+> [!TIP]
+> See the example: **[memory_address.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/memory_address.cpp)**.

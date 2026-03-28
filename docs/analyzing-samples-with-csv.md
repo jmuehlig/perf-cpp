@@ -1,31 +1,18 @@
 # Exporting Samples to CSV
 
-*perf-cpp* allows you to export recorded samples into CSV (Comma-Separated Values) format, enabling analysis with statistical tools, spreadsheet applications, or custom scripts.
+Export recorded samples to CSV for analysis with tools like Python (pandas), R, Excel, or custom scripts.
 
-Unlike specialized formats like flame graphs or perf data files, CSV export gives you direct access to the raw sample data in a structured, portable format. This makes it easy to perform custom statistical analysis, create visualizations, or integrate performance data into data processing pipelines using tools like Python (pandas), R, Excel, or SQL databases.
-
-**Example use cases:**
-
-- Statistical analysis of cache miss patterns across different data structures
-- Correlation analysis between latency and memory access patterns
-- Time-series analysis of performance counter evolution
-- Custom filtering and aggregation beyond what built-in tools provide
-- Integration with automated performance regression testing pipelines
-
-&rarr; [For a practical example, see the instruction pointer sampling code.](../examples/sampling/instruction_pointer.cpp)
+> [!TIP]
+> See the example: **[instruction_pointer.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/instruction_pointer.cpp)**.
 
 ---
 
 ## Exporting Samples
 
-After recording samples with the `Sampler`, export them to CSV using the `to_csv()` method:
-
 ```cpp
 #include <perfcpp/sampler.hpp>
 
 auto sampler = perf::Sampler{};
-
-/// Configure sampling - specify what to record
 sampler.trigger("cycles", perf::Period{ 50000U });
 sampler.values()
     .timestamp(true)
@@ -33,48 +20,30 @@ sampler.values()
     .cpu_id(true)
     .data_source(true);
 
-/// Execute the workload
 sampler.start();
-code_to_profile(); /// <-- Your code here
+/// ... computation here ...
 sampler.stop();
 
-/// Export samples to CSV
+/// Export samples to a file or retrieve as string.
 const auto samples = sampler.result();
 samples.to_csv("samples.csv");
-```
-
-Alternatively, retrieve the CSV data as a string for further processing:
-
-```cpp
 const auto csv_string = samples.to_csv();
+
+/// Release resources explicitly, or let the destructor handle it.
+sampler.close();
 ```
 
-This produces CSV data where:
-- **Each row** represents one sample
-- **Each column** represents a recorded field (only fields you configured via `sampler.values()` will contain data)
-- **Empty cells** indicate that a field was not configured or not available for that sample
+Each row is one sample, each column a recorded field. Fields not configured via `sampler.values()` appear as empty cells.
 
 ## Customizing Delimiters
 
-The `to_csv()` method accepts optional delimiter parameters:
+Both overloads accept optional delimiter parameters:
+
+- **Column delimiter** (default `,`): separates fields in each row
+- **List delimiter** (default `;`): separates elements in list-type fields like callchains or registers
 
 ```cpp
-/**
- * Export samples to CSV with custom delimiters.
- *
- * @param file_name Path to the output CSV file.
- * @param delimiter Character separating columns (default: ',').
- * @param list_delimiter Character separating list elements within a cell (default: ';').
- */
-samples.to_csv("samples.csv", ',', ';');
-```
-
-**Delimiter parameters:**
-* **Column delimiter** (default `,`): Separates different fields in each row
-* **List delimiter** (default `;`): Separates elements in list-type fields like callchains or registers
-
-**Example with semicolon as column separator** (useful for European Excel):
-```cpp
+/// Semicolon as column separator (useful for European Excel).
 samples.to_csv("samples.csv", ';', '|');
 ```
 
@@ -89,20 +58,15 @@ User,365449130913157,8,0x64af7417c75c,0,1,...
 User,365449131112591,8,0x5a6e84b2075c,1,0,...
 ```
 
-**Important notes:**
-* Only fields configured via `sampler.values()` will contain meaningful data
-* Fields not configured will appear as empty cells in the CSV
-* Some fields are platform-specific (Intel vs AMD) – see [field reference](#field-reference) below
-* The `mode` field is always included and indicates execution context (`User`, `Kernel`, `Hypervisor`, `GuestKernel`, or `GuestUser`)
+The `mode` field is always present and indicates execution context (`User`, `Kernel`, `Hypervisor`, `GuestKernel`, or `GuestUser`).
+Some fields are platform-specific (Intel vs AMD) — see [field reference](#field-reference) below.
 
 ## Field Reference
 
-This section lists all CSV columns and their corresponding `sampler.values()` configurations.
-For detailed descriptions of each field, refer to the [sampling documentation](sampling.md).
+All CSV columns and their corresponding `sampler.values()` configurations.
+For detailed descriptions, see the [sampling documentation](sampling.md).
 
 ### Metadata Fields
-
-Metadata fields provide contextual information about each sample.
 
 | CSV Column | How to Record | Description | Always Present |
 |------------|---------------|-------------|----------------|
@@ -259,10 +223,3 @@ Information about lost samples due to buffer overflow.
 |------------|-------------|--------------|
 | `loss_count` | Number of samples lost | Only if any sample contains a loss event |
 
-> [!NOTE]
-> The `loss_count` column only appears if at least one sample in the result set contains a loss event.
-
----
-
-For more information on configuring what data to record, see the [sampling documentation](sampling.md).
-For details on parallel sampling scenarios, refer to the [parallel sampling guide](sampling-parallel.md).

@@ -8,7 +8,7 @@ Performance counters can be recorded per thread, per CPU core, or per process:
 4. **[Per-process counters](#per-process-counters)**: Monitor specific processes by PID.
 
 > [!TIP]
-> See the examples: **[multi_thread.cpp](../examples/statistics/multi_thread.cpp)**, **[inherit_thread.cpp](../examples/statistics/inherit_thread.cpp)**, **[multi_cpu.cpp](../examples/statistics/multi_cpu.cpp)**, **[multi_process.cpp](../examples/statistics/multi_process.cpp)**.
+> See the examples: **[multi_thread.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/multi_thread.cpp)**, **[inherit_thread.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/inherit_thread.cpp)**, **[multi_cpu.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/multi_cpu.cpp)**, **[multi_process.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/multi_process.cpp)**.
 
 ---
 

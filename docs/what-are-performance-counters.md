@@ -43,7 +43,7 @@ Typical values:
 If you request more events than physical counters, the kernel **multiplexes**: it time-shares the counters and scales the results.
 Multiplexed counts are estimates, not exact — so fewer simultaneous events means more accurate data.
 
-*perf-cpp* [detects your hardware's counter layout automatically](recording.md#adjusting-hardware-settings-to-the-underlying-system) and manages multiplexing transparently.
+*perf-cpp* [detects your hardware's counter layout automatically](recording.md#detection-of-physical-hardware-counters) and manages multiplexing transparently.
 
 ## Further reading
 

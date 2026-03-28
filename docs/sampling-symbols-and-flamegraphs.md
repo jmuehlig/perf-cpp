@@ -1,100 +1,94 @@
 # Symbols and Flamegraphs
-Performance bottlenecks often hide inside deep call stacks: the one slow function that is really stalling your frame rate sits four layers below the code you are looking at. 
-A flamegraph ([example](https://www.brendangregg.com/flamegraphs.html)) collapses thousands of sampled call-stacks into a single, interactive SVG where the widest bars show the functions that burn the most CPU time.
 
-*perf‑cpp* now provides two building blocks for flamegraph generation:
-- **Symbol resolution**: translate raw instruction pointers into `<module>::<function>+<offset>` strings.
-- **Collapsed‑stack export**: emit samples in the canonical `func1;func2;func3 <count>` format understood by tools such as [Brendan Gregg's FlameGraph](https://github.com/brendangregg/FlameGraph), [Speedscope](https://www.speedscope.app/), or [flamegraph.com](https://flamegraph.com/).
+A flamegraph ([example](https://www.brendangregg.com/flamegraphs.html)) collapses thousands of sampled call stacks into a single interactive SVG where the widest bars show the functions that consume the most CPU time.
 
-With just a few lines of code you can record samples, resolve symbols, and open a browser to an interactive heat‑map of your code.
+*perf-cpp* provides two building blocks:
+
+- **Symbol resolution**: translate instruction pointers into `<module>::<function>+<offset>` strings.
+- **Collapsed-stack export**: emit samples in the `func1;func2;func3 <count>` format understood by [FlameGraph](https://github.com/brendangregg/FlameGraph), [Speedscope](https://www.speedscope.app/), or [flamegraph.com](https://flamegraph.com/).
 
 ---
 
 ## Translating Instruction Pointers into Symbols
-The `perf::SymbolResolver` allows to translate logical instruction pointers into symbols (i.e., the name if the module, the name of the function, and the offset within that function).
+
+`perf::util::SymbolResolver` translates logical instruction pointers into symbols (module name, function name, and offset):
 
 ```cpp
 #include <perfcpp/sampler.hpp>
 #include <perfcpp/util/symbol_resolver.hpp>
 
-auto sampler = perf::Sampler{ };
+auto sampler = perf::Sampler{};
 sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 50000U });
 sampler.values().logical_instruction_pointer(true);
 
 sampler.start();
-/// Run some code
+/// ... computation here ...
 sampler.stop();
 
-auto symbol_resolver = perf::SymbolResolver{};
+auto symbol_resolver = perf::util::SymbolResolver{};
 
 for (const auto& sample : sampler.result()) {
-  const auto instruction_pointer =   sample.instruction_execution().logical_instruction_pointer();
-  if (instruction_pointer.has_value()) {
-      
-    /// Resolve the symbol.
-    const auto symbol = symbol_resolver.resolve(instruction_pointer.value());
-    
-    /// Translate the symbol into a string.
-    const auto symbol_name = symbol.has_value() ? symbol->to_string() : std::string{"??"};
+    const auto instruction_pointer = sample.instruction_execution().logical_instruction_pointer();
+    if (instruction_pointer.has_value()) {
+        const auto symbol = symbol_resolver.resolve(instruction_pointer.value());
+        const auto symbol_name = symbol.has_value() ? symbol->to_string() : std::string{"??"};
 
-    std::cout << " Instruction Pointer = 0x" << std::hex
-              << instruction_pointer.value() << std::dec
-              << " | Symbol = " << symbol_name
-              << "\n";
-  }
+        std::cout << "IP = 0x" << std::hex
+                  << instruction_pointer.value() << std::dec
+                  << " | Symbol = " << symbol_name << "\n";
+    }
 }
+
+/// Release resources explicitly, or let the destructor handle it.
+sampler.close();
 ```
 
 The output could look like the following:
 
-```bash
-Instruction Pointer = 0x57459be95faf | Symbol = [instruction-pointer-sampling] _ZNK4perf7example15AccessBenchmarkixEm+47
-Instruction Pointer = 0x57459be95faf | Symbol = [instruction-pointer-sampling] _ZNK4perf7example15AccessBenchmarkixEm+47 
-Instruction Pointer = 0x57459be987d0 | Symbol = [instruction-pointer-sampling] _ZNKSt6vectorIN4perf7example15AccessBenchmark10cache_lineESaIS3_EEixEm+0
+```
+IP = 0x57459be95faf | Symbol = [instruction-pointer-sampling] _ZNK4perf7example15AccessBenchmarkixEm+47
+IP = 0x57459be95faf | Symbol = [instruction-pointer-sampling] _ZNK4perf7example15AccessBenchmarkixEm+47
+IP = 0x57459be987d0 | Symbol = [instruction-pointer-sampling] _ZNKSt6vectorIN4perf7example15AccessBenchmark10cache_lineESaIS3_EEixEm+0
 ```
 
-**&rarr; [See a practical example](../examples/sampling/instruction_pointer.cpp)**
+> [!TIP]
+> See the example: **[instruction_pointer.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/instruction_pointer.cpp)**.
 
-### Translating Sampler Results into Flame Graphs
+---
 
-#### Setting up the Sampler
-To generate flamegraphs, we need include 
-- the (logical) *instruction pointer* (to identify the leaf frame) 
-- and the *callchain* (to reconstruct the stack)
+## Generating Flamegraphs
 
-into samples.
-For more condensed outputs, it is also recommended to include the *timestamp* and sort the results afterward.
+To generate flamegraphs, record the instruction pointer and callchain. Including the timestamp and sorting the results produces more condensed output.
 
 ```cpp
 #include <perfcpp/sampler.hpp>
 
-auto sampler = perf::Sampler{ };
+auto sampler = perf::Sampler{};
 sampler.trigger("cycles");
 sampler.values()
     .logical_instruction_pointer(true)
     .callchain(true)
     .timestamp(true);
-```
 
-#### Generating Flamegraphs
-After sampling, the samples can be mapped into a format that can be read by common used flamegraph generators:
-
-```cpp
 sampler.start();
-/// Code to sample will be called here...
+/// ... computation here ...
 sampler.stop();
 
-/// Get all the recorded samples and sort for condensed outputs 
-/// (sorting via `true` flag is optional).
-const auto samples = sampler.result(/*sort = */ true);
+/// Get samples and sort for condensed output (sorting is optional).
+const auto samples = sampler.result(/* sort = */ true);
 
-/// Translate into a frame graph format and write the result to "flamegraphs.txt".
+/// Write collapsed stacks to a file.
 samples.to_flamegraphs("flamegraphs.txt");
+
+/// Release resources explicitly, or let the destructor handle it.
+sampler.close();
 ```
 
-After writing the output, we can use that file as an input to flamegraph generators, for example:
-- [Brendan Gregg's FlameGraph](https://github.com/brendangregg/FlameGraph): Download the project and translate `flamegraphs.txt` into an SVG via `./flamegraph.pl flamegraphs.txt > flamegraphs.svg`
-- [flamegraph.com](https://flamegraph.com/): Upload the `flamegraphs.txt`
-- [Speedscope](https://www.speedscope.app/): Upload the `flamegraphs.txt`
+The output file can be fed into common flamegraph generators:
 
-**&rarr; [See full example](../examples/sampling/flame_graph.cpp)**
+- [Brendan Gregg's FlameGraph](https://github.com/brendangregg/FlameGraph): `./flamegraph.pl flamegraphs.txt > flamegraphs.svg`
+- [flamegraph.com](https://flamegraph.com/): Upload `flamegraphs.txt`
+- [Speedscope](https://www.speedscope.app/): Upload `flamegraphs.txt`
+
+> [!TIP]
+> See the example: **[flame_graph.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/flame_graph.cpp)**.

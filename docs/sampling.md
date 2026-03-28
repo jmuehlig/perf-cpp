@@ -1,85 +1,53 @@
 # Event Sampling
 
-*perf-cpp* enables the recording of event samples, capturing information such as instruction pointers, performance counter values, branch behavior, memory addresses, data sources, latencies, and more.  
-Sampling occurs at a user-defined period or frequency, allowing precise control over when data is collected.
-
-This mechanism is conceptually similar to tools like `perf record`, but is specifically designed to target defined blocks of code rather than profiling the entire application.
-
-&rarr; [See what data can be recorded and how to access it](#what-can-be-recorded-and-how-to-access-the-data).
+Sampling captures detailed information — instruction pointers, memory addresses, counter values, branches, latencies — at a user-defined period or frequency.
 
 > [!TIP]
-> Our examples include several working code-examples, e.g., **[sampling/instruction_pointer.cpp](../examples/sampling/instruction_pointer.cpp)**, **[sampling/branch.cpp](../examples/sampling/branch.cpp)**, **[sampling/counter.cpp](../examples/sampling/counter.cpp)**, and **[sampling/memory_address.cpp](../examples/sampling/memory_address.cpp)**.
+> See the examples: **[instruction_pointer.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/instruction_pointer.cpp)**, **[branch.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/branch.cpp)**, **[counter.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/counter.cpp)**, **[memory_address.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/memory_address.cpp)**.
 
-The sections below provide a general overview of sampling behavior.  
-For information on sampling across multiple threads or cores, refer to the [parallel sampling documentation](sampling-parallel.md).
+For parallel sampling across threads or cores, see the [parallel sampling documentation](sampling-parallel.md).
 
 ---
 
-## Interface
-### Setting up *what* to record and *when*
-During sampling, the hardware captures a specified set of data fields when a configured trigger event reaches its defined threshold  
-([see what data can be recorded](#what-can-be-recorded-and-how-to-access-the-data) and [how trigger events work](#trigger)).
+## Basic Lifecycle
 
-In the following example, a timestamp and the current instruction pointer are recorded every 50,000th cycle:
+Configure what to sample, which event triggers sampling, then start/stop around your code:
+
 ```cpp
 #include <perfcpp/sampler.hpp>
 
+/// Configure the trigger period.
 auto sample_config = perf::SampleConfig{};
 sample_config.period(50000U);
 
+/// Create the sampler and specify trigger and recorded fields.
 auto sampler = perf::Sampler{ sample_config };
 sampler.trigger("cycles");
 sampler.values().timestamp(true).logical_instruction_pointer(true);
-```
 
-## Initializing the Sampler *(optional)*
-The sampler is initialized using `sampler.start()`, if it is not already done.
-This action configures all necessary hardware counters and buffers, a process that may require some time. 
-For those requiring **precise timing measurements** and wishing to omit the time spent setting up counters, the `sampler.open()` method can be invoked separately.
+/// Optionally open before start() to exclude setup time from measurements.
+sampler.open();
 
-```cpp
-try {
-    sampler.open();
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-```
-
-### Managing Sampler Lifecycle
-Surround your computational code with `start()` and `stop()` methods to sample hardware events:
-
-```cpp
-try {
-    sampler.start();
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-
-/// ... do some computational work here...
-
+/// Start and stop around the code to sample.
+sampler.start();
+/// ... computation here ...
 sampler.stop();
-```
 
-### Retrieving Samples
-The output is a series of `perf::Sample` instances, each potentially including extensive data. 
-Given the capability to select specific data elements for sampling, each data point is encapsulated within an `std::optional` to manage its potential absence.
-
-&rarr; [See how to query sample results](#what-can-be-recorded-and-how-to-access-the-data)
-
-```cpp
-const auto result = sampler.result();
-
-for (const auto& record : result)
+/// Retrieve samples. Each field is std::optional (absent if not configured).
+for (const auto& record : sampler.result())
 {
     const auto timestamp = record.metadata().timestamp();
     const auto instruction = record.instruction_execution().logical_instruction_pointer();
     if (timestamp.has_value() && instruction.has_value())
     {
-        std::cout 
-            << "Time = " << timestamp.value() 
+        std::cout
+            << "Time = " << timestamp.value()
             << " | IP = 0x" << std::hex << instruction.value() << std::dec << std::endl;
     }
 }
+
+/// Release resources explicitly, or let the destructor handle it.
+sampler.close();
 ```
 
 The output may be something like this:
@@ -90,11 +58,13 @@ The output may be something like this:
     Time = 124853765058918 | IP = 0x5794c991990c
     Time = 124853765256328 | IP = 0x5794c991990c
 
-#### Exporting to CSV
+### Exporting to CSV
 Sample results can be exported to CSV, either as a string or directly to a file.
 Only fields configured via `sampler.values()` will contain data; unconfigured fields appear as empty cells.
 
 ```cpp
+const auto result = sampler.result();
+
 /// Export to a CSV-formatted string.
 const auto csv_string = result.to_csv();
 
@@ -110,59 +80,46 @@ const auto csv_string = result.to_csv(/* delimiter = */ ';', /* list_delimiter =
 result.to_csv("samples.csv", /* delimiter = */ ';', /* list_delimiter = */ '|');
 ```
 
-&rarr; [See the full CSV field reference](analyzing-samples-with-csv.md)
-
-### Closing the Sampler (*optional*)
-Closing the sampler releases and un-maps all buffers and deactivates all counters. 
-Additionally, the sampler automatically closes upon destruction. 
-However, closing the sampler explicitly enables it to be reopened at a future time.
-
-```cpp
-sampler.close();
-```
+See the [full CSV field reference](analyzing-samples-with-csv.md) for details.
 
 ---
 
 ## Trigger
-Each sampler is associated with one or more [trigger](#trigger) events.
-When a trigger event reaches a specified (user-defined) threshold, the CPU records a sample containing the desired data. 
-Triggers for a sampler can be specified as follows:
+A trigger event determines *when* the CPU captures a sample. When the event reaches a threshold, the CPU records a sample:
 
 ```cpp
 sampler.trigger("cycles");
 ```
 
-To define multiple triggers, use a vector of trigger names:
+Multiple triggers can be specified — a sample is captured when any of them fires:
 
 ```cpp
 sampler.trigger(std::vector<std::string>{"cycles", "instructions"});
 ```
-In this scenario, exceeding either the cycles or instructions counter will prompt the CPU to capture a sample.
 
 ### Notes for specific CPUs
-When configuring event-based sampling, it's important to understand that different CPU manufacturers support different sets of events that can be used as triggers.
-
-Intel CPUs are generally flexible and allow almost every event as a trigger.
-On AMD systems, the range of events that can trigger samples is more restricted: Typically, only the `cycles` event and specific IBS events such as `ibs_fetch` and `ibs_op` are supported.
+Intel CPUs allow almost every event as a trigger.
+AMD systems are more restricted: typically only `cycles` and IBS events (`ibs_fetch`, `ibs_op`) are supported.
 
 > [!TIP]
-> For more detailed information on configuring event-based sampling for different CPU types and specific notes on memory sampling, refer to the section: [Specific Notes for different CPU Vendors](#specific-notes-for-different-cpu-vendors).
+> For memory sampling and vendor-specific configuration, see [Specific Notes for different CPU Vendors](#specific-notes-for-different-cpu-vendors).
 
 ## Precision
-Due to deeply pipelined processors, samples might not be precise, i.e., a sample might contain an instruction pointer or memory address that did not generate the overflow (&rarr; see [a blogpost on easyperf.net](https://easyperf.net/blog/2019/04/03/Precise-timing-of-machine-code-with-Linux-perf) and [the perf documentation](https://man7.org/linux/man-pages/man2/perf_event_open.2.html)).
-You can request a specific amount of skid for each trigger, for example,
+Due to deep pipelining, a sample's instruction pointer or memory address may not exactly match the instruction that caused the overflow (see [easyperf.net](https://easyperf.net/blog/2019/04/03/Precise-timing-of-machine-code-with-Linux-perf) and the [perf documentation](https://man7.org/linux/man-pages/man2/perf_event_open.2.html)).
+You can request a specific amount of skid per trigger:
 
 ```cpp
 sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid);
 ```
 
-The precision can have the following values:
-* `perf::Precision::AllowArbitrarySkid` (this does **not** enable Intel PEBS)
-* `perf::Precision::MustHaveConstantSkid` (default)
-* `perf::Precision::RequestZeroSkid`
-* `perf::Precision::MustHaveZeroSkid`
+Available precision levels:
 
-If you do not set any precision level through the `.trigger()` interface, you can control the *default* precision through the sample config:
+- `perf::Precision::AllowArbitrarySkid` (does **not** enable Intel PEBS)
+- `perf::Precision::MustHaveConstantSkid` (default)
+- `perf::Precision::RequestZeroSkid`
+- `perf::Precision::MustHaveZeroSkid`
+
+The default precision can also be set via `SampleConfig`:
 
 ```cpp
 auto sample_config = perf::SampleConfig{};
@@ -173,38 +130,32 @@ sampler.trigger("cycles");
 ```
 
 > [!NOTE]
-> If the precision setting is too high and the perf subsystem fails to activate the trigger, *perf-cpp* will automatically reduce the precision. 
-> However, it will not increase precision autonomously.
+> If the precision is too high for the perf subsystem, *perf-cpp* will automatically reduce it. It will not increase precision autonomously.
 
 ## Period / Frequency
-You can request a specific period **or** frequency for each trigger – basically how often the hardware should write samples –, for example,
+Each trigger can specify a period (sample every N events) **or** a frequency (samples per second):
 
 ```cpp
 /// Every 50,000th cycle.
-sampler.trigger("cycles", perf::Period{50000U /* cycle */});
+sampler.trigger("cycles", perf::Period{50000U});
+
+/// 1000 samples per second (hardware adjusts the period automatically).
+sampler.trigger("cycles", perf::Frequency{1000U});
 ```
 
-**or**
-
-```cpp
-/// With a frequency of 1000 samples per second , i.e., one sample per millisecond.
-// (the hardware will adjust the period according to the provided frequency).
-sampler.trigger("cycles", perf::Frequency{1000U /* Hz */});
-```
-
-You can also combine the configurations, for example, by
+Period/frequency and precision can be combined:
 ```cpp
 /// Every 50,000th cycle with zero skid.
 sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{50000U});
 ```
 
-If you do not set any precision level through the `.trigger()` interface, you can control the *default* period or frequency through the sample config:
+The default period or frequency can also be set via `SampleConfig`:
 
 ```cpp
 auto sample_config = perf::SampleConfig{};
-sample_config.period(50000U /* trigger event, e.g., cycle */);
+sample_config.period(50000U);
 /// xor:
-sample_config.frequency(1000U /* Hz */);
+sample_config.frequency(1000U);
 
 auto sampler = perf::Sampler{ sample_config };
 sampler.trigger("cycles");
@@ -213,31 +164,10 @@ sampler.trigger("cycles");
 ---
 
 ## What can be Recorded and how to Access the Data?
-Prior to activation, the sampler must be configured to specify the data to be recorded. 
-For instance:
-
-```cpp
-sampler.values()
-    .timestamp(true)
-    .logical_instruction_pointer(true);
-```
-
-This specific configuration captures both the *timestamp* and *instruction pointer* within the sample record. 
-Upon completing the sampling and [retrieving the sampling results](#retrieving-samples), the recorded fields can be accessed as follows:
-
-```cpp
-for (const auto& record : sampler.result()) {
-    const auto timestamp = record.metadata().timestamp();
-    const auto instruction = record.instruction_execution().logical_instruction_pointer();
-}
-```
-
-See the information below to learn *what* information the sampler can record and *how* to access these.
-
----
+Configure which fields to record via `sampler.values()`, then access them on each record from `sampler.result()`.
 
 > [!NOTE]
-> A `record` in the following denotes to one record from the `sampler.result()` list.
+> A `record` in the following refers to one record from the `sampler.result()` list.
 
 
 ### Metadata
@@ -275,7 +205,7 @@ All fields are returned as `std::optional`, unless otherwise noted.
 | **Fetch**                        | Captures instruction fetch-specific information.                                                                                    | [See details below](#instruction-fetch)                                   | `record.instruction_execution().fetch()`                        | `std::optional<perf::InstructionExecution::Fetch>`                    |
 | **Hardware Transaction Abort**   | Provides information on transactional memory aborts.                                                                                | [See details below](#hardware-transaction-abort)                          | `record.instruction_execution().hardware_transaction_abort()`   | `std::optional<perf::InstructionExecution::HardwareTransactionAbort>` |
 
-**Example:** [`examples/instruction_pointer_sampling.cpp`](../examples/sampling/instruction_pointer.cpp)
+**Example:** [`instruction_pointer_sampling.cpp`](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/instruction_pointer.cpp)
 
 #### Instruction Latency
 Latency information captures timing characteristics for instruction execution or micro-operations (on AMD).  
@@ -361,7 +291,7 @@ Note that most fields are returned as `std::optional`.
 | **Access Width**            | The size (in bytes) of the accessed data ([**AMD's Op PMU**](#ibs-op-pmu) only).                     | `sampler.values().data_access_width(true)`            | `record.data_access().access_width()`            | `std::optional<std::uint8_t>`             |
 | **Data Page Size**          | The page size of the instruction pointer (from Linux `5.11`).                                        | `sampler.values().data_page_size(true)`               | `record.data_access().page_size()`               | `std::optional<std::uint64_t>`            |
 
-**Example:** [`examples/address_sampling.cpp`](../examples/sampling/memory_address.cpp)
+**Example:** [`address_sampling.cpp`](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/memory_address.cpp)
 
 #### Data Source
 Provides detailed information about the memory or cache source involved in a data access.  
@@ -427,7 +357,7 @@ Refer to the documentation on [recording events](recording.md) and [metrics](met
 |--------------------|----------------------------------------------------------|----------------------------------------------------------------------------------------------------------|--------------------|---------------------------------------------------------------------------------|
 | **Counter Values** | Captures the values of the specified performance events. | `sampler.values().counter({"cycles", "instructions", "cycles-per-instruction"})` (example counter names) | `record.counter()` | `perf::CounterResult` (see the [recording events](recording.md) documentation). |
 
-**Example:** [`examples/counter_sampling.cpp`](../examples/sampling/counter.cpp)
+**Example:** [`counter_sampling.cpp`](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/counter.cpp)
 
 ### Branch Stack
 Captures the branch stack recorded by the CPU at the time of sampling.  
@@ -468,7 +398,7 @@ Each entry in the branch stack contains the following information:
 | **Is Transaction Abort**     | Indicates that the branch aborted a hardware transaction.         | `record.branch_stack()->at(i).is_transaction_abort()`     | `bool`                         |
 | **Cycles**                   | The number of cycles for the branch (if supported).               | `record.branch_stack()->at(i).cycles()`                   | `std::optional<std::uint64_t>` |
 
-**Example:** [`examples/branch_sampling.cpp`](../examples/sampling/branch.cpp)
+**Example:** [`branch_sampling.cpp`](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/branch.cpp)
 
 ### User Stack
 Captures a snapshot of the user-level stack at the time of sampling.  
@@ -497,7 +427,7 @@ The following fields are available:
 | **Register Value** | The value of a specific register.                | `record.user_registers()->get(perf::Registers::x86::AX)` (example register) | `std::optional<std::int64_t>` |
 | **ABI**            | The ABI used when capturing the register values. | `record.user_registers()->abi()`                                            | `perf::ABI`                   |
 
-**Example:** [`examples/register_sampling.cpp`](../examples/sampling/register.cpp)
+**Example:** [`register_sampling.cpp`](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/register.cpp)
 
 ### Raw Data
 Captures the raw data output from the underlying Performance Monitoring Unit.  
@@ -527,7 +457,7 @@ If recorded, the following [metadata fields](#metadata) will also be included:
 - CPU ID
 - Sample ID
 
-**Example:** [`examples/context_switch_sampling.cpp`](../examples/sampling/context_switch.cpp)
+**Example:** [`context_switch_sampling.cpp`](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/context_switch.cpp)
 
 ### CGroup
 Captures information about control groups (cgroups) associated with each sample.  
@@ -601,7 +531,7 @@ You can add load and store events like this:
 ```cpp
 sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid); /// Only load events
 ```
-&rarr; [See code example](../examples/sampling/memory_address.cpp)
+&rarr; [See code example](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/memory_address.cpp)
 
 or
 ```cpp
@@ -617,7 +547,7 @@ sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
     { perf::Sampler::Trigger{ "mem-stores", perf::Precision::MustHaveZeroSkid } } /// Stores
   });
 ```
-&rarr; [See code example](../examples/sampling/multi_event.cpp)
+&rarr; [See code example](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/multi_event.cpp)
 
 #### Sapphire Rapids and Beyond
 To use memory latency sampling on Intel's Sapphire Rapids architecture, the perf subsystem **needs an auxiliary counter** to be added to the group, before the first "real" counter is added (see [this commit](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).
@@ -654,6 +584,7 @@ In contrast to Intel's mechanism, IBS cannot tag specific load and store instruc
 In case the instruction was a load/store instruction, the sample will include data source, latency, and a memory address ([see kernel mailing list](https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/)).
 
 *perf-cpp* will detect IBS support on AMD devices and adds the following counters that can be used as **trigger** for sampling on AMD:
+
 - `ibs_op` selects instructions during the execution pipeline. CPU cycles (on the specified period/frequency) will lead to tag an instruction.
 - `ibs_op_uops` selects instructions during the execution pipeline, **but** the period/frequency refers to the number of executed micro-operations, **not** CPU cycles.
 - `ibs_op_l3missonly` selects instructions during the execution pipeline that miss the L3 cache. CPU cycles are used as the trigger.
@@ -663,6 +594,7 @@ In case the instruction was a load/store instruction, the sample will include da
 The *IBS Fetch PMU* offers information on instruction fetch, including data such as instruction cache hit/miss, instruction TLB hit/miss, fetch latency, and more.
 
 *perf-cpp* provides IBS support on AMD devices and adds the following counters that can be used as **trigger** for sampling on AMD:
+
 - `ibs_fetch` selects instructions in the fetch-state (frontend) using cycles as the trigger.
 - `ibs_fetch_l3missonly` selects instructions in the fetch-state (frontend) that miss the L3 cache, again, using cycles as a trigger.
 
@@ -670,38 +602,34 @@ The *IBS Fetch PMU* offers information on instruction fetch, including data such
 ---
 
 ## Sample Buffer
-The hardware transfers collected samples into an mmap-ed [ring buffer](https://docs.kernel.org/userspace-api/perf_ring_buffer.html).
-You can configure the size of this buffer using the `SampleConfig` class as demonstrated below:
+Samples are transferred into an mmap-ed [ring buffer](https://docs.kernel.org/userspace-api/perf_ring_buffer.html).
+The buffer size (default: 16 MB) can be configured via `SampleConfig`:
 
 ```cpp
 auto sample_config = perf::SampleConfig{};
-sample_config.buffer_pages(4096U); /// This sets the buffer to 16MB (4096 pages x 4kB per page).
+sample_config.buffer_pages(4096U); /// 16 MB (4096 pages × 4 kB per page).
 
 auto sampler = perf::Sampler{ sample_config };
 ```
 
-Because the ring buffer has a finite size, it needs to be drained before it becomes full.
-*perf-cpp* handles this automatically, though copying the data can be expensive.
-Choosing the right buffer size involves balancing memory usage against the cost of frequent data copying.
-By default, the buffer is set to `16`MB.
+*perf-cpp* drains the buffer automatically before it becomes full.
 
 > [!NOTE]
-> The number of buffer pages must be a power of two; any non-power-of-two value will be rounded up accordingly.
+> The number of buffer pages must be a power of two; non-power-of-two values will be rounded up.
 
 ## Troubleshooting Counter Configurations
-Debugging and configuring hardware counters can sometimes be complex, as settings (e.g., the precision – `precise_ip`) may need to be adjusted for different machines.
-Utilize *perf-cpp*'s debugging features to gain insights into the internal workings of performance counters and troubleshoot any configuration issues:
+Enable debug mode to print the counter configuration passed to the perf subsystem:
 
 ```cpp
 auto config = perf::SampleConfig{};
-config.is_debug(true);
+config.debug(true);
 
 auto sampler = perf::Sampler{ config };
 ```
 
-The idea is borrowed from *Linux Perf*, which can be asked to print counter configurations as follows:
+The equivalent in *Linux Perf*:
 ```bash
 perf --debug perf-event-open record -- sleep 1
 ```
 
-This command helps visualize configurations for various counters, which is also beneficial for retrieving event codes (for more details, see the [counters documentation](counters.md)).
+See the [counters documentation](counters.md) for more details on event codes and configuration.
