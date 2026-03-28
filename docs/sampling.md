@@ -2,10 +2,11 @@
 
 Sampling captures detailed information — instruction pointers, memory addresses, counter values, branches, latencies — at a user-defined period or frequency.
 
+> [!NOTE]
+> `Sampler` monitors a single thread. For multi-threaded or multi-core sampling, use `MultiThreadSampler` or `MultiCoreSampler` — see [parallel sampling](sampling-parallel.md).
+
 > [!TIP]
 > See the examples: **[instruction_pointer.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/instruction_pointer.cpp)**, **[branch.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/branch.cpp)**, **[counter.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/counter.cpp)**, **[memory_address.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/memory_address.cpp)**.
-
-For parallel sampling across threads or cores, see the [parallel sampling documentation](sampling-parallel.md).
 
 ---
 
