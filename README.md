@@ -20,7 +20,7 @@ Built around Linux's [*perf subsystem*](https://man7.org/linux/man-pages/man2/pe
 - **Calculate metrics** like cycles per instruction or cache miss ratios from the counters ([documentation](docs/metrics.md))
 - **Read counter values without stopping** for low-overhead measurements in tight loops ([documentation](docs/recording-live-events.md))
 - **Sample instructions and memory accesses** like `perf [mem] record`, but targeted at specific functions ([documentation](docs/sampling.md))
-- **Export and analyze results** in your code: [write samples to CSV](docs/analyzing-samples-with-csv.md), [generate flame graphs](docs/sampling-symbols-and-flamegraphs.md), or [correlate memory accesses with specific data structures](docs/analyzing-memory-access-patterns.md)
+- **Export and analyze results** in your code: [write samples to CSV](docs/sampling-export-to-csv.md), [generate flame graphs](docs/sampling-symbols-and-flamegraphs.md), or [correlate memory accesses with specific data structures](docs/sampling-memory-analysis.md)
 - **Mix built-in and processor-specific events** like cycles, cache misses, or vendor PMU features ([documentation](docs/counters.md))
 
 See various **[practical examples](examples/README.md)** and the **[documentation](#full-documentation)** for more details.
@@ -160,10 +160,10 @@ cmake --build build --target examples
     - [**Basics**](docs/sampling.md): Record samples for specific code paths (like `perf record` and `perf mem record` but fine-grained).
     - [**Parallel and Multithreaded**](docs/sampling-parallel.md): Record samples across multiple threads and CPU cores.
 - **Analyzing Samples**
-    - [**CSV Export**](docs/analyzing-samples-with-csv.md): Export samples for analysis with statistical tools, spreadsheets, or custom scripts.
-    - [**Linux Perf Tools**](docs/analyzing-samples-with-perf-report.md): Analyze samples with `perf report` and `perf mem report`.
+    - [**CSV Export**](docs/sampling-export-to-csv.md): Export samples for analysis with statistical tools, spreadsheets, or custom scripts.
+    - [**Linux Perf Tools**](docs/sampling-export-to-perf.md): Analyze samples with `perf report` and `perf mem report`.
     - [**Flame Graphs**](docs/sampling-symbols-and-flamegraphs.md): Translate instruction pointers to symbols and generate flame graphs.
-    - [**Memory Access Patterns**](docs/analyzing-memory-access-patterns.md): Link samples to data objects for per-instance memory profiling.
+    - [**Memory Access Patterns**](docs/sampling-memory-analysis.md): Link samples to data objects for per-instance memory profiling.
 - [**Built-in and Hardware-specific Events**](docs/counters.md): Built-in events and how to add new ones for your CPU.
 - [**Perf Paranoid**](docs/perf-paranoid.md): Configure perf permissions.
 
