@@ -27,6 +27,7 @@ theme:
 plugins:
   - search
   - callouts
+  - meta
 
 markdown_extensions:
   - admonition
