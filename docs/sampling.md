@@ -80,7 +80,7 @@ const auto csv_string = result.to_csv(/* delimiter = */ ';', /* list_delimiter =
 result.to_csv("samples.csv", /* delimiter = */ ';', /* list_delimiter = */ '|');
 ```
 
-See the [full CSV field reference](analyzing-samples-with-csv.md) for details.
+See the [full CSV field reference](sampling-export-to-csv.md) for details.
 
 ---
 
