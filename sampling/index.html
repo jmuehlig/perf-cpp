@@ -1,0 +1,3437 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="C++ library for recording and sampling performance counters using the Linux perf subsystem">
+      
+      
+      
+      
+        <link rel="prev" href="../metrics/">
+      
+      
+        <link rel="next" href="../sampling-parallel/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Basics - perf-cpp</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-6SPLE817K1"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-6SPLE817K1",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-6SPLE817K1",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#event-sampling" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="perf-cpp" class="md-header__button md-logo" aria-label="perf-cpp" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            perf-cpp
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Basics
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/jmuehlig/perf-cpp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jmuehlig/perf-cpp
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="perf-cpp" class="md-nav__button md-logo" aria-label="perf-cpp" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    perf-cpp
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/jmuehlig/perf-cpp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jmuehlig/perf-cpp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-are-performance-counters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What are Performance Counters?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recording Events
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Recording Events
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recording/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recording-live-events/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live Events
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recording-parallel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Thread, -Core & -Process
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sampling
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Sampling
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basics
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#basic-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Lifecycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic Lifecycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exporting-to-csv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting to CSV
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trigger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trigger
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Trigger">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notes-for-specific-cpus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes for specific CPUs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#precision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Precision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#period-frequency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Period / Frequency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-can-be-recorded-and-how-to-access-the-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What can be Recorded and how to Access the Data?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What can be Recorded and how to Access the Data?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instruction-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instruction Execution
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Instruction Execution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#instruction-latency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instruction Latency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instruction-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instruction Cache
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instruction-tlb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instruction TLB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instruction-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instruction Fetch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hardware-transaction-abort" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hardware Transaction Abort
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Access
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Access">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Source
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-latency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Latency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-tlb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data TLB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-snoop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Snoop
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#counter-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Counter Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#branch-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Branch Stack
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Branch Stack">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#branch-types-to-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Branch Types to Record
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#branch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Branch
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User Stack
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#registers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Registers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#register-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Register Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#raw-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raw Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context-switches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context Switches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cgroup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CGroup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#throttle-and-unthrottle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Throttle and Unthrottle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lost-samples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lost Samples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#specific-notes-for-different-cpu-vendors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Specific Notes for Different CPU Vendors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Specific Notes for Different CPU Vendors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intel-processor-event-based-sampling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intel (Processor Event Based Sampling)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Intel (Processor Event Based Sampling)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#before-sapphire-rapids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Before Sapphire Rapids
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sapphire-rapids-and-beyond" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sapphire Rapids and Beyond
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#amd-instruction-based-sampling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AMD (Instruction Based Sampling)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="AMD (Instruction Based Sampling)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ibs-op-pmu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IBS Op PMU
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ibs-fetch-pmu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IBS Fetch PMU
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sample-buffer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sample Buffer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting-counter-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting Counter Configurations
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sampling-parallel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Thread & Multi-Core
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sampling-symbols-and-flamegraphs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Symbols & Flamegraphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sampling-export-to-csv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CSV Export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sampling-export-to-perf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Perf Report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sampling-memory-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory Access Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../counters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customizing Events
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../perf-paranoid/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Perf Paranoid
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#basic-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Lifecycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic Lifecycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exporting-to-csv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting to CSV
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trigger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trigger
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Trigger">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notes-for-specific-cpus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes for specific CPUs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#precision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Precision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#period-frequency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Period / Frequency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-can-be-recorded-and-how-to-access-the-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What can be Recorded and how to Access the Data?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What can be Recorded and how to Access the Data?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instruction-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instruction Execution
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Instruction Execution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#instruction-latency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instruction Latency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instruction-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instruction Cache
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instruction-tlb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instruction TLB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instruction-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instruction Fetch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hardware-transaction-abort" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hardware Transaction Abort
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Access
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Access">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Source
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-latency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Latency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-tlb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data TLB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-snoop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Snoop
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#counter-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Counter Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#branch-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Branch Stack
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Branch Stack">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#branch-types-to-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Branch Types to Record
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#branch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Branch
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User Stack
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#registers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Registers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#register-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Register Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#raw-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raw Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context-switches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context Switches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cgroup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CGroup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#throttle-and-unthrottle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Throttle and Unthrottle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lost-samples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lost Samples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#specific-notes-for-different-cpu-vendors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Specific Notes for Different CPU Vendors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Specific Notes for Different CPU Vendors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intel-processor-event-based-sampling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intel (Processor Event Based Sampling)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Intel (Processor Event Based Sampling)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#before-sapphire-rapids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Before Sapphire Rapids
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sapphire-rapids-and-beyond" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sapphire Rapids and Beyond
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#amd-instruction-based-sampling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AMD (Instruction Based Sampling)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="AMD (Instruction Based Sampling)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ibs-op-pmu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IBS Op PMU
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ibs-fetch-pmu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IBS Fetch PMU
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sample-buffer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sample Buffer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting-counter-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting Counter Configurations
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="event-sampling">Event Sampling<a class="headerlink" href="#event-sampling" title="Permanent link">&para;</a></h1>
+<p>Sampling captures detailed information — instruction pointers, memory addresses, counter values, branches, latencies — at a user-defined period or frequency.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>See the examples: <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/instruction_pointer.cpp">instruction_pointer.cpp</a></strong>, <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/branch.cpp">branch.cpp</a></strong>, <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/counter.cpp">counter.cpp</a></strong>, <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/memory_address.cpp">memory_address.cpp</a></strong>.</p>
+</div>
+<p>For parallel sampling across threads or cores, see the <a href="../sampling-parallel/">parallel sampling documentation</a>.</p>
+<hr />
+<h2 id="basic-lifecycle">Basic Lifecycle<a class="headerlink" href="#basic-lifecycle" title="Permanent link">&para;</a></h2>
+<p>Configure what to sample, which event triggers sampling, then start/stop around your code:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;perfcpp/sampler.hpp&gt;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1">/// Configure the trigger period.</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">auto</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">SampleConfig</span><span class="p">{};</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">sample_config</span><span class="p">.</span><span class="n">period</span><span class="p">(</span><span class="mi">50000U</span><span class="p">);</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1">/// Create the sampler and specify trigger and recorded fields.</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">);</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">sampler</span><span class="p">.</span><span class="n">values</span><span class="p">().</span><span class="n">timestamp</span><span class="p">(</span><span class="nb">true</span><span class="p">).</span><span class="n">logical_instruction_pointer</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1">/// Optionally open before start() to exclude setup time from measurements.</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">sampler</span><span class="p">.</span><span class="n">open</span><span class="p">();</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1">/// Start and stop around the code to sample.</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="n">sampler</span><span class="p">.</span><span class="n">start</span><span class="p">();</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="c1">/// ... computation here ...</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="n">sampler</span><span class="p">.</span><span class="n">stop</span><span class="p">();</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1">/// Retrieve samples. Each field is std::optional (absent if not configured).</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">record</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">sampler</span><span class="p">.</span><span class="n">result</span><span class="p">())</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="p">{</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">record</span><span class="p">.</span><span class="n">metadata</span><span class="p">().</span><span class="n">timestamp</span><span class="p">();</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">instruction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">record</span><span class="p">.</span><span class="n">instruction_execution</span><span class="p">().</span><span class="n">logical_instruction_pointer</span><span class="p">();</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">timestamp</span><span class="p">.</span><span class="n">has_value</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">instruction</span><span class="p">.</span><span class="n">has_value</span><span class="p">())</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">            </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Time = &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">timestamp</span><span class="p">.</span><span class="n">value</span><span class="p">()</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">            </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; | IP = 0x&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">hex</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">instruction</span><span class="p">.</span><span class="n">value</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">dec</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="p">}</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="c1">/// Release resources explicitly, or let the destructor handle it.</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="n">sampler</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+</code></pre></div>
+<p>The output may be something like this:</p>
+<div class="highlight"><pre><span></span><code>Time = 124853764466887 | IP = 0x5794c991990c
+Time = 124853764663977 | IP = 0xffffffff8d79d48b
+Time = 124853764861377 | IP = 0x5794c991990c
+Time = 124853765058918 | IP = 0x5794c991990c
+Time = 124853765256328 | IP = 0x5794c991990c
+</code></pre></div>
+<h3 id="exporting-to-csv">Exporting to CSV<a class="headerlink" href="#exporting-to-csv" title="Permanent link">&para;</a></h3>
+<p>Sample results can be exported to CSV, either as a string or directly to a file.
+Only fields configured via <code>sampler.values()</code> will contain data; unconfigured fields appear as empty cells.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sampler</span><span class="p">.</span><span class="n">result</span><span class="p">();</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1">/// Export to a CSV-formatted string.</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">csv_string</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="n">to_csv</span><span class="p">();</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1">/// Export directly to a file.</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">result</span><span class="p">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s">&quot;samples.csv&quot;</span><span class="p">);</span>
+</code></pre></div>
+<p>Both overloads accept optional delimiter parameters:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">/// Custom column delimiter and list delimiter.</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">csv_string</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="n">to_csv</span><span class="p">(</span><span class="cm">/* delimiter = */</span><span class="w"> </span><span class="sc">&#39;;&#39;</span><span class="p">,</span><span class="w"> </span><span class="cm">/* list_delimiter = */</span><span class="w"> </span><span class="sc">&#39;|&#39;</span><span class="p">);</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">result</span><span class="p">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s">&quot;samples.csv&quot;</span><span class="p">,</span><span class="w"> </span><span class="cm">/* delimiter = */</span><span class="w"> </span><span class="sc">&#39;;&#39;</span><span class="p">,</span><span class="w"> </span><span class="cm">/* list_delimiter = */</span><span class="w"> </span><span class="sc">&#39;|&#39;</span><span class="p">);</span>
+</code></pre></div>
+<p>See the <a href="../sampling-export-to-csv/">full CSV field reference</a> for details.</p>
+<hr />
+<h2 id="trigger">Trigger<a class="headerlink" href="#trigger" title="Permanent link">&para;</a></h2>
+<p>A trigger event determines <em>when</em> the CPU captures a sample. When the event reaches a threshold, the CPU records a sample:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">);</span>
+</code></pre></div>
+<p>Multiple triggers can be specified — a sample is captured when any of them fires:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">{</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;instructions&quot;</span><span class="p">});</span>
+</code></pre></div>
+<h3 id="notes-for-specific-cpus">Notes for specific CPUs<a class="headerlink" href="#notes-for-specific-cpus" title="Permanent link">&para;</a></h3>
+<p>Intel CPUs allow almost every event as a trigger.
+AMD systems are more restricted: typically only <code>cycles</code> and IBS events (<code>ibs_fetch</code>, <code>ibs_op</code>) are supported.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>For memory sampling and vendor-specific configuration, see <a href="#specific-notes-for-different-cpu-vendors">Specific Notes for different CPU Vendors</a>.</p>
+</div>
+<h2 id="precision">Precision<a class="headerlink" href="#precision" title="Permanent link">&para;</a></h2>
+<p>Due to deep pipelining, a sample's instruction pointer or memory address may not exactly match the instruction that caused the overflow (see <a href="https://easyperf.net/blog/2019/04/03/Precise-timing-of-machine-code-with-Linux-perf">easyperf.net</a> and the <a href="https://man7.org/linux/man-pages/man2/perf_event_open.2.html">perf documentation</a>).
+You can request a specific amount of skid per trigger:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">AllowArbitrarySkid</span><span class="p">);</span>
+</code></pre></div>
+<p>Available precision levels:</p>
+<ul>
+<li><code>perf::Precision::AllowArbitrarySkid</code> (does <strong>not</strong> enable Intel PEBS)</li>
+<li><code>perf::Precision::MustHaveConstantSkid</code> (default)</li>
+<li><code>perf::Precision::RequestZeroSkid</code></li>
+<li><code>perf::Precision::MustHaveZeroSkid</code></li>
+</ul>
+<p>The default precision can also be set via <code>SampleConfig</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">SampleConfig</span><span class="p">{};</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">sample_config</span><span class="p">.</span><span class="n">precision</span><span class="p">(</span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">RequestZeroSkid</span><span class="p">);</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">);</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the precision is too high for the perf subsystem, <em>perf-cpp</em> will automatically reduce it. It will not increase precision autonomously.</p>
+</div>
+<h2 id="period-frequency">Period / Frequency<a class="headerlink" href="#period-frequency" title="Permanent link">&para;</a></h2>
+<p>Each trigger can specify a period (sample every N events) <strong>or</strong> a frequency (samples per second):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">/// Every 50,000th cycle.</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Period</span><span class="p">{</span><span class="mi">50000U</span><span class="p">});</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1">/// 1000 samples per second (hardware adjusts the period automatically).</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Frequency</span><span class="p">{</span><span class="mi">1000U</span><span class="p">});</span>
+</code></pre></div>
+<p>Period/frequency and precision can be combined:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">/// Every 50,000th cycle with zero skid.</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">RequestZeroSkid</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Period</span><span class="p">{</span><span class="mi">50000U</span><span class="p">});</span>
+</code></pre></div></p>
+<p>The default period or frequency can also be set via <code>SampleConfig</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">SampleConfig</span><span class="p">{};</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">sample_config</span><span class="p">.</span><span class="n">period</span><span class="p">(</span><span class="mi">50000U</span><span class="p">);</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1">/// or (mutually exclusive):</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">sample_config</span><span class="p">.</span><span class="n">frequency</span><span class="p">(</span><span class="mi">1000U</span><span class="p">);</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">);</span>
+</code></pre></div>
+<hr />
+<h2 id="what-can-be-recorded-and-how-to-access-the-data">What can be Recorded and how to Access the Data?<a class="headerlink" href="#what-can-be-recorded-and-how-to-access-the-data" title="Permanent link">&para;</a></h2>
+<p>Configure which fields to record via <code>sampler.values()</code>, then access them on each record from <code>sampler.result()</code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A <code>record</code> in the following refers to one record from the <code>sampler.result()</code> list.</p>
+</div>
+<h3 id="metadata">Metadata<a class="headerlink" href="#metadata" title="Permanent link">&para;</a></h3>
+<p>Metadata associated with a sample can be accessed via <code>record.metadata()</code>.<br />
+All metadata fields are returned as <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Mode</strong></td>
+<td>Indicates the execution mode in which the sample was recorded (<code>Kernel</code>, <code>User</code>, <code>Hypervisor</code>, <code>GuestKernel</code>, or <code>GuestUser</code>).</td>
+<td>Always recorded</td>
+<td><code>record.metadata().mode()</code></td>
+<td><code>std::optional&lt;perf::Metadata::Mode&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Sample ID</strong></td>
+<td>Unique identifier for the sample's group leader.</td>
+<td><code>sampler.values().sample_id(true)</code></td>
+<td><code>record.metadata().sample_id()</code></td>
+<td><code>std::optional&lt;std::uint64_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Stream ID</strong></td>
+<td>Unique identifier for the event that generated the sample.</td>
+<td><code>sampler.values().stream_id(true)</code></td>
+<td><code>record.metadata().stream_id()</code></td>
+<td><code>std::optional&lt;std::uint64_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Timestamp</strong></td>
+<td>Records the time at which the sample was taken.</td>
+<td><code>sampler.values().timestamp(true)</code></td>
+<td><code>record.metadata().timestamp()</code></td>
+<td><code>std::optional&lt;std::uint64_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Period</strong></td>
+<td>Indicates the event count threshold that triggered the sample.</td>
+<td><code>sampler.values().period(true)</code></td>
+<td><code>record.metadata().period()</code></td>
+<td><code>std::optional&lt;std::uint64_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>CPU ID</strong></td>
+<td>Identifies the CPU core where the sample was recorded.</td>
+<td><code>sampler.values().cpu_id(true)</code></td>
+<td><code>record.metadata().cpu_id()</code></td>
+<td><code>std::optional&lt;std::uint32_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Process ID</strong></td>
+<td>Identifies the process context in which the sample was recorded.</td>
+<td><code>sampler.values().thread_id(true)</code></td>
+<td><code>record.metadata().process_id()</code></td>
+<td><code>std::optional&lt;std::uint32_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Thread ID</strong></td>
+<td>Identifies the thread context in which the sample was recorded.</td>
+<td><code>sampler.values().thread_id(true)</code></td>
+<td><code>record.metadata().thread_id()</code></td>
+<td><code>std::optional&lt;std::uint32_t&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="instruction-execution">Instruction Execution<a class="headerlink" href="#instruction-execution" title="Permanent link">&para;</a></h3>
+<p>Instruction-level information is accessible via <code>record.instruction_execution()</code>.<br />
+All fields are returned as <code>std::optional</code>, unless otherwise noted.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Instruction Type</strong></td>
+<td>The type of the sampled instruction (<code>Return</code>, <code>Branch</code>, or <code>DataAccess</code>) (the first two only on <a href="#ibs-op-pmu"><strong>AMD's Op PMU</strong></a>).</td>
+<td><code>sampler.values().instruction_type(true)</code></td>
+<td><code>record.instruction_execution().type()</code></td>
+<td><code>std::optional&lt;perf::InstructionExecution::InstructionType&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Logical Instruction Pointer</strong></td>
+<td>The logical address of the sampled instruction.</td>
+<td><code>sampler.values().logical_instruction_pointer(true)</code></td>
+<td><code>record.instruction_execution().logical_instruction_pointer()</code></td>
+<td><code>std::optional&lt;std::uintptr_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Physical Instruction Pointer</strong></td>
+<td>The physical address of the sampled instruction (<a href="#ibs-fetch-pmu"><strong>AMD's Fetch PMU</strong></a> only).</td>
+<td><code>sampler.values().physical_instruction_pointer(true)</code></td>
+<td><code>record.instruction_execution().physical_instruction_pointer()</code></td>
+<td><code>std::optional&lt;std::uintptr_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Is Instruction Pointer Exact</strong></td>
+<td>Indicates that the recorded instruction pointer exactly corresponds to the sampled instruction.</td>
+<td><code>sampler.values().logical_instruction_pointer(true)</code></td>
+<td><code>record.instruction_execution().is_instruction_pointer_exact()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Branch Type</strong></td>
+<td>The type of branch, if applicable (<code>Taken</code>, <code>Retired</code>, <code>Mispredicted</code>, <code>Fuse</code>) (<a href="#ibs-op-pmu"><strong>AMD's Op PMU</strong></a> only) .</td>
+<td><code>sampler.values().branch_type(true)</code></td>
+<td><code>record.instruction_execution().branch_type()</code></td>
+<td><code>std::optional&lt;perf::InstructionExecution::BranchType&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Callchain</strong></td>
+<td>The callchain of the sampled instruction.</td>
+<td><code>sampler.values().callchain(true)</code> or a <code>std::uint32_t</code> for maximum depth</td>
+<td><code>record.instruction_execution().callchain()</code></td>
+<td><code>std::optional&lt;std::vector&lt;std::uintptr_t&gt;&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Code Page Size</strong></td>
+<td>Indicates the page size of the instruction pointer (from Linux <code>5.11</code>).</td>
+<td><code>sampler.values().code_page_size(true)</code></td>
+<td><code>record.instruction_execution().page_size()</code></td>
+<td><code>std::optional&lt;std::uint64_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Latency</strong></td>
+<td>Captures latency information of instruction execution and fetch.</td>
+<td><a href="#instruction-latency">See details below</a></td>
+<td><code>record.instruction_execution().latency()</code></td>
+<td><code>perf::InstructionExecution::Latency</code></td>
+</tr>
+<tr>
+<td><strong>Cache</strong></td>
+<td>Captures cache-related information from the instruction fetch stage.</td>
+<td><a href="#instruction-cache">See details below</a></td>
+<td><code>record.instruction_execution().cache()</code></td>
+<td><code>std::optional&lt;perf::InstructionExecution::Cache&gt;</code></td>
+</tr>
+<tr>
+<td><strong>TLB</strong></td>
+<td>Captures TLB information.</td>
+<td><a href="#instruction-tlb">See details below</a></td>
+<td><code>record.instruction_execution().tlb()</code></td>
+<td><code>std::optional&lt;perf::InstructionExecution::TLB&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Fetch</strong></td>
+<td>Captures instruction fetch-specific information.</td>
+<td><a href="#instruction-fetch">See details below</a></td>
+<td><code>record.instruction_execution().fetch()</code></td>
+<td><code>std::optional&lt;perf::InstructionExecution::Fetch&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Hardware Transaction Abort</strong></td>
+<td>Provides information on transactional memory aborts.</td>
+<td><a href="#hardware-transaction-abort">See details below</a></td>
+<td><code>record.instruction_execution().hardware_transaction_abort()</code></td>
+<td><code>std::optional&lt;perf::InstructionExecution::HardwareTransactionAbort&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong> <a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/instruction_pointer.cpp"><code>instruction_pointer_sampling.cpp</code></a></p>
+<h4 id="instruction-latency">Instruction Latency<a class="headerlink" href="#instruction-latency" title="Permanent link">&para;</a></h4>
+<p>Latency information captures timing characteristics for instruction execution or micro-operations (on AMD).<br />
+All fields are returned as <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Instruction Retirement</strong></td>
+<td>The total latency (in cycles) to execute the instruction, including TLB and memory accesses. (<strong>Intel</strong> only)</td>
+<td><code>sampler.values().instruction_latency(true)</code></td>
+<td><code>record.instruction_execution().latency().instruction_retirement()</code></td>
+<td><code>std::optional&lt;std::uint32_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>uOp Tag-to-Retirement</strong></td>
+<td>The number of cycles from tagging a uOp to its retirement (<a href="#ibs-op-pmu"><strong>AMD's Op PMU</strong></a> only).</td>
+<td><code>sampler.values().instruction_latency(true)</code></td>
+<td><code>record.instruction_execution().latency().uop_tag_to_retirement()</code></td>
+<td><code>std::optional&lt;std::uint32_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>uOp Completion-to-Retirement</strong></td>
+<td>The number of cycles from uOp completion to retirement (<a href="#ibs-op-pmu"><strong>AMD's Op PMU</strong></a> only).</td>
+<td><code>sampler.values().instruction_latency(true)</code></td>
+<td><code>record.instruction_execution().latency().uop_completion_to_retirement()</code></td>
+<td><code>std::optional&lt;std::uint32_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>uOp Tag-to-Completion</strong></td>
+<td>The number of cycles from tagging a uOp to its completion (<a href="#ibs-op-pmu"><strong>AMD's Op PMU</strong></a> only).</td>
+<td><code>sampler.values().instruction_latency(true)</code></td>
+<td><code>record.instruction_execution().latency().uop_tag_to_completion()</code></td>
+<td><code>std::optional&lt;std::uint32_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Fetch</strong></td>
+<td>The instruction fetch latency (in cycles) from initiation to delivery to the core (<a href="#ibs-fetch-pmu"><strong>AMD's Fetch PMU</strong></a> only).</td>
+<td><code>sampler.values().instruction_latency(true)</code></td>
+<td><code>record.instruction_execution().latency().fetch()</code></td>
+<td><code>std::optional&lt;std::uint32_t&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="instruction-cache">Instruction Cache<a class="headerlink" href="#instruction-cache" title="Permanent link">&para;</a></h4>
+<p>Provides cache-related information about instruction fetches.<br />
+This is available only on <a href="#ibs-fetch-pmu"><strong>AMD's Fetch PMU</strong></a>.<br />
+Note that <code>record.instruction_execution().cache()</code> returns an <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>L1 Cache Miss</strong></td>
+<td>Indicates that the instruction fetch missed the L1 instruction cache.</td>
+<td><code>sampler.values().instruction_cache(true)</code></td>
+<td><code>record.instruction_execution().cache()-&gt;is_l1_cache_miss()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>L2 Cache Miss</strong></td>
+<td>Indicates that the instruction fetch missed the L2 cache.</td>
+<td><code>sampler.values().instruction_cache(true)</code></td>
+<td><code>record.instruction_execution().cache()-&gt;is_l2_cache_miss()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>L3 Cache Miss</strong></td>
+<td>Indicates that the instruction fetch missed the L3 cache.</td>
+<td><code>sampler.values().instruction_cache(true)</code></td>
+<td><code>record.instruction_execution().cache()-&gt;is_l3_cache_miss()</code></td>
+<td><code>bool</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="instruction-tlb">Instruction TLB<a class="headerlink" href="#instruction-tlb" title="Permanent link">&para;</a></h4>
+<p>Provides TLB information related to instruction fetch.<br />
+This is available only on <a href="#ibs-fetch-pmu"><strong>AMD's Fetch PMU</strong></a>.<br />
+Note that <code>record.instruction_execution().tlb()</code> returns an <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>L1 Cache Miss</strong></td>
+<td>Indicates that the instruction fetch missed the L1 instruction TLB (iTLB).</td>
+<td><code>sampler.values().instruction_tlb(true)</code></td>
+<td><code>record.instruction_execution().tlb()-&gt;is_l1_miss()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>L2 Cache Miss</strong></td>
+<td>Indicates that the instruction fetch missed the second-level TLB (STLB).</td>
+<td><code>sampler.values().instruction_tlb(true)</code></td>
+<td><code>record.instruction_execution().tlb()-&gt;is_l2_miss()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>L1 Page Size</strong></td>
+<td>The page size used in the L1 instruction TLB.</td>
+<td><code>sampler.values().instruction_tlb(true)</code></td>
+<td><code>record.instruction_execution().tlb()-&gt;l1_page_size()</code></td>
+<td><code>std::uint64_t</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="instruction-fetch">Instruction Fetch<a class="headerlink" href="#instruction-fetch" title="Permanent link">&para;</a></h4>
+<p>Provides details about instruction fetch behavior during micro-op execution.<br />
+This is available only on <a href="#ibs-fetch-pmu"><strong>AMD's Fetch PMU</strong></a>.<br />
+Note that <code>record.instruction_execution().fetch()</code> returns an <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Is Fetch Complete</strong></td>
+<td>Indicates that the instruction fetch process completed.</td>
+<td><code>sampler.values().instruction_fetch(true)</code></td>
+<td><code>record.instruction_execution().fetch()-&gt;is_complete()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Fetch Valid</strong></td>
+<td>Indicates that the instruction fetch is considered valid.</td>
+<td><code>sampler.values().instruction_fetch(true)</code></td>
+<td><code>record.instruction_execution().fetch()-&gt;is_valid()</code></td>
+<td><code>bool</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="hardware-transaction-abort">Hardware Transaction Abort<a class="headerlink" href="#hardware-transaction-abort" title="Permanent link">&para;</a></h4>
+<p>Provides information about hardware transactional memory aborts.<br />
+This is available only on <strong>Intel</strong>.<br />
+Note that <code>record.instruction_execution().hardware_transaction_abort()</code> returns an <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Is Elision Transaction</strong></td>
+<td>Indicates that the abort originated from an elision-type transaction.</td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td><code>record.instruction_execution().hardware_transaction_abort()-&gt;is_elision_transaction()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Generic Transaction</strong></td>
+<td>Indicates that the abort originated from a generic hardware transaction.</td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td><code>record.instruction_execution().hardware_transaction_abort()-&gt;is_generic_transaction()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Synchronous Transaction</strong></td>
+<td>Indicates that the abort occurred due to a synchronous condition.</td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td><code>record.instruction_execution().hardware_transaction_abort()-&gt;is_synchronous_abort()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Retryable</strong></td>
+<td>Indicates that the transaction can be retried after the abort.</td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td><code>record.instruction_execution().hardware_transaction_abort()-&gt;is_retryable()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Due to Memory Conflict</strong></td>
+<td>Indicates that the abort was caused by a memory conflict.</td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td><code>record.instruction_execution().hardware_transaction_abort()-&gt;is_due_to_memory_conflict()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Due to Write Capacity Conflict</strong></td>
+<td>Indicates that the abort was caused by a write capacity conflict.</td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td><code>record.instruction_execution().hardware_transaction_abort()-&gt;is_due_to_write_capacity_conflict()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Due to Read Capacity Conflict</strong></td>
+<td>Indicates that the abort was caused by a read capacity conflict.</td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td><code>record.instruction_execution().hardware_transaction_abort()-&gt;is_due_to_read_capacity_conflict()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>User Specified Code</strong></td>
+<td>User-specified code associated with the abort, if provided.</td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td><code>record.instruction_execution().hardware_transaction_abort()-&gt;user_specified_code()</code></td>
+<td><code>std::uint32_t</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="data-access">Data Access<a class="headerlink" href="#data-access" title="Permanent link">&para;</a></h3>
+<p>Provides information about memory, cache, and TLB behavior during data access.<br />
+All fields can be accessed via <code>record.data_access()</code>.<br />
+Note that most fields are returned as <code>std::optional</code>.</p>
+<div class="admonition tip">
+<p class="admonition-title">Important</p>
+<p>Sampling for memory accesses (memory address, cache information, etc.) is only supported using <a href="#ibs-op-pmu"><strong>AMD's IBS Op PMU</strong></a> and <a href="#intel-processor-event-based-sampling"><strong>Intel PEBS <code>mem-load</code>/<code>mem-store</code> events</strong></a>.</p>
+</div>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Is load</strong></td>
+<td>Indicates that the access was a load operation.</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().is_load()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Store</strong></td>
+<td>Indicates that the access was a store operation.</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().is_store()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Software Prefetch</strong></td>
+<td>Indicates that the access was a software prefetch (<a href="#ibs-op-pmu"><strong>AMD's Op PMU</strong></a> only).</td>
+<td><code>sampler.values().instruction_type(true)</code></td>
+<td><code>record.data_access().is_software_prefetch()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Locked</strong></td>
+<td>Indicates that the sampled data access was a locked operation.</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().is_locked()</code></td>
+<td><code>std::optional&lt;bool&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Logical Memory Address</strong></td>
+<td>The logical address of the accessed memory.</td>
+<td><code>sampler.values().logical_memory_address(true)</code></td>
+<td><code>record.data_access().logical_memory_address()</code></td>
+<td><code>std::optional&lt;std::uintptr_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Physical Memory Address</strong></td>
+<td>The physical address of the accessed memory (from Linux <code>4.13</code>).</td>
+<td><code>sampler.values().physical_memory_address(true)</code></td>
+<td><code>record.data_access().physical_memory_address()</code></td>
+<td><code>std::optional&lt;std::uintptr_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Source</strong></td>
+<td>Provides information about the memory or cache source of the access.</td>
+<td><a href="#data-source">See details below</a></td>
+<td><code>record.data_access().source()</code></td>
+<td><code>std::optional&lt;perf::DataAccess::Source&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Latency</strong></td>
+<td>Provides latency details for the data access.</td>
+<td><a href="#data-latency">See details below</a></td>
+<td><code>record.data_access().latency()</code></td>
+<td><code>perf::DataAccess::Latency</code></td>
+</tr>
+<tr>
+<td><strong>TLB</strong></td>
+<td>Provides TLB-related information for the access.</td>
+<td><a href="#data-tlb">See details below</a></td>
+<td><code>record.data_access().tlb()</code></td>
+<td><code>perf::DataAccess::TLB</code></td>
+</tr>
+<tr>
+<td><strong>Snoop</strong></td>
+<td>Provides Snoop-related information for the access.</td>
+<td><a href="#data-snoop">See details below</a></td>
+<td><code>record.data_access().snoop()</code></td>
+<td><code>std::optional&lt;perf::DataAccess::Snoop&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Is Misalign Penalty</strong></td>
+<td>Indicates that the access incurred a misalignment penalty (<a href="#ibs-op-pmu"><strong>AMD's Op PMU</strong></a> only).</td>
+<td><code>sampler.values().data_access_misalign_penalty(true)</code></td>
+<td><code>record.data_access().is_misaligned_penalty()</code></td>
+<td><code>std::optional&lt;bool&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Access Width</strong></td>
+<td>The size (in bytes) of the accessed data (<a href="#ibs-op-pmu"><strong>AMD's Op PMU</strong></a> only).</td>
+<td><code>sampler.values().data_access_width(true)</code></td>
+<td><code>record.data_access().access_width()</code></td>
+<td><code>std::optional&lt;std::uint8_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Data Page Size</strong></td>
+<td>The page size of the data page (from Linux <code>5.11</code>).</td>
+<td><code>sampler.values().data_page_size(true)</code></td>
+<td><code>record.data_access().page_size()</code></td>
+<td><code>std::optional&lt;std::uint64_t&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong> <a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/memory_address.cpp"><code>address_sampling.cpp</code></a></p>
+<h4 id="data-source">Data Source<a class="headerlink" href="#data-source" title="Permanent link">&para;</a></h4>
+<p>Provides detailed information about the memory or cache source involved in a data access.<br />
+Note that <code>record.data_access().source()</code> returns an <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Is L1 Hit</strong></td>
+<td>Indicates that the access hit the L1 data cache (L1d).</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().source()-&gt;is_l1_hit()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is MHB Hit</strong></td>
+<td>Indicates that the access hit the LFB (Intel) or MAB (AMD).</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().source()-&gt;is_mhb_hit()</code></td>
+<td><code>std::optional&lt;bool&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Number of Allocated MHB Slots</strong></td>
+<td>The number of MAB (AMD) slots allocated at the time of sampling (<a href="#ibs-op-pmu"><strong>AMD's Op PMU</strong></a> only).</td>
+<td><code>sampler.values().mhb_allocations(true)</code></td>
+<td><code>record.data_access().source()-&gt;num_mhb_slots_allocated()</code></td>
+<td><code>std::optional&lt;std::uint8_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Is L2 Hit</strong></td>
+<td>Indicates that the access hit the L2 cache.</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().source()-&gt;is_l2_hit()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is L3 Hit</strong></td>
+<td>Indicates that the access hit the L3 cache.</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().source()-&gt;is_l3_hit()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Memory Hit</strong></td>
+<td>Indicates that the access missed all caches and was served from memory.</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().source()-&gt;is_memory_hit()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Remote</strong></td>
+<td>Indicates that the access was served by a remote core or node (cache or memory).</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().source()-&gt;is_remote()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Same Node Remote Core</strong></td>
+<td>Indicates that the access was served by another core on the same node.</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().source()-&gt;is_same_node_remote_core()</code></td>
+<td><code>std::optional&lt;bool&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Is Same Socket Remote Node</strong></td>
+<td>Indicates that the access was served by another node on the same socket.</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().source()-&gt;is_same_socket_remote_node()</code></td>
+<td><code>std::optional&lt;bool&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Is Same Board Remote Socket</strong></td>
+<td>Indicates that the access was served by another socket on the same board.</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().source()-&gt;is_same_board_remote_socket()</code></td>
+<td><code>std::optional&lt;bool&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Is Remote Board</strong></td>
+<td>Indicates that the access was served by another board.</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().source()-&gt;is_remote_board()</code></td>
+<td><code>std::optional&lt;bool&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Is Uncachable Memory</strong></td>
+<td>Indicates that the access targeted uncachable memory.</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().source()-&gt;is_uncachable_memory()</code></td>
+<td><code>std::optional&lt;bool&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Is Write Combine Memory</strong></td>
+<td>Indicates that the access targeted write-combine memory.</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().source()-&gt;is_write_combine()</code></td>
+<td><code>std::optional&lt;bool&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="data-latency">Data Latency<a class="headerlink" href="#data-latency" title="Permanent link">&para;</a></h4>
+<p>Provides latency measurements associated with data access operations.<br />
+All fields are returned as <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cache Access</strong></td>
+<td>The latency (in cycles) for completing the data access (<a href="#intel-processor-event-based-sampling"><strong>Intel</strong> <code>mem-load</code></a> trigger only).</td>
+<td><code>sampler.values().data_access_latency(true)</code></td>
+<td><code>record.data_access().latency().cache_access()</code></td>
+<td><code>std::optional&lt;std::uint32_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Cache Miss</strong></td>
+<td>The latency (in cycles) caused by an L1d cache miss (<a href="#ibs-op-pmu"><strong>AMD's Op PMU</strong></a> only).</td>
+<td><code>sampler.values().data_access_latency(true)</code></td>
+<td><code>record.data_access().latency().cache_miss()</code></td>
+<td><code>std::optional&lt;std::uint32_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>dTLB Refill</strong></td>
+<td>The latency (in cycles) for refilling the data TLB after a miss (<a href="#ibs-op-pmu"><strong>AMD's Op PMU</strong></a> only).</td>
+<td><code>sampler.values().data_tlb_latency(true)</code></td>
+<td><code>record.data_access().latency().dtlb_refill()</code></td>
+<td><code>std::optional&lt;std::uint32_t&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="data-tlb">Data TLB<a class="headerlink" href="#data-tlb" title="Permanent link">&para;</a></h4>
+<p>Provides information about dTLB and STLB access behavior.<br />
+All fields are returned as <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Is L1 Hit</strong></td>
+<td>Indicates that the data access hit the L1 data TLB (dTLB).</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().tlb().is_l1_hit()</code></td>
+<td><code>std::optional&lt;bool&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Is L2 Hit</strong></td>
+<td>Indicates that the data access hit the second-level TLB (STLB).</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().tlb().is_l2_hit()</code></td>
+<td><code>std::optional&lt;bool&gt;</code></td>
+</tr>
+<tr>
+<td><strong>L1 Page Size</strong></td>
+<td>The page size of the translation associated with the dTLB hit (<a href="#ibs-op-pmu"><strong>AMD's Op PMU</strong></a> only).</td>
+<td><code>sampler.values().data_tlb_page_size(true)</code></td>
+<td><code>record.data_access().tlb().l1_page_size()</code></td>
+<td><code>std::optional&lt;std::uint64_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>L2 Page Size</strong></td>
+<td>The page size of the translation associated with the STLB hit (<a href="#ibs-op-pmu"><strong>AMD's Op PMU</strong></a> only).</td>
+<td><code>sampler.values().data_tlb_page_size(true)</code></td>
+<td><code>record.data_access().tlb().l2_page_size()</code></td>
+<td><code>std::optional&lt;std::uint64_t&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">Important</p>
+<p><strong>Intel</strong> systems do not distinguish between L1 and L2 TLB hits.<br />
+If a TLB hit occurs, both <code>is_l1_hit()</code> and <code>is_l2_hit()</code> will return <code>true</code>.</p>
+</div>
+<h4 id="data-snoop">Data Snoop<a class="headerlink" href="#data-snoop" title="Permanent link">&para;</a></h4>
+<p>Provides information about snooping access behavior.<br />
+All fields are returned as <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Is Hit</strong></td>
+<td>Indicates that the data access is a snoop hit (<code>true</code>) or a miss (<code>false</code>).</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().snoop()-&gt;is_hit()</code></td>
+<td><code>std::optional&lt;bool&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Is Hit Modified</strong></td>
+<td><code>True</code> if the hit cache line is dirty.</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().snoop()-&gt;is_hit_modified()</code></td>
+<td><code>std::optional&lt;bool&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Is Forward</strong></td>
+<td>Indicates that the cache line is forwarded.</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().snoop()-&gt;is_forward()</code></td>
+<td><code>std::optional&lt;bool&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Is Transfer from Peer</strong></td>
+<td>Indicates that the cache line is transferred from another node.</td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td><code>record.data_access().snoop()-&gt;is_transfer_from_peer()</code></td>
+<td><code>std::optional&lt;bool&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="counter-values">Counter Values<a class="headerlink" href="#counter-values" title="Permanent link">&para;</a></h3>
+<p>Records hardware performance event values (e.g., <code>cycles</code>, <code>L1-dcache-loads</code>, etc.) and derived metrics at the time each sample is taken.<br />
+Refer to the documentation on <a href="../recording/">recording events</a> and <a href="../metrics/">metrics</a> for more information.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Counter Values</strong></td>
+<td>Captures the values of the specified performance events.</td>
+<td><code>sampler.values().counter({"cycles", "instructions", "cycles-per-instruction"})</code> (example counter names)</td>
+<td><code>record.counter()</code></td>
+<td><code>perf::CounterResult</code> (see the <a href="../recording/">recording events</a> documentation).</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong> <a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/counter.cpp"><code>counter_sampling.cpp</code></a></p>
+<h3 id="branch-stack">Branch Stack<a class="headerlink" href="#branch-stack" title="Permanent link">&para;</a></h3>
+<p>Captures the branch stack recorded by the CPU at the time of sampling.<br />
+This can include call and jump instructions, conditional branches, and transactional memory branches.<br />
+Note that <code>record.branch_stack()</code> returns an <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Branch Stack</strong></td>
+<td>Records the current branch stack of the CPU.</td>
+<td><code>sampler.values().branch_stack({perf::BranchType::Call, perf::BranchType::Conditional})</code> (see types below)</td>
+<td><code>record.branch_stack()</code></td>
+<td><code>std::optional&lt;std::vector&lt;perf::Branch&gt;&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="branch-types-to-record">Branch Types to Record<a class="headerlink" href="#branch-types-to-record" title="Permanent link">&para;</a></h4>
+<p>You can configure which types of branches to record. The following types are supported (and can be combined):</p>
+<ul>
+<li><code>perf::BranchType::Any</code></li>
+<li><code>perf::BranchType::User</code></li>
+<li><code>perf::BranchType::Kernel</code></li>
+<li><code>perf::BranchType::HyperVisor</code></li>
+<li><code>perf::BranchType::Call</code> (available from Linux <code>4.4.0</code>)</li>
+<li><code>perf::BranchType::DirectCall</code> (available from Linux <code>4.4.0</code>)</li>
+<li><code>perf::BranchType::IndirectCall</code></li>
+<li><code>perf::BranchType::Return</code></li>
+<li><code>perf::BranchType::IndirectJump</code> (available from Linux <code>4.2.0</code>)</li>
+<li><code>perf::BranchType::Conditional</code></li>
+<li><code>perf::BranchType::TransactionalMemoryAbort</code></li>
+<li><code>perf::BranchType::InTransaction</code></li>
+<li><code>perf::BranchType::NotInTransaction</code></li>
+</ul>
+<h4 id="branch">Branch<a class="headerlink" href="#branch" title="Permanent link">&para;</a></h4>
+<p>Each entry in the branch stack contains the following information:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Instruction Pointer From</strong></td>
+<td>The instruction pointer where the branch originated.</td>
+<td><code>record.branch_stack()-&gt;at(i).instruction_pointer_from()</code></td>
+<td><code>std::uintptr_t</code></td>
+</tr>
+<tr>
+<td><strong>Instruction Pointer To</strong></td>
+<td>The instruction pointer where the branch target landed.</td>
+<td><code>record.branch_stack()-&gt;at(i).instruction_pointer_to()</code></td>
+<td><code>std::uintptr_t</code></td>
+</tr>
+<tr>
+<td><strong>Is Mispredicted</strong></td>
+<td>Indicates that the branch was mispredicted.</td>
+<td><code>record.branch_stack()-&gt;at(i).is_mispredicted()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Predicted</strong></td>
+<td>Indicates that the branch was predicted correctly.</td>
+<td><code>record.branch_stack()-&gt;at(i).is_predicted()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is In Transaction</strong></td>
+<td>Indicates that the branch occurred during a hardware transaction.</td>
+<td><code>record.branch_stack()-&gt;at(i).is_in_transaction()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Transaction Abort</strong></td>
+<td>Indicates that the branch aborted a hardware transaction.</td>
+<td><code>record.branch_stack()-&gt;at(i).is_transaction_abort()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Cycles</strong></td>
+<td>The number of cycles for the branch (if supported).</td>
+<td><code>record.branch_stack()-&gt;at(i).cycles()</code></td>
+<td><code>std::optional&lt;std::uint64_t&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong> <a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/branch.cpp"><code>branch_sampling.cpp</code></a></p>
+<h3 id="user-stack">User Stack<a class="headerlink" href="#user-stack" title="Permanent link">&para;</a></h3>
+<p>Captures a snapshot of the user-level stack at the time of sampling.<br />
+Note that <code>record.user_stack()</code> returns an <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>User Stack</strong></td>
+<td>Records a specified number of bytes from the user stack.</td>
+<td><code>sampler.values().user_stack(64U)</code> (<code>64U</code> specifies the number of bytes to record)</td>
+<td><code>record.user_stack()</code></td>
+<td><code>std::optional&lt;std::vector&lt;std::byte&gt;&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="registers">Registers<a class="headerlink" href="#registers" title="Permanent link">&para;</a></h3>
+<p>Captures register values at the time of sampling, based on the system's ABI.<br />
+Both user-space and kernel-space registers can be recorded.<br />
+Note that <code>record.user_registers()</code> and <code>record.kernel_registers()</code> return an <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>User Registers</strong></td>
+<td>User-level register values at the time the sample was taken.</td>
+<td><code>sampler.values().user_registers({perf::Registers::x86::AX, perf::Registers::x86::R10})</code> (example registers shown)</td>
+<td><a href="#register-values">See details below</a></td>
+<td><code>perf::RegisterValues</code></td>
+</tr>
+<tr>
+<td><strong>Kernel Registers</strong></td>
+<td>Kernel-level register values at the time the sample was taken.</td>
+<td><code>sampler.values().kernel_registers({perf::Registers::x86::AX, perf::Registers::x86::R10})</code> (example registers shown)</td>
+<td><a href="#register-values">See details below</a></td>
+<td><code>perf::RegisterValues</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="register-values">Register Values<a class="headerlink" href="#register-values" title="Permanent link">&para;</a></h4>
+<p>Register values (user or kernel) can be accessed via <code>record.user_registers()</code> or <code>record.kernel_registers()</code>.<br />
+The following fields are available:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Register Value</strong></td>
+<td>The value of a specific register.</td>
+<td><code>record.user_registers()-&gt;get(perf::Registers::x86::AX)</code> (example register)</td>
+<td><code>std::optional&lt;std::int64_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>ABI</strong></td>
+<td>The ABI used when capturing the register values.</td>
+<td><code>record.user_registers()-&gt;abi()</code></td>
+<td><code>perf::ABI</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong> <a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/register.cpp"><code>register_sampling.cpp</code></a></p>
+<h3 id="raw-data">Raw Data<a class="headerlink" href="#raw-data" title="Permanent link">&para;</a></h3>
+<p>Captures the raw data output from the underlying Performance Monitoring Unit.<br />
+This can be used to manually parse additional information not exposed through the standard <em>perf-cpp</em> interface.<br />
+For example, <em>perf-cpp</em> uses raw data to expose <a href="#amd-instruction-based-sampling">AMD IBS</a> records that are otherwise inaccessible via the <a href="https://man7.org/linux/man-pages/man2/perf_event_open.2.html"><em>perf_event_open</em></a> system call.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Raw Data</strong></td>
+<td>The raw PMU output for manual inspection.</td>
+<td><code>sampler.values().raw(true)</code></td>
+<td><code>record.raw()</code></td>
+<td><code>std::optional&lt;std::vector&lt;std::byte&gt;&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="context-switches">Context Switches<a class="headerlink" href="#context-switches" title="Permanent link">&para;</a></h3>
+<p>Captures context switch events, including switch-in, switch-out, and preemption information.<br />
+This feature requires a Linux kernel version of <code>4.3</code> or higher.<br />
+Note that <code>record.context_switch()</code> returns an <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Is Switch In</strong></td>
+<td>Indicates that the process was switched in.</td>
+<td><code>sampler.values().context_switch(true)</code></td>
+<td><code>record.context_switch()-&gt;is_in()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Switch Out</strong></td>
+<td>Indicates that the process was switched out.</td>
+<td><code>sampler.values().context_switch(true)</code></td>
+<td><code>record.context_switch()-&gt;is_out()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Preempt</strong></td>
+<td>Indicates that the process was preempted.</td>
+<td><code>sampler.values().context_switch(true)</code></td>
+<td><code>record.context_switch()-&gt;is_preempt()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Thread ID</strong></td>
+<td>The thread ID involved in the switch (available in CPU-wide mode).</td>
+<td><code>sampler.values().context_switch(true)</code></td>
+<td><code>record.context_switch()-&gt;thread_id()</code></td>
+<td><code>std::optional&lt;std::uint32_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Process ID</strong></td>
+<td>The process ID involved in the switch (available in CPU-wide mode).</td>
+<td><code>sampler.values().context_switch(true)</code></td>
+<td><code>record.context_switch()-&gt;process_id()</code></td>
+<td><code>std::optional&lt;std::uint32_t&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p>If recorded, the following <a href="#metadata">metadata fields</a> will also be included:
+- Timestamp
+- Stream ID
+- CPU ID
+- Sample ID</p>
+<p><strong>Example:</strong> <a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/context_switch.cpp"><code>context_switch_sampling.cpp</code></a></p>
+<h3 id="cgroup">CGroup<a class="headerlink" href="#cgroup" title="Permanent link">&para;</a></h3>
+<p>Captures information about control groups (cgroups) associated with each sample.<br />
+Sampling cgroups requires a Linux kernel version of <code>5.7</code> or higher.<br />
+Note that <code>record.cgroup()</code> returns an <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CGroup ID</strong></td>
+<td>The ID of the cgroup the sample belongs to.</td>
+<td><code>sampler.values().cgroup(true)</code></td>
+<td><code>record.cgroup_id()</code></td>
+<td><code>std::optional&lt;std::uint64_t&gt;</code></td>
+</tr>
+<tr>
+<td><strong>New CGroup ID</strong></td>
+<td>The ID of a newly added cgroup.</td>
+<td><code>sampler.values().cgroup(true)</code></td>
+<td><code>record.cgroup()-&gt;id()</code></td>
+<td><code>std::uint64_t</code></td>
+</tr>
+<tr>
+<td><strong>New CGroup Path</strong></td>
+<td>The path of a newly added cgroup.</td>
+<td><code>sampler.values().cgroup(true)</code></td>
+<td><code>record.cgroup()-&gt;path()</code></td>
+<td><code>std::string</code></td>
+</tr>
+</tbody>
+</table>
+<p>If recorded, the following <a href="#metadata">metadata fields</a> will also be included:
+- Timestamp
+- Process ID
+- Thread ID
+- Stream ID
+- CPU ID
+- Sample ID</p>
+<h3 id="throttle-and-unthrottle">Throttle and Unthrottle<a class="headerlink" href="#throttle-and-unthrottle" title="Permanent link">&para;</a></h3>
+<p>Captures events where sampling was throttled or unthrottled by the kernel.<br />
+Note that <code>record.throttle()</code> returns an <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Is Throttle</strong></td>
+<td>Indicates that the sample corresponds to a throttle event.</td>
+<td><code>sampler.values().throttle(true)</code></td>
+<td><code>record.throttle()-&gt;is_throttle()</code></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><strong>Is Unthrottle</strong></td>
+<td>Indicates that the sample corresponds to an unthrottle event.</td>
+<td><code>sampler.values().throttle(true)</code></td>
+<td><code>record.throttle()-&gt;is_unthrottle()</code></td>
+<td><code>bool</code></td>
+</tr>
+</tbody>
+</table>
+<p>If recorded, the following <a href="#metadata">metadata fields</a> will also be included:
+- Timestamp
+- Process ID
+- Thread ID
+- Stream ID
+- CPU ID
+- Sample ID</p>
+<h3 id="lost-samples">Lost Samples<a class="headerlink" href="#lost-samples" title="Permanent link">&para;</a></h3>
+<p>Sample loss can occur when buffers overflow or the CPU is under high load.<br />
+This section records how many samples were lost during profiling.<br />
+Note that <code>record.count_loss()</code> returns an <code>std::optional</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>How to record?</th>
+<th>How to access?</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Count Loss Events</strong></td>
+<td>The number of lost samples.</td>
+<td>Always recorded</td>
+<td><code>record.count_loss()</code></td>
+<td><code>std::optional&lt;std::uint64_t&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p>If recorded, the following <a href="#metadata">metadata fields</a> will also be included:
+- Timestamp
+- Process ID
+- Thread ID
+- Stream ID
+- CPU ID
+- Sample ID</p>
+<hr />
+<h2 id="specific-notes-for-different-cpu-vendors">Specific Notes for Different CPU Vendors<a class="headerlink" href="#specific-notes-for-different-cpu-vendors" title="Permanent link">&para;</a></h2>
+<h3 id="intel-processor-event-based-sampling">Intel (Processor Event Based Sampling)<a class="headerlink" href="#intel-processor-event-based-sampling" title="Permanent link">&para;</a></h3>
+<p>Memory address, latency, and data source sampling requires specific trigger events.
+Intel's <code>perf list</code> reports these as "<em>Supports address when precise</em>".</p>
+<p><em>perf-cpp</em> discovers <code>mem-loads</code> and <code>mem-stores</code> events automatically on supported Intel hardware.
+Memory sampling requires a <a href="#precision">precision</a> of at least <code>perf::Precision::RequestZeroSkid</code>.</p>
+<h4 id="before-sapphire-rapids">Before Sapphire Rapids<a class="headerlink" href="#before-sapphire-rapids" title="Permanent link">&para;</a></h4>
+<p>On Cascade Lake and earlier architectures, latency and source are only reported for memory loads, not stores. This changes starting with Sapphire Rapids.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1">/// Loads only.</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;mem-loads&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="p">);</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1">/// Stores only.</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;mem-stores&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="p">);</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="c1">/// Loads and stores together.</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="o">&gt;&gt;</span><span class="p">{</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">      </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="w"> </span><span class="s">&quot;mem-loads&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">RequestZeroSkid</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="w"> </span><span class="s">&quot;mem-stores&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">  </span><span class="p">});</span>
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>See the examples: <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/memory_address.cpp">memory_address.cpp</a></strong>, <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/multi_event.cpp">multi_event.cpp</a></strong>.</p>
+</div>
+<h4 id="sapphire-rapids-and-beyond">Sapphire Rapids and Beyond<a class="headerlink" href="#sapphire-rapids-and-beyond" title="Permanent link">&para;</a></h4>
+<p>Memory latency sampling on Sapphire Rapids requires an <strong>auxiliary counter</strong> in the trigger group before the first real counter (<a href="https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/">kernel patch</a>).</p>
+<div class="admonition tip">
+<p class="admonition-title">Important</p>
+<p><em>perf-cpp</em> detects this automatically and adds the auxiliary counter when needed.
+If auto-detection fails, add it manually:</p>
+</div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">({</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">        </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="s">&quot;mem-loads-aux&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="p">},</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">        </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="s">&quot;mem-loads&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">RequestZeroSkid</span><span class="p">}</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="s">&quot;mem-stores&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">  </span><span class="p">});</span>
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Check whether the auxiliary counter is required: <code>ls /sys/bus/event_source/devices/cpu/events/mem-loads-aux</code></p>
+</div>
+<h3 id="amd-instruction-based-sampling">AMD (Instruction Based Sampling)<a class="headerlink" href="#amd-instruction-based-sampling" title="Permanent link">&para;</a></h3>
+<p>AMD uses Instruction Based Sampling (IBS) to randomly tag instructions and collect detailed execution data per sample.
+IBS provides two PMUs, only one of which can be active at a time.</p>
+<p>For details, see the <a href="https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/24593.pdf">AMD programmer reference</a> and the <a href="https://man7.org/linux/man-pages/man1/perf-amd-ibs.1.html">perf IBS documentation</a>.</p>
+<h4 id="ibs-op-pmu">IBS Op PMU<a class="headerlink" href="#ibs-op-pmu" title="Permanent link">&para;</a></h4>
+<p>The Op PMU captures micro-op execution details: data cache and TLB hit/miss, latency, load/store data source, and branch behavior.
+Unlike Intel's mechanism, IBS does not tag specific load or store instructions. If the sampled instruction happens to be a load/store, the sample includes data source, latency, and memory address (<a href="https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/">kernel patch</a>).</p>
+<p><em>perf-cpp</em> detects IBS support automatically and provides the following triggers:</p>
+<table>
+<thead>
+<tr>
+<th>Trigger</th>
+<th>Selection</th>
+<th>Period/Frequency Unit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ibs_op</code></td>
+<td>Instructions in the execution pipeline</td>
+<td>CPU cycles</td>
+</tr>
+<tr>
+<td><code>ibs_op_uops</code></td>
+<td>Instructions in the execution pipeline</td>
+<td>Micro-operations</td>
+</tr>
+<tr>
+<td><code>ibs_op_l3missonly</code></td>
+<td>Instructions that miss L3</td>
+<td>CPU cycles</td>
+</tr>
+<tr>
+<td><code>ibs_op_uops_l3missonly</code></td>
+<td>Instructions that miss L3</td>
+<td>Micro-operations</td>
+</tr>
+</tbody>
+</table>
+<h4 id="ibs-fetch-pmu">IBS Fetch PMU<a class="headerlink" href="#ibs-fetch-pmu" title="Permanent link">&para;</a></h4>
+<p>The Fetch PMU captures instruction fetch details: instruction cache and TLB hit/miss, fetch latency, and page size.</p>
+<table>
+<thead>
+<tr>
+<th>Trigger</th>
+<th>Selection</th>
+<th>Period/Frequency Unit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ibs_fetch</code></td>
+<td>Instructions in the fetch stage (frontend)</td>
+<td>CPU cycles</td>
+</tr>
+<tr>
+<td><code>ibs_fetch_l3missonly</code></td>
+<td>Instructions in the fetch stage that miss L3</td>
+<td>CPU cycles</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sample-buffer">Sample Buffer<a class="headerlink" href="#sample-buffer" title="Permanent link">&para;</a></h2>
+<p>Samples are transferred into an mmap-ed <a href="https://docs.kernel.org/userspace-api/perf_ring_buffer.html">ring buffer</a>.
+The buffer size (default: 16 MB) can be configured via <code>SampleConfig</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">SampleConfig</span><span class="p">{};</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">sample_config</span><span class="p">.</span><span class="n">buffer_pages</span><span class="p">(</span><span class="mi">4096U</span><span class="p">);</span><span class="w"> </span><span class="c1">/// 16 MB (4096 pages × 4 kB per page).</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="p">};</span>
+</code></pre></div>
+<p><em>perf-cpp</em> drains the buffer automatically before it becomes full.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The number of buffer pages must be a power of two; non-power-of-two values will be rounded up.</p>
+</div>
+<h2 id="troubleshooting-counter-configurations">Troubleshooting Counter Configurations<a class="headerlink" href="#troubleshooting-counter-configurations" title="Permanent link">&para;</a></h2>
+<p>Enable debug mode to print the counter configuration passed to the perf subsystem:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">SampleConfig</span><span class="p">{};</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">config</span><span class="p">.</span><span class="n">debug</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="p">};</span>
+</code></pre></div>
+<p>The equivalent in <em>Linux Perf</em>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>perf<span class="w"> </span>--debug<span class="w"> </span>perf-event-open<span class="w"> </span>record<span class="w"> </span>--<span class="w"> </span>sleep<span class="w"> </span><span class="m">1</span>
+</code></pre></div></p>
+<p>See the <a href="../counters/">counters documentation</a> for more details on event codes and configuration.</p>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

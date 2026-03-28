@@ -1,0 +1,1960 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="C++ library for recording and sampling performance counters using the Linux perf subsystem">
+      
+      
+      
+      
+        <link rel="prev" href="../sampling-symbols-and-flamegraphs/">
+      
+      
+        <link rel="next" href="../sampling-export-to-perf/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>CSV Export - perf-cpp</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-6SPLE817K1"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-6SPLE817K1",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-6SPLE817K1",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#exporting-samples-to-csv" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="perf-cpp" class="md-header__button md-logo" aria-label="perf-cpp" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            perf-cpp
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              CSV Export
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/jmuehlig/perf-cpp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jmuehlig/perf-cpp
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="perf-cpp" class="md-nav__button md-logo" aria-label="perf-cpp" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    perf-cpp
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/jmuehlig/perf-cpp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jmuehlig/perf-cpp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-are-performance-counters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What are Performance Counters?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recording Events
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Recording Events
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recording/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recording-live-events/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live Events
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recording-parallel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Thread, -Core & -Process
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sampling
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Sampling
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sampling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sampling-parallel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Thread & Multi-Core
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sampling-symbols-and-flamegraphs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Symbols & Flamegraphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CSV Export
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CSV Export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#exporting-samples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting Samples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#customizing-delimiters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Customizing Delimiters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#csv-file-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CSV File Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#field-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Field Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#metadata-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metadata Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instruction-execution-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instruction Execution Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-access-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Access Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-counter-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Counter Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Register Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#control-group-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control Group Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context-switch-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context Switch Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#throttle-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Throttle Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loss-event-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loss Event Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sampling-export-to-perf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Perf Report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sampling-memory-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory Access Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../counters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customizing Events
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../perf-paranoid/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Perf Paranoid
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#exporting-samples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting Samples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#customizing-delimiters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Customizing Delimiters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#csv-file-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CSV File Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#field-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Field Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#metadata-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metadata Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instruction-execution-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instruction Execution Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-access-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Access Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-counter-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Counter Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Register Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#control-group-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control Group Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context-switch-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context Switch Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#throttle-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Throttle Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loss-event-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loss Event Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="exporting-samples-to-csv">Exporting Samples to CSV<a class="headerlink" href="#exporting-samples-to-csv" title="Permanent link">&para;</a></h1>
+<p>Export recorded samples to CSV for analysis with tools like Python (pandas), R, Excel, or custom scripts.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>See the example: <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/instruction_pointer.cpp">instruction_pointer.cpp</a></strong>.</p>
+</div>
+<hr />
+<h2 id="exporting-samples">Exporting Samples<a class="headerlink" href="#exporting-samples" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;perfcpp/sampler.hpp&gt;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{};</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Period</span><span class="p">{</span><span class="w"> </span><span class="mi">50000U</span><span class="w"> </span><span class="p">});</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">sampler</span><span class="p">.</span><span class="n">values</span><span class="p">()</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="p">.</span><span class="n">timestamp</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="p">.</span><span class="n">logical_instruction_pointer</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="p">.</span><span class="n">cpu_id</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="p">.</span><span class="n">data_source</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">sampler</span><span class="p">.</span><span class="n">start</span><span class="p">();</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1">/// ... computation here ...</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">sampler</span><span class="p">.</span><span class="n">stop</span><span class="p">();</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1">/// Export samples to a file or retrieve as string.</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">samples</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sampler</span><span class="p">.</span><span class="n">result</span><span class="p">();</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="n">samples</span><span class="p">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s">&quot;samples.csv&quot;</span><span class="p">);</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">csv_string</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">samples</span><span class="p">.</span><span class="n">to_csv</span><span class="p">();</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1">/// Release resources explicitly, or let the destructor handle it.</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="n">sampler</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+</code></pre></div>
+<p>Each row is one sample, each column a recorded field. Fields not configured via <code>sampler.values()</code> appear as empty cells.</p>
+<h2 id="customizing-delimiters">Customizing Delimiters<a class="headerlink" href="#customizing-delimiters" title="Permanent link">&para;</a></h2>
+<p>Both overloads accept optional delimiter parameters:</p>
+<ul>
+<li><strong>Column delimiter</strong> (default <code>,</code>): separates fields in each row</li>
+<li><strong>List delimiter</strong> (default <code>;</code>): separates elements in list-type fields like callchains or registers</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">/// Semicolon as column separator (useful for European Excel).</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">samples</span><span class="p">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s">&quot;samples.csv&quot;</span><span class="p">,</span><span class="w"> </span><span class="sc">&#39;;&#39;</span><span class="p">,</span><span class="w"> </span><span class="sc">&#39;|&#39;</span><span class="p">);</span>
+</code></pre></div>
+<h2 id="csv-file-structure">CSV File Structure<a class="headerlink" href="#csv-file-structure" title="Permanent link">&para;</a></h2>
+<p>The CSV file contains a header row followed by one row per sample:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>mode,timestamp,cpu_id,logical_instruction_pointer,data_access_is_l1d_hit,data_access_is_l2_hit,...
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>User,365449130714033,8,0x5a6e84b2075c,1,0,...
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>User,365449130913157,8,0x64af7417c75c,0,1,...
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>User,365449131112591,8,0x5a6e84b2075c,1,0,...
+</code></pre></div>
+<p>The <code>mode</code> field is always present and indicates execution context (<code>User</code>, <code>Kernel</code>, <code>Hypervisor</code>, <code>GuestKernel</code>, or <code>GuestUser</code>).
+Some fields are platform-specific (Intel vs AMD) — see <a href="#field-reference">field reference</a> below.</p>
+<h2 id="field-reference">Field Reference<a class="headerlink" href="#field-reference" title="Permanent link">&para;</a></h2>
+<p>All CSV columns and their corresponding <code>sampler.values()</code> configurations.
+For detailed descriptions, see the <a href="../sampling/">sampling documentation</a>.</p>
+<h3 id="metadata-fields">Metadata Fields<a class="headerlink" href="#metadata-fields" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>CSV Column</th>
+<th>How to Record</th>
+<th>Description</th>
+<th>Always Present</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mode</code></td>
+<td>Always recorded</td>
+<td>Execution mode (<code>User</code>, <code>Kernel</code>, <code>Hypervisor</code>, <code>GuestKernel</code>, <code>GuestUser</code>)</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>id</code></td>
+<td><code>sampler.values().sample_id(true)</code></td>
+<td>Unique sample group leader ID</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>stream_id</code></td>
+<td><code>sampler.values().stream_id(true)</code></td>
+<td>Event stream identifier</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>timestamp</code></td>
+<td><code>sampler.values().timestamp(true)</code></td>
+<td>Sample timestamp (nanoseconds)</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>period</code></td>
+<td><code>sampler.values().period(true)</code></td>
+<td>Event count threshold that triggered the sample</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>cpu_id</code></td>
+<td><code>sampler.values().cpu_id(true)</code></td>
+<td>CPU core where sample was recorded</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>process_id</code></td>
+<td><code>sampler.values().thread_id(true)</code></td>
+<td>Process ID</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>thread_id</code></td>
+<td><code>sampler.values().thread_id(true)</code></td>
+<td>Thread ID</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<h3 id="instruction-execution-fields">Instruction Execution Fields<a class="headerlink" href="#instruction-execution-fields" title="Permanent link">&para;</a></h3>
+<p>Fields related to the sampled instruction and its execution characteristics.</p>
+<table>
+<thead>
+<tr>
+<th>CSV Column</th>
+<th>How to Record</th>
+<th>Description</th>
+<th>Platform</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>instruction_type</code></td>
+<td><code>sampler.values().instruction_type(true)</code></td>
+<td>Instruction type (<code>Return</code>, <code>Branch</code>, <code>DataAccess</code>)</td>
+<td>AMD only</td>
+</tr>
+<tr>
+<td><code>logical_instruction_pointer</code></td>
+<td><code>sampler.values().logical_instruction_pointer(true)</code></td>
+<td>Logical address of sampled instruction (hexadecimal)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>is_instruction_pointer_exact</code></td>
+<td><code>sampler.values().logical_instruction_pointer(true)</code></td>
+<td>Whether instruction pointer is exact (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>physical_instruction_pointer</code></td>
+<td><code>sampler.values().physical_instruction_pointer(true)</code></td>
+<td>Physical address of sampled instruction (hexadecimal)</td>
+<td>AMD Fetch PMU</td>
+</tr>
+<tr>
+<td><code>instruction_l1i_miss</code></td>
+<td><code>sampler.values().instruction_cache(true)</code></td>
+<td>L1 instruction cache miss (<code>0</code> or <code>1</code>)</td>
+<td>AMD Fetch PMU</td>
+</tr>
+<tr>
+<td><code>instruction_l2_miss</code></td>
+<td><code>sampler.values().instruction_cache(true)</code></td>
+<td>L2 cache miss (<code>0</code> or <code>1</code>)</td>
+<td>AMD Fetch PMU</td>
+</tr>
+<tr>
+<td><code>instruction_l3_miss</code></td>
+<td><code>sampler.values().instruction_cache(true)</code></td>
+<td>L3 cache miss (<code>0</code> or <code>1</code>)</td>
+<td>AMD Fetch PMU</td>
+</tr>
+<tr>
+<td><code>instruction_itlb_miss</code></td>
+<td><code>sampler.values().instruction_tlb(true)</code></td>
+<td>Instruction TLB miss (<code>0</code> or <code>1</code>)</td>
+<td>AMD Fetch PMU</td>
+</tr>
+<tr>
+<td><code>instruction_itlb_size</code></td>
+<td><code>sampler.values().instruction_tlb(true)</code></td>
+<td>Instruction TLB page size (bytes)</td>
+<td>AMD Fetch PMU</td>
+</tr>
+<tr>
+<td><code>instruction_stlb_miss</code></td>
+<td><code>sampler.values().instruction_tlb(true)</code></td>
+<td>Second-level TLB miss (<code>0</code> or <code>1</code>)</td>
+<td>AMD Fetch PMU</td>
+</tr>
+<tr>
+<td><code>instruction_retirement_latency</code></td>
+<td><code>sampler.values().instruction_latency(true)</code></td>
+<td>Instruction retirement latency (cycles)</td>
+<td>Intel only</td>
+</tr>
+<tr>
+<td><code>uop_tag_to_retirement_latency</code></td>
+<td><code>sampler.values().instruction_latency(true)</code></td>
+<td>Micro-op tag-to-retirement latency (cycles)</td>
+<td>AMD only</td>
+</tr>
+<tr>
+<td><code>uop_tag_to_completion</code></td>
+<td><code>sampler.values().instruction_latency(true)</code></td>
+<td>Micro-op tag-to-completion latency (cycles)</td>
+<td>AMD only</td>
+</tr>
+<tr>
+<td><code>uop_completion_to_retirement</code></td>
+<td><code>sampler.values().instruction_latency(true)</code></td>
+<td>Micro-op completion-to-retirement latency (cycles)</td>
+<td>AMD only</td>
+</tr>
+<tr>
+<td><code>instruction_fetch_latency</code></td>
+<td><code>sampler.values().instruction_latency(true)</code></td>
+<td>Instruction fetch latency (cycles)</td>
+<td>AMD Fetch PMU</td>
+</tr>
+<tr>
+<td><code>branch_type</code></td>
+<td><code>sampler.values().branch_type(true)</code></td>
+<td>Branch type (<code>Taken</code>, <code>Retired</code>, <code>Mispredicted</code>, <code>Fuse</code>)</td>
+<td>AMD Op PMU</td>
+</tr>
+<tr>
+<td><code>tx_is_elision</code></td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td>Hardware transaction is elision type (<code>0</code> or <code>1</code>)</td>
+<td>Intel only</td>
+</tr>
+<tr>
+<td><code>tx_is_generic</code></td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td>Hardware transaction is generic type (<code>0</code> or <code>1</code>)</td>
+<td>Intel only</td>
+</tr>
+<tr>
+<td><code>tx_is_synchronous_abort</code></td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td>Synchronous transaction abort (<code>0</code> or <code>1</code>)</td>
+<td>Intel only</td>
+</tr>
+<tr>
+<td><code>tx_is_retryable</code></td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td>Transaction abort is retryable (<code>0</code> or <code>1</code>)</td>
+<td>Intel only</td>
+</tr>
+<tr>
+<td><code>tx_is_memory_conflict</code></td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td>Abort due to memory conflict (<code>0</code> or <code>1</code>)</td>
+<td>Intel only</td>
+</tr>
+<tr>
+<td><code>tx_is_write_capacity_conflict</code></td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td>Abort due to write capacity (<code>0</code> or <code>1</code>)</td>
+<td>Intel only</td>
+</tr>
+<tr>
+<td><code>tx_is_read_capacity_conflict</code></td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td>Abort due to read capacity (<code>0</code> or <code>1</code>)</td>
+<td>Intel only</td>
+</tr>
+<tr>
+<td><code>tx_user_code</code></td>
+<td><code>sampler.values().hardware_transaction_abort(true)</code></td>
+<td>User-specified transaction abort code</td>
+<td>Intel only</td>
+</tr>
+<tr>
+<td><code>code_page_size</code></td>
+<td><code>sampler.values().code_page_size(true)</code></td>
+<td>Page size of instruction pointer (bytes)</td>
+<td>Linux ≥ 5.11</td>
+</tr>
+<tr>
+<td><code>callchain</code></td>
+<td><code>sampler.values().callchain(true)</code></td>
+<td>Call stack (list of addresses separated by <code>;</code>)</td>
+<td>All</td>
+</tr>
+</tbody>
+</table>
+<h3 id="data-access-fields">Data Access Fields<a class="headerlink" href="#data-access-fields" title="Permanent link">&para;</a></h3>
+<p>Fields describing memory access behavior, cache hierarchy, and data sources.</p>
+<table>
+<thead>
+<tr>
+<th>CSV Column</th>
+<th>How to Record</th>
+<th>Description</th>
+<th>Platform</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data_access_type</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>Access type (<code>Load</code>, <code>Store</code>, <code>Prefetch</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>is_locked</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>Locked memory operation (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>logical_memory_address</code></td>
+<td><code>sampler.values().logical_memory_address(true)</code></td>
+<td>Logical memory address (hexadecimal)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>physical_memory_address</code></td>
+<td><code>sampler.values().physical_memory_address(true)</code></td>
+<td>Physical memory address (hexadecimal)</td>
+<td>Linux ≥ 4.13</td>
+</tr>
+<tr>
+<td><code>data_access_is_l1d_hit</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>L1 data cache hit (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>data_access_is_mhb_hit</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>LFB/MAB hit (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>mhb_slots_allocated</code></td>
+<td><code>sampler.values().mhb_allocations(true)</code></td>
+<td>Number of MAB slots allocated</td>
+<td>AMD Op PMU</td>
+</tr>
+<tr>
+<td><code>data_access_is_l2_hit</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>L2 cache hit (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>data_access_is_l3_hit</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>L3 cache hit (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>data_access_is_memory_hit</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>Main memory access (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>data_access_is_remote</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>Remote core/node access (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>data_access_is_same_node_remote_core</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>Same node, different core (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>data_access_is_same_socket_remote_node</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>Same socket, different node (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>data_access_is_same_board_remote_socket</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>Same board, different socket (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>data_access_is_remote_board</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>Different board (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>dtlb_hit</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>Data TLB hit (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>stlb_hit</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>Second-level TLB hit (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>dtlb_page_size</code></td>
+<td><code>sampler.values().data_tlb_page_size(true)</code></td>
+<td>Data TLB page size (bytes)</td>
+<td>AMD Op PMU</td>
+</tr>
+<tr>
+<td><code>stlb_page_size</code></td>
+<td><code>sampler.values().data_tlb_page_size(true)</code></td>
+<td>Second-level TLB page size (bytes)</td>
+<td>AMD Op PMU</td>
+</tr>
+<tr>
+<td><code>cache_access_latency</code></td>
+<td><code>sampler.values().data_access_latency(true)</code></td>
+<td>Cache access latency (cycles)</td>
+<td>Intel only</td>
+</tr>
+<tr>
+<td><code>cache_miss_latency</code></td>
+<td><code>sampler.values().data_access_latency(true)</code></td>
+<td>Cache miss latency (cycles)</td>
+<td>AMD only</td>
+</tr>
+<tr>
+<td><code>dtlb_refill_latency</code></td>
+<td><code>sampler.values().data_tlb_latency(true)</code></td>
+<td>Data TLB refill latency (cycles)</td>
+<td>AMD Op PMU</td>
+</tr>
+<tr>
+<td><code>snoop_is_hit</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>Snoop hit (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>snoop_is_hit_modified</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>Snoop hit on modified line (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>snoop_is_forward</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>Cache line forwarded (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>snoop_is_transfer_from_peer</code></td>
+<td><code>sampler.values().data_source(true)</code></td>
+<td>Transfer from peer node (<code>0</code> or <code>1</code>)</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>is_misalign_penalty</code></td>
+<td><code>sampler.values().data_access_misalign_penalty(true)</code></td>
+<td>Misalignment penalty (<code>0</code> or <code>1</code>)</td>
+<td>AMD Op PMU</td>
+</tr>
+<tr>
+<td><code>data_access_width</code></td>
+<td><code>sampler.values().data_access_width(true)</code></td>
+<td>Access width (bytes)</td>
+<td>AMD Op PMU</td>
+</tr>
+<tr>
+<td><code>data_page_size</code></td>
+<td><code>sampler.values().data_page_size(true)</code></td>
+<td>Data page size (bytes)</td>
+<td>Linux ≥ 5.11</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">Important</p>
+<p>Memory access fields require specific triggers:</p>
+<ul>
+<li><strong>Intel</strong>: Use <code>mem-loads</code> or <code>mem-stores</code> triggers with <code>perf::Precision::MustHaveZeroSkid</code></li>
+<li><strong>AMD</strong>: Use <code>ibs_op</code> family triggers</li>
+</ul>
+<p>See the <a href="../sampling/#specific-notes-for-different-cpu-vendors">sampling documentation</a> for details.</p>
+</div>
+<h3 id="performance-counter-fields">Performance Counter Fields<a class="headerlink" href="#performance-counter-fields" title="Permanent link">&para;</a></h3>
+<p>Counter values recorded at the time of sampling.</p>
+<table>
+<thead>
+<tr>
+<th>CSV Column</th>
+<th>How to Record</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>counter_&lt;name&gt;</code></td>
+<td><code>sampler.values().counter({"cycles", "instructions", ...})</code></td>
+<td>One column per configured counter (e.g., <code>counter_cycles</code>, <code>counter_instructions</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">values</span><span class="p">().</span><span class="n">counter</span><span class="p">({</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;instructions&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cache-misses&quot;</span><span class="p">});</span>
+</code></pre></div>
+Creates columns: <code>counter_cycles</code>, <code>counter_instructions</code>, <code>counter_cache-misses</code>.</p>
+<h3 id="register-fields">Register Fields<a class="headerlink" href="#register-fields" title="Permanent link">&para;</a></h3>
+<p>Register values captured at sampling time.</p>
+<table>
+<thead>
+<tr>
+<th>CSV Column</th>
+<th>How to Record</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>user_register_&lt;name&gt;</code></td>
+<td><code>sampler.values().user_registers({...})</code></td>
+<td>User-space register (e.g., <code>user_register_AX</code>, <code>user_register_R10</code>)</td>
+</tr>
+<tr>
+<td><code>kernel_register_&lt;name&gt;</code></td>
+<td><code>sampler.values().kernel_registers({...})</code></td>
+<td>Kernel-space register (e.g., <code>kernel_register_AX</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">values</span><span class="p">().</span><span class="n">user_registers</span><span class="p">({</span><span class="n">perf</span><span class="o">::</span><span class="n">Registers</span><span class="o">::</span><span class="n">x86</span><span class="o">::</span><span class="n">AX</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Registers</span><span class="o">::</span><span class="n">x86</span><span class="o">::</span><span class="n">R10</span><span class="p">});</span>
+</code></pre></div>
+Creates columns: <code>user_register_AX</code>, <code>user_register_R10</code>.</p>
+<h3 id="control-group-fields">Control Group Fields<a class="headerlink" href="#control-group-fields" title="Permanent link">&para;</a></h3>
+<p>Information about control groups (cgroups).</p>
+<table>
+<thead>
+<tr>
+<th>CSV Column</th>
+<th>How to Record</th>
+<th>Description</th>
+<th>Kernel Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cgroup_id</code></td>
+<td><code>sampler.values().cgroup(true)</code></td>
+<td>CGroup ID of sample</td>
+<td>Linux ≥ 5.7</td>
+</tr>
+<tr>
+<td><code>cgroup_cgroup_id</code></td>
+<td><code>sampler.values().cgroup(true)</code></td>
+<td>New cgroup ID (if changed)</td>
+<td>Linux ≥ 5.7</td>
+</tr>
+<tr>
+<td><code>cgroup_path</code></td>
+<td><code>sampler.values().cgroup(true)</code></td>
+<td>New cgroup path (if changed)</td>
+<td>Linux ≥ 5.7</td>
+</tr>
+</tbody>
+</table>
+<h3 id="context-switch-fields">Context Switch Fields<a class="headerlink" href="#context-switch-fields" title="Permanent link">&para;</a></h3>
+<p>Context switch event information.</p>
+<table>
+<thead>
+<tr>
+<th>CSV Column</th>
+<th>How to Record</th>
+<th>Description</th>
+<th>Kernel Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>context_switch_is_out</code></td>
+<td><code>sampler.values().context_switch(true)</code></td>
+<td>Process switched out (<code>0</code> or <code>1</code>)</td>
+<td>Linux ≥ 4.3</td>
+</tr>
+<tr>
+<td><code>context_switch_is_in</code></td>
+<td><code>sampler.values().context_switch(true)</code></td>
+<td>Process switched in (<code>0</code> or <code>1</code>)</td>
+<td>Linux ≥ 4.3</td>
+</tr>
+<tr>
+<td><code>context_switch_is_preempt</code></td>
+<td><code>sampler.values().context_switch(true)</code></td>
+<td>Process preempted (<code>0</code> or <code>1</code>)</td>
+<td>Linux ≥ 4.3</td>
+</tr>
+<tr>
+<td><code>context_switch_process_id</code></td>
+<td><code>sampler.values().context_switch(true)</code></td>
+<td>Process ID involved in switch</td>
+<td>Linux ≥ 4.3</td>
+</tr>
+<tr>
+<td><code>context_switch_thread_id</code></td>
+<td><code>sampler.values().context_switch(true)</code></td>
+<td>Thread ID involved in switch</td>
+<td>Linux ≥ 4.3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="throttle-fields">Throttle Fields<a class="headerlink" href="#throttle-fields" title="Permanent link">&para;</a></h3>
+<p>Throttling event information (when kernel reduces sampling rate).</p>
+<table>
+<thead>
+<tr>
+<th>CSV Column</th>
+<th>How to Record</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>is_throttle</code></td>
+<td><code>sampler.values().throttle(true)</code></td>
+<td>Sampling was throttled (<code>0</code> or <code>1</code>)</td>
+</tr>
+<tr>
+<td><code>is_unthrottle</code></td>
+<td><code>sampler.values().throttle(true)</code></td>
+<td>Sampling was unthrottled (<code>0</code> or <code>1</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="loss-event-fields">Loss Event Fields<a class="headerlink" href="#loss-event-fields" title="Permanent link">&para;</a></h3>
+<p>Information about lost samples due to buffer overflow.</p>
+<table>
+<thead>
+<tr>
+<th>CSV Column</th>
+<th>Description</th>
+<th>When Present</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>loss_count</code></td>
+<td>Number of samples lost</td>
+<td>Only if any sample contains a loss event</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
