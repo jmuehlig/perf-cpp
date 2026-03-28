@@ -154,7 +154,7 @@ The default period or frequency can also be set via `SampleConfig`:
 ```cpp
 auto sample_config = perf::SampleConfig{};
 sample_config.period(50000U);
-/// xor:
+/// or (mutually exclusive):
 sample_config.frequency(1000U);
 
 auto sampler = perf::Sampler{ sample_config };
@@ -275,21 +275,21 @@ Note that most fields are returned as `std::optional`.
 > [!IMPORTANT]
 > Sampling for memory accesses (memory address, cache information, etc.) is only supported using [**AMD's IBS Op PMU**](#ibs-op-pmu) and [**Intel PEBS `mem-load`/`mem-store` events**](#intel-processor-event-based-sampling).
 
-| Name                        | Description                                                                                          | How to record?                                        | How to access?                                   | Type                                      |
-|-----------------------------|------------------------------------------------------------------------------------------------------|-------------------------------------------------------|--------------------------------------------------|-------------------------------------------|
-| **Is load**                 | Indicates that the access was a load operation.                                                      | `sampler.values().data_source(true)`                  | `record.data_access().is_load()`                 | `bool`                                    |
-| **Is Store**                | Indicates that the access was a store operation.                                                     | `sampler.values().data_source(true)`                  | `record.data_access().is_store()`                | `bool`                                    |
-| **Is Software Prefetch**    | Indicates that the access was a software prefetch ([**AMD's Op PMU**](#ibs-op-pmu) only).            | `sampler.values().instruction_type(true)`             | `record.data_access().is_software_prefetch()`    | `bool`                                    |
-| **Is Locked**               | Indicates that the sampled data access was a locked operation.                                       | `sampler.values().data_source(true)`                  | `record.data_access().is_locked()`               | `std::optional<bool>`                                                 |
-| **Logical Memory Address**  | The logical address of the accessed memory.                                                          | `sampler.values().logical_memory_address(true)`       | `record.data_access().logical_memory_address()`  | `std::optional<std::uintptr_t>`           |
-| **Physical Memory Address** | The physical address of the accessed memory (from Linux `4.13`).                                     | `sampler.values().physical_memory_address(true)`      | `record.data_access().physical_memory_address()` | `std::optional<std::uintptr_t>`           |
-| **Source**                  | Provides information about the memory or cache source of the access.                                 | [See details below](#data-source)                     | `record.data_access().source()`                  | `std::optional<perf::DataAccess::Source>` |
-| **Latency**                 | Provides latency details for the data access.                                                        | [See details below](#data-latency)                    | `record.data_access().latency()`                 | `perf::DataAccess::Latency`               |
-| **TLB**                     | Provides TLB-related information for the access.                                                     | [See details below](#data-tlb)                        | `record.data_access().tlb()`                     | `perf::DataAccess::TLB`                   |
-| **Snoop**                   | Provides Snoop-related information for the access.                                                   | [See details below](#data-snoop)                      | `record.data_access().snoop()`                   | `std::optional<perf::DataAccess::Snoop>`  |
-| **Is Misalign Penalty**     | Indicates that the access incurred a misalignment penalty ([**AMD's Op PMU**](#ibs-op-pmu) only).    | `sampler.values().data_access_misalign_penalty(true)` | `record.data_access().is_misaligned_penalty()`   | `std::optional<bool>`                     |
-| **Access Width**            | The size (in bytes) of the accessed data ([**AMD's Op PMU**](#ibs-op-pmu) only).                     | `sampler.values().data_access_width(true)`            | `record.data_access().access_width()`            | `std::optional<std::uint8_t>`             |
-| **Data Page Size**          | The page size of the instruction pointer (from Linux `5.11`).                                        | `sampler.values().data_page_size(true)`               | `record.data_access().page_size()`               | `std::optional<std::uint64_t>`            |
+| Name                        | Description                                                                                         | How to record?                                        | How to access?                                   | Type                                      |
+|-----------------------------|-----------------------------------------------------------------------------------------------------|-------------------------------------------------------|--------------------------------------------------|-------------------------------------------|
+| **Is load**                 | Indicates that the access was a load operation.                                                     | `sampler.values().data_source(true)`                  | `record.data_access().is_load()`                 | `bool`                                    |
+| **Is Store**                | Indicates that the access was a store operation.                                                    | `sampler.values().data_source(true)`                  | `record.data_access().is_store()`                | `bool`                                    |
+| **Is Software Prefetch**    | Indicates that the access was a software prefetch ([**AMD's Op PMU**](#ibs-op-pmu) only).           | `sampler.values().instruction_type(true)`             | `record.data_access().is_software_prefetch()`    | `bool`                                    |
+| **Is Locked**               | Indicates that the sampled data access was a locked operation.                                      | `sampler.values().data_source(true)`                  | `record.data_access().is_locked()`               | `std::optional<bool>`                                                 |
+| **Logical Memory Address**  | The logical address of the accessed memory.                                                         | `sampler.values().logical_memory_address(true)`       | `record.data_access().logical_memory_address()`  | `std::optional<std::uintptr_t>`           |
+| **Physical Memory Address** | The physical address of the accessed memory (from Linux `4.13`).                                    | `sampler.values().physical_memory_address(true)`      | `record.data_access().physical_memory_address()` | `std::optional<std::uintptr_t>`           |
+| **Source**                  | Provides information about the memory or cache source of the access.                                | [See details below](#data-source)                     | `record.data_access().source()`                  | `std::optional<perf::DataAccess::Source>` |
+| **Latency**                 | Provides latency details for the data access.                                                       | [See details below](#data-latency)                    | `record.data_access().latency()`                 | `perf::DataAccess::Latency`               |
+| **TLB**                     | Provides TLB-related information for the access.                                                    | [See details below](#data-tlb)                        | `record.data_access().tlb()`                     | `perf::DataAccess::TLB`                   |
+| **Snoop**                   | Provides Snoop-related information for the access.                                                  | [See details below](#data-snoop)                      | `record.data_access().snoop()`                   | `std::optional<perf::DataAccess::Snoop>`  |
+| **Is Misalign Penalty**     | Indicates that the access incurred a misalignment penalty ([**AMD's Op PMU**](#ibs-op-pmu) only).   | `sampler.values().data_access_misalign_penalty(true)` | `record.data_access().is_misaligned_penalty()`   | `std::optional<bool>`                     |
+| **Access Width**            | The size (in bytes) of the accessed data ([**AMD's Op PMU**](#ibs-op-pmu) only).                    | `sampler.values().data_access_width(true)`            | `record.data_access().access_width()`            | `std::optional<std::uint8_t>`             |
+| **Data Page Size**          | The page size of the data page (from Linux `5.11`).                                                 | `sampler.values().data_page_size(true)`               | `record.data_access().page_size()`               | `std::optional<std::uint64_t>`            |
 
 **Example:** [`address_sampling.cpp`](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/memory_address.cpp)
 
@@ -346,7 +346,7 @@ All fields are returned as `std::optional`.
 |---------------------------|-----------------------------------------------------------------------------|--------------------------------------|---------------------------------------------------------|-----------------------|
 | **Is Hit**                | Indicates that the data access is a snoop hit (`true`) or a miss (`false`). | `sampler.values().data_source(true)` | `record.data_access().snoop()->is_hit()`                | `std::optional<bool>` |
 | **Is Hit Modified**       | `True` if the hit cache line is dirty.                                      | `sampler.values().data_source(true)` | `record.data_access().snoop()->is_hit_modified()`       | `std::optional<bool>` |
-| **Is Forward**            | Indicates that the cache line is forwarded.                                 | `sampler.values().data_source(true)` | `record.data_access().snoop()->is_fardwarded()`         | `std::optional<bool>` |
+| **Is Forward**            | Indicates that the cache line is forwarded.                                 | `sampler.values().data_source(true)` | `record.data_access().snoop()->is_forward()`            | `std::optional<bool>` |
 | **Is Transfer from Peer** | Indicates that the cache line is transferred from another node.             | `sampler.values().data_source(true)` | `record.data_access().snoop()->is_transfer_from_peer()` | `std::optional<bool>` |
 
 ### Counter Values
@@ -514,89 +514,89 @@ If recorded, the following [metadata fields](#metadata) will also be included:
 
 ---
 
-## Specific Notes for different CPU Vendors
+## Specific Notes for Different CPU Vendors
+
 ### Intel (Processor Event Based Sampling)
-Especially for sampling memory addresses, latency, and data source, the perf subsystem needs specific events as triggers.
-On Intel, the `perf list` command reports these triggers as "*Supports address when precise*".
 
-*perf-cpp*  will discover `mem-loads` and `mem-stores` events when running on Intel hardware that supports sampling for memory.
+Memory address, latency, and data source sampling requires specific trigger events.
+Intel's `perf list` reports these as "*Supports address when precise*".
 
-Additionally, memory sampling typically requires a [precision](#precision) setting of at least `perf::Precision::RequestZeroSkid`.
+*perf-cpp* discovers `mem-loads` and `mem-stores` events automatically on supported Intel hardware.
+Memory sampling requires a [precision](#precision) of at least `perf::Precision::RequestZeroSkid`.
 
 #### Before Sapphire Rapids
-From our experience, Intel's Cascade Lake architecture (and earlier architectures) only reports latency and source for memory loads, not stores – this changes from Sapphire Rapids.
 
-You can add load and store events like this:
+On Cascade Lake and earlier architectures, latency and source are only reported for memory loads, not stores. This changes starting with Sapphire Rapids.
 
 ```cpp
-sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid); /// Only load events
-```
-&rarr; [See code example](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/memory_address.cpp)
+/// Loads only.
+sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid);
 
-or
-```cpp
-sampler.trigger("mem-stores", perf::Precision::MustHaveZeroSkid); /// Only store events
-```
-or
-```cpp
-/// Load and store events
+/// Stores only.
+sampler.trigger("mem-stores", perf::Precision::MustHaveZeroSkid);
+
+/// Loads and stores together.
 sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
     {
-      perf::Sampler::Trigger{ "mem-loads", perf::Precision::RequestZeroSkid } /// Loads
+      perf::Sampler::Trigger{ "mem-loads", perf::Precision::RequestZeroSkid }
     },
-    { perf::Sampler::Trigger{ "mem-stores", perf::Precision::MustHaveZeroSkid } } /// Stores
-  });
-```
-&rarr; [See code example](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/multi_event.cpp)
-
-#### Sapphire Rapids and Beyond
-To use memory latency sampling on Intel's Sapphire Rapids architecture, the perf subsystem **needs an auxiliary counter** to be added to the group, before the first "real" counter is added (see [this commit](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).
-
-> [!IMPORTANT]
-> Starting with version `0.10.0`, *perf-cpp* will **automatically define and enable this counter** as a trigger when the hardware requires it. 
-> In such cases, you can continue as normal by simply adding the mem-loads counter.
-> However, if the detection fails but the system needs it, you can add it yourself:
-
-```cpp
-sampler.trigger({
-    { 
-        perf::Sampler::Trigger{"mem-loads-aux", perf::Precision::MustHaveZeroSkid},     /// Helper
-        perf::Sampler::Trigger{"mem-loads", perf::Precision::RequestZeroSkid}           /// First "real" counter
-    },
-    { perf::Sampler::Trigger{"mem-stores", perf::Precision::MustHaveZeroSkid} }         /// Other "real" counters.
+    { perf::Sampler::Trigger{ "mem-stores", perf::Precision::MustHaveZeroSkid } }
   });
 ```
 
 > [!TIP]
-> You can check if the auxiliary counter is required by checking if the following file exists in the system:
+> See the examples: **[memory_address.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/memory_address.cpp)**, **[multi_event.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/multi_event.cpp)**.
 
+#### Sapphire Rapids and Beyond
+
+Memory latency sampling on Sapphire Rapids requires an **auxiliary counter** in the trigger group before the first real counter ([kernel patch](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).
+
+> [!IMPORTANT]
+> *perf-cpp* detects this automatically and adds the auxiliary counter when needed.
+> If auto-detection fails, add it manually:
+
+```cpp
+sampler.trigger({
+    {
+        perf::Sampler::Trigger{"mem-loads-aux", perf::Precision::MustHaveZeroSkid},
+        perf::Sampler::Trigger{"mem-loads", perf::Precision::RequestZeroSkid}
+    },
+    { perf::Sampler::Trigger{"mem-stores", perf::Precision::MustHaveZeroSkid} }
+  });
 ```
-/sys/bus/event_source/devices/cpu/events/mem-loads-aux
-```
+
+> [!TIP]
+> Check whether the auxiliary counter is required: `ls /sys/bus/event_source/devices/cpu/events/mem-loads-aux`
 
 ### AMD (Instruction Based Sampling)
-AMD uses Instruction Based Sampling to tag instructions randomly for sampling and collect various information for each sample ([see the programmer reference](https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/24593.pdf)).
-IBS comes with two different PMUs of which only one can be actively selected at a time (also see the [perf documentation](https://man7.org/linux/man-pages/man1/perf-amd-ibs.1.html)).
+
+AMD uses Instruction Based Sampling (IBS) to randomly tag instructions and collect detailed execution data per sample.
+IBS provides two PMUs, only one of which can be active at a time.
+
+For details, see the [AMD programmer reference](https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/24593.pdf) and the [perf IBS documentation](https://man7.org/linux/man-pages/man1/perf-amd-ibs.1.html).
 
 #### IBS Op PMU
-The *IBS Op PMU* offers information on micro-op execution, including data cache hit/miss, data TLB hit/miss, latency, load/store data source, branch behavior, and so on.
-In contrast to Intel's mechanism, IBS cannot tag specific load and store instructions (and apply a filter on the latency).
-In case the instruction was a load/store instruction, the sample will include data source, latency, and a memory address ([see kernel mailing list](https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/)).
 
-*perf-cpp* will detect IBS support on AMD devices and adds the following counters that can be used as **trigger** for sampling on AMD:
+The Op PMU captures micro-op execution details: data cache and TLB hit/miss, latency, load/store data source, and branch behavior.
+Unlike Intel's mechanism, IBS does not tag specific load or store instructions. If the sampled instruction happens to be a load/store, the sample includes data source, latency, and memory address ([kernel patch](https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/)).
 
-- `ibs_op` selects instructions during the execution pipeline. CPU cycles (on the specified period/frequency) will lead to tag an instruction.
-- `ibs_op_uops` selects instructions during the execution pipeline, **but** the period/frequency refers to the number of executed micro-operations, **not** CPU cycles.
-- `ibs_op_l3missonly` selects instructions during the execution pipeline that miss the L3 cache. CPU cycles are used as the trigger.
-- `ibs_op_uops_l3missonly` selects instructions during the execution pipeline that miss the L3 cache, using micro-operations as the trigger.
+*perf-cpp* detects IBS support automatically and provides the following triggers:
+
+| Trigger | Selection | Period/Frequency Unit |
+|---|---|---|
+| `ibs_op` | Instructions in the execution pipeline | CPU cycles |
+| `ibs_op_uops` | Instructions in the execution pipeline | Micro-operations |
+| `ibs_op_l3missonly` | Instructions that miss L3 | CPU cycles |
+| `ibs_op_uops_l3missonly` | Instructions that miss L3 | Micro-operations |
 
 #### IBS Fetch PMU
-The *IBS Fetch PMU* offers information on instruction fetch, including data such as instruction cache hit/miss, instruction TLB hit/miss, fetch latency, and more.
 
-*perf-cpp* provides IBS support on AMD devices and adds the following counters that can be used as **trigger** for sampling on AMD:
+The Fetch PMU captures instruction fetch details: instruction cache and TLB hit/miss, fetch latency, and page size.
 
-- `ibs_fetch` selects instructions in the fetch-state (frontend) using cycles as the trigger.
-- `ibs_fetch_l3missonly` selects instructions in the fetch-state (frontend) that miss the L3 cache, again, using cycles as a trigger.
+| Trigger | Selection | Period/Frequency Unit |
+|---|---|---|
+| `ibs_fetch` | Instructions in the fetch stage (frontend) | CPU cycles |
+| `ibs_fetch_l3missonly` | Instructions in the fetch stage that miss L3 | CPU cycles |
 
 
 ---

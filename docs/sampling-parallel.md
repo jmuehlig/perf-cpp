@@ -114,8 +114,8 @@ sampler.close();
 
 The output may be something like this:
 
-    Time = 173058798201719 | CPU ID = 6 | Thread ID = 62803
+    Time = 173058798201719 | CPU ID = 0 | Thread ID = 62803
     Time = 173058798713083 | CPU ID = 3 | Thread ID = 62802
     Time = 173058799826723 | CPU ID = 3 | Thread ID = 62802
-    Time = 173058800426323 | CPU ID = 6 | Thread ID = 62803
-    Time = 173058801403355 | CPU ID = 8 | Thread ID = 62804
+    Time = 173058800426323 | CPU ID = 1 | Thread ID = 62803
+    Time = 173058801403355 | CPU ID = 0 | Thread ID = 62804

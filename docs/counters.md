@@ -47,7 +47,7 @@ auto sampler = perf::Sampler{ counter_definitions };
 
 Supported by most modern processors:
 
-```
+```bash
 branches                 # Total branch instructions
 branch-instructions      # Synonym for branches
 branch-misses            # Mispredicted branches
@@ -74,7 +74,7 @@ iTLB-load-misses         # Instruction TLB load misses
 
 From the kernel, not hardware counters:
 
-```
+```bash
 cpu-clock             # High-resolution CPU timer
 task-clock            # Clock count specific to task
 page-faults           # Page fault count
@@ -94,7 +94,7 @@ migrations            # Synonym for cpu-migrations
 
 Virtual events using `std::chrono` for wall-clock time, useful for [metrics](metrics.md):
 
-```
+```bash
 seconds         # Wall-clock seconds
 s               # Short form
 milliseconds    # Wall-clock milliseconds

@@ -204,6 +204,8 @@ int main()
     {
         std::cout << val << " " << name << " per cache line" << std::endl;
     }
+    
+    event_counter.close();
 }
 ```
 

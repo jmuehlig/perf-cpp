@@ -3,6 +3,9 @@
 **perf-cpp** lets you measure hardware performance counters for specific parts of your code — not the entire program.
 Place `start()` and `stop()` around exactly the code you care about.
 
+> [!TIP]
+> New to performance counters? Start with [What are Hardware Performance Counters?](what-are-performance-counters.md)
+
 ## Count Hardware Events
 
 Count instructions, cycles, cache misses, and more while your code runs:
@@ -57,15 +60,13 @@ samples.to_csv("samples.csv");
 
 &rarr; [Sampling in detail](sampling.md)
 
-## What else can perf-cpp do?
+## Next Steps
 
-- **[Multi-thread and multicore event recording](recording-parallel.md)**: Record events across threads and CPU cores
-- **[Multi-thread and multicore sampling](sampling-parallel.md)**: Record events across threads and CPU cores
-- **[Metrics](metrics.md)**: Combine counters into ratios like cycles-per-instruction or cache miss rates
-- **[Live counters](recording-live-events.md)**: Read counter values without stopping — useful for tight loops
-- **[Flamegraphs](sampling-symbols-and-flamegraphs.md)**: Resolve instruction pointers to symbols and generate flamegraphs
-- **[CSV export](analyzing-samples-with-csv.md)**: Export samples for analysis with Python, R, or spreadsheets
-- **[Memory access analysis](analyzing-memory-access-patterns.md)**: Map sampled memory addresses to your data structures
+- Record events for a code region → [Recording](recording.md)
+- Find *where* events happen → [Sampling](sampling.md)
+- Measure across threads or cores → [Parallel Recording](recording-parallel.md) / [Parallel Sampling](sampling-parallel.md)
+- Combine counters into ratios (CPI, miss rates) → [Metrics](metrics.md)
+- Generate flamegraphs → [Symbols & Flamegraphs](sampling-symbols-and-flamegraphs.md)
 
 ## Building
 
