@@ -25,6 +25,9 @@ event_counter.start();
 /// ... read live values during computation (see below) ...
 
 event_counter.stop();
+
+/// Release resources explicitly, or let the destructor handle it.
+event_counter.close();
 ```
 
 > [!IMPORTANT]

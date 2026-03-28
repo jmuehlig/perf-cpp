@@ -59,8 +59,7 @@ event_counter.close();
 The required hardware events (e.g., `cycles` and `instructions` for CPI) are configured automatically if not already being measured.
 
 ## Creating Custom Metrics
-Built-in metrics cover common cases, but your hardware likely supports hundreds of specialized counters that can yield deeper insights. 
-*perf-cpp* gives you two ways to define custom metrics, each with its own strengths.
+*perf-cpp* supports two approaches for defining custom metrics: formula-based and class-based.
 
 Custom metrics are registered via the `perf::CounterDefinition` that needs to be passed to the `EventCounter` (&rarr; [read more about adding custom events and metrics](counters.md#the-counterdefinition-system)).
 

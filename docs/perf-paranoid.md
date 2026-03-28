@@ -50,7 +50,7 @@ config.include_kernel(false);       /// Disable kernel event recording.
 config.include_hypervisor(false);   /// Disable hypervisor event recording.
 
 auto event_counter = perf::EventCounter{ config };
-event_counter.add("instructions", "cycles");
+event_counter.add({"instructions", "cycles"});
 
 event_counter.start(); /// Will only record user-level events.
 ```

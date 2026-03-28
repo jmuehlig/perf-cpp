@@ -13,7 +13,7 @@ cmake --build build
 
 | Option | Default | Description |
 |---|---|---|
-| `-DBUILD_EXAMPLES=ON` | `OFF` | Build example binaries into `buihttps://github.com/jmuehlig/perf-cpp/tree/dev/examples/bin` |
+| `-DBUILD_EXAMPLES=ON` | `OFF` | Build example binaries into `build/bin` |
 | `-DBUILD_LIB_SHARED=ON` | `OFF` | Build as shared library instead of static |
 | `-DBUILD_TESTS=ON` | `OFF` | Build unit tests |
 | `-DGEN_PROCESSOR_EVENTS=ON` | `OFF` | Embed processor-specific events at compile time (see [customizing events](counters.md)) |

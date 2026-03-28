@@ -66,13 +66,13 @@ sampler.close();
 ### Basic Performance Analysis
 
 ```bash
-/// Performance report with symbol resolution.
+# Performance report with symbol resolution.
 perf report -i perf-cpp.data
 
-/// Text-based report.
+# Text-based report.
 perf report -i perf-cpp.data --stdio
 
-/// Focus on specific functions or modules.
+# Focus on specific functions or modules.
 perf report -i perf-cpp.data --sort comm,dso,symbol
 ```
 
@@ -83,7 +83,7 @@ Requires memory-capable triggers (`mem-loads`, `ibs_op`) and memory-related samp
 ```bash
 perf mem report -i perf-cpp.data
 
-/// Detailed memory hierarchy analysis.
+# Detailed memory hierarchy analysis.
 perf mem report -i perf-cpp.data --sort mem,snoop,tlb,locked
 ```
 
