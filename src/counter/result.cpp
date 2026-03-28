@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <perfcpp/counter/result.hpp>
 #include <sstream>
+#include <tuple>
 
 std::optional<double>
 perf::CounterResult::get(const std::string_view name) const noexcept
