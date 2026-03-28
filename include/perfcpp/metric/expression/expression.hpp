@@ -151,7 +151,7 @@ public:
 
 protected:
   [[nodiscard]] virtual std::optional<double> evaluate(std::optional<double> left,
-                                                       std::optional<double> right) const = 0;
+                                                               std::optional<double> right) const = 0;
 
 private:
   std::unique_ptr<ExpressionInterface> _left;
@@ -164,6 +164,8 @@ private:
 class AdditionExpression final : public BinaryExpression
 {
 public:
+  using BinaryExpression::evaluate;
+
   AdditionExpression(std::unique_ptr<ExpressionInterface>&& left, std::unique_ptr<ExpressionInterface>&& right)
     : BinaryExpression(std::move(left), std::move(right))
   {
@@ -185,6 +187,8 @@ protected:
 class SubtractionExpression final : public BinaryExpression
 {
 public:
+  using BinaryExpression::evaluate;
+
   SubtractionExpression(std::unique_ptr<ExpressionInterface>&& left, std::unique_ptr<ExpressionInterface>&& right)
     : BinaryExpression(std::move(left), std::move(right))
   {
@@ -206,6 +210,8 @@ protected:
 class MultiplyExpression final : public BinaryExpression
 {
 public:
+  using BinaryExpression::evaluate;
+
   MultiplyExpression(std::unique_ptr<ExpressionInterface>&& left, std::unique_ptr<ExpressionInterface>&& right)
     : BinaryExpression(std::move(left), std::move(right))
   {
@@ -227,6 +233,8 @@ protected:
 class DivideExpression final : public BinaryExpression
 {
 public:
+  using BinaryExpression::evaluate;
+
   DivideExpression(std::unique_ptr<ExpressionInterface>&& left, std::unique_ptr<ExpressionInterface>&& right)
     : BinaryExpression(std::move(left), std::move(right))
   {

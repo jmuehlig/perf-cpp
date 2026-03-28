@@ -12,6 +12,8 @@ namespace perf::metric::expression {
 class DRatioFunction final : public BinaryExpression
 {
 public:
+  using BinaryExpression::evaluate;
+
   DRatioFunction(std::unique_ptr<ExpressionInterface>&& left, std::unique_ptr<ExpressionInterface>&& right)
     : BinaryExpression(std::move(left), std::move(right))
   {
