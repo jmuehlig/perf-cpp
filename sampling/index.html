@@ -1959,11 +1959,14 @@
 
 <h1 id="event-sampling">Event Sampling<a class="headerlink" href="#event-sampling" title="Permanent link">&para;</a></h1>
 <p>Sampling captures detailed information — instruction pointers, memory addresses, counter values, branches, latencies — at a user-defined period or frequency.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>Sampler</code> monitors a single thread. For multi-threaded or multi-core sampling, use <code>MultiThreadSampler</code> or <code>MultiCoreSampler</code> — see <a href="../sampling-parallel/">parallel sampling</a>.</p>
+</div>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>See the examples: <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/instruction_pointer.cpp">instruction_pointer.cpp</a></strong>, <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/branch.cpp">branch.cpp</a></strong>, <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/counter.cpp">counter.cpp</a></strong>, <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/memory_address.cpp">memory_address.cpp</a></strong>.</p>
 </div>
-<p>For parallel sampling across threads or cores, see the <a href="../sampling-parallel/">parallel sampling documentation</a>.</p>
 <hr />
 <h2 id="basic-lifecycle">Basic Lifecycle<a class="headerlink" href="#basic-lifecycle" title="Permanent link">&para;</a></h2>
 <p>Configure what to sample, which event triggers sampling, then start/stop around your code:</p>

@@ -1146,8 +1146,12 @@
 
 
 <h1 id="recording-hardware-events">Recording Hardware Events<a class="headerlink" href="#recording-hardware-events" title="Permanent link">&para;</a></h1>
-<p>Record hardware performance counters for specific code regions using <code>perf::EventCounter</code>.
-See also <a href="../recording-parallel/">multi-thread and multicore recording</a> and <a href="../recording-live-events/">live counter access</a>.</p>
+<p>Record hardware performance counters for specific code regions using <code>perf::EventCounter</code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>EventCounter</code> monitors a single thread. For multi-threaded or multi-core recording, use <code>MultiThreadEventCounter</code>, <code>MultiCoreEventCounter</code>, or <code>MultiProcessEventCounter</code> — see <a href="../recording-parallel/">parallel recording</a>.</p>
+</div>
+<p>See also <a href="../recording-live-events/">live counter access</a>.</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>See <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/single_thread.cpp">single_thread.cpp</a></strong> for a full working example.</p>
