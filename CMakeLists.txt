@@ -117,6 +117,19 @@ if(BUILD_TESTS)
 endif()
 
 #############################################################
+#   Custom target to build documentation website            #
+#############################################################
+## To preview the documentation locally, run: .venv/bin/mkdocs serve
+find_program(MKDOCS_EXECUTABLE mkdocs HINTS ${CMAKE_SOURCE_DIR}/.venv/bin)
+if(MKDOCS_EXECUTABLE)
+    add_custom_target(docs
+            COMMAND ${MKDOCS_EXECUTABLE} build -f ${CMAKE_SOURCE_DIR}/mkdocs.yml -d ${CMAKE_SOURCE_DIR}/site
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Building documentation website into site/"
+    )
+endif()
+
+#############################################################
 #   Custom target to extract hardware events into CSV file  #
 #############################################################
 add_custom_target(perf-list python3 ${CMAKE_SOURCE_DIR}/script/create_perf_list.py)

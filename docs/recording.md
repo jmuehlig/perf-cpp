@@ -1,217 +1,163 @@
-# Counting Hardware Events
+# Recording Hardware Events
 
-This section details how to leverage the *perf-cpp* library to monitor and analyze hardware performance counters directly from your C++ applications. 
-The library also supports [multi-threading and multi-CPU counting](recording-parallel.md) and [live access to event counts without stopping the counters](recording-live-events.md).
+Record hardware performance counters for specific code regions using `perf::EventCounter`.
+See also [multi-thread and multi-core recording](recording-parallel.md) and [live counter access](recording-live-events.md).
 
 > [!TIP]
-> Our examples include several working code-examples, e.g., **[statistics/single_thread.cpp](../examples/statistics/single_thread.cpp)**.
+> See **[statistics/single_thread.cpp](../examples/statistics/single_thread.cpp)** for a full working example.
 
 ---
-## Table of Contents
-- [Setting Up Event Counters](#setting-up-event-counters)
-- [Initializing the Hardware Counters *(optional)*](#initializing-the-hardware-counters-optional)
-- [Managing Counter Lifecycle](#managing-counter-lifecycle)
-- [Retrieving Counter Data](#retrieving-counter-data)
-- [Closing the Hardware Counters *(optional)*](#closing-the-hardware-counters-optional)
-- [Binding the Event Counter to a Specific CPU Core](#binding-the-event-counter-to-a-specific-cpu-core)
-- [Binding the Event Counter to a Specific Process](#binding-the-event-counter-to-a-specific-process)
-- [Control Scheduling of Events to Hardware Counters](#control-scheduling-of-events-to-hardware-counters)
-- [Adjusting Hardware Settings to the Underlying System](#adjusting-hardware-settings-to-the-underlying-system)
-- [Further Configuration Settings](#further-configuration-settings)
-- [Example: Analyzing Random Access Patterns](#example-analyzing-random-access-patterns)
-- [Troubleshooting Counter Configurations](#troubleshooting-counter-configurations)
----
 
-## Setting Up Event Counters
-Define the specific events you wish to record using the `perf::EventCounter` class.
-The `perf::EventCounter` instance requires a `perf::CounterDefinition` as a reference, containing all events, their configurations, and names.
+## Basic Lifecycle
+
+Set up an event counter, wrap your code with `start()` / `stop()`, and retrieve the results:
 
 ```cpp
 #include <perfcpp/event_counter.hpp>
-auto event_counter = perf::EventCounter{ };
 
-try {
-    event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-```
+/// Create the counter and add events.
+auto event_counter = perf::EventCounter{};
+event_counter.add({"instructions", "cycles", "branches", "cache-misses"});
 
-## Initializing the Hardware Counters *(optional)*
-Optionally, preparing the hardware counters ahead of time to exclude configuration time from your measurements, though this is also handled automatically at the start if skipped:
+/// Optionally, open counters ahead of time to exclude setup from measurement.
+event_counter.open();
 
-```cpp
-try {
-    event_counter.open();
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-```
-
-## Managing Counter Lifecycle
-Surround your computational code with `start()` and `stop()` methods to count hardware events:
-
-```cpp
-try {
-    event_counter.start();
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-
-/// ... do some computational work here...
-
+/// Measure.
+event_counter.start();
+/// ... your code here ...
 event_counter.stop();
-```
 
-## Retrieving Counter Data
-Extract and analyze the results from the event counter:
-
-```cpp
-/// Retrieve the result.
+/// Retrieve results.
 const auto result = event_counter.result();
-
-/// Query result for specific events.
-const auto cycles = result.get("cycles");
-std::cout << "Took " << cycles.value() << " cycles" << std::endl;
-
-/// Or, print all counters.
-for (const auto [name, value] : result)
-{
-    std::cout << "Counter " << name << " = " << value << std::endl;
-}
-
-//// Or, print the results as table.
-std::cout << result.to_string() << std::endl;
-
-/// Or, get as CSV and JSON.
-std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << std::endl;
-std::cout << result.to_json() << std::endl;
 ```
 
-## Closing the Hardware Counters *(optional)*
-Once you have [initialized](#initializing-the-hardware-counters-optional) the hardware performance counters, you can `start()`, `stop()`, and gather results repeatedly. 
-To ultimately release resources such as file descriptors, consider closing the `EventCounter`:
+After `stop()`, you can call `start()` / `stop()` again without re-adding events.
 
 ```cpp
+/// Release resources explicitly, or let the destructor handle it.
 event_counter.close();
 ```
 
-This action is optional and will occur automatically upon object destruction if `close()` is not invoked manually.
-
-## Control Scheduling of Events to Hardware Counters
-The number of *physical* hardware counters that can count low-level events is limited (around one handful on the most modern CPUs). 
-However, many vendors implement *multiplexing*–allowing to schedule multiple events to the same counter.
-
-By default, *perf-cpp* will try to schedule the events to as few physical hardware counters as possible.
-However, you can control this scheduling via the `EventCounter::add()` method, providing a schedule hint next to the event name(s), for example:
+### Accessing Results
 
 ```cpp
-event_counter.add({ "instructions", "cycles",
-                    "branches", "dTLB-miss-ratio",
-                  }, perf::EventCounter::Schedule::Separate);
+/// Query a specific event.
+const auto cycles = result.get("cycles");
+std::cout << "Took " << cycles.value() << " cycles" << std::endl;
+
+/// Iterate over all results.
+for (const auto [name, value] : result)
+{
+    std::cout << name << " = " << value << std::endl;
+}
+
+/// Print as formatted table.
+std::cout << result.to_string() << std::endl;
+
+/// Export as CSV or JSON — to string or to file.
+std::cout << result.to_csv() << std::endl;
+std::cout << result.to_json() << std::endl;
+result.to_csv("results.csv");
+result.to_json("results.json");
 ```
 
-which will schedule each provided event to a **separate** hardware counter.
-*perf-cpp* implements three different scheduling modes:
+## Scheduling Events to Hardware Counters
 
-| Schedule Mode                            | Description                                                                                                                                                                                                        |
-|------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `perf::EventCounter::Schedule::Separate` | Schedule each event to a separate *physical* hardware counter to avoid multiplexing. If a metric is provided as an event, each counter used to calculate the metric will be placed on a separate hardware counter. |
-| `perf::EventCounter::Schedule::Append`   | Schedule each event to any *physical*  hardware counter and make use of multiplexing. This is the **default**.                                                                                                     |
-| `perf::EventCounter::Schedule::Group`    | Schedule the list of provided events to the **same** *physical* hardware counter to multiplex the events (this is true for list of events and metrics).                                                            |
+Physical hardware counters are limited (typically 4–8 per core).
+When you request more events than counters, the kernel **multiplexes** — time-sharing counters and scaling results.
 
-`EventCounter::add()` will throw an exception, if the scheduling does not fit (e.g., too many events are requested to group together.)
+By default, *perf-cpp* packs events into as few counters as possible.
+You can control this via a scheduling hint in `add()`:
 
-## Binding the Event Counter to a Specific CPU Core
-By default, a `perf::EventCounter` tracks events across all CPU cores on which the associated thread is scheduled, as well as the process that instantiated the counter.
-To restrict event counting to a particular CPU core, configure the counter as follows:
+```cpp
+event_counter.add({"instructions", "cycles", "branches"},
+                  perf::EventCounter::Schedule::Separate);
+```
+
+| Schedule Mode | Description |
+|---|---|
+| `Schedule::Append` | Pack into any counter, using multiplexing. **Default.** |
+| `Schedule::Separate` | One event per physical counter — avoids multiplexing. |
+| `Schedule::Group` | Force all listed events onto the **same** counter (multiplexed together). |
+
+`add()` throws if the requested scheduling doesn't fit (e.g., too many events to group).
+
+## Binding to a CPU Core or Process
+
+By default, events are counted across all cores the thread runs on, for the calling process only.
 
 ```cpp
 auto config = perf::Config{};
-config.cpu_core(5U); /// Bind to CPU core 5.
+
+/// Count only on CPU core 5.
+config.cpu_core(5U);
+config.cpu_core(perf::CpuCore::Any); /// revert to all cores
+
+/// Monitor a specific process or all processes.
+config.process(perf::Process{1337});
+config.process(perf::Process::Any);
+
+auto event_counter = perf::EventCounter{ config };
 ```
-
-To revert this and resume counting on all cores the thread executes on:
-
-```cpp
-config.cpu_core(perf::CpuCore::Any); /// Count events on all CPU cores the thread is executed on.
-```
-
-## Binding the Event Counter to a Specific Process
-Similarly, process binding determines which process’s events are monitored. 
-By default, `perf::EventCounter` captures only the events triggered by the *calling* process.
-You can customize this behavior to:
-- Bind to a specific process by PID
-- Monitor all processes on the system
 
 > [!NOTE]
-> Monitoring other or all processes may require elevated privileges. 
-> Refer to the [perf paranoid setting](perf-paranoid.md) for configuration guidance.
-
-The process to monitor can be configured as follows:
-
-```cpp
-auto config = perf::Config{};
-config.process(perf::Process::Calling); /// Default: Monitor only the calling process.
-
-/// Alternatively:
-config.process(perf::Process{1337});    /// Monitor events from process with PID 1337.
-
-/// Alternatively:
-config.process(perf::Process::Any);     /// Monitor events from all processes.
-```
+> Monitoring other or all processes may require elevated privileges.
+> See the [perf paranoid setting](perf-paranoid.md).
 
 > [!TIP]
-> Certain hardware events (e.g., Intel's off-core events) may require monitoring all processes on a specific CPU core, as the hardware does not attribute these events to individual processes.
+> Some hardware events (e.g., Intel off-core events) require monitoring all processes on a specific CPU core, as the hardware does not attribute these events to individual processes.
 
-## Adjusting Hardware Settings to the Underlying System
-Every CPU has a limited number of physical performance counters—special registers that track events. 
-Modern processors typically have `4` to `8` counters per core (e.g., see the specs for [Intel Sapphire Rapids](https://github.com/RRZE-HPC/likwid/wiki/SapphireRapids#general-purpose-counters)), and some allow measuring multiple events per counter through time-multiplexing.
+## Detection of Physical Hardware Counters
 
-*perf-cpp* automatically detects these hardware limits on most systems.
+*perf-cpp* automatically detects the number of physical counters and multiplexing capabilities on most systems.
 
 > [!IMPORTANT]
-> If the NMI watchdog is enabled (`cat /proc/sys/kernel/nmi_watchdog` returns `1`), it permanently consumes one hardware PMU counter. 
-> *perf-cpp* detects this and adjusts automatically. 
-> **However, if you need the extra counter**, you can disable the watchdog via `echo 0 > /proc/sys/kernel/nmi_watchdog` (requires root).
+> If the NMI watchdog is enabled (`cat /proc/sys/kernel/nmi_watchdog` returns `1`), it permanently consumes one hardware counter.
+> *perf-cpp* detects this and adjusts automatically.
+> To reclaim the counter, disable the watchdog via `echo 0 > /proc/sys/kernel/nmi_watchdog` (requires root).
 
-If you're working with unusual hardware or embedded systems where auto-detection fails, you can specify the limits manually:
-
-```cpp
-auto config = perf::Config{};
-config.num_physical_counters(2U);           // This CPU only has 2 hardware counters
-config.num_events_per_physical_counter(1U); // Each counter tracks just one event at a time
-
-auto event_counter = perf::EventCounter{ config };
-```
-
-## Further Configuration Settings
-The `perf::Config` class provides additional settings to control the monitoring scope and behavior:
+For unusual hardware where auto-detection fails, specify limits manually:
 
 ```cpp
 auto config = perf::Config{};
-config.include_child_threads(true); /// Also monitor child threads.
-config.include_kernel(false);       /// Exclude kernel-activity from monitoring.
-config.is_pinned(true);             /// Pin events to the CPU.
-
+config.num_physical_counters(2U);
+config.num_events_per_physical_counter(1U);
 auto event_counter = perf::EventCounter{ config };
 ```
 
-| Setting                       | Default | Description                                                                                                                                                                                                            |
-|-------------------------------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `include_child_threads(bool)` | `false` | If enabled, child threads spawned by the recording thread will also be monitored.                                                                                                                                      |
-| `include_kernel(bool)`        | `true`  | If enabled, events triggered by kernel-activity are included. Disabling this can be useful when only user-space performance matters or when the [perf paranoid setting](perf-paranoid.md) restricts kernel monitoring. |
-| `include_user(bool)`          | `true`  | If enabled, events triggered by user-space activity are included.                                                                                                                                                      |
-| `include_hypervisor(bool)`    | `true`  | If enabled, events triggered by hypervisor-activity are included.                                                                                                                                                      |
-| `include_idle(bool)`          | `true`  | If enabled, events triggered during CPU idle periods are included.                                                                                                                                                     |
-| `include_guest(bool)`         | `true`  | If enabled, events triggered by guest (virtual machine) activity are included.                                                                                                                                         |
-| `include_host(bool)`          | `true`  | If enabled, events triggered by host activity are included.                                                                                                                                                            |
-| `is_pinned(bool)`             | `false` | If enabled, events are kept on the CPU if possible, preventing them from being multiplexed off.                                                                                                                        |
+## Further Configuration
+
+| Setting | Default | Description |
+|---|---|---|
+| `include_child_threads(bool)` | `false` | Also monitor child threads spawned by the recording thread. |
+| `include_kernel(bool)` | `true` | Include events from kernel activity. Disable when only user-space matters or [perf paranoid](perf-paranoid.md) restricts access. |
+| `include_user(bool)` | `true` | Include events from user-space activity. |
+| `include_hypervisor(bool)` | `true` | Include events from hypervisor activity. |
+| `include_idle(bool)` | `true` | Include events during CPU idle periods. |
+| `include_guest(bool)` | `true` | Include events from guest (VM) activity. |
+| `include_host(bool)` | `true` | Include events from host activity. |
+| `pinned(bool)` | `false` | Pin events to the CPU, preventing them from being multiplexed off. |
 
 ---
 
-## Example: Analyzing Random Access Patterns
-Investigate the high costs associated with unpredictable memory access patterns by measuring their impact on hardware prefetching:
+## Troubleshooting
+
+Enable debug output to inspect the counter configuration passed to the kernel:
+
+```cpp
+auto config = perf::Config{};
+config.debug(true);
+auto event_counter = perf::EventCounter{ config };
+```
+
+This is equivalent to `perf --debug perf-event-open stat -- sleep 1`, which prints the `perf_event_open` arguments for each counter.
+Useful for retrieving event codes or diagnosing why a counter fails to open.
+
+---
+
+## Example: Random vs. Sequential Access
+
+This example measures how unpredictable memory access patterns defeat the hardware prefetcher:
 
 ```cpp
 #include <random>
@@ -221,96 +167,58 @@ Investigate the high costs associated with unpredictable memory access patterns 
 #include <algorithm>
 #include <perfcpp/event_counter.hpp>
 
-/// We want access one cache line per iteration.
+/// One cache line per element.
 struct alignas(64U) cache_line { std::int64_t value; };
 
 int main()
 {
-    /// Initialize performance counters.
-    auto event_counter = perf::EventCounter{ };
-    try {
-        event_counter.add({"instructions", "cycles", "branches", "cache-misses", "cycles-per-instruction"});
-    } catch (std::runtime_error& e) {
-        std::cerr << e.what() << std::endl;
-    }
-    
-    /// Setup random access benchmark.
-    /// Create data to process: Allocate enough cache lines for 256 MB.
+    auto event_counter = perf::EventCounter{};
+    event_counter.add({"instructions", "cycles", "cache-misses", "cycles-per-instruction"});
+
+    /// 256 MB of cache lines.
     auto cache_lines = std::vector<cache_line>{};
     cache_lines.resize((1024U * 1024U * 256U) / sizeof(cache_line));
     for (auto i = 0U; i < cache_lines.size(); ++i)
     {
         cache_lines[i].value = i;
     }
-    
-    /// Create a random access pattern (otherwise the hardware prefetcher will take action).
-    auto access_pattern_indices = std::vector<std::uint64_t>{};
-    access_pattern_indices.resize(cache_lines.size());
-    std::iota(access_pattern_indices.begin(), access_pattern_indices.end(), 0U);
-    std::shuffle(access_pattern_indices.begin(), access_pattern_indices.end(), std::mt19937 {std::random_device{}()});
 
-    /// Start recording.
-    try {
-        event_counter.start();
-    } catch (std::runtime_error& e) {
-        std::cerr << e.what() << std::endl;
-    }
+    /// Shuffle indices for random access.
+    auto indices = std::vector<std::uint64_t>(cache_lines.size());
+    std::iota(indices.begin(), indices.end(), 0U);
+    std::shuffle(indices.begin(), indices.end(), std::mt19937{std::random_device{}()});
 
-    /// Process the data and force the value to be not optimized away by the compiler.
+    /// Measure random access.
+    event_counter.start();
     auto value = 0ULL;
-    for (const auto index : access_pattern_indices)
+    for (const auto index : indices)
     {
         value += cache_lines[index].value;
     }
     asm volatile("" : "+r,m"(value) : : "memory");
-
-    /// Stop recording counters and get the result (normalized to the number of accessed cache lines).
     event_counter.stop();
+
+    /// Print per-cache-line results.
     const auto result = event_counter.result(cache_lines.size());
-
-    /// Print the performance counters.
-    for (const auto [name, value] : result)
+    for (const auto [name, val] : result)
     {
-        std::cout << value << " " << name << " per cache line" << std::endl;
+        std::cout << val << " " << name << " per cache line" << std::endl;
     }
-
-    return 0;
 }
 ```
 
-The output will be something like that, indicating that we have more than one cache miss per cache line:
-
-    7.1214 instructions per cache line
-    57.1871 cycles per cache line
-    1.02313 branches per cache line
-    1.6294 cache-misses per cache line
-    8.03031 cycles-per-instruction per cache line
-
-If you're interested in seeing the outcome with not-shuffled `access_pattern_indices`, thereby establishing a predictable access pattern:
-
-    6.85057 instructions per cache line
-    8.94096 cycles per cache line
-    0.97978 branches per cache line
-    0.00748136 cache-misses per cache line
-    1.30514 cycles-per-instruction per cache line
-
----
-
-## Troubleshooting Counter Configurations
-Debugging and configuring hardware counters can sometimes be complex. 
-Utilize *perf-cpp*'s debugging features to gain insights into the internal workings of performance counters and troubleshoot any configuration issues:
-
-```cpp
-auto config = perf::Config{};
-config.is_debug(true);
-
-auto event_counter = perf::EventCounter{ config };
+Random access output — more than one cache miss per line:
+```
+7.12 instructions per cache line
+57.19 cycles per cache line
+1.63 cache-misses per cache line
+8.03 cycles-per-instruction per cache line
 ```
 
-The idea is borrowed from *Linux Perf*, which can be asked to print counter configurations as follows:
-```bash
-perf --debug perf-event-open stat -- sleep 1
+Sequential access (without shuffling) — the prefetcher eliminates nearly all misses:
 ```
-
-This command helps visualize configurations for various counters, which is also beneficial for retrieving event codes (for more details, see the [counters documentation](counters.md)).
-
+6.85 instructions per cache line
+8.94 cycles per cache line
+0.007 cache-misses per cache line
+1.31 cycles-per-instruction per cache line
+```

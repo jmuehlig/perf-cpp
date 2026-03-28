@@ -9,12 +9,6 @@ A flamegraph ([example](https://www.brendangregg.com/flamegraphs.html)) collapse
 With just a few lines of code you can record samples, resolve symbols, and open a browser to an interactive heat‑map of your code.
 
 ---
-## Table of Contents
-- [Translating Instruction Pointers into Symbols](#translating-instruction-pointers-into-symbols)
-- [Translating Sampler Results into Flame Graphs](#translating-sampler-results-into-flame-graphs)
-  - [Setting up the Sampler](#setting-up-the-sampler)
-  - [Generating Flamegraphs](#generating-flamegraphs)
----
 
 ## Translating Instruction Pointers into Symbols
 The `perf::SymbolResolver` allows to translate logical instruction pointers into symbols (i.e., the name if the module, the name of the function, and the offset within that function).

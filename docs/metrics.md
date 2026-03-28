@@ -1,23 +1,10 @@
-# Performance Metrics in perf-cpp
+# Performance Metrics
 
-Raw performance counters tell you what happened, but metrics tell you what it means. 
-By combining multiple hardware events into calculated values, metrics transform low-level data into actionable insights. 
-For instance, knowing you had 1 million cache misses is less useful than knowing those misses represent a 5% miss rate—well within acceptable bounds.
-
-This guide shows you how to use built-in metrics and create your own to measure exactly what matters for your application.
+Metrics combine multiple hardware events into calculated values — knowing you had 1 million cache misses is less useful than knowing those misses represent a 5% miss rate.
 
 > [!TIP]
-> Check out our working example at **[statistics/metric.cpp](../examples/statistics/metric.cpp)** to see metrics in action.
-> For inspiration when creating custom metrics, explore the extensive collection in the [Likwid project](https://github.com/RRZE-HPC/likwid/tree/master/groups).
-
----
-
-## Table of Contents
-- [Available Built-in Metrics](#available-built-in-metrics)
-- [Working with Metrics](#working-with-metrics)
-- [Creating Custom Metrics](#creating-custom-metrics)
-    - [Formula-Based Metrics](#formula-based-metrics)
-    - [Class-Based Metrics](#class-based-metrics)
+> See the example: **[statistics/metric.cpp](../examples/statistics/metric.cpp)**.
+> For inspiration when creating custom metrics, explore the [Likwid project](https://github.com/RRZE-HPC/likwid/tree/master/groups).
 
 ---
 
@@ -46,34 +33,30 @@ You don't need any special setup—just use them like regular events by adding t
 > Reading RAPL counters may require `perf_event_paranoid <= 0` or `CAP_SYS_ADMIN`.
 
 ## Working with Metrics
-The beauty of metrics in *perf-cpp* is their simplicity–they work exactly like regular events. 
-Add them, measure, and retrieve results using the same familiar interface:
+Metrics work exactly like regular events — add them, measure, and retrieve results:
 
 ```cpp
 #include <perfcpp/event_counter.hpp>
 
-auto event_counter = perf::EventCounter{ };
+auto event_counter = perf::EventCounter{};
 
-// Add metrics just like regular events
+/// Add metrics just like regular events.
 event_counter.add("cycles-per-instruction");
 
-// Measure your code
+/// Measure your code.
 event_counter.start();
-// ... your code being measured ...
+/// ... your code being measured ...
 event_counter.stop();
 
-// Get the calculated metric value
+/// Get the calculated metric value.
 const auto result = event_counter.result();
 const auto cpi = result.get("cycles-per-instruction");
+
+/// Release resources explicitly, or let the destructor handle it.
+event_counter.close();
 ```
 
-Behind the scenes, *perf-cpp* automatically:
-1. Identifies which hardware events the metric needs (cycles and instructions in this case)
-2. Configures those counters if they're not already being measured
-3. Performs the calculation after measurement stops
-4. Returns only the metrics and events you explicitly requested
-
-This means you can mix metrics and raw events freely without worrying about the underlying complexity.
+The required hardware events (e.g., `cycles` and `instructions` for CPI) are configured automatically if not already being measured.
 
 ## Creating Custom Metrics
 Built-in metrics cover common cases, but your hardware likely supports hundreds of specialized counters that can yield deeper insights. 
@@ -188,11 +171,4 @@ auto event_counter = perf::EventCounter{ counter_definition };
 event_counter.add("stalls-per-cache-miss");  /// Or "SPCM" if using custom name
 ```
 
-Class-based metrics excel when you need:
-- Complex calculations with multiple steps
-- Input validation and error handling
-- Conditional logic based on hardware capabilities
-- Reusable metric libraries across projects
-- Metrics that adapt to different processor architectures
-
-Choose the approach that best fits your needs—simple formulas for quick calculations, or custom classes when you need more control.
+Use class-based metrics when the calculation requires complex logic, validation, or architecture-specific behavior.

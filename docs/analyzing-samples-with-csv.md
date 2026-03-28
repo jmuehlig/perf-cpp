@@ -5,29 +5,15 @@
 Unlike specialized formats like flame graphs or perf data files, CSV export gives you direct access to the raw sample data in a structured, portable format. This makes it easy to perform custom statistical analysis, create visualizations, or integrate performance data into data processing pipelines using tools like Python (pandas), R, Excel, or SQL databases.
 
 **Example use cases:**
-* Statistical analysis of cache miss patterns across different data structures
-* Correlation analysis between latency and memory access patterns
-* Time-series analysis of performance counter evolution
-* Custom filtering and aggregation beyond what built-in tools provide
-* Integration with automated performance regression testing pipelines
+
+- Statistical analysis of cache miss patterns across different data structures
+- Correlation analysis between latency and memory access patterns
+- Time-series analysis of performance counter evolution
+- Custom filtering and aggregation beyond what built-in tools provide
+- Integration with automated performance regression testing pipelines
 
 &rarr; [For a practical example, see the instruction pointer sampling code.](../examples/sampling/instruction_pointer.cpp)
 
----
-## Table of Contents
-- [Exporting Samples](#exporting-samples)
-- [Customizing Delimiters](#customizing-delimiters)
-- [CSV File Structure](#csv-file-structure)
-- [Field Reference](#field-reference)
-  - [Metadata Fields](#metadata-fields)
-  - [Instruction Execution Fields](#instruction-execution-fields)
-  - [Data Access Fields](#data-access-fields)
-  - [Performance Counter Fields](#performance-counter-fields)
-  - [Register Fields](#register-fields)
-  - [Control Group Fields](#control-group-fields)
-  - [Context Switch Fields](#context-switch-fields)
-  - [Throttle Fields](#throttle-fields)
-  - [Loss Event Fields](#loss-event-fields)
 ---
 
 ## Exporting Samples

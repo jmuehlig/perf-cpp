@@ -1,101 +1,59 @@
-# How to build and include *perf-cpp* in your project
-*perf-cpp* can be built manually or included into CMake projects.
-
-## Table of Contents
-- [Building Manually](#building-manually)
-  - [Build the Library](#build-the-library)
-  - [Install the Library](#install-the-library)
-  - [Build the Examples](#build-examples)
-  - [Building as a Dynamically Linked Library](#building-as-a-dynamically-linked-library)
-- [Use CMake](#including-into-cmakeliststxt)
-  - [ExternalProject](#via-externalproject)
-  - [FetchContent](#via-fetchcontent)
-  - [find_package](#via-find_package)
----
+# Building and Project Integration
 
 ## Building Manually
-> [!NOTE]
-> Throughout the documentation, we use `./build` as the build directory. 
-> However, the build directory can be any directory of your choice (including `.`).
-
-### Build the Library
-#### Download the source code
 
 ```bash
 git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
-
-# Optional: switch to this development version
-git checkout v0.13-dev
-```
-
-#### Generate the Makefile and Build
-
-```bash
-cmake . -B build 
+cmake . -B build
 cmake --build build
 ```
 
-### Install the Library
-To install the library, specify the `CMAKE_INSTALL_PREFIX`:
+### CMake Options
+
+| Option | Default | Description |
+|---|---|---|
+| `-DBUILD_EXAMPLES=ON` | `OFF` | Build example binaries into `build/examples/bin` |
+| `-DBUILD_LIB_SHARED=ON` | `OFF` | Build as shared library instead of static |
+| `-DBUILD_TESTS=ON` | `OFF` | Build unit tests |
+| `-DGEN_PROCESSOR_EVENTS=ON` | `OFF` | Embed processor-specific events at compile time (see [customizing events](counters.md)) |
+
+Example with multiple options:
 ```bash
-# Generate Makefile
+cmake . -B build -DBUILD_EXAMPLES=ON -DGEN_PROCESSOR_EVENTS=ON
+cmake --build build
+```
+
+> [!NOTE]
+> `-DGEN_PROCESSOR_EVENTS=ON` reads events from the [event library](./counters.md#loading-events-from-the-event-library) and generates a source file that can grow large, increasing compilation time significantly.
+
+### Installing
+
+```bash
 cmake . -B build -DCMAKE_INSTALL_PREFIX=/path/to/install/dir
-
-# Build
 cmake --build build
-
-# Install
 cmake --install build
 ```
 
-The library will then be available for discovery via CMake and `find_package` (see [below](#via-find_package)).
+The library will then be available via `find_package` (see [below](#via-find_package)).
 
-### Generate Processor-specific Events
-With `-DGEN_PROCESSOR_EVENTS=1`, the build process will try to read the processor-specific events from the event library ([events/](../events)) and generate a source file (`src/processor_specific_event_provider.cpp`) that adds these events to every (the default and *manually* instantiated) `perf::CounterDefinition` (see also the documentation on [hardware events](counters.md)).
+## Including into CMake Projects
 
-With this option, processor-specific events can be used like *built-in* ones.
+### Via FetchContent (recommended)
 
-```bash
-# Generate Makefile and source file for processor-specific events
-cmake . -B build -DGEN_PROCESSOR_EVENTS=1
-
-# Build Library
-cmake --build build
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+  perf-cpp-external
+  GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
+  GIT_TAG "v0.13-dev"
+)
+FetchContent_MakeAvailable(perf-cpp-external)
 ```
 
-> [!IMPORTANT]
-> Depending on the underlying processor, the source file can grow very large and increase compilation time significantly.
-
-
-### Build Examples
-Enable example compilation with `-DBUILD_EXAMPLES=1` and build the `examples` target:
-
-```bash
-# Generate Makefile
-cmake . -B build -DBUILD_EXAMPLES=1
-
-# Build Library and Examples
-cmake --build build --target examples
-```
-
-The example binaries will be located in `build/examples/bin`.
-
-### Building as a Dynamically Linked Library
-By default, *perf-cpp* is built as a **static** library.
-You can request to build a **shared** library with `-DBUILD_LIB_SHARED=1`:
-
-```bash
-cmake . -B build -DBUILD_LIB_SHARED=1
-cmake --build build
-```
-
-## Including into `CMakeLists.txt`
-*perf-cpp* uses [CMake](https://cmake.org/) as its build system, facilitating integration into additional CMake projects. 
-Choose from the following methods:
+Then link against `perf-cpp` and add `${perf-cpp-external_SOURCE_DIR}/include/` to your include directories.
 
 ### Via ExternalProject
-Include `ExternalProject` in your `CMakeLists.txt` and define the project:
 
 ```cmake
 include(ExternalProject)
@@ -107,30 +65,14 @@ ExternalProject_Add(
   INSTALL_COMMAND cmake -E echo ""
 )
 ```
-* Add `lib/perf-cpp/src/perf-cpp-external/include` to your `include_directories()`.
-* Add `lib/perf-cpp/src/perf-cpp-external-build` to your `link_directories()`.
 
-Note: The directory `lib/` can be any folder of your choice.
-
-### Via FetchContent
-Include `FetchContent` in your `CMakeLists.txt` and define the project:
-
-```cmake
-include(FetchContent)
-FetchContent_Declare(
-  perf-cpp-external
-  GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v0.13-dev"
-)
-FetchContent_MakeAvailable(perf-cpp-external)
-```
-* Add `perf-cpp` to your linked libraries.
-* Add `${perf-cpp-external_SOURCE_DIR}/include/` to your include directories.
+Then add `lib/perf-cpp/src/perf-cpp-external/include` to your include directories and `lib/perf-cpp/src/perf-cpp-external-build` to your link directories.
 
 ### Via find_package
-If *perf-cpp* is already installed on your system (see [install instructions above](#install-the-library)), you can simply use `find_package` to link it with your project:
+
+If *perf-cpp* is [installed](#installing) on your system:
 
 ```cmake
 find_package(perf-cpp REQUIRED)
-target_link_libraries(perf-cpp::perf-cpp)
+target_link_libraries(your_target perf-cpp::perf-cpp)
 ```

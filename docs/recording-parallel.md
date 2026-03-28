@@ -1,101 +1,62 @@
-# Counting Hardware Events in Parallel Applications
+# Recording Hardware Events in Parallel
 
-Performance counters can be counted for each thread or CPU core.
-To monitor multiple threads or CPU cores, you have various options:
-* Record counters individually for each thread and combine the results afterward (&rarr; [See our multithreaded code example: `examples/multi_thread.cpp`](../examples/statistics/multi_thread.cpp)).
-* Initiate measurements that record counters for all child threads simultaneously (&rarr; [See our multithreaded inheritance code example: `examples/inherit_thread.cpp`](../examples/statistics/inherit_thread.cpp)).
-* Monitor specific CPU cores and record counters of all processes executed there (&rarr; [See our multi cpu code example: `examples/multi_cpu.cpp`](../examples/statistics/multi_cpu.cpp)).
+Performance counters can be recorded per thread, per CPU core, or per process:
+
+1. **[Per-thread counters](#per-thread-counters)**: Each thread gets its own counter, results are combined afterward.
+2. **[Inherited counters](#inherited-counters)**: A single counter automatically covers all child threads.
+3. **[Per-CPU-core counters](#per-cpu-core-counters)**: Monitor specific CPU cores regardless of which process runs on them.
+4. **[Per-process counters](#per-process-counters)**: Monitor specific processes by PID.
 
 > [!TIP]
-> Our examples include several working code-examples, e.g., **[statistics/inherit_thread.cpp](../examples/statistics/inherit_thread.cpp)**, **[statistics/multi_cpu.cpp](../examples/statistics/multi_cpu.cpp)**, **[statistics/multi_thread.cpp](../examples/statistics/multi_thread.cpp)**, and **[statistics/multi_process.cpp](../examples/statistics/multi_process.cpp)**.
+> See the examples: **[multi_thread.cpp](../examples/statistics/multi_thread.cpp)**, **[inherit_thread.cpp](../examples/statistics/inherit_thread.cpp)**, **[multi_cpu.cpp](../examples/statistics/multi_cpu.cpp)**, **[multi_process.cpp](../examples/statistics/multi_process.cpp)**.
 
-
-----
-## Table of Contents
-- [1st Option: Count Events Individually for each Thread](#1st-option-count-events-individually-for-each-thread)
-- [2nd Option: Count Events for all Child Threads Simultaneously](#2nd-option-count-events-for-all-child-threads-simultaneously)
-- [3rd Option: Count Events for specific CPU Cores](#3rd-option-count-events-on-specific-cpu-cores)
 ---
 
-## 1st Option: Count Events Individually for each Thread
-The `perf::MultiThreadEventCounter` class allows you to copy the measurement on every thread and combines the results.
+## Per-Thread Counters
 
-### Define the events to record
+`perf::MultiThreadEventCounter` creates one counter per thread and combines the results:
+
 ```cpp
 #include <perfcpp/event_counter.hpp>
 
 const auto count_threads = 4U;
+auto multi_event_counter = perf::MultiThreadEventCounter{count_threads};
+multi_event_counter.add({"instructions", "cycles", "cache-misses"});
 
-auto multithread_event_counter = perf::MultiThreadEventCounter{count_threads};
-try {
-    multithread_event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-```
-
-### Wrap `start()` and `stop()` around your thread-local processing code
-```cpp
+/// Start/stop per thread.
 auto threads = std::vector<std::thread>{};
-for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
-    threads.emplace_back([thread_index, &multithread_event_counter]() {
-        
-        try {
-            multithread_event_counter.start(thread_index);
-        } catch (std::runtime_error& e) {
-            std::cerr << e.what() << std::endl;
-        }
-
-        /// ... do some computational work here...
-
-        multithread_event_counter.stop(thread_index);
+for (auto thread_id = 0U; thread_id < count_threads; ++thread_id) {
+    threads.emplace_back([thread_id, &multi_event_counter]() {
+        multi_event_counter.start(thread_id);
+        /// ... computation here ...
+        multi_event_counter.stop(thread_id);
     });
 }
-```
 
-### Wait for the threads to finish
-```cpp
-for (auto &thread: threads) {
+for (auto& thread : threads) {
     thread.join();
 }
-```
 
-### Access the combined results
-```cpp
-/// Calculate the result.
-const auto result = multithread_event_counter.result();
-
-/// Ask the result for specific counters.
-const auto cycles = result.get("cycles");
-std::cout << "Took " << cycles.value() << " cycles" << std::endl;
-
-/// Or print all counters on your own.
+/// Combined results across all threads.
+const auto result = multi_event_counter.result();
 for (const auto [name, value] : result)
 {
-    std::cout << "Counter " << name << " = " << value << std::endl;
+    std::cout << name << " = " << value << std::endl;
 }
 
-/// Or print in CSV and JSON.
-std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << std::endl;
-std::cout << result.to_json() << std::endl;
+/// Result for a specific thread.
+const auto thread_result = multi_event_counter.result_of_thread(0U);
+
+/// Release resources explicitly, or let the destructor handle it.
+multi_event_counter.close();
 ```
-
-### Closing the Hardware Counters *(optional)*
-Once you have initialized the hardware performance counters, you can `start()`, `stop()`, and gather results repeatedly.
-To ultimately release resources such as file descriptors, consider closing the `MultiThreadEventCounter`:
-
-```cpp
-multithread_event_counter.close();
-```
-
-This action is optional and will occur automatically upon object destruction if `close()` is not invoked manually.
 
 ---
 
-## 2nd Option: Count Events for all Child Threads Simultaneously
-The `perf::Config` class allows you to inherit the measurement to all child threads.
+## Inherited Counters
 
-### Define inheritance and the counters to record
+A single `perf::EventCounter` with `include_child_threads(true)` automatically monitors all threads spawned after `start()`:
+
 ```cpp
 #include <perfcpp/event_counter.hpp>
 
@@ -103,139 +64,99 @@ auto config = perf::Config{};
 config.include_child_threads(true);
 
 auto event_counter = perf::EventCounter{ config };
+event_counter.add({"instructions", "cycles", "cache-misses"});
 
-try {
-    event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-```
+/// Start before spawning threads.
+event_counter.start();
 
-### Wrap `start()` and `stop()` around thread-spawning
-```cpp
 auto threads = std::vector<std::thread>{};
-
-try {
-    event_counter.start();
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-
-for (auto thread_index = 0U; thread_index < count_threads; ++thread_index) {
+for (auto i = 0U; i < count_threads; ++i) {
     threads.emplace_back([]() {
-        /// ... do some computational work here...
+        /// ... computation here ...
     });
 }
 
-/// Wait for all threads to finish.
-for (auto &thread: threads) {
+for (auto& thread : threads) {
     thread.join();
 }
 
 event_counter.stop();
-```
 
-### Access the results
-```cpp
-/// Calculate the result.
+/// Aggregated result across all threads.
 const auto result = event_counter.result();
-
-/// Ask the result for specific counters.
-const auto cycles = result.get("cycles");
-std::cout << "Took " << cycles.value() << " cycles" << std::endl;
-
-/// Or print all counters on your own.
 for (const auto [name, value] : result)
 {
-    std::cout << "Counter " << name << " = " << value << std::endl;
+    std::cout << name << " = " << value << std::endl;
 }
 
-/// Or print in CSV and JSON.
-std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << std::endl;
-std::cout << result.to_json() << std::endl;
-```
-
-### Closing the Hardware Counters *(optional)*
-Once you have initialized the hardware performance counters, you can `start()`, `stop()`, and gather results repeatedly.
-To ultimately release resources such as file descriptors, consider closing the `EventCounter`:
-
-```cpp
+/// Release resources explicitly, or let the destructor handle it.
 event_counter.close();
 ```
 
-This action is optional and will occur automatically upon object destruction if `close()` is not invoked manually.
-
 ---
 
-## 3rd Option: Count Events on specific CPU Cores
-The `perf::MultiCoreEventCounter` class allows you record performance counters on specified CPU cores.
-Please note that you may record events of other applications running on that CPU cores.
+## Per-CPU-Core Counters
+
+`perf::MultiCoreEventCounter` records events on specified CPU cores, capturing activity from all processes running there.
 
 > [!NOTE]
-> According to the [`perf_event_open` documentation](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), this option needs a `/proc/sys/kernel/perf_event_paranoid` value of `< 1`.
+> This requires `perf_event_paranoid < 1`. See the [perf paranoid setting](perf-paranoid.md).
 
-### Define CPU cores to watch
-```cpp
-/// Create a list of (logical) cpu ids to record performance counters on.
-auto cpus_to_watch = std::vector<std::uint16_t>{};
-cpus_to_watch.push_back(0U);
-cpus_to_watch.push_back(1U);
-/// ... add more.
-```
-
-### Define the counters you want to record
 ```cpp
 #include <perfcpp/event_counter.hpp>
 
-auto multi_cpu_event_counter = perf::MultiCoreEventCounter{cpus_to_watch};
-try {
-    multi_cpu_event_counter.add({"instructions", "cycles", "branches", "branch-misses", "cache-misses", "cache-references"});
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-```
+const auto cpu_core_ids = std::vector<std::uint16_t>{0U, 4U, 8U, 12U};
+auto multi_cpu_counter = perf::MultiCoreEventCounter{ cpu_core_ids };
+multi_cpu_counter.add({"instructions", "cycles", "cache-misses"});
 
-### Start and stop the counters whenever you want
-```cpp
-/// You can start threads here.
-try {
-    multi_cpu_event_counter.start();
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
+multi_cpu_counter.start();
+/// ... computation runs on the monitored cores ...
+multi_cpu_counter.stop();
 
-/// ... wait until some work is done on the CPUs.
-/// For example, join threads here.
-
-multi_cpu_event_counter.stop();
-```
-
-### Access the combined results
-```cpp
-/// Calculate the result.
-const auto result = multi_cpu_event_counter.result();
-
-/// Ask the result for specific counters.
-const auto cycles = result.get("cycles");
-std::cout << "Took " << cycles.value() << " cycles" << std::endl;
-
-/// Or print all counters on your own.
+/// Combined results across all monitored cores.
+const auto result = multi_cpu_counter.result();
 for (const auto [name, value] : result)
 {
-    std::cout << "Counter " << name << " = " << value << std::endl;
+    std::cout << name << " = " << value << std::endl;
 }
 
-/// Or print in CSV and JSON.
-std::cout << result.to_csv(/* delimiter = */'|', /* print header = */ true) << std::endl;
-std::cout << result.to_json() << std::endl;
+/// Result for a specific core (returns std::optional).
+const auto core_result = multi_cpu_counter.result_of_core(12U);
+
+/// Release resources explicitly, or let the destructor handle it.
+multi_cpu_counter.close();
 ```
 
-### Closing the Hardware Counters *(optional)*
-Once you have initialized the hardware performance counters, you can `start()`, `stop()`, and gather results repeatedly.
-To ultimately release resources such as file descriptors, consider closing the `MultiCoreEventCounter`:
+---
+
+## Per-Process Counters
+
+`perf::MultiProcessEventCounter` records events for specific processes by PID, combining the results:
+
+> [!NOTE]
+> Monitoring other processes may require elevated privileges. See the [perf paranoid setting](perf-paranoid.md).
 
 ```cpp
-multi_cpu_event_counter.close();
-```
+#include <perfcpp/event_counter.hpp>
 
-This action is optional and will occur automatically upon object destruction if `close()` is not invoked manually.
+const auto process_ids = std::vector<pid_t>{1234, 5678};
+auto multi_process_counter = perf::MultiProcessEventCounter{ process_ids };
+multi_process_counter.add({"instructions", "cycles", "cache-misses"});
+
+multi_process_counter.start();
+/// ... processes are running ...
+multi_process_counter.stop();
+
+/// Combined results across all monitored processes.
+const auto result = multi_process_counter.result();
+for (const auto [name, value] : result)
+{
+    std::cout << name << " = " << value << std::endl;
+}
+
+/// Result for a specific process (returns std::optional).
+const auto process_result = multi_process_counter.result_of_process(1234);
+
+/// Release resources explicitly, or let the destructor handle it.
+multi_process_counter.close();
+```

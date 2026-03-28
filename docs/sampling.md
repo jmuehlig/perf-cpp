@@ -14,34 +14,6 @@ The sections below provide a general overview of sampling behavior.
 For information on sampling across multiple threads or cores, refer to the [parallel sampling documentation](sampling-parallel.md).
 
 ---
-## Table of Contents
-- [Interface](#interface)
-  - [Setting up *what* to record and *when*](#setting-up-what-to-record-and-when)
-  - [Initializing the Sampler *(optional)*](#initializing-the-sampler-optional)
-  - [Managing Sampler Lifecycle](#managing-sampler-lifecycle)
-  - [Retrieving Samples](#retrieving-samples)
-  - [Closing the Sampler (*optional*)](#closing-the-sampler-optional)
-- [Trigger](#trigger)
-- [Precision](#precision)
-- [Period / Frequency](#period--frequency)
-- [What can be Recorded and How to Access the Data?](#what-can-be-recorded-and-how-to-access-the-data)
-  - [Metadata](#metadata)
-  - [Instruction Execution](#instruction-execution)
-  - [Data Access](#data-access)
-  - [Counter Values](#counter-values)
-  - [Branch Stack](#branch-stack)
-  - [User Stack](#user-stack)
-  - [Registers](#registers)
-  - [Context Switches](#context-switches)
-  - [CGroup](#cgroup)
-  - [Throttle and Unthrottle](#throttle-and-unthrottle)
-  - [Lost Samples](#lost-samples)
-- [Specific Notes for different CPU Vendors](#specific-notes-for-different-cpu-vendors)
-  - [Intel (Processor Event Based Sampling)](#intel-processor-event-based-sampling)
-  - [AMD (Instruction Based Sampling)](#amd-instruction-based-sampling)
-- [Sample Buffer](#sample-buffer)
-- [Troubleshooting Counter Configurations](#troubleshooting-counter-configurations)
----
 
 ## Interface
 ### Setting up *what* to record and *when*

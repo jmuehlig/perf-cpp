@@ -1,28 +1,9 @@
-# Performance Events in perf-cpp
+# Hardware Performance Counters and Events
 
 Performance events are hardware and software counters that help you understand how your application behaves at the CPU level—tracking everything from cache misses to branch predictions. 
 Each CPU generation brings new events specific to its microarchitecture, making it essential to use the right events for your hardware.
 
 This guide explains how *perf-cpp* handles performance events and how you can use both generic and processor-specific events in your measurements.
-
----
-
-## Table of Contents
-- [Understanding Event Storage and Management](#understanding-event-storage-and-management)
-  - [The CounterDefinition System](#the-counterdefinition-system)
-  - [Default vs. Custom Configurations](#default-vs-custom-configurations)
-- [Working with Built-in Events](#working-with-built-in-events)
-  - [Hardware Events](#hardware-events)
-  - [Software Events](#software-events)
-  - [Virtual Time Events](#virtual-time-events)
-- [Using Processor-Specific Events](#using-processor-specific-events)
-  - [Loading Events from the Event Library](#loading-events-from-the-event-library)
-  - [Auto-Generating Events at Compile Time](#auto-generating-events-at-compile-time)
-  - [Adding Custom Events Programmatically](#adding-custom-events-programmatically)
-- [Translating Event Names to Event Codes](#translating-event-names-to-event-codes)
-  - [Using libpfm4](#using-libpfm4)
-  - [Using perf with Debug Output](#using-perf-with-debug-output)
-- [Detecting Hardware Capabilities at Runtime](#detecting-hardware-capabilities-at-runtime)
 
 ---
 

@@ -5,38 +5,27 @@
 Unlike `perf [mem] record`, which profiles your entire application**, *perf-cpp* allows you to **sample only the specific code sections you care about**, then export that targeted data for analysis with standard Linux perf tools like `perf report`, `perf mem report`, and flame graph generators.
 
 This gives you the best of both worlds:
-* **Surgical precision**: Record only critical code paths, hot loops, or specific algorithms
-* **Comprehensive analysis**: Use the full perf ecosystem for visualization and reporting
-* **Reduced noise**: Eliminate irrelevant samples from application startup, I/O waits, or unrelated code
+- 
+- **Precision**: Record only critical code paths, hot loops, or specific algorithms
+- **Comprehensive analysis**: Use the full perf ecosystem for visualization and reporting
+- **Reduced noise**: Eliminate irrelevant samples from application startup, I/O waits, or unrelated code
 
 &rarr; [For a practical implementation, check out our perf data export example.](../examples/sampling/perf_record.cpp)
 
 > [!IMPORTANT]
 > This feature is considered as being **experimental**.
 
-
----
-## Table of Contents
-- [Overview](#overview)
-- [Exporting Samples to Perf Data Files](#exporting-samples-to-perf-data-files)
-    - [Single Sampler Export](#single-sampler-export)
-    - [Multi-Sampler Export](#multi-sampler-export)
-- [Analyzing the Exported Data](#analyzing-the-exported-data)
-    - [Basic Performance Analysis](#basic-performance-analysis)
-    - [Memory Access Analysis](#memory-access-analysis)
-    - [Symbol Resolution and Flame Graphs](#symbol-resolution-and-flame-graphs)
-- [Use Cases and Benefits](#use-cases-and-benefits)
 ---
 
 ## Overview
 
 The `to_perf_file()` method transforms your application's sample data into the standard perf.data format used by Linux perf tools. This enables you to:
 
-* **Leverage existing perf ecosystem tools** for analysis, visualization, and reporting
-* **Generate flame graphs** using tools like [FlameGraph](https://github.com/brendangregg/FlameGraph)
-* **Perform memory access analysis** with `perf mem report`
-* **Annotate source code** with performance data using `perf annotate`
-* **Share analysis-ready data** with teams using standard perf workflows
+- **Leverage existing perf ecosystem tools** for analysis, visualization, and reporting
+- **Generate flame graphs** using tools like [FlameGraph](https://github.com/brendangregg/FlameGraph)
+- **Perform memory access analysis** with `perf mem report`
+- **Annotate source code** with performance data using `perf annotate`
+- **Share analysis-ready data** with teams using standard perf workflows
 
 ## Exporting Samples to Perf Data Files
 

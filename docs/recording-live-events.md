@@ -1,121 +1,88 @@
 # Accessing Live Event Counts
-The *perf-cpp* library supports reading hardware performance counter values without stopping the counters ("live" events), particularly on `x86` systems using the [rdpmc](https://www.felixcloutier.com/x86/rdpmc) instruction. 
-This feature allows for interim results during ongoing computations, ideal for real-time monitoring and adjustments.
 
-The `perf::EventCounter` class is designed to support both standard and "live" events, allowing configuration of hardware performance counters to access results either "live" (for interim results) or after stopping.
-For the latter, see [the recording basics documentation](recording.md).
+Read hardware counter values without stopping the counters, using the [rdpmc](https://www.felixcloutier.com/x86/rdpmc) instruction on `x86` systems.
+This is useful for measuring individual iterations or phases within a running computation.
+
+For standard (non-live) recording, see [recording basics](recording.md).
 
 > [!TIP]
-> Our examples include a working code-example: **[statistics/live_events.cpp](../examples/statistics/live_events.cpp)**.
+> See **[statistics/live_events.cpp](../examples/statistics/live_events.cpp)** for a full working example.
 
 ---
-## Table of Contents
-- [Setting Up Live Events](#setting-up-live-events)
-- [Initializing the Hardware Counters *(optional)*](#initializing-the-hardware-counters-optional)
-- [Reading Live Events During Computation](#reading-live-events-during-computation)
-- [Finalizing and Retrieving Results](#finalizing-and-retrieving-results)
----
 
-## Setting Up Live Events
-Define which events to monitor live and which to read post-computation using the `perf::EventCounter`:
+## Basic Lifecycle
+
+Add events with `add_live()` instead of `add()`, then use `start()` / `stop()` as usual:
 
 ```cpp
 #include <perfcpp/event_counter.hpp>
 
 auto event_counter = perf::EventCounter{};
+event_counter.add_live({"cache-misses", "cache-references", "branches"});
 
-try {
-    /// Events for live monitoring.
-    event_counter.add_live({"cache-misses", "cache-references", "branches"});
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-```
+event_counter.start();
 
-> [!IMPORTANT]
-> We experienced that not mixing live with "traditional" events leads to more consistent results.
+/// ... read live values during computation (see below) ...
 
-> [!NOTE]
-> Live events can only capture hardware events but not metrics.
-
-## Initializing the Hardware Counters *(optional)*
-Optionally, preparing the hardware counters ahead of time to exclude configuration time from your measurements, though this is also handled automatically at the start if skipped:
-
-```cpp
-try {
-    event_counter.open();
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-```
-
-## Reading Live Events During Computation
-The library provides two methods for accessing live events during computation: directly via the `EventCounter` and using a simplified `LiveEventCounter` wrapper.
-
-### Option 1: Direct Access via `EventCounter`
-Events added as live events (via `add_live()`) can be directly accessed from the `EventCounter` without stopping.
-To be efficient, read live event counts by pre-allocating memory for the results to avoid allocation overheads during critical measurement phases:
-
-```cpp
-try {
-    event_counter.start();
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-
-/// Pre-allocated containers for live results.
-auto start_values = std::vector<double>{/* cache-misses */ .0, /* cache-references */ .0};
-auto end_values = std::vector<double>{/* cache-misses */ .0, /* cache-references */ .0};
-
-for (auto i = 0U; i < runs; ++i) {
-    /// Capture start values.
-    event_counter.live_result(start_values); 
-    
-    /// Computation here...
-    
-    /// Capture end values after computation.
-    event_counter.live_result(end_values);  
-    
-    std::cout << "Live Results: "
-        << "cache-misses: " << end_values[0U] - start_values[0U] << ","
-        << "cache-references: " << end_values[1U] - start_values[1U] << std::endl;
-}
-```
-
-### Option 2: Simplified Access via `LiveEventCounter` Wrapper
-The `LiveEventCounter` provides a streamlined method to manage live event monitoring by handling memory management and calculation of differences internally.
-
-```cpp
-/// Initiate the LiveEventCounter wrapper before starting.
-auto live_event_counter = perf::LiveEventCounter{ event_counter };
-
-try {
-    event_counter.start();
-} catch (std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-
-for (auto i = 0U; i < runs; ++i) {
-    /// Capture start values.
-    live_event_counter.start();
-    
-    /// Computation here...
-    
-    /// Capture end values after computation.
-    live_event_counter.stop();
-    
-    std::cout << "Live Results: "
-        << "cache-misses: " << live_event_counter.get("cache-misses") << ","
-        << "cache-references: " << live_event_counter.get("cache-references") << std::endl;
-}
-```
-
-## Finalizing and Retrieving Results
-Upon completion, stop the counters:
-
-```cpp
-/// Stop the counter after processing.
 event_counter.stop();
 ```
 
-For further information, refer to the [recording basics documentation](recording.md) and the [code example](../examples/statistics/live_events.cpp).
+> [!IMPORTANT]
+> Avoid mixing live events with regular events — using only live events leads to more consistent results.
+
+> [!NOTE]
+> Live events can only capture hardware events, not metrics.
+
+## Reading Live Values
+
+There are two ways to read counter values during computation.
+
+### Using `LiveEventCounter` (recommended)
+
+The `LiveEventCounter` wrapper handles memory management and difference calculation internally:
+
+```cpp
+auto live_event_counter = perf::LiveEventCounter{ event_counter };
+
+event_counter.start();
+
+for (auto i = 0U; i < runs; ++i) {
+    live_event_counter.start();
+    /// ... computation here ...
+    live_event_counter.stop();
+
+    std::cout
+        << "cache-misses: " << live_event_counter.get("cache-misses")
+        << ", cache-references: " << live_event_counter.get("cache-references")
+        << std::endl;
+}
+
+event_counter.stop();
+```
+
+### Direct access via `EventCounter`
+
+For maximum performance, pre-allocate result vectors (one entry per event) and compute differences yourself:
+
+```cpp
+/// One entry per event: cache-misses, cache-references, branches.
+auto start_values = std::vector<double>{.0, .0, .0};
+auto end_values = std::vector<double>{.0, .0, .0};
+
+event_counter.start();
+
+for (auto i = 0U; i < runs; ++i) {
+    event_counter.live_result(start_values);
+    /// ... computation here ...
+    event_counter.live_result(end_values);
+
+    std::cout
+        << "cache-misses: " << end_values[0] - start_values[0]
+        << ", cache-references: " << end_values[1] - start_values[1]
+        << std::endl;
+}
+
+event_counter.stop();
+```
+
+Values are returned in the order events were added. This avoids per-read allocations but requires you to track the index-to-event mapping.

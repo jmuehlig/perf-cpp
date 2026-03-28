@@ -12,12 +12,6 @@ The Memory Access Analyzer helps identify which specific memory addresses experi
 &rarr; [For a practical implementation, check out our random-access-benchmark example.](../examples/sampling/memory_access_analyzer.cpp)
 
 ---
-## Table of Contents
-- [Describing Data Types](#step-1-describing-data-types)
-- [Registering Data Type Instances](#step-2-registering-data-type-instances)
-- [Mapping Samples to Data Type Instances](#step-3-mapping-samples-to-data-type-instances)
-- [Processing the Result](#step-4-processing-the-result)
----
 
 ## Step 1: Describing Data Types
 The **Memory Access Analyzer** requires information about the structure of your data types. 
