@@ -5,8 +5,6 @@ Record hardware performance counters for specific code regions using `perf::Even
 > [!NOTE]
 > `EventCounter` monitors a single thread. For multi-threaded or multi-core recording, use `MultiThreadEventCounter`, `MultiCoreEventCounter`, or `MultiProcessEventCounter` — see [parallel recording](recording-parallel.md).
 
-See also [live counter access](recording-live-events.md).
-
 > [!TIP]
 > See **[single_thread.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/single_thread.cpp)** for a full working example.
 
