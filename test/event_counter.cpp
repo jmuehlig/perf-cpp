@@ -106,7 +106,7 @@ TEST_CASE("counter scheduling", "[EventCounter]")
     auto counter_definition = perf::CounterDefinition{};
     counter_definition.add("non-existing", "cycles", 10000U, 10000U);
 
-    auto event_counter = perf::EventCounter{counter_definition};
+    auto event_counter = perf::EventCounter{ counter_definition };
 
     event_counter.add(std::vector<std::string>{ "cpu/cycles" }, perf::EventCounter::Schedule::Separate);
 

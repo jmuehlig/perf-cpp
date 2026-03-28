@@ -17,9 +17,8 @@ TEST_CASE("access", "[CounterResult]")
 
   SECTION("get by name")
   {
-    auto result = perf::CounterResult{
-      std::vector<std::pair<std::string_view, double>>{ { "instructions", 100.0 }, { "cycles", 200.0 } }
-    };
+    auto result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{ { "instructions", 100.0 },
+                                                                                         { "cycles", 200.0 } } };
 
     REQUIRE(result.get("instructions").has_value());
     REQUIRE(result.get("instructions").value() == 100.0);
@@ -30,8 +29,7 @@ TEST_CASE("access", "[CounterResult]")
 
   SECTION("get with package prefix")
   {
-    auto result =
-      perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{ { "cycles", 42.0 } } };
+    auto result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{ { "cycles", 42.0 } } };
 
     /// Single slash triggers fallback: "cpu/cycles" -> "cycles".
     REQUIRE(result.get("cpu/cycles").has_value());
@@ -46,9 +44,8 @@ TEST_CASE("access", "[CounterResult]")
 
   SECTION("operator[]")
   {
-    auto result = perf::CounterResult{
-      std::vector<std::pair<std::string_view, double>>{ { "instructions", 100.0 }, { "cycles", 200.0 } }
-    };
+    auto result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{ { "instructions", 100.0 },
+                                                                                         { "cycles", 200.0 } } };
 
     REQUIRE(result["instructions"].has_value());
     REQUIRE(result["instructions"].value() == 100.0);

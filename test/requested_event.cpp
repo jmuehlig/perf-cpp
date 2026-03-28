@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
-#include <perfcpp/counter_definition.hpp>
-#include <perfcpp/counter/result.hpp>
 #include <perfcpp/counter/requested_event.hpp>
+#include <perfcpp/counter/result.hpp>
+#include <perfcpp/counter_definition.hpp>
 
 TEST_CASE("empty RequestedEventSet", "[RequestedEventSet]")
 {

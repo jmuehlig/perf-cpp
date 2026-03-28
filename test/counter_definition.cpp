@@ -1,6 +1,69 @@
 #include <catch2/catch_test_macros.hpp>
 #include <perfcpp/counter_definition.hpp>
 
+TEST_CASE("supports", "[CounterDefinition]")
+{
+  const auto definition = perf::CounterDefinition{};
+
+  SECTION("built-in hardware events")
+  {
+    REQUIRE(definition.supports("instructions"));
+    REQUIRE(definition.supports("cycles"));
+    REQUIRE(definition.supports("cache-misses"));
+    REQUIRE(definition.supports("cache-references"));
+    REQUIRE(definition.supports("branches"));
+    REQUIRE(definition.supports("branch-misses"));
+  }
+
+  SECTION("built-in software events")
+  {
+    REQUIRE(definition.supports("cpu-clock"));
+    REQUIRE(definition.supports("task-clock"));
+    REQUIRE(definition.supports("page-faults"));
+    REQUIRE(definition.supports("context-switches"));
+  }
+
+  SECTION("built-in time events")
+  {
+    REQUIRE(definition.supports("seconds"));
+    REQUIRE(definition.supports("milliseconds"));
+    REQUIRE(definition.supports("microseconds"));
+    REQUIRE(definition.supports("nanoseconds"));
+  }
+
+  SECTION("built-in metrics")
+  {
+    REQUIRE(definition.supports("cycles-per-instruction"));
+    REQUIRE(definition.supports("instructions-per-cycle"));
+    REQUIRE(definition.supports("cache-hit-ratio"));
+    REQUIRE(definition.supports("cache-miss-ratio"));
+  }
+
+  SECTION("unknown event")
+  {
+    REQUIRE_FALSE(definition.supports("does-not-exist"));
+    REQUIRE_FALSE(definition.supports(""));
+  }
+
+  SECTION("user-added event")
+  {
+    auto extended = perf::CounterDefinition{};
+    REQUIRE_FALSE(extended.supports("my-custom-event"));
+
+    extended.add("my-custom-event", 0x1234);
+    REQUIRE(extended.supports("my-custom-event"));
+  }
+
+  SECTION("user-added metric")
+  {
+    auto extended = perf::CounterDefinition{};
+    REQUIRE_FALSE(extended.supports("my-custom-metric"));
+
+    extended.add("my-custom-metric", "cycles / instructions");
+    REQUIRE(extended.supports("my-custom-metric"));
+  }
+}
+
 TEST_CASE("adding new events and metrics", "[CounterDefinition]")
 {
   auto definition = perf::CounterDefinition{};

@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
-#include <perfcpp/metric/metric.hpp>
 #include <perfcpp/counter/requested_event.hpp>
+#include <perfcpp/metric/metric.hpp>
 
 TEST_CASE("calculating", "[Metric][CyclesPerInstruction]")
 {
