@@ -1,8 +1,8 @@
 #pragma once
 
-#include <perfcpp/metric/expression/expression.hpp>
 #include <memory>
 #include <optional>
+#include <perfcpp/metric/expression/expression.hpp>
 #include <vector>
 
 namespace perf::metric::expression {

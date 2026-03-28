@@ -1,8 +1,8 @@
 #include "../access_benchmark.h"
-#include <perfcpp/event_counter.hpp>
 #include <atomic>
 #include <iostream>
 #include <numeric>
+#include <perfcpp/event_counter.hpp>
 #include <thread>
 
 int

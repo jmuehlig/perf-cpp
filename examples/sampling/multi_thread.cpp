@@ -1,7 +1,7 @@
 #include "../access_benchmark.h"
-#include <perfcpp/sampler.hpp>
 #include <iostream>
 #include <numeric>
+#include <perfcpp/sampler.hpp>
 #include <thread>
 
 int

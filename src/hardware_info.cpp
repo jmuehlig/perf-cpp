@@ -2,8 +2,8 @@
 #include <cerrno>
 #include <filesystem>
 #include <fstream>
-#include <perfcpp/counter_definition.hpp>
 #include <perfcpp/counter/group.hpp>
+#include <perfcpp/counter_definition.hpp>
 #include <perfcpp/hardware_info.hpp>
 #include <unistd.h>
 #if defined(__x86_64__) || defined(__i386__)

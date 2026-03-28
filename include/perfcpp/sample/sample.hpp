@@ -1,16 +1,16 @@
 #pragma once
 
+#include <cstdint>
+#include <optional>
+#include <perfcpp/counter/result.hpp>
 #include <perfcpp/sample/branch.hpp>
 #include <perfcpp/sample/cgroup.hpp>
 #include <perfcpp/sample/context_switch.hpp>
-#include <perfcpp/counter/result.hpp>
 #include <perfcpp/sample/data_access.hpp>
 #include <perfcpp/sample/instruction_execution.hpp>
 #include <perfcpp/sample/metadata.hpp>
 #include <perfcpp/sample/registers.hpp>
 #include <perfcpp/sample/throttle.hpp>
-#include <cstdint>
-#include <optional>
 
 namespace perf {
 

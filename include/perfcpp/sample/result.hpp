@@ -1,8 +1,8 @@
 #pragma once
-#include <perfcpp/sample/sample.hpp>
-#include <perfcpp/sample/recording_values.hpp>
-#include <ostream>
 #include <functional>
+#include <ostream>
+#include <perfcpp/sample/recording_values.hpp>
+#include <perfcpp/sample/sample.hpp>
 #include <string>
 #include <string_view>
 #include <type_traits>

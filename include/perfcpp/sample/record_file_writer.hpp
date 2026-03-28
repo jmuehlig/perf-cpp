@@ -1,12 +1,12 @@
 #pragma once
 
-#include <perfcpp/sample/recording_values.hpp>
-#include <perfcpp/sampler.hpp>
-#include <perfcpp/util/symbol_resolver.hpp>
 #include <array>
 #include <cstdint>
 #include <linux/perf_event.h>
 #include <optional>
+#include <perfcpp/sample/recording_values.hpp>
+#include <perfcpp/sampler.hpp>
+#include <perfcpp/util/symbol_resolver.hpp>
 #include <string_view>
 #include <tuple>
 #include <utility>
@@ -221,7 +221,8 @@ private:
    * @param modules List of modules with build IDs.
    * @return Written build ids.
    */
-  static std::optional<std::string> generate_build_ids_records(const std::vector<util::SymbolResolver::Module>& modules);
+  static std::optional<std::string> generate_build_ids_records(
+    const std::vector<util::SymbolResolver::Module>& modules);
 
   /**
    * Writes MMAP records for process memory mappings.

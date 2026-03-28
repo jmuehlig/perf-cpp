@@ -65,13 +65,14 @@ perf::EventCounter::unfold(const std::string& name,
     const auto pmu_name = name.substr(0U, pmu_delimiter_pos);
     const auto name_without_pmu = name.substr(pmu_delimiter_pos + 1U, name.length() - (pmu_delimiter_pos + 1U));
 
-    if (const auto event_configurations = this->_counter_definition.counter(pmu_name, name_without_pmu); event_configurations.has_value()) {
+    if (const auto event_configurations = this->_counter_definition.counter(pmu_name, name_without_pmu);
+        event_configurations.has_value()) {
       auto [global_pmu_name, global_event_name, config] = event_configurations.value();
       EventCounter::add(global_pmu_name,
-                          global_event_name,
-                          config,
-                          /* requested hardware events are visible */ is_visible_in_results,
-                          events);
+                        global_event_name,
+                        config,
+                        /* requested hardware events are visible */ is_visible_in_results,
+                        events);
       return;
     }
   }

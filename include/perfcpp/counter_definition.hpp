@@ -1,13 +1,13 @@
 #pragma once
 
-#include <perfcpp/counter/counter.hpp>
-#include <perfcpp/counter/event_provider.hpp>
-#include <perfcpp/metric/metric.hpp>
-#include <perfcpp/counter/time_event.hpp>
 #include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <perfcpp/counter/counter.hpp>
+#include <perfcpp/counter/event_provider.hpp>
+#include <perfcpp/counter/time_event.hpp>
+#include <perfcpp/metric/metric.hpp>
 #include <string>
 #include <string_view>
 #include <tuple>

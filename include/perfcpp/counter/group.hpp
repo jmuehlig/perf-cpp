@@ -1,10 +1,10 @@
 #pragma once
 
+#include <cstdint>
+#include <optional>
 #include <perfcpp/counter/config.hpp>
 #include <perfcpp/counter/counter.hpp>
 #include <perfcpp/sample/recording_values.hpp>
-#include <cstdint>
-#include <optional>
 #include <vector>
 
 namespace perf {

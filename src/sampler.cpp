@@ -1,9 +1,9 @@
 #include <algorithm>
 #include <perfcpp/exception.hpp>
 #include <perfcpp/hardware_info.hpp>
+#include <perfcpp/sample/decoder.hpp>
 #include <perfcpp/sample/ibs_decoder.hpp>
 #include <perfcpp/sample/record_file_writer.hpp>
-#include <perfcpp/sample/decoder.hpp>
 #include <perfcpp/sampler.hpp>
 #include <stdexcept>
 #include <utility>

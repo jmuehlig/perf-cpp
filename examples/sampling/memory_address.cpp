@@ -1,7 +1,7 @@
 #include "../access_benchmark.h"
+#include <iostream>
 #include <perfcpp/hardware_info.hpp>
 #include <perfcpp/sampler.hpp>
-#include <iostream>
 
 int
 main()

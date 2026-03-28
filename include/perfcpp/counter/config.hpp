@@ -282,8 +282,10 @@ public:
   /**
    * @deprecated Use pinned(bool) instead. Will be removed in v1.0.
    */
-  [[deprecated("Use pinned(bool) instead. Will be removed in v1.0.")]]
-  void is_pinned(const bool is_pinned) noexcept { _is_pinned = is_pinned; }
+  [[deprecated("Use pinned(bool) instead. Will be removed in v1.0.")]] void is_pinned(const bool is_pinned) noexcept
+  {
+    _is_pinned = is_pinned;
+  }
 
   /**
    * If debug is set to true (false by default), the counter configuration will be dumped to the console upon opening
@@ -299,8 +301,10 @@ public:
   /**
    * @deprecated Use debug(bool) instead. Will be removed in v1.0.
    */
-  [[deprecated("Use debug(bool) instead. Will be removed in v1.0.")]]
-  void is_debug(const bool is_debug) noexcept { _is_debug = is_debug; }
+  [[deprecated("Use debug(bool) instead. Will be removed in v1.0.")]] void is_debug(const bool is_debug) noexcept
+  {
+    _is_debug = is_debug;
+  }
 
   /**
    * If specified, the EventCounter or Sampler will monitor only that specified CPU.

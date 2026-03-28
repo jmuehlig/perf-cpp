@@ -1,12 +1,12 @@
 #pragma once
 
-#include <perfcpp/counter/config.hpp>
-#include <perfcpp/counter/counter.hpp>
-#include <perfcpp/counter_definition.hpp>
-#include <perfcpp/counter/group.hpp>
-#include <perfcpp/counter/requested_event.hpp>
 #include <chrono>
 #include <optional>
+#include <perfcpp/counter/config.hpp>
+#include <perfcpp/counter/counter.hpp>
+#include <perfcpp/counter/group.hpp>
+#include <perfcpp/counter/requested_event.hpp>
+#include <perfcpp/counter_definition.hpp>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -542,11 +542,13 @@ private:
 class MultiProcessEventCounter final : public StartableMultiEventCounterBase
 {
 public:
-  MultiProcessEventCounter(const CounterDefinition& counter_definition, std::vector<pid_t>&& process_ids, Config config = {});
+  MultiProcessEventCounter(const CounterDefinition& counter_definition,
+                           std::vector<pid_t>&& process_ids,
+                           Config config = {});
 
   MultiProcessEventCounter(const CounterDefinition& counter_definition,
-                            const std::vector<pid_t>& process_ids,
-                            Config config = {})
+                           const std::vector<pid_t>& process_ids,
+                           Config config = {})
     : MultiProcessEventCounter(counter_definition, std::vector<pid_t>{ process_ids }, config)
   {
   }
@@ -588,7 +590,8 @@ public:
    * @param normalization Normalization value, default = 1.
    * @return List of counter names and values.
    */
-  [[nodiscard]] std::optional<CounterResult> result_of_process(pid_t process_id, std::uint64_t normalization = 1U) const;
+  [[nodiscard]] std::optional<CounterResult> result_of_process(pid_t process_id,
+                                                               std::uint64_t normalization = 1U) const;
 
 private:
   std::vector<EventCounter> _process_local_counter;
@@ -656,7 +659,8 @@ public:
    * @param normalization Normalization value, default = 1.
    * @return List of counter names and values.
    */
-  [[nodiscard]] std::optional<CounterResult> result_of_core(std::uint16_t core_id, std::uint64_t normalization = 1U) const;
+  [[nodiscard]] std::optional<CounterResult> result_of_core(std::uint16_t core_id,
+                                                            std::uint64_t normalization = 1U) const;
 
 private:
   std::vector<EventCounter> _cpu_local_counter;

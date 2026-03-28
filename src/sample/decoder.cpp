@@ -1,6 +1,6 @@
 #include <perfcpp/hardware_info.hpp>
-#include <perfcpp/sample/ibs_decoder.hpp>
 #include <perfcpp/sample/decoder.hpp>
+#include <perfcpp/sample/ibs_decoder.hpp>
 
 std::optional<perf::Metadata::Mode>
 perf::SampleIterator::mode() const noexcept
@@ -548,16 +548,16 @@ perf::SampleDecoder::decode_data_access_source(const std::uint64_t memory_level_
   data_access_source.uncachable_memory(memory_level_code == PERF_MEM_LVLNUM_UNC);
 #else /// Use lvl before Linux 6.1
   data_access_source.l1_hit(static_cast<bool>(memory_level_code & PERF_MEM_LVL_L1) &&
-                               static_cast<bool>(memory_level_code & PERF_MEM_LVL_HIT));
+                            static_cast<bool>(memory_level_code & PERF_MEM_LVL_HIT));
   data_access_source.l2_hit(static_cast<bool>(memory_level_code & PERF_MEM_LVL_L2) &&
-                               static_cast<bool>(memory_level_code & PERF_MEM_LVL_HIT));
+                            static_cast<bool>(memory_level_code & PERF_MEM_LVL_HIT));
   data_access_source.l3_hit(static_cast<bool>(memory_level_code & PERF_MEM_LVL_L3) &&
-                               static_cast<bool>(memory_level_code & PERF_MEM_LVL_HIT));
+                            static_cast<bool>(memory_level_code & PERF_MEM_LVL_HIT));
   data_access_source.memory_hit(static_cast<bool>(memory_level_code & PERF_MEM_LVL_LOC_RAM) ||
-                                   static_cast<bool>(memory_level_code & PERF_MEM_LVL_REM_RAM1) ||
-                                   static_cast<bool>(memory_level_code & PERF_MEM_LVL_REM_RAM2));
+                                static_cast<bool>(memory_level_code & PERF_MEM_LVL_REM_RAM1) ||
+                                static_cast<bool>(memory_level_code & PERF_MEM_LVL_REM_RAM2));
   data_access_source.mhb_hit(static_cast<bool>(memory_level_code & PERF_MEM_LVL_LFB) &&
-                                static_cast<bool>(memory_level_code & PERF_MEM_LVL_HIT));
+                             static_cast<bool>(memory_level_code & PERF_MEM_LVL_HIT));
   data_access_source.uncachable_memory(static_cast<bool>(memory_level_code & PERF_MEM_LVL_UNC));
 #endif
 
@@ -660,9 +660,9 @@ perf::SampleDecoder::decode_data_access_source_and_remote(const perf_mem_data_sr
   data_access_source.remote(static_cast<bool>(perf_data_source.mem_remote & PERF_MEM_REMOTE_REMOTE));
 #else /// Use lvl before Linux 4.14
   data_access_source.remote(static_cast<bool>(perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM1) ||
-                               static_cast<bool>(perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM2) ||
-                               static_cast<bool>(perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE1) ||
-                               static_cast<bool>(perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE2));
+                            static_cast<bool>(perf_data_source.mem_lvl & PERF_MEM_LVL_REM_RAM2) ||
+                            static_cast<bool>(perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE1) ||
+                            static_cast<bool>(perf_data_source.mem_lvl & PERF_MEM_LVL_REM_CCE2));
 #endif
 
   /// Remote hops.

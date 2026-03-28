@@ -1,13 +1,13 @@
 #pragma once
-#include <perfcpp/feature.h>
-#include <perfcpp/sample/ibs_decoder.hpp>
-#include <perfcpp/sample/metadata.hpp>
-#include <perfcpp/counter/requested_event.hpp>
-#include <perfcpp/sample/recording_values.hpp>
-#include <perfcpp/sampler.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <linux/perf_event.h>
+#include <perfcpp/counter/requested_event.hpp>
+#include <perfcpp/feature.h>
+#include <perfcpp/sample/ibs_decoder.hpp>
+#include <perfcpp/sample/metadata.hpp>
+#include <perfcpp/sample/recording_values.hpp>
+#include <perfcpp/sampler.hpp>
 #include <utility>
 #include <vector>
 

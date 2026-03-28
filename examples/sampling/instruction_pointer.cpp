@@ -1,7 +1,7 @@
 #include "../access_benchmark.h"
+#include <iostream>
 #include <perfcpp/sampler.hpp>
 #include <perfcpp/util/symbol_resolver.hpp>
-#include <iostream>
 
 int
 main()

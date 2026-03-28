@@ -1,16 +1,16 @@
 #pragma once
 
-#include <perfcpp/sample/config.hpp>
-#include <perfcpp/counter_definition.hpp>
-#include <perfcpp/feature.h>
-#include <perfcpp/counter/group.hpp>
-#include <perfcpp/counter/requested_event.hpp>
-#include <perfcpp/sample/sample.hpp>
-#include <perfcpp/sample/recording_values.hpp>
-#include <perfcpp/sample/result.hpp>
 #include <chrono>
 #include <functional>
 #include <optional>
+#include <perfcpp/counter/group.hpp>
+#include <perfcpp/counter/requested_event.hpp>
+#include <perfcpp/counter_definition.hpp>
+#include <perfcpp/feature.h>
+#include <perfcpp/sample/config.hpp>
+#include <perfcpp/sample/recording_values.hpp>
+#include <perfcpp/sample/result.hpp>
+#include <perfcpp/sample/sample.hpp>
 #include <string>
 #include <utility>
 #include <vector>

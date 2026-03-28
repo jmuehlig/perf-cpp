@@ -1,9 +1,9 @@
 #pragma once
 
-#include <perfcpp/metric/expression/token.hpp>
 #include <cctype>
 #include <cstdint>
 #include <optional>
+#include <perfcpp/metric/expression/token.hpp>
 #include <string>
 #include <utility>
 

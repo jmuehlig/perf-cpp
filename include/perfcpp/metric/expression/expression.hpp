@@ -1,10 +1,10 @@
 #pragma once
 
-#include <perfcpp/metric/expression/token.hpp>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <perfcpp/counter/result.hpp>
+#include <perfcpp/metric/expression/token.hpp>
 #include <string>
 #include <vector>
 
@@ -151,7 +151,7 @@ public:
 
 protected:
   [[nodiscard]] virtual std::optional<double> evaluate(std::optional<double> left,
-                                                               std::optional<double> right) const = 0;
+                                                       std::optional<double> right) const = 0;
 
 private:
   std::unique_ptr<ExpressionInterface> _left;

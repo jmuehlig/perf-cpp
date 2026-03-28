@@ -4,8 +4,8 @@
 #include <list>
 #include <perfcpp/analyzer/data_type.hpp>
 #include <perfcpp/hardware_info.hpp>
-#include <perfcpp/sample/sample.hpp>
 #include <perfcpp/sample/result.hpp>
+#include <perfcpp/sample/sample.hpp>
 #include <set>
 #include <string>
 #include <string_view>

@@ -54,8 +54,8 @@ perf::util::SymbolResolver::resolve(const std::uintptr_t logical_instruction_poi
 
 std::optional<perf::util::SymbolResolver::ResolvedSymbol>
 perf::util::SymbolResolver::resolve(const perf::util::SymbolResolver::Module& module,
-                              const std::vector<Symbol>& symbols,
-                              std::uintptr_t logical_instruction_pointer) noexcept
+                                    const std::vector<Symbol>& symbols,
+                                    std::uintptr_t logical_instruction_pointer) noexcept
 {
   const auto relative_address = logical_instruction_pointer - module.start() + module.offset();
 
@@ -138,8 +138,8 @@ perf::util::SymbolResolver::read_process_name()
 
 std::vector<perf::util::SymbolResolver::Symbol>
 perf::util::SymbolResolver::extract_symbols_from_table(void* elf_data,
-                                                 const Elf64_Shdr* symbol_table,
-                                                 const Elf64_Shdr* string_table)
+                                                       const Elf64_Shdr* symbol_table,
+                                                       const Elf64_Shdr* string_table)
 {
   const auto* symbols = reinterpret_cast<const Elf64_Sym*>(static_cast<char*>(elf_data) + symbol_table->sh_offset);
   const auto* strings = static_cast<char*>(elf_data) + string_table->sh_offset;
@@ -247,7 +247,7 @@ perf::util::SymbolResolver::demangle_symbol_name(std::string&& symbol_name)
 
 std::pair<const Elf64_Shdr*, const Elf64_Shdr*>
 perf::util::SymbolResolver::find_symbol_and_string_tables(const Elf64_Shdr* section_header_table,
-                                                    const std::uint16_t size) noexcept
+                                                          const std::uint16_t size) noexcept
 {
   /// First, try to find the static symbol table (SHT_SYMTAB) which contains all symbols.
   for (auto i = 0U; i < size; ++i) {

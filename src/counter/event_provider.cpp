@@ -2,13 +2,13 @@
 #include <cctype>
 #include <fstream>
 #include <linux/perf_event.h>
-#include <perfcpp/counter_definition.hpp>
 #include <perfcpp/counter/event_provider.hpp>
+#include <perfcpp/counter/time_event.hpp>
+#include <perfcpp/counter_definition.hpp>
 #include <perfcpp/exception.hpp>
 #include <perfcpp/feature.h>
 #include <perfcpp/hardware_info.hpp>
 #include <perfcpp/metric/metric.hpp>
-#include <perfcpp/counter/time_event.hpp>
 #include <regex>
 #include <sstream>
 

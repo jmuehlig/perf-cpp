@@ -1,10 +1,10 @@
 #pragma once
 
+#include <cstdint>
+#include <optional>
 #include <perfcpp/counter/counter.hpp>
 #include <perfcpp/counter_definition.hpp>
 #include <perfcpp/util/graph.hpp>
-#include <cstdint>
-#include <optional>
 #include <string_view>
 #include <vector>
 

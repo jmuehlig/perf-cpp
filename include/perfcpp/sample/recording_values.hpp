@@ -1,9 +1,9 @@
 #pragma once
-#include <perfcpp/sample/branch.hpp>
-#include <perfcpp/exception.hpp>
-#include <perfcpp/sample/registers.hpp>
 #include <array>
 #include <cstdint>
+#include <perfcpp/exception.hpp>
+#include <perfcpp/sample/branch.hpp>
+#include <perfcpp/sample/registers.hpp>
 
 namespace perf {
 class SampleRecordingValues

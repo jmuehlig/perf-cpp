@@ -239,10 +239,7 @@ public:
      * Set whether this is a synchronous abort.
      * @param is_synchronous_abort Synchronous abort indicator.
      */
-    void synchronous_abort(const bool is_synchronous_abort) noexcept
-    {
-      _is_synchronous_abort = is_synchronous_abort;
-    }
+    void synchronous_abort(const bool is_synchronous_abort) noexcept { _is_synchronous_abort = is_synchronous_abort; }
 
     /**
      * Set whether this is retryable.

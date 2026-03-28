@@ -86,10 +86,7 @@ public:
      * Set whether the accessed memory is marked as uncachable.
      * @param is_uncachable_memory True if memory is uncachable.
      */
-    void uncachable_memory(const bool is_uncachable_memory) noexcept
-    {
-      _is_uncachable_memory = is_uncachable_memory;
-    }
+    void uncachable_memory(const bool is_uncachable_memory) noexcept { _is_uncachable_memory = is_uncachable_memory; }
 
     /**
      * Set whether the accessed memory is write-combine.

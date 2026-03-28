@@ -1,9 +1,9 @@
 #pragma once
 
-#include <perfcpp/metric/expression/expression.hpp>
-#include <perfcpp/metric/expression/tokenizer.hpp>
 #include <memory>
 #include <perfcpp/exception.hpp>
+#include <perfcpp/metric/expression/expression.hpp>
+#include <perfcpp/metric/expression/tokenizer.hpp>
 #include <string>
 
 namespace perf::metric::expression {

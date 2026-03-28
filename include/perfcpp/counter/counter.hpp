@@ -1,5 +1,10 @@
 #pragma once
 
+#include <array>
+#include <cstdint>
+#include <linux/perf_event.h>
+#include <memory>
+#include <optional>
 #include <perfcpp/counter/config.hpp>
 #include <perfcpp/counter/result.hpp>
 #include <perfcpp/sample/mmap_buffer.hpp>
@@ -7,11 +12,6 @@
 #include <perfcpp/sample/precision.hpp>
 #include <perfcpp/sample/recording_values.hpp>
 #include <perfcpp/util/unique_file_descriptor.hpp>
-#include <array>
-#include <cstdint>
-#include <linux/perf_event.h>
-#include <memory>
-#include <optional>
 #include <string>
 #include <thread>
 #include <unordered_map>

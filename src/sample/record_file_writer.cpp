@@ -2,8 +2,8 @@
 #include <fstream>
 #include <iostream>
 #include <numeric>
-#include <perfcpp/sample/record_file_writer.hpp>
 #include <perfcpp/sample/decoder.hpp>
+#include <perfcpp/sample/record_file_writer.hpp>
 #include <perfcpp/sampler.hpp>
 #include <sstream>
 #include <sys/mman.h>

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <perfcpp/util/unique_file_descriptor.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <linux/perf_event.h>
 #include <mutex>
+#include <perfcpp/util/unique_file_descriptor.hpp>
 #include <thread>
 #include <utility>
 #include <vector>
