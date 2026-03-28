@@ -544,8 +544,20 @@ class MultiProcessEventCounter final : public StartableMultiEventCounterBase
 public:
   MultiProcessEventCounter(const CounterDefinition& counter_definition, std::vector<pid_t>&& process_ids, Config config = {});
 
+  MultiProcessEventCounter(const CounterDefinition& counter_definition,
+                            const std::vector<pid_t>& process_ids,
+                            Config config = {})
+    : MultiProcessEventCounter(counter_definition, std::vector<pid_t>{ process_ids }, config)
+  {
+  }
+
   explicit MultiProcessEventCounter(std::vector<pid_t>&& process_ids, const Config config = {})
     : MultiProcessEventCounter(CounterDefinition::global(), std::move(process_ids), config)
+  {
+  }
+
+  explicit MultiProcessEventCounter(const std::vector<pid_t>& process_ids, const Config config = {})
+    : MultiProcessEventCounter(CounterDefinition::global(), std::vector<pid_t>{ process_ids }, config)
   {
   }
 
@@ -553,6 +565,11 @@ public:
 
   MultiProcessEventCounter(const EventCounter& event_counter, std::vector<pid_t>&& process_ids)
     : MultiProcessEventCounter(EventCounter::copy_from_template(event_counter), std::move(process_ids))
+  {
+  }
+
+  MultiProcessEventCounter(const EventCounter& event_counter, const std::vector<pid_t>& process_ids)
+    : MultiProcessEventCounter(EventCounter::copy_from_template(event_counter), std::vector<pid_t>{ process_ids })
   {
   }
 
@@ -564,8 +581,17 @@ public:
   MultiProcessEventCounter& operator=(const MultiProcessEventCounter&) = delete;
   MultiProcessEventCounter& operator=(MultiProcessEventCounter&&) noexcept = default;
 
+  /**
+   * Returns the result of the performance measurement for a given process.
+   *
+   * @param process_id Id of the process.
+   * @param normalization Normalization value, default = 1.
+   * @return List of counter names and values.
+   */
+  [[nodiscard]] std::optional<CounterResult> result_of_process(pid_t process_id, std::uint64_t normalization = 1U) const;
+
 private:
-  std::vector<perf::EventCounter> _process_local_counter;
+  std::vector<EventCounter> _process_local_counter;
 
   [[nodiscard]] std::vector<EventCounter>& event_counters() noexcept override { return _process_local_counter; }
   [[nodiscard]] const std::vector<EventCounter>& event_counters() const noexcept override
@@ -586,8 +612,20 @@ public:
                         std::vector<std::uint16_t>&& cpu_ids,
                         Config config = {});
 
+  MultiCoreEventCounter(const CounterDefinition& counter_definition,
+                        const std::vector<std::uint16_t>& cpu_ids,
+                        Config config = {})
+    : MultiCoreEventCounter(counter_definition, std::vector<std::uint16_t>{ cpu_ids }, config)
+  {
+  }
+
   explicit MultiCoreEventCounter(std::vector<std::uint16_t>&& cpu_ids, const Config config = {})
     : MultiCoreEventCounter(CounterDefinition::global(), std::move(cpu_ids), config)
+  {
+  }
+
+  explicit MultiCoreEventCounter(const std::vector<std::uint16_t>& cpu_ids, const Config config = {})
+    : MultiCoreEventCounter(CounterDefinition::global(), std::vector<std::uint16_t>{ cpu_ids }, config)
   {
   }
 
@@ -595,6 +633,11 @@ public:
 
   MultiCoreEventCounter(const EventCounter& event_counter, std::vector<std::uint16_t>&& cpu_ids)
     : MultiCoreEventCounter(EventCounter::copy_from_template(event_counter), std::move(cpu_ids))
+  {
+  }
+
+  MultiCoreEventCounter(const EventCounter& event_counter, const std::vector<std::uint16_t>& cpu_ids)
+    : MultiCoreEventCounter(EventCounter::copy_from_template(event_counter), std::vector<std::uint16_t>{ cpu_ids })
   {
   }
 
@@ -606,8 +649,17 @@ public:
   MultiCoreEventCounter& operator=(const MultiCoreEventCounter&) = delete;
   MultiCoreEventCounter& operator=(MultiCoreEventCounter&&) noexcept = default;
 
+  /**
+   * Returns the result of the performance measurement for a given CPU core.
+   *
+   * @param core_id Id of the CPU core.
+   * @param normalization Normalization value, default = 1.
+   * @return List of counter names and values.
+   */
+  [[nodiscard]] std::optional<CounterResult> result_of_core(std::uint16_t core_id, std::uint64_t normalization = 1U) const;
+
 private:
-  std::vector<perf::EventCounter> _cpu_local_counter;
+  std::vector<EventCounter> _cpu_local_counter;
 
   [[nodiscard]] std::vector<EventCounter>& event_counters() noexcept override { return _cpu_local_counter; }
   [[nodiscard]] const std::vector<EventCounter>& event_counters() const noexcept override { return _cpu_local_counter; }

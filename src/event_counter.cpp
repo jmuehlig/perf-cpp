@@ -686,6 +686,18 @@ perf::MultiProcessEventCounter::MultiProcessEventCounter(perf::EventCounter&& ev
   }
 }
 
+std::optional<perf::CounterResult>
+perf::MultiProcessEventCounter::result_of_process(const pid_t process_id, const std::uint64_t normalization) const
+{
+  for (const auto& event_counter : this->_process_local_counter) {
+    if (event_counter.config().process() == process_id) {
+      return event_counter.result(normalization);
+    }
+  }
+
+  return std::nullopt;
+}
+
 perf::MultiCoreEventCounter::MultiCoreEventCounter(const perf::CounterDefinition& counter_definition,
                                                    std::vector<std::uint16_t>&& cpu_ids,
                                                    perf::Config config)
@@ -723,4 +735,16 @@ perf::MultiCoreEventCounter::MultiCoreEventCounter(perf::EventCounter&& event_co
     event_counter.config(config);
     this->_cpu_local_counter.push_back(std::move(event_counter));
   }
+}
+
+std::optional<perf::CounterResult>
+perf::MultiCoreEventCounter::result_of_core(const std::uint16_t core_id, const std::uint64_t normalization) const
+{
+  for (const auto& event_counter : this->_cpu_local_counter) {
+    if (event_counter.config().cpu_core() == core_id) {
+      return event_counter.result(normalization);
+    }
+  }
+
+  return std::nullopt;
 }

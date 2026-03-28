@@ -737,8 +737,20 @@ public:
                    std::vector<std::uint16_t>&& core_ids,
                    SampleConfig config = {});
 
+  MultiCoreSampler(const CounterDefinition& counter_definition,
+                   const std::vector<std::uint16_t>& core_ids,
+                   SampleConfig config = {})
+    : MultiCoreSampler(counter_definition, std::vector<std::uint16_t>{ core_ids }, config)
+  {
+  }
+
   explicit MultiCoreSampler(std::vector<std::uint16_t>&& core_ids, SampleConfig config = {})
     : MultiCoreSampler(CounterDefinition::global(), std::move(core_ids), config)
+  {
+  }
+
+  explicit MultiCoreSampler(const std::vector<std::uint16_t>& core_ids, SampleConfig config = {})
+    : MultiCoreSampler(CounterDefinition::global(), std::vector<std::uint16_t>{ core_ids }, config)
   {
   }
 
