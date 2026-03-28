@@ -1,6 +1,6 @@
 site_name: perf-cpp
 site_description: C++ library for recording and sampling performance counters using the Linux perf subsystem
-# site_url: https://jmuehlig.github.io/perf-cpp/  # uncomment for deployment
+site_url: https://jmuehlig.github.io/perf-cpp/  # uncomment for deployment
 repo_url: https://github.com/jmuehlig/perf-cpp
 repo_name: jmuehlig/perf-cpp
 
@@ -38,6 +38,11 @@ markdown_extensions:
   - tables
   - toc:
       permalink: true
+
+extra:
+  analytics:
+    provider: google
+    property: G-6SPLE817K1
 
 nav:
   - Home: README.md

@@ -1,10 +1,10 @@
-# perf-cpp: Effortless Hardware Performance Monitoring for C++ Applications
+# perf-cpp: Hardware Performance Monitoring for C++
 ![LGPL-3.0](https://img.shields.io/github/license/jmuehlig/perf-cpp?) ![LinuxKernel->=4.0](https://img.shields.io/badge/Linux_Kernel-%3E%3D4.0-yellow)
 ![C++17](https://img.shields.io/badge/C++-17-00599C?logo=cplusplus) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/jmuehlig/perf-cpp)
 
-[Quick Start](#quick-start) | [How to Build](#building) | [Documentation](#full-documentation) | [System Requirements](#system-requirements) 
+[Quick Start](#quick-start) | [How to Build](#building) | [Documentation](https://jmuehlig.github.io/perf-cpp) | [System Requirements](#system-requirements)
 
-**perf-cpp** lets you profile for specific parts of your code, *not the entire program*.
+**perf-cpp** lets you profile specific parts of your code, *not the entire program*.
 
 Tools like [Linux Perf](https://perfwiki.github.io/main/), [Intel® VTune™](https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html), and [AMD uProf](https://www.amd.com/en/developer/uprof.html) profile everything: application startup, configuration parsing, data loading, and all your helper functions.
 **perf-cpp** is different: place `start()` and `stop()` **around exactly the code you want to measure**. 
@@ -16,14 +16,14 @@ Compare two memory allocators.
 ## What can perf-cpp do?
 Built around Linux's [*perf subsystem*](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), **perf-cpp** lets you count and sample hardware events for specific code blocks:
 
-- **Count hardware events** like `perf stat`, but only around the code you care about, *not the entire binary* ([documentation](docs/recording.md))
-- **Calculate metrics** like cycles per instruction or cache miss ratios from the counters ([documentation](docs/metrics.md))
-- **Read counter values without stopping** for low-overhead measurements in tight loops ([documentation](docs/recording-live-events.md))
-- **Sample instructions and memory accesses** like `perf [mem] record`, but targeted at specific functions ([documentation](docs/sampling.md))
-- **Export and analyze results** in your code: [write samples to CSV](docs/sampling-export-to-csv.md), [generate flame graphs](docs/sampling-symbols-and-flamegraphs.md), or [correlate memory accesses with specific data structures](docs/sampling-memory-analysis.md)
-- **Mix built-in and processor-specific events** like cycles, cache misses, or vendor PMU features ([documentation](docs/counters.md))
+- **Record hardware events** like `perf stat`, but only around the code you care about, *not the entire binary* ([documentation](https://jmuehlig.github.io/perf-cpp/recording/))
+- **Calculate metrics** like cycles per instruction or cache miss ratios from the counters ([documentation](https://jmuehlig.github.io/perf-cpp/metrics/))
+- **Read counter values without stopping** for low-overhead measurements in tight loops ([documentation](https://jmuehlig.github.io/perf-cpp/recording-live-events/))
+- **Sample instructions and memory accesses** like `perf [mem] record`, but targeted at specific functions ([documentation](https://jmuehlig.github.io/perf-cpp/sampling/))
+- **Export and analyze results** in your code: [write samples to CSV](https://jmuehlig.github.io/perf-cpp/sampling-export-to-csv/), [generate flame graphs](https://jmuehlig.github.io/perf-cpp/sampling-symbols-and-flamegraphs/), or [correlate memory accesses with specific data structures](https://jmuehlig.github.io/perf-cpp/sampling-memory-analysis/)
+- **Mix built-in and processor-specific events** like cycles, cache misses, or vendor PMU features ([documentation](https://jmuehlig.github.io/perf-cpp/counters/))
 
-See various **[practical examples](examples/README.md)** and the **[documentation](#full-documentation)** for more details.
+See various **[practical examples](examples/README.md)** and the **[full documentation](https://jmuehlig.github.io/perf-cpp/)** for more details.
 
 ## Quick Start
 ### Record Hardware Event Statistics
@@ -40,7 +40,7 @@ event_counter.add({"seconds", "instructions", "cycles", "cache-misses"});
 
 /// Run the workload
 event_counter.start();
-code_to_profile(); /// <-- Statistics recorded while execution
+code_to_profile(); /// <-- Statistics recorded during execution
 event_counter.stop();
 
 /// Print the result to the console
@@ -60,8 +60,8 @@ cache-misses: 1.35633e+07
 ```
 
 > [!NOTE]
-> See the guides on **[recording event statistics](docs/recording.md)** and **[event statistics on multiple CPUs/threads](docs/recording-parallel.md)**.
-> Check out the **[hardware events](docs/counters.md)** documentation for built-in and processor-specific events.
+> See the guides on **[recording event statistics](https://jmuehlig.github.io/perf-cpp/recording/)** and **[event statistics on multiple CPUs/threads](https://jmuehlig.github.io/perf-cpp/recording-parallel/)**.
+> Check out the **[hardware events](https://jmuehlig.github.io/perf-cpp/counters/)** documentation for built-in and processor-specific events.
 
 ### Record Samples
 Record snapshots like `perf [mem] record`—instruction pointer, CPU, timestamp—every 50,000 cycles.
@@ -75,23 +75,23 @@ auto sampler = perf::Sampler{};
 /// Specify when a sample is recorded: every 50,000th cycle
 sampler.trigger("cycles", perf::Period{50000U});
 
-/// Specify what data is included into a sample: time, CPU ID, instruction
+/// Specify what data is included in a sample: time, CPU ID, instruction
 sampler.values()
     .timestamp(true)
     .cpu_id(true)
-    .instruction_pointer(true);
+    .logical_instruction_pointer(true);
 
 /// Run the workload
 sampler.start();
-code_to_profile(); /// <-- Samples recorded while execution
+code_to_profile(); /// <-- Samples recorded during execution
 sampler.stop();
 
 const auto samples = sampler.result();
 
-/// Materialize samples as CSV (-> analyze with python etc) ...
+/// Export samples to CSV.
 samples.to_csv("samples.csv");
 
-/// ... or print the samples to the console
+/// Or access samples programmatically.
 for (const auto& record : samples)
 {
     const auto timestamp = record.metadata().timestamp().value();
@@ -114,69 +114,34 @@ Time = 365449131312005 | CPU = 8 | Instruction = 0x64af7417c75c
 ```
 
 > [!NOTE]
-> See the **[sampling guide](docs/sampling.md)** for what data you can record.
-> Also check out the **[sampling on multiple CPUs/threads guide](docs/sampling-parallel.md)** for parallel sampling. 
-
-### More Examples
-We have [examples](examples/README.md) showing how *perf-cpp* works in the `examples/` directory:
-- counting hardware events (`examples/statistics`)
-- sampling (`examples/sampling`)
+> See the **[sampling guide](https://jmuehlig.github.io/perf-cpp/sampling/)** for what data you can record.
+> Also check out the **[sampling on multiple CPUs/threads guide](https://jmuehlig.github.io/perf-cpp/sampling-parallel/)** for parallel sampling.
 
 ## Building
 *perf-cpp* is designed as a library (static or shared) that can be linked to your application.
 
 ```bash
-# Clone the repository
 git clone https://github.com/jmuehlig/perf-cpp.git
-
-# Switch to the repository folder
 cd perf-cpp
-
-# Optional: Switch to this development version
-git checkout v0.13-dev
-
-# Build the library (in build/)
-# -DBUILD_EXAMPLES=1        compiles all examples (optional)
-# -DBUILD_LIB_SHARED=1      creates the library as a shared one (optional)
-# -DGEN_PROCESSOR_EVENTS=1  generates and compiles a .cpp file that adds events specific to the underlying CPU (optional)
-cmake . -B build -DBUILD_EXAMPLES=1
+cmake . -B build
 cmake --build build
-
-# Optional: Build examples (in build/examples/bin) if -DBUILD_EXAMPLES=1
-cmake --build build --target examples
 ```
 
 > [!NOTE]
-> See the **[building guide](docs/build.md)** for how to integrate *perf-cpp* into *CMake* projects.
+> See the **[building guide](https://jmuehlig.github.io/perf-cpp/build/)** for CMake integration and build options.
 
-## Full Documentation
-- [**Building**](docs/build.md): Integrate *perf-cpp* into your C++ projects.
-- **Counting Performance Events**
-    - [**Basics**](docs/recording.md): Record hardware event statistics directly in your application (like `perf stat` but fine-grained).
-    - [**Parallel and Multithreaded**](docs/recording-parallel.md): Monitor events across threads and CPU cores.
-    - [**Metrics**](docs/metrics.md): Combine hardware events into metrics for better analysis.
-    - [**Live Access**](docs/recording-live-events.md): Read counters without stopping, great for tight loops.
-- **Recording Samples**
-    - [**Basics**](docs/sampling.md): Record samples for specific code paths (like `perf record` and `perf mem record` but fine-grained).
-    - [**Parallel and Multithreaded**](docs/sampling-parallel.md): Record samples across multiple threads and CPU cores.
-- **Analyzing Samples**
-    - [**CSV Export**](docs/sampling-export-to-csv.md): Export samples for analysis with statistical tools, spreadsheets, or custom scripts.
-    - [**Linux Perf Tools**](docs/sampling-export-to-perf.md): Analyze samples with `perf report` and `perf mem report`.
-    - [**Flame Graphs**](docs/sampling-symbols-and-flamegraphs.md): Translate instruction pointers to symbols and generate flame graphs.
-    - [**Memory Access Patterns**](docs/sampling-memory-analysis.md): Link samples to data objects for per-instance memory profiling.
-- [**Built-in and Hardware-specific Events**](docs/counters.md): Built-in events and how to add new ones for your CPU.
-- [**Perf Paranoid**](docs/perf-paranoid.md): Configure perf permissions.
+## Documentation
 
-## Further Reading
-- **[Examples](examples/README.md)**: See how to set up different features.
-- **[Changelog](CHANGELOG.md)**: See what's new.
+The full documentation is available at **[jmuehlig.github.io/perf-cpp](https://jmuehlig.github.io/perf-cpp/)**.
+
+See also: **[Examples](examples/README.md)** | **[Changelog](CHANGELOG.md)**
 
 ## System Requirements
 - *Clang* / *GCC* with support for **C++17** features.
 - *CMake* version **3.10** or higher.
 - *Linux Kernel* **4.0** or newer (note that some features need a newer Kernel).
-- `perf_event_paranoid` setting: Adjust as needed to allow access to performance counters (see the [Paranoid Value](docs/perf-paranoid.md) documentation).
-- *Python3*, if you make use of [processor-specific hardware event generation](docs/build.md#generate-processor-specific-events).
+- `perf_event_paranoid` setting: Adjust as needed to allow access to performance counters (see the [perf paranoid](https://jmuehlig.github.io/perf-cpp/perf-paranoid/) documentation).
+- *Python3*, if you make use of [processor-specific hardware event generation](https://jmuehlig.github.io/perf-cpp/build/#auto-generating-events-at-compile-time).
 
 ## Contribute and Contact
 We welcome contributions and feedback.
