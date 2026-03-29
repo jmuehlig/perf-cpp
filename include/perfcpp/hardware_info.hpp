@@ -54,9 +54,16 @@ public:
   [[nodiscard]] static std::uint64_t memory_page_size();
 
   /**
-   * @return The number of physical performance counters per logical CPU core.
+   * @return The number of generic (programmable) physical performance counters per logical CPU core.
    */
-  [[nodiscard]] static std::uint8_t physical_performance_counters_per_logical_core();
+  [[nodiscard]] static std::uint8_t physical_generic_performance_counters_per_logical_core();
+
+  /**
+   * @return The number of fixed-function physical performance counters per logical CPU core.
+   *         Fixed counters are dedicated to specific events (e.g., instructions, cycles, ref-cycles on Intel).
+   *         Returns 0 on platforms without fixed counters (AMD, ARM).
+   */
+  [[nodiscard]] static std::uint8_t physical_fixed_performance_counters_per_logical_core();
 
   /**
    * @return The number of events that can be scheduled to the same physical performance counter.
@@ -80,7 +87,8 @@ private:
   static std::optional<bool> _is_amd_ibs_supported;
   static std::optional<bool> _is_ibs_l3_filter_supported;
   static std::optional<std::uint64_t> _memory_page_size;
-  static std::optional<std::uint8_t> _physical_performance_counters_per_logical_core;
+  static std::optional<std::uint8_t> _physical_generic_performance_counters_per_logical_core;
+  static std::optional<std::uint8_t> _physical_fixed_performance_counters_per_logical_core;
   static std::optional<std::uint8_t> _events_per_physical_performance_counter;
   static std::optional<std::uint64_t> _max_cpu_clock_frequency;
 

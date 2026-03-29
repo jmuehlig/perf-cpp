@@ -24,9 +24,11 @@ public:
   CounterConfig(const std::uint32_t type,
                 const std::uint64_t id,
                 const std::uint64_t id_extension_1 = 0UL,
-                const std::uint64_t id_extension_2 = 0UL) noexcept
+                const std::uint64_t id_extension_2 = 0UL,
+                const bool is_fixed = false) noexcept
     : _type(type)
     , _configs({ id, id_extension_1, id_extension_2 })
+    , _is_fixed(is_fixed)
   {
   }
 
@@ -37,6 +39,14 @@ public:
 
   [[nodiscard]] CounterConfig& operator=(const CounterConfig&) noexcept = default;
   [[nodiscard]] CounterConfig& operator=(CounterConfig&&) noexcept = default;
+
+  /**
+   * Mark this event as using a fixed-function performance counter.
+   * Fixed counters are dedicated to specific events and do not participate in generic PMC scheduling.
+   *
+   * @param is_fixed True if the event uses a fixed PMC.
+   */
+  void fixed(const bool is_fixed) noexcept { _is_fixed = is_fixed; }
 
   /**
    * Set the scale for calculating the event result.
@@ -90,6 +100,11 @@ public:
    */
   [[nodiscard]] std::optional<PeriodOrFrequency> period_or_frequency() const noexcept { return _period_or_frequency; }
 
+  /**
+   * @return True if the event uses a fixed-function performance counter.
+   */
+  [[nodiscard]] bool is_fixed() const noexcept { return _is_fixed; }
+
   [[nodiscard]] bool operator==(const CounterConfig& other) const noexcept
   {
     return _type == other._type && _configs[0U] == other._configs[0U];
@@ -110,6 +125,9 @@ private:
 
   /// Period of frequency, if the event is used for sampling.
   std::optional<PeriodOrFrequency> _period_or_frequency{ std::nullopt };
+
+  /// True if the event uses a fixed-function performance counter (e.g., instructions, cycles on Intel).
+  bool _is_fixed{ false };
 };
 
 class Counter

@@ -51,11 +51,13 @@ Supported by most modern processors:
 branches                 # Total branch instructions
 branch-instructions      # Synonym for branches
 branch-misses            # Mispredicted branches
+bus-cycles               # Bus cycles
 cache-misses             # Cache access that missed
 cache-references         # Cache accesses
-cycles                   # CPU cycles
+cycles                   # CPU cycles (at current core frequency)
 cpu-cycles               # Synonym for cycles
 instructions             # Retired instructions
+ref-cycles               # Reference cycles (at fixed frequency, unaffected by turbo/power saving)
 stalled-cycles-backend   # Cycles stalled in backend
 idle-cycles-backend      # Synonym for stalled-cycles-backend
 stalled-cycles-frontend  # Cycles stalled in frontend

@@ -10,8 +10,10 @@ main()
     << std::endl;
 
   std::cout << "Scanning the underlying hardware for hardware counters..." << std::endl;
-  std::cout << "Physical Hardware Counters  = "
-            << std::uint16_t(perf::HardwareInfo::physical_performance_counters_per_logical_core()) << "\n";
+  std::cout << "Generic Hardware Counters   = "
+            << std::uint16_t(perf::HardwareInfo::physical_generic_performance_counters_per_logical_core()) << "\n";
+  std::cout << "Fixed Hardware Counters     = "
+            << std::uint16_t(perf::HardwareInfo::physical_fixed_performance_counters_per_logical_core()) << "\n";
   std::cout << "Events per Hardware Counter = "
             << std::uint16_t(perf::HardwareInfo::events_per_physical_performance_counter()) << "\n"
             << std::endl;

@@ -15,11 +15,12 @@
 void
 perf::PerfSubsystemEventProvider::add_events(perf::CounterDefinition& counter_definition)
 {
-  counter_definition.add("instructions", PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS);
-
-  /// Cycles
-  counter_definition.add("cycles", PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES);
-  counter_definition.add("cpu-cycles", PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES);
+  /// On Intel, instructions, cycles, and ref-cycles use fixed-function PMCs dedicated to these events.
+  const auto is_fixed = HardwareInfo::is_intel() && HardwareInfo::physical_fixed_performance_counters_per_logical_core() > 0U;
+  counter_definition.add("instructions", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS, 0UL, 0UL, is_fixed });
+  counter_definition.add("cycles", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES, 0UL, 0UL, is_fixed });
+  counter_definition.add("cpu-cycles", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES, 0UL, 0UL, is_fixed });
+  counter_definition.add("ref-cycles", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_REF_CPU_CYCLES, 0UL, 0UL, is_fixed });
   counter_definition.add("bus-cycles", PERF_TYPE_HARDWARE, PERF_COUNT_HW_BUS_CYCLES);
 
   /// Branches

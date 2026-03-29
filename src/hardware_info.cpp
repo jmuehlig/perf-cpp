@@ -26,8 +26,11 @@ std::optional<bool> perf::HardwareInfo::_is_ibs_l3_filter_supported{ std::nullop
 /// Cache variable to remember the memory page size.
 std::optional<std::uint64_t> perf::HardwareInfo::_memory_page_size{ std::nullopt };
 
-/// Number of performance counters per logical CPU core.
-std::optional<std::uint8_t> perf::HardwareInfo::_physical_performance_counters_per_logical_core{ std::nullopt };
+/// Number of generic (programmable) performance counters per logical CPU core.
+std::optional<std::uint8_t> perf::HardwareInfo::_physical_generic_performance_counters_per_logical_core{ std::nullopt };
+
+/// Number of fixed-function performance counters per logical CPU core.
+std::optional<std::uint8_t> perf::HardwareInfo::_physical_fixed_performance_counters_per_logical_core{ std::nullopt };
 
 /// Number of events that can be scheduled to the same physical performance counter.
 std::optional<std::uint8_t> perf::HardwareInfo::_events_per_physical_performance_counter{ std::nullopt };
@@ -160,10 +163,10 @@ perf::HardwareInfo::memory_page_size()
 }
 
 std::uint8_t
-perf::HardwareInfo::physical_performance_counters_per_logical_core()
+perf::HardwareInfo::physical_generic_performance_counters_per_logical_core()
 {
-  if (HardwareInfo::_physical_performance_counters_per_logical_core.has_value()) {
-    return HardwareInfo::_physical_performance_counters_per_logical_core.value();
+  if (HardwareInfo::_physical_generic_performance_counters_per_logical_core.has_value()) {
+    return HardwareInfo::_physical_generic_performance_counters_per_logical_core.value();
   }
 
 #if defined(__x86_64__) || defined(__i386__)
@@ -173,7 +176,7 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
       /// Number of general-purpose performance monitoring counter per logical processor is in bits 15-08.
       const auto performance_counters_per_logical_core = (pmu_info->eax >> 8) & 0xFF;
 
-      return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
+      return HardwareInfo::cache_value(HardwareInfo::_physical_generic_performance_counters_per_logical_core,
                                        static_cast<std::uint8_t>(performance_counters_per_logical_core));
     }
   }
@@ -194,7 +197,7 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
         if (const auto pmu_info = HardwareInfo::cpuid(0x80000022); pmu_info.has_value()) {
           const auto performance_counters_per_logical_core = pmu_info->eax & 0xFF;
 
-          return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
+          return HardwareInfo::cache_value(HardwareInfo::_physical_generic_performance_counters_per_logical_core,
                                            static_cast<std::uint8_t>(performance_counters_per_logical_core));
         }
       }
@@ -205,14 +208,39 @@ perf::HardwareInfo::physical_performance_counters_per_logical_core()
   /// Try to find the number of hardware counters per logical core.
   const auto hardware_counters = HardwareInfo::explore_hardware_counters_experimentally(true);
 
-  /// Fallback: Set to one, if the experiment failed.
+  /// Fallback: Set to zero, if the experiment failed.
   if (!hardware_counters.has_value()) {
-    return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
+    return HardwareInfo::cache_value(HardwareInfo::_physical_generic_performance_counters_per_logical_core,
                                      static_cast<std::uint8_t>(0U));
   }
 
-  return HardwareInfo::cache_value(HardwareInfo::_physical_performance_counters_per_logical_core,
+  return HardwareInfo::cache_value(HardwareInfo::_physical_generic_performance_counters_per_logical_core,
                                    hardware_counters.value());
+}
+
+std::uint8_t
+perf::HardwareInfo::physical_fixed_performance_counters_per_logical_core()
+{
+  if (HardwareInfo::_physical_fixed_performance_counters_per_logical_core.has_value()) {
+    return HardwareInfo::_physical_fixed_performance_counters_per_logical_core.value();
+  }
+
+#if defined(__x86_64__) || defined(__i386__)
+  if (HardwareInfo::is_intel()) {
+    /// Read CPUID information with 0x0A (see https://www.felixcloutier.com/x86/cpuid).
+    if (const auto pmu_info = HardwareInfo::cpuid(0x0A); pmu_info.has_value()) {
+      /// Number of fixed-function performance counters is in EDX bits 4-0.
+      const auto fixed_counters = pmu_info->edx & 0x1F;
+
+      return HardwareInfo::cache_value(HardwareInfo::_physical_fixed_performance_counters_per_logical_core,
+                                       static_cast<std::uint8_t>(fixed_counters));
+    }
+  }
+#endif
+
+  /// AMD and ARM do not have fixed-function performance counters.
+  return HardwareInfo::cache_value(HardwareInfo::_physical_fixed_performance_counters_per_logical_core,
+                                   static_cast<std::uint8_t>(0U));
 }
 
 #if defined(__x86_64__) || defined(__i386__)
