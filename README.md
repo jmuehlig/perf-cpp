@@ -2,19 +2,18 @@
 ![LGPL-3.0](https://img.shields.io/github/license/jmuehlig/perf-cpp?) ![LinuxKernel->=4.0](https://img.shields.io/badge/Linux_Kernel-%3E%3D4.0-yellow)
 ![C++17](https://img.shields.io/badge/C++-17-00599C?logo=cplusplus) [![Build and Test](https://github.com/jmuehlig/perf-cpp/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/jmuehlig/perf-cpp/actions/workflows/build-and-test.yml) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/jmuehlig/perf-cpp)
 
-[Quick Start](#quick-start) | [How to Build](#building) | [Documentation](https://jmuehlig.github.io/perf-cpp) | [System Requirements](#system-requirements)
+[Quick Start](#quick-start) | [Building](#building) | [Documentation](https://jmuehlig.github.io/perf-cpp) | [System Requirements](#system-requirements)
 
 **perf-cpp** lets you profile specific parts of your code, *not the entire program*.
 
 Tools like [Linux Perf](https://perfwiki.github.io/main/), [Intel® VTune™](https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html), and [AMD uProf](https://www.amd.com/en/developer/uprof.html) profile everything: application startup, configuration parsing, data loading, and all your helper functions.
 **perf-cpp** is different: place `start()` and `stop()` **around exactly the code you want to measure**. 
-Profile one sorting algorithm. 
-Measure cache misses in your hash table lookup. 
-Compare two memory allocators. 
-*Skip all the noise.*
+Profile one sorting algorithm.
+Measure cache misses in your hash table lookup.
+Compare two memory allocators.
 
-## What can perf-cpp do?
-Built around Linux's [*perf subsystem*](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), **perf-cpp** lets you count and sample hardware events for specific code blocks:
+## Features
+Built around Linux's [*perf subsystem*](https://man7.org/linux/man-pages/man2/perf_event_open.2.html), **perf-cpp** supports counting and sampling hardware events for specific code blocks:
 
 - **Record hardware events** like `perf stat`, but only around the code you care about, *not the entire binary* ([documentation](https://jmuehlig.github.io/perf-cpp/recording/))
 - **Calculate metrics** like cycles per instruction or cache miss ratios from the counters ([documentation](https://jmuehlig.github.io/perf-cpp/metrics/))
@@ -23,27 +22,26 @@ Built around Linux's [*perf subsystem*](https://man7.org/linux/man-pages/man2/pe
 - **Export and analyze results** in your code: [write samples to CSV](https://jmuehlig.github.io/perf-cpp/sampling-export-to-csv/), [generate flame graphs](https://jmuehlig.github.io/perf-cpp/sampling-symbols-and-flamegraphs/), or [correlate memory accesses with specific data structures](https://jmuehlig.github.io/perf-cpp/sampling-memory-analysis/)
 - **Mix built-in and processor-specific events** like cycles, cache misses, or vendor PMU features ([documentation](https://jmuehlig.github.io/perf-cpp/counters/))
 
-See various **[practical examples](examples/README.md)** and the **[full documentation](https://jmuehlig.github.io/perf-cpp/)** for more details.
+See the **[examples](examples/README.md)** and **[full documentation](https://jmuehlig.github.io/perf-cpp/)** for details.
 
 ## Quick Start
 ### Record Hardware Event Statistics
-Count hardware events like `perf stat`—instructions, cycles, cache misses—while your code runs.
 
 ```cpp
 #include <perfcpp/event_counter.hpp>
 
-/// Initialize the counter
+// Initialize the counter
 auto event_counter = perf::EventCounter{};
 
-/// Specify hardware events to count
+// Specify hardware events to count
 event_counter.add({"seconds", "instructions", "cycles", "cache-misses"});
 
-/// Run the workload
+// Run the workload
 event_counter.start();
-code_to_profile(); /// <-- Statistics recorded during execution
+code_to_profile(); // <-- Statistics recorded during execution
 event_counter.stop();
 
-/// Print the result to the console
+// Print the result to the console
 const auto result = event_counter.result();
 for (const auto [event_name, value] : result)
 {
@@ -64,34 +62,33 @@ cache-misses: 1.35633e+07
 > Check out the **[hardware events](https://jmuehlig.github.io/perf-cpp/counters/)** documentation for built-in and processor-specific events.
 
 ### Record Samples
-Record snapshots like `perf [mem] record`—instruction pointer, CPU, timestamp—every 50,000 cycles.
 
 ```cpp
 #include <perfcpp/sampler.hpp>
 
-/// Create the sampler
+// Create the sampler
 auto sampler = perf::Sampler{};
 
-/// Specify when a sample is recorded: every 50,000th cycle
+// Specify when a sample is recorded: every 50,000th cycle
 sampler.trigger("cycles", perf::Period{50000U});
 
-/// Specify what data is included in a sample: time, CPU ID, instruction
+// Specify what data is included in a sample: time, CPU ID, instruction
 sampler.values()
     .timestamp(true)
     .cpu_id(true)
     .logical_instruction_pointer(true);
 
-/// Run the workload
+// Run the workload
 sampler.start();
-code_to_profile(); /// <-- Samples recorded during execution
+code_to_profile(); // <-- Samples recorded during execution
 sampler.stop();
 
 const auto samples = sampler.result();
 
-/// Export samples to CSV.
+// Export samples to CSV.
 samples.to_csv("samples.csv");
 
-/// Or access samples programmatically.
+// Or access samples programmatically.
 for (const auto& record : samples)
 {
     const auto timestamp = record.metadata().timestamp().value();
@@ -139,15 +136,24 @@ See also: **[Examples](examples/README.md)** | **[Changelog](CHANGELOG.md)**
 ## System Requirements
 - *Clang* / *GCC* with support for **C++17** features.
 - *CMake* version **3.10** or higher.
-- *Linux Kernel* **4.0** or newer (note that some features need a newer Kernel).
+- *Linux Kernel* **4.0** or newer (some features require a newer kernel).
 - `perf_event_paranoid` setting: Adjust as needed to allow access to performance counters (see the [perf paranoid](https://jmuehlig.github.io/perf-cpp/perf-paranoid/) documentation).
 - *Python3*, if you make use of [processor-specific hardware event generation](https://jmuehlig.github.io/perf-cpp/build/#auto-generating-events-at-compile-time).
 
-## Contribute and Contact
-We welcome contributions and feedback.
-For feature requests, feedback, or bug reports, please reach out via our issue tracker or submit a pull request.
+## Contributing
+Contributions are welcome. Open an issue or submit a pull request.
 
-Alternatively, you can email me: `jan.muehlig@tu-dortmund.de`.
+To build and run the tests:
+```bash
+cmake . -B build -DBUILD_TESTS=ON
+cmake --build build --target tests
+./build/bin/tests
+```
+
+> [!NOTE]
+> Most tests require access to hardware performance counters via `perf_event_open`. If your system restricts access (e.g., in containers or VMs), some tests will fail. See the [perf paranoid](https://jmuehlig.github.io/perf-cpp/perf-paranoid/) documentation.
+
+For questions or feedback: `jan.muehlig@tu-dortmund.de`.
 
 ---
 
@@ -160,19 +166,27 @@ Other profiling tools:
 - Intel's [Instrumentation and Tracing Technology](https://github.com/intel/ittapi) lets you control [Intel VTune Profiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html) from your code.
 - Want to go lower-level? Use [perf_event_open](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) directly.
 
-## Resources about (Perf-) Profiling
-Papers and articles about profiling (feel free to add your own via pull request):
+## Resources on Profiling
+Papers and articles about hardware performance profiling:
 
 ### Academic Papers
 - [Quantitative Evaluation of Intel PEBS Overhead for Online System-Noise Analysis](https://soramichi.jp/pdf/ROSS2017.pdf) (2017)
 - [Analyzing memory accesses with modern processors](https://dl.acm.org/doi/abs/10.1145/3399666.3399896) (2020)
+- [On the Precision of Precise Event Based Sampling](https://dl.acm.org/doi/10.1145/3409963.3410490) (2020)
+- [CachePerf: A Unified Cache Miss Classifier via Hybrid Hardware Sampling](https://dl.acm.org/doi/10.1145/3530901) (2022)
 - [Precise Event Sampling on AMD Versus Intel: Quantitative and Qualitative Comparison](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10068807&tag=1) (2023)
+- [Efficient Cross-platform Multiplexing of Hardware Performance Counters via Adaptive Grouping](https://dl.acm.org/doi/full/10.1145/3629525) (2024)
 - [Multi-level Memory-Centric Profiling on ARM Processors with ARM SPE](https://arxiv.org/html/2410.01514v1) (2024)
 - [Breaking the Cycle - A Short Overview of Memory-Access Sampling Differences on Modern x86 CPUs](https://dl.acm.org/doi/pdf/10.1145/3736227.3736241) (2025)
+- [From Profiling to Optimization: Unveiling Profile Guided Optimization](https://arxiv.org/html/2507.16649v1) (2025)
 
 ### Blog Posts
 - [C2C - False Sharing Detection in Linux Perf](https://joemario.github.io/blog/2016/09/01/c2c-blog/) (2016)
-- [PMU counters and profiling basics.](https://easyperf.net/blog/2018/06/01/PMU-counters-and-profiling-basics) (2018)
-- [Detect false sharing with Data Address Profiling.](https://easyperf.net/blog/2019/12/17/Detecting-false-sharing-using-perf) (2019)
-- [Advanced profiling topics. PEBS and LBR.](https://easyperf.net/blog/2018/06/08/Advanced-profiling-topics-PEBS-and-LBR) (2018)
+- [PMU counters and profiling basics](https://easyperf.net/blog/2018/06/01/PMU-counters-and-profiling-basics) (2018)
+- [Advanced profiling topics. PEBS and LBR](https://easyperf.net/blog/2018/06/08/Advanced-profiling-topics-PEBS-and-LBR) (2018)
+- [The Linux perf Event Scheduling Algorithm](https://hadibrais.wordpress.com/2019/09/06/the-linux-perf-event-scheduling-algorithm/) (2019)
+- [Performance Speed Limits](https://travisdowns.github.io/blog/2019/06/11/speed-limits.html) (2019)
+- [Detect false sharing with Data Address Profiling](https://easyperf.net/blog/2019/12/17/Detecting-false-sharing-using-perf) (2019)
+- [Data-type profiling for perf](https://lwn.net/Articles/955709/) (2023)
+- [Analyze cache behavior with Perf C2C on Arm](https://learn.arm.com/learning-paths/servers-and-cloud-computing/false-sharing-arm-spe/) (2023)
 
