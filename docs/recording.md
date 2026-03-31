@@ -84,6 +84,19 @@ event_counter.add({"instructions", "cycles", "branches"},
 
 `add()` throws if the requested scheduling doesn't fit (e.g., too many events to group).
 
+### Fixed-Function Performance Counters (Intel)
+
+On Intel processors, `instructions`, `cycles`, `cpu-cycles`, and `ref-cycles` are backed by dedicated fixed-function hardware counters rather than the general-purpose PMCs.
+*perf-cpp* detects this automatically and schedules these events into their own pinned groups — they are never multiplexed and do not consume a generic PMC slot.
+
+This means you can measure fixed events alongside a full set of generic events without any scheduling penalty:
+
+```cpp
+/// On Intel: instructions, cycles, and ref-cycles go to fixed-function PMCs;
+/// cache-misses and branch-misses use the generic PMC budget as usual.
+event_counter.add({"instructions", "cycles", "ref-cycles", "cache-misses", "branch-misses"});
+```
+
 ## Binding to a CPU Core or Process
 
 By default, events are counted across all cores the thread runs on, for the calling process only.
@@ -112,6 +125,7 @@ auto event_counter = perf::EventCounter{ config };
 ## Detection of Physical Hardware Counters
 
 *perf-cpp* automatically detects the number of physical counters and multiplexing capabilities on most systems.
+On Intel processors, fixed-function PMCs (typically 3: `instructions`, `cycles`, `ref-cycles`) are detected separately via CPUID and do not reduce the available generic PMC slots.
 
 > [!IMPORTANT]
 > If the NMI watchdog is enabled (`cat /proc/sys/kernel/nmi_watchdog` returns `1`), it permanently consumes one hardware counter.
