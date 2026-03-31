@@ -228,6 +228,10 @@ private:
   /// wanted to schedule the counters together without any other.
   std::vector<std::pair<Group, bool>> _hardware_event_groups;
 
+  /// Number of groups in _hardware_event_groups that are dedicated to fixed-function PMCs.
+  /// Fixed-PMC groups bypass the generic PMC limit and are excluded from size().
+  std::size_t _num_fixed_groups{ 0U };
+
   /// List of counters that are marked to be read "live" (without stopping) using the "rdpmc" instruction (only
   /// implemented on x86 hardware).
   std::vector<Counter> _hardware_live_counters;
@@ -254,7 +258,7 @@ private:
    */
   [[nodiscard]] std::size_t size() const noexcept
   {
-    return _hardware_event_groups.size() + _hardware_live_counters.size();
+    return _hardware_event_groups.size() - _num_fixed_groups + _hardware_live_counters.size();
   }
 
   /**
@@ -296,6 +300,38 @@ private:
    * @param schedule Request of the user.
    */
   void schedule(std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>&& events, Schedule schedule);
+
+  /**
+   * Schedules all fixed-function PMC events from the given event list into dedicated pinned groups.
+   * Fixed events are removed from the list; the remaining events are returned for further scheduling.
+   * Only has an effect on Intel processors with fixed-function PMCs.
+   *
+   * @param events List of events; fixed events will be scheduled and removed.
+   * @return The remaining events after fixed events have been extracted.
+   */
+  [[nodiscard]] std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>
+  schedule_to_fixed_hardware_counters(
+    std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>&& events);
+
+  /**
+   * Schedules the given events to generic hardware counter groups.
+   * Depending on the schedule mode, events are appended to existing groups (Append) or placed in their own group
+   * (Separate).
+   *
+   * @param events List of events to schedule.
+   * @param schedule Append or Separate.
+   */
+  void schedule_to_generic_hardware_counters(
+    std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>&& events,
+    Schedule schedule);
+
+  /**
+   * Schedules all given events into a single hardware counter group.
+   * Throws if the group limit is reached or the events do not fit into one group.
+   *
+   * @param events List of events to schedule into one group.
+   */
+  void schedule_as_group(std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>&& events);
 
   /**
    * Try to append the given event to any hardware counter.

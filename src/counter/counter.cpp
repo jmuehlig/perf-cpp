@@ -243,7 +243,8 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled, const Config&
   attribute.config1 = this->_config.configs()[1U];
   attribute.config2 = this->_config.configs()[2U];
   attribute.disabled = is_disabled;
-  attribute.pinned = configuration.is_pinned();
+  /// Fixed-function PMC events are pinned to their dedicated counter; generic events use the config flag.
+  attribute.pinned = configuration.is_pinned() || (is_disabled && this->_config.is_fixed());
 
   attribute.inherit = configuration.is_include_child_threads();
   attribute.exclude_kernel = !configuration.is_include_kernel();

@@ -1,15 +1,20 @@
 #include <algorithm>
 #include <numeric>
 #include <perfcpp/event_counter.hpp>
+
+#include "perfcpp/hardware_info.hpp"
+
 #include <perfcpp/exception.hpp>
 #include <utility>
 
 perf::EventCounter
-perf::EventCounter::copy_from_template(const perf::EventCounter& other)
+perf::EventCounter::copy_from_template(const EventCounter& other)
 {
   auto copy = EventCounter{
     other._counter_definition, other._config, other._requested_event_set, other._requested_live_event_set
   };
+
+  copy._num_fixed_groups = other._num_fixed_groups;
 
   copy._hardware_event_groups.reserve(other._hardware_event_groups.size());
   for (const auto& [group, is_open] : other._hardware_event_groups) {
@@ -122,7 +127,7 @@ perf::EventCounter::unfold(const std::string& name,
 void
 perf::EventCounter::add(const std::string_view pmu_name,
                         const std::string_view event_name,
-                        const perf::CounterConfig& event_config,
+                        const CounterConfig& event_config,
                         const bool is_shown_in_results,
                         std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>& events)
 {
@@ -142,86 +147,128 @@ perf::EventCounter::add(const std::string_view pmu_name,
 
 void
 perf::EventCounter::schedule(std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>&& events,
-                             const perf::EventCounter::Schedule schedule)
+                             const Schedule schedule)
 {
+  /// On Intel, fixed-function PMCs hold dedicated events (instructions, cycles, ref-cycles).
+  /// Each fixed event gets its own pinned group and does not count against the generic PMC limit.
+  if (HardwareInfo::is_intel() && HardwareInfo::physical_fixed_performance_counters_per_logical_core() > 0U) {
+    events = this->schedule_to_fixed_hardware_counters(std::move(events));
+    if (events.empty()) {
+      return;
+    }
+  }
+
   if (schedule == Schedule::Append || schedule == Schedule::Separate) {
-    for (auto& [requested_event, event_configuration] : events) {
-      /// Metrics and time events (indicated by no hardware event config) do not need to be scheduled to hardware
-      /// counter groups; just add it to the event set.
-      if (!event_configuration.has_value()) {
-        this->_requested_event_set.add(requested_event);
-        continue;
-      }
-
-      /// If the event is already in the set, set the visibility to true (if is_shown_in_results == true), and return
-      /// since we do not need to add the event twice.
-      if (this->_requested_event_set.adjust_visibility_if_present(
-            requested_event.pmu_name(), requested_event.event_name(), requested_event.is_shown_in_results())) {
-        continue;
-      }
-
-      /// When appending to any group, try to find a group and schedule the event to that group.
-      if (schedule == Schedule::Append &&
-          this->append_to_any_hardware_counter(requested_event, event_configuration.value())) {
-        continue;
-      }
-
-      /// If either the event should be scheduled separately or no open group was found to append the event to, we
-      /// create a new group and schedule the event to that group. In case of appending, the new group remains open for
-      /// further events to be added. In case of scheduling separately, the group will be "closed", i.e., no further
-      /// events can be added in the future.
-      this->create_new_group(requested_event,
-                             event_configuration.value(),
-                             /* for appended events, further events can be added to that group */ schedule ==
-                               Schedule::Append);
-    }
+    this->schedule_to_generic_hardware_counters(std::move(events), schedule);
   } else if (schedule == Schedule::Group) {
-    /// Test if we can add another group.
-    if (this->size() == this->_config.num_physical_counters()) {
-      throw MaxGroupsReachedError{ this->_config.num_physical_counters() };
+    this->schedule_as_group(std::move(events));
+  }
+}
+
+std::vector<std::pair<perf::RequestedEvent, std::optional<perf::CounterConfig>>>
+perf::EventCounter::schedule_to_fixed_hardware_counters(
+  std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>&& events)
+{
+  for (auto& [requested_event, config] : events) {
+    if (!config.has_value() || !config->is_fixed()) {
+      continue;
     }
 
-    /// Test, if all the hardware events fit into a single group.
-    const auto count_hardware_events = std::count_if(events.begin(), events.end(), [](const auto& requested_event) {
-      return std::get<1>(requested_event).has_value();
-    });
-    if (count_hardware_events > this->_config.num_events_per_physical_counter()) {
-      throw CannotAddEventToSingleGroupError{ this->_config.num_events_per_physical_counter() };
+    /// Skip if the event is already scheduled (e.g., required by multiple metrics).
+    if (this->_requested_event_set.adjust_visibility_if_present(
+          requested_event.pmu_name(), requested_event.event_name(), requested_event.is_shown_in_results())) {
+      continue;
     }
 
-    /// Create a new group and add the event, if we did not raise an exception.
-    auto& [group, _] = this->_hardware_event_groups.emplace_back(
-      Group{}, /* only this events should be scheduled to the group; close it */ false);
+    /// Create a dedicated group for this fixed event; fixed groups do not count against the generic PMC limit.
+    this->create_new_group(requested_event, config.value(), /* fixed events never share a group */ false);
+    ++this->_num_fixed_groups;
+  }
 
-    /// Add all events.
-    const auto group_id = static_cast<std::uint8_t>(this->_hardware_event_groups.size() - 1U);
-    for (auto& [requested_event, event_configuration] : events) {
-      /// Metrics and time events (indicated by no hardware event config) do not need to be scheduled to hardware
-      /// counter groups; just add it to the event set.
-      if (!event_configuration.has_value()) {
-        this->_requested_event_set.add(requested_event);
-        continue;
-      }
+  /// Remove fixed events that have been scheduled above.
+  events.erase(std::remove_if(events.begin(), events.end(), [](const auto& event_and_config) {
+    return std::get<1>(event_and_config).has_value() && std::get<1>(event_and_config)->is_fixed();
+  }), events.end());
 
-      /// If the event is already in the set, set the visibility to true (if is_shown_in_results == true), and return
-      /// since we do not need to add the event twice.
-      if (this->_requested_event_set.adjust_visibility_if_present(
-            requested_event.pmu_name(), requested_event.event_name(), requested_event.is_shown_in_results())) {
-        continue;
-      }
+  return events;
+}
 
-      /// Add the hardware event to the group.
-      const auto in_group_position = static_cast<std::uint8_t>(group.size());
-      group.add(event_configuration.value());
-
-      /// Add to the request set.
-      this->_requested_event_set.add(requested_event, group_id, in_group_position);
+void
+perf::EventCounter::schedule_to_generic_hardware_counters(
+  std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>&& events,
+  const Schedule schedule)
+{
+  for (auto& [requested_event, event_configuration] : events) {
+    /// Metrics and time events (indicated by no hardware event config) do not need to be scheduled to hardware
+    /// counter groups; just add them to the event set.
+    if (!event_configuration.has_value()) {
+      this->_requested_event_set.add(requested_event);
+      continue;
     }
+
+    /// If the event is already in the set, only adjust its visibility; do not add the event twice.
+    if (this->_requested_event_set.adjust_visibility_if_present(
+          requested_event.pmu_name(), requested_event.event_name(), requested_event.is_shown_in_results())) {
+      continue;
+    }
+
+    /// When appending, try to find an open group and schedule the event there.
+    if (schedule == Schedule::Append &&
+        this->append_to_any_hardware_counter(requested_event, event_configuration.value())) {
+      continue;
+    }
+
+    /// No open group found (or Separate mode): create a new group. Append keeps the group open for future events;
+    /// Separate closes it immediately.
+    this->create_new_group(requested_event,
+                           event_configuration.value(),
+                           /* keep open for append mode */ schedule == Schedule::Append);
+  }
+}
+
+void
+perf::EventCounter::schedule_as_group(std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>&& events)
+{
+  /// Test if we can add another group.
+  if (this->size() == this->_config.num_physical_counters()) {
+    throw MaxGroupsReachedError{ this->_config.num_physical_counters() };
+  }
+
+  /// Test if all hardware events fit into a single group.
+  const auto count_hardware_events = std::count_if(events.begin(), events.end(), [](const auto& requested_event) {
+    return std::get<1>(requested_event).has_value();
+  });
+  if (count_hardware_events > this->_config.num_events_per_physical_counter()) {
+    throw CannotAddEventToSingleGroupError{ this->_config.num_events_per_physical_counter() };
+  }
+
+  /// Create the group; close it immediately so no further events can be appended.
+  auto& [group, _] = this->_hardware_event_groups.emplace_back(Group{}, false);
+  const auto group_id = static_cast<std::uint8_t>(this->_hardware_event_groups.size() - 1U);
+
+  for (auto& [requested_event, event_configuration] : events) {
+    /// Metrics and time events (indicated by no hardware event config) do not need to be scheduled to hardware
+    /// counter groups; just add them to the event set.
+    if (!event_configuration.has_value()) {
+      this->_requested_event_set.add(requested_event);
+      continue;
+    }
+
+    /// If the event is already in the set, only adjust its visibility; do not add the event twice.
+    if (this->_requested_event_set.adjust_visibility_if_present(
+          requested_event.pmu_name(), requested_event.event_name(), requested_event.is_shown_in_results())) {
+      continue;
+    }
+
+    /// Add the hardware event to the group.
+    const auto in_group_position = static_cast<std::uint8_t>(group.size());
+    group.add(event_configuration.value());
+    this->_requested_event_set.add(requested_event, group_id, in_group_position);
   }
 }
 
 bool
-perf::EventCounter::append_to_any_hardware_counter(perf::RequestedEvent& event, const perf::CounterConfig& event_config)
+perf::EventCounter::append_to_any_hardware_counter(RequestedEvent& event, const CounterConfig& event_config)
 {
   for (auto group_id = 0U; group_id < this->_hardware_event_groups.size(); ++group_id) {
     if (const auto is_group_open = std::get<1>(this->_hardware_event_groups[group_id]); is_group_open) {
@@ -248,8 +295,8 @@ perf::EventCounter::append_to_any_hardware_counter(perf::RequestedEvent& event, 
 }
 
 void
-perf::EventCounter::create_new_group(perf::RequestedEvent& event,
-                                     const perf::CounterConfig& event_config,
+perf::EventCounter::create_new_group(RequestedEvent& event,
+                                     const CounterConfig& event_config,
                                      bool is_keep_open)
 {
   /// Test if we can add another group.
@@ -470,7 +517,7 @@ perf::EventCounter::live_event_names() const
   return names;
 }
 
-perf::LiveEventCounter::LiveEventCounter(const perf::EventCounter& event_counter)
+perf::LiveEventCounter::LiveEventCounter(const EventCounter& event_counter)
   : _event_counter(event_counter)
   , _event_names(event_counter.live_event_names())
 {
@@ -522,7 +569,7 @@ perf::LiveEventCounter::get(const std::string_view event_name, const std::uint64
 }
 
 void
-perf::MultiEventCounterBase::add(std::string&& event_name, const perf::EventCounter::Schedule schedule)
+perf::MultiEventCounterBase::add(std::string&& event_name, const EventCounter::Schedule schedule)
 {
   /// Add the event to every event counter.
   for (auto& event_counter : this->event_counters()) {
@@ -532,7 +579,7 @@ perf::MultiEventCounterBase::add(std::string&& event_name, const perf::EventCoun
 
 void
 perf::MultiEventCounterBase::add(const std::vector<std::string>& event_names,
-                                 const perf::EventCounter::Schedule schedule)
+                                 const EventCounter::Schedule schedule)
 {
   /// Add the event to every sub event counter.
   for (auto& event_counter : this->event_counters()) {
@@ -628,9 +675,9 @@ perf::StartableMultiEventCounterBase::start()
   }
 }
 
-perf::MultiThreadEventCounter::MultiThreadEventCounter(const perf::CounterDefinition& counter_definition,
+perf::MultiThreadEventCounter::MultiThreadEventCounter(const CounterDefinition& counter_definition,
                                                        const std::uint16_t num_threads,
-                                                       const perf::Config config)
+                                                       const Config config)
 {
   this->_thread_local_counter.reserve(num_threads);
   for (auto thread_index = 0U; thread_index < num_threads; ++thread_index) {
@@ -638,7 +685,7 @@ perf::MultiThreadEventCounter::MultiThreadEventCounter(const perf::CounterDefini
   }
 }
 
-perf::MultiThreadEventCounter::MultiThreadEventCounter(perf::EventCounter&& event_counter,
+perf::MultiThreadEventCounter::MultiThreadEventCounter(EventCounter&& event_counter,
                                                        const std::uint16_t num_threads)
 {
   if (num_threads > 0U) {
@@ -650,9 +697,9 @@ perf::MultiThreadEventCounter::MultiThreadEventCounter(perf::EventCounter&& even
   }
 }
 
-perf::MultiProcessEventCounter::MultiProcessEventCounter(const perf::CounterDefinition& counter_definition,
+perf::MultiProcessEventCounter::MultiProcessEventCounter(const CounterDefinition& counter_definition,
                                                          std::vector<pid_t>&& process_ids,
-                                                         perf::Config config)
+                                                         Config config)
 {
   this->_process_local_counter.reserve(process_ids.size());
 
@@ -662,7 +709,7 @@ perf::MultiProcessEventCounter::MultiProcessEventCounter(const perf::CounterDefi
   }
 }
 
-perf::MultiProcessEventCounter::MultiProcessEventCounter(perf::EventCounter&& event_counter,
+perf::MultiProcessEventCounter::MultiProcessEventCounter(EventCounter&& event_counter,
                                                          std::vector<pid_t>&& process_ids)
 {
   if (!process_ids.empty()) {
@@ -699,9 +746,9 @@ perf::MultiProcessEventCounter::result_of_process(const pid_t process_id, const 
   return std::nullopt;
 }
 
-perf::MultiCoreEventCounter::MultiCoreEventCounter(const perf::CounterDefinition& counter_definition,
+perf::MultiCoreEventCounter::MultiCoreEventCounter(const CounterDefinition& counter_definition,
                                                    std::vector<std::uint16_t>&& cpu_ids,
-                                                   perf::Config config)
+                                                   Config config)
 {
   config.process(Process::Any); /// Record every thread/process on the given CPUs.
 
@@ -713,7 +760,7 @@ perf::MultiCoreEventCounter::MultiCoreEventCounter(const perf::CounterDefinition
   }
 }
 
-perf::MultiCoreEventCounter::MultiCoreEventCounter(perf::EventCounter&& event_counter,
+perf::MultiCoreEventCounter::MultiCoreEventCounter(EventCounter&& event_counter,
                                                    std::vector<std::uint16_t>&& cpu_ids)
 {
   this->_cpu_local_counter.reserve(cpu_ids.size());
