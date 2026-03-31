@@ -1,5 +1,10 @@
 # *perf-cpp*: Changelog
 
+## v0.13.1 (WIP)
+- **Fixed-Function PMC Scheduling**: On Intel processors, the built-in events `instructions`, `cycles`, `cpu-cycles`, and `ref-cycles` are now automatically scheduled to dedicated pinned groups. This prevents the kernel scheduler from placing fixed-function PMC events alongside generic events, which would distort multiplexing ratios. Fixed groups do not count against the generic PMC limit.
+- **Fixed PMC Detection**: Added `HardwareInfo::physical_fixed_performance_counters_per_logical_core()`, which reads the number of fixed-function performance counters on Intel.
+- **Built-in Event**: Added `ref-cycles` (reference cycles at a fixed frequency, unaffected by turbo boost or power-saving states) to the built-in hardware event list.  
+
 ## v0.13.0
 - **Header Restructuring**: Headers have been reorganized into `counter/`, `sample/`, `metric/`, `analyzer/`, and `util/` subdirectories and renamed from `.h` to `.hpp`. The previous `.h` headers remain as forwarding includes with deprecation notices and will be removed in v1.0.
 - **Breaking**: `EventCounter::add()` and `start()` (including `Sampler::start()` and all multi-thread/core variants) now return `void` instead of `bool`. Errors are communicated via exceptions; the return values were unused.
