@@ -653,9 +653,13 @@ For details, see the [AMD programmer reference](https://www.amd.com/content/dam/
 The Op PMU captures micro-op execution details: data cache and TLB hit/miss, latency, load/store data source, and branch behavior.
 Unlike Intel's mechanism, IBS does not tag specific load or store instructions. If the sampled instruction happens to be a load/store, the sample includes data source, latency, and memory address ([kernel patch](https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/)).
 
-*perf-cpp* detects IBS support automatically and provides the following triggers:
+*perf-cpp* detects IBS support automatically and registers the base events `ibs_op` and `ibs_fetch`.
+Use [typed triggers](#typed-triggers) to configure IBS behavior:
 
-Using [typed triggers](#typed-triggers) (recommended):
+- **`is_uop`** controls the counting source for the sampling interval.
+  With `is_uop = false` (default), the hardware counts dispatched **CPU cycles** and triggers a sample after the configured period of cycles.
+  With `is_uop = true`, the hardware counts dispatched **micro-operations** instead — a sample is triggered after the configured number of micro-ops, which provides more uniform sampling across instructions of varying latency.
+- **`is_l3_miss_only`** restricts sampling to operations that miss the L3 cache, filtering out samples that hit in L1/L2/L3.
 
 | Typed Trigger | Selection | Period/Frequency Unit |
 |---|---|---|
@@ -664,32 +668,23 @@ Using [typed triggers](#typed-triggers) (recommended):
 | `perf::IbsOp{/* is_uop */ false, /* is_l3_miss_only */ true}` | Instructions that miss L3 | CPU cycles |
 | `perf::IbsOp{/* is_uop */ true, /* is_l3_miss_only */ true}` | Instructions that miss L3 | Micro-operations |
 
-Using string-based triggers:
-
-| Trigger | Selection | Period/Frequency Unit |
-|---|---|---|
-| `ibs_op` | Instructions in the execution pipeline | CPU cycles |
-| `ibs_op_uops` | Instructions in the execution pipeline | Micro-operations |
-| `ibs_op_l3missonly` | Instructions that miss L3 | CPU cycles |
-| `ibs_op_uops_l3missonly` | Instructions that miss L3 | Micro-operations |
+> [!NOTE]
+> String-based triggers (`ibs_op`, `ibs_fetch`) still work but do not support configuration flags.
+> Use typed triggers (`perf::IbsOp`, `perf::IbsFetch`) for full control over uop counting, L3 miss filtering, and randomization.
 
 #### IBS Fetch PMU
 
 The Fetch PMU captures instruction fetch details: instruction cache and TLB hit/miss, fetch latency, and page size.
 
-Using [typed triggers](#typed-triggers) (recommended):
+- **`is_rand`** enables randomized fetch-count tagging (`IbsFetchCtl.IbsFetchRandEn`).
+  With `is_rand = true` (default), the hardware adds a random offset to the fetch counter, preventing sampling bias from repetitive instruction patterns.
+  With `is_rand = false`, sampling occurs at exact interval boundaries.
+- **`is_l3_miss_only`** restricts sampling to fetches that miss the L3 cache.
 
 | Typed Trigger | Selection | Period/Frequency Unit |
 |---|---|---|
 | `perf::IbsFetch{}` | Instructions in the fetch stage (frontend) | CPU cycles |
 | `perf::IbsFetch{/* is_rand */ true, /* is_l3_miss_only */ true}` | Instructions in the fetch stage that miss L3 | CPU cycles |
-
-Using string-based triggers:
-
-| Trigger | Selection | Period/Frequency Unit |
-|---|---|---|
-| `ibs_fetch` | Instructions in the fetch stage (frontend) | CPU cycles |
-| `ibs_fetch_l3missonly` | Instructions in the fetch stage that miss L3 | CPU cycles |
 
 
 ---

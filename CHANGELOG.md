@@ -1,6 +1,9 @@
 # *perf-cpp*: Changelog
 
 ## v0.13.1 (WIP)
+- **Configurable Sampling Triggers**: Typed triggers now fully support hardware-specific configuration:
+  - **Intel**: `perf::MemoryLoads` supports configurable `min_latency` for PEBS load latency filtering. `perf::MemoryStores` and `perf::MemoryLoadsAux` provide type-safe alternatives to string-based `mem-stores` and `mem-loads-aux` triggers. String-based triggers remain available and documented.
+  - **AMD**: `perf::IbsOp` and `perf::IbsFetch` now build their counter configuration directly from hardware capabilities, fully supporting `is_uop`, `is_l3_miss_only`, and `is_rand` flags. String-based trigger variants (`ibs_op_uops`, `ibs_op_l3missonly`, `ibs_op_uops_l3missonly`, `ibs_fetch_l3missonly`) still work but are no longer documented. Use typed triggers for full configurability.
 - **Fixed-Function PMC Scheduling**: On Intel processors, the built-in events `instructions`, `cycles`, `cpu-cycles`, and `ref-cycles` are now automatically scheduled to dedicated pinned groups. This prevents the kernel scheduler from placing fixed-function PMC events alongside generic events, which would distort multiplexing ratios. Fixed groups do not count against the generic PMC limit.
 - **Fixed PMC Detection**: Added `HardwareInfo::physical_fixed_performance_counters_per_logical_core()`, which reads the number of fixed-function performance counters on Intel.
 - **Built-in Event**: Added `ref-cycles` (reference cycles at a fixed frequency, unaffected by turbo boost or power-saving states) to the built-in hardware event list.  
