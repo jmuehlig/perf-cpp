@@ -11,7 +11,7 @@ perf::CannotOpenCounterError::create_error_message_from_code(const std::int64_t 
     case EACCES:
       return "insufficient access rights to start the counter, e.g., profiling a not user-owned process or "
              "perf_event_paranoid value too high (see "
-             "https://github.com/jmuehlig/perf-cpp/blob/dev/docs/perf-paranoid.md)";
+             "https://jmuehlig.github.io/perf-cpp/perf-paranoid/)";
 #ifndef PERFCPP_NO_ERROR_EBUSY /// Busy error is reported since Linux 4.1
     case EBUSY:
       return "another event has exclusive access to the PMU";
