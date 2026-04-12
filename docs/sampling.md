@@ -95,7 +95,7 @@ sampler.trigger("cycles");
 Multiple triggers can be specified — a sample is captured when any of them fires:
 
 ```cpp
-sampler.trigger(std::vector<std::string>{"cycles", "instructions"});
+sampler.trigger(std::vector<std::vector<std::string>>{{"cycles"}, {"instructions"}});
 ```
 
 ### Notes for specific CPUs
