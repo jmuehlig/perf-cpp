@@ -68,7 +68,10 @@ public:
     /**
      * @param op_l3_miss_only_bit The bit position for the L3 miss only filter in the IBS Op config.
      */
-    void op_l3_miss_only_bit(const std::uint8_t op_l3_miss_only_bit) noexcept { _op_l3_miss_only_bit = op_l3_miss_only_bit; }
+    void op_l3_miss_only_bit(const std::uint8_t op_l3_miss_only_bit) noexcept
+    {
+      _op_l3_miss_only_bit = op_l3_miss_only_bit;
+    }
 
     /**
      * @return The PMU type of the IBS Fetch device.
@@ -93,12 +96,18 @@ public:
     /**
      * @return The bit position for the L3 miss only filter in the IBS Fetch config.
      */
-    [[nodiscard]] std::optional<std::uint8_t> fetch_l3_miss_only_bit() const noexcept { return _fetch_l3_miss_only_bit; }
+    [[nodiscard]] std::optional<std::uint8_t> fetch_l3_miss_only_bit() const noexcept
+    {
+      return _fetch_l3_miss_only_bit;
+    }
 
     /**
      * @param fetch_l3_miss_only_bit The bit position for the L3 miss only filter in the IBS Fetch config.
      */
-    void fetch_l3_miss_only_bit(const std::uint8_t fetch_l3_miss_only_bit) noexcept { _fetch_l3_miss_only_bit = fetch_l3_miss_only_bit; }
+    void fetch_l3_miss_only_bit(const std::uint8_t fetch_l3_miss_only_bit) noexcept
+    {
+      _fetch_l3_miss_only_bit = fetch_l3_miss_only_bit;
+    }
 
   private:
     /// True, if IBS is supported.

@@ -310,8 +310,7 @@ private:
    * @return The remaining events after fixed events have been extracted.
    */
   [[nodiscard]] std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>
-  schedule_to_fixed_hardware_counters(
-    std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>&& events);
+  schedule_to_fixed_hardware_counters(std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>&& events);
 
   /**
    * Schedules the given events to generic hardware counter groups.

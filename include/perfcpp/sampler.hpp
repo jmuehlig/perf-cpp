@@ -279,6 +279,19 @@ public:
    * Set the trigger for sampling to a typed trigger (e.g., MemoryLoad, IbsOp).
    *
    * @param typed_trigger Typed trigger that "triggers" sample recording.
+   * @return Sampler
+   */
+  template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, std::string>, int> = 0>
+  Sampler& trigger(T&& typed_trigger)
+  {
+    return trigger(std::vector<std::vector<Trigger>>{
+      std::vector{ Trigger{ Trigger::trigger_t{ std::forward<T>(typed_trigger) } } } });
+  }
+
+  /**
+   * Set the trigger for sampling to a typed trigger (e.g., MemoryLoad, IbsOp).
+   *
+   * @param typed_trigger Typed trigger that "triggers" sample recording.
    * @param precision Precision of the event.
    * @return Sampler
    */

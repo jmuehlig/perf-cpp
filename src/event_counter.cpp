@@ -186,9 +186,13 @@ perf::EventCounter::schedule_to_fixed_hardware_counters(
   }
 
   /// Remove fixed events that have been scheduled above.
-  events.erase(std::remove_if(events.begin(), events.end(), [](const auto& event_and_config) {
-    return std::get<1>(event_and_config).has_value() && std::get<1>(event_and_config)->is_fixed();
-  }), events.end());
+  events.erase(std::remove_if(events.begin(),
+                              events.end(),
+                              [](const auto& event_and_config) {
+                                return std::get<1>(event_and_config).has_value() &&
+                                       std::get<1>(event_and_config)->is_fixed();
+                              }),
+               events.end());
 
   return events;
 }
@@ -235,9 +239,8 @@ perf::EventCounter::schedule_as_group(std::vector<std::pair<RequestedEvent, std:
   }
 
   /// Test if all hardware events fit into a single group.
-  const auto count_hardware_events = std::count_if(events.begin(), events.end(), [](const auto& requested_event) {
-    return std::get<1>(requested_event).has_value();
-  });
+  const auto count_hardware_events = std::count_if(
+    events.begin(), events.end(), [](const auto& requested_event) { return std::get<1>(requested_event).has_value(); });
   if (count_hardware_events > this->_config.num_events_per_physical_counter()) {
     throw CannotAddEventToSingleGroupError{ this->_config.num_events_per_physical_counter() };
   }
@@ -295,9 +298,7 @@ perf::EventCounter::append_to_any_hardware_counter(RequestedEvent& event, const 
 }
 
 void
-perf::EventCounter::create_new_group(RequestedEvent& event,
-                                     const CounterConfig& event_config,
-                                     bool is_keep_open)
+perf::EventCounter::create_new_group(RequestedEvent& event, const CounterConfig& event_config, bool is_keep_open)
 {
   /// Test if we can add another group.
   if (this->size() == this->_config.num_physical_counters()) {
@@ -578,8 +579,7 @@ perf::MultiEventCounterBase::add(std::string&& event_name, const EventCounter::S
 }
 
 void
-perf::MultiEventCounterBase::add(const std::vector<std::string>& event_names,
-                                 const EventCounter::Schedule schedule)
+perf::MultiEventCounterBase::add(const std::vector<std::string>& event_names, const EventCounter::Schedule schedule)
 {
   /// Add the event to every sub event counter.
   for (auto& event_counter : this->event_counters()) {
@@ -685,8 +685,7 @@ perf::MultiThreadEventCounter::MultiThreadEventCounter(const CounterDefinition& 
   }
 }
 
-perf::MultiThreadEventCounter::MultiThreadEventCounter(EventCounter&& event_counter,
-                                                       const std::uint16_t num_threads)
+perf::MultiThreadEventCounter::MultiThreadEventCounter(EventCounter&& event_counter, const std::uint16_t num_threads)
 {
   if (num_threads > 0U) {
     this->_thread_local_counter.reserve(num_threads);
@@ -709,8 +708,7 @@ perf::MultiProcessEventCounter::MultiProcessEventCounter(const CounterDefinition
   }
 }
 
-perf::MultiProcessEventCounter::MultiProcessEventCounter(EventCounter&& event_counter,
-                                                         std::vector<pid_t>&& process_ids)
+perf::MultiProcessEventCounter::MultiProcessEventCounter(EventCounter&& event_counter, std::vector<pid_t>&& process_ids)
 {
   if (!process_ids.empty()) {
     this->_process_local_counter.reserve(process_ids.size());
@@ -760,8 +758,7 @@ perf::MultiCoreEventCounter::MultiCoreEventCounter(const CounterDefinition& coun
   }
 }
 
-perf::MultiCoreEventCounter::MultiCoreEventCounter(EventCounter&& event_counter,
-                                                   std::vector<std::uint16_t>&& cpu_ids)
+perf::MultiCoreEventCounter::MultiCoreEventCounter(EventCounter&& event_counter, std::vector<std::uint16_t>&& cpu_ids)
 {
   this->_cpu_local_counter.reserve(cpu_ids.size());
   auto config = event_counter.config();

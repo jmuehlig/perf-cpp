@@ -65,6 +65,29 @@ TEST_CASE("sampling", "[Sampler]")
     REQUIRE_NOTHROW(sampler.close());
   }
 
+  SECTION("IP with cycles (typed)")
+  {
+    auto sampler = perf::Sampler{};
+    REQUIRE_NOTHROW(sampler.trigger(perf::Cycles{}));
+    sampler.values().logical_instruction_pointer(true);
+
+    REQUIRE_NOTHROW(sampler.open());
+    REQUIRE_NOTHROW(sampler.start());
+
+    readonly_benchmark.run();
+
+    REQUIRE_NOTHROW(sampler.stop());
+
+    const auto samples = sampler.result();
+    REQUIRE_FALSE(samples.empty());
+    for (const auto& sample : samples) {
+      REQUIRE_FALSE(sample.metadata().timestamp().has_value());
+      REQUIRE(sample.instruction_execution().logical_instruction_pointer().has_value());
+    }
+
+    REQUIRE_NOTHROW(sampler.close());
+  }
+
   SECTION("re-start")
   {
     auto sampler = perf::Sampler{};
@@ -98,7 +121,7 @@ TEST_CASE("sampling", "[Sampler]")
   {
     auto sampler1 = perf::Sampler{};
 
-    REQUIRE_NOTHROW(sampler1.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 200000 }));
+    REQUIRE_NOTHROW(sampler1.trigger(perf::Cycles{}, perf::Precision::RequestZeroSkid, perf::Period{ 200000 }));
     sampler1.values().logical_instruction_pointer(true).timestamp(true);
 
     REQUIRE_NOTHROW(sampler1.open());
@@ -134,9 +157,10 @@ TEST_CASE("sampling", "[Sampler]")
     auto sampler = perf::Sampler{};
 
     if (perf::HardwareInfo::is_intel()) {
-      REQUIRE_NOTHROW(sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid, perf::Period{ 16000 }));
+      REQUIRE_NOTHROW(sampler.trigger(perf::MemoryLoads{}, perf::Precision::MustHaveZeroSkid, perf::Period{ 16000 }));
     } else if (perf::HardwareInfo::is_amd()) {
-      REQUIRE_NOTHROW(sampler.trigger("ibs_op_uops", perf::Precision::RequestZeroSkid, perf::Period{ 16000 }));
+      REQUIRE_NOTHROW(
+        sampler.trigger(perf::IbsOp{ /*upos = */ true }, perf::Precision::RequestZeroSkid, perf::Period{ 16000 }));
     }
 
     REQUIRE_NOTHROW(sampler.values().logical_memory_address(true).data_source(true).data_access_latency(true));

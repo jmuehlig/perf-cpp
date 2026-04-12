@@ -117,22 +117,12 @@ perf::MemoryLoadsAux::resolve(const CounterDefinition& counter_definition, const
 std::vector<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
 perf::IbsFetch::resolve(const CounterDefinition& counter_definition) const
 {
-  if (!HardwareInfo::is_amd()) {
-    throw EventRequiresSpecificVendorError{ "AMD", "ibs_fetch" };
+  /// IBS Fetch has a single dedicated PMU.
+  if (auto event = this->resolve(counter_definition, std::string_view{ "ibs_fetch" }); event.has_value()) {
+    return { std::move(event.value()) };
   }
 
-  /// Select the event name based on the L3 miss filter.
-  /// Note: the registered ibs_fetch event always has rand_en set; is_rand=false cannot be
-  /// honoured via event-name variants and requires direct config-bit patching (not yet implemented).
-  const auto event_name = this->_is_l3_miss_only ? std::string{ "ibs_fetch_l3missonly" } : std::string{ "ibs_fetch" };
-
-  const auto counter_configs = counter_definition.counter(event_name);
-  if (counter_configs.empty()) {
-    throw CannotFindEventError{ event_name };
-  }
-
-  /// AMD IBS has a single dedicated PMU; always a single entry.
-  return { counter_configs.front() };
+  throw CannotFindEventError{ std::string_view{ "ibs_fetch" } };
 }
 
 std::optional<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
@@ -142,35 +132,39 @@ perf::IbsFetch::resolve(const CounterDefinition& counter_definition, const std::
     throw EventRequiresSpecificVendorError{ "AMD", "ibs_fetch" };
   }
 
-  /// Select the event name based on the L3 miss filter.
-  const auto event_name =
-    this->_is_l3_miss_only ? std::string_view{ "ibs_fetch_l3missonly" } : std::string_view{ "ibs_fetch" };
-  return counter_definition.counter(pmu_name, event_name);
+  /// Look up the base ibs_fetch event on the requested PMU.
+  const auto base_event = counter_definition.counter(pmu_name, std::string_view{ "ibs_fetch" });
+  if (!base_event.has_value()) {
+    return std::nullopt;
+  }
+
+  /// Get ibs_op event.
+  const auto& [base_pmu_name, event_name, base_config] = base_event.value();
+
+  /// Get IBS information from perf subsystem.
+  const auto& ibs_info = HardwareInfo::amd_ibs();
+
+  /// Build the config value from the flags.
+  auto config_value = 0ULL;
+  if (const auto rand_bit = ibs_info.fetch_rand_bit(); this->_is_rand && rand_bit.has_value()) {
+    config_value |= 1ULL << rand_bit.value();
+  }
+  if (const auto l3_miss_bit = ibs_info.fetch_l3_miss_only_bit(); this->_is_l3_miss_only && l3_miss_bit.has_value()) {
+    config_value |= 1ULL << l3_miss_bit.value();
+  }
+
+  return std::make_tuple(base_pmu_name, event_name, CounterConfig{ base_config.type(), config_value });
 }
 
 std::vector<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
 perf::IbsOp::resolve(const CounterDefinition& counter_definition) const
 {
-  if (!HardwareInfo::is_amd()) {
-    throw EventRequiresSpecificVendorError{ "AMD", "ibs_op" };
+  /// IBS Op has a single dedicated PMU.
+  if (auto event = this->resolve(counter_definition, std::string_view{ "ibs_op" }); event.has_value()) {
+    return { std::move(event.value()) };
   }
 
-  /// Select the event name from the four variants covering all combinations of cnt_ctl and l3missonly.
-  auto event_name = std::string{ "ibs_op" };
-  if (this->_is_uop) {
-    event_name.append("_uops");
-  }
-  if (this->_is_l3_miss_only) {
-    event_name.append("_l3missonly");
-  }
-
-  const auto counter_configs = counter_definition.counter(event_name);
-  if (counter_configs.empty()) {
-    throw CannotFindEventError{ event_name };
-  }
-
-  /// AMD IBS has a single dedicated PMU; always a single entry.
-  return { counter_configs.front() };
+  throw CannotFindEventError{ std::string_view{ "ibs_op" } };
 }
 
 std::optional<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
@@ -180,14 +174,23 @@ perf::IbsOp::resolve(const CounterDefinition& counter_definition, const std::str
     throw EventRequiresSpecificVendorError{ "AMD", "ibs_op" };
   }
 
-  /// Select the event name from the four variants covering all combinations of cnt_ctl and l3missonly.
-  auto event_name = std::string{ "ibs_op" };
-  if (this->_is_uop) {
-    event_name.append("_uops");
-  }
-  if (this->_is_l3_miss_only) {
-    event_name.append("_l3missonly");
+  /// Look up the base ibs_op event on the requested PMU.
+  const auto base_event = counter_definition.counter(pmu_name, std::string_view{ "ibs_op" });
+  if (!base_event.has_value()) {
+    return std::nullopt;
   }
 
-  return counter_definition.counter(pmu_name, event_name);
+  const auto& [base_pmu_name, event_name, base_config] = base_event.value();
+  const auto& ibs_info = HardwareInfo::amd_ibs();
+
+  /// Build the config value from the flags.
+  auto config_value = 0ULL;
+  if (const auto uops_bit = ibs_info.op_uops_bit(); this->_is_uop && uops_bit.has_value()) {
+    config_value |= 1ULL << uops_bit.value();
+  }
+  if (const auto l3_miss_bit = ibs_info.op_l3_miss_only_bit(); this->_is_l3_miss_only && l3_miss_bit.has_value()) {
+    config_value |= 1ULL << l3_miss_bit.value();
+  }
+
+  return std::make_tuple(base_pmu_name, event_name, CounterConfig{ base_config.type(), config_value });
 }

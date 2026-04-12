@@ -16,11 +16,15 @@ void
 perf::PerfSubsystemEventProvider::add_events(CounterDefinition& counter_definition)
 {
   /// On Intel, instructions, cycles, and ref-cycles use fixed-function PMCs dedicated to these events.
-  const auto is_fixed = HardwareInfo::is_intel() && HardwareInfo::physical_fixed_performance_counters_per_logical_core() > 0U;
-  counter_definition.add("instructions", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS, 0UL, 0UL, is_fixed });
+  const auto is_fixed =
+    HardwareInfo::is_intel() && HardwareInfo::physical_fixed_performance_counters_per_logical_core() > 0U;
+  counter_definition.add("instructions",
+                         CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS, 0UL, 0UL, is_fixed });
   counter_definition.add("cycles", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES, 0UL, 0UL, is_fixed });
-  counter_definition.add("cpu-cycles", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES, 0UL, 0UL, is_fixed });
-  counter_definition.add("ref-cycles", CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_REF_CPU_CYCLES, 0UL, 0UL, is_fixed });
+  counter_definition.add("cpu-cycles",
+                         CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES, 0UL, 0UL, is_fixed });
+  counter_definition.add("ref-cycles",
+                         CounterConfig{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_REF_CPU_CYCLES, 0UL, 0UL, is_fixed });
   counter_definition.add("bus-cycles", PERF_TYPE_HARDWARE, PERF_COUNT_HW_BUS_CYCLES);
 
   /// Branches
@@ -165,8 +169,7 @@ perf::SystemSpecificEventProvider::add_events(CounterDefinition& counter_definit
         if (!counter_definition.counter(pmu_name, event_name).has_value()) {
 
           /// Parse the file descriptor containing configuration code and further information.
-          if (const auto event_configuration = event_parser.config(event_name);
-              event_configuration.has_value()) {
+          if (const auto event_configuration = event_parser.config(event_name); event_configuration.has_value()) {
 
             /// Add the event, if parsing was successfully.
             auto config = CounterConfig{ type.value(),
@@ -250,8 +253,7 @@ perf::AMDIbsEventProvider::add_op_events(perf::CounterDefinition& counter_defini
 
     if (const auto uops_bit = ibs_info.op_uops_bit(); uops_bit.has_value()) {
       /// Event that is triggered by micro ops.
-      counter_definition.add(
-        "ibs_op", "ibs_op_uops", CounterConfig{ op_type.value(), 1ULL << uops_bit.value() });
+      counter_definition.add("ibs_op", "ibs_op_uops", CounterConfig{ op_type.value(), 1ULL << uops_bit.value() });
     }
 
     if (const auto l3_miss_only_bit = ibs_info.op_l3_miss_only_bit(); l3_miss_only_bit.has_value()) {
@@ -305,8 +307,7 @@ perf::CsvFileEventProvider::add_events(perf::CounterDefinition& counter_definiti
         if (std::string config_or_metric_str; std::getline(line_stream, config_or_metric_str, ',')) {
 
           /// Try to translate config into number.
-          if (const auto config = EventFileDescriptorParser::integer(config_or_metric_str);
-              config.has_value()) {
+          if (const auto config = EventFileDescriptorParser::integer(config_or_metric_str); config.has_value()) {
             /// Read extended config-field and translate into integer.
             if (std::string extended_config_str; std::getline(line_stream, extended_config_str, ',')) {
               /// Translate extended config into number.

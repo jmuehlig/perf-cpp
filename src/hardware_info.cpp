@@ -4,8 +4,8 @@
 #include <fstream>
 #include <perfcpp/counter/group.hpp>
 #include <perfcpp/counter_definition.hpp>
-#include <perfcpp/hardware_info.hpp>
 #include <perfcpp/event_file_descriptor_parser.hpp>
+#include <perfcpp/hardware_info.hpp>
 #include <unistd.h>
 #if defined(__x86_64__) || defined(__i386__)
 #include <cpuid.h>
@@ -127,7 +127,7 @@ perf::HardwareInfo::amd_ibs()
     return HardwareInfo::_amd_ibs.value();
   }
 
-  auto ibs_info = AMDInstructionBasedSampling{true};
+  auto ibs_info = AMDInstructionBasedSampling{ true };
 
   /// Check if L3Miss filter is supported.
   auto is_l3miss_filter_supported = false;
@@ -148,7 +148,8 @@ perf::HardwareInfo::amd_ibs()
 
       /// Read l3_miss_only bit.
       if (is_l3miss_filter_supported) {
-        if (const auto fetch_l3miss_bit_format = fetch_event.format("l3missonly"); fetch_l3miss_bit_format.size() == 1UL) {
+        if (const auto fetch_l3miss_bit_format = fetch_event.format("l3missonly");
+            fetch_l3miss_bit_format.size() == 1UL) {
           ibs_info.fetch_l3_miss_only_bit(std::get<0U>(std::get<1U>(fetch_l3miss_bit_format.front())));
         }
       }
