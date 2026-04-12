@@ -42,6 +42,7 @@ set(PERF_CPP_SRC
     src/counter/requested_event.cpp
     src/counter/result.cpp
     src/sample/decoder.cpp
+    src/sample/trigger.cpp
     src/sample/mmap_buffer.cpp
     src/sample/recording_values.cpp
     src/sample/record_file_writer.cpp

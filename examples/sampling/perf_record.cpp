@@ -16,9 +16,10 @@ main()
 
   /// Setup which counters trigger the writing of samples (depends on the underlying hardware substrate).
   if (perf::HardwareInfo::is_amd_ibs_supported()) {
-    sampler.trigger("ibs_op_uops", perf::Precision::MustHaveZeroSkid, perf::Period{ 16000 });
+    sampler.trigger(perf::IbsOp{ /*is_uop=*/true }, perf::Precision::MustHaveZeroSkid, perf::Period{ 16000 });
   } else if (perf::HardwareInfo::is_intel()) {
-    sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid, perf::Period{ 16000 });
+    sampler.trigger(
+      perf::MemoryLoad{ /*no latency filter*/ 0U }, perf::Precision::MustHaveZeroSkid, perf::Period{ 16000 });
   } else {
     std::cout << "Error: Memory sampling is not supported on this CPU." << std::endl;
     return 1;

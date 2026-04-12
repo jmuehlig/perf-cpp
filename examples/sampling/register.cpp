@@ -11,7 +11,7 @@ main()
             << std::endl;
 
   auto sampler = perf::Sampler{};
-  sampler.trigger("cycles", perf::Period{ 100000 });
+  sampler.trigger(perf::Cycles{}, perf::Period{ 100000 });
   sampler.values()
     .timestamp(true)
     .user_registers(

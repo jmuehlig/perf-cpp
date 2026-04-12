@@ -342,6 +342,21 @@ public:
   ~MetricNotSupportedAsSamplingTriggerError() override = default;
 };
 
+class TriggerIsAmbiguousError final : public std::runtime_error
+{
+public:
+  explicit TriggerIsAmbiguousError(const std::string& metric_name)
+    : std::runtime_error(
+        std::string{ "The event '" }.append(metric_name).append("' is ambiguous. Please specify the trigger."))
+  {
+  }
+  TriggerIsAmbiguousError(const TriggerIsAmbiguousError&) = default;
+  TriggerIsAmbiguousError(TriggerIsAmbiguousError&&) noexcept = default;
+  TriggerIsAmbiguousError& operator=(const TriggerIsAmbiguousError&) = default;
+  TriggerIsAmbiguousError& operator=(TriggerIsAmbiguousError&&) noexcept = default;
+  ~TriggerIsAmbiguousError() override = default;
+};
+
 class MetricNotSupportedAsLiveEventError final : public std::runtime_error
 {
 public:
@@ -683,6 +698,22 @@ public:
   CannotReadMaxClockFrequency& operator=(const CannotReadMaxClockFrequency&) = default;
   CannotReadMaxClockFrequency& operator=(CannotReadMaxClockFrequency&&) noexcept = default;
   ~CannotReadMaxClockFrequency() override = default;
+};
+
+class EventRequiresSpecificVendorError final : public std::runtime_error
+{
+public:
+  EventRequiresSpecificVendorError(const std::string_view vendor_name, const std::string_view event_name)
+    : std::runtime_error{
+      std::string{ "The event '" }.append(event_name).append("' requires ").append(vendor_name).append(" hardware.")
+    }
+  {
+  }
+  EventRequiresSpecificVendorError(const EventRequiresSpecificVendorError&) = default;
+  EventRequiresSpecificVendorError(EventRequiresSpecificVendorError&&) noexcept = default;
+  EventRequiresSpecificVendorError& operator=(const EventRequiresSpecificVendorError&) = default;
+  EventRequiresSpecificVendorError& operator=(EventRequiresSpecificVendorError&&) noexcept = default;
+  ~EventRequiresSpecificVendorError() override = default;
 };
 
 }

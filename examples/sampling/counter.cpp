@@ -20,7 +20,7 @@ main()
   auto sampler = perf::Sampler{ counter_definition };
 
   /// Setup the event that will trigger writing samples.
-  sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid, perf::Period{ 50000 });
+  sampler.trigger(perf::Cycles{}, perf::Precision::AllowArbitrarySkid, perf::Period{ 50000 });
 
   /// Setup which data should be included (L1 hit and miss counter, timestamp).
   sampler.values().counter({ "L1-dcache-loads", "L1-dcache-load-misses", "L1d-misses-per-load" }).timestamp(true);

@@ -13,7 +13,7 @@ main()
   auto sampler = perf::Sampler{};
 
   /// Event that generates an overflow which is samples.
-  sampler.trigger("cycles", perf::Precision::RequestZeroSkid, perf::Period{ 50000 });
+  sampler.trigger(perf::Cycles{}, perf::Precision::RequestZeroSkid, perf::Period{ 50000 });
 
   /// Include Timestamp, period, instruction pointer, and CPU number into samples.
   sampler.values().timestamp(true).cpu_id(true).context_switch(true);

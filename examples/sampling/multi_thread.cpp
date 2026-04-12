@@ -17,7 +17,7 @@ main()
   auto sampler = perf::MultiThreadSampler{ count_threads };
 
   /// Setup event that triggers writing samples.
-  sampler.trigger("cycles", perf::Period{ 50000 });
+  sampler.trigger(perf::Cycles{}, perf::Period{ 50000 });
 
   /// Setup what data the samples should include (timestamp, instruction pointer, CPU id, thread id).
   sampler.values().timestamp(true).logical_instruction_pointer(true).cpu_id(true).thread_id(true);

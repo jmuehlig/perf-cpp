@@ -24,7 +24,7 @@ main()
   auto sampler = perf::Sampler{};
 
   /// Setup which counters trigger the writing of samples.
-  sampler.trigger("cycles", perf::Precision::AllowArbitrarySkid, perf::Period{ 1000000U });
+  sampler.trigger(perf::Cycles{}, perf::Precision::AllowArbitrarySkid, perf::Period{ 1000000U });
 
   /// Setup which data will be included into samples (timestamp and stack of branches).
   sampler.values().timestamp(true).branch_stack(
