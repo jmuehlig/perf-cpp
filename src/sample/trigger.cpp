@@ -138,7 +138,7 @@ perf::IbsFetch::resolve(const CounterDefinition& counter_definition, const std::
     return std::nullopt;
   }
 
-  /// Get ibs_op event.
+  /// Get ibs_fetch event.
   const auto& [base_pmu_name, event_name, base_config] = base_event.value();
 
   /// Get IBS information from perf subsystem.
@@ -146,12 +146,22 @@ perf::IbsFetch::resolve(const CounterDefinition& counter_definition, const std::
 
   /// Build the config value from the flags.
   auto config_value = 0ULL;
-  if (const auto rand_bit = ibs_info.fetch_rand_bit(); this->_is_rand && rand_bit.has_value()) {
-    config_value |= 1ULL << rand_bit.value();
+  if (this->_is_rand) {
+    if (const auto rand_bit = ibs_info.fetch_rand_bit(); rand_bit.has_value()) {
+      config_value |= 1ULL << rand_bit.value();
+    } else {
+      throw EventDoesNotSupportIBSFeature{"ibs_fetch", "randomization"};
+    }
   }
-  if (const auto l3_miss_bit = ibs_info.fetch_l3_miss_only_bit(); this->_is_l3_miss_only && l3_miss_bit.has_value()) {
-    config_value |= 1ULL << l3_miss_bit.value();
+
+  if (this->_is_l3_miss_only) {
+    if (const auto l3_miss_bit = ibs_info.fetch_l3_miss_only_bit(); l3_miss_bit.has_value()) {
+      config_value |= 1ULL << l3_miss_bit.value();
+    } else {
+      throw EventDoesNotSupportIBSFeature{"ibs_fetch", "l3 miss filtering"};
+    }
   }
+
 
   return std::make_tuple(base_pmu_name, event_name, CounterConfig{ base_config.type(), config_value });
 }
@@ -185,11 +195,21 @@ perf::IbsOp::resolve(const CounterDefinition& counter_definition, const std::str
 
   /// Build the config value from the flags.
   auto config_value = 0ULL;
-  if (const auto uops_bit = ibs_info.op_uops_bit(); this->_is_uop && uops_bit.has_value()) {
-    config_value |= 1ULL << uops_bit.value();
+  if (this->_is_uop) {
+    if (const auto uops_bit = ibs_info.op_uops_bit(); uops_bit.has_value()) {
+      config_value |= 1ULL << uops_bit.value();
+    }
+    else {
+      throw EventDoesNotSupportIBSFeature{"ibs_op", "micro operations"};
+    }
   }
-  if (const auto l3_miss_bit = ibs_info.op_l3_miss_only_bit(); this->_is_l3_miss_only && l3_miss_bit.has_value()) {
-    config_value |= 1ULL << l3_miss_bit.value();
+
+  if (this->_is_l3_miss_only) {
+    if (const auto l3_miss_bit = ibs_info.op_l3_miss_only_bit(); l3_miss_bit.has_value()) {
+      config_value |= 1ULL << l3_miss_bit.value();
+    } else {
+      throw EventDoesNotSupportIBSFeature{"ibs_op", "l3 miss filtering"};
+    }
   }
 
   return std::make_tuple(base_pmu_name, event_name, CounterConfig{ base_config.type(), config_value });

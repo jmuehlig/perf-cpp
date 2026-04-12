@@ -716,4 +716,20 @@ public:
   ~EventRequiresSpecificVendorError() override = default;
 };
 
+class EventDoesNotSupportIBSFeature final : public std::runtime_error
+{
+public:
+  EventDoesNotSupportIBSFeature(const std::string_view ibs_event, const std::string_view feature)
+    : std::runtime_error{
+      std::string{ "The underlying IBS counter '" }.append(ibs_event).append("' does not support ").append(feature).append(".")
+    }
+  {
+  }
+  EventDoesNotSupportIBSFeature(const EventDoesNotSupportIBSFeature&) = default;
+  EventDoesNotSupportIBSFeature(EventDoesNotSupportIBSFeature&&) noexcept = default;
+  EventDoesNotSupportIBSFeature& operator=(const EventDoesNotSupportIBSFeature&) = default;
+  EventDoesNotSupportIBSFeature& operator=(EventDoesNotSupportIBSFeature&&) noexcept = default;
+  ~EventDoesNotSupportIBSFeature() override = default;
+};
+
 }
