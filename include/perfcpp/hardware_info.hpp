@@ -12,12 +12,113 @@
 #endif
 
 namespace perf {
+
 /**
  * Access to information about the underlying hardware substrate like manufacturer and perf specifics.
  */
 class HardwareInfo
 {
 public:
+  class AMDInstructionBasedSampling
+  {
+  public:
+    explicit AMDInstructionBasedSampling(const bool is_supported) noexcept
+      : _is_supported(is_supported)
+    {
+    }
+
+    AMDInstructionBasedSampling(AMDInstructionBasedSampling&&) noexcept = default;
+    AMDInstructionBasedSampling(const AMDInstructionBasedSampling&) = default;
+
+    ~AMDInstructionBasedSampling() noexcept = default;
+
+    AMDInstructionBasedSampling& operator=(AMDInstructionBasedSampling&&) noexcept = default;
+    AMDInstructionBasedSampling& operator=(const AMDInstructionBasedSampling&) = default;
+
+    /**
+     * @return True, if IBS is supported on the underlying hardware.
+     */
+    [[nodiscard]] bool is_supported() const noexcept { return _is_supported; }
+
+    /**
+     * @return The PMU type of the IBS Op device.
+     */
+    [[nodiscard]] std::optional<std::uint32_t> op_type() const noexcept { return _op_type; }
+
+    /**
+     * @param op_type The PMU type of the IBS Op device.
+     */
+    void op_type(const std::uint32_t op_type) noexcept { _op_type = op_type; }
+
+    /**
+     * @return The bit position for the uops trigger in the IBS Op config.
+     */
+    [[nodiscard]] std::optional<std::uint8_t> op_uops_bit() const noexcept { return _op_uops_bit; }
+
+    /**
+     * @param op_uops_bit The bit position for the uops trigger in the IBS Op config.
+     */
+    void op_uops_bit(const std::uint8_t op_uops_bit) noexcept { _op_uops_bit = op_uops_bit; }
+
+    /**
+     * @return The bit position for the L3 miss only filter in the IBS Op config.
+     */
+    [[nodiscard]] std::optional<std::uint8_t> op_l3_miss_only_bit() const noexcept { return _op_l3_miss_only_bit; }
+
+    /**
+     * @param op_l3_miss_only_bit The bit position for the L3 miss only filter in the IBS Op config.
+     */
+    void op_l3_miss_only_bit(const std::uint8_t op_l3_miss_only_bit) noexcept { _op_l3_miss_only_bit = op_l3_miss_only_bit; }
+
+    /**
+     * @return The PMU type of the IBS Fetch device.
+     */
+    [[nodiscard]] std::optional<std::uint32_t> fetch_type() const noexcept { return _fetch_type; }
+
+    /**
+     * @param fetch_type The PMU type of the IBS Fetch device.
+     */
+    void fetch_type(const std::uint32_t fetch_type) noexcept { _fetch_type = fetch_type; }
+
+    /**
+     * @return The bit position for the randomization enable in the IBS Fetch config.
+     */
+    [[nodiscard]] std::optional<std::uint8_t> fetch_rand_bit() const noexcept { return _fetch_rand_bit; }
+
+    /**
+     * @param fetch_rand_bit The bit position for the randomization enable in the IBS Fetch config.
+     */
+    void fetch_rand_bit(const std::uint8_t fetch_rand_bit) noexcept { _fetch_rand_bit = fetch_rand_bit; }
+
+    /**
+     * @return The bit position for the L3 miss only filter in the IBS Fetch config.
+     */
+    [[nodiscard]] std::optional<std::uint8_t> fetch_l3_miss_only_bit() const noexcept { return _fetch_l3_miss_only_bit; }
+
+    /**
+     * @param fetch_l3_miss_only_bit The bit position for the L3 miss only filter in the IBS Fetch config.
+     */
+    void fetch_l3_miss_only_bit(const std::uint8_t fetch_l3_miss_only_bit) noexcept { _fetch_l3_miss_only_bit = fetch_l3_miss_only_bit; }
+
+  private:
+    /// True, if IBS is supported.
+    bool _is_supported;
+
+    /// PMU type of the IBS Op device.
+    std::optional<std::uint32_t> _op_type{ std::nullopt };
+    /// Bit position for the uops trigger in the IBS Op config.
+    std::optional<std::uint8_t> _op_uops_bit{ std::nullopt };
+    /// Bit position for the L3 miss only filter in the IBS Op config.
+    std::optional<std::uint8_t> _op_l3_miss_only_bit{ std::nullopt };
+
+    /// PMU type of the IBS Fetch device.
+    std::optional<std::uint32_t> _fetch_type{ std::nullopt };
+    /// Bit position for the randomization enable in the IBS Fetch config.
+    std::optional<std::uint8_t> _fetch_rand_bit{ std::nullopt };
+    /// Bit position for the L3 miss only filter in the IBS Fetch config.
+    std::optional<std::uint8_t> _fetch_l3_miss_only_bit{ std::nullopt };
+  };
+
   /**
    * @return True, if the underlying hardware is an Intel processor.
    */
@@ -39,14 +140,14 @@ public:
   [[nodiscard]] static bool is_amd() noexcept { return __builtin_cpu_is("amd"); }
 
   /**
+   * @return Information about AMD Instruction Based Sampling if the underlying hardware is an AMD processor.
+   */
+  [[nodiscard]] static const AMDInstructionBasedSampling& amd_ibs();
+
+  /**
    * @return True, if the underlying AMD processor supports Instruction Based Sampling (IBS).
    */
   [[nodiscard]] static bool is_amd_ibs_supported();
-
-  /**
-   * @return True, if the underlying AMD processor supports Instruction Based Sampling (IBS) with L3 filter.
-   */
-  [[nodiscard]] static bool is_ibs_l3_filter_supported();
 
   /**
    * @return The page size of memory of the underlying machine.
@@ -84,8 +185,7 @@ private:
   static std::optional<bool> _is_nmi_watchdog_enabled;
   static std::optional<bool> _is_intel_aux_event_required;
   static std::optional<bool> _is_intel_12th_generation_or_newer;
-  static std::optional<bool> _is_amd_ibs_supported;
-  static std::optional<bool> _is_ibs_l3_filter_supported;
+  static std::optional<AMDInstructionBasedSampling> _amd_ibs;
   static std::optional<std::uint64_t> _memory_page_size;
   static std::optional<std::uint8_t> _physical_generic_performance_counters_per_logical_core;
   static std::optional<std::uint8_t> _physical_fixed_performance_counters_per_logical_core;

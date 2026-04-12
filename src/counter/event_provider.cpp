@@ -1,10 +1,10 @@
 #include <algorithm>
-#include <cctype>
 #include <fstream>
 #include <linux/perf_event.h>
 #include <perfcpp/counter/event_provider.hpp>
 #include <perfcpp/counter/time_event.hpp>
 #include <perfcpp/counter_definition.hpp>
+#include <perfcpp/event_file_descriptor_parser.hpp>
 #include <perfcpp/exception.hpp>
 #include <perfcpp/feature.h>
 #include <perfcpp/hardware_info.hpp>
@@ -13,7 +13,7 @@
 #include <sstream>
 
 void
-perf::PerfSubsystemEventProvider::add_events(perf::CounterDefinition& counter_definition)
+perf::PerfSubsystemEventProvider::add_events(CounterDefinition& counter_definition)
 {
   /// On Intel, instructions, cycles, and ref-cycles use fixed-function PMCs dedicated to these events.
   const auto is_fixed = HardwareInfo::is_intel() && HardwareInfo::physical_fixed_performance_counters_per_logical_core() > 0U;
@@ -93,7 +93,7 @@ perf::PerfSubsystemEventProvider::add_events(perf::CounterDefinition& counter_de
 }
 
 void
-perf::TimeEventProvider::add_events(perf::CounterDefinition& counter_definition)
+perf::TimeEventProvider::add_events(CounterDefinition& counter_definition)
 {
   counter_definition.add("seconds", std::make_unique<SecondsTimeEvent>());
   counter_definition.add("s", std::make_unique<SecondsTimeEvent>());
@@ -106,7 +106,7 @@ perf::TimeEventProvider::add_events(perf::CounterDefinition& counter_definition)
 }
 
 void
-perf::MetricEventProvider::add_events(perf::CounterDefinition& counter_definition)
+perf::MetricEventProvider::add_events(CounterDefinition& counter_definition)
 {
   counter_definition.add(std::make_unique<CyclesPerInstruction>());
   counter_definition.add(std::make_unique<Gigahertz>());
@@ -123,7 +123,7 @@ perf::MetricEventProvider::add_events(perf::CounterDefinition& counter_definitio
 }
 
 void
-perf::SystemSpecificEventProvider::add_events(perf::CounterDefinition& counter_definition)
+perf::SystemSpecificEventProvider::add_events(CounterDefinition& counter_definition)
 {
   auto performance_monitoring_units = std::vector<std::pair<std::string, std::string>>{
     { "/sys/bus/event_source/devices/cpu/", "cpu" },                 /// CPU PMU
@@ -146,25 +146,26 @@ perf::SystemSpecificEventProvider::add_events(perf::CounterDefinition& counter_d
 }
 
 void
-perf::SystemSpecificEventProvider::add_events(perf::CounterDefinition& counter_definition,
+perf::SystemSpecificEventProvider::add_events(CounterDefinition& counter_definition,
                                               const std::string& pmu_name,
                                               const std::string& path)
 {
+  auto event_parser = EventFileDescriptorParser{ path };
+
   /// Parse the type for the PMU.
-  if (const auto type = SystemSpecificEventProvider::parse_event_file_descriptor_type(path + "type");
-      type.has_value()) {
+  if (const auto type = event_parser.type(); type.has_value()) {
     /// Iterate over all files in the descriptor path.
     for (const auto& file_entry : std::filesystem::directory_iterator(path + "events")) {
 
       /// Events are only described in files without extension.
       if (file_entry.path().extension() == "") {
+        auto event_name = file_entry.path().filename().string();
 
         /// Check if a counter with the given filename already exists. If yes, do not add another.
-        if (!counter_definition.counter(pmu_name, file_entry.path().filename()).has_value()) {
+        if (!counter_definition.counter(pmu_name, event_name).has_value()) {
 
           /// Parse the file descriptor containing configuration code and further information.
-          if (const auto event_configuration =
-                SystemSpecificEventProvider::parse_event_file_descriptor_config(file_entry.path());
+          if (const auto event_configuration = event_parser.config(event_name);
               event_configuration.has_value()) {
 
             /// Add the event, if parsing was successfully.
@@ -174,192 +175,16 @@ perf::SystemSpecificEventProvider::add_events(perf::CounterDefinition& counter_d
 
             /// Try to find and parse a .scale file for the given event. Only a few events (e.g., the power PMU)
             /// provide/need a scale factor.
-            if (const auto scale =
-                  SystemSpecificEventProvider::parse_event_file_descriptor_scale(file_entry.path().string() + ".scale");
-                scale.has_value()) {
+            if (const auto scale = event_parser.scale(event_name); scale.has_value()) {
               config.scale(scale.value());
             }
 
-            counter_definition.add(std::string{ pmu_name }, file_entry.path().filename(), config);
+            counter_definition.add(std::string{ pmu_name }, std::move(event_name), config);
           }
         }
       }
     }
   }
-}
-
-std::optional<std::pair<std::uint64_t, std::optional<std::uint64_t>>>
-perf::SystemSpecificEventProvider::parse_event_file_descriptor_config(const std::filesystem::path& path)
-{
-  auto event_stream = std::ifstream{ path };
-  if (event_stream.is_open()) {
-    std::string line;
-    std::getline(event_stream, line);
-
-    if (line.empty()) {
-      return std::nullopt;
-    }
-
-    /// Store all entries (A,B) from parsing the line in the format "A=B[,C=D]*", with entries being "event", "umask",
-    /// or "ldlat".
-    auto entries = std::unordered_map<std::string, std::uint64_t>{};
-
-    auto token_stream = std::stringstream{ line };
-    std::string token;
-
-    /// Process every token where tokens are separated by ','.
-    while (std::getline(token_stream, token, ',')) {
-
-      /// Locate eq-char.
-      const auto pos = token.find('=');
-      if (pos == std::string::npos) {
-        continue;
-      }
-
-      auto key = token.substr(0ULL, pos);
-      auto value = token.substr(pos + 1ULL);
-
-      /// Remove possible whitespace
-      key.erase(std::remove_if(key.begin(), key.end(), ::isspace), key.end());
-      value.erase(std::remove_if(value.begin(), value.end(), ::isspace), value.end());
-
-      /// Convert key to lowercase for case-insensitivity
-      std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-
-      /// Transform value into integer and add to entries.
-      if (!key.empty()) {
-        if (const auto integer = SystemSpecificEventProvider::parse_integer(value); integer.has_value()) {
-          entries.insert(std::make_pair(std::move(key), integer.value()));
-        }
-      }
-    }
-
-    /// Combine event and umask to a single event id.
-    if (const auto event = entries.find("event"); event != entries.end()) {
-
-      /// Fetch event value.
-      auto event_value = event->second;
-
-      /// Apply umask, if available.
-      if (const auto umask = entries.find("umask"); umask != entries.end()) {
-        event_value = (umask->second << 8) | event_value;
-      }
-
-      /// Add load latency, if found (only available for mem-load on Intel PEBS).
-      if (const auto load_latency = entries.find("ldlat"); load_latency != entries.end()) {
-        return std::make_pair(event_value, load_latency->second);
-      }
-
-      return std::make_pair(event_value, std::nullopt);
-    }
-
-    /// Some AMD IO MMU events are configured via csource instead.
-    if (const auto csource = entries.find("csource"); csource != entries.end()) {
-      return std::make_pair(csource->second, std::nullopt);
-    }
-  }
-
-  return std::nullopt;
-}
-
-std::optional<std::uint32_t>
-perf::SystemSpecificEventProvider::parse_event_file_descriptor_type(std::filesystem::path&& path)
-{
-  if (!std::filesystem::exists(path)) {
-    return std::nullopt;
-  }
-
-  auto type_stream = std::ifstream{ path };
-  if (type_stream.is_open()) {
-    auto type = std::uint32_t{};
-    type_stream >> type;
-
-    return type;
-  }
-
-  return std::nullopt;
-}
-
-std::optional<double>
-perf::SystemSpecificEventProvider::parse_event_file_descriptor_scale(std::filesystem::path&& path)
-{
-  if (!std::filesystem::exists(path)) {
-    return std::nullopt;
-  }
-
-  auto type_stream = std::ifstream{ path };
-  if (type_stream.is_open()) {
-    auto type = double{};
-    type_stream >> type;
-
-    return type;
-  }
-
-  return std::nullopt;
-}
-
-std::vector<std::pair<std::uint8_t, std::pair<std::uint8_t, std::optional<std::uint8_t>>>>
-perf::SystemSpecificEventProvider::parse_event_file_descriptor_format(std::filesystem::path&& path)
-{
-  auto configs = std::vector<std::pair<std::uint8_t, std::pair<std::uint8_t, std::optional<std::uint8_t>>>>{};
-  if (!std::filesystem::exists(path)) {
-    return configs;
-  }
-
-  auto format_file = std::ifstream{ path };
-
-  if (!format_file.is_open()) {
-    return configs;
-  }
-
-  std::string line;
-  if (std::getline(format_file, line); !line.empty()) {
-    auto config_pattern = std::regex("config([0-9]?):(\\d+)(?:-(\\d+))?");
-
-    auto stream = std::stringstream{ line };
-    std::string entry;
-
-    while (std::getline(stream, entry, ',')) {
-      if (std::smatch match; std::regex_match(entry, match, config_pattern)) {
-        const auto config_id = match[1U].length() == 0U ? 0 : std::stoi(match[1U].str());
-        const auto bit_start = std::stoi(match[2U].str());
-        const auto bit_end = match[3U].length() == 0U ? std::nullopt : std::make_optional(std::stoi(match[2U].str()));
-
-        configs.emplace_back(config_id, std::make_pair(bit_start, bit_end));
-      }
-    }
-  }
-
-  return configs;
-}
-
-std::optional<std::uint64_t>
-perf::SystemSpecificEventProvider::parse_integer(const std::string& value)
-{
-  if (value.empty()) {
-    return std::nullopt;
-  }
-
-  /// Remove all whitespaces if the value has at least one.
-  if (value.find_first_of(' ') != std::string::npos) {
-    auto value_without_leading_whitespace = value;
-    value_without_leading_whitespace.erase(
-      std::remove_if(value_without_leading_whitespace.begin(), value_without_leading_whitespace.end(), ::isspace),
-      value_without_leading_whitespace.end());
-    return SystemSpecificEventProvider::parse_integer(value_without_leading_whitespace);
-  }
-
-  /// Strings starting with '0x' are considered hex numbers.
-  if (value.rfind("0x", 0ULL) == 0ULL) {
-    return std::stoull(value.substr(2ULL), nullptr, 16);
-  }
-
-  /// Strings containing digits are considered dec numbers.
-  if (std::all_of(value.begin(), value.end(), [](const auto c) { return std::isdigit(c); })) {
-    return std::stoull(value, nullptr, 0);
-  }
-
-  return std::nullopt;
 }
 
 void
@@ -386,7 +211,7 @@ perf::SystemSpecificEventProvider::detect_performance_monitoring_units(
 }
 
 void
-perf::AMDIbsEventProvider::add_events(perf::CounterDefinition& counter_definition)
+perf::AMDIbsEventProvider::add_events(CounterDefinition& counter_definition)
 {
   /// AMD's Instruction Based Sampling differs in configuration (and utilization) from Intel PEBS with specific PMUs for
   /// sampling. Whenever an AMD CPU is detected, IBS PMUs will be added.
@@ -397,32 +222,20 @@ perf::AMDIbsEventProvider::add_events(perf::CounterDefinition& counter_definitio
 }
 
 void
-perf::AMDIbsEventProvider::add_fetch_events(perf::CounterDefinition& counter_definition)
+perf::AMDIbsEventProvider::add_fetch_events(CounterDefinition& counter_definition)
 {
-  if (const auto ibs_fetch_type =
-        SystemSpecificEventProvider::parse_event_file_descriptor_type("/sys/bus/event_source/devices/ibs_fetch/type");
-      ibs_fetch_type.has_value()) {
-    if (const auto ibs_fetch_bit_format = SystemSpecificEventProvider::parse_event_file_descriptor_format(
-          "/sys/bus/event_source/devices/ibs_fetch/format/rand_en");
-        ibs_fetch_bit_format.size() == 1UL) {
-      const auto ibs_fetch_bit = std::get<0U>(std::get<1U>(ibs_fetch_bit_format.front()));
+  const auto& ibs_info = HardwareInfo::amd_ibs();
+  if (const auto fetch_type = ibs_info.fetch_type(); ibs_info.is_supported() && fetch_type.has_value()) {
+    const auto rand_value = ibs_info.fetch_rand_bit().has_value() ? 1ULL << ibs_info.fetch_rand_bit().value() : 0ULL;
+    /// Event that is triggered by cycles.
+    counter_definition.add("ibs_fetch", "ibs_fetch", CounterConfig{ fetch_type.value(), rand_value });
 
-      /// Event that is triggered by cycles.
-      counter_definition.add("ibs_fetch", "ibs_fetch", CounterConfig{ ibs_fetch_type.value(), 1ULL << ibs_fetch_bit });
-
-      if (HardwareInfo::is_ibs_l3_filter_supported()) {
-        if (const auto ibs_fetch_l3miss_bit_format = SystemSpecificEventProvider::parse_event_file_descriptor_format(
-              "/sys/bus/event_source/devices/ibs_fetch/format/l3missonly");
-            ibs_fetch_l3miss_bit_format.size() == 1UL) {
-          const auto ibs_fetch_l3miss_bit = std::get<0U>(std::get<1U>(ibs_fetch_l3miss_bit_format.front()));
-
-          /// Event that is triggered by cycles and applies the L3 miss filter.
-          counter_definition.add(
-            "ibs_fetch",
-            "ibs_fetch_l3missonly",
-            CounterConfig{ ibs_fetch_type.value(), (1ULL << ibs_fetch_bit) | (1ULL << ibs_fetch_l3miss_bit) });
-        }
-      }
+    if (const auto l3_miss_only_bit = ibs_info.fetch_l3_miss_only_bit(); l3_miss_only_bit.has_value()) {
+      /// Event that is triggered by cycles and applies the L3 miss filter.
+      counter_definition.add(
+        "ibs_fetch",
+        "ibs_fetch_l3missonly",
+        CounterConfig{ ibs_info.fetch_type().value(), rand_value | (1ULL << l3_miss_only_bit.value()) });
     }
   }
 }
@@ -430,43 +243,28 @@ perf::AMDIbsEventProvider::add_fetch_events(perf::CounterDefinition& counter_def
 void
 perf::AMDIbsEventProvider::add_op_events(perf::CounterDefinition& counter_definition)
 {
-  if (const auto ibs_op_type =
-        SystemSpecificEventProvider::parse_event_file_descriptor_type("/sys/bus/event_source/devices/ibs_op/type");
-      ibs_op_type.has_value()) {
+  const auto& ibs_info = HardwareInfo::amd_ibs();
+  if (const auto op_type = ibs_info.op_type(); ibs_info.is_supported() && op_type.has_value()) {
     /// Event that is triggered by cycles.
-    counter_definition.add("ibs_op", "ibs_op", CounterConfig{ ibs_op_type.value(), 0U });
+    counter_definition.add("ibs_op", "ibs_op", CounterConfig{ op_type.value(), 0U });
 
-    /// Event that is triggered by uops.
-    auto ibs_op_uops_bit = std::optional<std::uint8_t>{ std::nullopt };
-    if (const auto ibs_uops_bit_format = SystemSpecificEventProvider::parse_event_file_descriptor_format(
-          "/sys/bus/event_source/devices/ibs_op/format/cnt_ctl");
-        ibs_uops_bit_format.size() == 1UL) {
-      ibs_op_uops_bit = std::get<0U>(std::get<1U>(ibs_uops_bit_format.front()));
-    }
-
-    if (ibs_op_uops_bit.has_value()) {
+    if (const auto uops_bit = ibs_info.op_uops_bit(); uops_bit.has_value()) {
+      /// Event that is triggered by micro ops.
       counter_definition.add(
-        "ibs_op", "ibs_op_uops", CounterConfig{ ibs_op_type.value(), 1ULL << ibs_op_uops_bit.value() });
+        "ibs_op", "ibs_op_uops", CounterConfig{ op_type.value(), 1ULL << uops_bit.value() });
     }
 
-    /// Cycle and uops events with L3 miss filter.
-    if (HardwareInfo::is_ibs_l3_filter_supported()) {
-      if (const auto ibs_op_l3miss_bit_format = SystemSpecificEventProvider::parse_event_file_descriptor_format(
-            "/sys/bus/event_source/devices/ibs_op/format/l3missonly");
-          ibs_op_l3miss_bit_format.size() == 1UL) {
-        const auto ibs_op_l3miss_bit = std::get<0U>(std::get<1U>(ibs_op_l3miss_bit_format.front()));
+    if (const auto l3_miss_only_bit = ibs_info.op_l3_miss_only_bit(); l3_miss_only_bit.has_value()) {
+      /// Event that is triggered by cycles and applies the L3 miss only filter.
+      counter_definition.add(
+        "ibs_op", "ibs_op_l3missonly", CounterConfig{ op_type.value(), 1ULL << l3_miss_only_bit.value() });
 
-        /// Event that is triggered by cycles and applies the L3 miss only filter.
+      /// Event that is triggered by uops and applies the L3 miss only filter.
+      if (const auto uops_bit = ibs_info.op_uops_bit(); uops_bit.has_value()) {
         counter_definition.add(
-          "ibs_op", "ibs_op_l3missonly", CounterConfig{ ibs_op_type.value(), 1ULL << ibs_op_l3miss_bit });
-
-        /// Event that is triggered by uops and applies the L3 miss only filter.
-        if (ibs_op_uops_bit.has_value()) {
-          counter_definition.add(
-            "ibs_op",
-            "ibs_op_uops_l3missonly",
-            CounterConfig{ ibs_op_type.value(), (1ULL << ibs_op_uops_bit.value()) | (1ULL << ibs_op_l3miss_bit) });
-        }
+          "ibs_op",
+          "ibs_op_uops_l3missonly",
+          CounterConfig{ op_type.value(), (1ULL << uops_bit.value()) | (1ULL << l3_miss_only_bit.value()) });
       }
     }
   }
@@ -507,17 +305,17 @@ perf::CsvFileEventProvider::add_events(perf::CounterDefinition& counter_definiti
         if (std::string config_or_metric_str; std::getline(line_stream, config_or_metric_str, ',')) {
 
           /// Try to translate config into number.
-          if (const auto config = SystemSpecificEventProvider::parse_integer(config_or_metric_str);
+          if (const auto config = EventFileDescriptorParser::integer(config_or_metric_str);
               config.has_value()) {
             /// Read extended config-field and translate into integer.
             if (std::string extended_config_str; std::getline(line_stream, extended_config_str, ',')) {
               /// Translate extended config into number.
-              extended_config = SystemSpecificEventProvider::parse_integer(extended_config_str);
+              extended_config = EventFileDescriptorParser::integer(extended_config_str);
 
               /// Read type-field and translate into integer.
               if (std::string type_str; std::getline(line_stream, type_str, ',')) {
                 /// Translate type into number.
-                type = SystemSpecificEventProvider::parse_integer(type_str);
+                type = EventFileDescriptorParser::integer(type_str);
               }
             }
 

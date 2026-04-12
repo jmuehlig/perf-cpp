@@ -1,8 +1,5 @@
 #pragma once
 
-#include <cstdint>
-#include <filesystem>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -104,52 +101,6 @@ public:
    * @param counter_definition Counter definition to add events to.
    */
   void add_events(CounterDefinition& counter_definition) override;
-
-  /**
-   * Tries to read the type from the provided file.
-   *
-   * @param path Path of the type file.
-   * @return Integer representation of type.
-   */
-  [[nodiscard]] static std::optional<std::uint32_t> parse_event_file_descriptor_type(std::filesystem::path&& path);
-
-  /**
-   * Tries to read the scale from the provided file.
-   *
-   * @param path Path of the type file.
-   * @return Double representation of scale.
-   */
-  [[nodiscard]] static std::optional<double> parse_event_file_descriptor_scale(std::filesystem::path&& path);
-
-  /**
-   * Parses an event file descriptor (typically located somewhere in the /sys/bus/event_source/.. directory).
-   * Typically, event file descriptors contain the event code, umask, and some additional data (e.g., ldlat for load
-   * latency).
-   *
-   * @param path Path of the file descriptor.
-   * @return A pair of configuration code and (optional) additional information, like load latency. When the descriptor
-   * could not be parsed, nullopt will be returned.
-   */
-  [[nodiscard]] static std::optional<std::pair<std::uint64_t, std::optional<std::uint64_t>>>
-  parse_event_file_descriptor_config(const std::filesystem::path& path);
-
-  /**
-   * Tries to read a format file and returns the id of the config and the number of bits.
-   * Some formats have multiple entries.
-   *
-   * @param path Path of the format file.
-   * @return List of pairs (config id, bits).
-   */
-  [[nodiscard]] static std::vector<std::pair<std::uint8_t, std::pair<std::uint8_t, std::optional<std::uint8_t>>>>
-  parse_event_file_descriptor_format(std::filesystem::path&& path);
-
-  /**
-   * Parses an integer (decimal or hex) from a given string.
-   *
-   * @param value String to parse.
-   * @return Integer, if parsable.
-   */
-  [[nodiscard]] static std::optional<std::uint64_t> parse_integer(const std::string& value);
 
 private:
   /**

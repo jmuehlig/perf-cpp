@@ -33,6 +33,7 @@ set(PERF_CPP_SRC
     src/config.cpp
     src/counter_definition.cpp
     src/event_counter.cpp
+    src/event_file_descriptor_parser.cpp
     src/exception.cpp
     src/hardware_info.cpp
     src/sampler.cpp

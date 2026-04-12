@@ -5,6 +5,7 @@
 #include <perfcpp/counter/group.hpp>
 #include <perfcpp/counter_definition.hpp>
 #include <perfcpp/hardware_info.hpp>
+#include <perfcpp/event_file_descriptor_parser.hpp>
 #include <unistd.h>
 #if defined(__x86_64__) || defined(__i386__)
 #include <cpuid.h>
@@ -17,11 +18,8 @@ std::optional<bool> perf::HardwareInfo::_is_intel_aux_event_required{ std::nullo
 /// machines have heterogeneous CPUs and PMUs.
 std::optional<bool> perf::HardwareInfo::_is_intel_12th_generation_or_newer{ std::nullopt };
 
-/// Cache variable to remember AMD IBS is supported.
-std::optional<bool> perf::HardwareInfo::_is_amd_ibs_supported{ std::nullopt };
-
-/// Cache variable to remember if AMD's IBS supports filtering for L3 cache misses.
-std::optional<bool> perf::HardwareInfo::_is_ibs_l3_filter_supported{ std::nullopt };
+/// Cache variable to remember AMD IBS information.
+std::optional<perf::HardwareInfo::AMDInstructionBasedSampling> perf::HardwareInfo::_amd_ibs{ std::nullopt };
 
 /// Cache variable to remember the memory page size.
 std::optional<std::uint64_t> perf::HardwareInfo::_memory_page_size{ std::nullopt };
@@ -102,52 +100,95 @@ perf::HardwareInfo::is_intel_12th_generation_or_newer()
 #endif
 }
 
-bool
-perf::HardwareInfo::is_amd_ibs_supported()
+const perf::HardwareInfo::AMDInstructionBasedSampling&
+perf::HardwareInfo::amd_ibs()
 {
 #if defined(__x86_64__) || defined(__i386__)
-  if (HardwareInfo::_is_amd_ibs_supported.has_value()) {
-    return HardwareInfo::_is_amd_ibs_supported.value();
+  if (HardwareInfo::_amd_ibs.has_value()) {
+    return HardwareInfo::_amd_ibs.value();
   }
 
+  /// Check if the hardware underneath is AMD.
   if (!HardwareInfo::is_amd()) {
-    return HardwareInfo::cache_value(HardwareInfo::_is_amd_ibs_supported, false);
+    HardwareInfo::_amd_ibs = AMDInstructionBasedSampling{ false };
+    return HardwareInfo::_amd_ibs.value();
   }
 
+  /// If the hardware is AMD, check if IBS is supported.
   /// See https://github.com/jlgreathouse/AMD_IBS_Toolkit/blob/master/ibs_with_perf_events.txt
-  if (const auto extended_processor_info = HardwareInfo::cpuid(0x80000001); extended_processor_info.has_value()) {
-    return HardwareInfo::cache_value(
-      HardwareInfo::_is_amd_ibs_supported,
-      static_cast<bool>(extended_processor_info->ecx & (static_cast<std::uint32_t>(1U) << 10)));
+  const auto extended_processor_info = HardwareInfo::cpuid(0x80000001);
+  if (!extended_processor_info.has_value()) {
+    HardwareInfo::_amd_ibs = AMDInstructionBasedSampling{ false };
+    return HardwareInfo::_amd_ibs.value();
   }
 
-  return HardwareInfo::cache_value(HardwareInfo::_is_amd_ibs_supported, false);
+  if (const auto is_ibs_supported = static_cast<bool>(extended_processor_info->ecx & (1U << 10)); !is_ibs_supported) {
+    HardwareInfo::_amd_ibs = AMDInstructionBasedSampling{ false };
+    return HardwareInfo::_amd_ibs.value();
+  }
+
+  auto ibs_info = AMDInstructionBasedSampling{true};
+
+  /// Check if L3Miss filter is supported.
+  auto is_l3miss_filter_supported = false;
+  if (const auto ibs_l3miss_info = HardwareInfo::cpuid(0x8000001b); ibs_l3miss_info.has_value()) {
+    is_l3miss_filter_supported = static_cast<bool>(ibs_l3miss_info->eax & (1U << 11));
+  }
+
+  /// Read IBS::Fetch from filesystem.
+  {
+    auto fetch_event = EventFileDescriptorParser{ "/sys/bus/event_source/devices/ibs_fetch/" };
+    if (const auto fetch_event_type = fetch_event.type(); fetch_event_type.has_value()) {
+      ibs_info.fetch_type(fetch_event_type.value());
+
+      /// Read rand_en bit.
+      if (const auto fetch_rand_bit = fetch_event.format("rand_en"); fetch_rand_bit.size() == 1UL) {
+        ibs_info.fetch_rand_bit(std::get<0U>(std::get<1U>(fetch_rand_bit.front())));
+      }
+
+      /// Read l3_miss_only bit.
+      if (is_l3miss_filter_supported) {
+        if (const auto fetch_l3miss_bit_format = fetch_event.format("l3missonly"); fetch_l3miss_bit_format.size() == 1UL) {
+          ibs_info.fetch_l3_miss_only_bit(std::get<0U>(std::get<1U>(fetch_l3miss_bit_format.front())));
+        }
+      }
+    }
+  }
+
+  /// Read IBS::Op from filesystem.
+  {
+    auto op_event = EventFileDescriptorParser{ "/sys/bus/event_source/devices/ibs_op/" };
+
+    if (const auto op_event_type = op_event.type(); op_event_type.has_value()) {
+      ibs_info.op_type(op_event_type.value());
+
+      /// Read uop bit.
+      if (const auto op_cnt_bit = op_event.format("cnt_ctl"); op_cnt_bit.size() == 1UL) {
+        ibs_info.op_uops_bit(std::get<0U>(std::get<1U>(op_cnt_bit.front())));
+      }
+
+      /// Read l3_miss_only bit.
+      if (is_l3miss_filter_supported) {
+        if (const auto op_l3miss_bit_format = op_event.format("l3missonly"); op_l3miss_bit_format.size() == 1UL) {
+          ibs_info.op_l3_miss_only_bit(std::get<0U>(std::get<1U>(op_l3miss_bit_format.front())));
+        }
+      }
+    }
+  }
+
+  HardwareInfo::_amd_ibs = ibs_info;
 #else
-  return false;
+  HardwareInfo::_amd_ibs = AMDInstructionBasedSampling{ false };
 #endif
+
+  return HardwareInfo::_amd_ibs.value();
 }
 
 bool
-perf::HardwareInfo::is_ibs_l3_filter_supported()
+perf::HardwareInfo::is_amd_ibs_supported()
 {
-#if defined(__x86_64__) || defined(__i386__)
-  if (HardwareInfo::_is_ibs_l3_filter_supported.has_value()) {
-    return HardwareInfo::_is_ibs_l3_filter_supported.value();
-  }
-
-  if (!HardwareInfo::is_amd_ibs_supported()) {
-    return HardwareInfo::cache_value(HardwareInfo::_is_ibs_l3_filter_supported, false);
-  }
-
-  if (const auto ibs_info = HardwareInfo::cpuid(0x8000001b); ibs_info.has_value()) {
-    const auto is_ibs_l3_filter_supported = static_cast<bool>(ibs_info->eax & (static_cast<std::uint32_t>(1U) << 11));
-    return HardwareInfo::cache_value(HardwareInfo::_is_ibs_l3_filter_supported, is_ibs_l3_filter_supported);
-  }
-
-  return HardwareInfo::cache_value(HardwareInfo::_is_ibs_l3_filter_supported, false);
-#else
-  return false;
-#endif
+  const auto& amd_ibs = HardwareInfo::amd_ibs();
+  return amd_ibs.is_supported();
 }
 
 std::uint64_t
