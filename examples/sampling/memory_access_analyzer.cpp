@@ -17,7 +17,7 @@ main()
     sampler.trigger(perf::IbsOp{ /*is_uop=*/true }, perf::Precision::MustHaveZeroSkid, perf::Period{ 4000U });
   } else if (perf::HardwareInfo::is_intel()) {
     sampler.trigger(
-      perf::MemoryLoad{ /*no latency filter*/ 0U }, perf::Precision::MustHaveZeroSkid, perf::Period{ 2000U });
+      perf::MemoryLoads{ /*no latency filter*/ 0U }, perf::Precision::MustHaveZeroSkid, perf::Period{ 2000U });
   } else {
     std::cout << "Error: Memory sampling is not supported on this CPU." << std::endl;
     return 1;

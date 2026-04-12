@@ -32,7 +32,7 @@ public:
   class Trigger
   {
   public:
-    using trigger_t = std::variant<std::string, Cycles, MemoryLoad, MemoryLoadsAux, MemoryStore, IbsFetch, IbsOp>;
+    using trigger_t = std::variant<std::string, Cycles, MemoryLoads, MemoryLoadsAux, MemoryStores, IbsFetch, IbsOp>;
 
     explicit Trigger(trigger_t&& type) noexcept
       : _trigger(std::move(type))

@@ -114,8 +114,8 @@ Typed triggers are defined in `<perfcpp/sample/trigger.hpp>` (included transitiv
 | Trigger Class | Vendor | Description | Parameters |
 |---|---|---|---|
 | `perf::Cycles` | Any | CPU cycles sampling. | — |
-| `perf::MemoryLoad` | Intel | PEBS memory-load sampling (Haswell+). Supports minimum latency filtering. | `min_latency` (cycles, default: 30) |
-| `perf::MemoryStore` | Intel | PEBS memory-store sampling (Haswell+). | — |
+| `perf::MemoryLoads` | Intel | PEBS memory-load sampling (Haswell+). Supports minimum latency filtering. | `min_latency` (cycles, default: 30) |
+| `perf::MemorStores` | Intel | PEBS memory-store sampling (Haswell+). | — |
 | `perf::MemoryLoadsAux` | Intel | Auxiliary event for memory-load sampling (Sapphire Rapids+). | — |
 | `perf::IbsFetch` | AMD | IBS fetch pipeline sampling. | `is_rand` (default: true), `is_l3_miss_only` (default: false) |
 | `perf::IbsOp` | AMD | IBS op (execute) pipeline sampling. | `is_uop` (default: false), `is_l3_miss_only` (default: false) |
@@ -126,13 +126,13 @@ Typed triggers can be passed directly to `sampler.trigger()` — implicit conver
 
 ```cpp
 /// Sample memory loads with a minimum latency of 50 cycles (Intel PEBS).
-sampler.trigger(perf::MemoryLoad{/* min_latency */ 50});
+sampler.trigger(perf::MemoryLoads{/* min_latency */ 50});
 
 /// AMD IBS op sampling, micro-ops only.
 sampler.trigger(perf::IbsOp{/* is_uop */ true});
 
 /// Typed triggers support precision and period/frequency, just like string triggers.
-sampler.trigger(perf::MemoryLoad{/* min_latency */ 50}, perf::Precision::RequestZeroSkid);
+sampler.trigger(perf::MemoryLoads{/* min_latency */ 50}, perf::Precision::RequestZeroSkid);
 sampler.trigger(perf::IbsOp{}, perf::Period{50000U});
 sampler.trigger(perf::Cycles{}, perf::Precision::MustHaveConstantSkid, perf::Frequency{1000U});
 ```
@@ -141,8 +141,8 @@ Multiple typed triggers are specified as a vector of groups, where each inner ve
 
 ```cpp
 sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
-    { perf::Sampler::Trigger{ perf::MemoryLoad{/* min_latency */ 50} } },
-    { perf::Sampler::Trigger{ perf::MemoryStore{} } }
+    { perf::Sampler::Trigger{ perf::MemoryLoads{/* min_latency */ 50} } },
+    { perf::Sampler::Trigger{ perf::MemorStores{} } }
 });
 ```
 
@@ -576,15 +576,15 @@ On Cascade Lake and earlier architectures, latency and source are only reported 
 Using [typed triggers](#typed-triggers) (recommended):
 ```cpp
 /// Loads only — filters for accesses with at least 50 cycles of latency.
-sampler.trigger(perf::MemoryLoad{/* min_latency */ 50}, perf::Precision::MustHaveZeroSkid);
+sampler.trigger(perf::MemoryLoads{/* min_latency */ 50}, perf::Precision::MustHaveZeroSkid);
 
 /// Stores only.
-sampler.trigger(perf::MemoryStore{}, perf::Precision::MustHaveZeroSkid);
+sampler.trigger(perf::MemorStores{}, perf::Precision::MustHaveZeroSkid);
 
 /// Loads and stores together.
 sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
-    { perf::Sampler::Trigger{ perf::MemoryLoad{/* min_latency */ 50} } },
-    { perf::Sampler::Trigger{ perf::MemoryStore{} } }
+    { perf::Sampler::Trigger{ perf::MemoryLoads{/* min_latency */ 50} } },
+    { perf::Sampler::Trigger{ perf::MemorStores{} } }
 });
 ```
 
@@ -613,17 +613,17 @@ sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
 Memory latency sampling on Sapphire Rapids requires an **auxiliary counter** in the trigger group before the first real counter ([kernel patch](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).
 
 > [!IMPORTANT]
-> *perf-cpp* detects this automatically and adds the auxiliary counter when needed — both for typed `perf::MemoryLoad` triggers and string-based `"mem-loads"` triggers.
+> *perf-cpp* detects this automatically and adds the auxiliary counter when needed — both for typed `perf::MemoryLoads` triggers and string-based `"mem-loads"` triggers.
 > If auto-detection fails, add it manually:
 
 Using [typed triggers](#typed-triggers) (recommended):
 ```cpp
 sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
     {
-        perf::Sampler::Trigger{ perf::MemoryLoadsAux{} },
-        perf::Sampler::Trigger{ perf::MemoryLoad{/* min_latency */ 50} }
+        perf::Sampler::Trigger{ perf::MemoryLoadsAux{}, perf::Precision::MustHaveZeroSkid },
+        perf::Sampler::Trigger{ perf::MemoryLoads{/* min_latency */ 50}, perf::Precision::RequestZeroSkid }
     },
-    { perf::Sampler::Trigger{ perf::MemoryStore{} } }
+    { perf::Sampler::Trigger{ perf::MemorStores{}, perf::Precision::MustHaveZeroSkid } }
 });
 ```
 

@@ -39,10 +39,10 @@ public:
 /**
  * Intel PEBS memory-load sampling. Supported on Haswell and newer.
  */
-class MemoryLoad
+class MemoryLoads
 {
 public:
-  explicit MemoryLoad(const std::uint64_t min_latency = 30U) noexcept
+  explicit MemoryLoads(const std::uint64_t min_latency = 30U) noexcept
     : _min_latency(min_latency)
   {
   }
@@ -82,7 +82,7 @@ private:
 /**
  * Intel PEBS memory-store sampling. Supported on Haswell and newer.
  */
-class MemoryStore
+class MemoryStores
 {
 public:
   /**

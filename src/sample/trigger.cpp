@@ -19,7 +19,7 @@ perf::Cycles::resolve(const CounterDefinition& counter_definition, const std::st
 }
 
 std::vector<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
-perf::MemoryLoad::resolve(const CounterDefinition& counter_definition) const
+perf::MemoryLoads::resolve(const CounterDefinition& counter_definition) const
 {
   if (!HardwareInfo::is_intel()) {
     throw EventRequiresSpecificVendorError{ "Intel", "mem-loads" };
@@ -44,7 +44,7 @@ perf::MemoryLoad::resolve(const CounterDefinition& counter_definition) const
 }
 
 std::optional<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
-perf::MemoryLoad::resolve(const CounterDefinition& counter_definition, const std::string_view pmu_name) const
+perf::MemoryLoads::resolve(const CounterDefinition& counter_definition, const std::string_view pmu_name) const
 {
   if (!HardwareInfo::is_intel()) {
     throw EventRequiresSpecificVendorError{ "Intel", "mem-loads" };
@@ -64,7 +64,7 @@ perf::MemoryLoad::resolve(const CounterDefinition& counter_definition, const std
 }
 
 std::vector<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
-perf::MemoryStore::resolve(const CounterDefinition& counter_definition) const
+perf::MemoryStores::resolve(const CounterDefinition& counter_definition) const
 {
   if (!HardwareInfo::is_intel()) {
     throw EventRequiresSpecificVendorError{ "Intel", "mem-stores" };
@@ -80,7 +80,7 @@ perf::MemoryStore::resolve(const CounterDefinition& counter_definition) const
 }
 
 std::optional<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
-perf::MemoryStore::resolve(const CounterDefinition& counter_definition, const std::string_view pmu_name) const
+perf::MemoryStores::resolve(const CounterDefinition& counter_definition, const std::string_view pmu_name) const
 {
   if (!HardwareInfo::is_intel()) {
     throw EventRequiresSpecificVendorError{ "Intel", "mem-stores" };

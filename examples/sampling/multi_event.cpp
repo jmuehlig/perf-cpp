@@ -17,11 +17,11 @@ main()
 
   if (perf::HardwareInfo::is_intel()) {
     sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
-      { perf::Sampler::Trigger{ perf::MemoryLoad{ /*no latency filter*/ 0U },
+      { perf::Sampler::Trigger{ perf::MemoryLoads{ /*no latency filter*/ 0U },
                                 perf::Precision::RequestZeroSkid,
                                 perf::Period{ 8000U } } }, /// Loads
       { perf::Sampler::Trigger{
-        perf::MemoryStore{}, perf::Precision::MustHaveZeroSkid, perf::Period{ 8000U } } } /// Stores
+        perf::MemoryStores{}, perf::Precision::MustHaveZeroSkid, perf::Period{ 8000U } } } /// Stores
     });
   } else {
     std::cout << "Error: Memory sampling with multiple triggers is not supported on this CPU." << std::endl;
