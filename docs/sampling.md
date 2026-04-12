@@ -105,6 +105,50 @@ AMD systems are more restricted: typically only `cycles` and IBS events (`ibs_fe
 > [!TIP]
 > For memory sampling and vendor-specific configuration, see [Specific Notes for different CPU Vendors](#specific-notes-for-different-cpu-vendors).
 
+### Typed Triggers
+In addition to string-based event names, *perf-cpp* provides typed trigger classes that handle vendor detection, event resolution, and hardware-specific configuration automatically.
+Typed triggers are defined in `<perfcpp/sample/trigger.hpp>` (included transitively via `<perfcpp/sampler.hpp>`).
+
+#### Available Typed Triggers
+
+| Trigger Class | Vendor | Description | Parameters |
+|---|---|---|---|
+| `perf::Cycles` | Any | CPU cycles sampling. | — |
+| `perf::MemoryLoad` | Intel | PEBS memory-load sampling (Haswell+). Supports minimum latency filtering. | `min_latency` (cycles, default: 30) |
+| `perf::MemoryStore` | Intel | PEBS memory-store sampling (Haswell+). | — |
+| `perf::MemoryLoadsAux` | Intel | Auxiliary event for memory-load sampling (Sapphire Rapids+). | — |
+| `perf::IbsFetch` | AMD | IBS fetch pipeline sampling. | `is_rand` (default: true), `is_l3_miss_only` (default: false) |
+| `perf::IbsOp` | AMD | IBS op (execute) pipeline sampling. | `is_uop` (default: false), `is_l3_miss_only` (default: false) |
+
+#### Usage
+
+Typed triggers can be passed directly to `sampler.trigger()` — implicit conversion to `Sampler::Trigger` happens automatically:
+
+```cpp
+/// Sample memory loads with a minimum latency of 50 cycles (Intel PEBS).
+sampler.trigger(perf::MemoryLoad{/* min_latency */ 50});
+
+/// AMD IBS op sampling, micro-ops only.
+sampler.trigger(perf::IbsOp{/* is_uop */ true});
+
+/// Typed triggers support precision and period/frequency, just like string triggers.
+sampler.trigger(perf::MemoryLoad{/* min_latency */ 50}, perf::Precision::RequestZeroSkid);
+sampler.trigger(perf::IbsOp{}, perf::Period{50000U});
+sampler.trigger(perf::Cycles{}, perf::Precision::MustHaveConstantSkid, perf::Frequency{1000U});
+```
+
+Multiple typed triggers are specified as a vector of groups, where each inner vector is one group (the auxiliary event is auto-inserted when needed):
+
+```cpp
+sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
+    { perf::Sampler::Trigger{ perf::MemoryLoad{/* min_latency */ 50} } },
+    { perf::Sampler::Trigger{ perf::MemoryStore{} } }
+});
+```
+
+> [!TIP]
+> Typed triggers are the recommended approach for memory and IBS sampling — they eliminate the need to remember event name strings and automatically handle hardware-specific configuration like `ldlat` patching and IBS variant selection.
+
 ## Precision
 Due to deep pipelining, a sample's instruction pointer or memory address may not exactly match the instruction that caused the overflow (see [easyperf.net](https://easyperf.net/blog/2019/04/03/Precise-timing-of-machine-code-with-Linux-perf) and the [perf documentation](https://man7.org/linux/man-pages/man2/perf_event_open.2.html)).
 You can request a specific amount of skid per trigger:
@@ -529,6 +573,22 @@ Memory sampling requires a [precision](#precision) of at least `perf::Precision:
 
 On Cascade Lake and earlier architectures, latency and source are only reported for memory loads, not stores. This changes starting with Sapphire Rapids.
 
+Using [typed triggers](#typed-triggers) (recommended):
+```cpp
+/// Loads only — filters for accesses with at least 50 cycles of latency.
+sampler.trigger(perf::MemoryLoad{/* min_latency */ 50}, perf::Precision::MustHaveZeroSkid);
+
+/// Stores only.
+sampler.trigger(perf::MemoryStore{}, perf::Precision::MustHaveZeroSkid);
+
+/// Loads and stores together.
+sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
+    { perf::Sampler::Trigger{ perf::MemoryLoad{/* min_latency */ 50} } },
+    { perf::Sampler::Trigger{ perf::MemoryStore{} } }
+});
+```
+
+Using string-based triggers:
 ```cpp
 /// Loads only.
 sampler.trigger("mem-loads", perf::Precision::MustHaveZeroSkid);
@@ -553,9 +613,21 @@ sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
 Memory latency sampling on Sapphire Rapids requires an **auxiliary counter** in the trigger group before the first real counter ([kernel patch](https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/)).
 
 > [!IMPORTANT]
-> *perf-cpp* detects this automatically and adds the auxiliary counter when needed.
+> *perf-cpp* detects this automatically and adds the auxiliary counter when needed — both for typed `perf::MemoryLoad` triggers and string-based `"mem-loads"` triggers.
 > If auto-detection fails, add it manually:
 
+Using [typed triggers](#typed-triggers) (recommended):
+```cpp
+sampler.trigger(std::vector<std::vector<perf::Sampler::Trigger>>{
+    {
+        perf::Sampler::Trigger{ perf::MemoryLoadsAux{} },
+        perf::Sampler::Trigger{ perf::MemoryLoad{/* min_latency */ 50} }
+    },
+    { perf::Sampler::Trigger{ perf::MemoryStore{} } }
+});
+```
+
+Using string-based triggers:
 ```cpp
 sampler.trigger({
     {
@@ -583,6 +655,17 @@ Unlike Intel's mechanism, IBS does not tag specific load or store instructions. 
 
 *perf-cpp* detects IBS support automatically and provides the following triggers:
 
+Using [typed triggers](#typed-triggers) (recommended):
+
+| Typed Trigger | Selection | Period/Frequency Unit |
+|---|---|---|
+| `perf::IbsOp{}` | Instructions in the execution pipeline | CPU cycles |
+| `perf::IbsOp{/* is_uop */ true}` | Instructions in the execution pipeline | Micro-operations |
+| `perf::IbsOp{/* is_uop */ false, /* is_l3_miss_only */ true}` | Instructions that miss L3 | CPU cycles |
+| `perf::IbsOp{/* is_uop */ true, /* is_l3_miss_only */ true}` | Instructions that miss L3 | Micro-operations |
+
+Using string-based triggers:
+
 | Trigger | Selection | Period/Frequency Unit |
 |---|---|---|
 | `ibs_op` | Instructions in the execution pipeline | CPU cycles |
@@ -593,6 +676,15 @@ Unlike Intel's mechanism, IBS does not tag specific load or store instructions. 
 #### IBS Fetch PMU
 
 The Fetch PMU captures instruction fetch details: instruction cache and TLB hit/miss, fetch latency, and page size.
+
+Using [typed triggers](#typed-triggers) (recommended):
+
+| Typed Trigger | Selection | Period/Frequency Unit |
+|---|---|---|
+| `perf::IbsFetch{}` | Instructions in the fetch stage (frontend) | CPU cycles |
+| `perf::IbsFetch{/* is_rand */ true, /* is_l3_miss_only */ true}` | Instructions in the fetch stage that miss L3 | CPU cycles |
+
+Using string-based triggers:
 
 | Trigger | Selection | Period/Frequency Unit |
 |---|---|---|
