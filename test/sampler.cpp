@@ -195,7 +195,9 @@ TEST_CASE("sampling", "[Sampler]")
               }
             }
           } else {
-            REQUIRE(sample.instruction_execution().latency().instruction_retirement().has_value());
+            if ( (perf::HardwareInfo::is_intel() && perf::HardwareInfo::is_intel_12th_generation_or_newer()) || (perf::HardwareInfo::is_amd() && perf::HardwareInfo::amd_ibs().is_supported())) {
+              REQUIRE(sample.instruction_execution().latency().instruction_retirement().has_value());
+            }
             if (sample.data_access().source().has_value()) {
               if (sample.data_access().source()->is_l1_hit()) {
                 l1d += sample.instruction_execution().latency().instruction_retirement().value();

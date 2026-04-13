@@ -650,8 +650,18 @@ perf::SampleDecoder::decode_data_access_source_and_remote(const perf_mem_data_sr
   /// Translate into Source object.
 #ifndef PERFCPP_NO_MEM_LVLNUM /// lvl_num field is supported since Linux 6.1
   const auto mem_lvl_num = perf_data_source.mem_lvl_num;
+
+  /// Return nullopt when no data source information is available.
+  if (mem_lvl_num == 0U || mem_lvl_num == PERF_MEM_LVLNUM_NA) {
+    return std::nullopt;
+  }
 #else /// Use lvl before Linux 6.1
   const auto mem_lvl_num = perf_data_source.mem_lvl;
+
+  /// Return nullopt when no data source information is available.
+  if (mem_lvl_num == 0U || static_cast<bool>(mem_lvl_num & PERF_MEM_LVL_NA)) {
+    return std::nullopt;
+  }
 #endif
   auto data_access_source = SampleDecoder::decode_data_access_source(mem_lvl_num);
 
