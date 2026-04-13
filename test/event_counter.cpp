@@ -231,6 +231,9 @@ TEST_CASE("counting", "[EventCounter]")
 
   SECTION("cache pattern increasing workload")
   {
+    /// Create both benchmarks upfront so their pages are faulted in before any counter runs.
+    auto readonly_sequential_benchmark = perf::test::AccessBenchmark{ /* is random */ false, 1024U /* MB */ };
+
     auto event_counter = perf::EventCounter{};
     event_counter.add({ "seconds", "instructions", "cycles", "cache-misses" });
 
@@ -244,7 +247,6 @@ TEST_CASE("counting", "[EventCounter]")
     REQUIRE(random_result.get("cycles").has_value());
     REQUIRE(random_result.get("cache-misses").has_value());
 
-    auto readonly_sequential_benchmark = perf::test::AccessBenchmark{ /* is random */ false, 1024U /* MB */ };
     event_counter.start();
     readonly_sequential_benchmark.run();
     event_counter.stop();
