@@ -37,7 +37,7 @@ TEST_CASE("configuration", "[EventCounter]")
     config.num_physical_counters(2U);
     auto event_counter = perf::EventCounter{ config };
 
-    REQUIRE_THROWS(event_counter.add({ "instructions", "cycles", "branches" }));
+    REQUIRE_THROWS(event_counter.add({ "branches", "branch-misses", "cache-misses" }));
   }
 
   SECTION("empty counter")
@@ -147,9 +147,37 @@ TEST_CASE("counting", "[EventCounter]")
     event_counter.stop();
     const auto result1 = event_counter.result();
 
+    REQUIRE(result1.get("instructions").has_value());
+
+    /// Restart the same counter without adding new events.
+    event_counter.start();
+    readonly_benchmark.run();
+    event_counter.stop();
+    const auto result2 = event_counter.result();
+
+    REQUIRE(result2.get("instructions").has_value());
+
+    const auto max_instructions = std::max(result1.get("instructions").value(), result2.get("instructions").value());
+    const auto min_instructions = std::min(result1.get("instructions").value(), result2.get("instructions").value());
+    REQUIRE((1. / max_instructions * min_instructions) < 1.1);
+    REQUIRE((1. / max_instructions * min_instructions) > .9);
+  }
+
+  SECTION("re-open with close")
+  {
+    auto event_counter = perf::EventCounter{};
+    event_counter.add("instructions");
+
+    event_counter.start();
+    readonly_benchmark.run();
+    event_counter.stop();
+    const auto result1 = event_counter.result();
+
     REQUIRE_FALSE(result1.get("cycles").has_value());
     REQUIRE(result1.get("instructions").has_value());
 
+    /// Close before adding new events, then restart.
+    event_counter.close();
     event_counter.add("cycles");
     event_counter.start();
     readonly_benchmark.run();
@@ -163,6 +191,27 @@ TEST_CASE("counting", "[EventCounter]")
     const auto min_instructions = std::min(result1.get("instructions").value(), result2.get("instructions").value());
     REQUIRE((1. / max_instructions * min_instructions) < 1.1);
     REQUIRE((1. / max_instructions * min_instructions) > .9);
+  }
+
+  SECTION("add when opened")
+  {
+    /// Adding after start() (implicit open).
+    {
+      auto event_counter = perf::EventCounter{};
+      event_counter.add("instructions");
+      event_counter.start();
+      REQUIRE_THROWS(event_counter.add("cycles"));
+      event_counter.stop();
+    }
+
+    /// Adding after explicit open().
+    {
+      auto event_counter = perf::EventCounter{};
+      event_counter.add("instructions");
+      event_counter.open();
+      REQUIRE_THROWS(event_counter.add("cycles"));
+      event_counter.close();
+    }
   }
 
   SECTION("instructions only")

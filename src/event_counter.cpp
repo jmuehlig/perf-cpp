@@ -37,6 +37,10 @@ perf::EventCounter::~EventCounter()
 void
 perf::EventCounter::add(const std::string& event_name, const Schedule schedule)
 {
+  if (this->_is_opened) {
+    throw CannotAddEventWhenOpenedError{};
+  }
+
   auto events = std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>{};
   this->unfold(event_name, true, events);
 
@@ -47,6 +51,10 @@ perf::EventCounter::add(const std::string& event_name, const Schedule schedule)
 void
 perf::EventCounter::add(const std::vector<std::string>& event_names, const Schedule schedule)
 {
+  if (this->_is_opened) {
+    throw CannotAddEventWhenOpenedError{};
+  }
+
   auto events = std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>{};
   events.reserve(8U);
 
@@ -320,6 +328,10 @@ perf::EventCounter::create_new_group(RequestedEvent& event, const CounterConfig&
 void
 perf::EventCounter::add_live(const std::string& event_name)
 {
+  if (this->_is_opened) {
+    throw CannotAddEventWhenOpenedError{};
+  }
+
   if (this->size() == this->_config.num_physical_counters()) {
     throw MaxCountersReachedError{ this->_config.num_physical_counters() };
   }

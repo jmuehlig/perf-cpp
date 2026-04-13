@@ -236,6 +236,20 @@ public:
   ~CannotAddEventToSingleGroupError() override = default;
 };
 
+class CannotAddEventWhenOpenedError final : public std::runtime_error
+{
+public:
+  CannotAddEventWhenOpenedError()
+    : std::runtime_error("Cannot add events to an opened EventCounter. Please call close() first.")
+  {
+  }
+  CannotAddEventWhenOpenedError(const CannotAddEventWhenOpenedError&) = default;
+  CannotAddEventWhenOpenedError(CannotAddEventWhenOpenedError&&) noexcept = default;
+  CannotAddEventWhenOpenedError& operator=(const CannotAddEventWhenOpenedError&) = default;
+  CannotAddEventWhenOpenedError& operator=(CannotAddEventWhenOpenedError&&) noexcept = default;
+  ~CannotAddEventWhenOpenedError() override = default;
+};
+
 class CannotFindEventForMetricError final : public std::runtime_error
 {
 public:
