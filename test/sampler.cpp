@@ -163,7 +163,7 @@ TEST_CASE("sampling", "[Sampler]")
         sampler.trigger(perf::IbsOp{ /*upos = */ true }, perf::Precision::RequestZeroSkid, perf::Period{ 16000 }));
     }
 
-    REQUIRE_NOTHROW(sampler.values().logical_memory_address(true).data_source(true).data_access_latency(true));
+    REQUIRE_NOTHROW(sampler.values().logical_memory_address(true).data_source(true).data_access_latency(true).instruction_latency(true));
     REQUIRE_NOTHROW(sampler.open());
 
     REQUIRE_NOTHROW(sampler.start());
@@ -195,9 +195,7 @@ TEST_CASE("sampling", "[Sampler]")
               }
             }
           } else {
-            if ( (perf::HardwareInfo::is_intel() && perf::HardwareInfo::is_intel_12th_generation_or_newer()) || (perf::HardwareInfo::is_amd() && perf::HardwareInfo::amd_ibs().is_supported())) {
-              REQUIRE(sample.instruction_execution().latency().instruction_retirement().has_value());
-            }
+            REQUIRE(sample.instruction_execution().latency().instruction_retirement().has_value());
             if (sample.data_access().source().has_value()) {
               if (sample.data_access().source()->is_l1_hit()) {
                 l1d += sample.instruction_execution().latency().instruction_retirement().value();
