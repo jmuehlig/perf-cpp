@@ -54,6 +54,7 @@ nav:
     - Live Events: recording-live-events.md
     - Multi-Thread, -Core & -Process: recording-parallel.md
     - Metrics: metrics.md
+    - Customizing Events: counters.md
   - Sampling:
     - Basics: sampling.md
     - Multi-Thread & Multi-Core: sampling-parallel.md
@@ -61,6 +62,5 @@ nav:
     - CSV Export: sampling-export-to-csv.md
     - Perf Report: sampling-export-to-perf.md
     - Memory Access Patterns: sampling-memory-analysis.md
-  - Customizing Events: counters.md
   - Reference:
     - Perf Paranoid: perf-paranoid.md
