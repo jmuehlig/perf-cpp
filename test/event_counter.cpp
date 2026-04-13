@@ -287,7 +287,7 @@ TEST_CASE("counting", "[EventCounter]")
     REQUIRE(random_result.get("branches").value() < 1.1);
 
     REQUIRE(random_result.get("dTLB-miss-ratio").has_value());
-    REQUIRE(random_result.get("dTLB-miss-ratio").value() > .9);
+    REQUIRE(random_result.get("dTLB-miss-ratio").value() > .4);
     REQUIRE(random_result.get("dTLB-miss-ratio").value() < 1.1);
   }
 

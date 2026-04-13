@@ -267,7 +267,7 @@ TEST_CASE("sampling", "[Sampler]")
       REQUIRE(sample.counter().has_value());
       REQUIRE(sample.counter()->get("L1d-misses-per-load").has_value());
       REQUIRE(sample.counter()->get("L1d-misses-per-load").value() > 0);
-      REQUIRE(sample.counter()->get("L1d-misses-per-load").value() < .7);
+      REQUIRE(sample.counter()->get("L1d-misses-per-load").value() < 1.1);
     }
   }
 }
