@@ -129,6 +129,11 @@ public:
   };
 
   /**
+   * @return A vector containing the logical ids of all CPU cores.
+   */
+  [[nodiscard]] static std::vector<std::uint16_t> all_cpu_cores();
+
+  /**
    * @return True, if the underlying hardware is an Intel processor.
    */
   [[nodiscard]] static bool is_intel() noexcept { return __builtin_cpu_is("intel"); }

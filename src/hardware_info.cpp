@@ -2,6 +2,8 @@
 #include <cerrno>
 #include <filesystem>
 #include <fstream>
+#include <numeric>
+#include <thread>
 #include <perfcpp/counter/group.hpp>
 #include <perfcpp/counter_definition.hpp>
 #include <perfcpp/event_file_descriptor_parser.hpp>
@@ -38,6 +40,15 @@ std::optional<std::uint64_t> perf::HardwareInfo::_max_cpu_clock_frequency{ std::
 
 /// Cache variable to remember if NMI watchdog is enabled.
 std::optional<bool> perf::HardwareInfo::_is_nmi_watchdog_enabled{ std::nullopt };
+
+std::vector<std::uint16_t>
+perf::HardwareInfo::all_cpu_cores()
+{
+    auto cpu_cores = std::vector<std::uint16_t>(std::thread::hardware_concurrency());
+    std::iota(cpu_cores.begin(), cpu_cores.end(), 0U);
+
+    return cpu_cores;
+}
 
 bool
 perf::HardwareInfo::is_intel_aux_counter_required()

@@ -102,10 +102,15 @@ event_counter.close();
 > [!NOTE]
 > This requires `perf_event_paranoid < 1`. See the [perf paranoid setting](perf-paranoid.md).
 
+> [!TIP]
+> Use `perf::HardwareInfo::all_cpu_cores()` to monitor all available CPU cores without specifying them manually.
+
 ```cpp
+#include <perfcpp/hardware_info.hpp>
 #include <perfcpp/event_counter.hpp>
 
-const auto cpu_core_ids = std::vector<std::uint16_t>{0U, 4U, 8U, 12U};
+/// Use all_cpu_cores() to target every core on the system.
+const auto cpu_core_ids = perf::HardwareInfo::all_cpu_cores(); // or e.g. {0U, 4U, 8U, 12U}
 auto multi_cpu_counter = perf::MultiCoreEventCounter{ cpu_core_ids };
 multi_cpu_counter.add({"instructions", "cycles", "cache-misses"});
 

@@ -75,13 +75,18 @@ The output may be something like this:
 > [!NOTE]
 > This requires `perf_event_paranoid < 1`. See the [perf paranoid setting](perf-paranoid.md).
 
+> [!TIP]
+> Use `perf::HardwareInfo::all_cpu_cores()` to monitor all available CPU cores without specifying them manually.
+
 ```cpp
+#include <perfcpp/hardware_info.hpp>
 #include <perfcpp/sampler.hpp>
 
 auto sample_config = perf::SampleConfig{};
 sample_config.period(50000U);
 
-const auto cpu_core_ids = std::vector<std::uint16_t>{0U, 1U, 2U, 3U};
+/// Use all_cpu_cores() to target every core on the system.
+const auto cpu_core_ids = perf::HardwareInfo::all_cpu_cores(); // or e.g. {0U, 1U, 2U, 3U}
 auto sampler = perf::MultiCoreSampler{ cpu_core_ids, sample_config };
 sampler.trigger("cycles");
 sampler.values().timestamp(true).cpu_id(true).thread_id(true);
