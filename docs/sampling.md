@@ -496,7 +496,8 @@ Note that `record.context_switch()` returns an `std::optional`.
 | **Thread ID**     | The thread ID involved in the switch (available in CPU-wide mode).  | `sampler.values().context_switch(true)` | `record.context_switch()->thread_id()`  | `std::optional<std::uint32_t>` |
 | **Process ID**    | The process ID involved in the switch (available in CPU-wide mode). | `sampler.values().context_switch(true)` | `record.context_switch()->process_id()` | `std::optional<std::uint32_t>` |
 
-If recorded, the following [metadata fields](#metadata) will also be included:
+If requested, the following [metadata fields](#metadata) will also be included:
+
 - Timestamp
 - Stream ID
 - CPU ID
@@ -515,7 +516,8 @@ Note that `record.cgroup()` returns an `std::optional`.
 | **New CGroup ID**   | The ID of a newly added cgroup.             | `sampler.values().cgroup(true)` | `record.cgroup()->id()`   | `std::uint64_t`                |
 | **New CGroup Path** | The path of a newly added cgroup.           | `sampler.values().cgroup(true)` | `record.cgroup()->path()` | `std::string`                  |
 
-If recorded, the following [metadata fields](#metadata) will also be included:
+If requested, the following [metadata fields](#metadata) will also be included:
+
 - Timestamp
 - Process ID
 - Thread ID
@@ -532,7 +534,8 @@ Note that `record.throttle()` returns an `std::optional`.
 | **Is Throttle**   | Indicates that the sample corresponds to a throttle event.    | `sampler.values().throttle(true)` | `record.throttle()->is_throttle()`   | `bool` |
 | **Is Unthrottle** | Indicates that the sample corresponds to an unthrottle event. | `sampler.values().throttle(true)` | `record.throttle()->is_unthrottle()` | `bool` |
 
-If recorded, the following [metadata fields](#metadata) will also be included:
+If requested, the following [metadata fields](#metadata) will also be included:
+
 - Timestamp
 - Process ID
 - Thread ID
@@ -549,7 +552,8 @@ Note that `record.count_loss()` returns an `std::optional`.
 |-----------------------|-----------------------------|-----------------|-----------------------|--------------------------------|
 | **Count Loss Events** | The number of lost samples. | Always recorded | `record.count_loss()` | `std::optional<std::uint64_t>` |
 
-If recorded, the following [metadata fields](#metadata) will also be included:
+If requested, the following [metadata fields](#metadata) will also be included:
+
 - Timestamp
 - Process ID
 - Thread ID
