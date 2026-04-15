@@ -194,7 +194,7 @@ public:
   }
 
   Sampler(Sampler&&) noexcept = default;
-  Sampler(const Sampler&) = default;
+  Sampler(const Sampler&) = delete;
 
   ~Sampler() = default;
   Sampler& operator=(const Sampler&) = delete;
@@ -1149,10 +1149,8 @@ public:
 
   /**
    * Opens and starts recording performance counters for all specified cores.
-   *
-   * @return True, of the performance counters could be started.
    */
-  bool start();
+  void start();
 
   /**
    * Stops the sampler.

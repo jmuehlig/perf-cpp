@@ -403,6 +403,42 @@ public:
   ~TimeEventNotSupportedAsLiveEventError() override = default;
 };
 
+class LiveEventCounterResultMismatchError final : public std::runtime_error
+{
+public:
+  explicit LiveEventCounterResultMismatchError(const std::size_t live_event_counter_size, const std::size_t result_size)
+    : std::runtime_error(std::string{ "The number of live event counters (" }
+                           .append(std::to_string(live_event_counter_size))
+                           .append(" does not match the length of results list (")
+                           .append(std::to_string(result_size))
+                           .append(")."))
+  {
+  }
+  LiveEventCounterResultMismatchError(const LiveEventCounterResultMismatchError&) = default;
+  LiveEventCounterResultMismatchError(LiveEventCounterResultMismatchError&&) noexcept = default;
+  LiveEventCounterResultMismatchError& operator=(const LiveEventCounterResultMismatchError&) = default;
+  LiveEventCounterResultMismatchError& operator=(LiveEventCounterResultMismatchError&&) noexcept = default;
+  ~LiveEventCounterResultMismatchError() override = default;
+};
+
+class LiveEventCounterOutOfBoundsAccessError final : public std::runtime_error
+{
+public:
+  explicit LiveEventCounterOutOfBoundsAccessError(const std::size_t live_event_counter_size, const std::size_t counter_index)
+    : std::runtime_error(std::string{ "The accessed live counter (" }
+                           .append(std::to_string(counter_index))
+                           .append(" is larger then the number if configured live counters (")
+                           .append(std::to_string(live_event_counter_size))
+                           .append(")."))
+  {
+  }
+  LiveEventCounterOutOfBoundsAccessError(const LiveEventCounterOutOfBoundsAccessError&) = default;
+  LiveEventCounterOutOfBoundsAccessError(LiveEventCounterOutOfBoundsAccessError&&) noexcept = default;
+  LiveEventCounterOutOfBoundsAccessError& operator=(const LiveEventCounterOutOfBoundsAccessError&) = default;
+  LiveEventCounterOutOfBoundsAccessError& operator=(LiveEventCounterOutOfBoundsAccessError&&) noexcept = default;
+  ~LiveEventCounterOutOfBoundsAccessError() override = default;
+};
+
 class TimeEventNotSupportedForSamplingError final : public std::runtime_error
 {
 public:
@@ -734,9 +770,11 @@ class EventDoesNotSupportIBSFeature final : public std::runtime_error
 {
 public:
   EventDoesNotSupportIBSFeature(const std::string_view ibs_event, const std::string_view feature)
-    : std::runtime_error{
-      std::string{ "The underlying IBS counter '" }.append(ibs_event).append("' does not support ").append(feature).append(".")
-    }
+    : std::runtime_error{ std::string{ "The underlying IBS counter '" }
+                            .append(ibs_event)
+                            .append("' does not support ")
+                            .append(feature)
+                            .append(".") }
   {
   }
   EventDoesNotSupportIBSFeature(const EventDoesNotSupportIBSFeature&) = default;

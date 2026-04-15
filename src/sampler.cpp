@@ -226,7 +226,7 @@ perf::Sampler::transform_trigger_to_sample_counter(const std::string_view pmu_na
 
     /// Notice the event name of the trigger event.
     if (this->_values.is_set(SampleRecordingValues::Field::PerformanceCounter)) {
-      requested_events.add(RequestedEvent{ pmu_name, event_name, /* group_id */ 0U, /* position in group */ 0U });
+      requested_events.add(RequestedEvent{ pmu_name, event_name, /* group_id */ 0U, /* position in group */ static_cast<std::uint8_t>(group.size()) });
     }
   }
 
@@ -489,6 +489,10 @@ perf::MultiSamplerBase::to_perf_file(std::vector<Sampler>& samplers, std::string
 void
 perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std::vector<std::string>>&& trigger_names)
 {
+  if (samplers.empty()) {
+    return;
+  }
+
   for (auto sampler_id = 0U; sampler_id < samplers.size() - 1U; ++sampler_id) {
     samplers[sampler_id].trigger(std::vector<std::vector<std::string>>{ trigger_names });
   }
@@ -560,7 +564,7 @@ perf::MultiCoreSampler::open()
   }
 }
 
-bool
+void
 perf::MultiCoreSampler::start()
 {
   for (auto sampler_id = 0U; sampler_id < this->_core_ids.size(); ++sampler_id) {
@@ -568,6 +572,4 @@ perf::MultiCoreSampler::start()
     config.cpu_core(CpuCore{ this->_core_ids[sampler_id] });
     MultiSamplerBase::start(this->_core_local_samplers[sampler_id], config);
   }
-
-  return true;
 }

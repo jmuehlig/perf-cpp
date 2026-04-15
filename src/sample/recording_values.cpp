@@ -17,7 +17,7 @@ perf::SampleRecordingValues::to_perf_sample_type() const noexcept
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_PERIOD, Field::Period);
 
   // === Identifiers ===
-  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_ID, Field::Id);
+  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_IDENTIFIER, Field::Id);
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_STREAM_ID, Field::StreamId);
 
   // === Instruction Execution ===

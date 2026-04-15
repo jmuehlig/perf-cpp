@@ -154,12 +154,12 @@ public:
   /**
    * Manage to include the ID into samples.
    *
-   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#identifier
+   * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/sampling.md#id
    *
    * @param include True, if the ID should be included.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& identifier(const bool include) noexcept
+  SampleRecordingValues& id(const bool include) noexcept
   {
     set(Field::Id, include);
     return *this;
@@ -598,7 +598,7 @@ public:
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& user_registers(Registers&& registers) noexcept
+  SampleRecordingValues& user_registers(Registers&& registers)
   {
     _user_registers = std::move(registers);
     set(Field::UserRegisters, !_user_registers.empty());
@@ -613,7 +613,7 @@ public:
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& user_registers(std::vector<Registers::arm>&& registers) noexcept
+  SampleRecordingValues& user_registers(std::vector<Registers::arm>&& registers)
   {
     return user_registers(Registers{ std::move(registers) });
   }
@@ -626,7 +626,7 @@ public:
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& user_registers(std::vector<Registers::arm64>&& registers) noexcept
+  SampleRecordingValues& user_registers(std::vector<Registers::arm64>&& registers)
   {
     return user_registers(Registers{ std::move(registers) });
   }
@@ -639,7 +639,7 @@ public:
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& user_registers(std::vector<Registers::x86>&& registers) noexcept
+  SampleRecordingValues& user_registers(std::vector<Registers::x86>&& registers)
   {
     return user_registers(Registers{ std::move(registers) });
   }
@@ -652,7 +652,7 @@ public:
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& user_registers(std::vector<Registers::riscv>&& registers) noexcept
+  SampleRecordingValues& user_registers(std::vector<Registers::riscv>&& registers)
   {
     return user_registers(Registers{ std::move(registers) });
   }
@@ -665,7 +665,7 @@ public:
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& kernel_registers(Registers&& registers) noexcept
+  SampleRecordingValues& kernel_registers(Registers&& registers)
   {
     _kernel_registers = std::move(registers);
     set(Field::KernelRegisters, !_kernel_registers.empty());
@@ -680,7 +680,7 @@ public:
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& kernel_registers(std::vector<Registers::arm>&& registers) noexcept
+  SampleRecordingValues& kernel_registers(std::vector<Registers::arm>&& registers)
   {
     return kernel_registers(Registers{ std::move(registers) });
   }
@@ -693,7 +693,7 @@ public:
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& kernel_registers(std::vector<Registers::arm64>&& registers) noexcept
+  SampleRecordingValues& kernel_registers(std::vector<Registers::arm64>&& registers)
   {
     return kernel_registers(Registers{ std::move(registers) });
   }
@@ -706,7 +706,7 @@ public:
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& kernel_registers(std::vector<Registers::x86>&& registers) noexcept
+  SampleRecordingValues& kernel_registers(std::vector<Registers::x86>&& registers)
   {
     return kernel_registers(Registers{ std::move(registers) });
   }
@@ -719,7 +719,7 @@ public:
    * @param registers List of registers to include.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& kernel_registers(std::vector<Registers::riscv>&& registers) noexcept
+  SampleRecordingValues& kernel_registers(std::vector<Registers::riscv>&& registers)
   {
     return kernel_registers(Registers{ std::move(registers) });
   }

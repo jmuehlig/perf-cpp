@@ -55,7 +55,7 @@ public:
   }
 
   template<typename T>
-  [[nodiscard]] const T* read(const std::size_t size) noexcept
+  [[nodiscard]] const T* read_array(const std::size_t size) noexcept
   {
     auto* begin = reinterpret_cast<T*>(_data);
     _data += sizeof(T) * size;
@@ -191,6 +191,7 @@ private:
 
   /**
    * Reads the sample_id struct from the data located at sample_ptr into the provided sample.
+   * Corresponds to sample_id emitted when sample_id_all is set.
    *
    * @param entry Entry from the sample iterator.
    * @param sample Sample to read the data into.
@@ -398,11 +399,11 @@ private:
    * Translates the current entry from the user-level buffer into a lost sample.
    *
    * @param entry Entry of the user-level buffer.
-   * @param is_contains_event_id If set, the entry contains the event ID field.
+   * @param has_leading_even_id If set, the entry contains the event ID field.
    * @return Sample containing the loss.
    */
-  [[nodiscard]] perf::Sample decode_lost_samples_event(SampleIterator&& entry,
-                                                       bool is_contains_event_id) const noexcept;
+  [[nodiscard]] Sample decode_lost_samples_event(SampleIterator&& entry,
+                                                       bool has_leading_even_id) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a context switch sample.
@@ -410,7 +411,7 @@ private:
    * @param entry Entry of the user-level buffer.
    * @return Sample containing the context switch.
    */
-  [[nodiscard]] perf::Sample decode_context_switch_event(SampleIterator&& entry) const noexcept;
+  [[nodiscard]] Sample decode_context_switch_event(SampleIterator&& entry) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a cgroup sample.
@@ -418,7 +419,7 @@ private:
    * @param entry Entry of the user-level buffer.
    * @return Sample containing the cgroup.
    */
-  [[nodiscard]] static perf::Sample decode_cgroup_event(SampleIterator&& entry);
+  [[nodiscard]] Sample decode_cgroup_event(SampleIterator&& entry) const;
 
   /**
    * Translates the current entry from the user-level buffer into a throttle or un-throttle sample.
@@ -426,6 +427,6 @@ private:
    * @param entry Entry of the user-level buffer.
    * @return Sample containing the throttle.
    */
-  [[nodiscard]] perf::Sample decode_throttle_event(SampleIterator&& entry) const noexcept;
+  [[nodiscard]] Sample decode_throttle_event(SampleIterator&& entry) const noexcept;
 };
 }

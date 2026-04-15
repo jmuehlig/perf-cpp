@@ -140,8 +140,9 @@ perf::EventCounter::add(const std::string_view pmu_name,
                         std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>& events)
 {
   /// Find an event with the same name in the result vector.
-  auto iterator = std::find_if(events.begin(), events.end(), [event_name](const auto& requested_event) {
-    return std::get<0>(requested_event).event_name() == event_name;
+  auto iterator = std::find_if(events.begin(), events.end(), [pmu_name, event_name](const auto& requested_event) {
+    const auto& event = std::get<0>(requested_event);
+    return (!event.pmu_name().has_value() || event.pmu_name().value() == pmu_name) && event.event_name() == event_name;
   });
   if (iterator == events.end()) {
     /// Append, if the event does not exist.
@@ -488,30 +489,46 @@ perf::EventCounter::result(const std::uint64_t normalization) const
 }
 
 void
-perf::EventCounter::live_result(std::vector<double>& result) const noexcept
+perf::EventCounter::live_result(std::vector<double>& result) const
 {
+  if (this->_hardware_live_counters.size() != result.size()) {
+    throw LiveEventCounterResultMismatchError{this->_hardware_live_counters.size(), result.size()};
+  }
+
   for (auto counter_id = 0U; counter_id < this->_hardware_live_counters.size(); ++counter_id) {
     result[counter_id] = this->live_result(counter_id).value_or(.0);
   }
 }
 
 void
-perf::EventCounter::live_result(std::vector<double>& result, std::uint64_t normalization) const noexcept
+perf::EventCounter::live_result(std::vector<double>& result, std::uint64_t normalization) const
 {
+  if (this->_hardware_live_counters.size() != result.size()) {
+    throw LiveEventCounterResultMismatchError{this->_hardware_live_counters.size(), result.size()};
+  }
+
   for (auto counter_id = 0U; counter_id < this->_hardware_live_counters.size(); ++counter_id) {
     result[counter_id] = this->live_result(counter_id, normalization).value_or(.0);
   }
 }
 
 std::optional<double>
-perf::EventCounter::live_result(const std::uint64_t counter_index) const noexcept
+perf::EventCounter::live_result(const std::uint64_t counter_index) const
 {
+  if (counter_index >= this->_hardware_live_counters.size()) {
+    throw LiveEventCounterOutOfBoundsAccessError{this->_hardware_live_counters.size(), counter_index};
+  }
+
   return this->_hardware_live_counters[counter_index].read_live();
 }
 
 std::optional<double>
-perf::EventCounter::live_result(const std::uint64_t counter_index, const std::uint64_t normalization) const noexcept
+perf::EventCounter::live_result(const std::uint64_t counter_index, const std::uint64_t normalization) const
 {
+  if (counter_index >= this->_hardware_live_counters.size()) {
+    throw LiveEventCounterOutOfBoundsAccessError{this->_hardware_live_counters.size(), counter_index};
+  }
+
   if (const auto value = this->live_result(counter_index); value.has_value()) {
     return value.value() / static_cast<double>(normalization);
   }
@@ -620,6 +637,10 @@ perf::MultiEventCounterBase::close()
 perf::CounterResult
 perf::MultiEventCounterBase::result(const std::uint64_t normalization) const
 {
+  if (this->event_counters().empty()) {
+    return CounterResult{};
+  }
+
   /// Aggregate hardware events from all individual EventCounters and turn into a list of requested values.
 
   /// The reference_event_counter is used to access counters (all EventCounters from the list are required to have the

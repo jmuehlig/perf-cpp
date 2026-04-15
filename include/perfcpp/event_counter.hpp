@@ -162,7 +162,7 @@ public:
    *
    * @param result Output parameter to write the result without allocating any memory.
    */
-  void live_result(std::vector<double>& result) const noexcept;
+  void live_result(std::vector<double>& result) const;
 
   /**
    * Performs a live read for every group without stopping the counter and writes it into the result input/output.
@@ -171,7 +171,7 @@ public:
    * @param result Output parameter to write the result without allocating any memory.
    * @param normalization  Normalization value.
    */
-  void live_result(std::vector<double>& result, std::uint64_t normalization) const noexcept;
+  void live_result(std::vector<double>& result, std::uint64_t normalization) const;
 
   /**
    * Performs a live read for every group without stopping the counter.
@@ -179,7 +179,7 @@ public:
    * @param counter_index Index of the counter to be read live.
    * @return The live value of the counter.
    */
-  [[nodiscard]] std::optional<double> live_result(std::uint64_t counter_index) const noexcept;
+  [[nodiscard]] std::optional<double> live_result(std::uint64_t counter_index) const;
 
   /**
    * Performs a live read for every group without stopping the counter.
@@ -189,7 +189,7 @@ public:
    * @return The live value of the counter.
    */
   [[nodiscard]] std::optional<double> live_result(std::uint64_t counter_index,
-                                                  std::uint64_t normalization) const noexcept;
+                                                  std::uint64_t normalization) const;
 
   /**
    * @return A list of event names that are added as live evens.

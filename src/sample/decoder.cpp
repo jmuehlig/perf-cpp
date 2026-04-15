@@ -64,7 +64,7 @@ perf::SampleDecoder::decode(const std::vector<std::vector<std::byte>>& sample_bu
       } else if (entry.is_context_switch_event()) { /// Read context switch event.
         samples.push_back(this->decode_context_switch_event(std::move(entry)));
       } else if (entry.is_cgroup_event()) { /// Read cgroup event.
-        samples.push_back(SampleDecoder::decode_cgroup_event(std::move(entry)));
+        samples.push_back(this->decode_cgroup_event(std::move(entry)));
       } else if (entry.is_throttle_event() &&
                  this->_sampler_values.is_set(SampleRecordingValues::Field::Throttle)) { /// Read (un-) throttle event.
         samples.push_back(this->decode_throttle_event(std::move(entry)));
@@ -169,7 +169,7 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
     /// Read the size of the raw sample.
     if (const auto raw_data_size = entry.read<std::uint32_t>(); raw_data_size > 0U) {
       /// Read the raw data.
-      const auto* raw_sample_data = entry.read<std::byte>(raw_data_size);
+      const auto* raw_sample_data = entry.read_array<std::byte>(raw_data_size);
       raw_values = std::vector<std::byte>{ raw_sample_data, raw_sample_data + raw_data_size };
     }
   }
@@ -186,7 +186,7 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
 
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::UserStack)) {
     const auto size = entry.read<std::uint64_t>();
-    const auto* stack_data = entry.read<std::byte>(size);
+    const auto* stack_data = entry.read_array<std::byte>(size);
 
     if (const auto dyn_size = size > 0ULL ? entry.read<std::uint64_t>() : 0ULL; dyn_size > 0ULL) {
       /// Read the stack.
@@ -283,7 +283,7 @@ perf::SampleDecoder::decode_registers(SampleIterator& entry, const Registers& re
   const auto count_registers = registers.size();
 
   /// Read raw register values from perf data.
-  const auto* perf_registers = entry.read<std::int64_t>(count_registers);
+  const auto* perf_registers = entry.read_array<std::int64_t>(count_registers);
 
   /// Transform raw perf register array into register value map by linking values to specified registers. Note that
   /// registers can be a vector of x86, arm, arm64, etc.
@@ -322,7 +322,7 @@ perf::SampleDecoder::decode_hardware_events_values(SampleIterator& entry,
   const auto multiplexing_correction = Group::calculate_multiplexing_factor(time_enabled, time_running);
 
   /// Read the event values (if the number matches the number of specified events).
-  const auto* raw_event_values = entry.read<CounterValues<Group::MAX_MEMBERS>::ValueAndIdentifier>(count_events);
+  const auto* raw_event_values = entry.read_array<CounterValues<Group::MAX_MEMBERS>::ValueAndIdentifier>(count_events);
 
   /// Create a list of results with only hardware events – regardless of their visibility in the result. This list will
   /// be used to build a result containing visible events and metrics.
@@ -341,7 +341,7 @@ perf::SampleDecoder::decode_hardware_events_values(SampleIterator& entry,
     }
   }
 
-  /// Build a result containing metrics and hardware events requested by teh user.
+  /// Build a result containing metrics and hardware events requested by the user.
   return requested_event_set.result(this->_counter_definition, CounterResult{ std::move(event_results) }, 1ULL);
 }
 
@@ -359,7 +359,7 @@ perf::SampleDecoder::decode_callchain(SampleIterator& entry)
   callchain.reserve(callchain_size);
 
   /// Read the callchain entries.
-  const auto* instruction_pointers = entry.read<std::uint64_t>(callchain_size);
+  const auto* instruction_pointers = entry.read_array<std::uint64_t>(callchain_size);
   for (auto index = 0U; index < callchain_size; ++index) {
     callchain.push_back(std::uintptr_t{ instruction_pointers[index] });
   }
@@ -381,7 +381,7 @@ perf::SampleDecoder::decode_branch_stack(SampleIterator& entry)
   branches.reserve(count_branches);
 
   /// Read the branch stack entries.
-  const auto* sampled_branches = entry.read<perf_branch_entry>(count_branches);
+  const auto* sampled_branches = entry.read_array<perf_branch_entry>(count_branches);
   for (auto i = 0U; i < count_branches; ++i) {
     const auto& branch = sampled_branches[i];
 #ifndef PERFCPP_NO_BRANCH_STACK_CYCLES /// Cycles in branch stacks is supported since Linux 4.3
@@ -399,7 +399,7 @@ void
 perf::SampleDecoder::decode_latency(const std::uint32_t latency, Sample& sample) const noexcept
 {
   if (HardwareInfo::is_intel()) {
-    /// Intel reports the instruction latency before th 12th generation–and cache access latency from that.
+    /// Intel reports the instruction latency before the 12th generation–and cache access latency from that.
     if (HardwareInfo::is_intel_12th_generation_or_newer()) {
       if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataAccessLatency)) {
         sample.data_access().latency().cache_access(latency);
@@ -874,7 +874,7 @@ perf::SampleDecoder::decode_tlb_page_size(const bool is_1g, const bool is_2m) no
     return 1024ULL * 1024ULL * 2ULL;
   }
 
-  /// Of not 1G and 2M, it is 4K
+  /// If not 1G and 2M, it is 4K
   return 1024ULL * 4ULL;
 }
 
@@ -889,13 +889,13 @@ perf::SampleDecoder::decode_tlb_page_size(const std::uint8_t code) noexcept
 }
 
 perf::Sample
-perf::SampleDecoder::decode_lost_samples_event(SampleIterator&& entry, const bool is_contains_event_id) const noexcept
+perf::SampleDecoder::decode_lost_samples_event(SampleIterator&& entry, const bool has_leading_even_id) const noexcept
 {
   auto sample = Sample{};
   sample.metadata().mode(entry.mode());
 
   /// Skip the sample id.
-  if (is_contains_event_id) {
+  if (has_leading_even_id) {
     entry.skip<std::uint64_t>();
   }
 
@@ -935,13 +935,16 @@ perf::SampleDecoder::decode_context_switch_event(SampleIterator&& entry) const n
 }
 
 perf::Sample
-perf::SampleDecoder::decode_cgroup_event(SampleIterator&& entry)
+perf::SampleDecoder::decode_cgroup_event(SampleIterator&& entry) const
 {
   auto sample = Sample{};
   sample.metadata().mode(entry.mode());
 
   const auto cgroup_id = entry.read<std::uint64_t>();
   const auto* path = entry.as<const char*>();
+
+  /// Read sample_id.
+  this->decode_sample_id_all(entry, sample);
 
   sample.cgroup(CGroup{ cgroup_id, std::string{ path } });
 
@@ -956,10 +959,23 @@ perf::SampleDecoder::decode_throttle_event(SampleIterator&& entry) const noexcep
 
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::Timestamp)) {
     sample.metadata().timestamp(entry.read<std::uint64_t>());
+  } else {
+    /// Timestamp is ALWAYS written; skip if not requested.
+    entry.skip<std::uint64_t>();
+  }
+
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::Id)) {
+    sample.metadata().sample_id(entry.read<std::uint64_t>());
+  } else {
+    /// Id is ALWAYS written; skip if not requested.
+    entry.skip<std::uint64_t>();
   }
 
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::StreamId)) {
     sample.metadata().stream_id(entry.read<std::uint64_t>());
+  } else {
+    /// StreamId is ALWAYS written; skip if not requested.
+    entry.skip<std::uint64_t>();
   }
 
   /// Read sample_id.
