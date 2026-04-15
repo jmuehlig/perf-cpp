@@ -202,22 +202,25 @@ public:
   ~MaxCountersReachedError() override = default;
 };
 
-class MaxGroupsReachedError final : public std::runtime_error
+class MaxPhysicalCountersReachedError final : public std::runtime_error
 {
 public:
-  explicit MaxGroupsReachedError(const std::uint64_t num_physical_counters)
+  explicit MaxPhysicalCountersReachedError(const std::uint64_t num_physical_counters)
     : std::runtime_error(
         std::string{ "Cannot add more events: reached maximum number of physical performance counters (" }.append(
           std::to_string(num_physical_counters)
             .append("). Try to increase via perf::Config::num_physical_counters(X).")))
   {
   }
-  MaxGroupsReachedError(const MaxGroupsReachedError&) = default;
-  MaxGroupsReachedError(MaxGroupsReachedError&&) noexcept = default;
-  MaxGroupsReachedError& operator=(const MaxGroupsReachedError&) = default;
-  MaxGroupsReachedError& operator=(MaxGroupsReachedError&&) noexcept = default;
-  ~MaxGroupsReachedError() override = default;
+  MaxPhysicalCountersReachedError(const MaxPhysicalCountersReachedError&) = default;
+  MaxPhysicalCountersReachedError(MaxPhysicalCountersReachedError&&) noexcept = default;
+  MaxPhysicalCountersReachedError& operator=(const MaxPhysicalCountersReachedError&) = default;
+  MaxPhysicalCountersReachedError& operator=(MaxPhysicalCountersReachedError&&) noexcept = default;
+  ~MaxPhysicalCountersReachedError() override = default;
 };
+
+/// Keep MaxGroupsReachedError for backward compatibility (changed in v0.13.1).
+using MaxGroupsReachedError = MaxPhysicalCountersReachedError;
 
 class CannotAddEventToSingleGroupError final : public std::runtime_error
 {

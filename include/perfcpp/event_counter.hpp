@@ -55,7 +55,7 @@ public:
   EventCounter(const EventCounter&) = delete;
   EventCounter(EventCounter&&) noexcept = default;
 
-  ~EventCounter();
+  ~EventCounter() noexcept(false);
 
   EventCounter& operator=(const EventCounter&) = delete;
   EventCounter& operator=(EventCounter&&) noexcept = delete;
@@ -271,7 +271,7 @@ private:
    * @param events List to extend the requested events. If the event is a single hardware event, the list will
    * have one entry. If the event is a metric, the list will have multiple entries.
    */
-  void unfold(const std::string& name,
+  void expand_to_events(const std::string& name,
               bool is_visible_in_results,
               std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>& events) const;
 

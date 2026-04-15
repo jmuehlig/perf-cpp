@@ -29,7 +29,7 @@ perf::EventCounter::copy_from_template(const EventCounter& other)
   return copy;
 }
 
-perf::EventCounter::~EventCounter()
+perf::EventCounter::~EventCounter() noexcept(false)
 {
   this->close();
 }
@@ -42,7 +42,7 @@ perf::EventCounter::add(const std::string& event_name, const Schedule schedule)
   }
 
   auto events = std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>{};
-  this->unfold(event_name, true, events);
+  this->expand_to_events(event_name, true, events);
 
   /// Schedule the events to hardware counters.
   this->schedule(std::move(events), schedule);
@@ -60,7 +60,7 @@ perf::EventCounter::add(const std::vector<std::string>& event_names, const Sched
 
   /// Unfold all events.
   for (const auto& event_name : event_names) {
-    this->unfold(event_name, true, events);
+    this->expand_to_events(event_name, true, events);
   }
 
   /// Schedule the events to hardware counters.
@@ -68,7 +68,7 @@ perf::EventCounter::add(const std::vector<std::string>& event_names, const Sched
 }
 
 void
-perf::EventCounter::unfold(const std::string& name,
+perf::EventCounter::expand_to_events(const std::string& name,
                            const bool is_visible_in_results,
                            std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>& events) const
 {
@@ -113,7 +113,7 @@ perf::EventCounter::unfold(const std::string& name,
             return std::get<0>(requested_event).event_name() == dependent_event_name;
           }) == events.end()) {
         /// Unfold dependent events recursively.
-        this->unfold(dependent_event_name, false, events);
+        this->expand_to_events(dependent_event_name, false, events);
       }
     }
 
@@ -244,7 +244,7 @@ perf::EventCounter::schedule_as_group(std::vector<std::pair<RequestedEvent, std:
 {
   /// Test if we can add another group.
   if (this->size() == this->_config.num_physical_counters()) {
-    throw MaxGroupsReachedError{ this->_config.num_physical_counters() };
+    throw MaxPhysicalCountersReachedError{ this->_config.num_physical_counters() };
   }
 
   /// Test if all hardware events fit into a single group.
@@ -311,15 +311,15 @@ perf::EventCounter::create_new_group(RequestedEvent& event, const CounterConfig&
 {
   /// Test if we can add another group.
   if (this->size() == this->_config.num_physical_counters()) {
-    throw MaxGroupsReachedError{ this->_config.num_physical_counters() };
+    throw MaxPhysicalCountersReachedError{ this->_config.num_physical_counters() };
   }
 
   /// Only keep the group open if more than one event is allowed per group.
   is_keep_open &= this->_config.num_events_per_physical_counter() > 1U;
 
   /// Create a new group and add the event, if we did not raise an exception.
-  auto& group_and_flag = this->_hardware_event_groups.emplace_back(Group{}, is_keep_open);
-  std::get<0>(group_and_flag).add(event_config);
+  auto& [group, _] = this->_hardware_event_groups.emplace_back(Group{}, is_keep_open);
+  group.add(event_config);
 
   /// Add to the request set.
   const auto group_id = static_cast<std::uint8_t>(this->_hardware_event_groups.size() - 1U);
@@ -389,7 +389,7 @@ perf::EventCounter::open()
   }
 
   /// Verify that the EventCounter is not already opened (_is_open == false) and set flag appropriately.
-  if (const auto is_open = std::exchange(this->_is_opened, true); !is_open) {
+  if (const auto was_open = std::exchange(this->_is_opened, true); !was_open) {
     /// Open all groups. If one of them fails, group.open() will throw an exception.
     for (auto& [group, _] : this->_hardware_event_groups) {
       group.open(this->_config);
