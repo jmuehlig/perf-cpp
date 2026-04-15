@@ -40,7 +40,7 @@ perf::SampleDecoder::decode(const std::vector<std::vector<std::byte>>& sample_bu
   auto samples = std::vector<Sample>{};
   samples.reserve(sample_buffers.size() * 2048UL);
 
-  /// Read samples from all the buffers (mmap-ed perf buffer and application-level buffers).
+  /// Read samples from all the buffers.
   for (const auto& buffer : sample_buffers) {
     auto iterator = reinterpret_cast<std::uintptr_t>(buffer.data());
     const auto end = iterator + buffer.size();
@@ -50,7 +50,8 @@ perf::SampleDecoder::decode(const std::vector<std::vector<std::byte>>& sample_bu
       auto entry = SampleIterator{ iterator };
       const auto size = entry.size();
 
-      if (size == 0ULL) {
+      /// Check if the size is valid.
+      if (size < sizeof(perf_event_header) || iterator + size > end) {
         break;
       }
 
@@ -188,9 +189,9 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
     const auto size = entry.read<std::uint64_t>();
     const auto* stack_data = entry.read_array<std::byte>(size);
 
-    if (const auto dyn_size = size > 0ULL ? entry.read<std::uint64_t>() : 0ULL; dyn_size > 0ULL) {
+    if (const auto dyn_size = size > 0UL ? entry.read<std::uint64_t>() : 0UL; dyn_size > 0UL) {
       /// Read the stack.
-      sample.user_stack(std::vector<std::byte>{ stack_data, stack_data + dyn_size });
+      sample.user_stack(std::vector<std::byte>{ stack_data, stack_data + std::min(dyn_size, size) });
     }
   }
 
@@ -216,10 +217,8 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
     }
 
     if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionType) &&
-        !sample.instruction_execution().type().has_value()) {
-      if (const auto access_type = SampleDecoder::decode_data_access_type(data_source); access_type.has_value()) {
-        sample.instruction_execution().type(InstructionExecution::InstructionType::DataAccess);
-      }
+        !sample.instruction_execution().type().has_value() && SampleDecoder::has_data_access_type(data_source)) {
+      sample.instruction_execution().type(InstructionExecution::InstructionType::DataAccess);
     }
   }
 
@@ -312,10 +311,6 @@ perf::SampleDecoder::decode_hardware_events_values(SampleIterator& entry,
   /// Read the number of hardware events.
   const auto count_events = entry.read<CounterValues<Group::MAX_MEMBERS>::size_t>();
 
-  if (count_events != event_group.size()) {
-    return std::nullopt;
-  }
-
   /// Time enabled and running for correction.
   const auto time_enabled = entry.read<CounterValues<Group::MAX_MEMBERS>::time_t>();
   const auto time_running = entry.read<CounterValues<Group::MAX_MEMBERS>::time_t>();
@@ -323,6 +318,11 @@ perf::SampleDecoder::decode_hardware_events_values(SampleIterator& entry,
 
   /// Read the event values (if the number matches the number of specified events).
   const auto* raw_event_values = entry.read_array<CounterValues<Group::MAX_MEMBERS>::ValueAndIdentifier>(count_events);
+
+  /// If the number of expected and real events does not match, skip here. There is no way identifying which counter is which.
+  if (count_events != event_group.size()) {
+    return std::nullopt;
+  }
 
   /// Create a list of results with only hardware events – regardless of their visibility in the result. This list will
   /// be used to build a result containing visible events and metrics.
@@ -529,6 +529,14 @@ perf::SampleDecoder::decode_data_access_type(const perf_mem_data_src perf_data_s
   }
 
   return std::nullopt;
+}
+
+bool
+perf::SampleDecoder::has_data_access_type(const perf_mem_data_src perf_data_source) noexcept
+{
+  const auto op_code = perf_data_source.mem_op;
+
+  return op_code == PERF_MEM_OP_LOAD || op_code == PERF_MEM_OP_STORE || op_code == PERF_MEM_OP_PFETCH;
 }
 
 perf::DataAccess::Source
@@ -941,12 +949,15 @@ perf::SampleDecoder::decode_cgroup_event(SampleIterator&& entry) const
   sample.metadata().mode(entry.mode());
 
   const auto cgroup_id = entry.read<std::uint64_t>();
-  const auto* path = entry.as<const char*>();
+  auto path = std::string{entry.as<const char*>()};
+
+  /// Advance past the null-terminated path, aligned to 8 bytes.
+  entry.skip<std::byte>((path.size() + /* null terminator */ 1U + 8U) & ~7U);
 
   /// Read sample_id.
   this->decode_sample_id_all(entry, sample);
 
-  sample.cgroup(CGroup{ cgroup_id, std::string{ path } });
+  sample.cgroup(CGroup{ cgroup_id, std::move(path) });
 
   return sample;
 }

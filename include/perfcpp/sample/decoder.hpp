@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <linux/perf_event.h>
 #include <perfcpp/counter/requested_event.hpp>
 #include <perfcpp/feature.h>
@@ -48,7 +49,9 @@ public:
   template<typename T>
   [[nodiscard]] T read() noexcept
   {
-    const auto data = *reinterpret_cast<T*>(_data);
+    T data;
+    std::memcpy(&data, reinterpret_cast<const T*>(_data), sizeof(T));
+
     _data += sizeof(T);
 
     return data;
@@ -57,6 +60,10 @@ public:
   template<typename T>
   [[nodiscard]] const T* read_array(const std::size_t size) noexcept
   {
+    if (size == 0U) {
+      return nullptr;
+    }
+
     auto* begin = reinterpret_cast<T*>(_data);
     _data += sizeof(T) * size;
 
@@ -284,6 +291,15 @@ private:
    * @return Translated access type.
    */
   [[nodiscard]] static std::optional<DataAccess::AccessType> decode_data_access_type(
+    perf_mem_data_src perf_data_source) noexcept;
+
+  /**
+   * Checks if the data source contains an access type.
+   *
+   * @param perf_data_source Data source read from perf sample.
+   * @return True, if the data source contains an access type.
+   */
+  [[nodiscard]] static bool has_data_access_type(
     perf_mem_data_src perf_data_source) noexcept;
 
   /**
