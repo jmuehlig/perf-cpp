@@ -40,7 +40,7 @@ TEST_CASE("config", "[Sampler]")
 TEST_CASE("sampling", "[Sampler]")
 {
   /// Benchmark used for all sampling tests.
-  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
+  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 2048 /* MB */ };
 
   SECTION("IP with cycles")
   {
@@ -245,7 +245,7 @@ TEST_CASE("sampling", "[Sampler]")
 
     if (perf::HardwareInfo::is_intel()) {
       REQUIRE_NOTHROW(
-        filtered_sampler.trigger(perf::MemoryLoads{ 60U }, perf::Precision::MustHaveZeroSkid, perf::Period{ 16000 }));
+        filtered_sampler.trigger(perf::MemoryLoads{ 60U }, perf::Precision::MustHaveZeroSkid, perf::Period{ 000 }));
       REQUIRE_NOTHROW(not_filtered_sampler.trigger(
         perf::MemoryLoads{ 0U }, perf::Precision::MustHaveZeroSkid, perf::Period{ 16000 }));
     } else if (perf::HardwareInfo::is_amd()) {
