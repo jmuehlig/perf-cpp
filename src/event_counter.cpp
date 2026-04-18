@@ -69,8 +69,8 @@ perf::EventCounter::add(const std::vector<std::string>& event_names, const Sched
 
 void
 perf::EventCounter::expand_to_events(const std::string& name,
-                           const bool is_visible_in_results,
-                           std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>& events) const
+                                     const bool is_visible_in_results,
+                                     std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>& events) const
 {
   /// If the event name contains a '/', it might be in the format "pmu/event". Probe the event list for this patter.
   /// However, if we cannot detect a (pmu, event) pair, it might be metric or just an event containing a slash.
@@ -492,7 +492,7 @@ void
 perf::EventCounter::live_result(std::vector<double>& result) const
 {
   if (this->_hardware_live_counters.size() != result.size()) {
-    throw LiveEventCounterResultMismatchError{this->_hardware_live_counters.size(), result.size()};
+    throw LiveEventCounterResultMismatchError{ this->_hardware_live_counters.size(), result.size() };
   }
 
   for (auto counter_id = 0U; counter_id < this->_hardware_live_counters.size(); ++counter_id) {
@@ -504,7 +504,7 @@ void
 perf::EventCounter::live_result(std::vector<double>& result, std::uint64_t normalization) const
 {
   if (this->_hardware_live_counters.size() != result.size()) {
-    throw LiveEventCounterResultMismatchError{this->_hardware_live_counters.size(), result.size()};
+    throw LiveEventCounterResultMismatchError{ this->_hardware_live_counters.size(), result.size() };
   }
 
   for (auto counter_id = 0U; counter_id < this->_hardware_live_counters.size(); ++counter_id) {
@@ -516,7 +516,7 @@ std::optional<double>
 perf::EventCounter::live_result(const std::uint64_t counter_index) const
 {
   if (counter_index >= this->_hardware_live_counters.size()) {
-    throw LiveEventCounterOutOfBoundsAccessError{this->_hardware_live_counters.size(), counter_index};
+    throw LiveEventCounterOutOfBoundsAccessError{ this->_hardware_live_counters.size(), counter_index };
   }
 
   return this->_hardware_live_counters[counter_index].read_live();
@@ -526,7 +526,7 @@ std::optional<double>
 perf::EventCounter::live_result(const std::uint64_t counter_index, const std::uint64_t normalization) const
 {
   if (counter_index >= this->_hardware_live_counters.size()) {
-    throw LiveEventCounterOutOfBoundsAccessError{this->_hardware_live_counters.size(), counter_index};
+    throw LiveEventCounterOutOfBoundsAccessError{ this->_hardware_live_counters.size(), counter_index };
   }
 
   if (const auto value = this->live_result(counter_index); value.has_value()) {

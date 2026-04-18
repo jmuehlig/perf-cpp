@@ -299,8 +299,7 @@ private:
    * @param perf_data_source Data source read from perf sample.
    * @return True, if the data source contains an access type.
    */
-  [[nodiscard]] static bool has_data_access_type(
-    perf_mem_data_src perf_data_source) noexcept;
+  [[nodiscard]] static bool has_data_access_type(perf_mem_data_src perf_data_source) noexcept;
 
   /**
    * Translates the perf data source information into a Source.
@@ -418,8 +417,7 @@ private:
    * @param has_leading_even_id If set, the entry contains the event ID field.
    * @return Sample containing the loss.
    */
-  [[nodiscard]] Sample decode_lost_samples_event(SampleIterator&& entry,
-                                                       bool has_leading_even_id) const noexcept;
+  [[nodiscard]] Sample decode_lost_samples_event(SampleIterator&& entry, bool has_leading_even_id) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a context switch sample.

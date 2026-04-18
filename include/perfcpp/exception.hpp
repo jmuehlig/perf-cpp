@@ -427,7 +427,8 @@ public:
 class LiveEventCounterOutOfBoundsAccessError final : public std::runtime_error
 {
 public:
-  explicit LiveEventCounterOutOfBoundsAccessError(const std::size_t live_event_counter_size, const std::size_t counter_index)
+  explicit LiveEventCounterOutOfBoundsAccessError(const std::size_t live_event_counter_size,
+                                                  const std::size_t counter_index)
     : std::runtime_error(std::string{ "The accessed live counter (" }
                            .append(std::to_string(counter_index))
                            .append(" is larger then the number if configured live counters (")

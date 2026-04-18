@@ -188,8 +188,7 @@ public:
    * @param normalization Normalization value.
    * @return The live value of the counter.
    */
-  [[nodiscard]] std::optional<double> live_result(std::uint64_t counter_index,
-                                                  std::uint64_t normalization) const;
+  [[nodiscard]] std::optional<double> live_result(std::uint64_t counter_index, std::uint64_t normalization) const;
 
   /**
    * @return A list of event names that are added as live evens.
@@ -272,8 +271,8 @@ private:
    * have one entry. If the event is a metric, the list will have multiple entries.
    */
   void expand_to_events(const std::string& name,
-              bool is_visible_in_results,
-              std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>& events) const;
+                        bool is_visible_in_results,
+                        std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>& events) const;
 
   /**
    * Adds the provided event to the given result vector.

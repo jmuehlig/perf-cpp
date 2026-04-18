@@ -29,7 +29,12 @@ main()
   }
 
   /// Define what to sample.
-  sampler.values().timestamp(true).logical_memory_address(true).data_source(true).data_access_latency(true).instruction_type(true);
+  sampler.values()
+    .timestamp(true)
+    .logical_memory_address(true)
+    .data_source(true)
+    .data_access_latency(true)
+    .instruction_type(true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*randomize the accesses*/ true,
@@ -101,8 +106,8 @@ main()
 
       const auto instruction_latency = sample.instruction_execution().latency().instruction_retirement().value_or(
         sample.instruction_execution().latency().uop_tag_to_retirement().value_or(0U));
-      const auto cache_latency =
-        sample.data_access().latency().cache_access().value_or(sample.data_access().latency().cache_miss().value_or(0U));
+      const auto cache_latency = sample.data_access().latency().cache_access().value_or(
+        sample.data_access().latency().cache_miss().value_or(0U));
 
       std::cout << "Time = " << sample.metadata().timestamp().value() << " | Logical Mem Address = 0x" << std::hex
                 << sample.data_access().logical_memory_address().value() << std::dec
