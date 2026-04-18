@@ -49,7 +49,7 @@ public:
   template<typename T>
   [[nodiscard]] T read() noexcept
   {
-    T data;
+    T data{};
     std::memcpy(&data, reinterpret_cast<const T*>(_data), sizeof(T));
 
     _data += sizeof(T);
