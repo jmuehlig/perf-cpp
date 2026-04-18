@@ -229,16 +229,20 @@ perf::AMDIbsEventProvider::add_fetch_events(CounterDefinition& counter_definitio
 {
   const auto& ibs_info = HardwareInfo::amd_ibs();
   if (const auto fetch_type = ibs_info.fetch_type(); ibs_info.is_supported() && fetch_type.has_value()) {
-    const auto rand_value = ibs_info.fetch_rand_bit().has_value() ? 1ULL << ibs_info.fetch_rand_bit().value() : 0ULL;
+    /// Setup random bit if requested.
+    auto rand_value = 0UL;
+    if (const auto rand_bit = ibs_info.fetch_rand_bit(); rand_bit.has_value()) {
+      rand_value = 1UL << rand_bit.value();
+    }
+
     /// Event that is triggered by cycles.
     counter_definition.add("ibs_fetch", "ibs_fetch", CounterConfig{ fetch_type.value(), rand_value });
 
     if (const auto l3_miss_only_bit = ibs_info.fetch_l3_miss_only_bit(); l3_miss_only_bit.has_value()) {
       /// Event that is triggered by cycles and applies the L3 miss filter.
-      counter_definition.add(
-        "ibs_fetch",
-        "ibs_fetch_l3missonly",
-        CounterConfig{ ibs_info.fetch_type().value(), rand_value | (1ULL << l3_miss_only_bit.value()) });
+      counter_definition.add("ibs_fetch",
+                             "ibs_fetch_l3missonly",
+                             CounterConfig{ fetch_type.value(), rand_value | (1ULL << l3_miss_only_bit.value()) });
     }
   }
 }

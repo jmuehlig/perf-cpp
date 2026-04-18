@@ -33,4 +33,4 @@ jobs:
         run: cmake --build build --target tests
 
       - name: Test
-        run: ./build/bin/tests ~[EventCounter] ~[Sampler] ~[HardwareInfo]
+        run: ./build/bin/tests ~[EventCounter] ~[Sampler] ~[HardwareInfo] ~[MultiThreadEventCounter] ~[MultiThreadSampler]

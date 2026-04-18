@@ -271,11 +271,12 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled,
   /// have a sample type but are not truly sampling. We assume that true sampling is only requested when
   /// period/frequency and precision is set since both are needed for sampling but not for reading counter without
   /// stopping.
-  if (this->_config.period_or_frequency().has_value() && this->_config.precision().has_value()) {
+  if (const auto period_or_frequency = this->_config.period_or_frequency();
+      period_or_frequency.has_value() && this->_config.precision().has_value()) {
     attribute.sample_id_all = 1U;
 
     /// Set period of frequency, based on the PeriodOrFrequency variant.
-    std::visit(PeriodOrFrequencyVisitor{ attribute }, this->_config.period_or_frequency().value());
+    std::visit(PeriodOrFrequencyVisitor{ attribute }, period_or_frequency.value());
 
     /// Set sampled fields.
     attribute.branch_sample_type = sample_recording_values.branch_mask();
