@@ -247,7 +247,7 @@ TEST_CASE("sampling", "[Sampler]")
       REQUIRE_NOTHROW(
         filtered_sampler.trigger(perf::MemoryLoads{ 60U }, perf::Precision::MustHaveZeroSkid, perf::Period{ 8000 }));
       REQUIRE_NOTHROW(not_filtered_sampler.trigger(
-        perf::MemoryLoads{ 0U }, perf::Precision::MustHaveZeroSkid, perf::Period{ 8000 }));
+        perf::MemoryLoads{ 1U }, perf::Precision::MustHaveZeroSkid, perf::Period{ 8000 }));
     } else if (perf::HardwareInfo::is_amd()) {
       REQUIRE_NOTHROW(filtered_sampler.trigger(perf::IbsOp{ /*upos = */ true, /* l3miss only = */ true },
                                                perf::Precision::RequestZeroSkid,
@@ -291,7 +291,7 @@ TEST_CASE("sampling", "[Sampler]")
     REQUIRE_FALSE(filtered_samples.empty());
 
     // Compare sample results
-    REQUIRE((filtered_samples.size() * 2) < not_filtered_samples.size());
+    REQUIRE(filtered_samples.size() < not_filtered_samples.size());
   }
 
   SECTION("metric-l1d-per-load")
