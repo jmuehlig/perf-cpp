@@ -6,7 +6,13 @@
   - **AMD**: `perf::IbsOp` and `perf::IbsFetch` now build their counter configuration directly from hardware capabilities, fully supporting `is_uop`, `is_l3_miss_only`, and `is_rand` flags. String-based trigger variants (`ibs_op_uops`, `ibs_op_l3missonly`, `ibs_op_uops_l3missonly`, `ibs_fetch_l3missonly`) still work but are no longer documented. Use typed triggers for full configurability.
 - **Fixed-Function PMC Scheduling**: On Intel processors, the built-in events `instructions`, `cycles`, `cpu-cycles`, and `ref-cycles` are now automatically scheduled to dedicated pinned groups. This prevents the kernel scheduler from placing fixed-function PMC events alongside generic events, which would distort multiplexing ratios. Fixed groups do not count against the generic PMC limit.
 - **Fixed PMC Detection**: Added `HardwareInfo::physical_fixed_performance_counters_per_logical_core()`, which reads the number of fixed-function performance counters on Intel.
-- **Built-in Event**: Added `ref-cycles` (reference cycles at a fixed frequency, unaffected by turbo boost or power-saving states) to the built-in hardware event list.  
+- **Built-in Event**: Added `ref-cycles` (reference cycles at a fixed frequency, unaffected by turbo boost or power-saving states) to the built-in hardware event list.
+- **Bugfixes**:
+  - Fixed out-of-bounds access when reading live counter values.
+  - Fixed wrong parsing order for throttle events in the sample decoder.
+  - Fixed sample decoder always reporting a data access source even when none was available (e.g., when sampling stores on Intel hardware).
+  - Fixed various decoding bugs and hardened the sample decoder against malformed records.
+  - Adding events to an already-opened `EventCounter` now raises an exception instead of silently failing.
 
 ## v0.13.0
 - **Header Restructuring**: Headers have been reorganized into `counter/`, `sample/`, `metric/`, `analyzer/`, and `util/` subdirectories and renamed from `.h` to `.hpp`. The previous `.h` headers remain as forwarding includes with deprecation notices and will be removed in v1.0.
