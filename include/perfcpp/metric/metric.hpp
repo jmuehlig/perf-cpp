@@ -1,6 +1,5 @@
 #pragma once
 
-#include <perfcpp/counter/counter.hpp>
 #include <perfcpp/metric/expression/parser.hpp>
 #include <string>
 #include <vector>

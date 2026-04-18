@@ -180,6 +180,8 @@ perf::Counter::close()
   if (this->_mmap_buffer != nullptr) {
     this->_mmap_buffer.reset();
   }
+
+  this->_file_descriptor.reset();
 }
 
 void
@@ -203,7 +205,7 @@ perf::Counter::disable() const
 }
 
 std::optional<double>
-perf::Counter::read_live() const noexcept
+perf::Counter::read_live() const
 {
   if (this->_mmap_buffer != nullptr) {
     /// Read the value from mmap-ed buffer (via rdpmc instruction).
@@ -311,8 +313,8 @@ perf::Counter::create_perf_event_read_format(const bool is_include_time, const b
 }
 
 std::pair<perf::util::UniqueFileDescriptor, std::int32_t>
-perf::Counter::try_open_via_perf_subsystem(const perf::Config& configuration,
-                                           const perf::util::FileDescriptorView group_leader_file_descriptor)
+perf::Counter::try_open_via_perf_subsystem(const Config& configuration,
+                                           const util::FileDescriptorView group_leader_file_descriptor)
 {
   /// Finally, pass the configuration to the perf subsystem to open the hardware performance counter.
   const auto file_descriptor = ::syscall(__NR_perf_event_open,
@@ -322,7 +324,8 @@ perf::Counter::try_open_via_perf_subsystem(const perf::Config& configuration,
                                          group_leader_file_descriptor.value(),
                                          0);
 
-  return std::make_pair(util::UniqueFileDescriptor{ file_descriptor }, errno);
+  const auto error_code = errno;
+  return std::make_pair(util::UniqueFileDescriptor{ file_descriptor }, error_code);
 }
 
 std::pair<perf::util::UniqueFileDescriptor, std::int32_t>

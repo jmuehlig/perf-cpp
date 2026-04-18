@@ -254,9 +254,9 @@ perf::EventCounter::schedule_as_group(std::vector<std::pair<RequestedEvent, std:
     throw CannotAddEventToSingleGroupError{ this->_config.num_events_per_physical_counter() };
   }
 
-  /// Create the group; close it immediately so no further events can be appended.
-  auto& [group, _] = this->_hardware_event_groups.emplace_back(Group{}, false);
-  const auto group_id = static_cast<std::uint8_t>(this->_hardware_event_groups.size() - 1U);
+  /// Check for every event if it should be added to a possible group. We keep the events that will be added.
+  auto events_to_add = std::vector<std::pair<RequestedEvent, CounterConfig>>{};
+  events_to_add.reserve(events.size());
 
   for (auto& [requested_event, event_configuration] : events) {
     /// Metrics and time events (indicated by no hardware event config) do not need to be scheduled to hardware
@@ -272,10 +272,20 @@ perf::EventCounter::schedule_as_group(std::vector<std::pair<RequestedEvent, std:
       continue;
     }
 
-    /// Add the hardware event to the group.
-    const auto in_group_position = static_cast<std::uint8_t>(group.size());
-    group.add(event_configuration.value());
-    this->_requested_event_set.add(requested_event, group_id, in_group_position);
+    /// Remember the index – this event will be added to the group.
+    events_to_add.emplace_back(requested_event, event_configuration.value());
+  }
+
+  /// If at least one event survived, we create a new group.
+  if (!events_to_add.empty()) {
+    auto& [group, _] = this->_hardware_event_groups.emplace_back(Group{}, false);
+    const auto group_id = static_cast<std::uint8_t>(this->_hardware_event_groups.size() - 1U);
+
+    for (auto& [requested_event, event_configuration] : events_to_add) {
+      const auto in_group_position = static_cast<std::uint8_t>(group.size());
+      group.add(event_configuration);
+      this->_requested_event_set.add(requested_event, group_id, in_group_position);
+    }
   }
 }
 
@@ -331,10 +341,6 @@ perf::EventCounter::add_live(const std::string& event_name)
 {
   if (this->_is_opened) {
     throw CannotAddEventWhenOpenedError{};
-  }
-
-  if (this->size() == this->_config.num_physical_counters()) {
-    throw MaxCountersReachedError{ this->_config.num_physical_counters() };
   }
 
   /// If the given name references one or multiple existing counters, add it.
@@ -555,7 +561,7 @@ perf::LiveEventCounter::LiveEventCounter(const EventCounter& event_counter)
 }
 
 void
-perf::LiveEventCounter::start() noexcept
+perf::LiveEventCounter::start()
 {
   for (auto counter_id = 0U; counter_id < this->_counter_values.size(); ++counter_id) {
     /// Set <start value> to current value.
@@ -564,7 +570,7 @@ perf::LiveEventCounter::start() noexcept
 }
 
 void
-perf::LiveEventCounter::stop() noexcept
+perf::LiveEventCounter::stop()
 {
   for (auto counter_id = 0U; counter_id < this->_counter_values.size(); ++counter_id) {
     /// Set <stop value> to current value.

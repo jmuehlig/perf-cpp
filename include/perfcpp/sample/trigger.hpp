@@ -34,6 +34,11 @@ public:
   [[nodiscard]] std::optional<std::tuple<std::string_view, std::string_view, CounterConfig>> resolve(
     const CounterDefinition& counter_definition,
     std::string_view pmu_name) const;
+
+  /**
+   * @return Transforms the trigger into a readable string.
+   */
+  [[nodiscard]] std::string to_string() const { return "cycles"; }
 };
 
 /**
@@ -74,6 +79,11 @@ public:
     const CounterDefinition& counter_definition,
     std::string_view pmu_name) const;
 
+  /**
+   * @return Transforms the trigger into a readable string.
+   */
+  [[nodiscard]] std::string to_string() const { return "mem-loads"; }
+
 private:
   /// Minimum load latency filter in cycles (ldlat).
   std::uint64_t _min_latency;
@@ -105,6 +115,11 @@ public:
   [[nodiscard]] std::optional<std::tuple<std::string_view, std::string_view, CounterConfig>> resolve(
     const CounterDefinition& counter_definition,
     std::string_view pmu_name) const;
+
+  /**
+   * @return Transforms the trigger into a readable string.
+   */
+  [[nodiscard]] std::string to_string() const { return "mem-stores"; }
 };
 
 /**
@@ -135,6 +150,11 @@ public:
   [[nodiscard]] std::optional<std::tuple<std::string_view, std::string_view, CounterConfig>> resolve(
     const CounterDefinition& counter_definition,
     std::string_view pmu_name) const;
+
+  /**
+   * @return Transforms the trigger into a readable string.
+   */
+  [[nodiscard]] std::string to_string() const { return "mem-loads-aux"; }
 };
 
 /**
@@ -179,6 +199,11 @@ public:
   [[nodiscard]] std::optional<std::tuple<std::string_view, std::string_view, CounterConfig>> resolve(
     const CounterDefinition& counter_definition,
     std::string_view pmu_name) const;
+
+  /**
+   * @return Transforms the trigger into a readable string.
+   */
+  [[nodiscard]] std::string to_string() const { return "ibs_fetch"; }
 
 private:
   /// Enables randomised fetch-count offset (rand_en bit).
@@ -231,6 +256,11 @@ public:
   [[nodiscard]] std::optional<std::tuple<std::string_view, std::string_view, CounterConfig>> resolve(
     const CounterDefinition& counter_definition,
     std::string_view pmu_name) const;
+
+  /**
+   * @return Transforms the trigger into a readable string.
+   */
+  [[nodiscard]] std::string to_string() const { return "ibs_op"; }
 
 private:
   /// Switches the op counter to count micro-ops (cnt_ctl bit).

@@ -248,7 +248,7 @@ perf::CounterDefinition::metric_names() const
     return config.first;
   });
 
-  /// Append parent PMU names, if there is a parent.
+  /// Append parent metric names, if there is a parent.
   if (this->_parent_counter_definition != nullptr) {
     if (auto parent_metric_names = this->_parent_counter_definition->metric_names(); !parent_metric_names.empty()) {
       std::move(parent_metric_names.begin(), parent_metric_names.end(), std::back_inserter(names));
@@ -269,7 +269,7 @@ perf::CounterDefinition::time_event_names() const
                  std::back_inserter(names),
                  [](const auto& config) { return config.first; });
 
-  /// Append parent PMU names, if there is a parent.
+  /// Append parent time names, if there is a parent.
   if (this->_parent_counter_definition != nullptr) {
     if (auto parent_time_event_names = this->_parent_counter_definition->time_event_names();
         !parent_time_event_names.empty()) {

@@ -191,7 +191,7 @@ public:
   [[nodiscard]] std::optional<double> live_result(std::uint64_t counter_index, std::uint64_t normalization) const;
 
   /**
-   * @return A list of event names that are added as live evens.
+   * @return A list of event names that are added as live events.
    */
   [[nodiscard]] std::vector<std::string_view> live_event_names() const;
 
@@ -369,12 +369,12 @@ public:
   /**
    * Retrieves the current value for every live counter and mark them as "start" value.
    */
-  void start() noexcept;
+  void start();
 
   /**
    * Retrieves the current value for every live counter and mark them as "stop" value.
    */
-  void stop() noexcept;
+  void stop();
 
   /**
    * Calculates the difference between the start- and the stop values for the live event with the given name.
@@ -537,14 +537,28 @@ public:
    *
    * @param thread_id Id of the thread.
    */
-  void start(std::uint16_t thread_id) { this->_thread_local_counter[thread_id].start(); }
+  void start(std::uint16_t thread_id)
+  {
+    if (thread_id >= _thread_local_counter.size()) {
+      throw ThreadIdOutOfBoundsError{ thread_id };
+    }
+
+    _thread_local_counter[thread_id].start();
+  }
 
   /**
    * Stops and closes recording performance counters.
    *
    * @param thread_id Id of the thread.
    */
-  void stop(std::uint16_t thread_id) { this->_thread_local_counter[thread_id].stop(); }
+  void stop(std::uint16_t thread_id)
+  {
+    if (thread_id >= _thread_local_counter.size()) {
+      throw ThreadIdOutOfBoundsError{ thread_id };
+    }
+
+    _thread_local_counter[thread_id].stop();
+  }
 
   /// Expose the base-class stop() so callers can stop all threads at once from the main thread.
   using MultiEventCounterBase::stop;
@@ -558,6 +572,10 @@ public:
    */
   [[nodiscard]] CounterResult result_of_thread(const std::uint16_t thread_id, std::uint64_t normalization = 1U) const
   {
+    if (thread_id >= _thread_local_counter.size()) {
+      throw ThreadIdOutOfBoundsError{ thread_id };
+    }
+
     return _thread_local_counter[thread_id].result(normalization);
   }
 

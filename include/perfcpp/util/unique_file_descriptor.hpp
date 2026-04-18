@@ -66,6 +66,11 @@ public:
    */
   [[nodiscard]] std::int32_t value() const noexcept { return _file_descriptor; }
 
+  /**
+   * Resets the file descriptor.
+   */
+  void reset() noexcept { _file_descriptor = -1LL; }
+
 private:
   std::int32_t _file_descriptor{ -1LL };
 };

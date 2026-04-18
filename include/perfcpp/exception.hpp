@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <perfcpp/feature.h>
 #include <stdexcept>
 #include <string>
 
@@ -770,10 +769,10 @@ public:
   ~EventRequiresSpecificVendorError() override = default;
 };
 
-class EventDoesNotSupportIBSFeature final : public std::runtime_error
+class EventDoesNotSupportIBSFeatureError final : public std::runtime_error
 {
 public:
-  EventDoesNotSupportIBSFeature(const std::string_view ibs_event, const std::string_view feature)
+  EventDoesNotSupportIBSFeatureError(const std::string_view ibs_event, const std::string_view feature)
     : std::runtime_error{ std::string{ "The underlying IBS counter '" }
                             .append(ibs_event)
                             .append("' does not support ")
@@ -781,11 +780,25 @@ public:
                             .append(".") }
   {
   }
-  EventDoesNotSupportIBSFeature(const EventDoesNotSupportIBSFeature&) = default;
-  EventDoesNotSupportIBSFeature(EventDoesNotSupportIBSFeature&&) noexcept = default;
-  EventDoesNotSupportIBSFeature& operator=(const EventDoesNotSupportIBSFeature&) = default;
-  EventDoesNotSupportIBSFeature& operator=(EventDoesNotSupportIBSFeature&&) noexcept = default;
-  ~EventDoesNotSupportIBSFeature() override = default;
+  EventDoesNotSupportIBSFeatureError(const EventDoesNotSupportIBSFeatureError&) = default;
+  EventDoesNotSupportIBSFeatureError(EventDoesNotSupportIBSFeatureError&&) noexcept = default;
+  EventDoesNotSupportIBSFeatureError& operator=(const EventDoesNotSupportIBSFeatureError&) = default;
+  EventDoesNotSupportIBSFeatureError& operator=(EventDoesNotSupportIBSFeatureError&&) noexcept = default;
+  ~EventDoesNotSupportIBSFeatureError() override = default;
+};
+
+class ThreadIdOutOfBoundsError final : public std::runtime_error
+{
+public:
+  explicit ThreadIdOutOfBoundsError(const std::size_t thread_id)
+    : std::runtime_error{ std::string{ "Thread ID '" }.append(std::to_string(thread_id)).append("' is out of bounds.") }
+  {
+  }
+  ThreadIdOutOfBoundsError(const ThreadIdOutOfBoundsError&) = default;
+  ThreadIdOutOfBoundsError(ThreadIdOutOfBoundsError&&) noexcept = default;
+  ThreadIdOutOfBoundsError& operator=(const ThreadIdOutOfBoundsError&) = default;
+  ThreadIdOutOfBoundsError& operator=(ThreadIdOutOfBoundsError&&) noexcept = default;
+  ~ThreadIdOutOfBoundsError() override = default;
 };
 
 }

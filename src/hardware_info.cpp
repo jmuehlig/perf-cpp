@@ -3,11 +3,11 @@
 #include <filesystem>
 #include <fstream>
 #include <numeric>
-#include <thread>
 #include <perfcpp/counter/group.hpp>
 #include <perfcpp/counter_definition.hpp>
 #include <perfcpp/event_file_descriptor_parser.hpp>
 #include <perfcpp/hardware_info.hpp>
+#include <thread>
 #include <unistd.h>
 #if defined(__x86_64__) || defined(__i386__)
 #include <cpuid.h>
@@ -44,10 +44,10 @@ std::optional<bool> perf::HardwareInfo::_is_nmi_watchdog_enabled{ std::nullopt }
 std::vector<std::uint16_t>
 perf::HardwareInfo::all_cpu_cores()
 {
-    auto cpu_cores = std::vector<std::uint16_t>(std::thread::hardware_concurrency());
-    std::iota(cpu_cores.begin(), cpu_cores.end(), 0U);
+  auto cpu_cores = std::vector<std::uint16_t>(std::thread::hardware_concurrency());
+  std::iota(cpu_cores.begin(), cpu_cores.end(), 0U);
 
-    return cpu_cores;
+  return cpu_cores;
 }
 
 bool

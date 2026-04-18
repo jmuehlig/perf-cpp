@@ -31,6 +31,21 @@ perf::Sampler::Trigger::resolve(const CounterDefinition& counter_definition) con
     this->_trigger);
 }
 
+std::string
+perf::Sampler::Trigger::to_string() const
+{
+  return std::visit(
+  [](
+    const auto& trigger) -> auto {
+    if constexpr (std::is_same_v<std::decay_t<decltype(trigger)>, std::string>) {
+      return trigger;
+    } else {
+      return trigger.to_string();
+    }
+  },
+  this->_trigger);
+}
+
 std::optional<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
 perf::Sampler::Trigger::resolve(const CounterDefinition& counter_definition, const std::string_view pmu_name) const
 {
@@ -84,7 +99,6 @@ perf::Sampler::trigger(std::vector<std::vector<Trigger>>&& list_of_triggers)
     throw CannotChangeTriggerWhenSamplerOpenedError{};
   }
 
-  this->_triggers.clear();
   this->_triggers = std::move(list_of_triggers);
   return *this;
 }
@@ -212,7 +226,7 @@ perf::Sampler::transform_trigger_to_sample_counter(const std::string_view pmu_na
     /// Resolve this trigger for the specific PMU determined by the leading trigger.
     const auto resolved = trigger.resolve(this->_counter_definition, pmu_name);
     if (!resolved.has_value()) {
-      throw CannotFindEventError{ pmu_name };
+      throw CannotFindEventError{ trigger.to_string() };
     }
 
     auto [var_pmu, event_name, event_config] = resolved.value();
@@ -430,11 +444,11 @@ perf::SampleResult
 perf::MultiSamplerBase::result(std::vector<Sampler>& samplers, const bool is_sort_by_time)
 {
   if (!samplers.empty()) {
-    auto result = samplers.front().result();
+    auto result = samplers.front().result(/* sort_by_time = */ false);
 
     /// Merge the results from all samplers (the result of the first sampler is the start point).
     for (auto i = 1U; i < samplers.size(); ++i) {
-      auto sampler_result = samplers[i].result();
+      auto sampler_result = samplers[i].result(/* sort_by_time = */ false);
       std::move(sampler_result.begin(), sampler_result.end(), std::back_inserter(result));
     }
 
@@ -503,6 +517,10 @@ perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std:
 void
 perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std::vector<Sampler::Trigger>>&& triggers)
 {
+  if (samplers.empty()) {
+    return;
+  }
+
   for (auto sampler_id = 0U; sampler_id < samplers.size() - 1U; ++sampler_id) {
     samplers[sampler_id].trigger(std::vector<std::vector<Sampler::Trigger>>{ triggers });
   }
@@ -511,7 +529,7 @@ perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std:
 }
 
 void
-perf::MultiSamplerBase::open(perf::Sampler& sampler, const perf::SampleConfig config) const
+perf::MultiSamplerBase::open(Sampler& sampler, const perf::SampleConfig config) const
 {
   sampler._values = _values;
   sampler._config = config;

@@ -107,6 +107,11 @@ public:
       const CounterDefinition& counter_definition,
       std::string_view pmu_name) const;
 
+    /**
+     * @return Transforms the trigger into a readable string.
+     */
+    [[nodiscard]] std::string to_string() const;
+
   private:
     trigger_t _trigger;
     std::optional<Precision> _precision{ std::nullopt };
@@ -501,7 +506,7 @@ private:
    * Consumes the sample data from the sample counters. This will only happen once; the sample data is reset when
    * starting the sampler (again).
    *
-   * @return Reference of the consumed sample data (either consumed now or by an ealier call).
+   * @return Reference of the consumed sample data (either consumed now or by an earlier call).
    */
   std::vector<std::vector<std::vector<std::byte>>>& consume_sample_data();
 
@@ -878,18 +883,27 @@ public:
    *
    * @param thread_id Id of the thread to start.
    */
-  void open(const std::uint16_t thread_id) { MultiSamplerBase::open(_thread_local_samplers[thread_id]); }
+  void open(const std::uint16_t thread_id)
+  {
+    if (thread_id >= _thread_local_samplers.size()) {
+      throw ThreadIdOutOfBoundsError{ thread_id };
+    }
+
+    MultiSamplerBase::open(_thread_local_samplers[thread_id]);
+  }
 
   /**
    * Opens and starts recording performance counters on a specific thread.
    *
    * @param thread_id Id of the thread to start.
-   * @return True, of the performance counters could be started.
    */
-  bool start(const std::uint16_t thread_id)
+  void start(const std::uint16_t thread_id)
   {
+    if (thread_id >= _thread_local_samplers.size()) {
+      throw ThreadIdOutOfBoundsError{ thread_id };
+    }
+
     MultiSamplerBase::start(_thread_local_samplers[thread_id]);
-    return true;
   }
 
   /**
@@ -897,7 +911,14 @@ public:
    *
    * @param thread_id Id of the thread to stop.
    */
-  void stop(const std::uint16_t thread_id) { _thread_local_samplers[thread_id].stop(); }
+  void stop(const std::uint16_t thread_id)
+  {
+    if (thread_id >= _thread_local_samplers.size()) {
+      throw ThreadIdOutOfBoundsError{ thread_id };
+    }
+
+    _thread_local_samplers[thread_id].stop();
+  }
 
   /**
    * Stops recording performance counters for all threads.

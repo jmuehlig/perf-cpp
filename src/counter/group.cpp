@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 perf::Group
-perf::Group::copy_from_template(const perf::Group& other)
+perf::Group::copy_from_template(const Group& other)
 {
   auto copy = Group{};
   copy._members.reserve(other._members.size());
@@ -17,7 +17,7 @@ perf::Group::copy_from_template(const perf::Group& other)
 }
 
 void
-perf::Group::open(const perf::Config& config)
+perf::Group::open(const Config& config)
 {
   if (this->_members.empty()) {
     return;

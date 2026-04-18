@@ -13,8 +13,6 @@
 #include <perfcpp/sample/recording_values.hpp>
 #include <perfcpp/util/unique_file_descriptor.hpp>
 #include <string>
-#include <thread>
-#include <unordered_map>
 #include <vector>
 
 namespace perf {
@@ -37,8 +35,8 @@ public:
 
   ~CounterConfig() noexcept = default;
 
-  [[nodiscard]] CounterConfig& operator=(const CounterConfig&) noexcept = default;
-  [[nodiscard]] CounterConfig& operator=(CounterConfig&&) noexcept = default;
+  CounterConfig& operator=(const CounterConfig&) noexcept = default;
+  CounterConfig& operator=(CounterConfig&&) noexcept = default;
 
   /**
    * Mark this event as using a fixed-function performance counter.
@@ -68,7 +66,7 @@ public:
 
   /**
    * Set the period or frequency if the event is used for sampling.
-   * @param period_or_frequency Period of frequency.
+   * @param period_or_frequency Period or frequency.
    */
   void period_or_frequency(const PeriodOrFrequency period_or_frequency) noexcept
   {
@@ -165,7 +163,7 @@ public:
   [[nodiscard]] const util::UniqueFileDescriptor& file_descriptor() const noexcept { return _file_descriptor; }
 
   /**
-   * Opens the counter using via the perf subsystem.
+   * Opens the counter via the perf subsystem.
    * The counter will be configured with the provided parameters.
    * After successfully open the counter, the counter's file descriptor will be set.
    * If the counter cannot be opened, it will throw an exception including the error number.
@@ -176,7 +174,7 @@ public:
   void open(const Config& configuration, bool is_live);
 
   /**
-   * Opens the counter using via the perf subsystem.
+   * Opens the counter via the perf subsystem.
    * The counter will be configured with the provided parameters.
    * After successfully open the counter, the counter's file descriptor will be set.
    * If the counter cannot be opened, it will throw an exception including the error number.
@@ -237,12 +235,12 @@ public:
    *
    * @return The current value of the counter.
    */
-  [[nodiscard]] std::optional<double> read_live() const noexcept;
+  [[nodiscard]] std::optional<double> read_live() const;
 
   /**
    * @return The sample buffer that manages the mmap-ed buffer for storing samples and/or live events.
    */
-  [[nodiscard]] const std::unique_ptr<MmapBuffer>& mmap_buffer() noexcept { return _mmap_buffer; }
+  [[nodiscard]] const std::unique_ptr<MmapBuffer>& mmap_buffer() const noexcept { return _mmap_buffer; }
 
   /**
    * @return Scale of the event, provided by the event configuration.
@@ -288,7 +286,7 @@ private:
   std::unique_ptr<MmapBuffer> _mmap_buffer{ nullptr };
 
   /**
-   * Creates an perf event of the counter.
+   * Creates a perf event of the counter.
    *
    * @param is_disabled True, if the counter is disabled (mostly true for the events but the first).
    * @param configuration Configuration to configure.
@@ -298,14 +296,13 @@ private:
                                                             const Config& configuration) const noexcept;
 
   /**
-   * Creates an perf event of the counter for sampling.
+   * Creates a perf event of the counter for sampling.
    *
    * @param is_disabled  True, if the counter is disabled (mostly true for the events but the first).
    * @param configuration Configuration to configure.
    * @param sample_recording_values Values to record while sampling.
    * @return The initialized perf_event_attr.
    */
-
   [[nodiscard]] perf_event_attr create_perf_event_attribute(bool is_disabled,
                                                             const Config& configuration,
                                                             const SampleRecordingValues& sample_recording_values) const;
@@ -355,7 +352,7 @@ private:
 
   /**
    * Decides whether adjusting (i.e., decrementing) the precision configuration could help to open a hardware
-   * performance counter if an previous attempt failed. This is only true for sampling, if the current precision is too
+   * performance counter if a previous attempt failed. This is only true for sampling, if the current precision is too
    * high and the error code indicates to do so (e.g., reporting an invalid argument).
    *
    * @param current_precise_ip The current value of the precision configuration.

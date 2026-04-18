@@ -150,7 +150,7 @@ perf::IbsFetch::resolve(const CounterDefinition& counter_definition, const std::
     if (const auto rand_bit = ibs_info.fetch_rand_bit(); rand_bit.has_value()) {
       config_value |= 1ULL << rand_bit.value();
     } else {
-      throw EventDoesNotSupportIBSFeature{"ibs_fetch", "randomization"};
+      throw EventDoesNotSupportIBSFeatureError{"ibs_fetch", "randomization"};
     }
   }
 
@@ -158,7 +158,7 @@ perf::IbsFetch::resolve(const CounterDefinition& counter_definition, const std::
     if (const auto l3_miss_bit = ibs_info.fetch_l3_miss_only_bit(); l3_miss_bit.has_value()) {
       config_value |= 1ULL << l3_miss_bit.value();
     } else {
-      throw EventDoesNotSupportIBSFeature{"ibs_fetch", "l3 miss filtering"};
+      throw EventDoesNotSupportIBSFeatureError{"ibs_fetch", "l3 miss filtering"};
     }
   }
 
@@ -200,7 +200,7 @@ perf::IbsOp::resolve(const CounterDefinition& counter_definition, const std::str
       config_value |= 1ULL << uops_bit.value();
     }
     else {
-      throw EventDoesNotSupportIBSFeature{"ibs_op", "micro operations"};
+      throw EventDoesNotSupportIBSFeatureError{"ibs_op", "micro operations"};
     }
   }
 
@@ -208,7 +208,7 @@ perf::IbsOp::resolve(const CounterDefinition& counter_definition, const std::str
     if (const auto l3_miss_bit = ibs_info.op_l3_miss_only_bit(); l3_miss_bit.has_value()) {
       config_value |= 1ULL << l3_miss_bit.value();
     } else {
-      throw EventDoesNotSupportIBSFeature{"ibs_op", "l3 miss filtering"};
+      throw EventDoesNotSupportIBSFeatureError{"ibs_op", "l3 miss filtering"};
     }
   }
 

@@ -319,7 +319,8 @@ perf::SampleDecoder::decode_hardware_events_values(SampleIterator& entry,
   /// Read the event values (if the number matches the number of specified events).
   const auto* raw_event_values = entry.read_array<CounterValues<Group::MAX_MEMBERS>::ValueAndIdentifier>(count_events);
 
-  /// If the number of expected and real events does not match, skip here. There is no way identifying which counter is which.
+  /// If the number of expected and real events does not match, skip here. There is no way identifying which counter is
+  /// which.
   if (count_events != event_group.size()) {
     return std::nullopt;
   }
@@ -949,7 +950,7 @@ perf::SampleDecoder::decode_cgroup_event(SampleIterator&& entry) const
   sample.metadata().mode(entry.mode());
 
   const auto cgroup_id = entry.read<std::uint64_t>();
-  auto path = std::string{entry.as<const char*>()};
+  auto path = std::string{ entry.as<const char*>() };
 
   /// Advance past the null-terminated path, aligned to 8 bytes.
   entry.skip<std::byte>((path.size() + /* null terminator */ 1U + 8U) & ~7U);
