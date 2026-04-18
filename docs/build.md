@@ -46,7 +46,7 @@ include(FetchContent)
 FetchContent_Declare(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v0.13-dev"
+  GIT_TAG "v0.13.1"
 )
 FetchContent_MakeAvailable(perf-cpp-external)
 ```
@@ -60,7 +60,7 @@ include(ExternalProject)
 ExternalProject_Add(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v0.13-dev"
+  GIT_TAG "v0.13.1"
   PREFIX "lib/perf-cpp"
   INSTALL_COMMAND cmake -E echo ""
 )

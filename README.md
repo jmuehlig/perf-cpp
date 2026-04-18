@@ -115,7 +115,7 @@ Time = 365449131312005 | CPU = 8 | Instruction = 0x64af7417c75c
 > Also check out the **[sampling on multiple CPUs/threads guide](https://jmuehlig.github.io/perf-cpp/sampling-parallel/)** for parallel sampling.
 
 ## Building
-*perf-cpp* is designed as a library (static or shared) that can be linked to your application.
+*perf-cpp* can be built as a static or shared library.
 
 ```bash
 git clone https://github.com/jmuehlig/perf-cpp.git
@@ -178,8 +178,6 @@ Papers and articles about hardware performance profiling:
 - [Efficient Cross-platform Multiplexing of Hardware Performance Counters via Adaptive Grouping](https://dl.acm.org/doi/full/10.1145/3629525) (2024)
 - [Multi-level Memory-Centric Profiling on ARM Processors with ARM SPE](https://arxiv.org/html/2410.01514v1) (2024)
 - [Breaking the Cycle - A Short Overview of Memory-Access Sampling Differences on Modern x86 CPUs](https://dl.acm.org/doi/pdf/10.1145/3736227.3736241) (2025)
-- [From Profiling to Optimization: Unveiling Profile Guided Optimization](https://arxiv.org/html/2507.16649v1) (2025)
-
 ### Blog Posts
 - [C2C - False Sharing Detection in Linux Perf](https://joemario.github.io/blog/2016/09/01/c2c-blog/) (2016)
 - [PMU counters and profiling basics](https://easyperf.net/blog/2018/06/01/PMU-counters-and-profiling-basics) (2018)

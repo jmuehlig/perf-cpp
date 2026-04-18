@@ -1,6 +1,6 @@
 # *perf-cpp*: Changelog
 
-## v0.13.1 (WIP)
+## v0.13.1
 - **Configurable Sampling Triggers**: Typed triggers now fully support hardware-specific configuration:
   - **Intel**: `perf::MemoryLoads` supports configurable `min_latency` for PEBS load latency filtering. `perf::MemoryStores` and `perf::MemoryLoadsAux` provide type-safe alternatives to string-based `mem-stores` and `mem-loads-aux` triggers. String-based triggers remain available and documented.
   - **AMD**: `perf::IbsOp` and `perf::IbsFetch` now build their counter configuration directly from hardware capabilities, fully supporting `is_uop`, `is_l3_miss_only`, and `is_rand` flags. String-based trigger variants (`ibs_op_uops`, `ibs_op_l3missonly`, `ibs_op_uops_l3missonly`, `ibs_fetch_l3missonly`) still work but are no longer documented. Use typed triggers for full configurability.
