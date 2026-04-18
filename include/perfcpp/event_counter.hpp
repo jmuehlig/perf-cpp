@@ -547,6 +547,9 @@ public:
    */
   void stop(std::uint16_t thread_id) { this->_thread_local_counter[thread_id].stop(); }
 
+  /// Expose the base-class stop() so callers can stop all threads at once from the main thread.
+  using MultiEventCounterBase::stop;
+
   /**
    * Returns the result of the performance measurement for a given thread.
    *
