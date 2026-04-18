@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://jmuehlig.github.io/perf-cpp/sampling/">
       
       
-        <link rel="prev" href="../metrics/">
+        <link rel="prev" href="../counters/">
       
       
         <link rel="next" href="../sampling-parallel/">
@@ -512,6 +512,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../counters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customizing Events
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -687,6 +715,45 @@
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typed-triggers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typed Triggers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Typed Triggers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#available-typed-triggers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Typed Triggers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1301,33 +1368,6 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../counters/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Customizing Events
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
     
     
     
@@ -1344,10 +1384,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
             
   
   
@@ -1365,8 +1405,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1485,6 +1525,45 @@
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typed-triggers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typed Triggers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Typed Triggers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#available-typed-triggers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Typed Triggers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -2035,7 +2114,7 @@ Only fields configured via <code>sampler.values()</code> will contain data; unco
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">);</span>
 </code></pre></div>
 <p>Multiple triggers can be specified — a sample is captured when any of them fires:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">{</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;instructions&quot;</span><span class="p">});</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;&gt;</span><span class="p">{{</span><span class="s">&quot;cycles&quot;</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="s">&quot;instructions&quot;</span><span class="p">}});</span>
 </code></pre></div>
 <h3 id="notes-for-specific-cpus">Notes for specific CPUs<a class="headerlink" href="#notes-for-specific-cpus" title="Permanent link">&para;</a></h3>
 <p>Intel CPUs allow almost every event as a trigger.
@@ -2044,10 +2123,85 @@ AMD systems are more restricted: typically only <code>cycles</code> and IBS even
 <p class="admonition-title">Tip</p>
 <p>For memory sampling and vendor-specific configuration, see <a href="#specific-notes-for-different-cpu-vendors">Specific Notes for different CPU Vendors</a>.</p>
 </div>
+<h3 id="typed-triggers">Typed Triggers<a class="headerlink" href="#typed-triggers" title="Permanent link">&para;</a></h3>
+<p>In addition to string-based event names, <em>perf-cpp</em> provides typed trigger classes that handle vendor detection, event resolution, and hardware-specific configuration automatically.
+Typed triggers are defined in <code>&lt;perfcpp/sample/trigger.hpp&gt;</code> (included transitively via <code>&lt;perfcpp/sampler.hpp&gt;</code>).</p>
+<h4 id="available-typed-triggers">Available Typed Triggers<a class="headerlink" href="#available-typed-triggers" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Trigger Class</th>
+<th>Vendor</th>
+<th>Description</th>
+<th>Parameters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>perf::Cycles</code></td>
+<td>Any</td>
+<td>CPU cycles sampling.</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>perf::MemoryLoads</code></td>
+<td>Intel</td>
+<td>PEBS memory-load sampling (Haswell+). Supports minimum latency filtering.</td>
+<td><code>min_latency</code> (cycles, default: 30)</td>
+</tr>
+<tr>
+<td><code>perf::MemorStores</code></td>
+<td>Intel</td>
+<td>PEBS memory-store sampling (Haswell+).</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>perf::MemoryLoadsAux</code></td>
+<td>Intel</td>
+<td>Auxiliary event for memory-load sampling (Sapphire Rapids+).</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>perf::IbsFetch</code></td>
+<td>AMD</td>
+<td>IBS fetch pipeline sampling.</td>
+<td><code>is_rand</code> (default: true), <code>is_l3_miss_only</code> (default: false)</td>
+</tr>
+<tr>
+<td><code>perf::IbsOp</code></td>
+<td>AMD</td>
+<td>IBS op (execute) pipeline sampling.</td>
+<td><code>is_uop</code> (default: false), <code>is_l3_miss_only</code> (default: false)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h4>
+<p>Typed triggers can be passed directly to <code>sampler.trigger()</code> — implicit conversion to <code>Sampler::Trigger</code> happens automatically:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">/// Sample memory loads with a minimum latency of 50 cycles (Intel PEBS).</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">perf</span><span class="o">::</span><span class="n">MemoryLoads</span><span class="p">{</span><span class="cm">/* min_latency */</span><span class="w"> </span><span class="mi">50</span><span class="p">});</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1">/// AMD IBS op sampling, micro-ops only.</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">perf</span><span class="o">::</span><span class="n">IbsOp</span><span class="p">{</span><span class="cm">/* is_uop */</span><span class="w"> </span><span class="nb">true</span><span class="p">});</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1">/// Typed triggers support precision and period/frequency, just like string triggers.</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">perf</span><span class="o">::</span><span class="n">MemoryLoads</span><span class="p">{</span><span class="cm">/* min_latency */</span><span class="w"> </span><span class="mi">50</span><span class="p">},</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">RequestZeroSkid</span><span class="p">);</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">perf</span><span class="o">::</span><span class="n">IbsOp</span><span class="p">{},</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Period</span><span class="p">{</span><span class="mi">50000U</span><span class="p">});</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">perf</span><span class="o">::</span><span class="n">Cycles</span><span class="p">{},</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveConstantSkid</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Frequency</span><span class="p">{</span><span class="mi">1000U</span><span class="p">});</span>
+</code></pre></div>
+<p>Multiple typed triggers are specified as a vector of groups, where each inner vector is one group (the auxiliary event is auto-inserted when needed):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="o">&gt;&gt;</span><span class="p">{</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">MemoryLoads</span><span class="p">{</span><span class="cm">/* min_latency */</span><span class="w"> </span><span class="mi">50</span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">MemorStores</span><span class="p">{}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="p">});</span>
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Typed triggers are the recommended approach for memory and IBS sampling — they eliminate the need to remember event name strings and automatically handle hardware-specific configuration like <code>ldlat</code> patching and IBS variant selection.</p>
+</div>
 <h2 id="precision">Precision<a class="headerlink" href="#precision" title="Permanent link">&para;</a></h2>
 <p>Due to deep pipelining, a sample's instruction pointer or memory address may not exactly match the instruction that caused the overflow (see <a href="https://easyperf.net/blog/2019/04/03/Precise-timing-of-machine-code-with-Linux-perf">easyperf.net</a> and the <a href="https://man7.org/linux/man-pages/man2/perf_event_open.2.html">perf documentation</a>).
 You can request a specific amount of skid per trigger:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">AllowArbitrarySkid</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">AllowArbitrarySkid</span><span class="p">);</span>
 </code></pre></div>
 <p>Available precision levels:</p>
 <ul>
@@ -2057,11 +2211,11 @@ You can request a specific amount of skid per trigger:</p>
 <li><code>perf::Precision::MustHaveZeroSkid</code></li>
 </ul>
 <p>The default precision can also be set via <code>SampleConfig</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">SampleConfig</span><span class="p">{};</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">sample_config</span><span class="p">.</span><span class="n">precision</span><span class="p">(</span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">RequestZeroSkid</span><span class="p">);</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="p">};</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">SampleConfig</span><span class="p">{};</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">sample_config</span><span class="p">.</span><span class="n">precision</span><span class="p">(</span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">RequestZeroSkid</span><span class="p">);</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">);</span>
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -2069,24 +2223,24 @@ You can request a specific amount of skid per trigger:</p>
 </div>
 <h2 id="period-frequency">Period / Frequency<a class="headerlink" href="#period-frequency" title="Permanent link">&para;</a></h2>
 <p>Each trigger can specify a period (sample every N events) <strong>or</strong> a frequency (samples per second):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">/// Every 50,000th cycle.</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Period</span><span class="p">{</span><span class="mi">50000U</span><span class="p">});</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1">/// 1000 samples per second (hardware adjusts the period automatically).</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Frequency</span><span class="p">{</span><span class="mi">1000U</span><span class="p">});</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">/// Every 50,000th cycle.</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Period</span><span class="p">{</span><span class="mi">50000U</span><span class="p">});</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1">/// 1000 samples per second (hardware adjusts the period automatically).</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Frequency</span><span class="p">{</span><span class="mi">1000U</span><span class="p">});</span>
 </code></pre></div>
 <p>Period/frequency and precision can be combined:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">/// Every 50,000th cycle with zero skid.</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">RequestZeroSkid</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Period</span><span class="p">{</span><span class="mi">50000U</span><span class="p">});</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1">/// Every 50,000th cycle with zero skid.</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">RequestZeroSkid</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Period</span><span class="p">{</span><span class="mi">50000U</span><span class="p">});</span>
 </code></pre></div></p>
 <p>The default period or frequency can also be set via <code>SampleConfig</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">SampleConfig</span><span class="p">{};</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">sample_config</span><span class="p">.</span><span class="n">period</span><span class="p">(</span><span class="mi">50000U</span><span class="p">);</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1">/// or (mutually exclusive):</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">sample_config</span><span class="p">.</span><span class="n">frequency</span><span class="p">(</span><span class="mi">1000U</span><span class="p">);</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="p">};</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">SampleConfig</span><span class="p">{};</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">sample_config</span><span class="p">.</span><span class="n">period</span><span class="p">(</span><span class="mi">50000U</span><span class="p">);</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1">/// or (mutually exclusive):</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="n">sample_config</span><span class="p">.</span><span class="n">frequency</span><span class="p">(</span><span class="mi">1000U</span><span class="p">);</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">);</span>
 </code></pre></div>
 <hr />
 <h2 id="what-can-be-recorded-and-how-to-access-the-data">What can be Recorded and how to Access the Data?<a class="headerlink" href="#what-can-be-recorded-and-how-to-access-the-data" title="Permanent link">&para;</a></h2>
@@ -3129,11 +3283,13 @@ Note that <code>record.context_switch()</code> returns an <code>std::optional</c
 </tr>
 </tbody>
 </table>
-<p>If recorded, the following <a href="#metadata">metadata fields</a> will also be included:
-- Timestamp
-- Stream ID
-- CPU ID
-- Sample ID</p>
+<p>If requested, the following <a href="#metadata">metadata fields</a> will also be included:</p>
+<ul>
+<li>Timestamp</li>
+<li>Stream ID</li>
+<li>CPU ID</li>
+<li>Sample ID</li>
+</ul>
 <p><strong>Example:</strong> <a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/context_switch.cpp"><code>context_switch_sampling.cpp</code></a></p>
 <h3 id="cgroup">CGroup<a class="headerlink" href="#cgroup" title="Permanent link">&para;</a></h3>
 <p>Captures information about control groups (cgroups) associated with each sample.<br />
@@ -3173,13 +3329,15 @@ Note that <code>record.cgroup()</code> returns an <code>std::optional</code>.</p
 </tr>
 </tbody>
 </table>
-<p>If recorded, the following <a href="#metadata">metadata fields</a> will also be included:
-- Timestamp
-- Process ID
-- Thread ID
-- Stream ID
-- CPU ID
-- Sample ID</p>
+<p>If requested, the following <a href="#metadata">metadata fields</a> will also be included:</p>
+<ul>
+<li>Timestamp</li>
+<li>Process ID</li>
+<li>Thread ID</li>
+<li>Stream ID</li>
+<li>CPU ID</li>
+<li>Sample ID</li>
+</ul>
 <h3 id="throttle-and-unthrottle">Throttle and Unthrottle<a class="headerlink" href="#throttle-and-unthrottle" title="Permanent link">&para;</a></h3>
 <p>Captures events where sampling was throttled or unthrottled by the kernel.<br />
 Note that <code>record.throttle()</code> returns an <code>std::optional</code>.</p>
@@ -3210,13 +3368,15 @@ Note that <code>record.throttle()</code> returns an <code>std::optional</code>.<
 </tr>
 </tbody>
 </table>
-<p>If recorded, the following <a href="#metadata">metadata fields</a> will also be included:
-- Timestamp
-- Process ID
-- Thread ID
-- Stream ID
-- CPU ID
-- Sample ID</p>
+<p>If requested, the following <a href="#metadata">metadata fields</a> will also be included:</p>
+<ul>
+<li>Timestamp</li>
+<li>Process ID</li>
+<li>Thread ID</li>
+<li>Stream ID</li>
+<li>CPU ID</li>
+<li>Sample ID</li>
+</ul>
 <h3 id="lost-samples">Lost Samples<a class="headerlink" href="#lost-samples" title="Permanent link">&para;</a></h3>
 <p>Sample loss can occur when buffers overflow or the CPU is under high load.<br />
 This section records how many samples were lost during profiling.<br />
@@ -3241,13 +3401,15 @@ Note that <code>record.count_loss()</code> returns an <code>std::optional</code>
 </tr>
 </tbody>
 </table>
-<p>If recorded, the following <a href="#metadata">metadata fields</a> will also be included:
-- Timestamp
-- Process ID
-- Thread ID
-- Stream ID
-- CPU ID
-- Sample ID</p>
+<p>If requested, the following <a href="#metadata">metadata fields</a> will also be included:</p>
+<ul>
+<li>Timestamp</li>
+<li>Process ID</li>
+<li>Thread ID</li>
+<li>Stream ID</li>
+<li>CPU ID</li>
+<li>Sample ID</li>
+</ul>
 <hr />
 <h2 id="specific-notes-for-different-cpu-vendors">Specific Notes for Different CPU Vendors<a class="headerlink" href="#specific-notes-for-different-cpu-vendors" title="Permanent link">&para;</a></h2>
 <h3 id="intel-processor-event-based-sampling">Intel (Processor Event Based Sampling)<a class="headerlink" href="#intel-processor-event-based-sampling" title="Permanent link">&para;</a></h3>
@@ -3257,20 +3419,34 @@ Intel's <code>perf list</code> reports these as "<em>Supports address when preci
 Memory sampling requires a <a href="#precision">precision</a> of at least <code>perf::Precision::RequestZeroSkid</code>.</p>
 <h4 id="before-sapphire-rapids">Before Sapphire Rapids<a class="headerlink" href="#before-sapphire-rapids" title="Permanent link">&para;</a></h4>
 <p>On Cascade Lake and earlier architectures, latency and source are only reported for memory loads, not stores. This changes starting with Sapphire Rapids.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1">/// Loads only.</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;mem-loads&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="p">);</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1">/// Stores only.</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;mem-stores&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="p">);</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="c1">/// Loads and stores together.</span>
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="o">&gt;&gt;</span><span class="p">{</span>
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">      </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="w"> </span><span class="s">&quot;mem-loads&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">RequestZeroSkid</span><span class="w"> </span><span class="p">}</span>
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="w"> </span><span class="s">&quot;mem-stores&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
-<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">  </span><span class="p">});</span>
-</code></pre></div>
+<p>Using <a href="#typed-triggers">typed triggers</a> (recommended):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1">/// Loads only — filters for accesses with at least 50 cycles of latency.</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">perf</span><span class="o">::</span><span class="n">MemoryLoads</span><span class="p">{</span><span class="cm">/* min_latency */</span><span class="w"> </span><span class="mi">50</span><span class="p">},</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="p">);</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1">/// Stores only.</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">perf</span><span class="o">::</span><span class="n">MemorStores</span><span class="p">{},</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="p">);</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1">/// Loads and stores together.</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="o">&gt;&gt;</span><span class="p">{</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">MemoryLoads</span><span class="p">{</span><span class="cm">/* min_latency */</span><span class="w"> </span><span class="mi">50</span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">MemorStores</span><span class="p">{}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="p">});</span>
+</code></pre></div></p>
+<p>Using string-based triggers:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1">/// Loads only.</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;mem-loads&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="p">);</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1">/// Stores only.</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;mem-stores&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="p">);</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="c1">/// Loads and stores together.</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="o">&gt;&gt;</span><span class="p">{</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">      </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="w"> </span><span class="s">&quot;mem-loads&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">RequestZeroSkid</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="w"> </span><span class="s">&quot;mem-stores&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">  </span><span class="p">});</span>
+</code></pre></div></p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>See the examples: <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/memory_address.cpp">memory_address.cpp</a></strong>, <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/multi_event.cpp">multi_event.cpp</a></strong>.</p>
@@ -3279,17 +3455,27 @@ Memory sampling requires a <a href="#precision">precision</a> of at least <code>
 <p>Memory latency sampling on Sapphire Rapids requires an <strong>auxiliary counter</strong> in the trigger group before the first real counter (<a href="https://lore.kernel.org/lkml/1612296553-21962-3-git-send-email-kan.liang@linux.intel.com/">kernel patch</a>).</p>
 <div class="admonition tip">
 <p class="admonition-title">Important</p>
-<p><em>perf-cpp</em> detects this automatically and adds the auxiliary counter when needed.
+<p><em>perf-cpp</em> detects this automatically and adds the auxiliary counter when needed — both for typed <code>perf::MemoryLoads</code> triggers and string-based <code>"mem-loads"</code> triggers.
 If auto-detection fails, add it manually:</p>
 </div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">({</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">        </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="s">&quot;mem-loads-aux&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="p">},</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">        </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="s">&quot;mem-loads&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">RequestZeroSkid</span><span class="p">}</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="s">&quot;mem-stores&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">  </span><span class="p">});</span>
-</code></pre></div>
+<p>Using <a href="#typed-triggers">typed triggers</a> (recommended):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="o">&gt;&gt;</span><span class="p">{</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">        </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">MemoryLoadsAux</span><span class="p">{},</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">        </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">MemoryLoads</span><span class="p">{</span><span class="cm">/* min_latency */</span><span class="w"> </span><span class="mi">50</span><span class="p">},</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">RequestZeroSkid</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">MemorStores</span><span class="p">{},</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="p">});</span>
+</code></pre></div></p>
+<p>Using string-based triggers:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">({</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">        </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="s">&quot;mem-loads-aux&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="p">},</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">        </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="s">&quot;mem-loads&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">RequestZeroSkid</span><span class="p">}</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="o">::</span><span class="n">Trigger</span><span class="p">{</span><span class="s">&quot;mem-stores&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Precision</span><span class="o">::</span><span class="n">MustHaveZeroSkid</span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">  </span><span class="p">});</span>
+</code></pre></div></p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>Check whether the auxiliary counter is required: <code>ls /sys/bus/event_source/devices/cpu/events/mem-loads-aux</code></p>
@@ -3301,56 +3487,74 @@ IBS provides two PMUs, only one of which can be active at a time.</p>
 <h4 id="ibs-op-pmu">IBS Op PMU<a class="headerlink" href="#ibs-op-pmu" title="Permanent link">&para;</a></h4>
 <p>The Op PMU captures micro-op execution details: data cache and TLB hit/miss, latency, load/store data source, and branch behavior.
 Unlike Intel's mechanism, IBS does not tag specific load or store instructions. If the sampled instruction happens to be a load/store, the sample includes data source, latency, and memory address (<a href="https://lore.kernel.org/all/20220616113638.900-2-ravi.bangoria@amd.com/T/">kernel patch</a>).</p>
-<p><em>perf-cpp</em> detects IBS support automatically and provides the following triggers:</p>
+<p><em>perf-cpp</em> detects IBS support automatically and registers the base events <code>ibs_op</code> and <code>ibs_fetch</code>.
+Use <a href="#typed-triggers">typed triggers</a> to configure IBS behavior:</p>
+<ul>
+<li><strong><code>is_uop</code></strong> controls the counting source for the sampling interval.
+  With <code>is_uop = false</code> (default), the hardware counts dispatched <strong>CPU cycles</strong> and triggers a sample after the configured period of cycles.
+  With <code>is_uop = true</code>, the hardware counts dispatched <strong>micro-operations</strong> instead — a sample is triggered after the configured number of micro-ops, which provides more uniform sampling across instructions of varying latency.</li>
+<li><strong><code>is_l3_miss_only</code></strong> restricts sampling to operations that miss the L3 cache, filtering out samples that hit in L1/L2/L3.</li>
+</ul>
 <table>
 <thead>
 <tr>
-<th>Trigger</th>
+<th>Typed Trigger</th>
 <th>Selection</th>
 <th>Period/Frequency Unit</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>ibs_op</code></td>
+<td><code>perf::IbsOp{}</code></td>
 <td>Instructions in the execution pipeline</td>
 <td>CPU cycles</td>
 </tr>
 <tr>
-<td><code>ibs_op_uops</code></td>
+<td><code>perf::IbsOp{/* is_uop */ true}</code></td>
 <td>Instructions in the execution pipeline</td>
 <td>Micro-operations</td>
 </tr>
 <tr>
-<td><code>ibs_op_l3missonly</code></td>
+<td><code>perf::IbsOp{/* is_uop */ false, /* is_l3_miss_only */ true}</code></td>
 <td>Instructions that miss L3</td>
 <td>CPU cycles</td>
 </tr>
 <tr>
-<td><code>ibs_op_uops_l3missonly</code></td>
+<td><code>perf::IbsOp{/* is_uop */ true, /* is_l3_miss_only */ true}</code></td>
 <td>Instructions that miss L3</td>
 <td>Micro-operations</td>
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>String-based triggers (<code>ibs_op</code>, <code>ibs_fetch</code>) still work but do not support configuration flags.
+Use typed triggers (<code>perf::IbsOp</code>, <code>perf::IbsFetch</code>) for full control over uop counting, L3 miss filtering, and randomization.</p>
+</div>
 <h4 id="ibs-fetch-pmu">IBS Fetch PMU<a class="headerlink" href="#ibs-fetch-pmu" title="Permanent link">&para;</a></h4>
 <p>The Fetch PMU captures instruction fetch details: instruction cache and TLB hit/miss, fetch latency, and page size.</p>
+<ul>
+<li><strong><code>is_rand</code></strong> enables randomized fetch-count tagging (<code>IbsFetchCtl.IbsFetchRandEn</code>).
+  With <code>is_rand = true</code> (default), the hardware adds a random offset to the fetch counter, preventing sampling bias from repetitive instruction patterns.
+  With <code>is_rand = false</code>, sampling occurs at exact interval boundaries.</li>
+<li><strong><code>is_l3_miss_only</code></strong> restricts sampling to fetches that miss the L3 cache.</li>
+</ul>
 <table>
 <thead>
 <tr>
-<th>Trigger</th>
+<th>Typed Trigger</th>
 <th>Selection</th>
 <th>Period/Frequency Unit</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>ibs_fetch</code></td>
+<td><code>perf::IbsFetch{}</code></td>
 <td>Instructions in the fetch stage (frontend)</td>
 <td>CPU cycles</td>
 </tr>
 <tr>
-<td><code>ibs_fetch_l3missonly</code></td>
+<td><code>perf::IbsFetch{/* is_rand */ true, /* is_l3_miss_only */ true}</code></td>
 <td>Instructions in the fetch stage that miss L3</td>
 <td>CPU cycles</td>
 </tr>
@@ -3360,10 +3564,10 @@ Unlike Intel's mechanism, IBS does not tag specific load or store instructions. 
 <h2 id="sample-buffer">Sample Buffer<a class="headerlink" href="#sample-buffer" title="Permanent link">&para;</a></h2>
 <p>Samples are transferred into an mmap-ed <a href="https://docs.kernel.org/userspace-api/perf_ring_buffer.html">ring buffer</a>.
 The buffer size (default: 16 MB) can be configured via <code>SampleConfig</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">SampleConfig</span><span class="p">{};</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">sample_config</span><span class="p">.</span><span class="n">buffer_pages</span><span class="p">(</span><span class="mi">4096U</span><span class="p">);</span><span class="w"> </span><span class="c1">/// 16 MB (4096 pages × 4 kB per page).</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="p">};</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">SampleConfig</span><span class="p">{};</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">sample_config</span><span class="p">.</span><span class="n">buffer_pages</span><span class="p">(</span><span class="mi">4096U</span><span class="p">);</span><span class="w"> </span><span class="c1">/// 16 MB (4096 pages × 4 kB per page).</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="p">};</span>
 </code></pre></div>
 <p><em>perf-cpp</em> drains the buffer automatically before it becomes full.</p>
 <div class="admonition note">
@@ -3372,13 +3576,13 @@ The buffer size (default: 16 MB) can be configured via <code>SampleConfig</code>
 </div>
 <h2 id="troubleshooting-counter-configurations">Troubleshooting Counter Configurations<a class="headerlink" href="#troubleshooting-counter-configurations" title="Permanent link">&para;</a></h2>
 <p>Enable debug mode to print the counter configuration passed to the perf subsystem:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">SampleConfig</span><span class="p">{};</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">config</span><span class="p">.</span><span class="n">debug</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="p">};</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">SampleConfig</span><span class="p">{};</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="n">config</span><span class="p">.</span><span class="n">debug</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="p">};</span>
 </code></pre></div>
 <p>The equivalent in <em>Linux Perf</em>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>perf<span class="w"> </span>--debug<span class="w"> </span>perf-event-open<span class="w"> </span>record<span class="w"> </span>--<span class="w"> </span>sleep<span class="w"> </span><span class="m">1</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>perf<span class="w"> </span>--debug<span class="w"> </span>perf-event-open<span class="w"> </span>record<span class="w"> </span>--<span class="w"> </span>sleep<span class="w"> </span><span class="m">1</span>
 </code></pre></div></p>
 <p>See the <a href="../counters/">counters documentation</a> for more details on event codes and configuration.</p>
 

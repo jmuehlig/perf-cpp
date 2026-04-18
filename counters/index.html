@@ -13,10 +13,10 @@
         <link rel="canonical" href="https://jmuehlig.github.io/perf-cpp/counters/">
       
       
-        <link rel="prev" href="../sampling-memory-analysis/">
+        <link rel="prev" href="../metrics/">
       
       
-        <link rel="next" href="../perf-paranoid/">
+        <link rel="next" href="../sampling/">
       
       
         
@@ -350,8 +350,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -362,13 +364,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
@@ -389,7 +389,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -507,6 +507,242 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customizing Events
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customizing Events
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-counterdefinition-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The CounterDefinition System
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#built-in-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in Events
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Built-in Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hardware-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hardware Events
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#software-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Software Events
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#virtual-time-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Virtual Time Events
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#processor-specific-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Processor-Specific Events
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Processor-Specific Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#loading-from-the-event-library" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loading from the Event Library
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-generating-events-at-compile-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Generating Events at Compile Time
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-custom-events-programmatically" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Custom Events Programmatically
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#translating-event-names-to-event-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Translating Event Names to Event Codes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Translating Event Names to Event Codes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-libpfm4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using libpfm4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-perf-with-debug-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using perf with Debug Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#detecting-hardware-capabilities-at-runtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detecting Hardware Capabilities at Runtime
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -752,241 +988,6 @@
       
   
   
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Customizing Events
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Customizing Events
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#the-counterdefinition-system" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The CounterDefinition System
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#built-in-events" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Built-in Events
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Built-in Events">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#hardware-events" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Hardware Events
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#software-events" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Software Events
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#virtual-time-events" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Virtual Time Events
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#processor-specific-events" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Processor-Specific Events
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Processor-Specific Events">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#loading-from-the-event-library" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Loading from the Event Library
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#auto-generating-events-at-compile-time" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Auto-Generating Events at Compile Time
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#adding-custom-events-programmatically" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Adding Custom Events Programmatically
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#translating-event-names-to-event-codes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Translating Event Names to Event Codes
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Translating Event Names to Event Codes">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#using-libpfm4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using libpfm4
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#using-perf-with-debug-output" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using perf with Debug Output
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#detecting-hardware-capabilities-at-runtime" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Detecting Hardware Capabilities at Runtime
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
   
   
     
@@ -1005,10 +1006,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
             
   
   
@@ -1026,8 +1027,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1318,23 +1319,25 @@ Event names are stored only in this instance — destroying it prematurely will 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>branches<span class="w">                 </span><span class="c1"># Total branch instructions</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>branch-instructions<span class="w">      </span><span class="c1"># Synonym for branches</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>branch-misses<span class="w">            </span><span class="c1"># Mispredicted branches</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>cache-misses<span class="w">             </span><span class="c1"># Cache access that missed</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>cache-references<span class="w">         </span><span class="c1"># Cache accesses</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>cycles<span class="w">                   </span><span class="c1"># CPU cycles</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>cpu-cycles<span class="w">               </span><span class="c1"># Synonym for cycles</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>instructions<span class="w">             </span><span class="c1"># Retired instructions</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>stalled-cycles-backend<span class="w">   </span><span class="c1"># Cycles stalled in backend</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>idle-cycles-backend<span class="w">      </span><span class="c1"># Synonym for stalled-cycles-backend</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>stalled-cycles-frontend<span class="w">  </span><span class="c1"># Cycles stalled in frontend</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>idle-cycles-frontend<span class="w">     </span><span class="c1"># Synonym for stalled-cycles-frontend</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>L1-dcache-loads<span class="w">          </span><span class="c1"># L1 data cache loads</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>L1-dcache-load-misses<span class="w">    </span><span class="c1"># L1 data cache load misses</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>L1-icache-loads<span class="w">          </span><span class="c1"># L1 instruction cache loads</span>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>L1-icache-load-misses<span class="w">    </span><span class="c1"># L1 instruction cache load misses</span>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>dTLB-loads<span class="w">               </span><span class="c1"># Data TLB loads</span>
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>dTLB-load-misses<span class="w">         </span><span class="c1"># Data TLB load misses</span>
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>iTLB-loads<span class="w">               </span><span class="c1"># Instruction TLB loads</span>
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>iTLB-load-misses<span class="w">         </span><span class="c1"># Instruction TLB load misses</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>bus-cycles<span class="w">               </span><span class="c1"># Bus cycles</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>cache-misses<span class="w">             </span><span class="c1"># Cache access that missed</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>cache-references<span class="w">         </span><span class="c1"># Cache accesses</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>cycles<span class="w">                   </span><span class="c1"># CPU cycles (at current core frequency)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>cpu-cycles<span class="w">               </span><span class="c1"># Synonym for cycles</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>instructions<span class="w">             </span><span class="c1"># Retired instructions</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>ref-cycles<span class="w">               </span><span class="c1"># Reference cycles (at fixed frequency, unaffected by turbo/power saving)</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>stalled-cycles-backend<span class="w">   </span><span class="c1"># Cycles stalled in backend</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>idle-cycles-backend<span class="w">      </span><span class="c1"># Synonym for stalled-cycles-backend</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>stalled-cycles-frontend<span class="w">  </span><span class="c1"># Cycles stalled in frontend</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>idle-cycles-frontend<span class="w">     </span><span class="c1"># Synonym for stalled-cycles-frontend</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>L1-dcache-loads<span class="w">          </span><span class="c1"># L1 data cache loads</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>L1-dcache-load-misses<span class="w">    </span><span class="c1"># L1 data cache load misses</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>L1-icache-loads<span class="w">          </span><span class="c1"># L1 instruction cache loads</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>L1-icache-load-misses<span class="w">    </span><span class="c1"># L1 instruction cache load misses</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>dTLB-loads<span class="w">               </span><span class="c1"># Data TLB loads</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>dTLB-load-misses<span class="w">         </span><span class="c1"># Data TLB load misses</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>iTLB-loads<span class="w">               </span><span class="c1"># Instruction TLB loads</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>iTLB-load-misses<span class="w">         </span><span class="c1"># Instruction TLB load misses</span>
 </code></pre></div>
 <h3 id="software-events">Software Events<a class="headerlink" href="#software-events" title="Permanent link">&para;</a></h3>
 <p>From the kernel, not hardware counters:</p>
