@@ -13,6 +13,7 @@ set(PERF_CPP_TEST
         test/counter_result.cpp
         test/metric.cpp
         test/event_counter.cpp
+        test/event_counter_live.cpp
         test/event_counter_multi_thread.cpp
         test/sampler.cpp
         test/sampler_multi_thread.cpp
