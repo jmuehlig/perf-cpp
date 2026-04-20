@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <optional>
 #include <perfcpp/counter/counter.hpp>
-#include <perfcpp/counter_definition.h>
+#include <perfcpp/counter_definition.hpp>
 #include <tuple>
 #include <vector>
 

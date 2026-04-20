@@ -1,5 +1,5 @@
 #include <iostream>
-#include <perfcpp/counter_definition.h>
+#include <perfcpp/counter_definition.hpp>
 #include <perfcpp/hardware_info.h>
 
 int

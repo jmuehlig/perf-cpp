@@ -1,5 +1,5 @@
 #include <perfcpp/exception.hpp>
-#include <perfcpp/hardware_info.h>
+#include <perfcpp/hardware_info.hpp>
 #include <perfcpp/sample/trigger.hpp>
 
 std::vector<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
