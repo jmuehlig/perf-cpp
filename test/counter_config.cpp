@@ -119,6 +119,7 @@ TEST_CASE("CounterConfig precision", "[CounterConfig]")
   {
     auto config = perf::CounterConfig{ 1U, 10UL };
     config.precision(perf::Precision::AllowArbitrarySkid);
+    REQUIRE(config.precision().has_value());
     REQUIRE(config.precision().value() == 0U);
   }
 
@@ -126,6 +127,7 @@ TEST_CASE("CounterConfig precision", "[CounterConfig]")
   {
     auto config = perf::CounterConfig{ 1U, 10UL };
     config.precision(perf::Precision::MustHaveConstantSkid);
+    REQUIRE(config.precision().has_value());
     REQUIRE(config.precision().value() == 1U);
   }
 
@@ -133,6 +135,7 @@ TEST_CASE("CounterConfig precision", "[CounterConfig]")
   {
     auto config = perf::CounterConfig{ 1U, 10UL };
     config.precision(perf::Precision::RequestZeroSkid);
+    REQUIRE(config.precision().has_value());
     REQUIRE(config.precision().value() == 2U);
   }
 
@@ -140,6 +143,7 @@ TEST_CASE("CounterConfig precision", "[CounterConfig]")
   {
     auto config = perf::CounterConfig{ 1U, 10UL };
     config.precision(perf::Precision::MustHaveZeroSkid);
+    REQUIRE(config.precision().has_value());
     REQUIRE(config.precision().value() == 3U);
   }
 }
@@ -172,6 +176,7 @@ TEST_CASE("CounterConfig period_or_frequency", "[CounterConfig]")
     config.period_or_frequency(perf::Period{ 50000UL });
     config.period_or_frequency(perf::Frequency{ 1000UL });
 
+    REQUIRE(config.period_or_frequency().has_value());
     REQUIRE(std::holds_alternative<perf::Frequency>(config.period_or_frequency().value()));
     REQUIRE(std::get<perf::Frequency>(config.period_or_frequency().value()).get() == 1000UL);
   }
