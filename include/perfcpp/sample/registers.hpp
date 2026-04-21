@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <bitset>
 #include <cstdint>
 #include <optional>
@@ -170,22 +171,22 @@ public:
   Registers& operator=(const Registers&) = default;
 
   explicit Registers(std::vector<x86>&& registers) noexcept
-    : _registers(std::move(registers))
+    : _registers(sort(std::move(registers)))
   {
   }
 
   explicit Registers(std::vector<arm>&& registers) noexcept
-    : _registers(std::move(registers))
+    : _registers(sort(std::move(registers)))
   {
   }
 
   explicit Registers(std::vector<arm64>&& registers) noexcept
-    : _registers(std::move(registers))
+    : _registers(sort(std::move(registers)))
   {
   }
 
   explicit Registers(std::vector<riscv>&& registers) noexcept
-    : _registers(std::move(registers))
+    : _registers(sort(std::move(registers)))
   {
   }
 
@@ -218,6 +219,15 @@ public:
 
 private:
   registers_t _registers;
+
+  /// Sort registers by enum value to match perf's bit-position output order.
+  template<typename T>
+  static std::vector<T> sort(std::vector<T>&& registers)
+  {
+    std::sort(registers.begin(), registers.end(),
+              [](const T a, const T b) { return static_cast<std::uint8_t>(a) < static_cast<std::uint8_t>(b); });
+    return std::move(registers);
+  }
 };
 
 /**

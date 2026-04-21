@@ -275,7 +275,9 @@ perf::SampleDecoder::decode_registers(SampleIterator& entry, const Registers& re
   /// Read the register ABI.
   const auto abi = static_cast<ABI>(entry.read<std::uint64_t>());
 
-  if (registers.empty()) {
+  /// When ABI is None, perf writes no register values — early return to avoid consuming bytes that belong to the next
+  /// field. Also return early for empty register specifications.
+  if (abi == ABI::None || registers.empty()) {
     return RegisterValues{ abi };
   }
 
@@ -284,8 +286,8 @@ perf::SampleDecoder::decode_registers(SampleIterator& entry, const Registers& re
   /// Read raw register values from perf data.
   const auto* perf_registers = entry.read_array<std::int64_t>(count_registers);
 
-  /// Transform raw perf register array into register value map by linking values to specified registers. Note that
-  /// registers can be a vector of x86, arm, arm64, etc.
+  /// Transform raw perf register array into register value map. Perf writes register values in bit-position order;
+  /// registers are pre-sorted by that same order in the Registers constructor, so positional mapping is correct here.
   auto register_values = std::visit(
     [count_registers, perf_registers](const auto& specified_registers) {
       auto values = std::unordered_map<std::uint8_t, std::int64_t>{};
