@@ -94,12 +94,9 @@ public:
   [[nodiscard]] bool operator==(const std::uint16_t other) const noexcept { return _cpu_core_id == other; }
 
 private:
-  std::int32_t _cpu_core_id;
+  std::int32_t _cpu_core_id { - 1};
 
-  explicit CpuCore(const std::int32_t cpu_core_id)
-    : _cpu_core_id(cpu_core_id)
-  {
-  }
+  CpuCore() noexcept = default;
 };
 
 /**

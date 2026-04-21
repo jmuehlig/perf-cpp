@@ -3,7 +3,7 @@
 
 perf::Process perf::Process::Any = Process{ -1 };
 perf::Process perf::Process::Calling = Process{ 0 };
-perf::CpuCore perf::CpuCore::Any = CpuCore{ -1 };
+perf::CpuCore perf::CpuCore::Any = CpuCore{};
 
 perf::Config::Config() noexcept
 {
