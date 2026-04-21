@@ -294,6 +294,134 @@ TEST_CASE("sampling", "[Sampler]")
     REQUIRE(filtered_samples.size() < not_filtered_samples.size());
   }
 
+  SECTION("branch stack")
+  {
+    auto sampler = perf::Sampler{};
+    REQUIRE_NOTHROW(sampler.trigger(perf::Cycles{}, perf::Precision::AllowArbitrarySkid, perf::Period{ 1000000U }));
+    sampler.values().timestamp(true).branch_stack({ perf::BranchType::User, perf::BranchType::Conditional });
+
+    REQUIRE_NOTHROW(sampler.open());
+    REQUIRE_NOTHROW(sampler.start());
+
+    readonly_benchmark.run();
+
+    REQUIRE_NOTHROW(sampler.stop());
+
+    const auto samples = sampler.result();
+    REQUIRE_FALSE(samples.empty());
+
+    for (const auto& sample : samples) {
+      REQUIRE(sample.metadata().timestamp().has_value());
+      REQUIRE(sample.branch_stack().has_value());
+      REQUIRE_FALSE(sample.branch_stack()->empty());
+
+      for (const auto& branch : sample.branch_stack().value()) {
+        REQUIRE(branch.instruction_pointer_from() != 0U);
+        REQUIRE(branch.instruction_pointer_to() != 0U);
+
+        /// Predicted and mispredicted are mutually exclusive.
+        REQUIRE_FALSE((branch.is_predicted() && branch.is_mispredicted()));
+      }
+    }
+
+    REQUIRE_NOTHROW(sampler.close());
+  }
+
+  SECTION("user registers")
+  {
+    auto sampler = perf::Sampler{};
+    REQUIRE_NOTHROW(sampler.trigger(perf::Cycles{}, perf::Period{ 100000U }));
+    sampler.values()
+      .timestamp(true)
+      .user_registers(
+        perf::Registers{ std::vector<perf::Registers::x86>{ perf::Registers::x86::IP, perf::Registers::x86::SP } })
+      .cpu_id(true);
+
+    REQUIRE_NOTHROW(sampler.open());
+    REQUIRE_NOTHROW(sampler.start());
+
+    readonly_benchmark.run();
+
+    REQUIRE_NOTHROW(sampler.stop());
+
+    const auto samples = sampler.result();
+    REQUIRE_FALSE(samples.empty());
+
+    for (const auto& sample : samples) {
+      REQUIRE(sample.metadata().timestamp().has_value());
+      REQUIRE(sample.metadata().cpu_id().has_value());
+      REQUIRE(sample.user_registers().has_value());
+
+      const auto& registers = sample.user_registers().value();
+
+      /// User-mode samples always carry a valid ABI.
+      if (sample.metadata().mode() == perf::Metadata::Mode::User) {
+        REQUIRE(registers.abi() != perf::ABI::None);
+      }
+
+      /// Requested registers are present with sensible values.
+      REQUIRE(registers.get(perf::Registers::x86::IP).has_value());
+      REQUIRE(registers.get(perf::Registers::x86::IP).value() != 0);
+      REQUIRE(registers.get(perf::Registers::x86::SP).has_value());
+
+      /// Non-requested register is absent.
+      REQUIRE_FALSE(registers.get(perf::Registers::x86::AX).has_value());
+    }
+
+    REQUIRE_NOTHROW(sampler.close());
+  }
+
+  SECTION("user and kernel registers")
+  {
+    auto sampler = perf::Sampler{};
+    REQUIRE_NOTHROW(sampler.trigger(perf::Cycles{}, perf::Period{ 100000U }));
+    sampler.values()
+      .timestamp(true)
+      .user_registers(
+        perf::Registers{ std::vector<perf::Registers::x86>{ perf::Registers::x86::IP, perf::Registers::x86::SP } })
+      .kernel_registers(
+        perf::Registers{ std::vector<perf::Registers::x86>{ perf::Registers::x86::IP, perf::Registers::x86::SP } });
+
+    REQUIRE_NOTHROW(sampler.open());
+    REQUIRE_NOTHROW(sampler.start());
+
+    readonly_benchmark.run();
+
+    REQUIRE_NOTHROW(sampler.stop());
+
+    const auto samples = sampler.result();
+    REQUIRE_FALSE(samples.empty());
+
+    auto found_kernel_sample = false;
+
+    for (const auto& sample : samples) {
+      REQUIRE(sample.user_registers().has_value());
+
+      if (sample.metadata().mode() == perf::Metadata::Mode::User) {
+        REQUIRE(sample.user_registers()->abi() != perf::ABI::None);
+      }
+
+      /// For kernel-mode samples, both register sets are present and reflect distinct contexts.
+      if (sample.metadata().mode() == perf::Metadata::Mode::Kernel &&
+          sample.kernel_registers().has_value()) {
+        found_kernel_sample = true;
+
+        /// User and kernel IPs are in distinct virtual address ranges on x86_64
+        /// (userspace < 0x0000800000000000, kernel >= 0xffff000000000000), so they must differ.
+        const auto user_ip = sample.user_registers()->get(perf::Registers::x86::IP);
+        const auto kernel_ip = sample.kernel_registers()->get(perf::Registers::x86::IP);
+
+        if (user_ip.has_value() && kernel_ip.has_value()) {
+          REQUIRE(user_ip.value() != kernel_ip.value());
+        }
+      }
+    }
+
+    REQUIRE(found_kernel_sample);
+
+    REQUIRE_NOTHROW(sampler.close());
+  }
+
   SECTION("metric-l1d-per-load")
   {
     auto counter_definition = perf::CounterDefinition{};
