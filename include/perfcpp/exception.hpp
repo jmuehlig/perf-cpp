@@ -472,6 +472,50 @@ public:
   ~CannotStartEmptyGroupError() override = default;
 };
 
+class InvalidSamplingPeriodError final : public std::runtime_error
+{
+public:
+  InvalidSamplingPeriodError()
+    : std::runtime_error("Sampling period must be greater than zero.")
+  {
+  }
+  InvalidSamplingPeriodError(const InvalidSamplingPeriodError&) = default;
+  InvalidSamplingPeriodError(InvalidSamplingPeriodError&&) noexcept = default;
+  InvalidSamplingPeriodError& operator=(const InvalidSamplingPeriodError&) = default;
+  InvalidSamplingPeriodError& operator=(InvalidSamplingPeriodError&&) noexcept = default;
+  ~InvalidSamplingPeriodError() override = default;
+};
+
+class InvalidSamplingFrequencyError final : public std::runtime_error
+{
+public:
+  InvalidSamplingFrequencyError()
+    : std::runtime_error("Sampling frequency must be greater than zero.")
+  {
+  }
+  InvalidSamplingFrequencyError(const InvalidSamplingFrequencyError&) = default;
+  InvalidSamplingFrequencyError(InvalidSamplingFrequencyError&&) noexcept = default;
+  InvalidSamplingFrequencyError& operator=(const InvalidSamplingFrequencyError&) = default;
+  InvalidSamplingFrequencyError& operator=(InvalidSamplingFrequencyError&&) noexcept = default;
+  ~InvalidSamplingFrequencyError() override = default;
+};
+
+class SamplingFrequencyExceedsMaximumError final : public std::runtime_error
+{
+public:
+  explicit SamplingFrequencyExceedsMaximumError(const std::uint64_t max_sample_rate)
+    : std::runtime_error(std::string{ "Sampling frequency exceeds the system maximum of " }
+                           .append(std::to_string(max_sample_rate))
+                           .append(" Hz (see /proc/sys/kernel/perf_event_max_sample_rate)."))
+  {
+  }
+  SamplingFrequencyExceedsMaximumError(const SamplingFrequencyExceedsMaximumError&) = default;
+  SamplingFrequencyExceedsMaximumError(SamplingFrequencyExceedsMaximumError&&) noexcept = default;
+  SamplingFrequencyExceedsMaximumError& operator=(const SamplingFrequencyExceedsMaximumError&) = default;
+  SamplingFrequencyExceedsMaximumError& operator=(SamplingFrequencyExceedsMaximumError&&) noexcept = default;
+  ~SamplingFrequencyExceedsMaximumError() override = default;
+};
+
 class CannotStartEmptySamplerError final : public std::runtime_error
 {
 public:

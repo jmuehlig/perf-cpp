@@ -191,6 +191,11 @@ public:
   [[nodiscard]] static std::uint64_t max_cpu_clock_frequency();
 
   /**
+   * @return The maximum perf sample rate.
+   */
+  [[nodiscard]] static std::uint64_t max_perf_sample_rate();
+
+  /**
    * @return True, if the NMI watchdog is enabled and permanently consumes one hw-PMU counter.
    */
   [[nodiscard]] static bool is_nmi_watchdog_enabled();
@@ -205,6 +210,7 @@ private:
   static std::optional<std::uint8_t> _physical_fixed_performance_counters_per_logical_core;
   static std::optional<std::uint8_t> _events_per_physical_performance_counter;
   static std::optional<std::uint64_t> _max_cpu_clock_frequency;
+  static std::optional<std::uint64_t> _max_perf_sample_rate;
 
 #if defined(__x86_64__) || defined(__i386__)
   /**

@@ -38,6 +38,9 @@ std::optional<std::uint8_t> perf::HardwareInfo::_events_per_physical_performance
 /// Maximal clock frequency across all cores in Hz.
 std::optional<std::uint64_t> perf::HardwareInfo::_max_cpu_clock_frequency{ std::nullopt };
 
+/// Maximal perf event sample rate, read from `/proc/sys/kernel/perf_event_max_sample_rate`.
+std::optional<std::uint64_t> perf::HardwareInfo::_max_perf_sample_rate{ std::nullopt };
+
 /// Cache variable to remember if NMI watchdog is enabled.
 std::optional<bool> perf::HardwareInfo::_is_nmi_watchdog_enabled{ std::nullopt };
 
@@ -371,6 +374,27 @@ perf::HardwareInfo::max_cpu_clock_frequency()
   }
 
   return HardwareInfo::cache_value(HardwareInfo::_max_cpu_clock_frequency, max_frequency_in_hz);
+}
+
+std::uint64_t
+perf::HardwareInfo::max_perf_sample_rate()
+{
+  if (HardwareInfo::_max_perf_sample_rate.has_value()) {
+    return HardwareInfo::_max_perf_sample_rate.value();
+  }
+
+  /// Default is 100,000 Hz. Used as a fallback if we cannot open the file.
+  auto max_perf_sample_rate = 100000UL;
+
+  if (const auto path = std::filesystem::path("/proc/sys/kernel/perf_event_max_sample_rate");
+      std::filesystem::is_regular_file(path)) {
+    auto perf_sample_rate_file_stream = std::ifstream{ path };
+    if (perf_sample_rate_file_stream.is_open()) {
+      perf_sample_rate_file_stream >> max_perf_sample_rate;
+    }
+  }
+
+  return HardwareInfo::cache_value(HardwareInfo::_max_perf_sample_rate, max_perf_sample_rate);
 }
 
 std::optional<std::uint8_t>

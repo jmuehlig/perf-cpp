@@ -35,15 +35,14 @@ std::string
 perf::Sampler::Trigger::to_string() const
 {
   return std::visit(
-  [](
-    const auto& trigger) -> auto {
-    if constexpr (std::is_same_v<std::decay_t<decltype(trigger)>, std::string>) {
-      return trigger;
-    } else {
-      return trigger.to_string();
-    }
-  },
-  this->_trigger);
+    [](const auto& trigger) -> auto {
+      if constexpr (std::is_same_v<std::decay_t<decltype(trigger)>, std::string>) {
+        return trigger;
+      } else {
+        return trigger.to_string();
+      }
+    },
+    this->_trigger);
 }
 
 std::optional<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
@@ -109,6 +108,36 @@ perf::Sampler::open()
   /// Measuring any CPU core and any process is invalid, according to the perf subsystem documentation.
   if (this->_config.cpu_core().is_any() && this->_config.process().is_any()) {
     throw InvalidConfigAnyCpuCoreAndAnyProcess{};
+  }
+
+  /// Validate the effective period/frequency for every trigger before touching the kernel.
+  const auto max_sample_rate = HardwareInfo::max_perf_sample_rate();
+  for (const auto& trigger_group : this->_triggers) {
+    for (const auto& trigger : trigger_group) {
+      const auto period_or_frequency = trigger.period_or_frequency().value_or(this->_config.period_or_frequency());
+      std::visit(
+        [max_sample_rate](const auto& value) {
+          using T = std::decay_t<decltype(value)>;
+
+          /// Period must be > 0
+          if constexpr (std::is_same_v<T, Period>) {
+            if (value.get() == 0U) {
+              throw InvalidSamplingPeriodError{};
+            }
+          }
+
+          /// Frequency must be 0 < f < /proc/sys/kernel/perf_event_max_sample_rate
+          else if constexpr (std::is_same_v<T, Frequency>) {
+            if (value.get() == 0U) {
+              throw InvalidSamplingFrequencyError{};
+            }
+            if (value.get() > max_sample_rate) {
+              throw SamplingFrequencyExceedsMaximumError{ max_sample_rate };
+            }
+          }
+        },
+        period_or_frequency);
+    }
   }
 
   /// Do not open again, if the sampler was already opened.
@@ -240,7 +269,8 @@ perf::Sampler::transform_trigger_to_sample_counter(const std::string_view pmu_na
 
     /// Notice the event name of the trigger event.
     if (this->_values.is_set(SampleRecordingValues::Field::PerformanceCounter)) {
-      requested_events.add(RequestedEvent{ pmu_name, event_name, /* group_id */ 0U, /* position in group */ static_cast<std::uint8_t>(group.size()) });
+      requested_events.add(RequestedEvent{
+        pmu_name, event_name, /* group_id */ 0U, /* position in group */ static_cast<std::uint8_t>(group.size()) });
     }
   }
 

@@ -206,6 +206,20 @@ auto sampler = perf::Sampler{ sample_config };
 sampler.trigger("cycles");
 ```
 
+### Valid Values and Errors
+
+| Parameter | Valid Range |
+|---|---|
+| `perf::Period{N}` | `N ≥ 1` |
+| `perf::Frequency{F}` | `1 ≤ F ≤ /proc/sys/kernel/perf_event_max_sample_rate` |
+
+- **Period = 0** is rejected by *perf-cpp*. A zero period means "never sample", which produces no output and is almost certainly a misconfiguration.
+- **Frequency = 0** is rejected by the kernel (`EINVAL`); *perf-cpp* catches it before the syscall.
+- **Frequency above the system maximum** is rejected by the kernel (`EINVAL`). The limit is read from `/proc/sys/kernel/perf_event_max_sample_rate` (default: 100,000 Hz) and can be raised by root: `echo 500000 > /proc/sys/kernel/perf_event_max_sample_rate`.
+- **Period has no upper bound** — the kernel accepts any `uint64_t` value; very large values simply produce rare samples.
+
+`sampler.open()` throws an exception if any of these constraints are violated.
+
 ---
 
 ## What can be Recorded and how to Access the Data?
