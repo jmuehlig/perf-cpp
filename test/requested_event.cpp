@@ -286,22 +286,27 @@ TEST_CASE("RequestedEventSet add deduplication", "[RequestedEventSet]")
   SECTION("first add returns true")
   {
     auto event_set = perf::RequestedEventSet{};
-    REQUIRE(event_set.add(perf::RequestedEvent{ "cpu", "instructions", true, perf::RequestedEvent::Type::HardwareEvent }));
+    REQUIRE(
+      event_set.add(perf::RequestedEvent{ "cpu", "instructions", true, perf::RequestedEvent::Type::HardwareEvent }));
   }
 
   SECTION("duplicate returns false and size stays at one")
   {
     auto event_set = perf::RequestedEventSet{};
-    REQUIRE(event_set.add(perf::RequestedEvent{ "cpu", "instructions", true, perf::RequestedEvent::Type::HardwareEvent }));
-    REQUIRE_FALSE(event_set.add(perf::RequestedEvent{ "cpu", "instructions", true, perf::RequestedEvent::Type::HardwareEvent }));
+    REQUIRE(
+      event_set.add(perf::RequestedEvent{ "cpu", "instructions", true, perf::RequestedEvent::Type::HardwareEvent }));
+    REQUIRE_FALSE(
+      event_set.add(perf::RequestedEvent{ "cpu", "instructions", true, perf::RequestedEvent::Type::HardwareEvent }));
     REQUIRE(event_set.size() == 1U);
   }
 
   SECTION("same event name different pmu is not a duplicate")
   {
     auto event_set = perf::RequestedEventSet{};
-    REQUIRE(event_set.add(perf::RequestedEvent{ "cpu", "instructions", true, perf::RequestedEvent::Type::HardwareEvent }));
-    REQUIRE(event_set.add(perf::RequestedEvent{ "uncore_imc_0", "instructions", true, perf::RequestedEvent::Type::HardwareEvent }));
+    REQUIRE(
+      event_set.add(perf::RequestedEvent{ "cpu", "instructions", true, perf::RequestedEvent::Type::HardwareEvent }));
+    REQUIRE(event_set.add(
+      perf::RequestedEvent{ "uncore_imc_0", "instructions", true, perf::RequestedEvent::Type::HardwareEvent }));
     REQUIRE(event_set.size() == 2U);
   }
 
@@ -388,9 +393,8 @@ TEST_CASE("RequestedEventSet result ordering and visibility", "[RequestedEventSe
     event_set.add(perf::RequestedEvent{ "cpu", "cache-misses", true, perf::RequestedEvent::Type::HardwareEvent });
 
     /// Hardware result has the events in reverse order of how they were added.
-    auto hardware_result = perf::CounterResult{
-      std::vector<std::pair<std::string_view, double>>{ { "cache-misses", 3.0 }, { "instructions", 2.0 }, { "cycles", 1.0 } }
-    };
+    auto hardware_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
+      { "cache-misses", 3.0 }, { "instructions", 2.0 }, { "cycles", 1.0 } } };
     const auto result = event_set.result(counter_definition, std::move(hardware_result), 1U);
 
     REQUIRE(result.size() == 3U);
@@ -439,9 +443,8 @@ TEST_CASE("RequestedEventSet result normalization", "[RequestedEventSet]")
     event_set.add(perf::RequestedEvent{ "instructions-per-cycle", true, perf::RequestedEvent::Type::Metric });
 
     /// IPC = 2000 / 1000 = 2.0; normalization must not be applied to the metric result.
-    auto hardware_result = perf::CounterResult{
-      std::vector<std::pair<std::string_view, double>>{ { "instructions", 2000.0 }, { "cycles", 1000.0 } }
-    };
+    auto hardware_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
+      { "instructions", 2000.0 }, { "cycles", 1000.0 } } };
     const auto result = event_set.result(counter_definition, std::move(hardware_result), 10U);
 
     REQUIRE(result.get("instructions-per-cycle").has_value());

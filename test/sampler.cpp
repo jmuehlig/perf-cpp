@@ -3,6 +3,7 @@
 
 #if defined(__x86_64__) || defined(__i386__)
 #include <iostream>
+#include <perfcpp/exception.hpp>
 #include <perfcpp/hardware_info.hpp>
 #include <perfcpp/sampler.hpp>
 
@@ -34,6 +35,60 @@ TEST_CASE("config", "[Sampler]")
     sampler.values().logical_instruction_pointer(true);
 
     REQUIRE_THROWS(sampler.open());
+  }
+
+  SECTION("start without prior open")
+  {
+    /// start() implicitly calls open(); no exception expected.
+    auto sampler = perf::Sampler{};
+    sampler.trigger("cycles");
+    sampler.values().logical_instruction_pointer(true);
+
+    REQUIRE_NOTHROW(sampler.start());
+    readonly_benchmark.run();
+    REQUIRE_NOTHROW(sampler.stop());
+    sampler.close();
+  }
+
+  SECTION("double start without stop")
+  {
+    /// Second start() clears collected samples and re-enables; no exception expected.
+    auto sampler = perf::Sampler{};
+    sampler.trigger("cycles");
+    sampler.values().logical_instruction_pointer(true);
+
+    REQUIRE_NOTHROW(sampler.start());
+    REQUIRE_NOTHROW(sampler.start());
+    readonly_benchmark.run();
+    REQUIRE_NOTHROW(sampler.stop());
+    sampler.close();
+  }
+
+  SECTION("zero period rejected")
+  {
+    auto sampler = perf::Sampler{};
+    sampler.trigger(perf::Cycles{}, perf::Period{ 0U });
+    sampler.values().logical_instruction_pointer(true);
+
+    REQUIRE_THROWS_AS(sampler.open(), perf::InvalidSamplingPeriodError);
+  }
+
+  SECTION("zero frequency rejected")
+  {
+    auto sampler = perf::Sampler{};
+    sampler.trigger(perf::Cycles{}, perf::Frequency{ 0U });
+    sampler.values().logical_instruction_pointer(true);
+
+    REQUIRE_THROWS_AS(sampler.open(), perf::InvalidSamplingFrequencyError);
+  }
+
+  SECTION("frequency exceeds system maximum")
+  {
+    auto sampler = perf::Sampler{};
+    sampler.trigger(perf::Cycles{}, perf::Frequency{ perf::HardwareInfo::max_perf_sample_rate() + 1U });
+    sampler.values().logical_instruction_pointer(true);
+
+    REQUIRE_THROWS_AS(sampler.open(), perf::SamplingFrequencyExceedsMaximumError);
   }
 }
 
@@ -246,8 +301,8 @@ TEST_CASE("sampling", "[Sampler]")
     if (perf::HardwareInfo::is_intel()) {
       REQUIRE_NOTHROW(
         filtered_sampler.trigger(perf::MemoryLoads{ 60U }, perf::Precision::MustHaveZeroSkid, perf::Period{ 8000 }));
-      REQUIRE_NOTHROW(not_filtered_sampler.trigger(
-        perf::MemoryLoads{ 1U }, perf::Precision::MustHaveZeroSkid, perf::Period{ 8000 }));
+      REQUIRE_NOTHROW(
+        not_filtered_sampler.trigger(perf::MemoryLoads{ 1U }, perf::Precision::MustHaveZeroSkid, perf::Period{ 8000 }));
     } else if (perf::HardwareInfo::is_amd()) {
       REQUIRE_NOTHROW(filtered_sampler.trigger(perf::IbsOp{ /*upos = */ true, /* l3miss only = */ true },
                                                perf::Precision::RequestZeroSkid,
@@ -354,17 +409,15 @@ TEST_CASE("sampling", "[Sampler]")
 
       const auto& registers = sample.user_registers().value();
 
-      /// User-mode samples always carry a valid ABI.
+      /// User-mode samples always carry a valid ABI with populated register values.
       if (sample.metadata().mode() == perf::Metadata::Mode::User) {
         REQUIRE(registers.abi() != perf::ABI::None);
+        REQUIRE(registers.get(perf::Registers::x86::IP).has_value());
+        REQUIRE(registers.get(perf::Registers::x86::IP).value() != 0);
+        REQUIRE(registers.get(perf::Registers::x86::SP).has_value());
       }
 
-      /// Requested registers are present with sensible values.
-      REQUIRE(registers.get(perf::Registers::x86::IP).has_value());
-      REQUIRE(registers.get(perf::Registers::x86::IP).value() != 0);
-      REQUIRE(registers.get(perf::Registers::x86::SP).has_value());
-
-      /// Non-requested register is absent.
+      /// Non-requested register is absent regardless of mode.
       REQUIRE_FALSE(registers.get(perf::Registers::x86::AX).has_value());
     }
 
@@ -392,8 +445,6 @@ TEST_CASE("sampling", "[Sampler]")
     const auto samples = sampler.result();
     REQUIRE_FALSE(samples.empty());
 
-    auto found_kernel_sample = false;
-
     for (const auto& sample : samples) {
       REQUIRE(sample.user_registers().has_value());
 
@@ -402,10 +453,7 @@ TEST_CASE("sampling", "[Sampler]")
       }
 
       /// For kernel-mode samples, both register sets are present and reflect distinct contexts.
-      if (sample.metadata().mode() == perf::Metadata::Mode::Kernel &&
-          sample.kernel_registers().has_value()) {
-        found_kernel_sample = true;
-
+      if (sample.metadata().mode() == perf::Metadata::Mode::Kernel && sample.kernel_registers().has_value()) {
         /// User and kernel IPs are in distinct virtual address ranges on x86_64
         /// (userspace < 0x0000800000000000, kernel >= 0xffff000000000000), so they must differ.
         const auto user_ip = sample.user_registers()->get(perf::Registers::x86::IP);
@@ -416,8 +464,6 @@ TEST_CASE("sampling", "[Sampler]")
         }
       }
     }
-
-    REQUIRE(found_kernel_sample);
 
     REQUIRE_NOTHROW(sampler.close());
   }

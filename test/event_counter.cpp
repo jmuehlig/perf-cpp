@@ -1,6 +1,7 @@
 #include "access_benchmark.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <perfcpp/event_counter.hpp>
+#include <perfcpp/exception.hpp>
 
 TEST_CASE("configuration", "[EventCounter]")
 {
@@ -308,5 +309,72 @@ TEST_CASE("counting", "[EventCounter]")
     REQUIRE_FALSE(result.get("nanoseconds").has_value());
 
     REQUIRE((result.get("seconds").value() * 1100.) > (result.get("milliseconds").value()));
+  }
+}
+
+TEST_CASE("open errors", "[EventCounter]")
+{
+  SECTION("invalid cpu core")
+  {
+    auto config = perf::Config{};
+    config.cpu_core(9999U);
+
+    auto event_counter = perf::EventCounter{ config };
+    event_counter.add("instructions");
+
+    REQUIRE_THROWS_AS(event_counter.open(), perf::CannotOpenCounterError);
+  }
+
+  SECTION("invalid pid")
+  {
+    auto config = perf::Config{};
+    config.process(static_cast<pid_t>(999999));
+
+    auto event_counter = perf::EventCounter{ config };
+    event_counter.add("instructions");
+
+    REQUIRE_THROWS_AS(event_counter.open(), perf::CannotOpenCounterError);
+  }
+}
+
+TEST_CASE("lifecycle", "[EventCounter]")
+{
+  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
+
+  SECTION("start without prior open")
+  {
+    /// start() implicitly calls open(); no exception expected.
+    auto event_counter = perf::EventCounter{};
+    event_counter.add("instructions");
+
+    REQUIRE_NOTHROW(event_counter.start());
+    readonly_benchmark.run();
+    REQUIRE_NOTHROW(event_counter.stop());
+
+    auto result = event_counter.result();
+    const auto instructions = result.get("instructions");
+    REQUIRE(instructions.has_value());
+    REQUIRE(instructions.value() > 0U);
+
+    event_counter.close();
+  }
+
+  SECTION("double start without stop")
+  {
+    /// Second start() is a no-op on the already-enabled counter; no exception expected.
+    auto event_counter = perf::EventCounter{};
+    event_counter.add("instructions");
+
+    REQUIRE_NOTHROW(event_counter.start());
+    REQUIRE_NOTHROW(event_counter.start());
+    readonly_benchmark.run();
+    REQUIRE_NOTHROW(event_counter.stop());
+
+    auto result = event_counter.result();
+    const auto instructions = result.get("instructions");
+    REQUIRE(instructions.has_value());
+    REQUIRE(instructions.value() > 0U);
+
+    event_counter.close();
   }
 }

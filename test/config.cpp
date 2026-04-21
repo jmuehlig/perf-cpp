@@ -1,6 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <perfcpp/counter/config.hpp>
+#include <perfcpp/event_counter.hpp>
+#include <perfcpp/exception.hpp>
 #include <perfcpp/sample/config.hpp>
+#include <perfcpp/sampler.hpp>
 
 TEST_CASE("Config defaults", "[Config]")
 {
@@ -183,6 +186,33 @@ TEST_CASE("Process and CpuCore", "[Config]")
     const auto core = perf::CpuCore{ std::uint16_t{ 7U } };
     REQUIRE(core == std::uint16_t{ 7U });
     REQUIRE_FALSE(core.is_any());
+  }
+}
+
+TEST_CASE("InvalidConfigAnyCpuCoreAndAnyProcess", "[Config]")
+{
+  SECTION("EventCounter throws on open")
+  {
+    auto config = perf::Config{};
+    config.cpu_core(perf::CpuCore::Any);
+    config.process(perf::Process::Any);
+
+    auto event_counter = perf::EventCounter{ config };
+    event_counter.add("instructions");
+
+    REQUIRE_THROWS_AS(event_counter.open(), perf::InvalidConfigAnyCpuCoreAndAnyProcess);
+  }
+
+  SECTION("Sampler throws on open")
+  {
+    auto config = perf::SampleConfig{};
+    config.cpu_core(perf::CpuCore::Any);
+    config.process(perf::Process::Any);
+
+    auto sampler = perf::Sampler{ config };
+    sampler.trigger("cycles");
+
+    REQUIRE_THROWS_AS(sampler.open(), perf::InvalidConfigAnyCpuCoreAndAnyProcess);
   }
 }
 
