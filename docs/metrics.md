@@ -3,7 +3,7 @@
 Metrics combine multiple hardware events into calculated values — knowing you had 1 million cache misses is less useful than knowing those misses represent a 5% miss rate.
 
 > [!TIP]
-> See the example: **[metric.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/metric.cpp)**.
+> See the examples: **[metric.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/metric.cpp)** (custom metrics) and **[rapl.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/rapl.cpp)** (RAPL power counters).
 > For inspiration when creating custom metrics, explore the [Likwid project](https://github.com/RRZE-HPC/likwid/tree/master/groups).
 
 ---

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <perfcpp/counter_definition.hpp>
-#include <perfcpp/hardware_info.h>
+#include <perfcpp/hardware_info.hpp>
 
 int
 main()
