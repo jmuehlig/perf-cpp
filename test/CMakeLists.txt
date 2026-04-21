@@ -20,6 +20,7 @@ set(PERF_CPP_TEST
         test/sampler_multi_thread.cpp
         test/hardware_info.cpp
         test/requested_event.cpp
+        test/sample_fields.cpp
 )
 
 add_executable(tests ${PERF_CPP_TEST})
