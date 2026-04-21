@@ -1,4 +1,4 @@
-#include "access_benchmark.h"
+#include "access_benchmark.hpp"
 #include <algorithm>
 #include <numeric>
 #include <random>

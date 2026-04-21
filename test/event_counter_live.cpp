@@ -1,4 +1,4 @@
-#include "access_benchmark.h"
+#include "access_benchmark.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <perfcpp/event_counter.hpp>
 #include <perfcpp/exception.hpp>

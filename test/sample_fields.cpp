@@ -1,4 +1,4 @@
-#include "access_benchmark.h"
+#include "access_benchmark.hpp"
 #include <catch2/catch_test_macros.hpp>
 
 #if defined(__x86_64__) || defined(__i386__)
