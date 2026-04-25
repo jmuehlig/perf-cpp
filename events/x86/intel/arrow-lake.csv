@@ -191,6 +191,8 @@ icache.misses, 0x280
 icache_data.stall_periods, 0x480
 icache_data.stalls, 0x480
 icache_tag.stalls, 0x483
+icache_tag.stalls_inuse, 0x1083
+icache_tag.stalls_isb, 0x883
 idq.dsb_cycles_any, 0x879
 idq.dsb_cycles_ok, 0x879
 idq.dsb_uops, 0x879
@@ -339,7 +341,10 @@ mem_bound_stalls_load.all, 0x7f34
 mem_bound_stalls_load.l2_hit, 0x134
 mem_bound_stalls_load.l2_miss, 0x7e34
 mem_bound_stalls_load.llc_hit, 0x634
+mem_bound_stalls_load.llc_hit_nosnoop, 0x234
+mem_bound_stalls_load.llc_hit_snoop, 0x434
 mem_bound_stalls_load.llc_miss, 0x7834
+mem_bound_stalls_load.llc_miss_localmem, 0x5034
 mem_bound_stalls_load.sbfull, 0x8034
 mem_inst_retired.all_loads, 0x81d0
 mem_inst_retired.all_stores, 0x82d0
@@ -376,6 +381,7 @@ mem_load_uops_retired.l1_miss, 0x40d1
 mem_load_uops_retired.l2_hit, 0x2d1
 mem_load_uops_retired.l2_miss, 0x80d1
 mem_load_uops_retired.l3_hit, 0x1cd1
+mem_load_uops_retired.l3_hit_no_snoop, 0x4d1
 mem_load_uops_retired.wcb_hit, 0x20d1
 mem_scheduler_block.all, 0x704
 mem_scheduler_block.ld_buf, 0x204

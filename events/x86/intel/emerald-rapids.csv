@@ -126,6 +126,8 @@ hw_interrupts.received, 0x1cb
 icache_data.stall_periods, 0x480
 icache_data.stalls, 0x480
 icache_tag.stalls, 0x483
+icache_tag.stalls_inuse, 0x1083
+icache_tag.stalls_isb, 0x883
 idq.dsb_cycles_any, 0x879
 idq.dsb_cycles_ok, 0x879
 idq.dsb_uops, 0x879

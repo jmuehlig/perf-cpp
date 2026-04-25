@@ -256,9 +256,9 @@ ls_l1_d_tlb_miss.tlb_reload_4k_l2_miss, 0x1045
 ls_l1_d_tlb_miss.tlb_reload_coalesced_page_hit, 0x245
 ls_l1_d_tlb_miss.tlb_reload_coalesced_page_miss, 0x2045
 ls_locks.bus_lock, 0x125
-ls_mab_alloc.all_allocations, 0x7f41
-ls_mab_alloc.hardware_prefetcher_allocations, 0x4041
-ls_mab_alloc.load_store_allocations, 0x3f41
+ls_mab_alloc.all_allocations, 0xf41
+ls_mab_alloc.hardware_prefetcher_allocations, 0x841
+ls_mab_alloc.load_store_allocations, 0x741
 ls_misal_loads.ma4k, 0x247
 ls_misal_loads.ma64, 0x147
 ls_not_halted_cyc, 0x76

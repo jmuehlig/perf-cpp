@@ -179,6 +179,7 @@ frontend_retired.predecode, 0x4c6
 frontend_retired.stlb_miss, 0x3c6, 0x15
 frontend_retired.unknown_branch, 0x3c6, 0x17
 frontend_retired_source.icache_l2_hit, 0x1c9
+frontend_retired_source.icache_l2_miss, 0xec9
 frontend_retired_source.itlb_stlb_hit, 0x10c9
 frontend_retired_source.itlb_stlb_miss, 0x20c9
 icache.accesses, 0x380
@@ -187,6 +188,8 @@ icache.misses, 0x280
 icache_data.stall_periods, 0x480
 icache_data.stalls, 0x480
 icache_tag.stalls, 0x483
+icache_tag.stalls_inuse, 0x1083
+icache_tag.stalls_isb, 0x883
 idq.dsb_cycles_any, 0x879
 idq.dsb_cycles_ok, 0x879
 idq.dsb_uops, 0x879
@@ -329,6 +332,8 @@ machine_clears.smc, 0x4c3
 mem_bound_stalls_ifetch.all, 0x7f35
 mem_bound_stalls_ifetch.l2_hit, 0x135
 mem_bound_stalls_ifetch.l2_miss, 0x7e35
+mem_bound_stalls_ifetch.llc_miss, 0x7835
+mem_bound_stalls_ifetch.llc_miss_localmem, 0x5035
 mem_bound_stalls_load.all, 0x7f34
 mem_bound_stalls_load.l2_hit, 0x134
 mem_bound_stalls_load.l2_miss, 0x7e34

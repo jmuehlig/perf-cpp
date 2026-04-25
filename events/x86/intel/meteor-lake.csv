@@ -144,6 +144,8 @@ icache.misses, 0x280
 icache_data.stall_periods, 0x480
 icache_data.stalls, 0x480
 icache_tag.stalls, 0x483
+icache_tag.stalls_inuse, 0x1083
+icache_tag.stalls_isb, 0x883
 idq.dsb_cycles_any, 0x879
 idq.dsb_cycles_ok, 0x879
 idq.dsb_uops, 0x879
@@ -254,12 +256,17 @@ mem_bound_stalls_ifetch.all, 0x7f35
 mem_bound_stalls_ifetch.l2_hit, 0x135
 mem_bound_stalls_ifetch.l2_miss, 0x7e35
 mem_bound_stalls_ifetch.llc_hit, 0x635
+mem_bound_stalls_ifetch.llc_hit_nosnoop, 0x235
 mem_bound_stalls_ifetch.llc_miss, 0x7835
+mem_bound_stalls_ifetch.llc_miss_localmem, 0x5035
 mem_bound_stalls_load.all, 0x7f34
 mem_bound_stalls_load.l2_hit, 0x134
 mem_bound_stalls_load.l2_miss, 0x7e34
 mem_bound_stalls_load.llc_hit, 0x634
+mem_bound_stalls_load.llc_hit_nosnoop, 0x234
+mem_bound_stalls_load.llc_hit_snoop, 0x434
 mem_bound_stalls_load.llc_miss, 0x7834
+mem_bound_stalls_load.llc_miss_localmem, 0x5034
 mem_bound_stalls_load.sbfull, 0x8034
 mem_inst_retired.all_loads, 0x81d0
 mem_inst_retired.all_stores, 0x82d0
@@ -337,6 +344,10 @@ misalign_mem_ref.load_page_split, 0x213
 misalign_mem_ref.store_page_split, 0x413
 misc2_retired.lfence, 0x20e0
 misc_retired.lbr_inserts, 0x1e4
+misc_retired1.cl_inst, 0xffe0
+misc_retired1.lfence, 0x2e0
+misc_retired2.keylocker_access, 0x10e1
+misc_retired2.keylocker_miss, 0x11e1
 ms_decoded.ms_busy, 0x4e7
 ocr.corewb_m.l3_hit_0, 0x12a, 0x3f803c0008
 ocr.corewb_m.l3_hit_1, 0x12b, 0x3f803c0008

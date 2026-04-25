@@ -24,6 +24,7 @@ br_inst_retired.far_branch, 0xbfc4
 br_inst_retired.ind_call, 0xfbc4
 br_inst_retired.indirect, 0xebc4
 br_inst_retired.indirect_call, 0xfbc4
+br_inst_retired.indirect_jmp, 0xefc4
 br_inst_retired.jcc, 0x7ec4
 br_inst_retired.near_call, 0xf9c4
 br_inst_retired.near_return, 0xf7c4
@@ -39,6 +40,7 @@ br_misp_retired.cond_taken, 0xfec5
 br_misp_retired.ind_call, 0xfbc5
 br_misp_retired.indirect, 0xebc5
 br_misp_retired.indirect_call, 0xfbc5
+br_misp_retired.indirect_jmp, 0xefc5
 br_misp_retired.jcc, 0x7ec5
 br_misp_retired.near_taken, 0x80c5
 br_misp_retired.non_return_ind, 0xebc5
@@ -131,6 +133,8 @@ icache.misses, 0x280
 icache_data.stall_periods, 0x480
 icache_data.stalls, 0x480
 icache_tag.stalls, 0x483
+icache_tag.stalls_inuse, 0x1083
+icache_tag.stalls_isb, 0x883
 idq.dsb_cycles_any, 0x879
 idq.dsb_cycles_ok, 0x879
 idq.dsb_uops, 0x879
@@ -313,6 +317,10 @@ memory_activity.stalls_l2_miss, 0x547
 memory_activity.stalls_l3_miss, 0x947
 misc2_retired.lfence, 0x20e0
 misc_retired.lbr_inserts, 0x1e4
+misc_retired1.cl_inst, 0xffe0
+misc_retired1.lfence, 0x2e0
+misc_retired2.keylocker_access, 0x10e1
+misc_retired2.keylocker_miss, 0x11e1
 ocr.corewb_m.any_response, 0x1b7, 0x10008
 ocr.corewb_m.l3_hit_0, 0x12a, 0x1f803c0008
 ocr.corewb_m.l3_hit_1, 0x12b, 0x1f803c0008
