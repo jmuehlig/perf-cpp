@@ -1,5 +1,13 @@
 # *perf-cpp*: Changelog
 
+## v0.14 (WIP)
+- **Deprecation Warnings Activated**: All legacy `.h` forwarding headers (e.g., `perfcpp/sampler.h`, `perfcpp/event_counter.h`) now emit a compile-time `#pragma message` warning directing users to the `.hpp` replacements introduced in v0.13.0. The old headers will be removed in v1.0. If you see a deprecation message, replace the include with the `.hpp` variant (e.g., `#include <perfcpp/sampler.hpp>`).
+- **Sampler Input Validation**: Opening a sampler with an invalid period or frequency now raises an exception immediately. Period must be greater than zero; frequency must be between 1 and the kernel's `perf_event_max_sample_rate` limit.
+- **RAPL Energy Measurement Example**: Added an example program demonstrating how to measure energy consumption of a code segment using the built-in `watts-pkg`, `watts-cores`, and `watts-ram` metrics.
+- **Bugfixes**:
+  - `perf::CpuCore` now accepts `std::uint16_t` as a CPU core id
+  - Fixed multiple event codes in the event library across AMD Zen5 and Intel Panther Lake 
+
 ## v0.13.1
 - **Configurable Sampling Triggers**: Typed triggers now fully support hardware-specific configuration:
   - **Intel**: `perf::MemoryLoads` supports configurable `min_latency` for PEBS load latency filtering. `perf::MemoryStores` and `perf::MemoryLoadsAux` provide type-safe alternatives to string-based `mem-stores` and `mem-loads-aux` triggers. String-based triggers remain available and documented.
