@@ -43,12 +43,12 @@ public:
 
   explicit EventCounter(const CounterDefinition& counter_definition, Config config = {})
     : _counter_definition(counter_definition)
-    , _config(config)
+    , _config(std::move(config))
   {
   }
 
   explicit EventCounter(Config config = {})
-    : EventCounter(CounterDefinition::global(), config)
+    : EventCounter(CounterDefinition::global(), std::move(config))
   {
   }
 
@@ -205,7 +205,7 @@ public:
    *
    * @param config New config.
    */
-  void config(const Config config) noexcept { _config = config; }
+  void config(const Config& config) noexcept { _config = config; }
 
 private:
   /// List of event names and codes.
@@ -242,7 +242,7 @@ private:
   bool _is_opened{ false };
 
   EventCounter(const CounterDefinition& counter_definition,
-               const Config config,
+               const Config& config,
                RequestedEventSet requested_event_set,
                RequestedEventSet requested_live_event_set)
     : _counter_definition(counter_definition)
@@ -510,9 +510,9 @@ public:
 class MultiThreadEventCounter final : public MultiEventCounterBase
 {
 public:
-  MultiThreadEventCounter(const CounterDefinition& counter_definition, std::uint16_t num_threads, Config config = {});
+  MultiThreadEventCounter(const CounterDefinition& counter_definition, std::uint16_t num_threads, const Config& config = {});
 
-  explicit MultiThreadEventCounter(const std::uint16_t num_threads, const Config config = {})
+  explicit MultiThreadEventCounter(const std::uint16_t num_threads, const Config& config = {})
     : MultiThreadEventCounter(CounterDefinition::global(), num_threads, config)
   {
   }
@@ -604,16 +604,16 @@ public:
   MultiProcessEventCounter(const CounterDefinition& counter_definition,
                            const std::vector<pid_t>& process_ids,
                            Config config = {})
-    : MultiProcessEventCounter(counter_definition, std::vector<pid_t>{ process_ids }, config)
+    : MultiProcessEventCounter(counter_definition, std::vector<pid_t>{ process_ids }, std::move(config))
   {
   }
 
-  explicit MultiProcessEventCounter(std::vector<pid_t>&& process_ids, const Config config = {})
+  explicit MultiProcessEventCounter(std::vector<pid_t>&& process_ids, const Config& config = {})
     : MultiProcessEventCounter(CounterDefinition::global(), std::move(process_ids), config)
   {
   }
 
-  explicit MultiProcessEventCounter(const std::vector<pid_t>& process_ids, const Config config = {})
+  explicit MultiProcessEventCounter(const std::vector<pid_t>& process_ids, const Config& config = {})
     : MultiProcessEventCounter(CounterDefinition::global(), std::vector<pid_t>{ process_ids }, config)
   {
   }
@@ -673,16 +673,16 @@ public:
   MultiCoreEventCounter(const CounterDefinition& counter_definition,
                         const std::vector<std::uint16_t>& cpu_ids,
                         Config config = {})
-    : MultiCoreEventCounter(counter_definition, std::vector<std::uint16_t>{ cpu_ids }, config)
+    : MultiCoreEventCounter(counter_definition, std::vector<std::uint16_t>{ cpu_ids }, std::move(config))
   {
   }
 
-  explicit MultiCoreEventCounter(std::vector<std::uint16_t>&& cpu_ids, const Config config = {})
+  explicit MultiCoreEventCounter(std::vector<std::uint16_t>&& cpu_ids, const Config& config = {})
     : MultiCoreEventCounter(CounterDefinition::global(), std::move(cpu_ids), config)
   {
   }
 
-  explicit MultiCoreEventCounter(const std::vector<std::uint16_t>& cpu_ids, const Config config = {})
+  explicit MultiCoreEventCounter(const std::vector<std::uint16_t>& cpu_ids, const Config& config = {})
     : MultiCoreEventCounter(CounterDefinition::global(), std::vector<std::uint16_t>{ cpu_ids }, config)
   {
   }

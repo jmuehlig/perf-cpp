@@ -721,7 +721,7 @@ perf::StartableMultiEventCounterBase::start()
 
 perf::MultiThreadEventCounter::MultiThreadEventCounter(const CounterDefinition& counter_definition,
                                                        const std::uint16_t num_threads,
-                                                       const Config config)
+                                                       const Config& config)
 {
   this->_thread_local_counter.reserve(num_threads);
   for (auto thread_index = 0U; thread_index < num_threads; ++thread_index) {

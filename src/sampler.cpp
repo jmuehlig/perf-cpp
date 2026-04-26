@@ -564,7 +564,7 @@ perf::MultiSamplerBase::trigger(std::vector<Sampler>& samplers, std::vector<std:
 }
 
 void
-perf::MultiSamplerBase::open(Sampler& sampler, const perf::SampleConfig config) const
+perf::MultiSamplerBase::open(Sampler& sampler, const perf::SampleConfig& config) const
 {
   sampler._values = _values;
   sampler._config = config;
@@ -573,7 +573,7 @@ perf::MultiSamplerBase::open(Sampler& sampler, const perf::SampleConfig config) 
 }
 
 void
-perf::MultiSamplerBase::start(perf::Sampler& sampler, const perf::SampleConfig config) const
+perf::MultiSamplerBase::start(perf::Sampler& sampler, const perf::SampleConfig& config) const
 {
   sampler._values = _values;
   sampler._config = config;
@@ -583,7 +583,7 @@ perf::MultiSamplerBase::start(perf::Sampler& sampler, const perf::SampleConfig c
 
 perf::MultiThreadSampler::MultiThreadSampler(const perf::CounterDefinition& counter_definition,
                                              const std::uint16_t num_threads,
-                                             const perf::SampleConfig config)
+                                             const perf::SampleConfig& config)
   : MultiSamplerBase(config)
 {
   /// Create thread-local samplers without config (will be set when starting).
@@ -595,7 +595,7 @@ perf::MultiThreadSampler::MultiThreadSampler(const perf::CounterDefinition& coun
 perf::MultiCoreSampler::MultiCoreSampler(const perf::CounterDefinition& counter_definition,
                                          std::vector<std::uint16_t>&& core_ids,
                                          perf::SampleConfig config)
-  : MultiSamplerBase(config)
+  : MultiSamplerBase(std::move(config))
   , _core_ids(std::move(core_ids))
 {
   /// Record all processes on the CPUs.

@@ -189,12 +189,12 @@ public:
 
   explicit Sampler(const CounterDefinition& counter_definition, SampleConfig config = {})
     : _counter_definition(counter_definition)
-    , _config(config)
+    , _config(std::move(config))
   {
   }
 
   explicit Sampler(SampleConfig config = {})
-    : Sampler(CounterDefinition::global(), config)
+    : Sampler(CounterDefinition::global(), std::move(config))
   {
   }
 
@@ -587,7 +587,7 @@ public:
 
 protected:
   explicit MultiSamplerBase(SampleConfig config)
-    : _config(config)
+    : _config(std::move(config))
   {
   }
 
@@ -648,7 +648,7 @@ protected:
    * @param sampler Sampler to open.
    * @param config Config for that sampler.
    */
-  void open(Sampler& sampler, SampleConfig config) const;
+  void open(Sampler& sampler, const SampleConfig& config) const;
 
   /**
    * Initializes the given sampler with values and config.
@@ -665,7 +665,7 @@ protected:
    * @param sampler Sampler to start.
    * @param config Config for that sampler.
    */
-  void start(Sampler& sampler, SampleConfig config) const;
+  void start(Sampler& sampler, const SampleConfig& config) const;
 
   /// Values to record into every sample.
   SampleRecordingValues _values;
@@ -677,10 +677,10 @@ protected:
 class MultiThreadSampler final : public MultiSamplerBase
 {
 public:
-  MultiThreadSampler(const CounterDefinition& counter_definition, std::uint16_t num_threads, SampleConfig config = {});
+  MultiThreadSampler(const CounterDefinition& counter_definition, std::uint16_t num_threads, const SampleConfig& config = {});
 
   explicit MultiThreadSampler(const std::uint16_t num_threads, SampleConfig config = {})
-    : MultiThreadSampler(CounterDefinition::global(), num_threads, config)
+    : MultiThreadSampler(CounterDefinition::global(), num_threads, std::move(config))
   {
   }
 
@@ -954,17 +954,17 @@ public:
   MultiCoreSampler(const CounterDefinition& counter_definition,
                    const std::vector<std::uint16_t>& core_ids,
                    SampleConfig config = {})
-    : MultiCoreSampler(counter_definition, std::vector<std::uint16_t>{ core_ids }, config)
+    : MultiCoreSampler(counter_definition, std::vector<std::uint16_t>{ core_ids }, std::move(config))
   {
   }
 
   explicit MultiCoreSampler(std::vector<std::uint16_t>&& core_ids, SampleConfig config = {})
-    : MultiCoreSampler(CounterDefinition::global(), std::move(core_ids), config)
+    : MultiCoreSampler(CounterDefinition::global(), std::move(core_ids), std::move(config))
   {
   }
 
   explicit MultiCoreSampler(const std::vector<std::uint16_t>& core_ids, SampleConfig config = {})
-    : MultiCoreSampler(CounterDefinition::global(), std::vector<std::uint16_t>{ core_ids }, config)
+    : MultiCoreSampler(CounterDefinition::global(), std::vector<std::uint16_t>{ core_ids }, std::move(config))
   {
   }
 
