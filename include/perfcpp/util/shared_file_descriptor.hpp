@@ -16,7 +16,7 @@ class SharedFileDescriptor
 public:
   SharedFileDescriptor() noexcept = default;
 
-  explicit SharedFileDescriptor(const int file_descriptor) noexcept
+  explicit SharedFileDescriptor(const int file_descriptor)
     : _ref_count(new std::atomic<std::uint64_t>{ 1U })
     , _file_descriptor(file_descriptor)
   {
