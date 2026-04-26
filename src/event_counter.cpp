@@ -389,8 +389,13 @@ perf::EventCounter::add_live(std::vector<std::string>&& event_names)
 void
 perf::EventCounter::open()
 {
+  /// CGroup monitoring requires a specific CPU core; CpuCore::Any is not permitted.
+  if (this->_config.is_cgroup() && this->_config.cpu_core().is_any()) {
+    throw InvalidConfigCGroupMonitorWithAnyCpuCore{};
+  }
+
   /// Measuring any CPU core and any process is invalid, according to the perf subsystem documentation.
-  if (this->_config.cpu_core().is_any() && this->_config.process().is_any()) {
+  if (!this->_config.is_cgroup() && this->_config.cpu_core().is_any() && this->_config.process().is_any()) {
     throw InvalidConfigAnyCpuCoreAndAnyProcess{};
   }
 

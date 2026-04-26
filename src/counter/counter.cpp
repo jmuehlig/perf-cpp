@@ -45,7 +45,7 @@ perf::Counter::open(const perf::Config& configuration, const bool is_live)
 
   /// Print debug output, if requested.
   if (configuration.is_debug()) {
-    std::cout << this->to_string(true, this->_file_descriptor, configuration.process(), configuration.cpu_core())
+    std::cout << this->to_string(true, this->_file_descriptor, configuration.process_or_cgroup(), configuration.cpu_core())
               << std::flush;
   }
 
@@ -81,7 +81,7 @@ perf::Counter::open(const perf::Config& configuration,
 
   /// Print debug output, if requested.
   if (configuration.is_debug()) {
-    std::cout << this->to_string(false, group_leader_file_descriptor, configuration.process(), configuration.cpu_core())
+    std::cout << this->to_string(false, group_leader_file_descriptor, configuration.process_or_cgroup(), configuration.cpu_core())
               << std::flush;
   }
 
@@ -117,7 +117,7 @@ perf::Counter::open(const perf::Config& config,
 
   /// Print debug output, if requested.
   if (config.is_debug()) {
-    std::cout << this->to_string(true, this->_file_descriptor, config.process(), config.cpu_core()) << std::flush;
+    std::cout << this->to_string(true, this->_file_descriptor, config.process_or_cgroup(), config.cpu_core()) << std::flush;
   }
 
   /// Notify the caller that opening the counter via the perf subsystem failed.
@@ -158,7 +158,7 @@ perf::Counter::open(const perf::Config& config,
 
   /// Print debug output, if requested.
   if (config.is_debug()) {
-    std::cout << this->to_string(false, group_leader_file_descriptor, config.process(), config.cpu_core())
+    std::cout << this->to_string(false, group_leader_file_descriptor, config.process_or_cgroup(), config.cpu_core())
               << std::flush;
   }
 
@@ -316,13 +316,18 @@ std::pair<perf::util::UniqueFileDescriptor, std::int32_t>
 perf::Counter::try_open_via_perf_subsystem(const Config& configuration,
                                            const util::FileDescriptorView group_leader_file_descriptor)
 {
+  /// Determine the pid/cgroup-fd and open flags based on the monitoring target.
+  const auto pid_or_fd = configuration.is_cgroup() ? configuration.cgroup().file_descriptor()
+                                                    : static_cast<int>(static_cast<pid_t>(configuration.process()));
+  const auto open_flags = configuration.is_cgroup() ? PERF_FLAG_PID_CGROUP : 0UL;
+
   /// Finally, pass the configuration to the perf subsystem to open the hardware performance counter.
   const auto file_descriptor = ::syscall(__NR_perf_event_open,
                                          &this->_event_attribute,
-                                         static_cast<pid_t>(configuration.process()),
+                                         pid_or_fd,
                                          static_cast<std::int32_t>(configuration.cpu_core()),
                                          group_leader_file_descriptor.value(),
-                                         0);
+                                         open_flags);
 
   const auto error_code = errno;
   return std::make_pair(util::UniqueFileDescriptor{ file_descriptor }, error_code);
@@ -371,7 +376,7 @@ perf::Counter::is_precision_adjustable(const std::uint8_t current_precise_ip, co
 std::string
 perf::Counter::to_string(const bool is_group_leader,
                          const util::UniqueFileDescriptor& group_leader_file_descriptor,
-                         const Process process,
+                         const std::variant<Process, CGroupMonitor>& process_or_cgroup,
                          const CpuCore cpu_core) const
 {
   auto stream = std::stringstream{};
@@ -390,14 +395,19 @@ perf::Counter::to_string(const bool is_group_leader,
     }
   }
 
-  /// Process
+  /// Process or cgroup target.
   stream << "    process: ";
-  if (process.is_any()) {
-    stream << "any (-1)\n";
-  } else if (process.is_calling()) {
-    stream << "calling (0)\n";
+  if (std::holds_alternative<CGroupMonitor>(process_or_cgroup)) {
+    stream << "cgroup (fd=" << std::get<CGroupMonitor>(process_or_cgroup).file_descriptor() << ")\n";
   } else {
-    stream << static_cast<pid_t>(process) << "\n";
+    const auto& process = std::get<Process>(process_or_cgroup);
+    if (process.is_any()) {
+      stream << "any (-1)\n";
+    } else if (process.is_calling()) {
+      stream << "calling (0)\n";
+    } else {
+      stream << static_cast<pid_t>(process) << "\n";
+    }
   }
 
   /// CPU

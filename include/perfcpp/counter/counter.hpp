@@ -257,13 +257,13 @@ public:
    *
    * @param is_group_leader Flag, if the counter is the leader of the group.
    * @param group_leader_file_descriptor File descriptor of the group leader.
-   * @param process Process the counter is tied to.
+   * @param process_or_cgroup Process or cgroup the counter is tied to.
    * @param cpu_core CPU core the counter is tied to.
    * @return A string representing all configurations of this counter.
    */
   [[nodiscard]] std::string to_string(bool is_group_leader,
                                       const util::UniqueFileDescriptor& group_leader_file_descriptor,
-                                      Process process,
+                                      const std::variant<Process, CGroupMonitor>& process_or_cgroup,
                                       CpuCore cpu_core) const;
 
   [[nodiscard]] bool operator==(const CounterConfig& config) const noexcept { return _config == config; }

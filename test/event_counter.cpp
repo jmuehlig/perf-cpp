@@ -1,7 +1,29 @@
 #include "access_benchmark.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <filesystem>
+#include <fstream>
+#include <optional>
 #include <perfcpp/event_counter.hpp>
 #include <perfcpp/exception.hpp>
+#include <sched.h>
+#include <string>
+#include <unistd.h>
+
+namespace {
+/// Reads the cgroupv2 path of the calling process from /proc/self/cgroup.
+[[nodiscard]] std::optional<std::string>
+read_own_cgroup_path()
+{
+  auto file = std::ifstream{ "/proc/self/cgroup" };
+  auto line = std::string{};
+  while (std::getline(file, line)) {
+    if (line.rfind("0::", 0) == 0) {
+      return "/sys/fs/cgroup" + line.substr(3);
+    }
+  }
+  return std::nullopt;
+}
+}
 
 TEST_CASE("configuration", "[EventCounter]")
 {
@@ -335,6 +357,69 @@ TEST_CASE("open errors", "[EventCounter]")
 
     REQUIRE_THROWS_AS(event_counter.open(), perf::CannotOpenCounterError);
   }
+}
+
+TEST_CASE("EventCounter with explicit PID", "[EventCounter]")
+{
+  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
+
+  SECTION("own process by getpid()")
+  {
+    auto config = perf::Config{};
+    config.process(static_cast<pid_t>(::getpid()));
+
+    auto event_counter = perf::EventCounter{ config };
+    event_counter.add(std::vector<std::string>{ "instructions", "cycles" });
+
+    event_counter.start();
+    readonly_benchmark.run();
+    event_counter.stop();
+
+    const auto result = event_counter.result();
+    REQUIRE(result.get("instructions").has_value());
+    REQUIRE(result.get("instructions").value() > 0.);
+    REQUIRE(result.get("cycles").has_value());
+    REQUIRE(result.get("cycles").value() > 0.);
+  }
+}
+
+TEST_CASE("EventCounter with cgroup", "[EventCounter]")
+{
+  const auto cgroup_path = read_own_cgroup_path();
+  REQUIRE(cgroup_path.has_value());
+
+  const auto cpu_id = ::sched_getcpu();
+  REQUIRE(cpu_id >= 0);
+
+  /// Pin this thread to the current CPU so the workload runs on the monitored CPU.
+  auto saved_affinity = cpu_set_t{};
+  ::sched_getaffinity(0, sizeof(cpu_set_t), &saved_affinity);
+
+  auto pinned_set = cpu_set_t{};
+  CPU_ZERO(&pinned_set);
+  CPU_SET(cpu_id, &pinned_set);
+  ::sched_setaffinity(0, sizeof(cpu_set_t), &pinned_set);
+
+  auto config = perf::Config{};
+  config.cgroup(perf::CGroupMonitor{ std::filesystem::path{ cgroup_path.value() } });
+  config.cpu_core(static_cast<std::uint16_t>(cpu_id));
+
+  auto event_counter = perf::EventCounter{ config };
+  event_counter.add(std::vector<std::string>{ "instructions", "cycles" });
+
+  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
+
+  event_counter.start();
+  readonly_benchmark.run();
+  event_counter.stop();
+
+  const auto result = event_counter.result();
+  REQUIRE(result.get("instructions").has_value());
+  REQUIRE(result.get("instructions").value() > 0.);
+  REQUIRE(result.get("cycles").has_value());
+  REQUIRE(result.get("cycles").value() > 0.);
+
+  ::sched_setaffinity(0, sizeof(cpu_set_t), &saved_affinity);
 }
 
 TEST_CASE("lifecycle", "[EventCounter]")
