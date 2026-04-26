@@ -1,9 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
-#include <perfcpp/counter/result.hpp>
 #include <cstdio>
 #include <fstream>
 #include <iterator>
 #include <optional>
+#include <perfcpp/counter/result.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <string>

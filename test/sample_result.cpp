@@ -1,8 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
-#include <perfcpp/sample/result.hpp>
 #include <cstdio>
 #include <fstream>
 #include <iterator>
+#include <perfcpp/sample/result.hpp>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -214,10 +214,9 @@ TEST_CASE("to_csv", "[SampleResult]")
       std::vector<perf::Registers::x86>{ perf::Registers::x86::AX, perf::Registers::x86::IP });
 
     auto sample = perf::Sample{};
-    sample.user_registers(perf::RegisterValues{
-      perf::ABI::Regs64,
-      { { static_cast<std::uint8_t>(perf::Registers::x86::AX), 100LL },
-        { static_cast<std::uint8_t>(perf::Registers::x86::IP), 200LL } } });
+    sample.user_registers(perf::RegisterValues{ perf::ABI::Regs64,
+                                                { { static_cast<std::uint8_t>(perf::Registers::x86::AX), 100LL },
+                                                  { static_cast<std::uint8_t>(perf::Registers::x86::IP), 200LL } } });
 
     auto samples = std::vector<perf::Sample>{};
     samples.push_back(std::move(sample));
@@ -239,10 +238,10 @@ TEST_CASE("to_csv", "[SampleResult]")
       std::vector<perf::Registers::x86>{ perf::Registers::x86::SP, perf::Registers::x86::BP });
 
     auto sample = perf::Sample{};
-    sample.kernel_registers(perf::RegisterValues{
-      perf::ABI::Regs64,
-      { { static_cast<std::uint8_t>(perf::Registers::x86::SP), 0xffffULL },
-        { static_cast<std::uint8_t>(perf::Registers::x86::BP), 0xeeeeULL } } });
+    sample.kernel_registers(
+      perf::RegisterValues{ perf::ABI::Regs64,
+                            { { static_cast<std::uint8_t>(perf::Registers::x86::SP), 0xffffULL },
+                              { static_cast<std::uint8_t>(perf::Registers::x86::BP), 0xeeeeULL } } });
 
     auto samples = std::vector<perf::Sample>{};
     samples.push_back(std::move(sample));
@@ -305,9 +304,8 @@ TEST_CASE("to_csv", "[SampleResult]")
 
     /// Only AX is populated; IP is absent from the map.
     auto sample = perf::Sample{};
-    sample.user_registers(perf::RegisterValues{
-      perf::ABI::Regs64,
-      { { static_cast<std::uint8_t>(perf::Registers::x86::AX), 42LL } } });
+    sample.user_registers(
+      perf::RegisterValues{ perf::ABI::Regs64, { { static_cast<std::uint8_t>(perf::Registers::x86::AX), 42LL } } });
 
     auto samples = std::vector<perf::Sample>{};
     samples.push_back(std::move(sample));

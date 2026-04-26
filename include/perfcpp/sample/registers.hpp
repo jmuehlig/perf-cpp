@@ -224,8 +224,9 @@ private:
   template<typename T>
   static std::vector<T> sort(std::vector<T>&& registers)
   {
-    std::sort(registers.begin(), registers.end(),
-              [](const T a, const T b) { return static_cast<std::uint8_t>(a) < static_cast<std::uint8_t>(b); });
+    std::sort(registers.begin(), registers.end(), [](const T a, const T b) {
+      return static_cast<std::uint8_t>(a) < static_cast<std::uint8_t>(b);
+    });
     return std::move(registers);
   }
 };
