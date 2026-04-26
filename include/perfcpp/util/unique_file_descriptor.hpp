@@ -38,7 +38,12 @@ public:
 
   UniqueFileDescriptor& operator=(UniqueFileDescriptor&& other) noexcept
   {
-    _file_descriptor = std::exchange(other._file_descriptor, -1L);
+    if (this != &other) {
+      if (has_value()) {
+        ::close(_file_descriptor);
+      }
+      _file_descriptor = std::exchange(other._file_descriptor, -1L);
+    }
     return *this;
   }
 
@@ -46,12 +51,18 @@ public:
 
   UniqueFileDescriptor& operator=(const std::int64_t file_descriptor) noexcept
   {
+    if (has_value()) {
+      ::close(_file_descriptor);
+    }
     _file_descriptor = static_cast<std::int32_t>(file_descriptor);
     return *this;
   }
 
   UniqueFileDescriptor& operator=(const std::int32_t file_descriptor) noexcept
   {
+    if (has_value()) {
+      ::close(_file_descriptor);
+    }
     _file_descriptor = file_descriptor;
     return *this;
   }
