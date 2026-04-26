@@ -21,6 +21,7 @@ set(PERF_CPP_TEST
         test/hardware_info.cpp
         test/requested_event.cpp
         test/sample_fields.cpp
+        test/sample_result.cpp
 )
 
 add_executable(tests ${PERF_CPP_TEST})
