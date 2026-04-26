@@ -3,7 +3,7 @@
 Record hardware performance counters for specific code regions using `perf::EventCounter`.
 
 > [!NOTE]
-> `EventCounter` monitors a single thread. For multi-threaded or multi-core recording, use `MultiThreadEventCounter`, `MultiCoreEventCounter`, or `MultiProcessEventCounter` — see [parallel recording](recording-parallel.md).
+> `EventCounter` monitors a single thread. For multi-threaded or multi-core recording, use `MultiThreadEventCounter`, `MultiCoreEventCounter`, or `MultiProcessEventCounter` (see [parallel recording](recording-parallel.md)).
 
 > [!TIP]
 > See **[single_thread.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/single_thread.cpp)** for a full working example.
@@ -56,7 +56,7 @@ for (const auto [name, value] : result)
 /// Print as formatted table.
 std::cout << result.to_string() << std::endl;
 
-/// Export as CSV or JSON — to string or to file.
+/// Export as CSV or JSON, to string or to file.
 std::cout << result.to_csv() << std::endl;
 std::cout << result.to_json() << std::endl;
 result.to_csv("results.csv");
@@ -66,7 +66,7 @@ result.to_json("results.json");
 ## Scheduling Events to Hardware Counters
 
 Physical hardware counters are limited (typically 4–8 per core).
-When you request more events than counters, the kernel **multiplexes** — time-sharing counters and scaling results.
+When you request more events than counters, the kernel **multiplexes**: it time-shares counters and scales results.
 
 By default, *perf-cpp* packs events into as few counters as possible.
 You can control this via a scheduling hint in `add()`:
@@ -79,7 +79,7 @@ event_counter.add({"instructions", "cycles", "branches"},
 | Schedule Mode | Description |
 |---|---|
 | `Schedule::Append` | Pack into any counter, using multiplexing. **Default.** |
-| `Schedule::Separate` | One event per physical counter — avoids multiplexing. |
+| `Schedule::Separate` | One event per physical counter; avoids multiplexing. |
 | `Schedule::Group` | Force all listed events onto the **same** counter (multiplexed together). |
 
 `add()` throws if the requested scheduling doesn't fit (e.g., too many events to group).
@@ -87,7 +87,7 @@ event_counter.add({"instructions", "cycles", "branches"},
 ### Fixed-Function Performance Counters (Intel)
 
 On Intel processors, `instructions`, `cycles`, `cpu-cycles`, and `ref-cycles` are backed by dedicated fixed-function hardware counters rather than the general-purpose PMCs.
-*perf-cpp* detects this automatically and schedules these events into their own pinned groups — they are never multiplexed and do not consume a generic PMC slot.
+*perf-cpp* detects this automatically and schedules these events into their own pinned groups; they are never multiplexed and do not consume a generic PMC slot.
 
 This means you can measure fixed events alongside a full set of generic events without any scheduling penalty:
 
@@ -121,6 +121,76 @@ auto event_counter = perf::EventCounter{ config };
 
 > [!TIP]
 > Some hardware events (e.g., Intel off-core events) require monitoring all processes on a specific CPU core, as the hardware does not attribute these events to individual processes.
+
+## Monitoring a cgroup (Container)
+
+Instead of targeting a process or thread by PID, you can monitor all tasks belonging to a **cgroup**, the Linux kernel primitive that container runtimes (Docker, Kubernetes, systemd) build on.
+The kernel counts events only when a task from the designated cgroup is running on the monitored CPU.
+
+Pass a `perf::CGroupMonitor` to `Config::cgroup()` instead of a process:
+
+```cpp
+auto config = perf::Config{};
+
+/// Open by path.
+config.cgroup(perf::CGroupMonitor{ std::filesystem::path{ "/sys/fs/cgroup/my-container" } });
+
+/// Open by name (expands to /sys/fs/cgroup/{name}).
+config.cgroup(perf::CGroupMonitor{ std::string{ "my-container" } });
+
+/// From a raw fd opened elsewhere in the application: wrap it in a UniqueFileDescriptor
+/// first to express ownership — the file descriptor will be closed when the monitor
+/// is destroyed.
+config.cgroup(perf::CGroupMonitor{ perf::util::UniqueFileDescriptor{ raw_fd } });
+```
+
+The cgroup directory path is opened with `O_RDONLY` and the resulting file descriptor is passed to `perf_event_open` via `PERF_FLAG_PID_CGROUP`.
+A `perf::CannotOpenCGroupError` is thrown if the path cannot be opened.
+
+> [!IMPORTANT]
+> Cgroup monitoring is **system-wide** and always requires a specific CPU core; `CpuCore::Any` is not permitted.
+> Use `config.cpu_core(N)` to pin to a core.
+> To monitor across all cores, use `MultiCoreEventCounter` with a `CGroupMonitor` config.
+
+```cpp
+config.cpu_core(0U); /// required: cgroup monitoring is per CPU
+
+auto event_counter = perf::EventCounter{ config };
+event_counter.add({"instructions", "cycles", "cache-misses"});
+
+event_counter.start();
+/// ... workload running inside the cgroup ...
+event_counter.stop();
+```
+
+To monitor the calling process's own cgroup (e.g., for testing), read its path from `/proc/self/cgroup`:
+
+```cpp
+/// cgroupv2: lines start with "0::", the relative path follows.
+auto file = std::ifstream{ "/proc/self/cgroup" };
+auto line  = std::string{};
+while (std::getline(file, line)) {
+    if (line.rfind("0::", 0) == 0) {
+        config.cgroup(perf::CGroupMonitor{ std::filesystem::path{ "/sys/fs/cgroup" + line.substr(3) } });
+        break;
+    }
+}
+```
+
+> [!NOTE]
+> Cgroup monitoring requires `CAP_PERFMON` (kernel ≥ 5.8) or `perf_event_paranoid ≤ 0`.
+> See [perf paranoid](perf-paranoid.md).
+> Grant the capability to a binary without running as root:
+> ```bash
+> sudo setcap cap_perfmon+ep ./my-program
+> ```
+
+> [!TIP]
+> See **[cgroup.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/cgroup.cpp)** for a full working example.
+> Run it with `taskset -c 0` to pin the workload to the monitored CPU:
+> ```bash
+> taskset -c 0 ./examples/bin/cgroup-statistics
+> ```
 
 ## Detection of Physical Hardware Counters
 
@@ -225,7 +295,7 @@ int main()
 }
 ```
 
-Random access output — more than one cache miss per line:
+Random access output, more than one cache miss per line:
 ```
 7.12 instructions per cache line
 57.19 cycles per cache line
@@ -233,7 +303,7 @@ Random access output — more than one cache miss per line:
 8.03 cycles-per-instruction per cache line
 ```
 
-Sequential access (without shuffling) — the prefetcher eliminates nearly all misses:
+Sequential access (without shuffling), the prefetcher eliminates nearly all misses:
 ```
 6.85 instructions per cache line
 8.94 cycles per cache line

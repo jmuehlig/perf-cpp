@@ -1,9 +1,25 @@
 #include <perfcpp/counter/config.hpp>
+#include <perfcpp/exception.hpp>
 #include <perfcpp/hardware_info.hpp>
+#include <fcntl.h>
 
 perf::Process perf::Process::Any = Process{ -1 };
 perf::Process perf::Process::Calling = Process{ 0 };
 perf::CpuCore perf::CpuCore::Any = CpuCore{};
+
+perf::CGroupMonitor::CGroupMonitor(const std::filesystem::path& path)
+{
+  const auto raw_fd = ::open(path.c_str(), O_RDONLY);
+  if (raw_fd < 0) {
+    throw CannotOpenCGroupError{ path.string(), errno };
+  }
+  this->_file_descriptor = util::SharedFileDescriptor{ raw_fd };
+}
+
+perf::CGroupMonitor::CGroupMonitor(const std::string& name)
+  : CGroupMonitor(std::filesystem::path{ "/sys/fs/cgroup/" + name })
+{
+}
 
 perf::Config::Config() noexcept
 {

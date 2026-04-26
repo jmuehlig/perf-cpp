@@ -1,8 +1,13 @@
 #pragma once
 
+#include <perfcpp/util/shared_file_descriptor.hpp>
+#include <perfcpp/util/unique_file_descriptor.hpp>
 #include <cstdint>
+#include <filesystem>
 #include <optional>
 #include <sched.h>
+#include <string>
+#include <variant>
 
 namespace perf {
 /**
@@ -100,6 +105,100 @@ private:
 };
 
 /**
+ * The CGroupMonitor identifies a cgroup (container) to monitor via perf_event_open using
+ * PERF_FLAG_PID_CGROUP. The underlying file descriptor is shared across copies.
+ * CGroup monitoring requires a specific CPU core; use MultiCoreEventCounter for all cores.
+ */
+class CGroupMonitor
+{
+public:
+  /**
+   * Takes ownership of an already-shared file descriptor pointing to a cgroup directory.
+   *
+   * @param fd Shared file descriptor of an opened cgroup directory.
+   */
+  explicit CGroupMonitor(util::SharedFileDescriptor&& fd) noexcept
+    : _file_descriptor(std::move(fd))
+  {
+  }
+
+  /**
+   * Shares an existing shared file descriptor pointing to a cgroup directory.
+   *
+   * @param fd Shared file descriptor of an opened cgroup directory.
+   */
+  explicit CGroupMonitor(const util::SharedFileDescriptor& fd) noexcept
+    : _file_descriptor(fd)
+  {
+  }
+
+  /**
+   * Promotes a unique file descriptor to a shared one. The unique descriptor is consumed.
+   *
+   * @param fd Unique file descriptor of an opened cgroup directory.
+   */
+  explicit CGroupMonitor(util::UniqueFileDescriptor&& fd) noexcept
+    : _file_descriptor(util::SharedFileDescriptor{ fd.value() })
+  {
+    fd.reset();
+  }
+
+  /**
+   * Opens the given path as the cgroup directory. Throws on failure.
+   *
+   * @param path Path to the cgroup directory.
+   */
+  explicit CGroupMonitor(const std::filesystem::path& path);
+
+  /**
+   * Opens the given path as the cgroup directory. Throws on failure.
+   *
+   * @param path Path to the cgroup directory.
+   */
+  explicit CGroupMonitor(std::filesystem::path&& path)
+    : CGroupMonitor(static_cast<const std::filesystem::path&>(path))
+  {
+  }
+
+  /**
+   * Opens /sys/fs/cgroup/{name} as the cgroup directory. Throws on failure.
+   *
+   * @param name Name of the cgroup (appended to /sys/fs/cgroup/).
+   */
+  explicit CGroupMonitor(const std::string& name);
+
+  /**
+   * Opens /sys/fs/cgroup/{name} as the cgroup directory. Throws on failure.
+   *
+   * @param name Name of the cgroup (appended to /sys/fs/cgroup/).
+   */
+  explicit CGroupMonitor(std::string&& name)
+    : CGroupMonitor(static_cast<const std::string&>(name))
+  {
+  }
+
+  CGroupMonitor(const CGroupMonitor&) noexcept = default;
+  CGroupMonitor(CGroupMonitor&&) noexcept = default;
+  ~CGroupMonitor() noexcept = default;
+
+  CGroupMonitor& operator=(const CGroupMonitor&) noexcept = default;
+  CGroupMonitor& operator=(CGroupMonitor&&) noexcept = default;
+
+  /**
+   * @return True if the underlying file descriptor is open and valid.
+   */
+  [[nodiscard]] bool is_valid() const noexcept { return _file_descriptor.has_value(); }
+
+  /**
+   * @return The raw file descriptor passed to perf_event_open as the pid argument.
+   */
+  [[nodiscard]] int file_descriptor() const noexcept { return _file_descriptor.value(); }
+
+private:
+  util::SharedFileDescriptor _file_descriptor;
+};
+
+/**
  * The Config specifies the configuration for monitoring and sampling performance counters,
  * including hardware counter limits, monitored scopes, and target process/CPU selection.
  */
@@ -183,9 +282,30 @@ public:
   [[nodiscard]] CpuCore cpu_core() const noexcept { return _cpu_core; }
 
   /**
-   * @return Process configuration.
+   * @return Process configuration. Only valid when is_cgroup() returns false.
    */
-  [[nodiscard]] Process process() const noexcept { return _process; }
+  [[nodiscard]] Process process() const { return std::get<Process>(_process_or_cgroup); }
+
+  /**
+   * @return CGroupMonitor configuration. Only valid when is_cgroup() returns true.
+   */
+  [[nodiscard]] const CGroupMonitor& cgroup() const { return std::get<CGroupMonitor>(_process_or_cgroup); }
+
+  /**
+   * @return True if the target is a cgroup rather than a process, false otherwise.
+   */
+  [[nodiscard]] bool is_cgroup() const noexcept
+  {
+    return std::holds_alternative<CGroupMonitor>(_process_or_cgroup);
+  }
+
+  /**
+   * @return The full process-or-cgroup variant, for use at the perf_event_open call site.
+   */
+  [[nodiscard]] const std::variant<Process, CGroupMonitor>& process_or_cgroup() const noexcept
+  {
+    return _process_or_cgroup;
+  }
 
   /**
    * Specify the number of maximum physical hardware counters.
@@ -322,14 +442,22 @@ public:
    *
    * @param process Process to monitor.
    */
-  void process(const Process process) noexcept { _process = process; }
+  void process(const Process process) noexcept { _process_or_cgroup = process; }
 
   /**
    * If specified, the EventCounter or Sampler will only monitor that specified process.
    *
    * @param process_id Process to monitor.
    */
-  void process(const pid_t process_id) noexcept { _process = Process{ process_id }; }
+  void process(const pid_t process_id) noexcept { _process_or_cgroup = Process{ process_id }; }
+
+  /**
+   * If specified, the EventCounter or Sampler will monitor the given cgroup.
+   * Requires a specific CPU core; CpuCore::Any is not permitted.
+   *
+   * @param cgroup CGroupMonitor identifying the cgroup directory to monitor.
+   */
+  void cgroup(const CGroupMonitor& cgroup) noexcept { _process_or_cgroup = cgroup; }
 
 private:
   std::uint8_t _num_physical_counters{ 5U };
@@ -348,6 +476,6 @@ private:
   bool _is_debug{ false };
 
   CpuCore _cpu_core{ CpuCore::Any };
-  Process _process{ Process::Calling };
+  std::variant<Process, CGroupMonitor> _process_or_cgroup{ Process::Calling };
 };
 }

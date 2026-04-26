@@ -20,6 +20,39 @@ public:
   ~InvalidConfigAnyCpuCoreAndAnyProcess() override = default;
 };
 
+class InvalidConfigCGroupMonitorWithAnyCpuCore final : public std::runtime_error
+{
+public:
+  explicit InvalidConfigCGroupMonitorWithAnyCpuCore()
+    : std::runtime_error(
+        "CGroup monitoring requires a specific CPU core. Use MultiCoreEventCounter / MultiCoreSampler to monitor across all CPU cores.")
+  {
+  }
+  InvalidConfigCGroupMonitorWithAnyCpuCore(const InvalidConfigCGroupMonitorWithAnyCpuCore&) = default;
+  InvalidConfigCGroupMonitorWithAnyCpuCore(InvalidConfigCGroupMonitorWithAnyCpuCore&&) noexcept = default;
+  InvalidConfigCGroupMonitorWithAnyCpuCore& operator=(const InvalidConfigCGroupMonitorWithAnyCpuCore&) = default;
+  InvalidConfigCGroupMonitorWithAnyCpuCore& operator=(InvalidConfigCGroupMonitorWithAnyCpuCore&&) noexcept = default;
+  ~InvalidConfigCGroupMonitorWithAnyCpuCore() override = default;
+};
+
+class CannotOpenCGroupError final : public std::runtime_error
+{
+public:
+  explicit CannotOpenCGroupError(const std::string_view path, const std::int32_t error_code)
+    : std::runtime_error(std::string{ "Cannot open cgroup directory '" }
+                           .append(path)
+                           .append("' (error no ")
+                           .append(std::to_string(error_code))
+                           .append(")."))
+  {
+  }
+  CannotOpenCGroupError(const CannotOpenCGroupError&) = default;
+  CannotOpenCGroupError(CannotOpenCGroupError&&) noexcept = default;
+  CannotOpenCGroupError& operator=(const CannotOpenCGroupError&) = default;
+  CannotOpenCGroupError& operator=(CannotOpenCGroupError&&) noexcept = default;
+  ~CannotOpenCGroupError() override = default;
+};
+
 class CannotOpenFileError final : public std::runtime_error
 {
 public:
