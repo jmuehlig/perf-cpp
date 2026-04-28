@@ -1,10 +1,10 @@
 #pragma once
 
-#include <perfcpp/util/shared_file_descriptor.hpp>
-#include <perfcpp/util/unique_file_descriptor.hpp>
 #include <cstdint>
 #include <filesystem>
 #include <optional>
+#include <perfcpp/util/shared_file_descriptor.hpp>
+#include <perfcpp/util/unique_file_descriptor.hpp>
 #include <sched.h>
 #include <string>
 #include <variant>
@@ -294,10 +294,7 @@ public:
   /**
    * @return True if the target is a cgroup rather than a process, false otherwise.
    */
-  [[nodiscard]] bool is_cgroup() const noexcept
-  {
-    return std::holds_alternative<CGroupMonitor>(_process_or_cgroup);
-  }
+  [[nodiscard]] bool is_cgroup() const noexcept { return std::holds_alternative<CGroupMonitor>(_process_or_cgroup); }
 
   /**
    * @return The full process-or-cgroup variant, for use at the perf_event_open call site.
@@ -458,6 +455,22 @@ public:
    * @param cgroup CGroupMonitor identifying the cgroup directory to monitor.
    */
   void cgroup(const CGroupMonitor& cgroup) noexcept { _process_or_cgroup = cgroup; }
+
+  /**
+   * If specified, the EventCounter or Sampler will monitor the given cgroup.
+   * Requires a specific CPU core; CpuCore::Any is not permitted.
+   *
+   * @param name Name of the cgroup in /sys/fs/cgroup/{name}.
+   */
+  void cgroup(const std::string& name) { _process_or_cgroup = CGroupMonitor{ name }; }
+
+  /**
+   * If specified, the EventCounter or Sampler will monitor the given cgroup.
+   * Requires a specific CPU core; CpuCore::Any is not permitted.
+   *
+   * @param path Absolute path of the cgroup.
+   */
+  void cgroup(const std::filesystem::path& path) { _process_or_cgroup = CGroupMonitor{ path }; }
 
 private:
   std::uint8_t _num_physical_counters{ 5U };

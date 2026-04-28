@@ -3,6 +3,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <cstdint>
+#include <optional>
 
 namespace perf {
 class CounterDefinition;
@@ -182,6 +184,14 @@ public:
 
 private:
   const std::string& _file_name;
+
+  /**
+   * Reads a type that is not an integer and tries to match it against PERF_TYPE_* from the kernel.
+   *
+   * @param type Type as a string
+   * @return Value of the matched PERF_TYPE_* if any; nullopt otherwise.
+   */
+  [[nodiscard]] static std::optional<std::uint64_t> parse_perf_type(const std::string& type);
 };
 
 #ifdef PERFCPP_HAS_PROCESSOR_SPECIFIC_EVENTS

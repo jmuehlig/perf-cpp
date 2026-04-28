@@ -321,6 +321,11 @@ perf::CsvFileEventProvider::add_events(perf::CounterDefinition& counter_definiti
               if (std::string type_str; std::getline(line_stream, type_str, ',')) {
                 /// Translate type into number.
                 type = EventFileDescriptorParser::integer(type_str);
+
+                // If type couldn't be parsed, try to match a kernel string.
+                if (!type.has_value()) {
+                  type = CsvFileEventProvider::parse_perf_type(type_str);
+                }
               }
             }
 
@@ -339,4 +344,26 @@ perf::CsvFileEventProvider::add_events(perf::CounterDefinition& counter_definiti
       }
     }
   }
+}
+
+std::optional<std::uint64_t>
+perf::CsvFileEventProvider::parse_perf_type(const std::string& type)
+{
+  if (type == "PERF_TYPE_HARDWARE" || type == "HARDWARE") {
+    return PERF_TYPE_HARDWARE;
+  }
+
+  if (type == "PERF_TYPE_RAW" || type == "RAW") {
+    return PERF_TYPE_RAW;
+  }
+
+  if (type == "PERF_TYPE_SOFTWARE" || type == "SOFTWARE") {
+    return PERF_TYPE_SOFTWARE;
+  }
+
+  if (type == "PERF_TYPE_HW_CACHE" || type == "HW_CACHE") {
+    return PERF_TYPE_HW_CACHE;
+  }
+
+  return std::nullopt;
 }

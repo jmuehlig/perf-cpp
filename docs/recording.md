@@ -133,10 +133,10 @@ Pass a `perf::CGroupMonitor` to `Config::cgroup()` instead of a process:
 auto config = perf::Config{};
 
 /// Open by path.
-config.cgroup(perf::CGroupMonitor{ std::filesystem::path{ "/sys/fs/cgroup/my-container" } });
+config.cgroup(std::filesystem::path{ "/sys/fs/cgroup/my-container" });
 
 /// Open by name (expands to /sys/fs/cgroup/{name}).
-config.cgroup(perf::CGroupMonitor{ std::string{ "my-container" } });
+config.cgroup("my-container");
 
 /// From a raw fd opened elsewhere in the application: wrap it in a UniqueFileDescriptor
 /// first to express ownership — the file descriptor will be closed when the monitor
