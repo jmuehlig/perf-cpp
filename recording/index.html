@@ -534,6 +534,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#monitoring-a-cgroup-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring a cgroup (Container)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#detection-of-physical-hardware-counters" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1117,6 +1128,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#monitoring-a-cgroup-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring a cgroup (Container)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#detection-of-physical-hardware-counters" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1184,7 +1206,7 @@
 <p>Record hardware performance counters for specific code regions using <code>perf::EventCounter</code>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><code>EventCounter</code> monitors a single thread. For multi-threaded or multi-core recording, use <code>MultiThreadEventCounter</code>, <code>MultiCoreEventCounter</code>, or <code>MultiProcessEventCounter</code> — see <a href="../recording-parallel/">parallel recording</a>.</p>
+<p><code>EventCounter</code> monitors a single thread. For multi-threaded or multi-core recording, use <code>MultiThreadEventCounter</code>, <code>MultiCoreEventCounter</code>, or <code>MultiProcessEventCounter</code> (see <a href="../recording-parallel/">parallel recording</a>).</p>
 </div>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
@@ -1228,7 +1250,7 @@
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1">/// Print as formatted table.</span>
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="n">to_string</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
 <a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="c1">/// Export as CSV or JSON — to string or to file.</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="c1">/// Export as CSV or JSON, to string or to file.</span>
 <a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="n">to_csv</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
 <a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="n">to_json</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
 <a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="n">result</span><span class="p">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s">&quot;results.csv&quot;</span><span class="p">);</span>
@@ -1236,7 +1258,7 @@
 </code></pre></div>
 <h2 id="scheduling-events-to-hardware-counters">Scheduling Events to Hardware Counters<a class="headerlink" href="#scheduling-events-to-hardware-counters" title="Permanent link">&para;</a></h2>
 <p>Physical hardware counters are limited (typically 4–8 per core).
-When you request more events than counters, the kernel <strong>multiplexes</strong> — time-sharing counters and scaling results.</p>
+When you request more events than counters, the kernel <strong>multiplexes</strong>: it time-shares counters and scales results.</p>
 <p>By default, <em>perf-cpp</em> packs events into as few counters as possible.
 You can control this via a scheduling hint in <code>add()</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">event_counter</span><span class="p">.</span><span class="n">add</span><span class="p">({</span><span class="s">&quot;instructions&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;branches&quot;</span><span class="p">},</span>
@@ -1256,7 +1278,7 @@ You can control this via a scheduling hint in <code>add()</code>:</p>
 </tr>
 <tr>
 <td><code>Schedule::Separate</code></td>
-<td>One event per physical counter — avoids multiplexing.</td>
+<td>One event per physical counter; avoids multiplexing.</td>
 </tr>
 <tr>
 <td><code>Schedule::Group</code></td>
@@ -1267,7 +1289,7 @@ You can control this via a scheduling hint in <code>add()</code>:</p>
 <p><code>add()</code> throws if the requested scheduling doesn't fit (e.g., too many events to group).</p>
 <h3 id="fixed-function-performance-counters-intel">Fixed-Function Performance Counters (Intel)<a class="headerlink" href="#fixed-function-performance-counters-intel" title="Permanent link">&para;</a></h3>
 <p>On Intel processors, <code>instructions</code>, <code>cycles</code>, <code>cpu-cycles</code>, and <code>ref-cycles</code> are backed by dedicated fixed-function hardware counters rather than the general-purpose PMCs.
-<em>perf-cpp</em> detects this automatically and schedules these events into their own pinned groups — they are never multiplexed and do not consume a generic PMC slot.</p>
+<em>perf-cpp</em> detects this automatically and schedules these events into their own pinned groups; they are never multiplexed and do not consume a generic PMC slot.</p>
 <p>This means you can measure fixed events alongside a full set of generic events without any scheduling penalty:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">/// On Intel: instructions, cycles, and ref-cycles go to fixed-function PMCs;</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1">/// cache-misses and branch-misses use the generic PMC budget as usual.</span>
@@ -1296,6 +1318,66 @@ See the <a href="../perf-paranoid/">perf paranoid setting</a>.</p>
 <p class="admonition-title">Tip</p>
 <p>Some hardware events (e.g., Intel off-core events) require monitoring all processes on a specific CPU core, as the hardware does not attribute these events to individual processes.</p>
 </div>
+<h2 id="monitoring-a-cgroup-container">Monitoring a cgroup (Container)<a class="headerlink" href="#monitoring-a-cgroup-container" title="Permanent link">&para;</a></h2>
+<p>Instead of targeting a process or thread by PID, you can monitor all tasks belonging to a <strong>cgroup</strong>, the Linux kernel primitive that container runtimes (Docker, Kubernetes, systemd) build on.
+The kernel counts events only when a task from the designated cgroup is running on the monitored CPU.</p>
+<p>Pass a <code>perf::CGroupMonitor</code> to <code>Config::cgroup()</code> instead of a process:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Config</span><span class="p">{};</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1">/// Open by path.</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">config</span><span class="p">.</span><span class="n">cgroup</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">filesystem</span><span class="o">::</span><span class="n">path</span><span class="p">{</span><span class="w"> </span><span class="s">&quot;/sys/fs/cgroup/my-container&quot;</span><span class="w"> </span><span class="p">});</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1">/// Open by name (expands to /sys/fs/cgroup/{name}).</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">config</span><span class="p">.</span><span class="n">cgroup</span><span class="p">(</span><span class="s">&quot;my-container&quot;</span><span class="p">);</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="c1">/// From a raw fd opened elsewhere in the application: wrap it in a UniqueFileDescriptor</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1">/// first to express ownership — the file descriptor will be closed when the monitor</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1">/// is destroyed.</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="n">config</span><span class="p">.</span><span class="n">cgroup</span><span class="p">(</span><span class="n">perf</span><span class="o">::</span><span class="n">CGroupMonitor</span><span class="p">{</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">util</span><span class="o">::</span><span class="n">UniqueFileDescriptor</span><span class="p">{</span><span class="w"> </span><span class="n">raw_fd</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">});</span>
+</code></pre></div>
+<p>The cgroup directory path is opened with <code>O_RDONLY</code> and the resulting file descriptor is passed to <code>perf_event_open</code> via <code>PERF_FLAG_PID_CGROUP</code>.
+A <code>perf::CannotOpenCGroupError</code> is thrown if the path cannot be opened.</p>
+<div class="admonition tip">
+<p class="admonition-title">Important</p>
+<p>Cgroup monitoring is <strong>system-wide</strong> and always requires a specific CPU core; <code>CpuCore::Any</code> is not permitted.
+Use <code>config.cpu_core(N)</code> to pin to a core.
+To monitor across all cores, use <code>MultiCoreEventCounter</code> with a <code>CGroupMonitor</code> config.</p>
+</div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">config</span><span class="p">.</span><span class="n">cpu_core</span><span class="p">(</span><span class="mi">0U</span><span class="p">);</span><span class="w"> </span><span class="c1">/// required: cgroup monitoring is per CPU</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">auto</span><span class="w"> </span><span class="n">event_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">EventCounter</span><span class="p">{</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">event_counter</span><span class="p">.</span><span class="n">add</span><span class="p">({</span><span class="s">&quot;instructions&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cache-misses&quot;</span><span class="p">});</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">event_counter</span><span class="p">.</span><span class="n">start</span><span class="p">();</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1">/// ... workload running inside the cgroup ...</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="n">event_counter</span><span class="p">.</span><span class="n">stop</span><span class="p">();</span>
+</code></pre></div>
+<p>To monitor the calling process's own cgroup (e.g., for testing), read its path from <code>/proc/self/cgroup</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">/// cgroupv2: lines start with &quot;0::&quot;, the relative path follows.</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">auto</span><span class="w"> </span><span class="n">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">ifstream</span><span class="p">{</span><span class="w"> </span><span class="s">&quot;/proc/self/cgroup&quot;</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">auto</span><span class="w"> </span><span class="n">line</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">{};</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">getline</span><span class="p">(</span><span class="n">file</span><span class="p">,</span><span class="w"> </span><span class="n">line</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">line</span><span class="p">.</span><span class="n">rfind</span><span class="p">(</span><span class="s">&quot;0::&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">        </span><span class="n">config</span><span class="p">.</span><span class="n">cgroup</span><span class="p">(</span><span class="n">perf</span><span class="o">::</span><span class="n">CGroupMonitor</span><span class="p">{</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">filesystem</span><span class="o">::</span><span class="n">path</span><span class="p">{</span><span class="w"> </span><span class="s">&quot;/sys/fs/cgroup&quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">line</span><span class="p">.</span><span class="n">substr</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">});</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">        </span><span class="k">break</span><span class="p">;</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="p">}</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Cgroup monitoring requires <code>CAP_PERFMON</code> (kernel ≥ 5.8) or <code>perf_event_paranoid ≤ 0</code>.
+See <a href="../perf-paranoid/">perf paranoid</a>.
+Grant the capability to a binary without running as root:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>sudo<span class="w"> </span>setcap<span class="w"> </span>cap_perfmon+ep<span class="w"> </span>./my-program
+</code></pre></div></p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>See <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/cgroup.cpp">cgroup.cpp</a></strong> for a full working example.
+Run it with <code>taskset -c 0</code> to pin the workload to the monitored CPU:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>taskset<span class="w"> </span>-c<span class="w"> </span><span class="m">0</span><span class="w"> </span>./examples/bin/cgroup-statistics
+</code></pre></div></p>
+</div>
 <h2 id="detection-of-physical-hardware-counters">Detection of Physical Hardware Counters<a class="headerlink" href="#detection-of-physical-hardware-counters" title="Permanent link">&para;</a></h2>
 <p><em>perf-cpp</em> automatically detects the number of physical counters and multiplexing capabilities on most systems.
 On Intel processors, fixed-function PMCs (typically 3: <code>instructions</code>, <code>cycles</code>, <code>ref-cycles</code>) are detected separately via CPUID and do not reduce the available generic PMC slots.</p>
@@ -1306,10 +1388,10 @@ On Intel processors, fixed-function PMCs (typically 3: <code>instructions</code>
 To reclaim the counter, disable the watchdog via <code>echo 0 &gt; /proc/sys/kernel/nmi_watchdog</code> (requires root).</p>
 </div>
 <p>For unusual hardware where auto-detection fails, specify limits manually:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Config</span><span class="p">{};</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">config</span><span class="p">.</span><span class="n">num_physical_counters</span><span class="p">(</span><span class="mi">2U</span><span class="p">);</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">config</span><span class="p">.</span><span class="n">num_events_per_physical_counter</span><span class="p">(</span><span class="mi">1U</span><span class="p">);</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">auto</span><span class="w"> </span><span class="n">event_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">EventCounter</span><span class="p">{</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="p">};</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Config</span><span class="p">{};</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">config</span><span class="p">.</span><span class="n">num_physical_counters</span><span class="p">(</span><span class="mi">2U</span><span class="p">);</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">config</span><span class="p">.</span><span class="n">num_events_per_physical_counter</span><span class="p">(</span><span class="mi">1U</span><span class="p">);</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="k">auto</span><span class="w"> </span><span class="n">event_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">EventCounter</span><span class="p">{</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="p">};</span>
 </code></pre></div>
 <h2 id="further-configuration">Further Configuration<a class="headerlink" href="#further-configuration" title="Permanent link">&para;</a></h2>
 <table>
@@ -1366,74 +1448,74 @@ To reclaim the counter, disable the watchdog via <code>echo 0 &gt; /proc/sys/ker
 <hr />
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <p>Enable debug output to inspect the counter configuration passed to the kernel:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Config</span><span class="p">{};</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">config</span><span class="p">.</span><span class="n">debug</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">auto</span><span class="w"> </span><span class="n">event_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">EventCounter</span><span class="p">{</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="p">};</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Config</span><span class="p">{};</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">config</span><span class="p">.</span><span class="n">debug</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="k">auto</span><span class="w"> </span><span class="n">event_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">EventCounter</span><span class="p">{</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="p">};</span>
 </code></pre></div>
 <p>This is equivalent to <code>perf --debug perf-event-open stat -- sleep 1</code>, which prints the <code>perf_event_open</code> arguments for each counter.
 Useful for retrieving event codes or diagnosing why a counter fails to open.</p>
 <hr />
 <h2 id="example-random-vs-sequential-access">Example: Random vs. Sequential Access<a class="headerlink" href="#example-random-vs-sequential-access" title="Permanent link">&para;</a></h2>
 <p>This example measures how unpredictable memory access patterns defeat the hardware prefetcher:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;random&gt;</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdint&gt;</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;vector&gt;</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;algorithm&gt;</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;perfcpp/event_counter.hpp&gt;</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1">/// One cache line per element.</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="k">struct</span><span class="w"> </span><span class="nc">alignas</span><span class="p">(</span><span class="mi">64U</span><span class="p">)</span><span class="w"> </span><span class="n">cache_line</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="kt">int64_t</span><span class="w"> </span><span class="n">value</span><span class="p">;</span><span class="w"> </span><span class="p">};</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="p">{</span>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">event_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">EventCounter</span><span class="p">{};</span>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">    </span><span class="n">event_counter</span><span class="p">.</span><span class="n">add</span><span class="p">({</span><span class="s">&quot;instructions&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cache-misses&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cycles-per-instruction&quot;</span><span class="p">});</span>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">    </span><span class="c1">/// 256 MB of cache lines.</span>
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">cache_lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">cache_line</span><span class="o">&gt;</span><span class="p">{};</span>
-<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">    </span><span class="n">cache_lines</span><span class="p">.</span><span class="n">resize</span><span class="p">((</span><span class="mi">1024U</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024U</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">256U</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">cache_line</span><span class="p">));</span>
-<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0U</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">cache_lines</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span>
-<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="w">        </span><span class="n">cache_lines</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="p">;</span>
-<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>
-<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="w">    </span><span class="c1">/// Shuffle indices for random access.</span>
-<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">indices</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">uint64_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">cache_lines</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
-<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">iota</span><span class="p">(</span><span class="n">indices</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">indices</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="mi">0U</span><span class="p">);</span>
-<a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">shuffle</span><span class="p">(</span><span class="n">indices</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">indices</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">mt19937</span><span class="p">{</span><span class="n">std</span><span class="o">::</span><span class="n">random_device</span><span class="p">{}()});</span>
-<a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a>
-<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a><span class="w">    </span><span class="c1">/// Measure random access.</span>
-<a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a><span class="w">    </span><span class="n">event_counter</span><span class="p">.</span><span class="n">start</span><span class="p">();</span>
-<a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0ULL</span><span class="p">;</span>
-<a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">indices</span><span class="p">)</span>
-<a id="__codelineno-8-33" name="__codelineno-8-33" href="#__codelineno-8-33"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-8-34" name="__codelineno-8-34" href="#__codelineno-8-34"></a><span class="w">        </span><span class="n">value</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">cache_lines</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="n">value</span><span class="p">;</span>
-<a id="__codelineno-8-35" name="__codelineno-8-35" href="#__codelineno-8-35"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-8-36" name="__codelineno-8-36" href="#__codelineno-8-36"></a><span class="w">    </span><span class="k">asm</span><span class="w"> </span><span class="k">volatile</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;+r,m&quot;</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;memory&quot;</span><span class="p">);</span>
-<a id="__codelineno-8-37" name="__codelineno-8-37" href="#__codelineno-8-37"></a><span class="w">    </span><span class="n">event_counter</span><span class="p">.</span><span class="n">stop</span><span class="p">();</span>
-<a id="__codelineno-8-38" name="__codelineno-8-38" href="#__codelineno-8-38"></a>
-<a id="__codelineno-8-39" name="__codelineno-8-39" href="#__codelineno-8-39"></a><span class="w">    </span><span class="c1">/// Print per-cache-line results.</span>
-<a id="__codelineno-8-40" name="__codelineno-8-40" href="#__codelineno-8-40"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">event_counter</span><span class="p">.</span><span class="n">result</span><span class="p">(</span><span class="n">cache_lines</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
-<a id="__codelineno-8-41" name="__codelineno-8-41" href="#__codelineno-8-41"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="p">[</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">val</span><span class="p">]</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">result</span><span class="p">)</span>
-<a id="__codelineno-8-42" name="__codelineno-8-42" href="#__codelineno-8-42"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-8-43" name="__codelineno-8-43" href="#__codelineno-8-43"></a><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; per cache line&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<a id="__codelineno-8-44" name="__codelineno-8-44" href="#__codelineno-8-44"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-8-45" name="__codelineno-8-45" href="#__codelineno-8-45"></a>
-<a id="__codelineno-8-46" name="__codelineno-8-46" href="#__codelineno-8-46"></a><span class="w">    </span><span class="n">event_counter</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
-<a id="__codelineno-8-47" name="__codelineno-8-47" href="#__codelineno-8-47"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;random&gt;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdint&gt;</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;vector&gt;</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;algorithm&gt;</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;perfcpp/event_counter.hpp&gt;</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="c1">/// One cache line per element.</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="k">struct</span><span class="w"> </span><span class="nc">alignas</span><span class="p">(</span><span class="mi">64U</span><span class="p">)</span><span class="w"> </span><span class="n">cache_line</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="kt">int64_t</span><span class="w"> </span><span class="n">value</span><span class="p">;</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="p">{</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">event_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">EventCounter</span><span class="p">{};</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">    </span><span class="n">event_counter</span><span class="p">.</span><span class="n">add</span><span class="p">({</span><span class="s">&quot;instructions&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cache-misses&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cycles-per-instruction&quot;</span><span class="p">});</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="w">    </span><span class="c1">/// 256 MB of cache lines.</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">cache_lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">cache_line</span><span class="o">&gt;</span><span class="p">{};</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="w">    </span><span class="n">cache_lines</span><span class="p">.</span><span class="n">resize</span><span class="p">((</span><span class="mi">1024U</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024U</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">256U</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">cache_line</span><span class="p">));</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0U</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">cache_lines</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="w">        </span><span class="n">cache_lines</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="p">;</span>
+<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>
+<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a><span class="w">    </span><span class="c1">/// Shuffle indices for random access.</span>
+<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">indices</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">uint64_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">cache_lines</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+<a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">iota</span><span class="p">(</span><span class="n">indices</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">indices</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="mi">0U</span><span class="p">);</span>
+<a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">shuffle</span><span class="p">(</span><span class="n">indices</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">indices</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">mt19937</span><span class="p">{</span><span class="n">std</span><span class="o">::</span><span class="n">random_device</span><span class="p">{}()});</span>
+<a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a>
+<a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a><span class="w">    </span><span class="c1">/// Measure random access.</span>
+<a id="__codelineno-13-30" name="__codelineno-13-30" href="#__codelineno-13-30"></a><span class="w">    </span><span class="n">event_counter</span><span class="p">.</span><span class="n">start</span><span class="p">();</span>
+<a id="__codelineno-13-31" name="__codelineno-13-31" href="#__codelineno-13-31"></a><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0ULL</span><span class="p">;</span>
+<a id="__codelineno-13-32" name="__codelineno-13-32" href="#__codelineno-13-32"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">indices</span><span class="p">)</span>
+<a id="__codelineno-13-33" name="__codelineno-13-33" href="#__codelineno-13-33"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-13-34" name="__codelineno-13-34" href="#__codelineno-13-34"></a><span class="w">        </span><span class="n">value</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">cache_lines</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="n">value</span><span class="p">;</span>
+<a id="__codelineno-13-35" name="__codelineno-13-35" href="#__codelineno-13-35"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-13-36" name="__codelineno-13-36" href="#__codelineno-13-36"></a><span class="w">    </span><span class="k">asm</span><span class="w"> </span><span class="k">volatile</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;+r,m&quot;</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;memory&quot;</span><span class="p">);</span>
+<a id="__codelineno-13-37" name="__codelineno-13-37" href="#__codelineno-13-37"></a><span class="w">    </span><span class="n">event_counter</span><span class="p">.</span><span class="n">stop</span><span class="p">();</span>
+<a id="__codelineno-13-38" name="__codelineno-13-38" href="#__codelineno-13-38"></a>
+<a id="__codelineno-13-39" name="__codelineno-13-39" href="#__codelineno-13-39"></a><span class="w">    </span><span class="c1">/// Print per-cache-line results.</span>
+<a id="__codelineno-13-40" name="__codelineno-13-40" href="#__codelineno-13-40"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">event_counter</span><span class="p">.</span><span class="n">result</span><span class="p">(</span><span class="n">cache_lines</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+<a id="__codelineno-13-41" name="__codelineno-13-41" href="#__codelineno-13-41"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="p">[</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">val</span><span class="p">]</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">result</span><span class="p">)</span>
+<a id="__codelineno-13-42" name="__codelineno-13-42" href="#__codelineno-13-42"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-13-43" name="__codelineno-13-43" href="#__codelineno-13-43"></a><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; per cache line&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<a id="__codelineno-13-44" name="__codelineno-13-44" href="#__codelineno-13-44"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-13-45" name="__codelineno-13-45" href="#__codelineno-13-45"></a>
+<a id="__codelineno-13-46" name="__codelineno-13-46" href="#__codelineno-13-46"></a><span class="w">    </span><span class="n">event_counter</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+<a id="__codelineno-13-47" name="__codelineno-13-47" href="#__codelineno-13-47"></a><span class="p">}</span>
 </code></pre></div>
-<p>Random access output — more than one cache miss per line:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>7.12 instructions per cache line
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>57.19 cycles per cache line
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>1.63 cache-misses per cache line
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>8.03 cycles-per-instruction per cache line
+<p>Random access output, more than one cache miss per line:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>7.12 instructions per cache line
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>57.19 cycles per cache line
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>1.63 cache-misses per cache line
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>8.03 cycles-per-instruction per cache line
 </code></pre></div></p>
-<p>Sequential access (without shuffling) — the prefetcher eliminates nearly all misses:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>6.85 instructions per cache line
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>8.94 cycles per cache line
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>0.007 cache-misses per cache line
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>1.31 cycles-per-instruction per cache line
+<p>Sequential access (without shuffling), the prefetcher eliminates nearly all misses:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>6.85 instructions per cache line
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>8.94 cycles per cache line
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>0.007 cache-misses per cache line
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>1.31 cycles-per-instruction per cache line
 </code></pre></div></p>
 
 
