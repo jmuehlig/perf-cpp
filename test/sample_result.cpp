@@ -1,7 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cstdio>
 #include <fstream>
-#include <iterator>
 #include <perfcpp/sample/result.hpp>
 #include <sstream>
 #include <string>
@@ -360,7 +359,9 @@ TEST_CASE("to_csv file", "[SampleResult]")
 
     auto file = std::ifstream{ file_path };
     REQUIRE(file.is_open());
-    const auto file_content = std::string{ std::istreambuf_iterator<char>{ file }, std::istreambuf_iterator<char>{} };
+    auto stream = std::ostringstream{};
+    stream << file.rdbuf();
+    const auto file_content = stream.str();
 
     REQUIRE(file_content == result.to_csv());
 
