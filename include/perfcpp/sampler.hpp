@@ -677,10 +677,12 @@ protected:
 class MultiThreadSampler final : public MultiSamplerBase
 {
 public:
-  MultiThreadSampler(const CounterDefinition& counter_definition, std::uint16_t num_threads, const SampleConfig& config = {});
+  MultiThreadSampler(const CounterDefinition& counter_definition,
+                     std::uint16_t num_threads,
+                     const SampleConfig& config = {});
 
-  explicit MultiThreadSampler(const std::uint16_t num_threads, SampleConfig config = {})
-    : MultiThreadSampler(CounterDefinition::global(), num_threads, std::move(config))
+  explicit MultiThreadSampler(const std::uint16_t num_threads, const SampleConfig& config = {})
+    : MultiThreadSampler(CounterDefinition::global(), num_threads, config)
   {
   }
 
@@ -1178,7 +1180,7 @@ public:
    */
   void stop()
   {
-    for (auto& sampler : this->_core_local_samplers) {
+    for (auto& sampler : _core_local_samplers) {
       sampler.stop();
     }
   }

@@ -2,7 +2,7 @@
 #include <numeric>
 #include <perfcpp/event_counter.hpp>
 
-#include "perfcpp/hardware_info.hpp"
+#include <perfcpp/hardware_info.hpp>
 
 #include <perfcpp/exception.hpp>
 #include <utility>

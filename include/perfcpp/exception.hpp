@@ -24,8 +24,8 @@ class InvalidConfigCGroupMonitorWithAnyCpuCore final : public std::runtime_error
 {
 public:
   explicit InvalidConfigCGroupMonitorWithAnyCpuCore()
-    : std::runtime_error(
-        "CGroup monitoring requires a specific CPU core. Use MultiCoreEventCounter / MultiCoreSampler to monitor across all CPU cores.")
+    : std::runtime_error("CGroup monitoring requires a specific CPU core. Use MultiCoreEventCounter / MultiCoreSampler "
+                         "to monitor across all CPU cores.")
   {
   }
   InvalidConfigCGroupMonitorWithAnyCpuCore(const InvalidConfigCGroupMonitorWithAnyCpuCore&) = default;

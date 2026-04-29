@@ -1,7 +1,7 @@
+#include <fcntl.h>
 #include <perfcpp/counter/config.hpp>
 #include <perfcpp/exception.hpp>
 #include <perfcpp/hardware_info.hpp>
-#include <fcntl.h>
 
 perf::Process perf::Process::Any = Process{ -1 };
 perf::Process perf::Process::Calling = Process{ 0 };

@@ -45,7 +45,8 @@ perf::Counter::open(const perf::Config& configuration, const bool is_live)
 
   /// Print debug output, if requested.
   if (configuration.is_debug()) {
-    std::cout << this->to_string(true, this->_file_descriptor, configuration.process_or_cgroup(), configuration.cpu_core())
+    std::cout << this->to_string(
+                   true, this->_file_descriptor, configuration.process_or_cgroup(), configuration.cpu_core())
               << std::flush;
   }
 
@@ -81,7 +82,8 @@ perf::Counter::open(const perf::Config& configuration,
 
   /// Print debug output, if requested.
   if (configuration.is_debug()) {
-    std::cout << this->to_string(false, group_leader_file_descriptor, configuration.process_or_cgroup(), configuration.cpu_core())
+    std::cout << this->to_string(
+                   false, group_leader_file_descriptor, configuration.process_or_cgroup(), configuration.cpu_core())
               << std::flush;
   }
 
@@ -117,7 +119,8 @@ perf::Counter::open(const perf::Config& config,
 
   /// Print debug output, if requested.
   if (config.is_debug()) {
-    std::cout << this->to_string(true, this->_file_descriptor, config.process_or_cgroup(), config.cpu_core()) << std::flush;
+    std::cout << this->to_string(true, this->_file_descriptor, config.process_or_cgroup(), config.cpu_core())
+              << std::flush;
   }
 
   /// Notify the caller that opening the counter via the perf subsystem failed.
@@ -318,7 +321,7 @@ perf::Counter::try_open_via_perf_subsystem(const Config& configuration,
 {
   /// Determine the pid/cgroup-fd and open flags based on the monitoring target.
   const auto pid_or_fd = configuration.is_cgroup() ? configuration.cgroup().file_descriptor()
-                                                    : static_cast<int>(static_cast<pid_t>(configuration.process()));
+                                                   : static_cast<int>(static_cast<pid_t>(configuration.process()));
   const auto open_flags = configuration.is_cgroup() ? PERF_FLAG_PID_CGROUP : 0UL;
 
   /// Finally, pass the configuration to the perf subsystem to open the hardware performance counter.

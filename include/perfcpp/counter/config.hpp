@@ -382,7 +382,7 @@ public:
    *
    * See https://github.com/jmuehlig/perf-cpp/blob/dev/docs/perf-paranoid.md#adjusting-monitoring-configuration
    *
-   * @param is_include_host Flag indicating that guest-activity should be monitored.
+   * @param is_include_host Flag indicating that host-activity should be monitored.
    */
   void include_host(const bool is_include_host) noexcept { _is_include_host = is_include_host; }
 

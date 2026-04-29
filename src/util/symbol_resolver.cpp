@@ -1,4 +1,4 @@
-#include "perfcpp/sample/record_file_writer.hpp"
+#include <perfcpp/sample/record_file_writer.hpp>
 
 #include <algorithm>
 #include <cstring>

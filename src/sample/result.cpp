@@ -1,4 +1,4 @@
-#include "perfcpp/hardware_info.hpp"
+#include <perfcpp/hardware_info.hpp>
 #include <algorithm>
 #include <fstream>
 #include <perfcpp/analyzer/flame_graph_generator.hpp>

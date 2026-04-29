@@ -1,10 +1,10 @@
 #pragma once
 
+#include <cstdint>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
-#include <cstdint>
-#include <optional>
 
 namespace perf {
 class CounterDefinition;

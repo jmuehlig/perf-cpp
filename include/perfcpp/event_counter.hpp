@@ -65,7 +65,7 @@ public:
    * The event must exist within the counter definitions.
    *
    * @param event_name Name of the event.
-   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual).
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (separate).
    */
   void add(std::string&& event_name, const Schedule schedule = Schedule::Append) { add(event_name, schedule); }
 
@@ -74,7 +74,7 @@ public:
    * The event must exist within the counter definitions.
    *
    * @param event_name Name of the event.
-   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual).
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (separate).
    */
   void add(const std::string& event_name, Schedule schedule = Schedule::Append);
 
@@ -83,7 +83,7 @@ public:
    * The events must exist within the counter definitions.
    *
    * @param event_names List of names of the events.
-   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual), or as a
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (separate), or as a
    * group (all to the same hardware counter).
    */
   void add(std::vector<std::string>&& event_names, const Schedule schedule = Schedule::Append)
@@ -96,7 +96,7 @@ public:
    * The events must exist within the counter definitions.
    *
    * @param event_names List of names of the counted events.
-   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual), or as a
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (separate), or as a
    * group (all to the same hardware counter).
    */
   void add(const std::vector<std::string>& event_names, Schedule schedule = Schedule::Append);
@@ -242,11 +242,11 @@ private:
   bool _is_opened{ false };
 
   EventCounter(const CounterDefinition& counter_definition,
-               const Config& config,
+               Config config,
                RequestedEventSet requested_event_set,
                RequestedEventSet requested_live_event_set)
     : _counter_definition(counter_definition)
-    , _config(config)
+    , _config(std::move(config))
     , _requested_event_set(std::move(requested_event_set))
     , _requested_live_event_set(std::move(requested_live_event_set))
   {
@@ -422,7 +422,7 @@ public:
    * The event must exist within the counter definitions.
    *
    * @param event_name Name of the event.
-   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual).
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (separate).
    */
   void add(std::string&& event_name, EventCounter::Schedule schedule = EventCounter::Schedule::Append);
 
@@ -431,7 +431,7 @@ public:
    * The event must exist within the counter definitions.
    *
    * @param event_name Name of the event.
-   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual).
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (separate).
    */
   void add(const std::string& event_name, const EventCounter::Schedule schedule = EventCounter::Schedule::Append)
   {
@@ -443,7 +443,7 @@ public:
    * The events must exist within the counter definitions.
    *
    * @param event_names List of names of the events.
-   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual), or as a
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (separate), or as a
    * group (all to the same hardware counter).
    */
   void add(std::vector<std::string>&& event_names,
@@ -457,7 +457,7 @@ public:
    * The events must exist within the counter definitions.
    *
    * @param event_names List of names of the events.
-   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (individual), or as a
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (separate), or as a
    * group (all to the same hardware counter).
    */
   void add(const std::vector<std::string>& event_names,
@@ -510,7 +510,9 @@ public:
 class MultiThreadEventCounter final : public MultiEventCounterBase
 {
 public:
-  MultiThreadEventCounter(const CounterDefinition& counter_definition, std::uint16_t num_threads, const Config& config = {});
+  MultiThreadEventCounter(const CounterDefinition& counter_definition,
+                          std::uint16_t num_threads,
+                          const Config& config = {});
 
   explicit MultiThreadEventCounter(const std::uint16_t num_threads, const Config& config = {})
     : MultiThreadEventCounter(CounterDefinition::global(), num_threads, config)
@@ -527,7 +529,7 @@ public:
   MultiThreadEventCounter(const MultiThreadEventCounter&) = delete;
   MultiThreadEventCounter(MultiThreadEventCounter&&) noexcept = default;
 
-  ~MultiThreadEventCounter() override { this->close(); }
+  ~MultiThreadEventCounter() override { close(); }
 
   MultiThreadEventCounter& operator=(const MultiThreadEventCounter&) = delete;
   MultiThreadEventCounter& operator=(MultiThreadEventCounter&&) noexcept = default;
@@ -633,7 +635,7 @@ public:
   MultiProcessEventCounter(const MultiProcessEventCounter&) = delete;
   MultiProcessEventCounter(MultiProcessEventCounter&&) noexcept = default;
 
-  ~MultiProcessEventCounter() override { this->close(); }
+  ~MultiProcessEventCounter() override { close(); }
 
   MultiProcessEventCounter& operator=(const MultiProcessEventCounter&) = delete;
   MultiProcessEventCounter& operator=(MultiProcessEventCounter&&) noexcept = default;
@@ -702,7 +704,7 @@ public:
   MultiCoreEventCounter(const MultiCoreEventCounter&) = delete;
   MultiCoreEventCounter(MultiCoreEventCounter&&) noexcept = default;
 
-  ~MultiCoreEventCounter() override { this->close(); }
+  ~MultiCoreEventCounter() override { close(); }
 
   MultiCoreEventCounter& operator=(const MultiCoreEventCounter&) = delete;
   MultiCoreEventCounter& operator=(MultiCoreEventCounter&&) noexcept = default;
