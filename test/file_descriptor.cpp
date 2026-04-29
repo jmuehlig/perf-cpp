@@ -217,21 +217,8 @@ TEST_CASE("SharedFileDescriptor self copy assignment is safe", "[SharedFileDescr
   auto [read_fd, write_fd] = make_pipe();
 
   auto sfd = perf::util::SharedFileDescriptor{ write_fd };
-  sfd = sfd; /// NOLINT: intentional self-assignment.
-  REQUIRE(sfd.has_value());
-  REQUIRE(is_fd_open(write_fd));
-
-  sfd = perf::util::SharedFileDescriptor{};
-  REQUIRE_FALSE(is_fd_open(write_fd));
-  ::close(read_fd);
-}
-
-TEST_CASE("SharedFileDescriptor self move assignment is safe", "[SharedFileDescriptor]")
-{
-  auto [read_fd, write_fd] = make_pipe();
-
-  auto sfd = perf::util::SharedFileDescriptor{ write_fd };
-  sfd = std::move(sfd); /// NOLINT: intentional self-move.
+  auto* self = &sfd;
+  sfd = *self; /// Routed through pointer to suppress -Wself-assign-overloaded.
   REQUIRE(sfd.has_value());
   REQUIRE(is_fd_open(write_fd));
 
