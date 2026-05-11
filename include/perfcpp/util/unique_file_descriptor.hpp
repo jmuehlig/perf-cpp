@@ -78,7 +78,7 @@ public:
   [[nodiscard]] std::int32_t value() const noexcept { return _file_descriptor; }
 
   /**
-   * Resets the file descriptor.
+   * Closes the underlying file descriptor and resets to an empty state.
    */
   void reset() noexcept
   {
@@ -86,6 +86,14 @@ public:
       ::close(std::exchange(_file_descriptor, -1L));
     }
   }
+
+  /**
+   * Releases ownership of the file descriptor without closing it.
+   * The caller is responsible for closing the returned descriptor.
+   *
+   * @return The raw file descriptor, or -1 if empty.
+   */
+  [[nodiscard]] std::int32_t release() noexcept { return std::exchange(_file_descriptor, -1L); }
 
 private:
   std::int32_t _file_descriptor{ -1LL };
