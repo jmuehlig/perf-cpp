@@ -80,7 +80,12 @@ public:
   /**
    * Resets the file descriptor.
    */
-  void reset() noexcept { _file_descriptor = -1LL; }
+  void reset() noexcept
+  {
+    if (has_value()) {
+      ::close(std::exchange(_file_descriptor, -1L));
+    }
+  }
 
 private:
   std::int32_t _file_descriptor{ -1LL };
