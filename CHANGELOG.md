@@ -1,5 +1,8 @@
 # *perf-cpp*: Changelog
 
+## v0.14.1
+- **Bugfix**: `UniqueFileDescriptor::reset()` did not close the underlying file descriptor (see [issue #13](https://github.com/jmuehlig/perf-cpp/issues/12) – thanks to [@ilyapopov](https://github.com/ilyapopov)).
+
 ## v0.14.0
 - **Deprecation Warnings Activated**: All legacy `.h` forwarding headers (e.g., `perfcpp/sampler.h`, `perfcpp/event_counter.h`) now emit a compile-time `#pragma message` warning directing users to the `.hpp` replacements introduced in `v0.13.0`. **The old headers will be removed in `v1.0`.** If you see a deprecation message, replace the include with the `.hpp` variant (e.g., `#include <perfcpp/sampler.hpp>`).
 - **CGroup Monitoring**: Added support for monitoring all tasks belonging to a cgroup (container). Configure a `perf::CGroupMonitor` (constructed from a path, a cgroup name, a `SharedFileDescriptor`, or a `UniqueFileDescriptor`) and pass it to `Config::cgroup()`. Requires a specific CPU core (`CpuCore::Any` is rejected) and `CAP_PERFMON` or `perf_event_paranoid <= 0`. See the [recording documentation](https://jmuehlig.github.io/perf-cpp/recording/#monitoring-a-cgroup-container).
