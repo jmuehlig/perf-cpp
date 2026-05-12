@@ -1,7 +1,7 @@
 # *perf-cpp*: Changelog
 
 ## v0.14.1
-- **Bugfix**: `UniqueFileDescriptor::reset()` did not close the underlying file descriptor (see [issue #13](https://github.com/jmuehlig/perf-cpp/issues/12) – thanks to [@ilyapopov](https://github.com/ilyapopov)).
+- **Bugfix**: `UniqueFileDescriptor::reset()` did not close the underlying file descriptor (see [issue #12](https://github.com/jmuehlig/perf-cpp/issues/12) – thanks to [@ilyapopov](https://github.com/ilyapopov)).
 
 ## v0.14.0
 - **Deprecation Warnings Activated**: All legacy `.h` forwarding headers (e.g., `perfcpp/sampler.h`, `perfcpp/event_counter.h`) now emit a compile-time `#pragma message` warning directing users to the `.hpp` replacements introduced in `v0.13.0`. **The old headers will be removed in `v1.0`.** If you see a deprecation message, replace the include with the `.hpp` variant (e.g., `#include <perfcpp/sampler.hpp>`).
