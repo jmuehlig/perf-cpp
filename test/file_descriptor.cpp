@@ -77,16 +77,31 @@ TEST_CASE("UniqueFileDescriptor move assignment", "[UniqueFileDescriptor]")
   ::close(read_fd);
 }
 
-TEST_CASE("UniqueFileDescriptor reset does not close fd", "[UniqueFileDescriptor]")
+TEST_CASE("UniqueFileDescriptor reset closes fd", "[UniqueFileDescriptor]")
 {
   auto [read_fd, write_fd] = make_pipe();
 
   auto ufd = perf::util::UniqueFileDescriptor{ write_fd };
   REQUIRE(ufd.has_value());
 
-  /// reset() abandons the fd without closing it (used when transferring ownership elsewhere).
   ufd.reset();
   REQUIRE_FALSE(ufd.has_value());
+  REQUIRE_FALSE(is_fd_open(write_fd));
+
+  ::close(read_fd);
+}
+
+TEST_CASE("UniqueFileDescriptor release does not close fd", "[UniqueFileDescriptor]")
+{
+  auto [read_fd, write_fd] = make_pipe();
+
+  auto ufd = perf::util::UniqueFileDescriptor{ write_fd };
+  REQUIRE(ufd.has_value());
+
+  /// release() transfers ownership without closing (used when handing the fd to another owner).
+  const auto raw = ufd.release();
+  REQUIRE_FALSE(ufd.has_value());
+  REQUIRE(raw == write_fd);
   REQUIRE(is_fd_open(write_fd));
 
   ::close(write_fd);

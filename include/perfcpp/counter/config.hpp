@@ -138,9 +138,8 @@ public:
    * @param fd Unique file descriptor of an opened cgroup directory.
    */
   explicit CGroupMonitor(util::UniqueFileDescriptor&& fd) noexcept
-    : _file_descriptor(util::SharedFileDescriptor{ fd.value() })
+    : _file_descriptor(util::SharedFileDescriptor{ fd.release() })
   {
-    fd.reset();
   }
 
   /**
