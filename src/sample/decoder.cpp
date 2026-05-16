@@ -743,6 +743,10 @@ perf::SampleDecoder::enrich_sample_with_ibs_fetch_data_from_raw(Sample& sample,
   /// Fetch latency.
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionLatency)) {
     sample.instruction_execution().latency().fetch(ibs_fetch_decoder.latency());
+
+    if (ibs_fetch_decoder.is_l1_tlb_miss()) {
+      sample.instruction_execution().latency().itlb_refill(ibs_fetch_decoder.itlb_refill_latency());
+    }
   }
 
   /// Fetch information.
@@ -753,8 +757,10 @@ perf::SampleDecoder::enrich_sample_with_ibs_fetch_data_from_raw(Sample& sample,
 
   /// Instruction cache.
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionCache)) {
-    sample.instruction_execution().cache(InstructionExecution::Cache{
-      ibs_fetch_decoder.is_instruction_cache_miss(), ibs_fetch_decoder.is_l2_miss(), ibs_fetch_decoder.is_l3_miss() });
+    sample.instruction_execution().cache(InstructionExecution::Cache{ ibs_fetch_decoder.is_instruction_cache_miss(),
+                                                                      ibs_fetch_decoder.is_l2_miss(),
+                                                                      ibs_fetch_decoder.is_l3_miss(),
+                                                                      ibs_fetch_decoder.is_op_cache_miss() });
   }
 
   /// Instruction TLB.
@@ -821,6 +827,9 @@ perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(Sample& sample,
         sample.instruction_execution().branch_type(branch_type.value());
       }
     }
+
+    /// Is Microcode
+    sample.instruction_execution().is_microcode(ibs_op_decoder.is_microcode());
   }
 
   /// Misalgin penalty.

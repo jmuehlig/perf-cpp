@@ -86,12 +86,14 @@ Fields related to the sampled instruction and its execution characteristics.
 | CSV Column | How to Record | Description | Platform |
 |------------|---------------|-------------|----------|
 | `instruction_type` | `sampler.values().instruction_type(true)` | Instruction type (`Return`, `Branch`, `DataAccess`) | AMD only |
+| `is_microcode` | `sampler.values().instruction_type(true)` | Op was dispatched from the microcode ROM sequencer (`0` or `1`) | AMD Op PMU |
 | `logical_instruction_pointer` | `sampler.values().logical_instruction_pointer(true)` | Logical address of sampled instruction (hexadecimal) | All |
 | `is_instruction_pointer_exact` | `sampler.values().logical_instruction_pointer(true)` | Whether instruction pointer is exact (`0` or `1`) | All |
 | `physical_instruction_pointer` | `sampler.values().physical_instruction_pointer(true)` | Physical address of sampled instruction (hexadecimal) | AMD Fetch PMU |
 | `instruction_l1i_miss` | `sampler.values().instruction_cache(true)` | L1 instruction cache miss (`0` or `1`) | AMD Fetch PMU |
 | `instruction_l2_miss` | `sampler.values().instruction_cache(true)` | L2 cache miss (`0` or `1`) | AMD Fetch PMU |
 | `instruction_l3_miss` | `sampler.values().instruction_cache(true)` | L3 cache miss (`0` or `1`) | AMD Fetch PMU |
+| `instruction_op_cache_miss` | `sampler.values().instruction_cache(true)` | Op cache (decoded instruction cache) miss (`0` or `1`) | AMD Fetch PMU |
 | `instruction_itlb_miss` | `sampler.values().instruction_tlb(true)` | Instruction TLB miss (`0` or `1`) | AMD Fetch PMU |
 | `instruction_itlb_size` | `sampler.values().instruction_tlb(true)` | Instruction TLB page size (bytes) | AMD Fetch PMU |
 | `instruction_stlb_miss` | `sampler.values().instruction_tlb(true)` | Second-level TLB miss (`0` or `1`) | AMD Fetch PMU |
@@ -100,6 +102,7 @@ Fields related to the sampled instruction and its execution characteristics.
 | `uop_tag_to_completion` | `sampler.values().instruction_latency(true)` | Micro-op tag-to-completion latency (cycles) | AMD only |
 | `uop_completion_to_retirement` | `sampler.values().instruction_latency(true)` | Micro-op completion-to-retirement latency (cycles) | AMD only |
 | `instruction_fetch_latency` | `sampler.values().instruction_latency(true)` | Instruction fetch latency (cycles) | AMD Fetch PMU |
+| `instruction_itlb_refill_latency` | `sampler.values().instruction_latency(true)` | iTLB refill latency after a miss (cycles) | AMD Fetch PMU |
 | `branch_type` | `sampler.values().branch_type(true)` | Branch type (`Taken`, `Retired`, `Mispredicted`, `Fuse`) | AMD Op PMU |
 | `tx_is_elision` | `sampler.values().hardware_transaction_abort(true)` | Hardware transaction is elision type (`0` or `1`) | Intel only |
 | `tx_is_generic` | `sampler.values().hardware_transaction_abort(true)` | Hardware transaction is generic type (`0` or `1`) | Intel only |

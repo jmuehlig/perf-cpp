@@ -1,5 +1,13 @@
 # *perf-cpp*: Changelog
 
+## v1.0.0
+- **Removed Deprecated Header Files**: All legacy `.h` forwarding headers (e.g., `perfcpp/sampler.h`, `perfcpp/event_counter.h`) have been removed. Use `.hpp` files instead.
+- **New IBS Sample Fields** (*AMD IBS PMU* only): Three additional fields decoded from IBS raw data, none of which are accessible via the standard `perf_event_open` interface:
+  - **Op Cache Miss** (`record.instruction_execution().cache()->is_op_miss()`): indicates the fetch missed the op cache (decoded instruction cache), even if the L1 instruction cache hit. Enabled via `sampler.values().instruction_cache(true)`. (*IBS Fetch PMU*)
+  - **iTLB Refill Latency** (`record.instruction_execution().latency().itlb_refill()`): cycles to refill the instruction TLB after a miss. Only set when an iTLB miss occurred. Enabled via `sampler.values().instruction_latency(true)`. (*IBS Fetch PMU*)
+  - **Is Microcode** (`record.instruction_execution().is_microcode()`): indicates the sampled op was dispatched from the microcode ROM sequencer. Enabled via `sampler.values().instruction_type(true)`. (*IBS Op PMU*)
+
+
 ## v0.14.1
 - **Bugfix**: `UniqueFileDescriptor::reset()` did not close the underlying file descriptor (see [issue #12](https://github.com/jmuehlig/perf-cpp/issues/12) – thanks to [@ilyapopov](https://github.com/ilyapopov)).
 

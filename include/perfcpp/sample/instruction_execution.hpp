@@ -61,6 +61,12 @@ public:
     void fetch(const std::uint32_t fetch) noexcept { _fetch = fetch; }
 
     /**
+     * Set the iTLB refill latency.
+     * @param itlb_refill iTLB refill latency.
+     */
+    void itlb_refill(const std::uint32_t itlb_refill) noexcept { _itlb_refill = itlb_refill; }
+
+    /**
      * @return Uop tag to retirement latency, if available. std::nullopt otherwise.
      */
     [[nodiscard]] std::optional<std::uint32_t> uop_tag_to_retirement() const noexcept { return _uop_tag_to_retirement; }
@@ -98,11 +104,17 @@ public:
      */
     [[nodiscard]] std::optional<std::uint32_t> fetch() const noexcept { return _fetch; }
 
+    /**
+     * @return iTLB refill latency, if available and iTLB was missed. std::nullopt otherwise.
+     */
+    [[nodiscard]] std::optional<std::uint32_t> itlb_refill() const noexcept { return _itlb_refill; }
+
   private:
     std::optional<std::uint32_t> _uop_tag_to_retirement{ std::nullopt };
     std::optional<std::uint32_t> _uop_completion_to_retirement{ std::nullopt };
     std::optional<std::uint32_t> _instruction_retirement{ std::nullopt };
     std::optional<std::uint32_t> _fetch{ std::nullopt };
+    std::optional<std::uint32_t> _itlb_refill{ std::nullopt };
   };
 
   class TLB
@@ -147,10 +159,11 @@ public:
   class Cache
   {
   public:
-    Cache(const bool is_l1_miss, const bool is_l2_miss, const bool is_l3_miss) noexcept
+    Cache(const bool is_l1_miss, const bool is_l2_miss, const bool is_l3_miss, const bool is_op_miss) noexcept
       : _is_l1_miss(is_l1_miss)
       , _is_l2_miss(is_l2_miss)
       , _is_l3_miss(is_l3_miss)
+      , _is_op_miss(is_op_miss)
     {
     }
 
@@ -175,10 +188,16 @@ public:
      */
     [[nodiscard]] bool is_l3_miss() const noexcept { return _is_l3_miss; }
 
+    /**
+     * @return True, if the access missed in OP cache.
+     */
+    [[nodiscard]] bool is_op_miss() const noexcept { return _is_op_miss; }
+
   private:
     bool _is_l1_miss;
     bool _is_l2_miss;
     bool _is_l3_miss;
+    bool _is_op_miss;
   };
 
   /**
@@ -371,6 +390,12 @@ public:
   void locked(const std::optional<bool> is_locked) noexcept { _is_locked = is_locked; }
 
   /**
+   * Set whether the sampled op required microcode assistance.
+   * @param is_microcode Microcode assistance indicator.
+   */
+  void is_microcode(const bool is_microcode) noexcept { _is_microcode = is_microcode; }
+
+  /**
    * Set the latency information.
    * @param latency Latency object.
    */
@@ -448,6 +473,11 @@ public:
   [[nodiscard]] bool is_instruction_pointer_exact() const noexcept { return _is_instruction_pointer_exact; }
 
   /**
+   * @return True if the sampled op required microcode assistance, false if not, std::nullopt if not available.
+   */
+  [[nodiscard]] std::optional<bool> is_microcode() const noexcept { return _is_microcode; }
+
+  /**
    * @return Cache object.
    */
   [[nodiscard]] const std::optional<Cache>& cache() const noexcept { return _cache; }
@@ -501,6 +531,7 @@ private:
   std::optional<std::uintptr_t> _physical_instruction_pointer{ std::nullopt };
   bool _is_instruction_pointer_exact{ false };
   std::optional<bool> _is_locked{ std::nullopt };
+  std::optional<bool> _is_microcode{ std::nullopt };
   std::optional<Cache> _cache;
   Latency _latency;
   std::optional<TLB> _tlb;

@@ -1,7 +1,7 @@
-#include <perfcpp/hardware_info.hpp>
 #include <algorithm>
 #include <fstream>
 #include <perfcpp/analyzer/flame_graph_generator.hpp>
+#include <perfcpp/hardware_info.hpp>
 #include <perfcpp/sample/result.hpp>
 #include <perfcpp/util/callchain_trie.hpp>
 #include <sstream>
@@ -48,12 +48,14 @@ perf::SampleResult::write_csv(std::ostream& stream, const char delimiter, const 
 
   /// Header: Instruction Execution
   csv_writer.write_header(SampleRecordingValues::Field::InstructionType, "instruction_type");
+  csv_writer.write_header(SampleRecordingValues::Field::InstructionType, "is_microcode");
   csv_writer.write_header(SampleRecordingValues::Field::LogicalInstructionPointer, "logical_instruction_pointer");
   csv_writer.write_header(SampleRecordingValues::Field::LogicalInstructionPointer, "is_instruction_pointer_exact");
   csv_writer.write_header(SampleRecordingValues::Field::PhysicalInstructionPointer, "physical_instruction_pointer");
   csv_writer.write_header(SampleRecordingValues::Field::InstructionCache, "instruction_l1i_miss");
   csv_writer.write_header(SampleRecordingValues::Field::InstructionCache, "instruction_l2_miss");
-  csv_writer.write_header(SampleRecordingValues::Field::InstructionCache, "instruction_l2_miss");
+  csv_writer.write_header(SampleRecordingValues::Field::InstructionCache, "instruction_l3_miss");
+  csv_writer.write_header(SampleRecordingValues::Field::InstructionCache, "instruction_op_cache_miss");
   csv_writer.write_header(SampleRecordingValues::Field::InstructionTLB, "instruction_itlb_miss");
   csv_writer.write_header(SampleRecordingValues::Field::InstructionTLB, "instruction_itlb_size");
   csv_writer.write_header(SampleRecordingValues::Field::InstructionTLB, "instruction_stlb_miss");
@@ -65,6 +67,7 @@ perf::SampleResult::write_csv(std::ostream& stream, const char delimiter, const 
     csv_writer.write_header(SampleRecordingValues::Field::InstructionLatency, "uop_tag_to_completion");
     csv_writer.write_header(SampleRecordingValues::Field::InstructionLatency, "uop_completion_to_retirement");
     csv_writer.write_header(SampleRecordingValues::Field::InstructionLatency, "instruction_fetch_latency");
+    csv_writer.write_header(SampleRecordingValues::Field::InstructionLatency, "instruction_itlb_refill_latency");
   }
 
   csv_writer.write_header(SampleRecordingValues::Field::BranchType, "branch_type");
@@ -175,6 +178,8 @@ perf::SampleResult::write_csv(std::ostream& stream, const char delimiter, const 
 
     /// Instruction execution
     csv_writer.write_value(SampleRecordingValues::Field::InstructionType, sample.instruction_execution().type());
+    csv_writer.write_value(SampleRecordingValues::Field::InstructionType,
+                           sample.instruction_execution().is_microcode());
     csv_writer.write_value(SampleRecordingValues::Field::LogicalInstructionPointer,
                            sample.instruction_execution().logical_instruction_pointer(),
                            true);
@@ -191,6 +196,8 @@ perf::SampleResult::write_csv(std::ostream& stream, const char delimiter, const 
       SampleRecordingValues::Field::InstructionCache, instruction_cache, [](const auto& c) { return c.is_l2_miss(); });
     csv_writer.write_value(
       SampleRecordingValues::Field::InstructionCache, instruction_cache, [](const auto& c) { return c.is_l3_miss(); });
+    csv_writer.write_value(
+      SampleRecordingValues::Field::InstructionCache, instruction_cache, [](const auto& c) { return c.is_op_miss(); });
 
     const auto& instruction_tlb = sample.instruction_execution().tlb();
     csv_writer.write_value(
@@ -212,6 +219,7 @@ perf::SampleResult::write_csv(std::ostream& stream, const char delimiter, const 
       csv_writer.write_value(SampleRecordingValues::Field::InstructionLatency,
                              instruction_latency.uop_completion_to_retirement());
       csv_writer.write_value(SampleRecordingValues::Field::InstructionLatency, instruction_latency.fetch());
+      csv_writer.write_value(SampleRecordingValues::Field::InstructionLatency, instruction_latency.itlb_refill());
     }
 
     csv_writer.write_value(SampleRecordingValues::Field::BranchType, sample.instruction_execution().branch_type());
