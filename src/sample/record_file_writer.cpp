@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <fstream>
-#include <iostream>
 #include <numeric>
 #include <perfcpp/sample/decoder.hpp>
 #include <perfcpp/sample/record_file_writer.hpp>
@@ -56,8 +55,14 @@ perf::RecordFileWriter::write(const SampleRecordingValues& sampler_values,
   header.attributes.offset = sizeof(FileHeader);
   header.attributes.size = sizeof(AttributeFileSection) * sample_counters.size();
 
-  /// Data section comes after attributes.
-  header.data.offset = header.attributes.offset + header.attributes.size;
+  /// Counter IDs are written immediately after the attrs section. perf report uses these IDs to
+  /// map SAMPLE records to the correct event attribute; without them it cannot build its evsel
+  /// list and hangs while processing records.
+  const auto ids_offset = header.attributes.offset + header.attributes.size;
+  const auto ids_size = sizeof(std::uint64_t) * sample_counters.size();
+
+  /// Data section comes after attributes and IDs.
+  header.data.offset = ids_offset + ids_size;
   header.data.size = sample_size + mmap2_samples.size() + comm_sample.size();
 
   /// Event types section (size is empty by default).
@@ -71,16 +76,24 @@ perf::RecordFileWriter::write(const SampleRecordingValues& sampler_values,
   /// Write the header.
   output_stream << header;
 
-  /// Write attributes with proper file structure.
-  for (const auto& counter : sample_counters) {
+  /// Write attributes, each pointing its ids FileSection at the counter ID written below.
+  for (auto counter_index = 0U; counter_index < sample_counters.size(); ++counter_index) {
+    const auto& counter = sample_counters[counter_index];
     const auto event_index = 0U + static_cast<std::uint8_t>(counter.has_intel_auxiliary_event());
     const auto& perf_event_attribute = counter.group().member(event_index).perf_event_attribute();
 
-    /// Create attribute file section (offset and size are empty by default).
     auto attribute_section = AttributeFileSection{};
     attribute_section.attr = perf_event_attribute;
+    attribute_section.ids.offset = ids_offset + counter_index * sizeof(std::uint64_t);
+    attribute_section.ids.size = sizeof(std::uint64_t);
 
     output_stream << attribute_section;
+  }
+
+  /// Write the counter IDs so perf report can correlate SAMPLE records with this attr.
+  for (const auto& counter : sample_counters) {
+    const auto event_index = 0U + static_cast<std::uint8_t>(counter.has_intel_auxiliary_event());
+    output_stream << counter.group().member(event_index).id();
   }
 
   /// Write the pre-computed MMAP2 and COMM records from buffer.
@@ -385,12 +398,13 @@ perf::RecordFileWriter::calculate_sample_id_all_size(std::optional<std::uint32_t
                                                      std::optional<std::uint64_t> stream_id,
                                                      std::optional<std::uint32_t> cpu_id)
 {
+  /// Layout per kernel perf_event.h sample_id_all:
+  ///   [TID] [TIME] [PERF_SAMPLE_ID — omitted, never set] [STREAM_ID] [CPU] [PERF_SAMPLE_IDENTIFIER]
   return (sizeof(std::uint64_t) * static_cast<std::uint64_t>(process_id.has_value() || thread_id.has_value())) +
          (sizeof(std::uint64_t) * static_cast<std::uint64_t>(timestamp.has_value())) +
-         (sizeof(std::uint64_t) * static_cast<std::uint64_t>(sample_id.has_value())) +
          (sizeof(std::uint64_t) * static_cast<std::uint64_t>(stream_id.has_value())) +
          (sizeof(std::uint64_t) * static_cast<std::uint64_t>(cpu_id.has_value())) +
-         (sizeof(std::uint64_t) * static_cast<std::uint64_t>(sample_id.has_value()));
+         (sizeof(std::uint64_t) * static_cast<std::uint64_t>(sample_id.has_value())); /// PERF_SAMPLE_IDENTIFIER slot
 }
 
 void
@@ -411,10 +425,6 @@ perf::RecordFileWriter::write_sample_id(BinaryStream<std::ostringstream>& output
     output_stream << timestamp.value_or(0ULL);
   }
 
-  if (sample_id.has_value()) {
-    output_stream << sample_id.value_or(0ULL);
-  }
-
   if (stream_id.has_value()) {
     output_stream << stream_id.value_or(0ULL);
   }
@@ -423,6 +433,7 @@ perf::RecordFileWriter::write_sample_id(BinaryStream<std::ostringstream>& output
     output_stream << cpu_id.value_or(0U) << static_cast<std::uint32_t>(0);
   }
 
+  /// PERF_SAMPLE_IDENTIFIER slot (position is fixed at the end of sample_id_all).
   if (sample_id.has_value()) {
     output_stream << sample_id.value_or(0ULL);
   }

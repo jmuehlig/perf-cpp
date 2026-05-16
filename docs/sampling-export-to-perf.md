@@ -5,9 +5,6 @@ Export collected samples into the standard `perf-cpp.data` file format for analy
 > [!TIP]
 > See the example: **[perf_record.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/perf_record.cpp)**.
 
-> [!IMPORTANT]
-> This feature is **experimental**.
-
 ---
 
 ## Exporting Samples
@@ -75,6 +72,14 @@ perf report -i perf-cpp.data --stdio
 # Focus on specific functions or modules.
 perf report -i perf-cpp.data --sort comm,dso,symbol
 ```
+
+> [!TIP]
+> If `perf report` appears to hang, your system may be fetching debug symbols over the network via [debuginfod](https://sourceware.org/elfutils/Debuginfod.html).
+> This is especially common with callchain recordings that reference many binaries.
+> Disable it by unsetting `DEBUGINFOD_URLS`:
+> ```bash
+> DEBUGINFOD_URLS='' perf report -i perf-cpp.data
+> ```
 
 ### Memory Access Analysis
 

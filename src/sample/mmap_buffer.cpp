@@ -123,8 +123,6 @@ perf::MmapBuffer::~MmapBuffer()
   }
 }
 
-#include <iostream>
-
 std::optional<std::uint64_t>
 perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
 {

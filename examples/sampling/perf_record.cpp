@@ -65,7 +65,10 @@ main()
 
   std::cout << "Wrote " << sampler.result().size() << " samples to `perf.data`."
             << "\n    Run `perf report`     to show overhead per symbol"
-            << "\n    Run `perf mem report` to show overhead per data object" << std::endl;
+            << "\n    Run `perf mem report` to show overhead per data object"
+            << "\n\nTip: If perf report hangs, your system may be fetching debug symbols via debuginfod."
+            << "\n     Run with DEBUGINFOD_URLS='' to disable: DEBUGINFOD_URLS='' perf report -i perf.data"
+            << std::endl;
 
   /// Close the sampler.
   /// Note that the sampler can only be closed after reading the samples.

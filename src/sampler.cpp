@@ -519,14 +519,16 @@ perf::MultiSamplerBase::to_perf_file(std::vector<Sampler>& samplers, std::string
       const auto& sample_data = samplers[i].consume_sample_data();
 
       /// Verify that both samples contain the same number of counters.
-      if (accumulated_sample_data.size() == sample_data.size()) {
-        for (auto counter_id = 0U; counter_id < sample_data.size(); ++counter_id) {
-          const auto& counter_sample_data = sample_data[counter_id];
+      if (accumulated_sample_data.size() != sample_data.size()) {
+        throw SamplerCounterMismatchError{};
+      }
 
-          /// Append the data for every counter as different counters will have different sample data.
-          accumulated_sample_data[counter_id].insert(
-            accumulated_sample_data[counter_id].end(), counter_sample_data.begin(), counter_sample_data.end());
-        }
+      for (auto counter_id = 0U; counter_id < sample_data.size(); ++counter_id) {
+        const auto& counter_sample_data = sample_data[counter_id];
+
+        /// Append the data for every counter as different counters will have different sample data.
+        accumulated_sample_data[counter_id].insert(
+          accumulated_sample_data[counter_id].end(), counter_sample_data.begin(), counter_sample_data.end());
       }
     }
 

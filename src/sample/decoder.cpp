@@ -539,7 +539,8 @@ perf::SampleDecoder::has_data_access_type(const perf_mem_data_src perf_data_sour
 {
   const auto op_code = perf_data_source.mem_op;
 
-  return op_code == PERF_MEM_OP_LOAD || op_code == PERF_MEM_OP_STORE || op_code == PERF_MEM_OP_PFETCH;
+  return static_cast<bool>(op_code & PERF_MEM_OP_LOAD) || static_cast<bool>(op_code & PERF_MEM_OP_STORE) ||
+         static_cast<bool>(op_code & PERF_MEM_OP_PFETCH);
 }
 
 perf::DataAccess::Source
@@ -964,7 +965,7 @@ perf::SampleDecoder::decode_cgroup_event(SampleIterator&& entry) const
   auto path = std::string{ entry.as<const char*>() };
 
   /// Advance past the null-terminated path, aligned to 8 bytes.
-  entry.skip<std::byte>((path.size() + /* null terminator */ 1U + 8U) & ~7U);
+  entry.skip<std::byte>((path.size() + /* null terminator */ 1U + 7U) & ~7U);
 
   /// Read sample_id.
   this->decode_sample_id_all(entry, sample);

@@ -864,6 +864,20 @@ public:
   ~EventDoesNotSupportIBSFeatureError() override = default;
 };
 
+class SamplerCounterMismatchError final : public std::runtime_error
+{
+public:
+  SamplerCounterMismatchError()
+    : std::runtime_error{ "Cannot merge perf file: samplers have different numbers of sample counters." }
+  {
+  }
+  SamplerCounterMismatchError(const SamplerCounterMismatchError&) = default;
+  SamplerCounterMismatchError(SamplerCounterMismatchError&&) noexcept = default;
+  SamplerCounterMismatchError& operator=(const SamplerCounterMismatchError&) = default;
+  SamplerCounterMismatchError& operator=(SamplerCounterMismatchError&&) noexcept = default;
+  ~SamplerCounterMismatchError() override = default;
+};
+
 class ThreadIdOutOfBoundsError final : public std::runtime_error
 {
 public:

@@ -828,7 +828,7 @@ public:
     return is_set(Field::PhysicalInstructionPointer) || is_set(Field::InstructionType) || is_set(Field::BranchType) ||
            is_set(Field::InstructionLatency) || is_set(Field::InstructionCache) || is_set(Field::InstructionTLB) ||
            is_set(Field::InstructionFetch) || is_set(Field::DataAccessWidth) ||
-           is_set(Field::DataAccessMisalignPenalty) || is_set(Field::MHBAllocations);
+           is_set(Field::DataAccessMisalignPenalty) || is_set(Field::MHBAllocations) || is_set(Field::DataTLBLatency);
   }
 
 private:
