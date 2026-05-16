@@ -187,4 +187,5 @@ Papers and articles about hardware performance profiling:
 - [Detect false sharing with Data Address Profiling](https://easyperf.net/blog/2019/12/17/Detecting-false-sharing-using-perf) (2019)
 - [Data-type profiling for perf](https://lwn.net/Articles/955709/) (2023)
 - [Analyze cache behavior with Perf C2C on Arm](https://learn.arm.com/learning-paths/servers-and-cloud-computing/false-sharing-arm-spe/) (2023)
+- [How Small Can a Measured Region Be Before perf Counters Lie?](https://jmuehlig.github.io/when-can-you-trust-your-hardware-counters/) (2026)
 
