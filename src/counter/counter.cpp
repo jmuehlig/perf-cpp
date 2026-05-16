@@ -177,7 +177,7 @@ perf::Counter::open(const perf::Config& config,
 }
 
 void
-perf::Counter::close()
+perf::Counter::close() noexcept
 {
   /// Close/un-map the mmap-ed buffer, if any.
   if (this->_mmap_buffer != nullptr) {

@@ -29,7 +29,7 @@ perf::EventCounter::copy_from_template(const EventCounter& other)
   return copy;
 }
 
-perf::EventCounter::~EventCounter() noexcept(false)
+perf::EventCounter::~EventCounter()
 {
   this->close();
 }
@@ -379,7 +379,7 @@ perf::EventCounter::add_live(const std::string& event_name)
 }
 
 void
-perf::EventCounter::add_live(std::vector<std::string>&& event_names)
+perf::EventCounter::add_live(const std::vector<std::string>& event_names)
 {
   for (const auto& event_name : event_names) {
     this->add_live(event_name);
@@ -400,7 +400,7 @@ perf::EventCounter::open()
   }
 
   /// Verify that the EventCounter is not already opened (_is_open == false) and set flag appropriately.
-  if (const auto was_open = std::exchange(this->_is_opened, true); !was_open) {
+  if (!this->_is_opened) {
     /// Open all groups. If one of them fails, group.open() will throw an exception.
     for (auto& [group, _] : this->_hardware_event_groups) {
       group.open(this->_config);
@@ -410,6 +410,9 @@ perf::EventCounter::open()
     for (auto& live_counter : this->_hardware_live_counters) {
       live_counter.open(this->_config, /* is live counter */ true);
     }
+
+    /// Mark opened after opening the counters.
+    this->_is_opened = true;
   }
 }
 
@@ -451,7 +454,7 @@ perf::EventCounter::stop()
 }
 
 void
-perf::EventCounter::close()
+perf::EventCounter::close() noexcept
 {
   if (const auto is_open = std::exchange(this->_is_opened, false); is_open) {
     /// Close all groups.

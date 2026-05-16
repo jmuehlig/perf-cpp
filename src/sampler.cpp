@@ -147,37 +147,38 @@ perf::Sampler::open()
 
   /// Do not open again, if the sampler was already opened.
   /// The is_open flag will be reset on closing the sampler.
-  if (std::exchange(this->_is_opened, true)) {
-    return;
-  }
+  if (!this->_is_opened) {
+    /// Build the groups from triggers + events from values.
+    for (const auto& trigger_group : this->_triggers) {
+      if (trigger_group.empty()) {
+        continue;
+      }
 
-  /// Build the groups from triggers + events from values.
-  for (const auto& trigger_group : this->_triggers) {
-    if (trigger_group.empty()) {
-      continue;
+      /// The first trigger determines which PMUs to open; all triggers in a group share the same PMU set
+      /// (e.g. mem-loads and mem-loads-aux both live on the same CPU PMU).
+      /// On heterogeneous Intel CPUs (P-cores + E-cores), this yields one SampleCounter per PMU.
+      const auto events_for_different_pmus = trigger_group.front().resolve(this->_counter_definition);
+      for (const auto& event : events_for_different_pmus) {
+        const auto pmu_name = std::get<0>(event);
+        auto sample_counter = this->transform_trigger_to_sample_counter(pmu_name, trigger_group);
+        this->_sample_counter.push_back(std::move(sample_counter));
+      }
     }
 
-    /// The first trigger determines which PMUs to open; all triggers in a group share the same PMU set
-    /// (e.g. mem-loads and mem-loads-aux both live on the same CPU PMU).
-    /// On heterogeneous Intel CPUs (P-cores + E-cores), this yields one SampleCounter per PMU.
-    const auto events_for_different_pmus = trigger_group.front().resolve(this->_counter_definition);
-    for (const auto& event : events_for_different_pmus) {
-      const auto pmu_name = std::get<0>(event);
-      auto sample_counter = this->transform_trigger_to_sample_counter(pmu_name, trigger_group);
-      this->_sample_counter.push_back(std::move(sample_counter));
+    /// Verify that at least one trigger was configured.
+    if (this->_sample_counter.empty()) {
+      throw CannotStartEmptySamplerError{};
     }
-  }
 
-  /// Verify that at least one trigger was configured.
-  if (this->_sample_counter.empty()) {
-    throw CannotStartEmptySamplerError{};
-  }
+    /// Open the trigger hardware events.
+    for (auto& sample_counter : this->_sample_counter) {
+      /// Open the group.
+      sample_counter.group().open(
+        this->_config, sample_counter.has_intel_auxiliary_event(), this->_config.buffer_pages(), this->_values);
+    }
 
-  /// Open the trigger hardware events.
-  for (auto& sample_counter : this->_sample_counter) {
-    /// Open the group.
-    sample_counter.group().open(
-      this->_config, sample_counter.has_intel_auxiliary_event(), this->_config.buffer_pages(), this->_values);
+    /// Mark opened after opening the counters.
+    this->_is_opened = true;
   }
 }
 

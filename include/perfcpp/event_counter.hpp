@@ -55,7 +55,7 @@ public:
   EventCounter(const EventCounter&) = delete;
   EventCounter(EventCounter&&) noexcept = default;
 
-  ~EventCounter() noexcept(false);
+  ~EventCounter();
 
   EventCounter& operator=(const EventCounter&) = delete;
   EventCounter& operator=(EventCounter&&) noexcept = delete;
@@ -126,7 +126,16 @@ public:
    *
    * @param event_names List of event names.
    */
-  void add_live(std::vector<std::string>&& event_names);
+  void add_live(std::vector<std::string>&& event_names) { add_live(event_names); }
+
+  /**
+   * Add the specified events to the list of countered performance events.
+   * The events can be read "live" without stopping the counter (only x86 hardware).
+   * The events must exist within the counter definitions.
+   *
+   * @param event_names List of event names.
+   */
+  void add_live(const std::vector<std::string>& event_names);
 
   /**
    * Opens hardware performance counters.
@@ -146,7 +155,7 @@ public:
   /**
    * Closes the hardware performance counters.
    */
-  void close();
+  void close() noexcept;
 
   /**
    * Returns the result of the performance measurement.

@@ -217,7 +217,7 @@ public:
   /**
    * Closes the counter and resets the file descriptor.
    */
-  void close();
+  void close() noexcept;
 
   /**
    * Enables the counter.

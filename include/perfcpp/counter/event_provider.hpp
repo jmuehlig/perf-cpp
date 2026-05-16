@@ -166,8 +166,8 @@ private:
 class CsvFileEventProvider final : public EventProvider
 {
 public:
-  explicit CsvFileEventProvider(const std::string& file_name) noexcept
-    : _file_name(file_name)
+  explicit CsvFileEventProvider(std::string file_name) noexcept
+    : _file_name(std::move(file_name))
   {
   }
   CsvFileEventProvider(const CsvFileEventProvider&) = default;
@@ -183,7 +183,7 @@ public:
   void add_events(CounterDefinition& counter_definition) override;
 
 private:
-  const std::string& _file_name;
+  const std::string _file_name;
 
   /**
    * Reads a type that is not an integer and tries to match it against PERF_TYPE_* from the kernel.
