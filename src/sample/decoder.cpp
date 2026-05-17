@@ -387,12 +387,35 @@ perf::SampleDecoder::decode_branch_stack(SampleIterator& entry)
   const auto* sampled_branches = entry.read_array<perf_branch_entry>(count_branches);
   for (auto i = 0U; i < count_branches; ++i) {
     const auto& branch = sampled_branches[i];
+
 #ifndef PERFCPP_NO_BRANCH_STACK_CYCLES /// Cycles in branch stacks is supported since Linux 4.3
     const auto cycles = branch.cycles > 0 ? std::make_optional<std::uint16_t>(branch.cycles) : std::nullopt;
 #else
     constexpr auto cycles = std::optional<std::uint16_t>{ std::nullopt };
 #endif
-    branches.emplace_back(branch.from, branch.to, branch.mispred, branch.predicted, branch.in_tx, branch.abort, cycles);
+
+#ifndef PERFCPP_NO_BRANCH_ENTRY_TYPE /// Branch entry type classification is supported since Linux 4.15
+    const auto classification = std::make_optional(static_cast<Branch::Classification>(branch.type));
+#else
+    constexpr auto classification = std::optional<Branch::Classification>{ std::nullopt };
+#endif
+
+#ifndef PERFCPP_NO_BRANCH_ENTRY_SPEC /// Branch speculation outcome is supported since Linux 6.1
+    const auto speculation_result = branch.spec > 0U ? std::make_optional(static_cast<Branch::Speculation>(branch.spec))
+                                                     : std::optional<Branch::Speculation>{ std::nullopt };
+#else
+    constexpr auto speculation_result = std::optional<Branch::Speculation>{ std::nullopt };
+#endif
+
+    branches.emplace_back(branch.from,
+                          branch.to,
+                          branch.mispred,
+                          branch.predicted,
+                          branch.in_tx,
+                          branch.abort,
+                          cycles,
+                          classification,
+                          speculation_result);
   }
 
   return branches;

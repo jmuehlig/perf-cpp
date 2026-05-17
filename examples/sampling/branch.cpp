@@ -27,9 +27,9 @@ main()
   sampler.trigger(perf::Cycles{}, perf::Precision::AllowArbitrarySkid, perf::Period{ 1000000U });
 
   /// Setup which data will be included into samples (timestamp and stack of branches).
-  sampler.values().timestamp(true).branch_stack(
-    { perf::BranchType::User, perf::BranchType::Conditional }) /// Only sample conditional branches in user-mode.
-    ;
+  /// The second argument enables per-entry branch classification (Linux 4.15+).
+  sampler.values().timestamp(true).branch_stack({ perf::BranchType::User, perf::BranchType::Conditional },
+                                                /*is_record_branch_classification=*/true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*sequential accesses*/ false,
@@ -66,16 +66,78 @@ main()
   for (auto index = 0U; index < count_show_samples; ++index) {
     const auto& sample = samples[index];
 
-    /// Since we recorded the time, period, the instruction pointer, and the CPU
-    /// id, we can only read these values.
     if (sample.metadata().timestamp().has_value() && sample.branch_stack().has_value()) {
       std::cout << "Time = " << sample.metadata().timestamp().value() << "\n";
       for (const auto& branch : sample.branch_stack().value()) {
-        std::cout << "\tpredicted correct = " << branch.is_predicted() << " | from instruction 0x" << std::hex
-                  << branch.instruction_pointer_from() << std::dec << " | to instruction 0x" << std::hex
+        std::cout << "\tpredicted correct = " << branch.is_predicted() << " | from 0x" << std::hex
+                  << branch.instruction_pointer_from() << std::dec << " | to 0x" << std::hex
                   << branch.instruction_pointer_to() << std::dec;
+
         if (branch.cycles().has_value()) {
           std::cout << " | cycles = " << branch.cycles().value();
+        }
+
+        if (branch.classification().has_value()) {
+          switch (branch.classification().value()) {
+            case perf::Branch::Classification::Conditional:
+              std::cout << " | conditional";
+              break;
+            case perf::Branch::Classification::Unconditional:
+              std::cout << " | unconditional";
+              break;
+            case perf::Branch::Classification::Call:
+              std::cout << " | call";
+              break;
+            case perf::Branch::Classification::IndirectCall:
+              std::cout << " | indirect call";
+              break;
+            case perf::Branch::Classification::Return:
+              std::cout << " | return";
+              break;
+            case perf::Branch::Classification::Syscall:
+              std::cout << " | syscall";
+              break;
+            case perf::Branch::Classification::SyscallReturn:
+              std::cout << " | syscall return";
+              break;
+            case perf::Branch::Classification::ConditionalCall:
+              std::cout << " | conditional call";
+              break;
+            case perf::Branch::Classification::ConditionalReturn:
+              std::cout << " | conditional return";
+              break;
+            case perf::Branch::Classification::Indirect:
+              std::cout << " | indirect";
+              break;
+            case perf::Branch::Classification::ExceptionReturn:
+              std::cout << " | exception return";
+              break;
+            case perf::Branch::Classification::Interrupt:
+              std::cout << " | interrupt";
+              break;
+            case perf::Branch::Classification::SystemError:
+              std::cout << " | system error";
+              break;
+            case perf::Branch::Classification::NotInTransaction:
+              std::cout << " | not in transaction";
+              break;
+            default:
+              break;
+          }
+        }
+
+        if (branch.speculation_result().has_value()) {
+          switch (branch.speculation_result().value()) {
+            case perf::Branch::Speculation::Wrong:
+              std::cout << " | wrong path";
+              break;
+            case perf::Branch::Speculation::Correct:
+              std::cout << " | correct path";
+              break;
+            case perf::Branch::Speculation::SpeculativeCorrect:
+              std::cout << " | speculative correct path";
+              break;
+          }
         }
 
         std::cout << "\n";

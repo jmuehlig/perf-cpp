@@ -510,14 +510,22 @@ public:
    * See https://jmuehlig.github.io/perf-cpp/sampling/#branch-stack
    *
    * @param branch_types List of branch types to include.
+   * @param is_record_branch_classification If set to true, branch classifications will be recorded
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& branch_stack(std::vector<BranchType>&& branch_types) noexcept
+  SampleRecordingValues& branch_stack(std::vector<BranchType>&& branch_types,
+                                      bool is_record_branch_classification = false) noexcept
   {
     this->_branch_mask = std::uint64_t{ 0U };
     for (auto branch_type : branch_types) {
       this->_branch_mask |= static_cast<std::uint64_t>(branch_type);
     }
+
+#ifndef PERFCPP_NO_BRANCH_ENTRY_TYPE
+    if (is_record_branch_classification) {
+      this->_branch_mask |= static_cast<std::uint64_t>(BranchType::TypeSave);
+    }
+#endif
 
     set(Field::BranchStack, this->_branch_mask != 0ULL);
     return *this;

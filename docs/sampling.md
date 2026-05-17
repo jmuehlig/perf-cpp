@@ -428,7 +428,7 @@ Note that `record.branch_stack()` returns an `std::optional`.
 
 | Name             | Description                                                | How to record?                                                                                             | How to access?          | Type                                       |
 |------------------|------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|-------------------------|--------------------------------------------|
-| **Branch Stack** | Records the current branch stack of the CPU.               | `sampler.values().branch_stack({perf::BranchType::Call, perf::BranchType::Conditional})` (see types below) | `record.branch_stack()` | `std::optional<std::vector<perf::Branch>>` |
+| **Branch Stack** | Records the current branch stack of the CPU.               | `sampler.values().branch_stack({perf::BranchType::Call, perf::BranchType::Conditional}, /*is_record_branch_classification=*/false)` (see types below) | `record.branch_stack()` | `std::optional<std::vector<perf::Branch>>` |
 
 #### Branch Types to Record
 You can configure which types of branches to record. The following types are supported (and can be combined):
@@ -450,15 +450,72 @@ You can configure which types of branches to record. The following types are sup
 #### Branch
 Each entry in the branch stack contains the following information:
 
-| Name                         | Description                                                       | How to access?                                            | Type                           |
-|------------------------------|-------------------------------------------------------------------|-----------------------------------------------------------|--------------------------------|
-| **Instruction Pointer From** | The instruction pointer where the branch originated.              | `record.branch_stack()->at(i).instruction_pointer_from()` | `std::uintptr_t`               |
-| **Instruction Pointer To**   | The instruction pointer where the branch target landed.           | `record.branch_stack()->at(i).instruction_pointer_to()`   | `std::uintptr_t`               |
-| **Is Mispredicted**          | Indicates that the branch was mispredicted.                       | `record.branch_stack()->at(i).is_mispredicted()`          | `bool`                         |
-| **Is Predicted**             | Indicates that the branch was predicted correctly.                | `record.branch_stack()->at(i).is_predicted()`             | `bool`                         |
-| **Is In Transaction**        | Indicates that the branch occurred during a hardware transaction. | `record.branch_stack()->at(i).is_in_transaction()`        | `bool`                         |
-| **Is Transaction Abort**     | Indicates that the branch aborted a hardware transaction.         | `record.branch_stack()->at(i).is_transaction_abort()`     | `bool`                         |
-| **Cycles**                   | The number of cycles for the branch (if supported).               | `record.branch_stack()->at(i).cycles()`                   | `std::optional<std::uint64_t>` |
+| Name                         | Description                                                                                                                        | How to access?                                            | Type                                             |
+|------------------------------|------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|--------------------------------------------------|
+| **Instruction Pointer From** | The instruction pointer where the branch originated.                                                                               | `record.branch_stack()->at(i).instruction_pointer_from()` | `std::uintptr_t`                                 |
+| **Instruction Pointer To**   | The instruction pointer where the branch target landed.                                                                            | `record.branch_stack()->at(i).instruction_pointer_to()`   | `std::uintptr_t`                                 |
+| **Is Mispredicted**          | Indicates that the branch was mispredicted.                                                                                        | `record.branch_stack()->at(i).is_mispredicted()`          | `bool`                                           |
+| **Is Predicted**             | Indicates that the branch was predicted correctly.                                                                                 | `record.branch_stack()->at(i).is_predicted()`             | `bool`                                           |
+| **Is In Transaction**        | Indicates that the branch occurred during a hardware transaction.                                                                  | `record.branch_stack()->at(i).is_in_transaction()`        | `bool`                                           |
+| **Is Transaction Abort**     | Indicates that the branch aborted a hardware transaction.                                                                          | `record.branch_stack()->at(i).is_transaction_abort()`     | `bool`                                           |
+| **Cycles**                   | The number of cycles for the branch (from Linux `4.3`).                                                                            | `record.branch_stack()->at(i).cycles()`                   | `std::optional<std::uint16_t>`                   |
+| **Classification**           | The hardware classification of the branch instruction (from Linux `4.15`).                                                      | `record.branch_stack()->at(i).classification()`           | `std::optional<perf::Branch::Classification>`    |
+| **Speculation Result**       | The speculation outcome of the branch (from Linux `6.1`).                                                                       | `record.branch_stack()->at(i).speculation_result()`       | `std::optional<perf::Branch::Speculation>`       |
+
+##### Branch Classification Values
+`perf::Branch::Classification` describes what kind of branch instruction the hardware recorded:
+
+| Value                                    | Description                                      |
+|------------------------------------------|--------------------------------------------------|
+| `perf::Branch::Classification::Unknown`          | Classification not available or not recognized.  |
+| `perf::Branch::Classification::Conditional`      | Conditional branch (e.g. `je`, `jne`).           |
+| `perf::Branch::Classification::Unconditional`    | Unconditional direct branch (e.g. `jmp`).        |
+| `perf::Branch::Classification::Indirect`         | Indirect branch (e.g. `jmp [rax]`).              |
+| `perf::Branch::Classification::Call`             | Direct function call (e.g. `call foo`).          |
+| `perf::Branch::Classification::IndirectCall`     | Indirect function call (e.g. `call [rax]`).      |
+| `perf::Branch::Classification::Return`           | Function return (e.g. `ret`).                    |
+| `perf::Branch::Classification::Syscall`          | System call entry.                               |
+| `perf::Branch::Classification::SyscallReturn`    | System call return.                              |
+| `perf::Branch::Classification::ConditionalCall`  | Conditional function call.                       |
+| `perf::Branch::Classification::ConditionalReturn`| Conditional function return.                     |
+| `perf::Branch::Classification::ExceptionReturn`  | Exception return (e.g. ARM `eret`).              |
+| `perf::Branch::Classification::Interrupt`        | Interrupt branch.                                |
+| `perf::Branch::Classification::SystemError`      | System error branch.                             |
+| `perf::Branch::Classification::NotInTransaction` | Branch not inside a hardware transaction.        |
+
+##### Branch Speculation Values
+`perf::Branch::Speculation` describes whether the branch was executed speculatively and whether it was on the correct path:
+
+| Value                                              | Description                                                        |
+|----------------------------------------------------|--------------------------------------------------------------------|
+| `perf::Branch::Speculation::Wrong`                 | Branch was executed speculatively on the wrong path.               |
+| `perf::Branch::Speculation::Correct`               | Branch was not speculative and retired on the correct path.        |
+| `perf::Branch::Speculation::SpeculativeCorrect`    | Branch was executed speculatively and was on the correct path.     |
+
+> [!NOTE]
+> `std::nullopt` is returned when the hardware did not record a speculation outcome (`PERF_BR_SPEC_NA`).
+
+**Example:**
+
+```cpp
+/// Pass true as the second argument to enable per-entry branch classification (Linux 4.15+).
+sampler.values().branch_stack({perf::BranchType::Any}, /*is_record_branch_classification=*/true);
+
+for (const auto& record : sampler.result())
+{
+    if (record.branch_stack().has_value())
+    {
+        for (const auto& branch : record.branch_stack().value())
+        {
+            if (branch.classification() == perf::Branch::Classification::Call)
+            {
+                std::cout << "Call from 0x" << std::hex << branch.instruction_pointer_from()
+                          << " to 0x" << branch.instruction_pointer_to() << "\n";
+            }
+        }
+    }
+}
+```
 
 **Example:** [`branch_sampling.cpp`](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/branch.cpp)
 
