@@ -407,6 +407,13 @@ perf::SampleDecoder::decode_branch_stack(SampleIterator& entry)
     constexpr auto speculation_result = std::optional<Branch::Speculation>{ std::nullopt };
 #endif
 
+#ifndef PERFCPP_NO_BRANCH_ENTRY_PRIV /// Branch privilege level is supported since Linux 6.1
+    const auto privilege_level = branch.priv > 0U ? std::make_optional(static_cast<Branch::PrivilegeLevel>(branch.priv))
+                                                  : std::optional<Branch::PrivilegeLevel>{ std::nullopt };
+#else
+    constexpr auto privilege_level = std::optional<Branch::PrivilegeLevel>{ std::nullopt };
+#endif
+
     branches.emplace_back(branch.from,
                           branch.to,
                           branch.mispred,
@@ -415,7 +422,8 @@ perf::SampleDecoder::decode_branch_stack(SampleIterator& entry)
                           branch.abort,
                           cycles,
                           classification,
-                          speculation_result);
+                          speculation_result,
+                          privilege_level);
   }
 
   return branches;

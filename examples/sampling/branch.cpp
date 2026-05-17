@@ -28,8 +28,10 @@ main()
 
   /// Setup which data will be included into samples (timestamp and stack of branches).
   /// The second argument enables per-entry branch classification (Linux 4.15+).
+  /// The third argument enables per-entry privilege level recording (Linux 6.1+).
   sampler.values().timestamp(true).branch_stack({ perf::BranchType::User, perf::BranchType::Conditional },
-                                                /*is_record_branch_classification=*/true);
+                                                /*is_record_branch_classification=*/true,
+                                                /*is_record_branch_privilege_level=*/true);
 
   /// Create random access benchmark.
   auto benchmark = perf::example::AccessBenchmark{ /*sequential accesses*/ false,
@@ -136,6 +138,20 @@ main()
               break;
             case perf::Branch::Speculation::SpeculativeCorrect:
               std::cout << " | speculative correct path";
+              break;
+          }
+        }
+
+        if (branch.privilege_level().has_value()) {
+          switch (branch.privilege_level().value()) {
+            case perf::Branch::PrivilegeLevel::User:
+              std::cout << " | user";
+              break;
+            case perf::Branch::PrivilegeLevel::Kernel:
+              std::cout << " | kernel";
+              break;
+            case perf::Branch::PrivilegeLevel::Hypervisor:
+              std::cout << " | hypervisor";
               break;
           }
         }

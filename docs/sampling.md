@@ -428,7 +428,7 @@ Note that `record.branch_stack()` returns an `std::optional`.
 
 | Name             | Description                                                | How to record?                                                                                             | How to access?          | Type                                       |
 |------------------|------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|-------------------------|--------------------------------------------|
-| **Branch Stack** | Records the current branch stack of the CPU.               | `sampler.values().branch_stack({perf::BranchType::Call, perf::BranchType::Conditional}, /*is_record_branch_classification=*/false)` (see types below) | `record.branch_stack()` | `std::optional<std::vector<perf::Branch>>` |
+| **Branch Stack** | Records the current branch stack of the CPU.               | `sampler.values().branch_stack({perf::BranchType::Call, perf::BranchType::Conditional}, /*is_record_branch_classification=*/false, /*is_record_branch_privilege_level=*/false)` (see types below) | `record.branch_stack()` | `std::optional<std::vector<perf::Branch>>` |
 
 #### Branch Types to Record
 You can configure which types of branches to record. The following types are supported (and can be combined):
@@ -461,6 +461,7 @@ Each entry in the branch stack contains the following information:
 | **Cycles**                   | The number of cycles for the branch (from Linux `4.3`).                                                                            | `record.branch_stack()->at(i).cycles()`                   | `std::optional<std::uint16_t>`                   |
 | **Classification**           | The hardware classification of the branch instruction (from Linux `4.15`).                                                      | `record.branch_stack()->at(i).classification()`           | `std::optional<perf::Branch::Classification>`    |
 | **Speculation Result**       | The speculation outcome of the branch (from Linux `6.1`).                                                                       | `record.branch_stack()->at(i).speculation_result()`       | `std::optional<perf::Branch::Speculation>`       |
+| **Privilege Level**          | The privilege level at which the branch was executed (from Linux `6.1`).                                                        | `record.branch_stack()->at(i).privilege_level()`          | `std::optional<perf::Branch::PrivilegeLevel>`    |
 
 ##### Branch Classification Values
 `perf::Branch::Classification` describes what kind of branch instruction the hardware recorded:
@@ -494,6 +495,19 @@ Each entry in the branch stack contains the following information:
 
 > [!NOTE]
 > `std::nullopt` is returned when the hardware did not record a speculation outcome (`PERF_BR_SPEC_NA`).
+
+##### Branch Privilege Level Values
+`perf::Branch::PrivilegeLevel` describes the privilege level at which the branch was executed.
+Enable recording via the third parameter of `branch_stack({...}, false, /*is_record_branch_privilege_level=*/true)`.
+
+| Value                                       | Description                                      |
+|---------------------------------------------|--------------------------------------------------|
+| `perf::Branch::PrivilegeLevel::User`        | Branch executed in user space.                   |
+| `perf::Branch::PrivilegeLevel::Kernel`      | Branch executed in kernel space.                 |
+| `perf::Branch::PrivilegeLevel::Hypervisor`  | Branch executed at hypervisor level.             |
+
+> [!NOTE]
+> `std::nullopt` is returned when the hardware did not record a privilege level (`PERF_BR_PRIV_UNKNOWN`) or `PERF_SAMPLE_BRANCH_PRIV_SAVE` was not requested.
 
 **Example:**
 

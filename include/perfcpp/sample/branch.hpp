@@ -47,6 +47,9 @@ enum class BranchType : std::uint32_t
 #ifndef PERFCPP_NO_BRANCH_ENTRY_TYPE /// Saving the branch type per entry is supported since Linux 4.15
   TypeSave = PERF_SAMPLE_BRANCH_TYPE_SAVE,
 #endif
+#ifndef PERFCPP_NO_BRANCH_ENTRY_PRIV /// Saving the privilege level per entry is supported since Linux 6.1
+  PrivSave = PERF_SAMPLE_BRANCH_PRIV_SAVE,
+#endif
 };
 
 /**
@@ -56,6 +59,18 @@ enum class BranchType : std::uint32_t
 class Branch
 {
 public:
+  /**
+   * Privilege level at which the branch was executed, as reported by the hardware.
+   * Values correspond to perf_branch_priv (PERF_BR_PRIV_*) in linux/perf_event.h.
+   * PERF_BR_PRIV_UNKNOWN (0) maps to std::nullopt.
+   */
+  enum class PrivilegeLevel : std::uint8_t
+  {
+    User = 1,
+    Kernel = 2,
+    Hypervisor = 3,
+  };
+
   /**
    * Speculation outcome of the branch, as reported by the hardware.
    * Values correspond to perf_branch_spec (PERF_BR_SPEC_*) in linux/perf_event.h.
@@ -98,7 +113,8 @@ public:
          const bool is_transaction_abort,
          const std::optional<std::uint16_t> cycles,
          const std::optional<Classification> classification,
-         const std::optional<Speculation> speculation_result) noexcept
+         const std::optional<Speculation> speculation_result,
+         const std::optional<PrivilegeLevel> privilege_level) noexcept
     : _instruction_pointer_from(instruction_pointer_from)
     , _instruction_pointer_to(instruction_pointer_to)
     , _is_mispredicted(is_mispredicted)
@@ -108,6 +124,7 @@ public:
     , _cycles(cycles)
     , _classification(classification)
     , _speculation_result(speculation_result)
+    , _privilege_level(privilege_level)
   {
   }
 
@@ -157,6 +174,13 @@ public:
    */
   [[nodiscard]] std::optional<Speculation> speculation_result() const noexcept { return _speculation_result; }
 
+  /**
+   * @return The privilege level at which the branch was executed, or std::nullopt if
+   *         PERF_SAMPLE_BRANCH_PRIV_SAVE was not requested, the hardware did not record a level,
+   *         or the kernel is older than 6.1.
+   */
+  [[nodiscard]] std::optional<PrivilegeLevel> privilege_level() const noexcept { return _privilege_level; }
+
 private:
   std::uintptr_t _instruction_pointer_from;
   std::uintptr_t _instruction_pointer_to;
@@ -172,5 +196,9 @@ private:
 
   /// Branch speculation outcome from the hardware; nullopt if kernel < 6.1.
   std::optional<Speculation> _speculation_result;
+
+  /// Branch privilege level from the hardware; nullopt if PERF_SAMPLE_BRANCH_PRIV_SAVE was not requested,
+  /// the hardware reported PERF_BR_PRIV_UNKNOWN, or kernel < 6.1.
+  std::optional<PrivilegeLevel> _privilege_level;
 };
 }

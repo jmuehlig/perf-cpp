@@ -2,8 +2,10 @@
 
 ## v1.0.0
 - **Removed Deprecated Header Files**: All legacy `.h` forwarding headers (e.g., `perfcpp/sampler.h`, `perfcpp/event_counter.h`) have been removed. Use `.hpp` files instead.
-- **Branch Entry Classification** (Linux 4.15+): Each entry in a branch stack sample now carries a hardware-assigned `Branch::Classification` indicating the instruction type (conditional, call, return, syscall, etc.). Enable via the second parameter of `branch_stack({...}, /*is_record_branch_classification=*/true)` and read with `branch.classification()`. See the [sampling documentation](https://jmuehlig.github.io/perf-cpp/sampling/#branch-stack).
-- **Branch Entry Speculation Result** (Linux 6.1+): Each branch entry now exposes a `Branch::Speculation` value (`Wrong`, `Correct`, or `SpeculativeCorrect`) via `branch.speculation_result()`, or `std::nullopt` when the hardware did not record a result. See the [sampling documentation](https://jmuehlig.github.io/perf-cpp/sampling/#branch-stack).
+- **Richer Branch Stack Entries**: Each entry in a branch stack sample can now carry additional hardware-reported metadata (see the [sampling documentation](https://jmuehlig.github.io/perf-cpp/sampling/#branch-stack)):
+  - **Classification** (Linux 4.15+): the type of branch instruction — conditional, unconditional, call, return, syscall, and more.
+  - **Speculation Result** (Linux 6.1+): whether the branch was on the correct or wrong speculative path.
+  - **Privilege Level** (Linux 6.1+): whether the branch executed in user space, kernel space, or at hypervisor level.
 - **New IBS Sample Fields** (*AMD IBS PMU* only): Three additional fields decoded from IBS raw data, none of which are accessible via the standard `perf_event_open` interface:
   - **Op Cache Miss** (`record.instruction_execution().cache()->is_op_miss()`): indicates the fetch missed the op cache (decoded instruction cache), even if the L1 instruction cache hit. Enabled via `sampler.values().instruction_cache(true)`. (*IBS Fetch PMU*)
   - **iTLB Refill Latency** (`record.instruction_execution().latency().itlb_refill()`): cycles to refill the instruction TLB after a miss. Only set when an iTLB miss occurred. Enabled via `sampler.values().instruction_latency(true)`. (*IBS Fetch PMU*)
