@@ -25,7 +25,7 @@ public:
                 const std::uint64_t id_extension_2 = 0UL,
                 const bool is_fixed = false) noexcept
     : _type(type)
-    , _configs({ id, id_extension_1, id_extension_2 })
+    , _configs({ id, id_extension_1, id_extension_2, 0UL, 0UL })
     , _is_fixed(is_fixed)
   {
   }
@@ -45,6 +45,26 @@ public:
    * @param is_fixed True if the event uses a fixed PMC.
    */
   void fixed(const bool is_fixed) noexcept { _is_fixed = is_fixed; }
+
+  /**
+   * Set extended configuration values for the perf event.
+   * The base config is set via the constructor's id parameter.
+   *
+   * @param config1 Value for perf_event_attr::config1.
+   * @param config2 Value for perf_event_attr::config2.
+   * @param config3 Value for perf_event_attr::config3.
+   * @param config4 Value for perf_event_attr::config4.
+   */
+  void config_extension(const std::uint64_t config1,
+                        const std::uint64_t config2 = 0UL,
+                        const std::uint64_t config3 = 0UL,
+                        const std::uint64_t config4 = 0UL) noexcept
+  {
+    _configs[1U] = config1;
+    _configs[2U] = config2;
+    _configs[3U] = config3;
+    _configs[4U] = config4;
+  }
 
   /**
    * Set the scale for calculating the event result.
@@ -81,7 +101,7 @@ public:
   /**
    * @return Configurations of the event.
    */
-  [[nodiscard]] std::array<std::uint64_t, 3U> configs() const noexcept { return _configs; }
+  [[nodiscard]] std::array<std::uint64_t, 5U> configs() const noexcept { return _configs; }
 
   /**
    * @return Scale of the event.
@@ -113,7 +133,7 @@ private:
   std::uint32_t _type;
 
   /// Configuration ids of the event.
-  std::array<std::uint64_t, 3U> _configs;
+  std::array<std::uint64_t, 5U> _configs;
 
   /// Scale of the event.
   double _scale{ 1.0 };

@@ -160,13 +160,13 @@ auto counter_definitions = perf::CounterDefinition{};
 /// Add a single event with its raw code.
 counter_definitions.add("cycle_activity.stalls_l3_miss", 0x65306a3);
 
-/// For events requiring additional configuration.
-counter_definitions.add(
-    "complex_event_name",
-    0x1234,     /// config
-    0x5678,     /// config1 (optional)
-    4           /// type (optional)
-);
+/// For events requiring a specific PMU type.
+counter_definitions.add("complex_event_name", /* type = */ 4, /* config = */ 0x1234);
+
+/// For events requiring extended configuration fields (config1 through config4).
+auto event_config = perf::CounterConfig{ /* type = */ 4, /* config = */ 0x1234 };
+event_config.config_extension(/* config1 = */ 0x5678, /* config2 = */ 0x0, /* config3 = */ 0x9abc);
+counter_definitions.add("complex_event_name", std::move(event_config));
 ```
 
 Custom CSV files following the format `name,config[,config1,type]` can be loaded the same way as built-in event library files.
@@ -206,7 +206,7 @@ perf_event_attr:
 The `config` value (`0xc0`) and `type` (`4`) are your event code and PMU type:
 
 ```cpp
-counter_definitions.add("ex_ret_instr", 0xc0, /* config1 = */ 0x0, /* type = */ 4);
+counter_definitions.add("ex_ret_instr", /* type = */ 4, /* config = */ 0xc0);
 ```
 
 ---

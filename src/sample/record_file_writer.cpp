@@ -84,7 +84,7 @@ perf::RecordFileWriter::write(const SampleRecordingValues& sampler_values,
 
     auto attribute_section = AttributeFileSection{};
     attribute_section.attr = perf_event_attribute;
-    attribute_section.ids.offset = ids_offset + counter_index * sizeof(std::uint64_t);
+    attribute_section.ids.offset = ids_offset + (counter_index * sizeof(std::uint64_t));
     attribute_section.ids.size = sizeof(std::uint64_t);
 
     output_stream << attribute_section;
