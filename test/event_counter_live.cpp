@@ -254,3 +254,119 @@ TEST_CASE("LiveEventCounter", "[LiveEventCounter]")
     REQUIRE(event_counter.result().get("cycles").value() > 0.);
   }
 }
+
+TEST_CASE("LiveEventCounter edge cases", "[LiveEventCounter]")
+{
+  auto benchmark = perf::test::AccessBenchmark{ /* is random */ true, 256U /* MB */ };
+
+  SECTION("live_event_names is empty when no live events were added")
+  {
+    auto event_counter = perf::EventCounter{};
+    REQUIRE(event_counter.live_event_names().empty());
+
+    /// LiveEventCounter built on a counter with no live events must still answer queries with 0.
+    const auto live_events = perf::LiveEventCounter{ event_counter };
+    REQUIRE(live_events.get("instructions") == 0.);
+  }
+
+  SECTION("live_event_names ignores regular (non-live) events")
+  {
+    auto event_counter = perf::EventCounter{};
+    event_counter.add("instructions");
+    event_counter.add("cycles");
+
+    REQUIRE(event_counter.live_event_names().empty());
+  }
+
+  SECTION("get before any start/stop returns 0")
+  {
+    /// Cached start/stop values are nullopt at construction; get must short-circuit to 0 instead of dereferencing.
+    auto event_counter = perf::EventCounter{};
+    event_counter.add_live("instructions");
+
+    const auto live_events = perf::LiveEventCounter{ event_counter };
+    REQUIRE(live_events.get("instructions") == 0.);
+    REQUIRE(live_events.get("instructions", std::uint64_t{ 1000U }) == 0.);
+  }
+
+  SECTION("get after only start (no stop) returns 0")
+  {
+    /// stop_value is still nullopt; get must not subtract from an empty optional.
+    auto event_counter = perf::EventCounter{};
+    event_counter.add_live("instructions");
+
+    auto live_events = perf::LiveEventCounter{ event_counter };
+
+    event_counter.start();
+    live_events.start();
+    benchmark.run();
+    /// Deliberately do NOT call live_events.stop().
+
+    REQUIRE(live_events.get("instructions") == 0.);
+
+    event_counter.stop();
+  }
+
+  SECTION("get for an unknown event name returns 0")
+  {
+    auto event_counter = perf::EventCounter{};
+    event_counter.add_live("instructions");
+
+    const auto live_events = perf::LiveEventCounter{ event_counter };
+    REQUIRE(live_events.get("not-an-event") == 0.);
+    REQUIRE(live_events.get("not-an-event", std::uint64_t{ 1000U }) == 0.);
+  }
+
+  SECTION("add_live(string&&) and add_live(vector&&) rvalue overloads register events")
+  {
+    auto event_counter = perf::EventCounter{};
+    REQUIRE_NOTHROW(event_counter.add_live(std::string{ "instructions" }));
+    REQUIRE_NOTHROW(event_counter.add_live(std::vector<std::string>{ "cache-misses", "branches" }));
+
+    const auto names = event_counter.live_event_names();
+    REQUIRE(names.size() == 3U);
+  }
+}
+
+TEST_CASE("EventCounter::live_result vector with normalization", "[LiveEventCounter]")
+{
+  auto benchmark = perf::test::AccessBenchmark{ /* is random */ true, 512U /* MB */ };
+
+  SECTION("normalization divides each entry")
+  {
+    auto event_counter = perf::EventCounter{};
+    event_counter.add_live(std::vector<std::string>{ "instructions", "cache-misses" });
+
+    event_counter.start();
+    benchmark.run();
+
+    auto raw = std::vector<double>(2U, 0.);
+    event_counter.live_result(raw);
+
+    auto normalized = std::vector<double>(2U, 0.);
+    const auto normalization = std::uint64_t{ 1000U };
+    event_counter.live_result(normalized, normalization);
+
+    event_counter.stop();
+
+    /// Live reads are independent in time, so allow 10% slack for the small drift between the two reads.
+    const auto expected_instructions = raw[0] / static_cast<double>(normalization);
+    REQUIRE(normalized[0] > expected_instructions * 0.9);
+    REQUIRE(normalized[0] < expected_instructions * 1.1);
+  }
+
+  SECTION("size mismatch throws")
+  {
+    auto event_counter = perf::EventCounter{};
+    event_counter.add_live(std::vector<std::string>{ "instructions", "cache-misses" });
+
+    event_counter.start();
+    benchmark.run();
+
+    auto wrong_size = std::vector<double>(1U, 0.);
+    REQUIRE_THROWS_AS(event_counter.live_result(wrong_size, std::uint64_t{ 1000U }),
+                      perf::LiveEventCounterResultMismatchError);
+
+    event_counter.stop();
+  }
+}

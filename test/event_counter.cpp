@@ -463,3 +463,222 @@ TEST_CASE("lifecycle", "[EventCounter]")
     event_counter.close();
   }
 }
+
+TEST_CASE("metric expansion", "[EventCounter]")
+{
+  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
+
+  SECTION("metric alone hides its required events")
+  {
+    /// Adding only the metric must schedule its hardware dependencies but hide them from the result.
+    auto event_counter = perf::EventCounter{};
+    event_counter.add("instructions-per-cycle");
+
+    event_counter.start();
+    readonly_benchmark.run();
+    event_counter.stop();
+
+    const auto result = event_counter.result();
+    REQUIRE(result.get("instructions-per-cycle").has_value());
+    REQUIRE(result.get("instructions-per-cycle").value() > 0.);
+    REQUIRE_FALSE(result.get("instructions").has_value());
+    REQUIRE_FALSE(result.get("cycles").has_value());
+  }
+
+  SECTION("required event added before metric stays visible")
+  {
+    /// Explicit event is visible; the metric's other dependency stays hidden.
+    auto event_counter = perf::EventCounter{};
+    event_counter.add("instructions");
+    event_counter.add("instructions-per-cycle");
+
+    event_counter.start();
+    readonly_benchmark.run();
+    event_counter.stop();
+
+    const auto result = event_counter.result();
+    REQUIRE(result.get("instructions").has_value());
+    REQUIRE(result.get("instructions").value() > 0.);
+    REQUIRE(result.get("instructions-per-cycle").has_value());
+    REQUIRE(result.get("instructions-per-cycle").value() > 0.);
+    REQUIRE_FALSE(result.get("cycles").has_value());
+  }
+
+  SECTION("required event added after metric upgrades visibility")
+  {
+    /// The dependency was scheduled hidden by the metric expansion; adding it explicitly must promote it.
+    auto event_counter = perf::EventCounter{};
+    event_counter.add("instructions-per-cycle");
+    event_counter.add("instructions");
+
+    event_counter.start();
+    readonly_benchmark.run();
+    event_counter.stop();
+
+    const auto result = event_counter.result();
+    REQUIRE(result.get("instructions").has_value());
+    REQUIRE(result.get("instructions").value() > 0.);
+    REQUIRE(result.get("instructions-per-cycle").has_value());
+    REQUIRE(result.get("instructions-per-cycle").value() > 0.);
+    REQUIRE_FALSE(result.get("cycles").has_value());
+  }
+
+  SECTION("metric appears only once when added twice")
+  {
+    /// Adding the same metric twice must not duplicate it in the result or re-schedule its dependencies.
+    auto event_counter = perf::EventCounter{};
+    event_counter.add("instructions-per-cycle");
+    event_counter.add("instructions-per-cycle");
+
+    event_counter.start();
+    readonly_benchmark.run();
+    event_counter.stop();
+
+    const auto result = event_counter.result();
+    REQUIRE(result.get("instructions-per-cycle").has_value());
+
+    /// Count occurrences via iteration since CounterResult::get returns only the first match.
+    auto metric_count = 0U;
+    for (const auto& [name, _] : result) {
+      if (name == "instructions-per-cycle") {
+        ++metric_count;
+      }
+    }
+    REQUIRE(metric_count == 1U);
+  }
+
+  SECTION("two metrics share hardware dependencies")
+  {
+    /// IPC and CPI both depend on instructions + cycles. The shared dependencies must be scheduled once: with a limit
+    /// of two physical counters, both metrics must still fit and compute.
+    auto config = perf::Config{};
+    config.num_physical_counters(2U);
+    config.num_events_per_physical_counter(1U);
+    auto event_counter = perf::EventCounter{ config };
+
+    event_counter.add(std::vector<std::string>{ "instructions-per-cycle", "cycles-per-instruction" });
+
+    event_counter.start();
+    readonly_benchmark.run();
+    event_counter.stop();
+
+    const auto result = event_counter.result();
+    REQUIRE(result.get("instructions-per-cycle").has_value());
+    REQUIRE(result.get("instructions-per-cycle").value() > 0.);
+    REQUIRE(result.get("cycles-per-instruction").has_value());
+    REQUIRE(result.get("cycles-per-instruction").value() > 0.);
+
+    /// IPC and CPI must be reciprocals: IPC * CPI == 1 (within floating-point tolerance).
+    const auto product = result.get("instructions-per-cycle").value() * result.get("cycles-per-instruction").value();
+    REQUIRE(product > 0.99);
+    REQUIRE(product < 1.01);
+
+    /// Underlying hardware dependencies must remain hidden.
+    REQUIRE_FALSE(result.get("instructions").has_value());
+    REQUIRE_FALSE(result.get("cycles").has_value());
+  }
+
+  SECTION("metric ordering follows first appearance")
+  {
+    /// Result order is dictated by the order events enter the requested event set, including hidden ones.
+    auto event_counter = perf::EventCounter{};
+    event_counter.add("instructions");
+    event_counter.add("instructions-per-cycle");
+    event_counter.add("cycles");
+
+    event_counter.start();
+    readonly_benchmark.run();
+    event_counter.stop();
+
+    const auto result = event_counter.result();
+
+    /// Expected order: instructions (added explicitly first), then cycles (added hidden by IPC, then upgraded by the
+    /// explicit add), then instructions-per-cycle (the metric itself).
+    auto names = std::vector<std::string_view>{};
+    for (const auto& [name, _] : result) {
+      names.push_back(name);
+    }
+    REQUIRE(names.size() == 3U);
+    REQUIRE(names[0] == "instructions");
+    REQUIRE(names[1] == "cycles");
+    REQUIRE(names[2] == "instructions-per-cycle");
+  }
+}
+
+TEST_CASE("ergonomics", "[EventCounter]")
+{
+  SECTION("config() getter returns the construction config")
+  {
+    auto config = perf::Config{};
+    config.num_physical_counters(3U);
+    config.num_events_per_physical_counter(2U);
+
+    const auto event_counter = perf::EventCounter{ config };
+    REQUIRE(event_counter.config().num_physical_counters() == 3U);
+    REQUIRE(event_counter.config().num_events_per_physical_counter() == 2U);
+  }
+
+  SECTION("config() setter overrides the previous config")
+  {
+    auto initial = perf::Config{};
+    initial.num_physical_counters(2U);
+    auto event_counter = perf::EventCounter{ initial };
+    REQUIRE(event_counter.config().num_physical_counters() == 2U);
+
+    auto updated = perf::Config{};
+    updated.num_physical_counters(5U);
+    event_counter.config(updated);
+    REQUIRE(event_counter.config().num_physical_counters() == 5U);
+  }
+
+  SECTION("config() setter takes effect for subsequent add()")
+  {
+    /// Updating the config after construction must change the scheduling limits used by add().
+    auto event_counter = perf::EventCounter{};
+
+    auto tight = perf::Config{};
+    tight.num_physical_counters(1U);
+    tight.num_events_per_physical_counter(1U);
+    event_counter.config(tight);
+
+    REQUIRE_THROWS(event_counter.add(std::vector<std::string>{ "instructions", "cycles" }));
+  }
+
+  SECTION("add(string&&) rvalue overload registers the event")
+  {
+    auto event_counter = perf::EventCounter{};
+    REQUIRE_NOTHROW(event_counter.add(std::string{ "instructions" }));
+  }
+
+  SECTION("add(vector&&) rvalue overload registers the events")
+  {
+    auto event_counter = perf::EventCounter{};
+    REQUIRE_NOTHROW(event_counter.add(std::vector<std::string>{ "instructions", "cycles" }));
+  }
+
+  SECTION("empty EventCounter has empty result and safe lifecycle")
+  {
+    /// With no events scheduled, open()/start()/stop()/close() must be safe no-ops and result() must be empty.
+    auto event_counter = perf::EventCounter{};
+
+    REQUIRE_NOTHROW(event_counter.open());
+    REQUIRE_NOTHROW(event_counter.start());
+    REQUIRE_NOTHROW(event_counter.stop());
+
+    const auto result = event_counter.result();
+    REQUIRE(result.empty());
+    REQUIRE(result.size() == 0U);
+
+    REQUIRE_NOTHROW(event_counter.close());
+    /// Second close on an already-closed counter must remain safe.
+    REQUIRE_NOTHROW(event_counter.close());
+  }
+
+  SECTION("close before any open is safe")
+  {
+    /// close() must be safe on a counter that was never opened, even after add().
+    auto event_counter = perf::EventCounter{};
+    event_counter.add("instructions");
+    REQUIRE_NOTHROW(event_counter.close());
+  }
+}

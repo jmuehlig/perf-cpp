@@ -17,6 +17,7 @@ set(PERF_CPP_TEST
         test/event_counter.cpp
         test/event_counter_live.cpp
         test/event_counter_multi_thread.cpp
+        test/event_counter_multi_core.cpp
         test/sampler.cpp
         test/sampler_multi_thread.cpp
         test/hardware_info.cpp

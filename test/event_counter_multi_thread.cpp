@@ -3,6 +3,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <perfcpp/event_counter.hpp>
+#include <perfcpp/exception.hpp>
 #include <thread>
 #include <vector>
 
@@ -111,6 +112,66 @@ TEST_CASE("multi_thread_event_counter_lifecycle", "[MultiThreadEventCounter]")
 
     REQUIRE_NOTHROW(counter.close());
     REQUIRE_NOTHROW(counter.close()); /// Second close must not crash or throw.
+  }
+}
+
+TEST_CASE("multi_thread_event_counter_bounds", "[MultiThreadEventCounter]")
+{
+  SECTION("start with out-of-bounds thread id throws")
+  {
+    auto counter = perf::MultiThreadEventCounter{ 2U };
+    counter.add("instructions");
+
+    /// thread_id == size and thread_id > size must both throw.
+    REQUIRE_THROWS_AS(counter.start(2U), perf::ThreadIdOutOfBoundsError);
+    REQUIRE_THROWS_AS(counter.start(99U), perf::ThreadIdOutOfBoundsError);
+  }
+
+  SECTION("stop with out-of-bounds thread id throws")
+  {
+    auto counter = perf::MultiThreadEventCounter{ 2U };
+    counter.add("instructions");
+
+    REQUIRE_THROWS_AS(counter.stop(2U), perf::ThreadIdOutOfBoundsError);
+    REQUIRE_THROWS_AS(counter.stop(99U), perf::ThreadIdOutOfBoundsError);
+  }
+
+  SECTION("result_of_thread with out-of-bounds thread id throws")
+  {
+    auto counter = perf::MultiThreadEventCounter{ 2U };
+    counter.add("instructions");
+
+    REQUIRE_THROWS_AS(counter.result_of_thread(2U), perf::ThreadIdOutOfBoundsError);
+    REQUIRE_THROWS_AS(counter.result_of_thread(99U), perf::ThreadIdOutOfBoundsError);
+  }
+
+  SECTION("highest valid thread id does not throw")
+  {
+    /// thread_id == size - 1 is in bounds; only the access checks are exercised here, no perf_event_open.
+    auto counter = perf::MultiThreadEventCounter{ 4U };
+    counter.add("instructions");
+
+    REQUIRE_NOTHROW(counter.start(3U));
+    REQUIRE_NOTHROW(counter.stop(3U));
+    REQUIRE_NOTHROW(counter.result_of_thread(3U));
+  }
+
+  SECTION("zero threads is constructible and safe to use")
+  {
+    /// With zero threads, no per-thread EventCounter exists. Operations that take a thread id must throw; bulk
+    /// operations must be safe no-ops.
+    auto counter = perf::MultiThreadEventCounter{ 0U };
+
+    REQUIRE_NOTHROW(counter.add("instructions"));
+    REQUIRE_THROWS_AS(counter.start(0U), perf::ThreadIdOutOfBoundsError);
+    REQUIRE_THROWS_AS(counter.stop(0U), perf::ThreadIdOutOfBoundsError);
+    REQUIRE_THROWS_AS(counter.result_of_thread(0U), perf::ThreadIdOutOfBoundsError);
+    REQUIRE_NOTHROW(counter.stop());
+    REQUIRE_NOTHROW(counter.close());
+
+    /// Aggregated result over an empty counter list must be empty.
+    const auto result = counter.result();
+    REQUIRE(result.empty());
   }
 }
 
