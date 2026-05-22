@@ -1,6 +1,7 @@
 #include <iostream>
 #include <perfcpp/counter/group.hpp>
 #include <perfcpp/exception.hpp>
+#include <perfcpp/sample/config.hpp>
 #include <type_traits>
 #include <unistd.h>
 
@@ -33,7 +34,7 @@ perf::Group::open(const Config& config)
 }
 
 void
-perf::Group::open(const Config& config,
+perf::Group::open(const SampleConfig& config,
                   const bool has_auxiliary_event,
                   const std::uint64_t buffer_pages,
                   const SampleRecordingValues& sample_recording_values)

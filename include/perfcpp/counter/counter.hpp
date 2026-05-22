@@ -7,6 +7,7 @@
 #include <optional>
 #include <perfcpp/counter/config.hpp>
 #include <perfcpp/counter/result.hpp>
+#include <perfcpp/sample/config.hpp>
 #include <perfcpp/sample/mmap_buffer.hpp>
 #include <perfcpp/sample/period.hpp>
 #include <perfcpp/sample/precision.hpp>
@@ -214,7 +215,7 @@ public:
    * @param buffer_pages Number of pages allocated for user-level buffer.
    * @param sample_recording_values Values to record while sampling.
    */
-  void open(const perf::Config& config,
+  void open(const SampleConfig& config,
             std::uint64_t buffer_pages,
             const SampleRecordingValues& sample_recording_values);
 
@@ -229,7 +230,7 @@ public:
    * @param sample_recording_values Values to record while sampling.
    * @param group_leader_file_descriptor File descriptor of the group leader.
    */
-  void open(const perf::Config& config,
+  void open(const SampleConfig& config,
             std::uint64_t buffer_pages,
             const SampleRecordingValues& sample_recording_values,
             const util::UniqueFileDescriptor& group_leader_file_descriptor);
@@ -324,7 +325,7 @@ private:
    * @return The initialized perf_event_attr.
    */
   [[nodiscard]] perf_event_attr create_perf_event_attribute(bool is_disabled,
-                                                            const Config& configuration,
+                                                            const SampleConfig& configuration,
                                                             const SampleRecordingValues& sample_recording_values) const;
 
   /**

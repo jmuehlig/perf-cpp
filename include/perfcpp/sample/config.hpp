@@ -1,6 +1,8 @@
 #pragma once
 
+#include <optional>
 #include <perfcpp/counter/config.hpp>
+#include <perfcpp/sample/clock.hpp>
 #include <perfcpp/sample/period.hpp>
 #include <perfcpp/sample/precision.hpp>
 
@@ -74,6 +76,21 @@ public:
    */
   void buffer_pages(const std::uint64_t buffer_pages) noexcept { _buffer_pages = buffer_pages; }
 
+  /**
+   * @return Clock source used for PERF_SAMPLE_TIME timestamps, if set.
+   */
+  [[nodiscard]] std::optional<Clock> clock() const noexcept { return _clock; }
+
+  /**
+   * Selects the clock source for PERF_SAMPLE_TIME timestamps recorded in samples.
+   * When set, perf uses the specified POSIX clock instead of its internal TSC-based
+   * clock, making sample timestamps directly comparable to clock_gettime() values.
+   * Pass std::nullopt to revert to the perf default (internal TSC-based clock).
+   *
+   * @param clock Clock source to use for sample timestamps, or std::nullopt for the perf default.
+   */
+  void clock(const std::optional<Clock> clock) noexcept { _clock = clock; }
+
 private:
   /// Number of pages allocated for the user-level buffer.
   std::uint64_t _buffer_pages{ /* pages for the data */ 4096U + /* one page for the metadata */ 1U };
@@ -83,5 +100,8 @@ private:
 
   /// Default precision for sampling, if not specified for a trigger.
   Precision _precise_ip{ Precision::MustHaveConstantSkid /* Enable Intel PEBS by default */ };
+
+  /// Clock source for PERF_SAMPLE_TIME timestamps; unset means the default perf hardware clock.
+  std::optional<Clock> _clock{ std::nullopt };
 };
 }

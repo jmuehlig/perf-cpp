@@ -10,6 +10,7 @@
   - **Op Cache Miss** (`record.instruction_execution().cache()->is_op_miss()`): indicates the fetch missed the op cache (decoded instruction cache), even if the L1 instruction cache hit. Enabled via `sampler.values().instruction_cache(true)`. (*IBS Fetch PMU*)
   - **iTLB Refill Latency** (`record.instruction_execution().latency().itlb_refill()`): cycles to refill the instruction TLB after a miss. Only set when an iTLB miss occurred. Enabled via `sampler.values().instruction_latency(true)`. (*IBS Fetch PMU*)
   - **Is Microcode** (`record.instruction_execution().is_microcode()`): indicates the sampled op was dispatched from the microcode ROM sequencer. Enabled via `sampler.values().instruction_type(true)`. (*IBS Op PMU*)
+- **Configurable Sample Timestamp Clock**: `SampleConfig::clock(perf::Clock)` selects the POSIX clock used for timestamps, making them directly comparable to `clock_gettime()` values without offset calibration. Note: `Clock::Realtime` and `Clock::Boottime` are rejected by the kernel for hardware PMU events on x86. Use `Clock::Monotonic` or `Clock::MonotonicRaw` instead. See the [sampling documentation](https://jmuehlig.github.io/perf-cpp/sampling/#sample-timestamp-clock).
 
 
 ## v0.14.1

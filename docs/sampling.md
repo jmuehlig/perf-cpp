@@ -222,6 +222,48 @@ sampler.trigger("cycles");
 
 ---
 
+## Sample Timestamp Clock
+
+By default, perf timestamps samples using its internal TSC-based clock (`local_clock()`), which is *not* the same as any POSIX clock.
+The resulting `PERF_SAMPLE_TIME` values are not directly comparable to `clock_gettime()` values from user-space — correlating them requires an offset calibration step.
+
+Setting a clock via `SampleConfig` replaces the default with a POSIX clock, making timestamps directly comparable to user-space time sources with no extra work:
+
+```cpp
+#include <perfcpp/sampler.hpp> /// perf::Clock is included transitively
+
+auto sample_config = perf::SampleConfig{};
+sample_config.clock(perf::Clock::Monotonic);  /// set a POSIX clock
+
+auto sampler = perf::Sampler{ sample_config };
+sampler.values().timestamp(true);
+```
+
+Pass `std::nullopt` to revert to the perf default:
+
+```cpp
+sample_config.clock(std::nullopt);  /// revert to internal TSC-based clock
+```
+
+### Available Clocks
+
+| Clock | POSIX equivalent | Notes |
+|---|---|---|
+| `perf::Clock::Monotonic` | `CLOCK_MONOTONIC` | Monotonic; does not count time spent suspended. |
+| `perf::Clock::MonotonicRaw` | `CLOCK_MONOTONIC_RAW` | Monotonic; not subject to NTP frequency adjustments. |
+| `perf::Clock::MonotonicCoarse` | `CLOCK_MONOTONIC_COARSE` | Low-resolution monotonic; cheaper to read. |
+| `perf::Clock::Realtime` | `CLOCK_REALTIME` | Wall clock (UTC); can jump on NTP adjustments. |
+| `perf::Clock::RealtimeCoarse` | `CLOCK_REALTIME_COARSE` | Low-resolution wall clock; cheaper to read. |
+| `perf::Clock::Boottime` | `CLOCK_BOOTTIME` | Monotonic; includes time the system was suspended. |
+| `perf::Clock::Tai` | `CLOCK_TAI` | International Atomic Time; no leap-second smearing. |
+
+> [!WARNING]
+> **`Clock::Realtime` and `Clock::Boottime` are rejected by the kernel (`EINVAL`) for hardware PMU events on x86** (e.g., `cycles`, `instructions`).
+> Use `Clock::Monotonic` or `Clock::MonotonicRaw` with hardware events.
+> `Clock::Realtime` is accepted for software events (`PERF_TYPE_SOFTWARE`).
+
+---
+
 ## What can be Recorded and how to Access the Data?
 Configure which fields to record via `sampler.values()`, then access them on each record from `sampler.result()`.
 
@@ -238,7 +280,7 @@ All metadata fields are returned as `std::optional`.
 | **Mode**       | Indicates the execution mode in which the sample was recorded (`Kernel`, `User`, `Hypervisor`, `GuestKernel`, or `GuestUser`). | Always recorded                      | `record.metadata().mode()`       | `std::optional<perf::Metadata::Mode>` |
 | **Sample ID**  | Unique identifier for the sample's group leader.                                                                               | `sampler.values().sample_id(true)`   | `record.metadata().sample_id()`  | `std::optional<std::uint64_t>`        |
 | **Stream ID**  | Unique identifier for the event that generated the sample.                                                                     | `sampler.values().stream_id(true)`   | `record.metadata().stream_id()`  | `std::optional<std::uint64_t>`        |
-| **Timestamp**  | Records the time at which the sample was taken.                                                                                | `sampler.values().timestamp(true)`   | `record.metadata().timestamp()`  | `std::optional<std::uint64_t>`        |
+| **Timestamp**  | Records the time at which the sample was taken. The clock source can be changed via `SampleConfig::clock()` — see [Sample Timestamp Clock](#sample-timestamp-clock). | `sampler.values().timestamp(true)`   | `record.metadata().timestamp()`  | `std::optional<std::uint64_t>`        |
 | **Period**     | Indicates the event count threshold that triggered the sample.                                                                 | `sampler.values().period(true)`      | `record.metadata().period()`     | `std::optional<std::uint64_t>`        |
 | **CPU ID**     | Identifies the CPU core where the sample was recorded.                                                                         | `sampler.values().cpu_id(true)`      | `record.metadata().cpu_id()`     | `std::optional<std::uint32_t>`        |
 | **Process ID** | Identifies the process context in which the sample was recorded.                                                               | `sampler.values().thread_id(true)`   | `record.metadata().process_id()` | `std::optional<std::uint32_t>`        |

@@ -5,6 +5,7 @@
 #include <perfcpp/counter/counter.hpp>
 #include <perfcpp/exception.hpp>
 #include <perfcpp/feature.h>
+#include <perfcpp/sample/config.hpp>
 #include <sstream>
 #include <sys/ioctl.h>
 #include <sys/syscall.h>
@@ -94,7 +95,7 @@ perf::Counter::open(const perf::Config& configuration,
 }
 
 void
-perf::Counter::open(const perf::Config& config,
+perf::Counter::open(const perf::SampleConfig& config,
                     const std::uint64_t buffer_pages,
                     const SampleRecordingValues& sample_recording_values)
 {
@@ -135,7 +136,7 @@ perf::Counter::open(const perf::Config& config,
 }
 
 void
-perf::Counter::open(const perf::Config& config,
+perf::Counter::open(const perf::SampleConfig& config,
                     const std::uint64_t buffer_pages,
                     const SampleRecordingValues& sample_recording_values,
                     const perf::util::UniqueFileDescriptor& group_leader_file_descriptor)
@@ -270,10 +271,10 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled, const Config&
 
 perf_event_attr
 perf::Counter::create_perf_event_attribute(const bool is_disabled,
-                                           const Config& configuration,
+                                           const SampleConfig& configuration,
                                            const SampleRecordingValues& sample_recording_values) const
 {
-  auto attribute = this->create_perf_event_attribute(is_disabled, configuration);
+  auto attribute = this->create_perf_event_attribute(is_disabled, static_cast<const Config&>(configuration));
 
   /// Set the sample type for the group leader (or the counter after the auxiliary-event).
   attribute.sample_type = sample_recording_values.to_perf_sample_type();
@@ -308,6 +309,12 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled,
       attribute.mmap = true;
       attribute.mmap2 = true;
     }
+  }
+
+  /// Use the specified POSIX clock for sample timestamps instead of the default perf hardware clock.
+  if (const auto clock = configuration.clock(); clock.has_value()) {
+    attribute.use_clockid = 1U;
+    attribute.clockid = static_cast<std::int32_t>(clock.value());
   }
 
   return attribute;

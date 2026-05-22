@@ -4,6 +4,7 @@
 #include <optional>
 #include <perfcpp/counter/config.hpp>
 #include <perfcpp/counter/counter.hpp>
+#include <perfcpp/sample/config.hpp>
 #include <perfcpp/sample/recording_values.hpp>
 #include <vector>
 
@@ -127,7 +128,7 @@ public:
    * @param buffer_pages Number of pages allocated for user-level buffer.
    * @param sample_recording_values Values to record while sampling.
    */
-  void open(const Config& config,
+  void open(const SampleConfig& config,
             bool has_auxiliary_event,
             std::uint64_t buffer_pages,
             const SampleRecordingValues& sample_recording_values);
