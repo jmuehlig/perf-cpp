@@ -270,13 +270,16 @@ perf::Sampler::transform_trigger_to_sample_counter(const std::string_view pmu_na
     event_config.precision(static_cast<std::uint8_t>(trigger.precision().value_or(this->_config.precise_ip())));
     event_config.period_or_frequency(trigger.period_or_frequency().value_or(this->_config.period_or_frequency()));
 
+    /// The trigger's position within the group must be captured before adding,
+    /// because `group.size()` is the index where this event *will* be placed.
+    const auto trigger_position = static_cast<std::uint8_t>(group.size());
+
     /// Add the event to the group.
     group.add(event_config);
 
     /// Notice the event name of the trigger event.
     if (this->_values.is_set(SampleRecordingValues::Field::PerformanceCounter)) {
-      requested_events.add(RequestedEvent{
-        pmu_name, event_name, /* group_id */ 0U, /* position in group */ static_cast<std::uint8_t>(group.size()) });
+      requested_events.add(RequestedEvent{ pmu_name, event_name, /* group_id */ 0U, trigger_position });
     }
   }
 
