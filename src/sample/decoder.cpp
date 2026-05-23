@@ -287,13 +287,13 @@ perf::SampleDecoder::decode_registers(SampleIterator& entry, const Registers& re
   const auto count_registers = registers.size();
 
   /// Read raw register values from perf data.
-  const auto* perf_registers = entry.read_array<std::int64_t>(count_registers);
+  const auto* perf_registers = entry.read_array<std::uint64_t>(count_registers);
 
   /// Transform raw perf register array into register value map. Perf writes register values in bit-position order;
   /// registers are pre-sorted by that same order in the Registers constructor, so positional mapping is correct here.
   auto register_values = std::visit(
     [count_registers, perf_registers](const auto& specified_registers) {
-      auto values = std::unordered_map<std::uint8_t, std::int64_t>{};
+      auto values = std::unordered_map<std::uint8_t, std::uint64_t>{};
       values.reserve(count_registers);
 
       for (auto register_id = 0U; register_id < count_registers; ++register_id) {

@@ -237,7 +237,7 @@ private:
 class RegisterValues
 {
 public:
-  RegisterValues(const ABI abi, std::unordered_map<std::uint8_t, std::int64_t>&& register_values) noexcept
+  RegisterValues(const ABI abi, std::unordered_map<std::uint8_t, std::uint64_t>&& register_values) noexcept
     : _abi(abi)
     , _values(std::move(register_values))
   {
@@ -264,7 +264,7 @@ public:
   /**
    * @return The value of the specified x86 register, if available.
    */
-  [[nodiscard]] std::optional<std::int64_t> get(const Registers::x86 reg) const noexcept
+  [[nodiscard]] std::optional<std::uint64_t> get(const Registers::x86 reg) const noexcept
   {
     return get(static_cast<std::uint8_t>(reg));
   }
@@ -272,7 +272,7 @@ public:
   /**
    * @return The value of the specified ARM register, if available.
    */
-  [[nodiscard]] std::optional<std::int64_t> get(const Registers::arm reg) const noexcept
+  [[nodiscard]] std::optional<std::uint64_t> get(const Registers::arm reg) const noexcept
   {
     return get(static_cast<std::uint8_t>(reg));
   }
@@ -280,7 +280,7 @@ public:
   /**
    * @return The value of the specified ARM64 (AArch64) register, if available.
    */
-  [[nodiscard]] std::optional<std::int64_t> get(const Registers::arm64 reg) const noexcept
+  [[nodiscard]] std::optional<std::uint64_t> get(const Registers::arm64 reg) const noexcept
   {
     return get(static_cast<std::uint8_t>(reg));
   }
@@ -288,27 +288,27 @@ public:
   /**
    * @return The value of the specified RISC-V register, if available.
    */
-  [[nodiscard]] std::optional<std::int64_t> get(const Registers::riscv reg) const noexcept
+  [[nodiscard]] std::optional<std::uint64_t> get(const Registers::riscv reg) const noexcept
   {
     return get(static_cast<std::uint8_t>(reg));
   }
 
-  [[nodiscard]] std::optional<std::int64_t> operator[](const Registers::x86 reg) const noexcept
+  [[nodiscard]] std::optional<std::uint64_t> operator[](const Registers::x86 reg) const noexcept
   {
     return get(static_cast<std::uint8_t>(reg));
   }
 
-  [[nodiscard]] std::optional<std::int64_t> operator[](const Registers::arm reg) const noexcept
+  [[nodiscard]] std::optional<std::uint64_t> operator[](const Registers::arm reg) const noexcept
   {
     return get(static_cast<std::uint8_t>(reg));
   }
 
-  [[nodiscard]] std::optional<std::int64_t> operator[](const Registers::arm64 reg) const noexcept
+  [[nodiscard]] std::optional<std::uint64_t> operator[](const Registers::arm64 reg) const noexcept
   {
     return get(static_cast<std::uint8_t>(reg));
   }
 
-  [[nodiscard]] std::optional<std::int64_t> operator[](const Registers::riscv reg) const noexcept
+  [[nodiscard]] std::optional<std::uint64_t> operator[](const Registers::riscv reg) const noexcept
   {
     return get(static_cast<std::uint8_t>(reg));
   }
@@ -318,12 +318,12 @@ private:
   ABI _abi{ ABI::None };
 
   /// Map of Register -> Value.
-  std::unordered_map<std::uint8_t, std::int64_t> _values;
+  std::unordered_map<std::uint8_t, std::uint64_t> _values;
 
   /**
    * @return The value of the register identified by its numeric encoding, if available.
    */
-  [[nodiscard]] std::optional<std::int64_t> get(const std::uint8_t reg) const noexcept
+  [[nodiscard]] std::optional<std::uint64_t> get(const std::uint8_t reg) const noexcept
   {
     if (const auto value = _values.find(reg); value != _values.end()) {
       return value->second;
