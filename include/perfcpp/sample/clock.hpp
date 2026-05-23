@@ -10,7 +10,7 @@ namespace perf {
  * Using a named clock lets perf timestamps be compared directly with clock_gettime() values
  * from user-space without an offset calibration step.
  */
-enum class Clock : std::int32_t
+enum class Clock : std::uint8_t
 {
   /// Wall-clock time (UTC); can jump on NTP adjustments.
   Realtime = 0,

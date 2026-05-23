@@ -45,6 +45,10 @@ public:
 
   [[nodiscard]] std::optional<Metadata::Mode> mode() const noexcept;
   [[nodiscard]] std::uint16_t size() const noexcept { return _header->size; }
+  [[nodiscard]] std::size_t remaining() const noexcept
+  {
+    return reinterpret_cast<std::uintptr_t>(_header) + _header->size - _data;
+  }
 
   template<typename T>
   [[nodiscard]] T read() noexcept
@@ -414,10 +418,10 @@ private:
    * Translates the current entry from the user-level buffer into a lost sample.
    *
    * @param entry Entry of the user-level buffer.
-   * @param has_leading_even_id If set, the entry contains the event ID field.
+   * @param has_leading_event_id If set, the entry contains the event ID field.
    * @return Sample containing the loss.
    */
-  [[nodiscard]] Sample decode_lost_samples_event(SampleIterator&& entry, bool has_leading_even_id) const noexcept;
+  [[nodiscard]] Sample decode_lost_samples_event(SampleIterator&& entry, bool has_leading_event_id) const noexcept;
 
   /**
    * Translates the current entry from the user-level buffer into a context switch sample.

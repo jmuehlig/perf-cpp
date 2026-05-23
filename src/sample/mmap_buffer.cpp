@@ -55,7 +55,7 @@ perf::MmapBufferOverflowWorker::run(perf::MmapBuffer& mmap_buffer,
       if (FD_ISSET(counter_file_descriptor.value(), &file_descriptor_set)) {
         mmap_buffer.handle_overflow();
       }
-    } else if (select == -1) {
+    } else if (select == -1 && errno != EINTR) {
       return;
     }
   } while (true);
@@ -147,11 +147,21 @@ perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
   do {
     lock = this->_ringbuffer_header->lock;
 
+    /// Skip if a kernel write is in progress (odd lock = seqlock write active).
+    if (static_cast<bool>(lock & 1U)) {
+      continue;
+    }
+
     /// Memory fence.
     asm volatile("" ::: "memory");
 
     /// Hardware counter identifier.
     index = this->_ringbuffer_header->index;
+
+    /// Safe to return nullopt here: lock was even, so the snapshot is clean.
+    if (!this->_ringbuffer_header->cap_user_rdpmc || index == 0U) {
+      return std::nullopt;
+    }
 
     /// Offset that must be added to the value.
     count = this->_ringbuffer_header->offset;
@@ -160,20 +170,16 @@ perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
     enabled = this->_ringbuffer_header->time_enabled;
     running = this->_ringbuffer_header->time_running;
 
-    if (this->_ringbuffer_header->cap_user_rdpmc && index > 0U) {
-      /// Read the hardware counter value.
-      auto value = _rdpmc(index - 1U);
+    /// Read the hardware counter value.
+    auto value = _rdpmc(index - 1U);
 
-      /// Read the width of the value.
-      const auto width = 64 - this->_ringbuffer_header->pmc_width;
+    /// Read the width of the value.
+    const auto width = 64 - this->_ringbuffer_header->pmc_width;
 
-      /// Adjust the value for the given width.
-      value = (value << width) >> width;
+    /// Adjust the value for the given width.
+    value = (value << width) >> width;
 
-      count += static_cast<std::int64_t>(value);
-    } else {
-      return std::nullopt;
-    }
+    count += static_cast<std::int64_t>(value);
 
     asm volatile("" ::: "memory");
   } while (this->_ringbuffer_header->lock != lock);
@@ -246,6 +252,11 @@ perf::MmapBuffer::copy_data_from_ringbuffer()
 #else
   const auto data_size = (this->_count_pages - 1U) * HardwareInfo::memory_page_size();
 #endif
+
+  /// No data region (e.g., header-only / rdpmc-only 1-page buffer).
+  if (data_size == 0U) {
+    return {};
+  }
 
   /// Align head and tail to the data size in case one or both are wrapped. Note: Both aligned values are offsets of
   /// data_start.

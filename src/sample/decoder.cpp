@@ -134,12 +134,12 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
     sample.metadata().timestamp(entry.read<std::uint64_t>());
   }
 
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::StreamId)) {
-    sample.metadata().stream_id(entry.read<std::uint64_t>());
-  }
-
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::LogicalMemoryAddress)) {
     sample.data_access().logical_memory_address(entry.read<std::uint64_t>());
+  }
+
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::StreamId)) {
+    sample.metadata().stream_id(entry.read<std::uint64_t>());
   }
 
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::CpuId)) {
@@ -168,11 +168,14 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::RawValues) ||
       this->_sampler_values.is_need_raw_values_for_ibs_decoding()) {
     /// Read the size of the raw sample.
-    if (const auto raw_data_size = entry.read<std::uint32_t>(); raw_data_size > 0U) {
+    const auto raw_data_size = entry.read<std::uint32_t>();
+    if (raw_data_size > 0U) {
       /// Read the raw data.
       const auto* raw_sample_data = entry.read_array<std::byte>(raw_data_size);
       raw_values = std::vector<std::byte>{ raw_sample_data, raw_sample_data + raw_data_size };
     }
+    /// The kernel pads the raw block (4-byte size field + data) to 8-byte alignment; skip the unused padding bytes.
+    entry.skip<std::byte>(((raw_data_size + 4U + 7U) & ~7U) - 4U - raw_data_size);
   }
 
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::BranchStack)) {
@@ -318,14 +321,15 @@ perf::SampleDecoder::decode_hardware_events_values(SampleIterator& entry,
   const auto time_running = entry.read<CounterValues<Group::MAX_MEMBERS>::time_t>();
   const auto multiplexing_correction = Group::calculate_multiplexing_factor(time_enabled, time_running);
 
-  /// Read the event values (if the number matches the number of specified events).
-  const auto* raw_event_values = entry.read_array<CounterValues<Group::MAX_MEMBERS>::ValueAndIdentifier>(count_events);
-
-  /// If the number of expected and real events does not match, skip here. There is no way identifying which counter is
-  /// which.
+  /// If the number of expected and real events does not match, skip the bytes and return. There is no way of
+  /// identifying which counter is which, but the iterator must still advance to keep subsequent fields aligned.
   if (count_events != event_group.size()) {
+    entry.skip<CounterValues<Group::MAX_MEMBERS>::ValueAndIdentifier>(count_events);
     return std::nullopt;
   }
+
+  /// Read the event values.
+  const auto* raw_event_values = entry.read_array<CounterValues<Group::MAX_MEMBERS>::ValueAndIdentifier>(count_events);
 
   /// Create a list of results with only hardware events – regardless of their visibility in the result. This list will
   /// be used to build a result containing visible events and metrics.
@@ -624,8 +628,8 @@ perf::SampleDecoder::decode_data_access_snoop(const std::uint64_t snoop_code,
 
 #ifndef PERFCPP_NO_MEM_SNOOPX /// Snoopx was introduced in Linux 4.14.0
     if (snoopx_code > 0) {
+      snoop.forward(static_cast<bool>(snoopx_code & PERF_MEM_SNOOPX_FWD));
 #ifndef PERFCPP_NO_MEM_SNOOPX_PEER /// Snoopx Peer was introduced in Linux 6.1.0
-      snoop.forward(static_cast<bool>(snoopx_code & PERF_MEM_SNOOPX_PEER));
       snoop.transfer_from_peer(static_cast<bool>(snoopx_code & PERF_MEM_SNOOPX_PEER));
 #endif
     }
@@ -941,13 +945,13 @@ perf::SampleDecoder::decode_tlb_page_size(const std::uint8_t code) noexcept
 }
 
 perf::Sample
-perf::SampleDecoder::decode_lost_samples_event(SampleIterator&& entry, const bool has_leading_even_id) const noexcept
+perf::SampleDecoder::decode_lost_samples_event(SampleIterator&& entry, const bool has_leading_event_id) const noexcept
 {
   auto sample = Sample{};
   sample.metadata().mode(entry.mode());
 
   /// Skip the sample id.
-  if (has_leading_even_id) {
+  if (has_leading_event_id) {
     entry.skip<std::uint64_t>();
   }
 
@@ -993,10 +997,12 @@ perf::SampleDecoder::decode_cgroup_event(SampleIterator&& entry) const
   sample.metadata().mode(entry.mode());
 
   const auto cgroup_id = entry.read<std::uint64_t>();
-  auto path = std::string{ entry.as<const char*>() };
+  const auto* path_data = entry.as<const char*>();
+  const auto path_length = ::strnlen(path_data, entry.remaining());
+  auto path = std::string{ path_data, path_length };
 
   /// Advance past the null-terminated path, aligned to 8 bytes.
-  entry.skip<std::byte>((path.size() + /* null terminator */ 1U + 7U) & ~7U);
+  entry.skip<std::byte>((path_length + /* null terminator */ 1U + 7U) & ~7U);
 
   /// Read sample_id.
   this->decode_sample_id_all(entry, sample);

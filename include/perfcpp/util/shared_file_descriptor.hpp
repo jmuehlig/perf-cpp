@@ -40,21 +40,13 @@ public:
   /**
    * Decrements the reference count and closes the file descriptor when the last owner is destroyed.
    */
-  ~SharedFileDescriptor()
-  {
-    if (_ref_count != nullptr && --(*_ref_count) == 0U) {
-      ::close(_file_descriptor);
-      delete _ref_count;
-    }
-  }
+  ~SharedFileDescriptor() { close(); }
 
   SharedFileDescriptor& operator=(const SharedFileDescriptor& other) noexcept
   {
     if (this != &other) {
-      if (_ref_count != nullptr && --(*_ref_count) == 0U) {
-        ::close(_file_descriptor);
-        delete _ref_count;
-      }
+      close();
+
       _ref_count = other._ref_count;
       _file_descriptor = other._file_descriptor;
       if (_ref_count != nullptr) {
@@ -67,10 +59,8 @@ public:
   SharedFileDescriptor& operator=(SharedFileDescriptor&& other) noexcept
   {
     if (this != &other) {
-      if (_ref_count != nullptr && --(*_ref_count) == 0U) {
-        ::close(_file_descriptor);
-        delete _ref_count;
-      }
+      close();
+
       _ref_count = std::exchange(other._ref_count, nullptr);
       _file_descriptor = std::exchange(other._file_descriptor, -1);
     }
@@ -91,5 +81,15 @@ private:
   /// Heap-allocated reference count; nullptr indicates an empty (unowned) state.
   std::atomic<std::uint64_t>* _ref_count{ nullptr };
   int _file_descriptor{ -1 };
+
+  void close()
+  {
+    if (_ref_count != nullptr && --(*_ref_count) == 0U) {
+      ::close(std::exchange(_file_descriptor, -1));
+      delete _ref_count;
+
+      _ref_count = nullptr;
+    }
+  }
 };
 }
