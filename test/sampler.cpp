@@ -2,6 +2,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #if defined(__x86_64__) || defined(__i386__)
+#include <ctime>
 #include <iostream>
 #include <perfcpp/exception.hpp>
 #include <perfcpp/hardware_info.hpp>
@@ -463,6 +464,43 @@ TEST_CASE("sampling", "[Sampler]")
           REQUIRE(user_ip.value() != kernel_ip.value());
         }
       }
+    }
+
+    REQUIRE_NOTHROW(sampler.close());
+  }
+
+  SECTION("clock monotonic timestamps in CLOCK_MONOTONIC range")
+  {
+    auto sample_config = perf::SampleConfig{};
+    sample_config.clock(perf::Clock::Monotonic);
+
+    auto sampler = perf::Sampler{ sample_config };
+    REQUIRE_NOTHROW(sampler.trigger(perf::Cycles{}, perf::Period{ 100000U }));
+    sampler.values().timestamp(true);
+
+    REQUIRE_NOTHROW(sampler.open());
+
+    struct timespec ts_before;
+    ::clock_gettime(CLOCK_MONOTONIC, &ts_before);
+    const auto before_ns =
+      static_cast<std::uint64_t>(ts_before.tv_sec) * 1000000000ULL + static_cast<std::uint64_t>(ts_before.tv_nsec);
+
+    REQUIRE_NOTHROW(sampler.start());
+    readonly_benchmark.run();
+    REQUIRE_NOTHROW(sampler.stop());
+
+    struct timespec ts_after;
+    ::clock_gettime(CLOCK_MONOTONIC, &ts_after);
+    const auto after_ns =
+      static_cast<std::uint64_t>(ts_after.tv_sec) * 1000000000ULL + static_cast<std::uint64_t>(ts_after.tv_nsec);
+
+    const auto samples = sampler.result();
+    REQUIRE_FALSE(samples.empty());
+
+    for (const auto& sample : samples) {
+      REQUIRE(sample.metadata().timestamp().has_value());
+      REQUIRE(sample.metadata().timestamp().value() >= before_ns);
+      REQUIRE(sample.metadata().timestamp().value() <= after_ns);
     }
 
     REQUIRE_NOTHROW(sampler.close());

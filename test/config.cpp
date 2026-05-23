@@ -417,6 +417,11 @@ TEST_CASE("SampleConfig defaults", "[SampleConfig]")
   {
     REQUIRE(config.precise_ip() == perf::Precision::MustHaveConstantSkid);
   }
+
+  SECTION("clock")
+  {
+    REQUIRE_FALSE(config.clock().has_value());
+  }
 }
 
 TEST_CASE("SampleConfig setter roundtrips", "[SampleConfig]")
@@ -454,5 +459,19 @@ TEST_CASE("SampleConfig setter roundtrips", "[SampleConfig]")
   {
     config.buffer_pages(8193U);
     REQUIRE(config.buffer_pages() == 8193U);
+  }
+
+  SECTION("clock")
+  {
+    config.clock(perf::Clock::Monotonic);
+    REQUIRE(config.clock().has_value());
+    REQUIRE(config.clock().value() == perf::Clock::Monotonic);
+  }
+
+  SECTION("clock clear with nullopt")
+  {
+    config.clock(perf::Clock::Monotonic);
+    config.clock(std::nullopt);
+    REQUIRE_FALSE(config.clock().has_value());
   }
 }
