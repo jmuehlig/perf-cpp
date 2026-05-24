@@ -39,6 +39,11 @@ auto sampler = perf::Sampler{ counter_definitions };
 > Keep your `CounterDefinition` instance alive throughout your measurement session.
 > Event names are stored only in this instance — destroying it prematurely will cause issues when retrieving results.
 
+> [!NOTE]
+> A custom `CounterDefinition` inherits all events from the global defaults.
+> If you `add()` an event under the same PMU and name as a built-in event, your definition takes priority — child definitions override parents.
+> This lets you replace a built-in event's configuration without touching anything else.
+
 ---
 
 ## Built-in Events
