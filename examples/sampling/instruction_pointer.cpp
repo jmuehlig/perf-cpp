@@ -52,7 +52,7 @@ main()
   auto symbol_resolver = perf::util::SymbolResolver{};
 
   /// Print the first samples.
-  const auto count_show_samples = std::min<std::size_t>(samples.size(), 400U);
+  const auto count_show_samples = std::min<std::size_t>(samples.size(), 40U);
   std::cout << "\nRecorded " << samples.size() << " samples." << std::endl;
   std::cout << "Here are the first " << count_show_samples << " recorded samples:\n" << std::endl;
   for (auto index = 0U; index < count_show_samples; ++index) {

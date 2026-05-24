@@ -9,8 +9,9 @@ int
 main()
 {
   std::cout << "libperf-cpp example: Record perf samples including time, "
-               "instruction pointer, and cpu id for single-threaded random "
-               "access to an in-memory array on multiple CPU cores."
+               "instruction pointer, cpu id, and thread id from all activity "
+               "running on selected CPU cores while a multi-threaded random "
+               "access benchmark executes."
             << std::endl;
 
   constexpr auto count_threads = 4U;
