@@ -90,6 +90,12 @@ public:
   void raw(std::vector<std::byte>&& raw) noexcept { _raw.emplace(std::move(raw)); }
 
   /**
+   * Set the auxiliary data.
+   * @param aux Auxiliary data to set.
+   */
+  void aux(std::vector<std::byte>&& aux) noexcept { _aux.emplace(std::move(aux)); }
+
+  /**
    * Set the count loss.
    * @param count_loss Count loss to set.
    */
@@ -176,6 +182,11 @@ public:
   [[nodiscard]] const std::optional<std::vector<std::byte>>& raw() const noexcept { return _raw; }
 
   /**
+   * @return Optional auxiliary data.
+   */
+  [[nodiscard]] const std::optional<std::vector<std::byte>>& aux() const noexcept { return _aux; }
+
+  /**
    * @return Optional count loss.
    */
   [[nodiscard]] std::optional<std::uint64_t> count_loss() const noexcept { return _count_loss; }
@@ -194,6 +205,7 @@ private:
   std::optional<ContextSwitch> _context_switch{ std::nullopt };
   std::optional<Throttle> _throttle{ std::nullopt };
   std::optional<std::vector<std::byte>> _raw{ std::nullopt };
+  std::optional<std::vector<std::byte>> _aux{ std::nullopt };
   std::optional<std::uint64_t> _count_loss{ std::nullopt };
 };
 }

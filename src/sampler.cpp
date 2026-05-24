@@ -148,6 +148,9 @@ perf::Sampler::open()
   /// Do not open again, if the sampler was already opened.
   /// The is_open flag will be reset on closing the sampler.
   if (!this->_is_opened) {
+    /// Clear any partial state left by a previous failed open() attempt.
+    this->_sample_counter.clear();
+
     /// Build the groups from triggers + events from values.
     for (const auto& trigger_group : this->_triggers) {
       if (trigger_group.empty()) {

@@ -238,6 +238,14 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
     sample.data_access().physical_memory_address(entry.read<std::uint64_t>());
   }
 
+#ifndef PERFCPP_NO_SAMPLE_AUX /// Sampling aux values is supported since Linux 5.5
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::AuxValues)) {
+    if (auto aux = SampleDecoder::decode_aux(entry); aux.has_value()) {
+      sample.aux(std::move(aux.value()));
+    }
+  }
+#endif
+
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::CGroup)) {
     sample.cgroup_id(entry.read<std::uint64_t>());
   }
@@ -431,6 +439,23 @@ perf::SampleDecoder::decode_branch_stack(SampleIterator& entry)
   }
 
   return branches;
+}
+
+std::optional<std::vector<std::byte>>
+perf::SampleDecoder::decode_aux(SampleIterator& entry)
+{
+  const auto aux_data_size = entry.read<std::uint64_t>();
+
+  auto aux_values = std::optional<std::vector<std::byte>>{ std::nullopt };
+  if (aux_data_size > 0U) {
+    const auto* aux_data = entry.read_array<std::byte>(aux_data_size);
+    aux_values.emplace(aux_data, aux_data + aux_data_size);
+  }
+
+  /// The kernel pads the aux data to 8-byte alignment; skip the unused padding bytes.
+  entry.skip<std::byte>((8U - (aux_data_size & 7U)) & 7U);
+
+  return aux_values;
 }
 
 void

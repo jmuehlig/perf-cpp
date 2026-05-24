@@ -117,6 +117,10 @@ perf::MemoryLoadsAux::resolve(const CounterDefinition& counter_definition, const
 std::vector<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
 perf::IbsFetch::resolve(const CounterDefinition& counter_definition) const
 {
+  if (!HardwareInfo::is_amd()) {
+    throw EventRequiresSpecificVendorError{ "AMD", "ibs_fetch" };
+  }
+
   /// IBS Fetch has a single dedicated PMU.
   if (auto event = this->resolve(counter_definition, std::string_view{ "ibs_fetch" }); event.has_value()) {
     return { std::move(event.value()) };
@@ -144,13 +148,13 @@ perf::IbsFetch::resolve(const CounterDefinition& counter_definition, const std::
   /// Get IBS information from perf subsystem.
   const auto& ibs_info = HardwareInfo::amd_ibs();
 
-  /// Build the config value from the flags.
-  auto config_value = 0ULL;
+  /// Build the config value from the base event, then OR in the flags.
+  auto config_value = base_config.configs()[0U];
   if (this->_is_rand) {
     if (const auto rand_bit = ibs_info.fetch_rand_bit(); rand_bit.has_value()) {
       config_value |= 1ULL << rand_bit.value();
     } else {
-      throw EventDoesNotSupportIBSFeatureError{"ibs_fetch", "randomization"};
+      throw EventDoesNotSupportIBSFeatureError{ "ibs_fetch", "randomization" };
     }
   }
 
@@ -158,10 +162,9 @@ perf::IbsFetch::resolve(const CounterDefinition& counter_definition, const std::
     if (const auto l3_miss_bit = ibs_info.fetch_l3_miss_only_bit(); l3_miss_bit.has_value()) {
       config_value |= 1ULL << l3_miss_bit.value();
     } else {
-      throw EventDoesNotSupportIBSFeatureError{"ibs_fetch", "l3 miss filtering"};
+      throw EventDoesNotSupportIBSFeatureError{ "ibs_fetch", "l3 miss filtering" };
     }
   }
-
 
   return std::make_tuple(base_pmu_name, event_name, CounterConfig{ base_config.type(), config_value });
 }
@@ -169,6 +172,10 @@ perf::IbsFetch::resolve(const CounterDefinition& counter_definition, const std::
 std::vector<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
 perf::IbsOp::resolve(const CounterDefinition& counter_definition) const
 {
+  if (!HardwareInfo::is_amd()) {
+    throw EventRequiresSpecificVendorError{ "AMD", "ibs_op" };
+  }
+
   /// IBS Op has a single dedicated PMU.
   if (auto event = this->resolve(counter_definition, std::string_view{ "ibs_op" }); event.has_value()) {
     return { std::move(event.value()) };
@@ -193,14 +200,13 @@ perf::IbsOp::resolve(const CounterDefinition& counter_definition, const std::str
   const auto& [base_pmu_name, event_name, base_config] = base_event.value();
   const auto& ibs_info = HardwareInfo::amd_ibs();
 
-  /// Build the config value from the flags.
-  auto config_value = 0ULL;
+  /// Build the config value from the base event, then OR in the flags.
+  auto config_value = base_config.configs()[0U];
   if (this->_is_uop) {
     if (const auto uops_bit = ibs_info.op_uops_bit(); uops_bit.has_value()) {
       config_value |= 1ULL << uops_bit.value();
-    }
-    else {
-      throw EventDoesNotSupportIBSFeatureError{"ibs_op", "micro operations"};
+    } else {
+      throw EventDoesNotSupportIBSFeatureError{ "ibs_op", "micro operations" };
     }
   }
 
@@ -208,7 +214,7 @@ perf::IbsOp::resolve(const CounterDefinition& counter_definition, const std::str
     if (const auto l3_miss_bit = ibs_info.op_l3_miss_only_bit(); l3_miss_bit.has_value()) {
       config_value |= 1ULL << l3_miss_bit.value();
     } else {
-      throw EventDoesNotSupportIBSFeatureError{"ibs_op", "l3 miss filtering"};
+      throw EventDoesNotSupportIBSFeatureError{ "ibs_op", "l3 miss filtering" };
     }
   }
 

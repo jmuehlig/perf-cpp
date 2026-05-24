@@ -22,8 +22,7 @@ perf::SampleRecordingValues::to_perf_sample_type() const noexcept
 
   // === Instruction Execution ===
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_IP, Field::LogicalInstructionPointer);
-  sample_type |=
-    this->perf_sample_type_if_field_activates(PERF_SAMPLE_IP | PERF_SAMPLE_RAW, Field::PhysicalInstructionPointer);
+  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::PhysicalInstructionPointer);
   sample_type |=
     this->perf_sample_type_if_field_activates(PERF_SAMPLE_DATA_SRC | PERF_SAMPLE_RAW, Field::InstructionType);
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::BranchType);
@@ -41,9 +40,9 @@ perf::SampleRecordingValues::to_perf_sample_type() const noexcept
   sample_type |=
     this->perf_sample_type_if_field_activates(PERF_SAMPLE_WEIGHT | PERF_SAMPLE_RAW, Field::InstructionLatency);
 #endif
-  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_IP | PERF_SAMPLE_RAW, Field::InstructionCache);
-  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_IP | PERF_SAMPLE_RAW, Field::InstructionTLB);
-  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_IP | PERF_SAMPLE_RAW, Field::InstructionFetch);
+  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::InstructionCache);
+  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::InstructionTLB);
+  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::InstructionFetch);
 
   // === Data Access ===
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_ADDR, Field::LogicalMemoryAddress);
@@ -57,11 +56,10 @@ perf::SampleRecordingValues::to_perf_sample_type() const noexcept
 #ifndef PERFCPP_NO_SAMPLE_WEIGHT_STRUCT /// Sampling of weight structs (in contrast to simple weight) is supported since
                                         /// Linux 5.12
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_WEIGHT_STRUCT, Field::DataAccessLatency);
-  sample_type |=
-    this->perf_sample_type_if_field_activates(PERF_SAMPLE_WEIGHT_STRUCT | PERF_SAMPLE_RAW, Field::DataTLBLatency);
+  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::DataTLBLatency);
 #else
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_WEIGHT, Field::DataAccessLatency);
-  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_WEIGHT | PERF_SAMPLE_RAW, Field::DataTLBLatency);
+  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::DataTLBLatency);
 #endif
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::DataTLBPageSize);
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::DataAccessWidth);

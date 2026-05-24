@@ -263,6 +263,14 @@ private:
   [[nodiscard]] static std::optional<std::vector<Branch>> decode_branch_stack(SampleIterator& entry);
 
   /**
+   * Reads the auxiliary data from the current buffer entry.
+   *
+   * @param entry Current position at the buffer.
+   * @return Auxiliary data bytes, or nullopt if the aux block is empty.
+   */
+  [[nodiscard]] static std::optional<std::vector<std::byte>> decode_aux(SampleIterator& entry);
+
+  /**
    * Decodes and sets the data access and/or instruction latency (based on the underlying hardware) from a single
    * latency value (coming from PERF_SAMPLE_WEIGHT).
    *
