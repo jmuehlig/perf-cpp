@@ -12,6 +12,7 @@
 #include <string_view>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 namespace perf {
@@ -132,7 +133,11 @@ public:
    *
    * @param metric Metric.
    */
-  void add(std::unique_ptr<Metric>&& metric) { _metrics.insert(std::make_pair(metric->name(), std::move(metric))); }
+  void add(std::unique_ptr<Metric>&& metric)
+  {
+    auto name = metric->name();
+    _metrics.insert(std::make_pair(std::move(name), std::move(metric)));
+  }
 
   /**
    * Adds a formula metric with the given name and formula.
@@ -173,6 +178,10 @@ public:
 
   /**
    * Returns a list of counter configurations with the requested name.
+   *
+   * Results are collected from this instance and all parent instances.
+   * When the same PMU provides the event in both this instance and a parent,
+   * only this instance's entry is returned — child definitions override parents.
    *
    * @param name Name of the queried counter.
    * @return A list of 3-tuples (name of the PMU, name of the event, event configuration). The list may be empty, when
@@ -386,5 +395,14 @@ private:
    * @return A CounterDefinition object that has no parent and is supposed to be the "global" instance.
    */
   [[nodiscard]] static std::shared_ptr<CounterDefinition> make_global();
+
+  /**
+   * Recursive implementation of supports(), carrying a visited set to detect cycles in metric dependencies.
+   *
+   * @param name Name being checked.
+   * @param visited Names on the current recursion path; a name already present indicates a cycle.
+   * @return True if the event or metric is fully supported.
+   */
+  [[nodiscard]] bool supports(std::string_view name, std::unordered_set<std::string_view>& visited) const;
 };
 }

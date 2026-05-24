@@ -104,7 +104,8 @@ perf::HardwareInfo::is_intel_12th_generation_or_newer()
 
     const auto display_model = (extended_model << 4) + model;
     return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer,
-                                     display_model >= /* 12th generation */ 143U);
+                                     display_model >= /* 12th generation */ 143U &&
+                                       display_model != /* Rocket Lake (11th gen desktop) */ 0xA7U);
   }
 
   return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer, false);
@@ -359,8 +360,9 @@ perf::HardwareInfo::max_cpu_clock_frequency()
 
   for (const auto& entry : std::filesystem::directory_iterator("/sys/devices/system/cpu")) {
     if (entry.is_directory()) {
-      if (auto cpu_directory_name = entry.path().filename().string();
-          cpu_directory_name.rfind("cpu", 0U) == 0U && std::isdigit(cpu_directory_name[3U]) != 0) {
+      if (auto cpu_directory_name = entry.path().filename().string(); cpu_directory_name.size() > 3U &&
+                                                                      cpu_directory_name.rfind("cpu", 0U) == 0U &&
+                                                                      std::isdigit(cpu_directory_name[3U]) != 0) {
         auto freq_file = std::ifstream{ entry.path() / "cpufreq/cpuinfo_max_freq" };
         if (auto frequency_in_khz = 0UL; freq_file >> frequency_in_khz) {
           max_frequency_in_hz = std::max(max_frequency_in_hz, frequency_in_khz * 1000UL);
@@ -428,7 +430,7 @@ perf::HardwareInfo::explore_hardware_counters_experimentally(const bool is_ident
         /// When detecting events per counter and the NMI watchdog is enabled, it permanently consumes one hw-PMU
         /// counter. The kernel accepts one event beyond the real limit (open succeeds but all counters read 0),
         /// so we need to subtract 2 instead of 1.
-        if (!is_identify_hardware_counters && HardwareInfo::is_nmi_watchdog_enabled() && number_events > 2U) {
+        if (!is_identify_hardware_counters && HardwareInfo::is_nmi_watchdog_enabled() && number_events >= 2U) {
           return static_cast<std::uint8_t>(number_events - 2U);
         }
 

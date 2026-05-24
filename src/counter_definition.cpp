@@ -97,13 +97,17 @@ perf::CounterDefinition::counter(const std::string& name) const noexcept
     }
   }
 
-  /// Scan all PMUs of parent counter definition.
+  /// Inherit from parent, but only for PMUs the child has not already overridden.
   if (this->_parent_counter_definition != nullptr) {
-    if (auto parent_event_configurations = this->_parent_counter_definition->counter(name);
-        !parent_event_configurations.empty()) {
-      std::move(parent_event_configurations.begin(),
-                parent_event_configurations.end(),
-                std::back_inserter(event_configurations));
+    for (auto& parent_entry : this->_parent_counter_definition->counter(name)) {
+      const auto parent_pmu = std::get<0>(parent_entry);
+      const auto child_overrides =
+        std::any_of(event_configurations.begin(), event_configurations.end(), [parent_pmu](const auto& child_entry) {
+          return std::get<0>(child_entry) == parent_pmu;
+        });
+      if (!child_overrides) {
+        event_configurations.emplace_back(std::move(parent_entry));
+      }
     }
   }
 
@@ -175,10 +179,17 @@ perf::CounterDefinition::pmu(const std::string& pmu_name) const
     });
   }
 
-  /// Append parent PMU names, if there is a parent.
+  /// Inherit from parent, but only for events the child has not already defined.
   if (this->_parent_counter_definition != nullptr) {
-    if (auto parent_counters = this->_parent_counter_definition->pmu(pmu_name); !parent_counters.empty()) {
-      std::move(parent_counters.begin(), parent_counters.end(), std::back_inserter(events));
+    for (auto& parent_event : this->_parent_counter_definition->pmu(pmu_name)) {
+      const auto parent_event_name = std::get<0>(parent_event);
+      const auto child_overrides =
+        std::any_of(events.begin(), events.end(), [parent_event_name](const auto& child_event) {
+          return std::get<0>(child_event) == parent_event_name;
+        });
+      if (!child_overrides) {
+        events.emplace_back(std::move(parent_event));
+      }
     }
   }
 
@@ -235,6 +246,10 @@ perf::CounterDefinition::pmu_names() const
     }
   }
 
+  /// Remove duplicates introduced by PMUs present in both this instance and a parent.
+  std::sort(names.begin(), names.end());
+  names.erase(std::unique(names.begin(), names.end()), names.end());
+
   return names;
 }
 
@@ -283,23 +298,36 @@ perf::CounterDefinition::time_event_names() const
 bool
 perf::CounterDefinition::supports(const std::string_view name) const
 {
+  auto visited = std::unordered_set<std::string_view>{};
+  return this->supports(name, visited);
+}
+
+bool
+perf::CounterDefinition::supports(const std::string_view name, std::unordered_set<std::string_view>& visited) const
+{
+  /// Cycle detected — this name is already on the current evaluation path.
+  if (!visited.insert(name).second) {
+    return false;
+  }
+
+  auto result = false;
+
   if (!this->counter(name).empty()) {
-    return true;
-  }
-
-  if (this->time_event(name).has_value()) {
-    return true;
-  }
-
-  if (const auto metric = this->metric(name); metric.has_value()) {
-    /// Check all events required by the metric.
+    result = true;
+  } else if (this->time_event(name).has_value()) {
+    result = true;
+  } else if (const auto metric = this->metric(name); metric.has_value()) {
+    /// Recursively check all events required by the metric.
     const auto required_counter_names = std::get<1>(metric.value()).required_counter_names();
-    return std::all_of(required_counter_names.begin(), required_counter_names.end(), [this](const auto& counter_name) {
-      return this->supports(counter_name);
-    });
+    result = std::all_of(
+      required_counter_names.begin(), required_counter_names.end(), [this, &visited](const auto& counter_name) {
+        return this->supports(std::string_view{ counter_name }, visited);
+      });
   }
 
-  return false;
+  /// Remove from the path so sibling branches can visit the same name without false cycle detection.
+  visited.erase(name);
+  return result;
 }
 
 std::string

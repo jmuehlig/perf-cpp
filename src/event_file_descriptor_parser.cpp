@@ -145,7 +145,7 @@ perf::EventFileDescriptorParser::format(const std::string& format_name) const
       if (std::smatch match; std::regex_match(entry, match, config_pattern)) {
         const auto config_id = match[1U].length() == 0U ? 0 : std::stoi(match[1U].str());
         const auto bit_start = std::stoi(match[2U].str());
-        const auto bit_end = match[3U].length() == 0U ? std::nullopt : std::make_optional(std::stoi(match[2U].str()));
+        const auto bit_end = match[3U].length() == 0U ? std::nullopt : std::make_optional(std::stoi(match[3U].str()));
 
         configs.emplace_back(config_id, std::make_pair(bit_start, bit_end));
       }

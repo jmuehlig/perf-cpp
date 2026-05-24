@@ -62,6 +62,32 @@ TEST_CASE("supports", "[CounterDefinition]")
     extended.add("my-custom-metric", "cycles / instructions");
     REQUIRE(extended.supports("my-custom-metric"));
   }
+
+  SECTION("mutually dependent metrics do not stack-overflow")
+  {
+    auto extended = perf::CounterDefinition{};
+
+    /// metric_a references metric_b and vice versa — a cycle.
+    /// Metric names in formulas must not contain hyphens: the tokenizer only accepts [alnum, _, .].
+    extended.add("metric_a", "metric_b + cycles");
+    extended.add("metric_b", "metric_a + instructions");
+
+    /// Must return false cleanly, not crash.
+    REQUIRE_FALSE(extended.supports("metric_a"));
+    REQUIRE_FALSE(extended.supports("metric_b"));
+  }
+
+  SECTION("diamond metric dependency is not mistaken for a cycle")
+  {
+    auto extended = perf::CounterDefinition{};
+
+    /// base_metric is a dependency of composite via two independent paths — a diamond, not a cycle.
+    extended.add("base_metric", "cycles + instructions");
+    extended.add("composite", "base_metric + base_metric");
+
+    /// The visited set must not block the second traversal of base_metric.
+    REQUIRE(extended.supports("composite"));
+  }
 }
 
 TEST_CASE("adding new events and metrics", "[CounterDefinition]")
@@ -148,5 +174,60 @@ TEST_CASE("adding new events and metrics", "[CounterDefinition]")
     const auto metric_result = metric->second.calculate(counter_result);
     REQUIRE(metric_result.has_value());
     REQUIRE(metric_result.value() == 1500U);
+  }
+}
+
+TEST_CASE("child overrides parent", "[CounterDefinition]")
+{
+  SECTION("counter: child entry takes priority over parent for the same PMU")
+  {
+    auto child = perf::CounterDefinition{};
+
+    /// "cycles" is registered in the global parent under "cpu"; override it with a custom config.
+    child.add(std::string{ "cycles" }, /* type = */ 99U, /* config = */ 0x9999UL);
+
+    const auto results = child.counter(std::string{ "cycles" });
+
+    /// Exactly one result — no duplicate from the parent.
+    REQUIRE(results.size() == 1U);
+
+    /// The child's config is returned, not the parent's.
+    REQUIRE(std::get<2>(results.front()).type() == 99U);
+    REQUIRE(std::get<2>(results.front()).configs()[0U] == 0x9999UL);
+  }
+
+  SECTION("pmu_names: no duplicates when child and parent share a PMU name")
+  {
+    auto child = perf::CounterDefinition{};
+
+    /// Adding any event under "cpu" creates a child-level entry; the global parent also has "cpu".
+    child.add(std::string{ "my-event" }, /* type = */ 4U, /* config = */ 0x1234UL);
+
+    const auto names = child.pmu_names();
+    const auto cpu_count = std::count(names.begin(), names.end(), "cpu");
+
+    REQUIRE(cpu_count == 1);
+  }
+
+  SECTION("pmu: child event overrides parent event with the same name in the same PMU")
+  {
+    auto child = perf::CounterDefinition{};
+
+    /// Override "cycles" (which exists in the global parent under "cpu") with a custom config.
+    child.add(std::string{ "cycles" }, /* type = */ 99U, /* config = */ 0x9999UL);
+
+    const auto events = child.pmu("cpu");
+
+    /// "cycles" must appear exactly once.
+    const auto cycles_count =
+      std::count_if(events.begin(), events.end(), [](const auto& event) { return std::get<0>(event) == "cycles"; });
+    REQUIRE(cycles_count == 1);
+
+    /// The child's config must be the one returned.
+    const auto cycles_it =
+      std::find_if(events.begin(), events.end(), [](const auto& event) { return std::get<0>(event) == "cycles"; });
+    REQUIRE(cycles_it != events.end());
+    REQUIRE(std::get<1>(*cycles_it).type() == 99U);
+    REQUIRE(std::get<1>(*cycles_it).configs()[0U] == 0x9999UL);
   }
 }
