@@ -312,9 +312,7 @@ perf::CounterDefinition::supports(const std::string_view name, std::unordered_se
 
   auto result = false;
 
-  if (!this->counter(name).empty()) {
-    result = true;
-  } else if (this->time_event(name).has_value()) {
+  if (!this->counter(name).empty() || this->time_event(name).has_value()) {
     result = true;
   } else if (const auto metric = this->metric(name); metric.has_value()) {
     /// Recursively check all events required by the metric.
