@@ -1,11 +1,14 @@
 #include "access_benchmark.hpp"
 #include <catch2/catch_test_macros.hpp>
-
-#if defined(__x86_64__) || defined(__i386__)
+#include <perfcpp/hardware_info.hpp>
 #include <perfcpp/sampler.hpp>
 
 TEST_CASE("sample fields", "[SampleFields]")
 {
+  if (!(perf::HardwareInfo::is_intel() || perf::HardwareInfo::is_amd())) {
+    SKIP("Sampler is not implemented for non-x86 hardware.");
+  }
+
   auto benchmark = perf::test::AccessBenchmark{ /* is random */ true, 512U /* MB */ };
 
   SECTION("logical instruction pointer")
@@ -462,4 +465,3 @@ TEST_CASE("sample fields", "[SampleFields]")
     REQUIRE_NOTHROW(sampler.close());
   }
 }
-#endif

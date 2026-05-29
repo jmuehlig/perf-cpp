@@ -1,10 +1,9 @@
 #include "access_benchmark.hpp"
-#include <catch2/catch_test_macros.hpp>
-
-#if defined(__x86_64__) || defined(__i386__)
 #include <algorithm>
+#include <catch2/catch_test_macros.hpp>
 #include <cstdint>
 #include <optional>
+#include <perfcpp/hardware_info.hpp>
 #include <perfcpp/sampler.hpp>
 #include <thread>
 #include <unistd.h>
@@ -29,6 +28,10 @@ spawn_catching(std::exception_ptr& capture, F&& fn)
 
 TEST_CASE("multi_thread_sampler_lifecycle", "[MultiThreadSampler]")
 {
+  if (!(perf::HardwareInfo::is_intel() || perf::HardwareInfo::is_amd())) {
+    SKIP("Sampler is not implemented for non-x86 hardware.");
+  }
+
   /// Shared read-only benchmark: all threads access the same data without data races.
   auto benchmark = perf::test::AccessBenchmark{ /* is_random= */ true, 512U };
 
@@ -98,6 +101,10 @@ TEST_CASE("multi_thread_sampler_lifecycle", "[MultiThreadSampler]")
 
 TEST_CASE("multi_thread_sampling", "[MultiThreadSampler]")
 {
+  if (!(perf::HardwareInfo::is_intel() || perf::HardwareInfo::is_amd())) {
+    SKIP("Sampler is not implemented for non-x86 hardware.");
+  }
+
   auto benchmark = perf::test::AccessBenchmark{ /* is_random= */ true, 256U };
 
   SECTION("IP sampling across 4 threads produces samples with instruction pointers")
@@ -343,4 +350,3 @@ TEST_CASE("multi_thread_sampling", "[MultiThreadSampler]")
     REQUIRE_NOTHROW(sampler.close());
   }
 }
-#endif

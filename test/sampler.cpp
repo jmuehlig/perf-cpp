@@ -1,7 +1,5 @@
 #include "access_benchmark.hpp"
 #include <catch2/catch_test_macros.hpp>
-
-#if defined(__x86_64__) || defined(__i386__)
 #include <ctime>
 #include <iostream>
 #include <perfcpp/exception.hpp>
@@ -27,6 +25,10 @@ private:
 
 TEST_CASE("config", "[Sampler]")
 {
+  if (!(perf::HardwareInfo::is_intel() || perf::HardwareInfo::is_amd())) {
+    SKIP("Sampler is not implemented for non-x86 hardware.");
+  }
+
   /// Benchmark used for all sampling tests.
   auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
 
@@ -95,6 +97,10 @@ TEST_CASE("config", "[Sampler]")
 
 TEST_CASE("sampling", "[Sampler]")
 {
+  if (!(perf::HardwareInfo::is_intel() || perf::HardwareInfo::is_amd())) {
+    SKIP("Sampler is not implemented for non-x86 hardware.");
+  }
+
   /// Benchmark used for all sampling tests.
   auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 2048 /* MB */ };
 
@@ -541,4 +547,3 @@ TEST_CASE("sampling", "[Sampler]")
     }
   }
 }
-#endif

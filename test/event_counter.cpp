@@ -324,6 +324,10 @@ TEST_CASE("counting", "[EventCounter]")
 
   SECTION("random access per cache line")
   {
+    if (!(perf::HardwareInfo::is_intel() || perf::HardwareInfo::is_amd())) {
+      SKIP("dTLB hardware cache events and per-access instruction count bounds require x86 hardware.");
+    }
+
     auto event_counter = perf::EventCounter{};
     event_counter.add({ "instructions", "cycles", "cache-misses", "branches", "dTLB-miss-ratio" });
 

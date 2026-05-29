@@ -2,9 +2,13 @@
 #include <catch2/catch_test_macros.hpp>
 #include <perfcpp/event_counter.hpp>
 #include <perfcpp/exception.hpp>
+#include <perfcpp/hardware_info.hpp>
 
 TEST_CASE("configuration", "[LiveEventCounter]")
 {
+  if (!(perf::HardwareInfo::is_intel() || perf::HardwareInfo::is_amd())) {
+    SKIP("LiveEventCounter uses rdpmc, which is only available on x86 hardware.");
+  }
   SECTION("add single live event")
   {
     auto event_counter = perf::EventCounter{};
@@ -42,6 +46,10 @@ TEST_CASE("configuration", "[LiveEventCounter]")
 
 TEST_CASE("live result", "[LiveEventCounter]")
 {
+  if (!(perf::HardwareInfo::is_intel() || perf::HardwareInfo::is_amd())) {
+    SKIP("LiveEventCounter uses rdpmc, which is only available on x86 hardware.");
+  }
+
   auto benchmark = perf::test::AccessBenchmark{ /* is random */ true, 512U /* MB */ };
 
   SECTION("live_result by index returns a value")
@@ -144,6 +152,10 @@ TEST_CASE("live result", "[LiveEventCounter]")
 
 TEST_CASE("LiveEventCounter", "[LiveEventCounter]")
 {
+  if (!(perf::HardwareInfo::is_intel() || perf::HardwareInfo::is_amd())) {
+    SKIP("LiveEventCounter uses rdpmc, which is only available on x86 hardware.");
+  }
+
   auto benchmark = perf::test::AccessBenchmark{ /* is random */ true, 512U /* MB */ };
 
   SECTION("basic start/stop/get")
@@ -257,6 +269,10 @@ TEST_CASE("LiveEventCounter", "[LiveEventCounter]")
 
 TEST_CASE("LiveEventCounter edge cases", "[LiveEventCounter]")
 {
+  if (!(perf::HardwareInfo::is_intel() || perf::HardwareInfo::is_amd())) {
+    SKIP("LiveEventCounter uses rdpmc, which is only available on x86 hardware.");
+  }
+
   auto benchmark = perf::test::AccessBenchmark{ /* is random */ true, 256U /* MB */ };
 
   SECTION("live_event_names is empty when no live events were added")
@@ -330,6 +346,10 @@ TEST_CASE("LiveEventCounter edge cases", "[LiveEventCounter]")
 
 TEST_CASE("EventCounter::live_result vector with normalization", "[LiveEventCounter]")
 {
+  if (!(perf::HardwareInfo::is_intel() || perf::HardwareInfo::is_amd())) {
+    SKIP("LiveEventCounter uses rdpmc, which is only available on x86 hardware.");
+  }
+
   auto benchmark = perf::test::AccessBenchmark{ /* is random */ true, 512U /* MB */ };
 
   SECTION("normalization divides each entry")
