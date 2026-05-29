@@ -92,10 +92,10 @@ perf::metric::expression::Parser::build_function(std::string&& function_name,
 {
   /// Transform the function name into lower characters.
   std::transform(function_name.begin(), function_name.end(), function_name.begin(), [](const auto character) {
-    return std::tolower(character);
+    return static_cast<char>(std::tolower(static_cast<unsigned char>(character)));
   });
 
-  /// Turn the function name and arguments into a function expression.
+  /// Turn the function name and arguments into a function expression.d
   if (function_name == "d_ratio" || function_name == "ratio") {
     if (arguments.size() == 2U) {
       return std::make_unique<DRatioFunction>(std::move(arguments[0U]), std::move(arguments[1U]));
@@ -108,12 +108,12 @@ perf::metric::expression::Parser::build_function(std::string&& function_name,
 
   /// Turn the function name and arguments into a function expression.
   if (function_name == "sum") {
-    if (arguments.size() >= 2U) {
+    if (!arguments.empty()) {
       return std::make_unique<SumFunction>(std::move(arguments));
     }
 
     throw CannotParseMetricExpressionUnexpectedFunctionArgumentsError{
-      this->_tokenizer.input(), function_name, 2U, arguments.size()
+      this->_tokenizer.input(), function_name, 1U, arguments.size()
     };
   }
 
@@ -145,11 +145,7 @@ perf::metric::expression::Parser::TokenVisitor::operator()(std::string& identifi
         this->_parser.consume();
 
         /// Parse the argument.
-        auto argument = this->_parser.parse_expression();
-        if (argument == nullptr) {
-          throw CannotParseMetricExpressionError{ this->_parser._tokenizer.input() };
-        }
-        arguments.push_back(std::move(argument));
+        arguments.push_back(this->_parser.parse_expression());
       }
     }
 
@@ -192,7 +188,7 @@ perf::metric::expression::Parser::TokenVisitor::operator()(const perf::metric::e
     return this->_parser.parse_primary();
   }
 
-  return nullptr;
+  throw CannotParseMetricExpressionError{ this->_parser._tokenizer.input() };
 }
 
 std::unique_ptr<perf::metric::expression::ExpressionInterface>
@@ -212,5 +208,5 @@ perf::metric::expression::Parser::TokenVisitor::operator()(const Token::Punctuat
     return expression;
   }
 
-  return nullptr;
+  throw CannotParseMetricExpressionError{ this->_parser._tokenizer.input() };
 }

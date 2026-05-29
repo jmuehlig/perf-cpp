@@ -701,6 +701,21 @@ public:
   ~CannotParseMetricExpressionUnexpectedFunctionArgumentsError() override = default;
 };
 
+class SumFunctionRequiresAtLeastOneArgumentError final : public std::runtime_error
+{
+public:
+  SumFunctionRequiresAtLeastOneArgumentError()
+    : std::runtime_error("Cannot create sum() function without arguments. At least one argument is required.")
+  {
+  }
+  SumFunctionRequiresAtLeastOneArgumentError(const SumFunctionRequiresAtLeastOneArgumentError&) = default;
+  SumFunctionRequiresAtLeastOneArgumentError(SumFunctionRequiresAtLeastOneArgumentError&&) noexcept = default;
+  SumFunctionRequiresAtLeastOneArgumentError& operator=(const SumFunctionRequiresAtLeastOneArgumentError&) = default;
+  SumFunctionRequiresAtLeastOneArgumentError& operator=(SumFunctionRequiresAtLeastOneArgumentError&&) noexcept =
+    default;
+  ~SumFunctionRequiresAtLeastOneArgumentError() override = default;
+};
+
 class CannotCreateEventFileDescriptor final : public std::runtime_error
 {
 public:

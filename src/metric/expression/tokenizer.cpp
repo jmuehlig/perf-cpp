@@ -32,15 +32,17 @@ perf::metric::expression::Tokenizer::next()
     return Token{ Token::Punctuation::RightParentheses };
   }
 
-  /// Read left parentheses.
+  /// Read comma.
   if (current_character == ',') {
     ++this->_position;
     return Token{ Token::Punctuation::Comma };
   }
 
-  /// Check if the next character is a constant number (obviously a digit indicates a number – and so does a ".").
-  /// If so, return a number token.
-  if (std::isdigit(current_character) != 0 || current_character == '.') {
+  /// Check if the next character is a constant number (obviously a digit indicates a number – and so does a "."
+  /// followed by a digit, e.g., ".5"). If so, return a number token.
+  const auto is_leading_dot = current_character == '.' && this->_position + 1U < this->_input.size() &&
+                              std::isdigit(static_cast<unsigned char>(this->_input[this->_position + 1U])) != 0;
+  if (std::isdigit(static_cast<unsigned char>(current_character)) != 0 || is_leading_dot) {
     auto [constant, new_position] = Tokenizer::read_constant(this->_position);
 
     /// The constant tokenizer calculates the next position.
@@ -52,7 +54,8 @@ perf::metric::expression::Tokenizer::next()
   /// Check if the next character is an alphabetical char, which indicates an identifier.
   /// Additionally, identifiers can start with single quotes to escape, for example, - operators as part of the
   /// identifier (e.g., the hardware counter "L1-cache-miss"). If so, return an identifier token.
-  if (std::isalpha(current_character) != 0 || Tokenizer::is_escape_char(current_character)) {
+  if (std::isalpha(static_cast<unsigned char>(current_character)) != 0 ||
+      Tokenizer::is_escape_char(current_character)) {
     auto [identifier, new_position] = Tokenizer::read_identifier(this->_position);
 
     /// The identifier tokenizer calculates the next position.
@@ -69,7 +72,7 @@ perf::metric::expression::Tokenizer::skip_whitespaces() const noexcept
 {
   auto position = this->_position;
 
-  while (position < this->_input.length() && std::isspace(this->_input[position]) != 0) {
+  while (position < this->_input.length() && std::isspace(static_cast<unsigned char>(this->_input[position])) != 0) {
     ++position;
   }
 
@@ -84,7 +87,7 @@ perf::metric::expression::Tokenizer::read_constant(const std::size_t begin) cons
   auto position = begin + 1ULL;
 
   /// Read all digits.
-  while (position < this->_input.length() && std::isdigit(this->_input[position]) != 0) {
+  while (position < this->_input.length() && std::isdigit(static_cast<unsigned char>(this->_input[position])) != 0) {
     ++position;
   }
 
@@ -93,7 +96,7 @@ perf::metric::expression::Tokenizer::read_constant(const std::size_t begin) cons
     ++position;
 
     /// Again, read all digits after the decimal point.
-    while (position < this->_input.length() && std::isdigit(this->_input[position]) != 0) {
+    while (position < this->_input.length() && std::isdigit(static_cast<unsigned char>(this->_input[position])) != 0) {
       ++position;
     }
   }
@@ -107,7 +110,7 @@ perf::metric::expression::Tokenizer::read_constant(const std::size_t begin) cons
                                          (this->_input[position] == '+' || this->_input[position] == '-'));
 
     /// Again, read all digits after the scientific e.
-    while (position < this->_input.length() && std::isdigit(this->_input[position]) != 0) {
+    while (position < this->_input.length() && std::isdigit(static_cast<unsigned char>(this->_input[position])) != 0) {
       ++position;
     }
   }
@@ -120,6 +123,9 @@ perf::metric::expression::Tokenizer::read_constant(const std::size_t begin) cons
   } catch (std::invalid_argument& e) {
     throw CannotParseMetricExpressionError{ this->_input,
                                             std::string{ "Cannot parse number (" }.append(e.what()).append(")") };
+  } catch (std::out_of_range& e) {
+    throw CannotParseMetricExpressionError{ this->_input,
+                                            std::string{ "Number out of range (" }.append(e.what()).append(")") };
   }
 }
 
@@ -130,10 +136,11 @@ perf::metric::expression::Tokenizer::read_identifier(const std::size_t begin) co
   /// called.
   auto count = 1ULL;
 
-  /// If the identifier starts with a single quote, we scan until we find the "ending" single quote.
+  /// If the identifier starts with a single quote, we scan until we find the matching closing quote.
   const auto is_start_with_escape_char = Tokenizer::is_escape_char(this->_input[begin]);
   if (is_start_with_escape_char) {
-    while ((begin + count) < this->_input.size() && !Tokenizer::is_escape_char(this->_input[begin + count])) {
+    const auto opening_escape_char = this->_input[begin];
+    while ((begin + count) < this->_input.size() && this->_input[begin + count] != opening_escape_char) {
       ++count;
     }
 

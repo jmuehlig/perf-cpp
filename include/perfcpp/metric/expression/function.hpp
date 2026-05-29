@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <optional>
+#include <perfcpp/exception.hpp>
 #include <perfcpp/metric/expression/expression.hpp>
 #include <vector>
 
@@ -35,6 +36,9 @@ public:
   explicit SumFunction(std::vector<std::unique_ptr<ExpressionInterface>>&& arguments)
     : _arguments(std::move(arguments))
   {
+    if (this->_arguments.empty()) {
+      throw SumFunctionRequiresAtLeastOneArgumentError{};
+    }
   }
 
   SumFunction(const SumFunction&) = delete;

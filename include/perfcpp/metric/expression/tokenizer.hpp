@@ -92,7 +92,7 @@ private:
    */
   [[nodiscard]] static bool is_identifier_char(const char char_) noexcept
   {
-    return (std::isalnum(char_) != 0) || char_ == '_' || char_ == '.';
+    return (std::isalnum(static_cast<unsigned char>(char_)) != 0) || char_ == '_' || char_ == '.';
   }
 
   /**

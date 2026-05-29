@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <perfcpp/counter/requested_event.hpp>
+#include <perfcpp/exception.hpp>
 #include <perfcpp/metric/metric.hpp>
 
 TEST_CASE("calculating", "[Metric][CyclesPerInstruction]")
@@ -288,6 +289,13 @@ TEST_CASE("calculating", "[Metric][Formula]")
     REQUIRE_THROWS(perf::FormulaMetric{ "scientific-formular", "'event-a' * 1e2e5" });
   }
 
+  SECTION("out-of-range constant throws domain error, not std::out_of_range")
+  {
+    /// std::stod throws std::out_of_range for values outside double's range.
+    /// The tokenizer must wrap it in CannotParseMetricExpressionError, not let it escape raw.
+    REQUIRE_THROWS_AS((perf::FormulaMetric{ "test", "'event-a' * 1e999" }), perf::CannotParseMetricExpressionError);
+  }
+
   SECTION("d_ratio function")
   {
     REQUIRE_THROWS(perf::FormulaMetric{ "d-ratio-formular", "d_ratio()" });
@@ -306,15 +314,29 @@ TEST_CASE("calculating", "[Metric][Formula]")
   SECTION("sum function")
   {
     REQUIRE_THROWS(perf::FormulaMetric{ "sum-formular", "sum()" });
-    REQUIRE_THROWS(perf::FormulaMetric{ "sum-formular", "sum('event-a')" });
     REQUIRE_THROWS(perf::FormulaMetric{ "sum-formular", "sum('event-a',)" });
-
-    auto sum_metric = perf::FormulaMetric{ "sum-formular", "sum(10, 'event-a', 10, 'event-b', 10)" };
 
     auto counter_result = perf::CounterResult{ std::vector<std::pair<std::string_view, double>>{
       std::make_pair("event-a", 100U), std::make_pair("event-b", 20U) } };
+
+    auto single_sum_metric = perf::FormulaMetric{ "sum-formular", "sum('event-a')" };
+    REQUIRE(single_sum_metric.calculate(counter_result).has_value());
+    REQUIRE(single_sum_metric.calculate(counter_result).value() == 100U);
+
+    auto sum_metric = perf::FormulaMetric{ "sum-formular", "sum(10, 'event-a', 10, 'event-b', 10)" };
     REQUIRE(sum_metric.calculate(counter_result).has_value());
     REQUIRE(sum_metric.calculate(counter_result).value() == (10 + 100 + 10 + 20 + 10));
+  }
+
+  SECTION("malformed primary expression")
+  {
+    /// Leading multiplicative operator — no valid left operand.
+    REQUIRE_THROWS(perf::FormulaMetric{ "test", "* 3" });
+    REQUIRE_THROWS(perf::FormulaMetric{ "test", "/ 3" });
+
+    /// Stray closing parenthesis or comma in primary position.
+    REQUIRE_THROWS(perf::FormulaMetric{ "test", ") + 3" });
+    REQUIRE_THROWS(perf::FormulaMetric{ "test", ", 3" });
   }
 
   SECTION("formula with PMU name")

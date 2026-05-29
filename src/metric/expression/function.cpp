@@ -1,16 +1,19 @@
-#include <numeric>
 #include <perfcpp/metric/expression/function.hpp>
 
 std::optional<double>
 perf::metric::expression::DRatioFunction::evaluate(const std::optional<double> left,
                                                    const std::optional<double> right) const
 {
-  if (left.has_value() && right.has_value() && right.value() != .0) {
-    return left.value() / right.value();
+  if (!left.has_value() || !right.has_value()) {
+    return std::nullopt;
   }
 
-  /// If one of the operands cannot be evaluated OR the right operand is zero, we cannot calculate the ratio.
-  return std::nullopt;
+  /// Return 0 when the denominator is zero, matching dratio() semantics.
+  if (right.value() == .0) {
+    return .0;
+  }
+
+  return left.value() / right.value();
 }
 
 std::optional<double>
