@@ -189,9 +189,12 @@ perf::EventCounter::schedule_to_fixed_hardware_counters(
       continue;
     }
 
-    /// Create a dedicated group for this fixed event; fixed groups do not count against the generic PMC limit.
-    this->create_new_group(requested_event, config.value(), /* fixed events never share a group */ false);
-    ++this->_num_fixed_groups;
+    /// Create a dedicated group for this fixed event; fixed groups do not count against the generic PMC limit
+    /// and are tracked (via _num_fixed_groups) inside create_new_group.
+    this->create_new_group(requested_event,
+                           config.value(),
+                           /* fixed events never share a group */ false,
+                           /* is fixed */ true);
   }
 
   /// Remove fixed events that have been scheduled above.
@@ -317,10 +320,14 @@ perf::EventCounter::append_to_any_hardware_counter(RequestedEvent& event, const 
 }
 
 void
-perf::EventCounter::create_new_group(RequestedEvent& event, const CounterConfig& event_config, bool is_keep_open)
+perf::EventCounter::create_new_group(RequestedEvent& event,
+                                     const CounterConfig& event_config,
+                                     bool is_keep_open,
+                                     const bool is_fixed)
 {
-  /// Test if we can add another group.
-  if (this->size() == this->_config.num_physical_counters()) {
+  /// Fixed-function PMC groups have dedicated counters (one group per fixed counter, never added twice) and do
+  /// not count against the generic PMC limit; they are also excluded from size(). Only generic groups are bounded.
+  if (!is_fixed && this->size() >= this->_config.num_physical_counters()) {
     throw MaxPhysicalCountersReachedError{ this->_config.num_physical_counters() };
   }
 
@@ -330,6 +337,9 @@ perf::EventCounter::create_new_group(RequestedEvent& event, const CounterConfig&
   /// Create a new group and add the event, if we did not raise an exception.
   auto& [group, _] = this->_hardware_event_groups.emplace_back(Group{}, is_keep_open);
   group.add(event_config);
+
+  /// Track fixed groups separately so they are excluded from size() and the generic PMC limit.
+  this->_num_fixed_groups += static_cast<std::size_t>(is_fixed);
 
   /// Add to the request set.
   const auto group_id = static_cast<std::uint8_t>(this->_hardware_event_groups.size() - 1U);

@@ -355,8 +355,12 @@ private:
    * @param event Event to append.
    * @param event_config Configuration of the event.
    * @param is_keep_open If true, further events can be added in the future. Otherwise, the event will be the only one.
+   * @param is_fixed If true, the group uses a fixed-function PMC and bypasses the generic PMC limit.
    */
-  void create_new_group(RequestedEvent& event, const CounterConfig& event_config, bool is_keep_open);
+  void create_new_group(RequestedEvent& event,
+                        const CounterConfig& event_config,
+                        bool is_keep_open,
+                        bool is_fixed = false);
 };
 
 /**

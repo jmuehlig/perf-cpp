@@ -5,6 +5,7 @@
 #include <optional>
 #include <perfcpp/event_counter.hpp>
 #include <perfcpp/exception.hpp>
+#include <perfcpp/hardware_info.hpp>
 #include <sched.h>
 #include <string>
 #include <unistd.h>
@@ -139,6 +140,42 @@ TEST_CASE("counter scheduling", "[EventCounter]")
 
     REQUIRE(event_counter.result().get("cycles").has_value());
   }
+}
+
+TEST_CASE("fixed counters bypass the generic PMC limit", "[EventCounter]")
+{
+  /// Regression test: a fixed-function event (e.g. instructions/cycles on Intel) added after the generic PMC budget
+  /// is already exhausted must still be scheduled on its dedicated fixed counter, not rejected with
+  /// MaxPhysicalCountersReachedError. Fixed events are extracted before generics within a single add(), so the bug
+  /// only surfaces across add() calls, once the generic groups already fill num_physical_counters().
+  if (!perf::HardwareInfo::is_intel() ||
+      perf::HardwareInfo::physical_fixed_performance_counters_per_logical_core() == 0U) {
+    SKIP("Requires an Intel CPU with fixed-function performance counters.");
+  }
+
+  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
+
+  auto config = perf::Config{};
+  config.num_events_per_physical_counter(1U);
+  config.num_physical_counters(2U);
+  auto event_counter = perf::EventCounter{ config };
+
+  /// Fill both generic counters with generic (non-fixed) events.
+  event_counter.add(std::vector<std::string>{ "branches", "cache-misses" });
+
+  /// Adding a fixed event afterwards must not throw, even though the generic budget is exhausted.
+  REQUIRE_NOTHROW(event_counter.add("instructions"));
+
+  event_counter.start();
+  readonly_benchmark.run();
+  event_counter.stop();
+
+  /// All three events must be present in the result, confirming the fixed event was scheduled and read.
+  const auto result = event_counter.result();
+  REQUIRE(result.get("branches").has_value());
+  REQUIRE(result.get("cache-misses").has_value());
+  REQUIRE(result.get("instructions").has_value());
+  REQUIRE(result.get("instructions").value() > 0.);
 }
 
 TEST_CASE("counting", "[EventCounter]")
