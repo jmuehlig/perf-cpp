@@ -138,12 +138,12 @@ public:
     }
     SampleCounter(Group&& group,
                   RequestedEventSet&& requested_events,
-                  const bool has_auxiliary_counter,
+                  const bool has_intel_auxiliary_counter,
                   const bool has_amd_fetch_pmu_counter,
                   const bool has_amd_op_pmu_counter)
       : _group(std::move(group))
       , _requested_events(std::move(requested_events))
-      , _has_intel_auxiliary_event(has_auxiliary_counter)
+      , _has_intel_auxiliary_event(has_intel_auxiliary_counter)
       , _has_amd_ibs_fetch_pmu(has_amd_fetch_pmu_counter)
       , _has_amd_ibs_op_pmu(has_amd_op_pmu_counter)
     {
@@ -164,7 +164,8 @@ public:
     [[nodiscard]] bool has_amd_op_pmu_counter() const noexcept { return _has_amd_ibs_op_pmu; }
 
     /**
-     * @return User-level buffer of the first counter (if not nullptr) or the second counter.
+     * @return User-level buffer of the sampling counter: the first counter, or the second counter when an Intel
+     * auxiliary event precedes it in the group.
      */
     [[nodiscard]] std::vector<std::vector<std::byte>> consume_samples();
 
@@ -400,7 +401,7 @@ public:
   /**
    * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
    *
-   * @param triggers List of name-precision tuples that "trigger" sample recording.
+   * @param triggers List of triggers that "trigger" sample recording.
    * @return Sampler
    */
   Sampler& trigger(std::vector<Trigger>&& triggers)
@@ -454,7 +455,7 @@ public:
   void close() noexcept;
 
   /**
-   * @return List of sampled events after closing the sampler.
+   * @return List of sampled events after stopping, before closing the sampler.
    */
   [[nodiscard]] SampleResult result(bool sort_by_time = true);
 
@@ -574,7 +575,7 @@ public:
   }
 
   /**
-   * @return List of sampled events after stopping the sampler.
+   * @return List of sampled events after stopping, before closing the sampler.
    */
   [[nodiscard]] SampleResult result(const bool sort_by_time = true) { return result(samplers(), sort_by_time); }
 
@@ -725,7 +726,7 @@ public:
    * @param period Sampling period of the event.
    * @return MultiThreadSampler
    */
-  MultiThreadSampler& trigger(std::string&& trigger_name, const class Period period)
+  MultiThreadSampler& trigger(std::string&& trigger_name, const Period period)
   {
     return trigger(std::vector<std::vector<Sampler::Trigger>>{
       std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name), period } } });
@@ -752,10 +753,37 @@ public:
    * @param period Sampling period of the event.
    * @return MultiThreadSampler
    */
-  MultiThreadSampler& trigger(std::string&& trigger_name, const Precision precision, const class Period period)
+  MultiThreadSampler& trigger(std::string&& trigger_name, const Precision precision, const Period period)
   {
     return trigger(std::vector<std::vector<Sampler::Trigger>>{
       std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name), precision, period } } });
+  }
+
+  /**
+   * Set the trigger for sampling to a single counter.
+   *
+   * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @param precision Precision of the event.
+   * @param frequency Sampling frequency of the event.
+   * @return MultiThreadSampler
+   */
+  MultiThreadSampler& trigger(std::string&& trigger_name, const Precision precision, const Frequency frequency)
+  {
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{
+      std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name), precision, frequency } } });
+  }
+
+  /**
+   * Set the trigger for sampling to a typed trigger (e.g., MemoryLoad, IbsOp).
+   *
+   * @param typed_trigger Typed trigger that "triggers" sample recording.
+   * @return MultiThreadSampler
+   */
+  template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, std::string>, int> = 0>
+  MultiThreadSampler& trigger(T&& typed_trigger)
+  {
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{ std::vector<Sampler::Trigger>{
+      Sampler::Trigger{ Sampler::Trigger::trigger_t{ std::forward<T>(typed_trigger) } } } });
   }
 
   /**
@@ -780,7 +808,7 @@ public:
    * @return MultiThreadSampler
    */
   template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, std::string>, int> = 0>
-  MultiThreadSampler& trigger(T&& typed_trigger, const class Period period)
+  MultiThreadSampler& trigger(T&& typed_trigger, const Period period)
   {
     return trigger(std::vector<std::vector<Sampler::Trigger>>{ std::vector<Sampler::Trigger>{
       Sampler::Trigger{ Sampler::Trigger::trigger_t{ std::forward<T>(typed_trigger) }, period } } });
@@ -809,7 +837,7 @@ public:
    * @return MultiThreadSampler
    */
   template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, std::string>, int> = 0>
-  MultiThreadSampler& trigger(T&& typed_trigger, const Precision precision, const class Period period)
+  MultiThreadSampler& trigger(T&& typed_trigger, const Precision precision, const Period period)
   {
     return trigger(std::vector<std::vector<Sampler::Trigger>>{ std::vector<Sampler::Trigger>{
       Sampler::Trigger{ Sampler::Trigger::trigger_t{ std::forward<T>(typed_trigger) }, precision, period } } });
@@ -839,6 +867,18 @@ public:
   MultiThreadSampler& trigger(std::vector<std::string>&& trigger_names)
   {
     return trigger(std::vector<std::vector<std::string>>{ std::move(trigger_names) });
+  }
+
+  /**
+   * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
+   *
+   * @param trigger Trigger that "triggers" sample recording.
+   * @return MultiThreadSampler
+   */
+  MultiThreadSampler& trigger(Sampler::Trigger&& trigger)
+  {
+    return this->trigger(
+      std::vector<std::vector<Sampler::Trigger>>{ std::vector<Sampler::Trigger>{ std::move(trigger) } });
   }
 
   /**
@@ -1009,7 +1049,7 @@ public:
    * @param period Sampling period of the event.
    * @return MultiCoreSampler
    */
-  MultiCoreSampler& trigger(std::string&& trigger_name, const class Period period)
+  MultiCoreSampler& trigger(std::string&& trigger_name, const Period period)
   {
     return trigger(std::vector<std::vector<Sampler::Trigger>>{
       std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name), period } } });
@@ -1036,10 +1076,37 @@ public:
    * @param period Sampling period of the event.
    * @return MultiCoreSampler
    */
-  MultiCoreSampler& trigger(std::string&& trigger_name, const Precision precision, const class Period period)
+  MultiCoreSampler& trigger(std::string&& trigger_name, const Precision precision, const Period period)
   {
     return trigger(std::vector<std::vector<Sampler::Trigger>>{
       std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name), precision, period } } });
+  }
+
+  /**
+   * Set the trigger for sampling to a single counter.
+   *
+   * @param trigger_name Name of the counter that "triggers" sample recording.
+   * @param precision Precision of the event.
+   * @param frequency Sampling frequency of the event.
+   * @return MultiCoreSampler
+   */
+  MultiCoreSampler& trigger(std::string&& trigger_name, const Precision precision, const Frequency frequency)
+  {
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{
+      std::vector<Sampler::Trigger>{ Sampler::Trigger{ std::move(trigger_name), precision, frequency } } });
+  }
+
+  /**
+   * Set the trigger for sampling to a typed trigger (e.g., MemoryLoad, IbsOp).
+   *
+   * @param typed_trigger Typed trigger that "triggers" sample recording.
+   * @return MultiCoreSampler
+   */
+  template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, std::string>, int> = 0>
+  MultiCoreSampler& trigger(T&& typed_trigger)
+  {
+    return trigger(std::vector<std::vector<Sampler::Trigger>>{ std::vector<Sampler::Trigger>{
+      Sampler::Trigger{ Sampler::Trigger::trigger_t{ std::forward<T>(typed_trigger) } } } });
   }
 
   /**
@@ -1064,7 +1131,7 @@ public:
    * @return MultiCoreSampler
    */
   template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, std::string>, int> = 0>
-  MultiCoreSampler& trigger(T&& typed_trigger, const class Period period)
+  MultiCoreSampler& trigger(T&& typed_trigger, const Period period)
   {
     return trigger(std::vector<std::vector<Sampler::Trigger>>{ std::vector<Sampler::Trigger>{
       Sampler::Trigger{ Sampler::Trigger::trigger_t{ std::forward<T>(typed_trigger) }, period } } });
@@ -1093,7 +1160,7 @@ public:
    * @return MultiCoreSampler
    */
   template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, std::string>, int> = 0>
-  MultiCoreSampler& trigger(T&& typed_trigger, const Precision precision, const class Period period)
+  MultiCoreSampler& trigger(T&& typed_trigger, const Precision precision, const Period period)
   {
     return trigger(std::vector<std::vector<Sampler::Trigger>>{ std::vector<Sampler::Trigger>{
       Sampler::Trigger{ Sampler::Trigger::trigger_t{ std::forward<T>(typed_trigger) }, precision, period } } });
@@ -1123,6 +1190,18 @@ public:
   MultiCoreSampler& trigger(std::vector<std::string>&& trigger_names)
   {
     return trigger(std::vector<std::vector<std::string>>{ std::move(trigger_names) });
+  }
+
+  /**
+   * Set the trigger for sampling to a list of different counters (e.g., mem loads and mem stores).
+   *
+   * @param trigger Trigger that "triggers" sample recording.
+   * @return MultiCoreSampler
+   */
+  MultiCoreSampler& trigger(Sampler::Trigger&& trigger)
+  {
+    return this->trigger(
+      std::vector<std::vector<Sampler::Trigger>>{ std::vector<Sampler::Trigger>{ std::move(trigger) } });
   }
 
   /**

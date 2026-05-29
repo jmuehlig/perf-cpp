@@ -6,7 +6,7 @@ int
 main()
 {
   std::cout << "libperf-cpp example: Record perf samples including time, "
-               "user_registers, and cpu id for single-threaded random "
+               "user registers, and cpu id for single-threaded random "
                "access to an in-memory array."
             << std::endl;
 
@@ -66,14 +66,14 @@ main()
       std::cout << "Time = " << sample.metadata().timestamp().value()
                 << " | CPU ID = " << sample.metadata().cpu_id().value();
 
-      if (sample.user_registers().has_value()) {
+      /// Print only the registers valid for the mode in which the sample was taken.
+      const auto mode = sample.metadata().mode();
+      if (mode == perf::Metadata::Mode::User && sample.user_registers().has_value()) {
         const auto& user_registers = sample.user_registers().value();
         std::cout << " | User Registers = IP(" << user_registers.get(perf::Registers::x86::IP).value_or(0) << "), DI("
                   << user_registers.get(perf::Registers::x86::DI).value_or(0) << "), R10("
                   << user_registers.get(perf::Registers::x86::R10).value_or(0) << ")";
-      }
-
-      if (sample.kernel_registers().has_value()) {
+      } else if (mode == perf::Metadata::Mode::Kernel && sample.kernel_registers().has_value()) {
         const auto& kernel_registers = sample.kernel_registers().value();
         std::cout << " | Kernel Registers = IP(" << kernel_registers.get(perf::Registers::x86::IP).value_or(0)
                   << "), DI(" << kernel_registers.get(perf::Registers::x86::DI).value_or(0) << "), R10("

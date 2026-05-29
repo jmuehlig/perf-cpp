@@ -473,7 +473,7 @@ perf::Sampler::SampleCounter::consume_samples()
   /// Normally, the first member will control the sample buffer; however, on some Intel
   /// architectures, an auxiliary event is needed before the "real" event – the "real" event controlling the
   /// buffer is the second one.
-  const auto event_index = 0U + static_cast<std::uint8_t>(this->_has_intel_auxiliary_event);
+  const auto event_index = static_cast<std::uint8_t>(this->_has_intel_auxiliary_event);
   if (auto& members = this->group().members();
       members.size() > event_index && members[event_index].mmap_buffer() != nullptr) {
     return members[event_index].mmap_buffer()->consume_data();
