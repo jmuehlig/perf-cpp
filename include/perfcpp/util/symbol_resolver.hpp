@@ -94,6 +94,13 @@ public:
     [[nodiscard]] const std::vector<std::uint8_t>& build_id() const noexcept { return _build_id; }
 
     /**
+     * @return The ELF load bias (p_vaddr - p_offset of the matching PT_LOAD segment; 0 when unavailable).
+     */
+    [[nodiscard]] std::int64_t elf_bias() const noexcept { return _elf_bias; }
+
+    void elf_bias(const std::int64_t bias) noexcept { _elf_bias = bias; }
+
+    /**
      * Compares two modules for equality based on their paths.
      *
      * @param other Module to compare with.
@@ -122,6 +129,9 @@ public:
 
     /// Build ID of the module.
     std::vector<std::uint8_t> _build_id;
+
+    /// ELF load bias: p_vaddr - p_offset of the matching PT_LOAD segment (0 when unavailable).
+    std::int64_t _elf_bias{ 0 };
   };
 
   /**
@@ -240,7 +250,7 @@ public:
    * @param module Module to lookup.
    * @return List of all symbols linked to the module.
    */
-  [[nodiscard]] static std::vector<Symbol> parse_symbol_table(const SymbolResolver::Module& module);
+  [[nodiscard]] static std::vector<Symbol> parse_symbol_table(SymbolResolver::Module& module);
 
   /**
    * Reads the process name from /proc/self/comm.

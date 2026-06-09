@@ -62,7 +62,11 @@ perf::util::SymbolResolver::resolve(const perf::util::SymbolResolver::Module& mo
                                     const std::vector<Symbol>& symbols,
                                     std::uintptr_t logical_instruction_pointer) noexcept
 {
-  const auto relative_address = logical_instruction_pointer - module.start() + module.offset();
+  /// Add the ELF load bias (p_vaddr - p_offset of the matching PT_LOAD segment). The bias may be
+  /// negative; casting to uintptr_t and adding uses two's-complement unsigned arithmetic, which
+  /// gives the mathematically correct result for any bias value.
+  const auto relative_address =
+    logical_instruction_pointer - module.start() + module.offset() + static_cast<std::uintptr_t>(module.elf_bias());
 
   /// Find the closest symbol.
   auto closest_symbol_iterator =
@@ -170,7 +174,7 @@ perf::util::SymbolResolver::extract_symbols_from_table(void* elf_data,
 }
 
 std::vector<perf::util::SymbolResolver::Symbol>
-perf::util::SymbolResolver::parse_symbol_table(const perf::util::SymbolResolver::Module& module)
+perf::util::SymbolResolver::parse_symbol_table(perf::util::SymbolResolver::Module& module)
 {
   const auto file_descriptor = util::UniqueFileDescriptor{ ::open(module.path().c_str(), O_RDONLY) };
   if (!file_descriptor.has_value()) {
@@ -198,6 +202,21 @@ perf::util::SymbolResolver::parse_symbol_table(const perf::util::SymbolResolver:
   if (std::memcmp(&elf_header->e_ident[0], ELFMAG, SELFMAG) != 0) {
     ::munmap(elf_data, stat_size);
     throw CannotVerifyElfMagicForModule{ module.name(), module.path() };
+  }
+
+  /// Compute the ELF load bias from program headers: find the PT_LOAD segment whose file-offset
+  /// range covers module.offset(), then set bias = p_vaddr - p_offset.
+  if (elf_header->e_phnum > 0U) {
+    const auto* phdr_table =
+      reinterpret_cast<const Elf64_Phdr*>(static_cast<const char*>(elf_data) + elf_header->e_phoff);
+    for (auto i = 0U; i < elf_header->e_phnum; ++i) {
+      const auto& phdr = phdr_table[i];
+      if (phdr.p_type == PT_LOAD && module.offset() >= phdr.p_offset &&
+          module.offset() < phdr.p_offset + phdr.p_filesz) {
+        module.elf_bias(static_cast<std::int64_t>(phdr.p_vaddr) - static_cast<std::int64_t>(phdr.p_offset));
+        break;
+      }
+    }
   }
 
   const auto* section_header_table =
