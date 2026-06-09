@@ -364,12 +364,12 @@ perf::RecordFileWriter::read_first_sample_id(const SampleRecordingValues& sample
               timestamp = entry.read<std::uint64_t>();
             }
 
-            if (sampler_values.is_set(SampleRecordingValues::Field::StreamId)) {
-              stream_id = entry.read<std::uint64_t>();
-            }
-
             if (sampler_values.is_set(SampleRecordingValues::Field::LogicalMemoryAddress)) {
               entry.skip<std::uint64_t>();
+            }
+
+            if (sampler_values.is_set(SampleRecordingValues::Field::StreamId)) {
+              stream_id = entry.read<std::uint64_t>();
             }
 
             if (sampler_values.is_set(SampleRecordingValues::Field::CpuId)) {
