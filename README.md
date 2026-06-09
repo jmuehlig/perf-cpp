@@ -134,7 +134,7 @@ The full documentation is available at **[jmuehlig.github.io/perf-cpp](https://j
 See also: **[Examples](examples/README.md)** | **[Changelog](CHANGELOG.md)**
 
 ## System Requirements
-- *Clang* / *GCC* with support for **C++17** features.
+- **GCC 12** or newer, or **Clang 16** or newer, with **C++17** support.
 - *CMake* version **3.10** or higher.
 - *Linux Kernel* **4.0** or newer (some features require a newer kernel).
 - `perf_event_paranoid` setting: Adjust as needed to allow access to performance counters (see the [perf paranoid](https://jmuehlig.github.io/perf-cpp/perf-paranoid/) documentation).

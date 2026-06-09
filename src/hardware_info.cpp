@@ -365,9 +365,9 @@ perf::HardwareInfo::max_cpu_clock_frequency()
 
   for (const auto& entry : std::filesystem::directory_iterator("/sys/devices/system/cpu")) {
     if (entry.is_directory()) {
-      if (auto cpu_directory_name = entry.path().filename().string(); cpu_directory_name.size() > 3U &&
-                                                                      cpu_directory_name.rfind("cpu", 0U) == 0U &&
-                                                                      std::isdigit(cpu_directory_name[3U]) != 0) {
+      if (auto cpu_directory_name = entry.path().filename().string();
+          cpu_directory_name.size() > 3U && cpu_directory_name.rfind("cpu", 0U) == 0U &&
+          std::isdigit(static_cast<unsigned char>(cpu_directory_name[3U])) != 0) {
         auto freq_file = std::ifstream{ entry.path() / "cpufreq/cpuinfo_max_freq" };
         if (auto frequency_in_khz = 0UL; freq_file >> frequency_in_khz) {
           max_frequency_in_hz = std::max(max_frequency_in_hz, frequency_in_khz * 1000UL);

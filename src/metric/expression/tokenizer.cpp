@@ -1,3 +1,4 @@
+#include <charconv>
 #include <perfcpp/exception.hpp>
 #include <perfcpp/metric/expression/tokenizer.hpp>
 
@@ -115,18 +116,14 @@ perf::metric::expression::Tokenizer::read_constant(const std::size_t begin) cons
     }
   }
 
-  /// Extract the number.
-  const auto number = this->_input.substr(begin, position - begin);
-  try {
-    /// Parse the number to decimal.
-    return std::make_pair(std::stod(number), position);
-  } catch (std::invalid_argument& e) {
-    throw CannotParseMetricExpressionError{ this->_input,
-                                            std::string{ "Cannot parse number (" }.append(e.what()).append(")") };
-  } catch (std::out_of_range& e) {
-    throw CannotParseMetricExpressionError{ this->_input,
-                                            std::string{ "Number out of range (" }.append(e.what()).append(")") };
+  /// Parse the number locale-independently.
+  auto value = double{};
+  const auto* const first = this->_input.data() + begin;
+  const auto* const last = this->_input.data() + position;
+  if (const auto [ptr, error] = std::from_chars(first, last, value); error != std::errc{} || ptr != last) {
+    throw CannotParseMetricExpressionError{ this->_input, "Cannot parse number" };
   }
+  return std::make_pair(value, position);
 }
 
 std::pair<std::string, std::size_t>
