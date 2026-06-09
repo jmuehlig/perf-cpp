@@ -1,3 +1,4 @@
+#include <numeric>
 #include <perfcpp/hardware_info.hpp>
 #include <perfcpp/sample/decoder.hpp>
 #include <perfcpp/sample/ibs_decoder.hpp>
@@ -38,7 +39,13 @@ perf::SampleDecoder::decode(const std::vector<std::vector<std::byte>>& sample_bu
                             const Group& event_group) const
 {
   auto samples = std::vector<Sample>{};
-  samples.reserve(sample_buffers.size() * 2048UL);
+  /// Estimate the number of samples from the total data volume; the smallest possible record is a
+  /// bare perf_event_header.
+  const auto total_bytes = std::accumulate(sample_buffers.begin(),
+                                           sample_buffers.end(),
+                                           std::size_t{ 0U },
+                                           [](const auto sum, const auto& buffer) { return sum + buffer.size(); });
+  samples.reserve(total_bytes / sizeof(perf_event_header));
 
   /// Read samples from all the buffers.
   for (const auto& buffer : sample_buffers) {
