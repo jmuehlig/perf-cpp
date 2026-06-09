@@ -19,8 +19,13 @@ perf::util::SymbolResolver::SymbolResolver()
   this->_resolved_symbols.reserve(1ULL << 10);
 
   for (auto& module : util::SymbolResolver::read_modules()) {
-    if (auto symbols = util::SymbolResolver::parse_symbol_table(module); !symbols.empty()) {
-      this->_modules.insert(std::make_pair(std::move(module), std::move(symbols)));
+    try {
+      if (auto symbols = util::SymbolResolver::parse_symbol_table(module); !symbols.empty()) {
+        this->_modules.insert(std::make_pair(std::move(module), std::move(symbols)));
+      }
+    } catch (const std::exception&) {
+      /// Skip modules whose symbols cannot be read (e.g., deleted/replaced .so files,
+      /// permission-restricted or non-ELF mappings). Samples there stay unresolved.
     }
   }
 }
@@ -178,6 +183,9 @@ perf::util::SymbolResolver::parse_symbol_table(const perf::util::SymbolResolver:
   }
 
   const auto stat_size = static_cast<std::size_t>(stat_.st_size);
+  if (stat_size == 0U) {
+    return {};
+  }
 
   /// MMap ELF data.
   auto* elf_data = ::mmap(nullptr, stat_size, PROT_READ, MAP_PRIVATE, file_descriptor.value(), 0);
