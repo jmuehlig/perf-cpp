@@ -1,10 +1,11 @@
+#include <array>
 #include <cstring>
 #include <perfcpp/exception.hpp>
 #include <perfcpp/hardware_info.hpp>
 #include <perfcpp/sample/mmap_buffer.hpp>
+#include <poll.h>
 #include <sys/eventfd.h>
 #include <sys/mman.h>
-#include <sys/select.h>
 
 #if defined(__x86_64__) || defined(__i386__)
 #include <x86intrin.h>
@@ -33,29 +34,24 @@ perf::MmapBufferOverflowWorker::run(perf::MmapBuffer& mmap_buffer,
                                     const perf::util::FileDescriptorView cancel_file_descriptor) noexcept
 {
   do {
-    /// Initialize the file descriptor set.
-    auto file_descriptor_set = ::fd_set{};
-    FD_ZERO(&file_descriptor_set);
-    FD_SET(counter_file_descriptor.value(), &file_descriptor_set);
-    FD_SET(cancel_file_descriptor.value(), &file_descriptor_set);
+    /// Wait for the perf file descriptor (overflow) or the event file descriptor (cancel) to notify.
+    std::array<::pollfd, 2U> poll_file_descriptors{ ::pollfd{ counter_file_descriptor.value(), POLLIN, 0 },
+                                                    ::pollfd{ cancel_file_descriptor.value(), POLLIN, 0 } };
 
-    const auto max_file_descriptor = std::max(counter_file_descriptor.value(), cancel_file_descriptor.value()) + 1;
+    const auto poll_result = ::poll(poll_file_descriptors.data(), poll_file_descriptors.size(), -1);
 
-    /// Block and wait for the perf file descriptor or the event file descriptor to notify.
-    const auto select = ::select(max_file_descriptor, &file_descriptor_set, nullptr, nullptr, nullptr);
-
-    if (select > 0) {
+    if (poll_result > 0) {
       /// If the cancel file descriptor is set, exit the loop and consequently the thread.
-      if (FD_ISSET(cancel_file_descriptor.value(), &file_descriptor_set)) {
+      if (static_cast<bool>(poll_file_descriptors[1U].revents & POLLIN)) {
         return;
       }
 
-      /// If the "normal" perf file descriptor is set, trigger the MmapBuffer to handle the overflow by copying all the
-      /// data into an application-level buffer.
-      if (FD_ISSET(counter_file_descriptor.value(), &file_descriptor_set)) {
+      /// If the "normal" perf file descriptor is set, trigger the MmapBuffer to handle the overflow
+      /// by copying all the data into an application-level buffer.
+      if (static_cast<bool>(poll_file_descriptors[0U].revents & (POLLIN | POLLHUP | POLLERR))) {
         mmap_buffer.handle_overflow();
       }
-    } else if (select == -1 && errno != EINTR) {
+    } else if (poll_result == -1 && errno != EINTR) {
       return;
     }
   } while (true);
