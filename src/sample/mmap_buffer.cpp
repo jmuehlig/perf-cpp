@@ -147,7 +147,7 @@ perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
   do {
     lock = this->_ringbuffer_header->lock;
 
-    /// Skip if a kernel write is in progress (odd lock = seqlock write active).
+    /// Retry if a kernel write is in progress (odd lock = seqlock write active).
     if (static_cast<bool>(lock & 1U)) {
       continue;
     }
@@ -182,7 +182,9 @@ perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
     count += static_cast<std::int64_t>(value);
 
     asm volatile("" ::: "memory");
-  } while (this->_ringbuffer_header->lock != lock);
+
+    /// Retry when the seqlock was odd (write in progress) or changed during the read.
+  } while (static_cast<bool>(lock & 1U) || this->_ringbuffer_header->lock != lock);
 
   /// Scale the value if it was not counted the entire time.
   if (running > 0ULL && enabled > running) {
