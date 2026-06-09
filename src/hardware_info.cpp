@@ -103,9 +103,14 @@ perf::HardwareInfo::is_intel_12th_generation_or_newer()
     const auto extended_model = (model_info->eax >> 16) & 0xF;
 
     const auto display_model = (extended_model << 4) + model;
+
+    /// Family-6 models >= 143 are 12th generation (Alder Lake) or newer, EXCEPT a few older
+    /// micro-architectures that also received high model numbers:
+    ///   0xA5 (165) / 0xA6 (166): Comet Lake (10th gen), 0xA7 (167): Rocket Lake (11th gen).
+    const auto is_pre_12th_gen_exception = display_model == 0xA5U || display_model == 0xA6U || display_model == 0xA7U;
+
     return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer,
-                                     display_model >= /* 12th generation */ 143U &&
-                                       display_model != /* Rocket Lake (11th gen desktop) */ 0xA7U);
+                                     display_model >= 143U && !is_pre_12th_gen_exception);
   }
 
   return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer, false);
