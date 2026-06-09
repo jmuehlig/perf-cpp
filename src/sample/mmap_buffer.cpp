@@ -76,11 +76,11 @@ perf::MmapBuffer::MmapBuffer(const util::UniqueFileDescriptor& file_descriptor, 
 
   /// Open the mapped buffer; use write mode if needed because a separate thread will copy data into application-level
   /// buffers.
-  const auto prod_flags = PROT_READ | (static_cast<decltype(PROT_WRITE)>(is_handle_overflow) * PROT_WRITE);
+  const auto prot_flags = is_handle_overflow ? (PROT_READ | PROT_WRITE) : PROT_READ;
   this->_ringbuffer_header =
     static_cast<perf_event_mmap_page*>(::mmap(nullptr,
                                               this->_count_pages * HardwareInfo::memory_page_size(),
-                                              prod_flags,
+                                              prot_flags,
                                               MAP_SHARED,
                                               file_descriptor.value(),
                                               0));

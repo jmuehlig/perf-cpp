@@ -102,7 +102,7 @@ perf::util::SymbolResolver::read_modules()
 
   std::string line;
   const auto map_regex =
-    std::regex{ R"(([0-9a-f]+)-([0-9a-f]+)\s+([rwxp-]+)\s+([0-9a-f]+)\s+[0-9a-f]+:[0-9a-f]+\s+\d+\s*(.*)?)" };
+    std::regex{ R"(([0-9a-f]+)-([0-9a-f]+)\s+([rwxps-]+)\s+([0-9a-f]+)\s+[0-9a-f]+:[0-9a-f]+\s+\d+\s*(.*)?)" };
 
   while (std::getline(modules_stream, line)) {
     std::smatch match;

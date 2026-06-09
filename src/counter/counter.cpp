@@ -323,9 +323,14 @@ perf::Counter::create_perf_event_attribute(const bool is_disabled,
 std::uint64_t
 perf::Counter::create_perf_event_read_format(const bool is_include_time, const bool is_include_group) noexcept
 {
-  return (static_cast<std::uint64_t>(is_include_group) * PERF_FORMAT_GROUP) | PERF_FORMAT_ID |
-         (static_cast<std::uint64_t>(is_include_time) *
-          (PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING));
+  auto read_format = static_cast<std::uint64_t>(PERF_FORMAT_ID);
+  if (is_include_group) {
+    read_format |= PERF_FORMAT_GROUP;
+  }
+  if (is_include_time) {
+    read_format |= PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING;
+  }
+  return read_format;
 }
 
 std::pair<perf::util::UniqueFileDescriptor, std::int32_t>
