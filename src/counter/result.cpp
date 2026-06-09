@@ -1,9 +1,35 @@
 #include <algorithm>
+#include <array>
+#include <cstdio>
 #include <fstream>
 #include <iomanip>
 #include <perfcpp/counter/result.hpp>
 #include <sstream>
 #include <tuple>
+
+namespace {
+/// Escapes a string for use as a JSON string value (quotes, backslashes, and control characters).
+std::string
+escape_json(const std::string_view input)
+{
+  auto out = std::string{};
+  out.reserve(input.size());
+  for (const auto ch : input) {
+    if (ch == '"') {
+      out += "\\\"";
+    } else if (ch == '\\') {
+      out += "\\\\";
+    } else if (static_cast<unsigned char>(ch) < 0x20U) {
+      auto buf = std::array<char, 7>{};
+      std::snprintf(buf.data(), buf.size(), "\\u%04X", static_cast<unsigned char>(ch));
+      out += buf.data();
+    } else {
+      out += ch;
+    }
+  }
+  return out;
+}
+}
 
 std::optional<double>
 perf::CounterResult::get(const std::string_view name) const noexcept
@@ -35,7 +61,7 @@ perf::CounterResult::to_json() const
       json_stream << ",";
     }
 
-    json_stream << "\"" << this->_results[i].first << "\": " << this->_results[i].second;
+    json_stream << "\"" << escape_json(this->_results[i].first) << "\": " << this->_results[i].second;
   }
 
   json_stream << "}";
@@ -57,7 +83,24 @@ perf::CounterResult::to_csv(const char delimiter, const bool print_header) const
       csv_stream << "\n";
     }
 
-    csv_stream << this->_results[i].first << delimiter << this->_results[i].second;
+    /// RFC 4180: quote the name if it contains the delimiter, a double-quote, or a newline.
+    const auto& name = this->_results[i].first;
+    const auto needs_quoting = name.find(delimiter) != std::string::npos || name.find('"') != std::string::npos ||
+                               name.find('\n') != std::string::npos;
+    if (needs_quoting) {
+      csv_stream << '"';
+      for (const auto ch : name) {
+        if (ch == '"') {
+          csv_stream << "\"\"";
+        } else {
+          csv_stream << ch;
+        }
+      }
+      csv_stream << '"';
+    } else {
+      csv_stream << name;
+    }
+    csv_stream << delimiter << this->_results[i].second;
   }
 
   return csv_stream.str();

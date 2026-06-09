@@ -130,7 +130,9 @@ perf::Group::read(CounterValues<MAX_MEMBERS>& values)
     const auto read_size = ::read(
       this->_members.front().file_descriptor().value(), &values, sizeof(std::remove_reference_t<decltype(values)>));
 
-    if (read_size < 0LL) {
+    /// Guard against errors and short reads: the kernel must return at least the
+    /// nr/time_enabled/time_running header plus two uint64_t per member (id and value).
+    if (read_size < static_cast<ssize_t>((3U + 2U * this->_members.size()) * sizeof(std::uint64_t))) {
       throw CannotReadCounter{};
     }
   }
@@ -152,10 +154,12 @@ perf::Group::get(const std::size_t index) const
     if (const auto start_value = this->_start_value.value(event.id()); start_value.has_value()) {
       /// Correct and return the result, if the event was found.
       if (const auto end_value = this->_end_value.value(event.id()); end_value.has_value()) {
-        const auto result = static_cast<double>(end_value.value() - start_value.value()) * event.scale();
-
-        /// Fall back to zero, of the event value is 0 (or lower).
-        return std::max(.0, result) * this->_multiplexing_correction;
+        const auto start = start_value.value();
+        const auto end = end_value.value();
+        /// Guard against end < start (e.g., counter anomalies); treat as zero instead of underflowing.
+        const auto difference = end >= start ? end - start : 0ULL;
+        const auto result = static_cast<double>(difference) * event.scale();
+        return result * this->_multiplexing_correction;
       }
     }
   }
