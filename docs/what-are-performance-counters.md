@@ -1,7 +1,7 @@
 # What are Hardware Performance Counters?
 
-Modern CPUs contain dedicated hardware registers — **performance monitoring counters (PMCs)** — that track low-level events as your code executes.
-These counters run in hardware with virtually zero overhead, giving you precise insights that software-only profiling cannot provide.
+Modern CPUs contain dedicated hardware registers, called **performance monitoring counters (PMCs)**, that track low-level events as your code executes.
+Since the counting happens in hardware, it costs virtually nothing and reveals details that software-only profiling cannot measure.
 
 ## What do they measure?
 
@@ -9,8 +9,8 @@ Every CPU core has a small number of programmable counters (typically 4–8).
 Each counter can be configured to count one event type at a time:
 
 - **Instructions retired**: how many instructions actually completed
-- **CPU cycles**: wall-clock time at the core level
-- **Cache misses**: L1, L2, L3, at different levels of the hierarchy
+- **CPU cycles**: clock ticks at the core's current frequency (not wall-clock time; the frequency varies with turbo and power saving)
+- **Cache misses**: accesses that missed in L1, L2, or L3
 - **Branch mispredictions**: wrong guesses by the branch predictor
 - **TLB misses**: virtual-to-physical address translation failures
 - **Memory accesses**: loads, stores, prefetches, and where data came from (L1, L2, RAM, remote NUMA node)
@@ -27,8 +27,9 @@ You get totals: *"this loop executed 4.7 billion cycles and had 13 million cache
 Counts are exact (no sampling error) but tell you nothing about *which* instructions caused those events.
 
 **Sampling** captures snapshots at regular intervals.
-Every *N* events (e.g., every 50,000 cycles), the CPU interrupts and records context about that moment — the instruction pointer, memory address, timestamp, cache level, and more.
-This gives you a statistical picture of *where* events are concentrated, but since only every *N*-th event triggers a sample, it's an approximation — not every instruction is observed.
+Every *N* events (e.g., every 50,000 cycles), the CPU interrupts and records context about that moment: the instruction pointer, memory address, timestamp, cache level, and more.
+This gives you a statistical picture of *where* events are concentrated.
+Since only every *N*-th event triggers a sample, the picture is an approximation; instructions between samples go unobserved.
 
 ## How many counters are available?
 
@@ -41,7 +42,7 @@ Typical values:
 | AMD (Zen 3+) | 6 | 0 |
 
 If you request more events than physical counters, the kernel **multiplexes**: it time-shares the counters and scales the results.
-Multiplexed counts are estimates, not exact — so fewer simultaneous events means more accurate data.
+Multiplexed counts are estimates rather than exact values; the fewer events you measure simultaneously, the more accurate the data.
 
 *perf-cpp* [detects your hardware's counter layout automatically](recording.md#detection-of-physical-hardware-counters) and manages multiplexing transparently.
 
