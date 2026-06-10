@@ -33,14 +33,18 @@ public:
 
   /// GCC 15 falsely reports -Wmaybe-uninitialized here when the move is inlined through
   /// std::variant layers; _file_descriptor is always initialized to -1 by the class definition.
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
   SharedFileDescriptor(SharedFileDescriptor&& other) noexcept
     : _ref_count(std::exchange(other._ref_count, nullptr))
     , _file_descriptor(std::exchange(other._file_descriptor, -1))
   {
   }
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
+#endif
 
   /**
    * Decrements the reference count and closes the file descriptor when the last owner is destroyed.
