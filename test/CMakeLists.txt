@@ -24,6 +24,7 @@ set(PERF_CPP_TEST
         test/requested_event.cpp
         test/sample_fields.cpp
         test/sample_result.cpp
+        test/ibs_decoder.cpp
 )
 
 add_executable(tests ${PERF_CPP_TEST})

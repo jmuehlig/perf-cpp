@@ -808,12 +808,19 @@ perf::SampleDecoder::enrich_sample_with_ibs_fetch_data_from_raw(Sample& sample,
 {
   const auto ibs_fetch_decoder = IBSFetchDecoder{ raw_values };
 
+  /// Skip samples whose base MSRs were not fully captured.
+  if (!ibs_fetch_decoder.is_base_data_complete()) {
+    return;
+  }
+
   /// Fetch latency.
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionLatency)) {
     sample.instruction_execution().latency().fetch(ibs_fetch_decoder.latency());
 
-    if (ibs_fetch_decoder.is_l1_tlb_miss()) {
-      sample.instruction_execution().latency().itlb_refill(ibs_fetch_decoder.itlb_refill_latency());
+    if (ibs_fetch_decoder.is_l1_tlb_miss() || ibs_fetch_decoder.is_l2_tlb_miss()) {
+      if (const auto itlb_latency = ibs_fetch_decoder.itlb_refill_latency(); itlb_latency.has_value()) {
+        sample.instruction_execution().latency().itlb_refill(itlb_latency.value());
+      }
     }
   }
 
@@ -852,6 +859,11 @@ perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(Sample& sample,
                                                              const std::vector<std::byte>& raw_values) const noexcept
 {
   const auto ibs_op_decoder = IBSOpDecoder{ raw_values };
+
+  /// Skip samples whose base MSRs were not fully captured.
+  if (!ibs_op_decoder.is_base_data_complete()) {
+    return;
+  }
 
   /// Execution latency.
   if (this->_sampler_values.is_set(SampleRecordingValues::Field::InstructionLatency)) {

@@ -1,5 +1,9 @@
 #pragma once
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <optional>
 #include <vector>
 
 namespace perf {
@@ -15,8 +19,13 @@ class IBSFetchDecoder
 {
 public:
   explicit IBSFetchDecoder(const std::vector<std::byte>& raw_data) noexcept
-    : _fetch_data(reinterpret_cast<const FetchData*>(raw_data.data() + /* 4 byte offset */ 4U))
   {
+    /// The raw buffer is a 4-byte caps word followed by the IBS fetch MSRs; copy only the
+    /// registers that are present (trailing MSRs are optional, depending on CPU capabilities).
+    if (raw_data.size() > 4U) {
+      _raw_size = raw_data.size() - 4U;
+      std::memcpy(&_fetch_data, raw_data.data() + 4U, std::min(_raw_size, sizeof(FetchData)));
+    }
   }
 
   IBSFetchDecoder(const IBSFetchDecoder&) = default;
@@ -26,18 +35,40 @@ public:
   IBSFetchDecoder& operator=(IBSFetchDecoder&&) noexcept = default;
 
   /**
+   * Returns true if the raw sample contains all three base fetch MSRs
+   * (IBS_FETCH_CTL, IBS_FETCH_LINADDR, IBS_FETCH_PHYS_ADDR).
+   *
+   * @return True if the base fetch data is fully present.
+   */
+  [[nodiscard]] bool is_base_data_complete() const noexcept
+  {
+    return _raw_size >= offsetof(FetchData, _fetch_control_extended);
+  }
+
+  /**
+   * Returns true if the raw sample contains the extended fetch control MSR
+   * (IC_IBS_EXTD_CTL; only written by CPUs with the FetchCtlExtd IBS capability).
+   *
+   * @return True if the extended fetch control register is present.
+   */
+  [[nodiscard]] bool has_extended_fetch_control() const noexcept
+  {
+    return _raw_size >= offsetof(FetchData, _fetch_control_extended) + sizeof(FetchControlExtended);
+  }
+
+  /**
    * Returns true if the sampled fetch data is valid.
    *
    * @return True if the fetch sample is valid.
    */
-  [[nodiscard]] bool is_valid() const noexcept { return _fetch_data->_fetch_control.is_fetch_valid; }
+  [[nodiscard]] bool is_valid() const noexcept { return _fetch_data._fetch_control.is_fetch_valid; }
 
   /**
    * Returns true if the sampled fetch missed in the op cache.
    *
    * @return True if the op cache was missed.
    */
-  [[nodiscard]] bool is_op_cache_miss() const noexcept { return _fetch_data->_fetch_control.is_fetch_op_cache_miss; }
+  [[nodiscard]] bool is_op_cache_miss() const noexcept { return _fetch_data._fetch_control.is_fetch_op_cache_miss; }
 
   /**
    * Returns true if the sampled fetch missed in the L1 instruction cache.
@@ -46,7 +77,7 @@ public:
    */
   [[nodiscard]] bool is_instruction_cache_miss() const noexcept
   {
-    return _fetch_data->_fetch_control.is_instruction_cache_miss;
+    return _fetch_data._fetch_control.is_instruction_cache_miss;
   }
 
   /**
@@ -54,28 +85,28 @@ public:
    *
    * @return True if the L2 cache was missed.
    */
-  [[nodiscard]] bool is_l2_miss() const noexcept { return _fetch_data->_fetch_control.is_fetch_l2_miss; }
+  [[nodiscard]] bool is_l2_miss() const noexcept { return _fetch_data._fetch_control.is_fetch_l2_miss; }
 
   /**
    * Returns true if the sampled fetch missed in the L3 cache.
    *
    * @return True if the L3 cache was missed.
    */
-  [[nodiscard]] bool is_l3_miss() const noexcept { return _fetch_data->_fetch_control.is_fetch_l3_miss; }
+  [[nodiscard]] bool is_l3_miss() const noexcept { return _fetch_data._fetch_control.is_fetch_l3_miss; }
 
   /**
    * Returns true if the fetch missed in the L1 instruction TLB.
    *
    * @return True if the L1 ITLB was missed.
    */
-  [[nodiscard]] bool is_l1_tlb_miss() const noexcept { return _fetch_data->_fetch_control.is_l1_tlb_miss; }
+  [[nodiscard]] bool is_l1_tlb_miss() const noexcept { return _fetch_data._fetch_control.is_l1_tlb_miss; }
 
   /**
    * Returns true if the fetch missed in the L2 instruction TLB.
    *
    * @return True if the L2 ITLB was missed.
    */
-  [[nodiscard]] bool is_l2_tlb_miss() const noexcept { return _fetch_data->_fetch_control.is_l2_tlb_miss; }
+  [[nodiscard]] bool is_l2_tlb_miss() const noexcept { return _fetch_data._fetch_control.is_l2_tlb_miss; }
 
   /**
    * Returns the L1 ITLB page size code for the sampled fetch.
@@ -85,7 +116,7 @@ public:
    */
   [[nodiscard]] std::uint8_t l1_tlb_page_size() const noexcept
   {
-    return static_cast<std::uint8_t>(_fetch_data->_fetch_control.l1_tlb_page_size);
+    return static_cast<std::uint8_t>(_fetch_data._fetch_control.l1_tlb_page_size);
   }
 
   /**
@@ -93,25 +124,29 @@ public:
    *
    * @return True if the fetch completed.
    */
-  [[nodiscard]] bool is_complete() const noexcept { return _fetch_data->_fetch_control.is_fetch_complete; }
+  [[nodiscard]] bool is_complete() const noexcept { return _fetch_data._fetch_control.is_fetch_complete; }
 
   /**
    * Returns the number of cycles from fetch dispatch to completion.
    *
    * @return Fetch latency in cycles.
    */
-  [[nodiscard]] std::uint16_t latency() const noexcept { return _fetch_data->_fetch_control.fetch_latency; }
+  [[nodiscard]] std::uint16_t latency() const noexcept { return _fetch_data._fetch_control.fetch_latency; }
 
   /**
    * Returns the number of cycles taken to refill the instruction TLB after a miss.
    * Only meaningful when is_l1_tlb_miss() or is_l2_tlb_miss() is true.
    * Requires CPU support for the extended IBS fetch MSR (Family 17h+).
+   * Returns std::nullopt when the extended MSR is not present in the raw buffer.
    *
-   * @return ITLB refill latency in cycles.
+   * @return ITLB refill latency in cycles, or std::nullopt if not available.
    */
-  [[nodiscard]] std::uint16_t itlb_refill_latency() const noexcept
+  [[nodiscard]] std::optional<std::uint16_t> itlb_refill_latency() const noexcept
   {
-    return _fetch_data->_fetch_control_extended.itlb_refill_latency;
+    if (!has_extended_fetch_control()) {
+      return std::nullopt;
+    }
+    return _fetch_data._fetch_control_extended.itlb_refill_latency;
   }
 
   /**
@@ -121,7 +156,7 @@ public:
    */
   [[nodiscard]] std::uintptr_t linear_instruction_address() const noexcept
   {
-    return _fetch_data->_linear_instruction_address;
+    return _fetch_data._linear_instruction_address;
   }
 
   /**
@@ -131,8 +166,8 @@ public:
    */
   [[nodiscard]] std::uintptr_t physical_instruction_address() const noexcept
   {
-    return _fetch_data->_physical_instruction_address *
-           static_cast<std::uint64_t>(_fetch_data->_fetch_control.is_physical_address_valid);
+    return _fetch_data._physical_instruction_address *
+           static_cast<std::uint64_t>(_fetch_data._fetch_control.is_physical_address_valid);
   }
 
   /**
@@ -142,7 +177,7 @@ public:
    */
   [[nodiscard]] bool is_physical_instruction_address_valid() const noexcept
   {
-    return _fetch_data->_fetch_control.is_physical_address_valid;
+    return _fetch_data._fetch_control.is_physical_address_valid;
   }
 
 private:
@@ -205,8 +240,16 @@ private:
     FetchControlExtended _fetch_control_extended;
   };
 
-  /// Pointer into the raw perf sample buffer, positioned past the 4-byte header.
-  const FetchData* _fetch_data{ nullptr };
+  /// The decoders rely on LSB-first bitfield allocation (GCC/Clang on x86-64, the only
+  /// platforms with AMD IBS). The asserts lock the MSR image sizes against accidental padding.
+  static_assert(sizeof(FetchControl) == 8U);
+  static_assert(sizeof(FetchControlExtended) == 8U);
+  static_assert(sizeof(FetchData) == 32U);
+
+  /// Value-initialized IBS fetch MSRs; bytes not present in the raw buffer remain zero.
+  FetchData _fetch_data{};
+  /// Number of payload bytes copied into _fetch_data (raw_data.size() - 4, or 0 if too small).
+  std::size_t _raw_size{ 0 };
 };
 
 /**
@@ -214,7 +257,7 @@ private:
  *
  * The raw buffer maps the IBS op MSRs
  * (IBS_OP_CTL, IBS_OP_RIP, IBS_OP_DATA, IBS_OP_DATA2, IBS_OP_DATA3,
- * IBS_DC_LINADDR, IBS_DC_PHYSADDR, IBS_OP_DATA4)
+ * IBS_DC_LINADDR, IBS_DC_PHYSADDR, MSR_AMD64_IBSBRTARGET)
  * as delivered by perf_event_open; some fields are not accessible via the standard
  * perf_event_open interface.
  */
@@ -222,8 +265,13 @@ class IBSOpDecoder
 {
 public:
   explicit IBSOpDecoder(const std::vector<std::byte>& raw_data) noexcept
-    : _execution_data(reinterpret_cast<const ExecutionData*>(raw_data.data() + /* 4 byte offset */ 4U))
   {
+    /// The raw buffer is a 4-byte caps word followed by the IBS op MSRs; copy only the
+    /// registers that are present (trailing MSRs are optional, depending on CPU capabilities).
+    if (raw_data.size() > 4U) {
+      _raw_size = raw_data.size() - 4U;
+      std::memcpy(&_execution_data, raw_data.data() + 4U, std::min(_raw_size, sizeof(ExecutionData)));
+    }
   }
 
   IBSOpDecoder(const IBSOpDecoder&) = default;
@@ -233,13 +281,35 @@ public:
   IBSOpDecoder& operator=(IBSOpDecoder&&) noexcept = default;
 
   /**
+   * Returns true if the raw sample contains all seven base op MSRs
+   * (IBS_OP_CTL through IBS_DC_PHYSADDR).
+   *
+   * @return True if the base execution data is fully present.
+   */
+  [[nodiscard]] bool is_base_data_complete() const noexcept
+  {
+    return _raw_size >= offsetof(ExecutionData, _branch_target_address);
+  }
+
+  /**
+   * Returns true if the raw sample contains the branch target MSR
+   * (MSR_AMD64_IBSBRTARGET; only written by CPUs with the BrnTrgt IBS capability).
+   *
+   * @return True if the branch target address register is present.
+   */
+  [[nodiscard]] bool has_branch_target_address() const noexcept
+  {
+    return _raw_size >= offsetof(ExecutionData, _branch_target_address) + sizeof(std::uintptr_t);
+  }
+
+  /**
    * Returns the number of cycles from op completion to retirement.
    *
    * @return Completion-to-retire cycle count.
    */
   [[nodiscard]] std::uint16_t completion_to_retire_latency() const noexcept
   {
-    return _execution_data->_op_data1.completion_to_retire_count;
+    return _execution_data._op_data1.completion_to_retire_count;
   }
 
   /**
@@ -249,7 +319,7 @@ public:
    */
   [[nodiscard]] std::uint16_t tag_to_retire_latency() const noexcept
   {
-    return _execution_data->_op_data1.tag_to_retire_count;
+    return _execution_data._op_data1.tag_to_retire_count;
   }
 
   /**
@@ -257,7 +327,7 @@ public:
    *
    * @return True if the op is a return.
    */
-  [[nodiscard]] bool is_return_operation() const noexcept { return _execution_data->_op_data1.is_return_operation; }
+  [[nodiscard]] bool is_return_operation() const noexcept { return _execution_data._op_data1.is_return_operation; }
 
   /**
    * Returns true if the sampled op is a taken branch.
@@ -266,7 +336,7 @@ public:
    */
   [[nodiscard]] bool is_branch_taken_operation() const noexcept
   {
-    return _execution_data->_op_data1.is_brn_taken_operation;
+    return _execution_data._op_data1.is_brn_taken_operation;
   }
 
   /**
@@ -276,7 +346,7 @@ public:
    */
   [[nodiscard]] bool is_branch_mispredicted_operation() const noexcept
   {
-    return _execution_data->_op_data1.is_brn_misp_operation;
+    return _execution_data._op_data1.is_brn_misp_operation;
   }
 
   /**
@@ -286,7 +356,7 @@ public:
    */
   [[nodiscard]] bool is_branch_retired_operation() const noexcept
   {
-    return _execution_data->_op_data1.is_brn_ret_operation;
+    return _execution_data._op_data1.is_brn_ret_operation;
   }
 
   /**
@@ -307,49 +377,49 @@ public:
    *
    * @return True if the branch is fused.
    */
-  [[nodiscard]] bool is_branch_fuse() const noexcept { return _execution_data->_op_data1.is_brn_fuse; }
+  [[nodiscard]] bool is_branch_fuse() const noexcept { return _execution_data._op_data1.is_brn_fuse; }
 
   /**
    * Returns true if the sampled op required microcode assistance.
    *
    * @return True if the op is microcode-assisted.
    */
-  [[nodiscard]] bool is_microcode() const noexcept { return _execution_data->_op_data1.is_microcode; }
+  [[nodiscard]] bool is_microcode() const noexcept { return _execution_data._op_data1.is_microcode; }
 
   /**
    * Returns true if the data for this load op was sourced from a remote NUMA node.
    *
    * @return True if the data source is a remote node.
    */
-  [[nodiscard]] bool is_remote_node() const noexcept { return _execution_data->_op_data2.is_remote_node; }
+  [[nodiscard]] bool is_remote_node() const noexcept { return _execution_data._op_data2.is_remote_node; }
 
   /**
    * Returns true if the load op hit in a cache.
    *
    * @return True if the access was a cache hit.
    */
-  [[nodiscard]] bool is_cache_hit() const noexcept { return _execution_data->_op_data2.is_cache_hit; }
+  [[nodiscard]] bool is_cache_hit() const noexcept { return _execution_data._op_data2.is_cache_hit; }
 
   /**
    * Returns true if the sampled op is a load.
    *
    * @return True if the op is a load.
    */
-  [[nodiscard]] bool is_load_operation() const noexcept { return _execution_data->_op_data3.is_load_operation; }
+  [[nodiscard]] bool is_load_operation() const noexcept { return _execution_data._op_data3.is_load_operation; }
 
   /**
    * Returns true if the sampled op is a store.
    *
    * @return True if the op is a store.
    */
-  [[nodiscard]] bool is_store_operation() const noexcept { return _execution_data->_op_data3.is_store_operation; }
+  [[nodiscard]] bool is_store_operation() const noexcept { return _execution_data._op_data3.is_store_operation; }
 
   /**
    * Returns true if the sampled op is a software prefetch instruction.
    *
    * @return True if the op is a software prefetch.
    */
-  [[nodiscard]] bool is_software_prefetch() const noexcept { return _execution_data->_op_data3.is_software_prefetch; }
+  [[nodiscard]] bool is_software_prefetch() const noexcept { return _execution_data._op_data3.is_software_prefetch; }
 
   /**
    * Returns true if the data cache access missed in the L1 TLB.
@@ -358,7 +428,7 @@ public:
    */
   [[nodiscard]] bool is_l1_data_tlb_miss() const noexcept
   {
-    return _execution_data->_op_data3.is_data_cache_l1_tlb_miss;
+    return _execution_data._op_data3.is_data_cache_l1_tlb_miss;
   }
 
   /**
@@ -368,7 +438,7 @@ public:
    */
   [[nodiscard]] bool is_l2_data_tlb_miss() const noexcept
   {
-    return _execution_data->_op_data3.is_data_cache_l2_tlb_miss;
+    return _execution_data._op_data3.is_data_cache_l2_tlb_miss;
   }
 
   /**
@@ -378,7 +448,7 @@ public:
    */
   [[nodiscard]] bool is_l1_data_tlb_hit_2m() const noexcept
   {
-    return _execution_data->_op_data3.is_data_cache_l1_tlb_hit_2m;
+    return _execution_data._op_data3.is_data_cache_l1_tlb_hit_2m;
   }
 
   /**
@@ -388,7 +458,7 @@ public:
    */
   [[nodiscard]] bool is_l1_data_tlb_hit_1g() const noexcept
   {
-    return _execution_data->_op_data3.is_data_cache_l1_tlb_hit_1g;
+    return _execution_data._op_data3.is_data_cache_l1_tlb_hit_1g;
   }
 
   /**
@@ -398,7 +468,7 @@ public:
    */
   [[nodiscard]] bool is_l2_data_tlb_hit_2m() const noexcept
   {
-    return _execution_data->_op_data3.is_data_cache_l2_tlb_hit_2m;
+    return _execution_data._op_data3.is_data_cache_l2_tlb_hit_2m;
   }
 
   /**
@@ -408,7 +478,7 @@ public:
    */
   [[nodiscard]] bool is_l2_data_tlb_hit_1g() const noexcept
   {
-    return _execution_data->_op_data3.is_data_cache_l2_tlb_hit_1g;
+    return _execution_data._op_data3.is_data_cache_l2_tlb_hit_1g;
   }
 
   /**
@@ -416,7 +486,7 @@ public:
    *
    * @return True if the L1 data cache was missed.
    */
-  [[nodiscard]] bool is_data_cache_miss() const noexcept { return _execution_data->_op_data3.is_data_cache_miss; }
+  [[nodiscard]] bool is_data_cache_miss() const noexcept { return _execution_data._op_data3.is_data_cache_miss; }
 
   /**
    * Returns true if the sampled memory access crossed a cache line boundary.
@@ -425,7 +495,7 @@ public:
    */
   [[nodiscard]] bool is_data_cache_misaligned_access() const noexcept
   {
-    return _execution_data->_op_data3.is_data_cache_misaligned_access;
+    return _execution_data._op_data3.is_data_cache_misaligned_access;
   }
 
   /**
@@ -435,7 +505,7 @@ public:
    */
   [[nodiscard]] bool is_data_cache_write_combine_access() const noexcept
   {
-    return _execution_data->_op_data3.is_data_cache_write_combine_access;
+    return _execution_data._op_data3.is_data_cache_write_combine_access;
   }
 
   /**
@@ -445,7 +515,7 @@ public:
    */
   [[nodiscard]] bool is_data_cache_uncachable_access() const noexcept
   {
-    return _execution_data->_op_data3.is_data_cache_uncachable_access;
+    return _execution_data._op_data3.is_data_cache_uncachable_access;
   }
 
   /**
@@ -455,7 +525,7 @@ public:
    */
   [[nodiscard]] bool is_data_cache_locked_operation() const noexcept
   {
-    return _execution_data->_op_data3.is_data_cache_locked_operation;
+    return _execution_data._op_data3.is_data_cache_locked_operation;
   }
 
   /**
@@ -465,7 +535,7 @@ public:
    */
   [[nodiscard]] bool is_data_cache_miss_no_mab_allocation() const noexcept
   {
-    return _execution_data->_op_data3.is_data_cache_miss_no_mab_allocation;
+    return _execution_data._op_data3.is_data_cache_miss_no_mab_allocation;
   }
 
   /**
@@ -473,7 +543,7 @@ public:
    *
    * @return True if the access missed in L2.
    */
-  [[nodiscard]] bool is_l2_miss() const noexcept { return _execution_data->_op_data3.is_l2_miss; }
+  [[nodiscard]] bool is_l2_miss() const noexcept { return _execution_data._op_data3.is_l2_miss; }
 
   /**
    * Returns the encoded width of the memory access.
@@ -483,7 +553,7 @@ public:
    */
   [[nodiscard]] std::uint8_t access_mem_width() const noexcept
   {
-    return static_cast<std::uint8_t>(_execution_data->_op_data3.op_mem_width);
+    return static_cast<std::uint8_t>(_execution_data._op_data3.op_mem_width);
   }
 
   /**
@@ -493,7 +563,7 @@ public:
    */
   [[nodiscard]] std::uint8_t num_open_mem_requests() const noexcept
   {
-    return static_cast<std::uint8_t>(_execution_data->_op_data3.num_op_data_cache_miss_open_mem_requests);
+    return static_cast<std::uint8_t>(_execution_data._op_data3.num_op_data_cache_miss_open_mem_requests);
   }
 
   /**
@@ -503,7 +573,7 @@ public:
    */
   [[nodiscard]] std::uint16_t data_cache_miss_latency() const noexcept
   {
-    return _execution_data->_op_data3.data_cache_miss_latency;
+    return _execution_data._op_data3.data_cache_miss_latency;
   }
 
   /**
@@ -514,7 +584,7 @@ public:
    */
   [[nodiscard]] std::uint16_t tlb_refill_latency() const noexcept
   {
-    return _execution_data->_op_data3.tlb_refill_latency;
+    return _execution_data._op_data3.tlb_refill_latency;
   }
 
   /**
@@ -524,7 +594,7 @@ public:
    */
   [[nodiscard]] std::uintptr_t linear_instruction_address() const noexcept
   {
-    return _execution_data->_linear_instruction_address;
+    return _execution_data._linear_instruction_address;
   }
 
   /**
@@ -535,8 +605,8 @@ public:
    */
   [[nodiscard]] std::uintptr_t linear_memory_address() const noexcept
   {
-    return _execution_data->_linear_memory_address *
-           static_cast<std::uint64_t>(_execution_data->_op_data3.is_data_cache_linear_address_valid);
+    return _execution_data._linear_memory_address *
+           static_cast<std::uint64_t>(_execution_data._op_data3.is_data_cache_linear_address_valid);
   }
 
   /**
@@ -547,19 +617,23 @@ public:
    */
   [[nodiscard]] std::uintptr_t physical_memory_address() const noexcept
   {
-    return _execution_data->_physical_memory_address *
-           static_cast<std::uint64_t>(_execution_data->_op_data3.is_data_cache_physical_address_valid);
+    return _execution_data._physical_memory_address *
+           static_cast<std::uint64_t>(_execution_data._op_data3.is_data_cache_physical_address_valid);
   }
 
   /**
-   * Returns the branch target address for the sampled branch op.
-   * Only valid when is_branch() is true. Requires Family 17h or later.
+   * Returns the branch target address for the sampled branch op, or std::nullopt if
+   * the MSR_AMD64_IBSBRTARGET register is not present in the raw buffer.
+   * Only valid when is_branch() is true. Requires the BrnTrgt IBS capability.
    *
-   * @return Branch target address.
+   * @return Branch target address, or std::nullopt if not available.
    */
-  [[nodiscard]] std::uintptr_t branch_target_address() const noexcept
+  [[nodiscard]] std::optional<std::uintptr_t> branch_target_address() const noexcept
   {
-    return _execution_data->_branch_target_address;
+    if (!has_branch_target_address()) {
+      return std::nullopt;
+    }
+    return _execution_data._branch_target_address;
   }
 
 private:
@@ -670,11 +744,21 @@ private:
     std::uintptr_t _linear_memory_address;
     /// IBS_DC_PHYSADDR MSR: physical address of the data cache access.
     std::uintptr_t _physical_memory_address;
-    /// IBS_OP_DATA4 MSR: branch target address (Family 17h+).
+    /// MSR_AMD64_IBSBRTARGET: branch target address. Only present when the CPU has the
+    /// BrnTrgt IBS capability; the kernel may append MSR IBS_OP_DATA4 after it (not mapped here).
     std::uintptr_t _branch_target_address;
   };
 
-  /// Pointer into the raw perf sample buffer, positioned past the 4-byte header.
-  const ExecutionData* _execution_data{ nullptr };
+  /// The decoders rely on LSB-first bitfield allocation (GCC/Clang on x86-64, the only
+  /// platforms with AMD IBS). The asserts lock the MSR image sizes against accidental padding.
+  static_assert(sizeof(OpData1) == 8U);
+  static_assert(sizeof(OpData2) == 8U);
+  static_assert(sizeof(OpData3) == 8U);
+  static_assert(sizeof(ExecutionData) == 64U);
+
+  /// Value-initialized IBS op MSRs; bytes not present in the raw buffer remain zero.
+  ExecutionData _execution_data{};
+  /// Number of payload bytes copied into _execution_data (raw_data.size() - 4, or 0 if too small).
+  std::size_t _raw_size{ 0 };
 };
 }
