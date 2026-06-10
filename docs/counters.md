@@ -14,10 +14,10 @@ Performance events map human-readable names to hardware-specific event codes. *p
 
 `perf::CounterDefinition` manages the mapping from event names to event codes. Both `perf::EventCounter` and `perf::Sampler` use it to translate names into codes the perf subsystem understands.
 
-By default, a global instance is created automatically with common events:
+By default, *perf-cpp* creates a global instance with common events:
 
 ```cpp
-/// Using the default configuration — no setup needed.
+/// Use the global default configuration; no setup required.
 auto event_counter = perf::EventCounter{};
 auto sampler = perf::Sampler{};
 ```
@@ -36,12 +36,12 @@ auto sampler = perf::Sampler{ counter_definitions };
 ```
 
 > [!IMPORTANT]
-> Keep your `CounterDefinition` instance alive throughout your measurement session.
-> Event names are stored only in this instance — destroying it prematurely will cause issues when retrieving results.
+> Keep your `CounterDefinition` instance alive throughout the measurement session.
+> `EventCounter` and `Sampler` only hold a reference to it; destroying the definition while a counter or sampler still uses it leads to undefined behavior.
 
 > [!NOTE]
 > A custom `CounterDefinition` inherits all events from the global defaults.
-> If you `add()` an event under the same PMU and name as a built-in event, your definition takes priority — child definitions override parents.
+> If you `add()` an event under the same PMU and name as a built-in event, your definition takes priority: child definitions override their parents.
 > This lets you replace a built-in event's configuration without touching anything else.
 
 ---
@@ -83,7 +83,7 @@ From the kernel, not hardware counters:
 
 ```bash
 cpu-clock             # High-resolution CPU timer
-task-clock            # Clock count specific to task
+task-clock            # CPU time clocked for this task
 page-faults           # Page fault count
 faults                # Synonym for page-faults
 major-faults          # Page faults requiring disk I/O
@@ -113,7 +113,7 @@ ns              # Short form
 ```
 
 > [!TIP]
-> Time events are measured *after opening* and *before stopping* performance counters — the overhead for accessing performance counters is **not** included.
+> The clock is read *after opening* and *before stopping* the performance counters, so the overhead of accessing the counters is not included in the measured time.
 
 ---
 
@@ -124,7 +124,7 @@ ns              # Short form
 
 ### Loading from the Event Library
 
-*perf-cpp* ships with curated event definitions for various processors in [events/x86](https://github.com/jmuehlig/perf-cpp/tree/dev/events/x86):
+*perf-cpp* ships with ready-made event definitions for many processors in [events/x86](https://github.com/jmuehlig/perf-cpp/tree/dev/events/x86):
 
 ```cpp
 /// Load AMD Zen 4 specific events.
@@ -150,7 +150,7 @@ cmake . -B build -DGEN_PROCESSOR_EVENTS=1
 cmake --build build
 ```
 
-Once built, processor-specific events are available automatically — no manual loading required.
+Once built, processor-specific events are part of the global `CounterDefinition`; there is no CSV file to load.
 
 > [!IMPORTANT]
 > Auto-generation is experimental. Validate your measurements, as event configurations may vary between processors or require specific kernel support.
@@ -174,7 +174,9 @@ event_config.config_extension(/* config1 = */ 0x5678, /* config2 = */ 0x0, /* co
 counter_definitions.add("complex_event_name", std::move(event_config));
 ```
 
-Custom CSV files following the format `name,config[,config1,type]` can be loaded the same way as built-in event library files.
+Alternatively, write your own CSV file and pass it to the `CounterDefinition` constructor, just like the built-in event library files.
+Each line has the format `name,config[,config1,type]`, where `config` and `config1` are integer or hex values and `type` is either numeric or a name like `PERF_TYPE_RAW` (the default if omitted).
+Lines starting with `#` are treated as comments.
 
 ---
 
@@ -231,7 +233,7 @@ if (perf::HardwareInfo::is_amd()) {
     /// Configure AMD-specific events.
 
     if (perf::HardwareInfo::is_amd_ibs_supported()) {
-        /// IBS available — can use ibs_op and related sampling features.
+        /// IBS is available; ibs_op and related sampling features can be used.
     }
 }
 ```
