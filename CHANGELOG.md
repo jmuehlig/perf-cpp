@@ -3,14 +3,35 @@
 ## v1.0.0
 - **Removed Deprecated Header Files**: All legacy `.h` forwarding headers (e.g., `perfcpp/sampler.h`, `perfcpp/event_counter.h`) have been removed. Use `.hpp` files instead.
 - **Richer Branch Stack Entries**: Each entry in a branch stack sample can now carry additional hardware-reported metadata (see the [sampling documentation](https://jmuehlig.github.io/perf-cpp/sampling/#branch-stack)):
-  - **Classification** (Linux 4.15+): the type of branch instruction — conditional, unconditional, call, return, syscall, and more.
+  - **Classification** (Linux 4.15+): the type of branch instruction, i.e., conditional, unconditional, call, return, syscall, and more.
   - **Speculation Result** (Linux 6.1+): whether the branch was on the correct or wrong speculative path.
   - **Privilege Level** (Linux 6.1+): whether the branch executed in user space, kernel space, or at hypervisor level.
-- **New IBS Sample Fields** (*AMD IBS PMU* only): Three additional fields decoded from IBS raw data, none of which are accessible via the standard `perf_event_open` interface:
+- **New IBS Sample Fields** (*AMD IBS PMU* only): Three additional fields decoded from IBS raw data, none of which are accessible via the standard `perf_event_open` interface (see the [sampling documentation](https://jmuehlig.github.io/perf-cpp/sampling/#what-can-be-recorded-and-how-to-access-the-data)):
   - **Op Cache Miss** (`record.instruction_execution().cache()->is_op_miss()`): indicates the fetch missed the op cache (decoded instruction cache), even if the L1 instruction cache hit. Enabled via `sampler.values().instruction_cache(true)`. (*IBS Fetch PMU*)
   - **iTLB Refill Latency** (`record.instruction_execution().latency().itlb_refill()`): cycles to refill the instruction TLB after a miss. Only set when an iTLB miss occurred. Enabled via `sampler.values().instruction_latency(true)`. (*IBS Fetch PMU*)
   - **Is Microcode** (`record.instruction_execution().is_microcode()`): indicates the sampled op was dispatched from the microcode ROM sequencer. Enabled via `sampler.values().instruction_type(true)`. (*IBS Op PMU*)
 - **Configurable Sample Timestamp Clock**: `SampleConfig::clock(perf::Clock)` selects the POSIX clock used for timestamps, making them directly comparable to `clock_gettime()` values without offset calibration. Note: `Clock::Realtime` and `Clock::Boottime` are rejected by the kernel for hardware PMU events on x86. Use `Clock::Monotonic` or `Clock::MonotonicRaw` instead. See the [sampling documentation](https://jmuehlig.github.io/perf-cpp/sampling/#sample-timestamp-clock).
+- **Removed Deprecated Config Setters**: The `Config::is_pinned(bool)` and `Config::is_debug(bool)` setters (deprecated since `v0.13.0`) have been removed. Use `pinned(bool)` and `debug(bool)` instead.
+- **Renamed Sample Fields**: Two recording fields have clearer names. The old names still work but are deprecated and will be removed in `v2.0`:
+  - `values().sample_id(true)` replaces `values().id(true)` and now matches the `record.metadata().sample_id()` accessor. The CSV column was renamed from `id` to `sample_id` as well.
+  - `values().data_access_misaligned(true)` and `record.data_access().is_misaligned()` replace the `*_misalign_penalty()` variants.
+- **CMake Package Support**: Fixed the installation process. Installed builds now ship a CMake package config, so `find_package(perf-cpp)` works without manual setup.
+- **Raised Compiler Requirements**: Building now requires GCC 11 and newer or Clang 14 and newer (for `std::from_chars` support).
+- **Extended Event Configuration**: Added `config3` and `config4` fields for raw event configuration.
+- **Tests on ARM**: x86-only tests (Sampler, live events) are skipped on other architectures, so the test suite now runs on ARM (e.g., Raspberry Pi).
+- **Bugfixes**:
+  - Live counter reads no longer return 0 when they race a concurrent kernel update (seqlock retry in the mmap buffer).
+  - The flamegraph export counted every group of identical call stacks one sample too many.
+  - Symbol resolver: ELF virtual addresses were treated as file offsets, which produced wrong symbols. Modules that cannot be opened no longer abort resolution, and modules mapped with shared permissions are now resolved.
+  - Replaced `select()` with `poll()` in the sample buffer to avoid a possible stack buffer overflow when monitoring many file descriptors.
+  - `EventCounter` counted fixed hardware events incorrectly when forming groups.
+  - CPU detection: Intel Comet Lake was misclassified as 12th generation (it is 10th), and Intel Rocket Lake was misclassified as well.
+  - Hardware counter detection applied a wrong offset for the counter consumed by the NMI watchdog.
+  - The perf file export wrote the logical memory address and sample ID in the wrong order.
+  - Sampler: fixed an offset when recording performance counter values with samples, multiple IBS decoding bugs, and a missing vendor check for IBS triggers.
+  - Event-file parsing no longer depends on the system locale and avoids undefined behavior in the tokenizer.
+  - The JSON export now escapes special characters in counter and metric names.
+  - Register values are reported as unsigned 64-bit integers.
 
 
 ## v0.14.1
