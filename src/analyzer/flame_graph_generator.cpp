@@ -54,7 +54,10 @@ perf::analyzer::FlameGraphGenerator::map(
 void
 perf::analyzer::FlameGraphGenerator::map(const std::vector<Sample>& samples, const std::string_view out_file_path)
 {
-  this->map(samples, [](const auto begin, const auto end) { return std::distance(begin, end) + 1U; }, out_file_path);
+  this->map(
+    samples,
+    [](const auto begin, const auto end) { return static_cast<std::uint64_t>(std::distance(begin, end)); },
+    out_file_path);
 }
 
 void
