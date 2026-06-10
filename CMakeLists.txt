@@ -10,9 +10,6 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message("Building Mode                        = ${CMAKE_BUILD_TYPE}")
 
-# Include include/ folder.
-include_directories(include/)
-
 #############################################################
 #   Options                                                 #
 #############################################################
@@ -92,6 +89,22 @@ else ()
     add_library(perf-cpp STATIC ${PERF_CPP_SRC})
 endif ()
 
+## Attach usage requirements to the target so they travel with the installed export:
+## the include directory (source tree when building, <prefix>/include when installed) and C++17.
+include(GNUInstallDirs)
+target_include_directories(perf-cpp
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+target_compile_features(perf-cpp PUBLIC cxx_std_17)
+
+## Version the library; shared builds get a proper soname (e.g., libperf-cpp.so.1).
+set_target_properties(perf-cpp PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+)
+
 #############################################################
 #   clang-tidy integration                                  #
 #############################################################
@@ -139,54 +152,52 @@ add_custom_target(perf-list python3 ${CMAKE_SOURCE_DIR}/script/create_perf_list.
 #############################################################
 #   Rules for installing the library                        #
 #############################################################
-if(PROJECT_IS_TOP_LEVEL)
-    include(CPack)
-    set(CMAKE_INSTALL_INCLUDEDIR include CACHE PATH "")
-    set(CMAKE_INSTALL_LIBRARY_DIR bin CACHE PATH "")
-endif()
-
 include(CMakePackageConfigHelpers)
-include(GNUInstallDirs)
 
-# Allow package maintainers to freely override the path for the configs
-set(package perf-cpp)
+## Allow package maintainers to override the location of the CMake package config files.
+set(PERF_CPP_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/perf-cpp"
+    CACHE PATH "CMake package config location relative to the install prefix")
+mark_as_advanced(PERF_CPP_INSTALL_CMAKEDIR)
 
-install(DIRECTORY include/ DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" COMPONENT perf-cpp)
-install(TARGETS perf-cpp EXPORT perf-cppTargets  DESTINATION "${CMAKE_INSTALL_LIBRARY_DIR}")
+## Install the library itself; the EXPORT clause records it for the package config.
+install(
+    TARGETS perf-cpp
+    EXPORT perf-cppTargets
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+)
 
+## Install the public headers.
+install(
+    DIRECTORY include/
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+    FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h"
+)
+
+## Generate a relocatable package config (no hardcoded install prefix).
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/perf-cppConfig.cmake.in"
+    "${PROJECT_BINARY_DIR}/perf-cppConfig.cmake"
+    INSTALL_DESTINATION "${PERF_CPP_INSTALL_CMAKEDIR}"
+)
+
+## Generate the version file; consumers' find_package(perf-cpp 1.0) checks against this.
 write_basic_package_version_file(
-    "${package}ConfigVersion.cmake"
+    "${PROJECT_BINARY_DIR}/perf-cppConfigVersion.cmake"
     COMPATIBILITY SameMajorVersion
-    ARCH_INDEPENDENT
-)
-
-set(
-    perf-cpp_INSTALL_CMAKEDIR "${CMAKE_INSTALL_DATADIR}/${package}"
-    CACHE PATH "CMake package config location relative to the install prefix"
-)
-mark_as_advanced(perf-cpp_INSTALL_CMAKEDIR)
-
-file(
-    WRITE
-    "${PROJECT_BINARY_DIR}/${package}Config.cmake"
-    "include(\"${CMAKE_INSTALL_PREFIX}/${perf-cpp_INSTALL_CMAKEDIR}/${package}Targets.cmake\")"
 )
 
 install(
-    FILES "${PROJECT_BINARY_DIR}/${package}Config.cmake"
-    DESTINATION "${perf-cpp_INSTALL_CMAKEDIR}"
-    COMPONENT perf-cpp
+    FILES
+        "${PROJECT_BINARY_DIR}/perf-cppConfig.cmake"
+        "${PROJECT_BINARY_DIR}/perf-cppConfigVersion.cmake"
+    DESTINATION "${PERF_CPP_INSTALL_CMAKEDIR}"
 )
 
-install(
-    FILES "${PROJECT_BINARY_DIR}/${package}ConfigVersion.cmake"
-    DESTINATION "${perf-cpp_INSTALL_CMAKEDIR}"
-    COMPONENT perf-cpp
-)
-
+## Install the targets file that the config includes; defines the perf-cpp::perf-cpp target.
 install(
     EXPORT perf-cppTargets
     NAMESPACE perf-cpp::
-    DESTINATION "${perf-cpp_INSTALL_CMAKEDIR}"
-    COMPONENT perf-cpp
+    DESTINATION "${PERF_CPP_INSTALL_CMAKEDIR}"
 )

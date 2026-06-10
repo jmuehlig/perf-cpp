@@ -36,7 +36,9 @@ cmake --build build
 cmake --install build
 ```
 
+This installs the library into `lib/`, the headers into `include/`, and the CMake package config files into `lib/cmake/perf-cpp/`, relative to the install prefix.
 The library will then be available via `find_package` (see [below](#via-find_package)).
+If you install to a non-standard prefix, point CMake to it when configuring the consuming project, e.g., via `-DCMAKE_PREFIX_PATH=/path/to/install/dir`.
 
 ## Including into CMake Projects
 
@@ -52,7 +54,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(perf-cpp-external)
 ```
 
-Then link against `perf-cpp` and add `${perf-cpp-external_SOURCE_DIR}/include/` to your include directories.
+Then link against `perf-cpp`; the include directory and the C++17 requirement propagate automatically:
+
+```cmake
+target_link_libraries(your_target perf-cpp)
+```
 
 ### Via ExternalProject
 
@@ -67,13 +73,23 @@ ExternalProject_Add(
 )
 ```
 
-Then add `lib/perf-cpp/src/perf-cpp-external/include` to your include directories and `lib/perf-cpp/src/perf-cpp-external-build` to your link directories.
+Then retrieve the build paths and link against `perf-cpp`:
+
+```cmake
+ExternalProject_Get_Property(perf-cpp-external SOURCE_DIR BINARY_DIR)
+include_directories(${SOURCE_DIR}/include)
+link_directories(${BINARY_DIR})
+target_link_libraries(your_target perf-cpp)
+add_dependencies(your_target perf-cpp-external)
+```
 
 ### Via find_package
 
 If *perf-cpp* is [installed](#installing) on your system:
 
 ```cmake
-find_package(perf-cpp REQUIRED)
+find_package(perf-cpp 1.0 REQUIRED)
 target_link_libraries(your_target perf-cpp::perf-cpp)
 ```
+
+The version argument is optional; the package accepts any request with the same major version (e.g., `find_package(perf-cpp 1.0)` matches an installed `1.2.0`, but not `2.0.0`).
