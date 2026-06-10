@@ -50,8 +50,7 @@ private:
 };
 
 /**
- * Measures the average number of cycles required to execute one instruction (CPI). Lower values indicate more efficient
- * instruction execution.
+ * Measures the GHz during execution by using executed cycles and time (s).
  */
 class Gigahertz final : public Metric
 {
