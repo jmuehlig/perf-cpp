@@ -1,6 +1,7 @@
 # Analyzing Samples with Linux Perf Tools
 
-Export collected samples into the standard `perf-cpp.data` file format for analysis with `perf report`, `perf mem report`, and flame graph generators.
+Export collected samples into the `perf.data` format used by the Linux perf tools for analysis with `perf report`, `perf mem report`, and flame graph generators.
+The examples below write to a file named `perf-cpp.data` to avoid clashing with files produced by `perf record`.
 
 > [!TIP]
 > See the example: **[perf_record.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/perf_record.cpp)**.
@@ -25,7 +26,7 @@ sampler.start();
 /// ... computation here ...
 sampler.stop();
 
-/// Export to perf-cpp.data format.
+/// Export the samples in perf.data format.
 sampler.to_perf_file("perf-cpp.data");
 
 /// Release resources explicitly, or let the destructor handle it.
@@ -37,6 +38,8 @@ sampler.close();
 For parallel sampling with `MultiThreadSampler` or `MultiCoreSampler`, the same method exports consolidated samples from all instances:
 
 ```cpp
+auto sample_config = perf::SampleConfig{};
+
 auto sampler = perf::MultiCoreSampler{
     {0, 1, 2, 3}, /// CPU cores to sample.
     sample_config
@@ -69,7 +72,7 @@ perf report -i perf-cpp.data
 # Text-based report.
 perf report -i perf-cpp.data --stdio
 
-# Focus on specific functions or modules.
+# Sort by command, shared object, and symbol.
 perf report -i perf-cpp.data --sort comm,dso,symbol
 ```
 
@@ -84,6 +87,7 @@ perf report -i perf-cpp.data --sort comm,dso,symbol
 ### Memory Access Analysis
 
 Requires memory-capable triggers (`mem-loads`, `ibs_op`) and memory-related sample fields (addresses, data sources, latency).
+See the [memory analysis documentation](sampling-memory-analysis.md) for how to configure them.
 
 ```bash
 perf mem report -i perf-cpp.data
@@ -105,3 +109,5 @@ Then generate flame graphs via [FlameGraph](https://github.com/brendangregg/Flam
 ```bash
 perf script -i perf-cpp.data | stackcollapse-perf.pl | flamegraph.pl > flame.svg
 ```
+
+See [symbols and flame graphs](sampling-symbols-and-flamegraphs.md) for symbol resolution and flame graph generation without the perf tools.

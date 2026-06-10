@@ -4,14 +4,14 @@ A flamegraph ([example](https://www.brendangregg.com/flamegraphs.html)) collapse
 
 *perf-cpp* provides two building blocks:
 
-- **Symbol resolution**: translate instruction pointers into `<module>::<function>+<offset>` strings.
+- **Symbol resolution**: translate instruction pointers into `[module] function+offset` strings.
 - **Collapsed-stack export**: emit samples in the `func1;func2;func3 <count>` format understood by [FlameGraph](https://github.com/brendangregg/FlameGraph), [Speedscope](https://www.speedscope.app/), or [flamegraph.com](https://flamegraph.com/).
 
 ---
 
 ## Translating Instruction Pointers into Symbols
 
-`perf::util::SymbolResolver` translates logical instruction pointers into symbols (module name, function name, and offset):
+`perf::util::SymbolResolver` translates logical instruction pointers into symbols (module name, demangled function name, and offset):
 
 ```cpp
 #include <perfcpp/sampler.hpp>
@@ -43,13 +43,15 @@ for (const auto& sample : sampler.result()) {
 sampler.close();
 ```
 
-The output could look like the following:
+Example output:
 
 ```
-IP = 0x57459be95faf | Symbol = [instruction-pointer-sampling] _ZNK4perf7example15AccessBenchmarkixEm+47
-IP = 0x57459be95faf | Symbol = [instruction-pointer-sampling] _ZNK4perf7example15AccessBenchmarkixEm+47
-IP = 0x57459be987d0 | Symbol = [instruction-pointer-sampling] _ZNKSt6vectorIN4perf7example15AccessBenchmark10cache_lineESaIS3_EEixEm+0
+IP = 0x57459be95faf | Symbol = [instruction-pointer-sampling] perf::example::AccessBenchmark::operator[](unsigned long) const+47
+IP = 0x57459be95faf | Symbol = [instruction-pointer-sampling] perf::example::AccessBenchmark::operator[](unsigned long) const+47
+IP = 0x57459be987d0 | Symbol = [instruction-pointer-sampling] std::vector<perf::example::AccessBenchmark::cache_line, std::allocator<perf::example::AccessBenchmark::cache_line> >::operator[](unsigned long) const+0
 ```
+
+Symbol names are demangled when possible; if demangling fails, the mangled name is returned as-is.
 
 > [!TIP]
 > See the example: **[instruction_pointer.cpp](https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/instruction_pointer.cpp)**.
@@ -58,7 +60,9 @@ IP = 0x57459be987d0 | Symbol = [instruction-pointer-sampling] _ZNKSt6vectorIN4pe
 
 ## Generating Flamegraphs
 
-To generate flamegraphs, record the instruction pointer and callchain. Including the timestamp and sorting the results produces more condensed output.
+To generate flamegraphs, record the instruction pointer and callchain.
+Recording the timestamp and sorting the result condenses the output: consecutive samples with identical call stacks are merged into a single line, and sorting by time places samples from the same code region next to each other.
+Unsorted output is still valid; flamegraph tools sum up duplicate stacks.
 
 ```cpp
 #include <perfcpp/sampler.hpp>

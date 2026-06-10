@@ -35,6 +35,9 @@ sampler.close();
 
 Each row is one sample, each column a recorded field. Fields not configured via `sampler.values()` appear as empty cells.
 
+> [!NOTE]
+> Branch stacks, user stacks, and raw PMU data are not exported to CSV. Access them via `sampler.result()` instead (see the [sampling documentation](sampling.md)).
+
 ## Customizing Delimiters
 
 Both overloads accept optional delimiter parameters:
@@ -52,14 +55,14 @@ samples.to_csv("samples.csv", ';', '|');
 The CSV file contains a header row followed by one row per sample:
 
 ```
-mode,timestamp,cpu_id,logical_instruction_pointer,data_access_is_l1d_hit,data_access_is_l2_hit,...
-User,365449130714033,8,0x5a6e84b2075c,1,0,...
-User,365449130913157,8,0x64af7417c75c,0,1,...
-User,365449131112591,8,0x5a6e84b2075c,1,0,...
+mode,timestamp,cpu_id,logical_instruction_pointer,is_instruction_pointer_exact,data_access_type,...
+user,365449130714033,8,0x5a6e84b2075c,true,load,...
+user,365449130913157,8,0x64af7417c75c,true,load,...
+user,365449131112591,8,0x5a6e84b2075c,false,store,...
 ```
 
-The `mode` field is always present and indicates execution context (`User`, `Kernel`, `Hypervisor`, `GuestKernel`, or `GuestUser`).
-Some fields are platform-specific (Intel vs AMD) — see [field reference](#field-reference) below.
+The `mode` field is always present and indicates the execution context (`user`, `kernel`, `hypervisor`, `guest_kernel`, or `guest_user`).
+Some fields are platform-specific (Intel vs AMD); see the [field reference](#field-reference) below.
 
 ## Field Reference
 
@@ -70,8 +73,8 @@ For detailed descriptions, see the [sampling documentation](sampling.md).
 
 | CSV Column | How to Record | Description | Always Present |
 |------------|---------------|-------------|----------------|
-| `mode` | Always recorded | Execution mode (`User`, `Kernel`, `Hypervisor`, `GuestKernel`, `GuestUser`) | Yes |
-| `id` | `sampler.values().sample_id(true)` | Unique sample group leader ID | No |
+| `mode` | Always recorded | Execution mode (`user`, `kernel`, `hypervisor`, `guest_kernel`, `guest_user`) | Yes |
+| `id` | `sampler.values().id(true)` | Unique sample group leader ID | No |
 | `stream_id` | `sampler.values().stream_id(true)` | Event stream identifier | No |
 | `timestamp` | `sampler.values().timestamp(true)` | Sample timestamp (nanoseconds) | No |
 | `period` | `sampler.values().period(true)` | Event count threshold that triggered the sample | No |
@@ -85,35 +88,35 @@ Fields related to the sampled instruction and its execution characteristics.
 
 | CSV Column | How to Record | Description | Platform |
 |------------|---------------|-------------|----------|
-| `instruction_type` | `sampler.values().instruction_type(true)` | Instruction type (`Return`, `Branch`, `DataAccess`) | AMD only |
-| `is_microcode` | `sampler.values().instruction_type(true)` | Op was dispatched from the microcode ROM sequencer (`0` or `1`) | AMD Op PMU |
+| `instruction_type` | `sampler.values().instruction_type(true)` | Instruction type (`return`, `branch`, `data_access`) | AMD only |
+| `is_microcode` | `sampler.values().instruction_type(true)` | Op was dispatched from the microcode ROM sequencer (`true` or `false`) | AMD Op PMU |
 | `logical_instruction_pointer` | `sampler.values().logical_instruction_pointer(true)` | Logical address of sampled instruction (hexadecimal) | All |
-| `is_instruction_pointer_exact` | `sampler.values().logical_instruction_pointer(true)` | Whether instruction pointer is exact (`0` or `1`) | All |
+| `is_instruction_pointer_exact` | `sampler.values().logical_instruction_pointer(true)` | Whether instruction pointer is exact (`true` or `false`) | All |
 | `physical_instruction_pointer` | `sampler.values().physical_instruction_pointer(true)` | Physical address of sampled instruction (hexadecimal) | AMD Fetch PMU |
-| `instruction_l1i_miss` | `sampler.values().instruction_cache(true)` | L1 instruction cache miss (`0` or `1`) | AMD Fetch PMU |
-| `instruction_l2_miss` | `sampler.values().instruction_cache(true)` | L2 cache miss (`0` or `1`) | AMD Fetch PMU |
-| `instruction_l3_miss` | `sampler.values().instruction_cache(true)` | L3 cache miss (`0` or `1`) | AMD Fetch PMU |
-| `instruction_op_cache_miss` | `sampler.values().instruction_cache(true)` | Op cache (decoded instruction cache) miss (`0` or `1`) | AMD Fetch PMU |
-| `instruction_itlb_miss` | `sampler.values().instruction_tlb(true)` | Instruction TLB miss (`0` or `1`) | AMD Fetch PMU |
+| `instruction_l1i_miss` | `sampler.values().instruction_cache(true)` | L1 instruction cache miss (`true` or `false`) | AMD Fetch PMU |
+| `instruction_l2_miss` | `sampler.values().instruction_cache(true)` | L2 cache miss (`true` or `false`) | AMD Fetch PMU |
+| `instruction_l3_miss` | `sampler.values().instruction_cache(true)` | L3 cache miss (`true` or `false`) | AMD Fetch PMU |
+| `instruction_op_cache_miss` | `sampler.values().instruction_cache(true)` | Op cache (decoded instruction cache) miss (`true` or `false`) | AMD Fetch PMU |
+| `instruction_itlb_miss` | `sampler.values().instruction_tlb(true)` | Instruction TLB miss (`true` or `false`) | AMD Fetch PMU |
 | `instruction_itlb_size` | `sampler.values().instruction_tlb(true)` | Instruction TLB page size (bytes) | AMD Fetch PMU |
-| `instruction_stlb_miss` | `sampler.values().instruction_tlb(true)` | Second-level TLB miss (`0` or `1`) | AMD Fetch PMU |
+| `instruction_stlb_miss` | `sampler.values().instruction_tlb(true)` | Second-level TLB miss (`true` or `false`) | AMD Fetch PMU |
 | `instruction_retirement_latency` | `sampler.values().instruction_latency(true)` | Instruction retirement latency (cycles) | Intel only |
 | `uop_tag_to_retirement_latency` | `sampler.values().instruction_latency(true)` | Micro-op tag-to-retirement latency (cycles) | AMD only |
 | `uop_tag_to_completion` | `sampler.values().instruction_latency(true)` | Micro-op tag-to-completion latency (cycles) | AMD only |
 | `uop_completion_to_retirement` | `sampler.values().instruction_latency(true)` | Micro-op completion-to-retirement latency (cycles) | AMD only |
 | `instruction_fetch_latency` | `sampler.values().instruction_latency(true)` | Instruction fetch latency (cycles) | AMD Fetch PMU |
 | `instruction_itlb_refill_latency` | `sampler.values().instruction_latency(true)` | iTLB refill latency after a miss (cycles) | AMD Fetch PMU |
-| `branch_type` | `sampler.values().branch_type(true)` | Branch type (`Taken`, `Retired`, `Mispredicted`, `Fuse`) | AMD Op PMU |
-| `tx_is_elision` | `sampler.values().hardware_transaction_abort(true)` | Hardware transaction is elision type (`0` or `1`) | Intel only |
-| `tx_is_generic` | `sampler.values().hardware_transaction_abort(true)` | Hardware transaction is generic type (`0` or `1`) | Intel only |
-| `tx_is_synchronous_abort` | `sampler.values().hardware_transaction_abort(true)` | Synchronous transaction abort (`0` or `1`) | Intel only |
-| `tx_is_retryable` | `sampler.values().hardware_transaction_abort(true)` | Transaction abort is retryable (`0` or `1`) | Intel only |
-| `tx_is_memory_conflict` | `sampler.values().hardware_transaction_abort(true)` | Abort due to memory conflict (`0` or `1`) | Intel only |
-| `tx_is_write_capacity_conflict` | `sampler.values().hardware_transaction_abort(true)` | Abort due to write capacity (`0` or `1`) | Intel only |
-| `tx_is_read_capacity_conflict` | `sampler.values().hardware_transaction_abort(true)` | Abort due to read capacity (`0` or `1`) | Intel only |
+| `branch_type` | `sampler.values().branch_type(true)` | Branch type (`taken`, `retired`, `mispredicted`, `fuse`) | AMD Op PMU |
+| `tx_is_elision` | `sampler.values().hardware_transaction_abort(true)` | Hardware transaction is elision type (`true` or `false`) | Intel only |
+| `tx_is_generic` | `sampler.values().hardware_transaction_abort(true)` | Hardware transaction is generic type (`true` or `false`) | Intel only |
+| `tx_is_synchronous_abort` | `sampler.values().hardware_transaction_abort(true)` | Synchronous transaction abort (`true` or `false`) | Intel only |
+| `tx_is_retryable` | `sampler.values().hardware_transaction_abort(true)` | Transaction abort is retryable (`true` or `false`) | Intel only |
+| `tx_is_memory_conflict` | `sampler.values().hardware_transaction_abort(true)` | Abort due to memory conflict (`true` or `false`) | Intel only |
+| `tx_is_write_capacity_conflict` | `sampler.values().hardware_transaction_abort(true)` | Abort due to write capacity (`true` or `false`) | Intel only |
+| `tx_is_read_capacity_conflict` | `sampler.values().hardware_transaction_abort(true)` | Abort due to read capacity (`true` or `false`) | Intel only |
 | `tx_user_code` | `sampler.values().hardware_transaction_abort(true)` | User-specified transaction abort code | Intel only |
 | `code_page_size` | `sampler.values().code_page_size(true)` | Page size of instruction pointer (bytes) | Linux ≥ 5.11 |
-| `callchain` | `sampler.values().callchain(true)` | Call stack (list of addresses separated by `;`) | All |
+| `callchain` | `sampler.values().callchain(true)` | Call stack (hexadecimal addresses separated by the list delimiter, default `;`) | All |
 
 ### Data Access Fields
 
@@ -121,40 +124,40 @@ Fields describing memory access behavior, cache hierarchy, and data sources.
 
 | CSV Column | How to Record | Description | Platform |
 |------------|---------------|-------------|----------|
-| `data_access_type` | `sampler.values().data_source(true)` | Access type (`Load`, `Store`, `Prefetch`) | All |
-| `is_locked` | `sampler.values().data_source(true)` | Locked memory operation (`0` or `1`) | All |
+| `data_access_type` | `sampler.values().data_source(true)` | Access type (`load`, `store`, `sw_prefetch`) | All |
+| `is_locked` | `sampler.values().data_source(true)` | Locked memory operation (`true` or `false`) | All |
 | `logical_memory_address` | `sampler.values().logical_memory_address(true)` | Logical memory address (hexadecimal) | All |
 | `physical_memory_address` | `sampler.values().physical_memory_address(true)` | Physical memory address (hexadecimal) | Linux ≥ 4.13 |
-| `data_access_is_l1d_hit` | `sampler.values().data_source(true)` | L1 data cache hit (`0` or `1`) | All |
-| `data_access_is_mhb_hit` | `sampler.values().data_source(true)` | LFB/MAB hit (`0` or `1`) | All |
+| `data_access_is_l1d_hit` | `sampler.values().data_source(true)` | L1 data cache hit (`true` or `false`) | All |
+| `data_access_is_mhb_hit` | `sampler.values().data_source(true)` | LFB/MAB hit (`true` or `false`) | All |
 | `mhb_slots_allocated` | `sampler.values().mhb_allocations(true)` | Number of MAB slots allocated | AMD Op PMU |
-| `data_access_is_l2_hit` | `sampler.values().data_source(true)` | L2 cache hit (`0` or `1`) | All |
-| `data_access_is_l3_hit` | `sampler.values().data_source(true)` | L3 cache hit (`0` or `1`) | All |
-| `data_access_is_memory_hit` | `sampler.values().data_source(true)` | Main memory access (`0` or `1`) | All |
-| `data_access_is_remote` | `sampler.values().data_source(true)` | Remote core/node access (`0` or `1`) | All |
-| `data_access_is_same_node_remote_core` | `sampler.values().data_source(true)` | Same node, different core (`0` or `1`) | All |
-| `data_access_is_same_socket_remote_node` | `sampler.values().data_source(true)` | Same socket, different node (`0` or `1`) | All |
-| `data_access_is_same_board_remote_socket` | `sampler.values().data_source(true)` | Same board, different socket (`0` or `1`) | All |
-| `data_access_is_remote_board` | `sampler.values().data_source(true)` | Different board (`0` or `1`) | All |
-| `dtlb_hit` | `sampler.values().data_source(true)` | Data TLB hit (`0` or `1`) | All |
-| `stlb_hit` | `sampler.values().data_source(true)` | Second-level TLB hit (`0` or `1`) | All |
+| `data_access_is_l2_hit` | `sampler.values().data_source(true)` | L2 cache hit (`true` or `false`) | All |
+| `data_access_is_l3_hit` | `sampler.values().data_source(true)` | L3 cache hit (`true` or `false`) | All |
+| `data_access_is_memory_hit` | `sampler.values().data_source(true)` | Main memory access (`true` or `false`) | All |
+| `data_access_is_remote` | `sampler.values().data_source(true)` | Remote core/node access (`true` or `false`) | All |
+| `data_access_is_same_node_remote_core` | `sampler.values().data_source(true)` | Same node, different core (`true` or `false`) | All |
+| `data_access_is_same_socket_remote_node` | `sampler.values().data_source(true)` | Same socket, different node (`true` or `false`) | All |
+| `data_access_is_same_board_remote_socket` | `sampler.values().data_source(true)` | Same board, different socket (`true` or `false`) | All |
+| `data_access_is_remote_board` | `sampler.values().data_source(true)` | Different board (`true` or `false`) | All |
+| `dtlb_hit` | `sampler.values().data_source(true)` | Data TLB hit (`true` or `false`) | All |
+| `stlb_hit` | `sampler.values().data_source(true)` | Second-level TLB hit (`true` or `false`) | All |
 | `dtlb_page_size` | `sampler.values().data_tlb_page_size(true)` | Data TLB page size (bytes) | AMD Op PMU |
 | `stlb_page_size` | `sampler.values().data_tlb_page_size(true)` | Second-level TLB page size (bytes) | AMD Op PMU |
 | `cache_access_latency` | `sampler.values().data_access_latency(true)` | Cache access latency (cycles) | Intel only |
 | `cache_miss_latency` | `sampler.values().data_access_latency(true)` | Cache miss latency (cycles) | AMD only |
 | `dtlb_refill_latency` | `sampler.values().data_tlb_latency(true)` | Data TLB refill latency (cycles) | AMD Op PMU |
-| `snoop_is_hit` | `sampler.values().data_source(true)` | Snoop hit (`0` or `1`) | All |
-| `snoop_is_hit_modified` | `sampler.values().data_source(true)` | Snoop hit on modified line (`0` or `1`) | All |
-| `snoop_is_forward` | `sampler.values().data_source(true)` | Cache line forwarded (`0` or `1`) | All |
-| `snoop_is_transfer_from_peer` | `sampler.values().data_source(true)` | Transfer from peer node (`0` or `1`) | All |
-| `is_misalign_penalty` | `sampler.values().data_access_misalign_penalty(true)` | Misalignment penalty (`0` or `1`) | AMD Op PMU |
+| `snoop_is_hit` | `sampler.values().data_source(true)` | Snoop hit (`true` or `false`) | All |
+| `snoop_is_hit_modified` | `sampler.values().data_source(true)` | Snoop hit on modified line (`true` or `false`) | All |
+| `snoop_is_forward` | `sampler.values().data_source(true)` | Cache line forwarded (`true` or `false`) | All |
+| `snoop_is_transfer_from_peer` | `sampler.values().data_source(true)` | Transfer from peer node (`true` or `false`) | All |
+| `is_misalign_penalty` | `sampler.values().data_access_misalign_penalty(true)` | Misalignment penalty (`true` or `false`) | AMD Op PMU |
 | `data_access_width` | `sampler.values().data_access_width(true)` | Access width (bytes) | AMD Op PMU |
 | `data_page_size` | `sampler.values().data_page_size(true)` | Data page size (bytes) | Linux ≥ 5.11 |
 
 > [!IMPORTANT]
 > Memory access fields require specific triggers:
-> - **Intel**: Use `mem-loads` or `mem-stores` triggers with `perf::Precision::MustHaveZeroSkid`
-> - **AMD**: Use `ibs_op` family triggers
+> - **Intel**: Use `mem-loads`/`mem-stores` triggers (or the typed `perf::MemoryLoads`/`perf::MemoryStores`) with a precision of at least `perf::Precision::RequestZeroSkid`
+> - **AMD**: Use `ibs_op` triggers (or the typed `perf::IbsOp`)
 >
 > See the [sampling documentation](sampling.md#specific-notes-for-different-cpu-vendors) for details.
 
@@ -178,14 +181,14 @@ Register values captured at sampling time.
 
 | CSV Column | How to Record | Description |
 |------------|---------------|-------------|
-| `user_register_<name>` | `sampler.values().user_registers({...})` | User-space register (e.g., `user_register_AX`, `user_register_R10`) |
-| `kernel_register_<name>` | `sampler.values().kernel_registers({...})` | Kernel-space register (e.g., `kernel_register_AX`) |
+| `user_register_<name>` | `sampler.values().user_registers({...})` | User-space register (e.g., `user_register_ax`, `user_register_r10`) |
+| `kernel_register_<name>` | `sampler.values().kernel_registers({...})` | Kernel-space register (e.g., `kernel_register_ax`) |
 
 **Example:**
 ```cpp
 sampler.values().user_registers({perf::Registers::x86::AX, perf::Registers::x86::R10});
 ```
-Creates columns: `user_register_AX`, `user_register_R10`.
+Creates columns: `user_register_ax`, `user_register_r10`.
 
 ### Control Group Fields
 
@@ -203,9 +206,9 @@ Context switch event information.
 
 | CSV Column | How to Record | Description | Kernel Version |
 |------------|---------------|-------------|----------------|
-| `context_switch_is_out` | `sampler.values().context_switch(true)` | Process switched out (`0` or `1`) | Linux ≥ 4.3 |
-| `context_switch_is_in` | `sampler.values().context_switch(true)` | Process switched in (`0` or `1`) | Linux ≥ 4.3 |
-| `context_switch_is_preempt` | `sampler.values().context_switch(true)` | Process preempted (`0` or `1`) | Linux ≥ 4.3 |
+| `context_switch_is_out` | `sampler.values().context_switch(true)` | Process switched out (`true` or `false`) | Linux ≥ 4.3 |
+| `context_switch_is_in` | `sampler.values().context_switch(true)` | Process switched in (`true` or `false`) | Linux ≥ 4.3 |
+| `context_switch_is_preempt` | `sampler.values().context_switch(true)` | Process preempted (`true` or `false`) | Linux ≥ 4.3 |
 | `context_switch_process_id` | `sampler.values().context_switch(true)` | Process ID involved in switch | Linux ≥ 4.3 |
 | `context_switch_thread_id` | `sampler.values().context_switch(true)` | Thread ID involved in switch | Linux ≥ 4.3 |
 
@@ -215,8 +218,8 @@ Throttling event information (when kernel reduces sampling rate).
 
 | CSV Column | How to Record | Description |
 |------------|---------------|-------------|
-| `is_throttle` | `sampler.values().throttle(true)` | Sampling was throttled (`0` or `1`) |
-| `is_unthrottle` | `sampler.values().throttle(true)` | Sampling was unthrottled (`0` or `1`) |
+| `is_throttle` | `sampler.values().throttle(true)` | Sampling was throttled (`true` or `false`) |
+| `is_unthrottle` | `sampler.values().throttle(true)` | Sampling was unthrottled (`true` or `false`) |
 
 ### Loss Event Fields
 
@@ -224,5 +227,5 @@ Information about lost samples due to buffer overflow.
 
 | CSV Column | Description | When Present |
 |------------|-------------|--------------|
-| `loss_count` | Number of samples lost | Only if any sample contains a loss event |
+| `loss_count` | Number of samples lost (`0` for rows without a loss event) | Only if any sample contains a loss event |
 

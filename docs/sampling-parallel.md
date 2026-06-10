@@ -2,7 +2,7 @@
 
 Sampling can target specific threads or CPU cores:
 
-1. **[Per-thread sampling](#per-thread-sampling)**: Each thread gets its own sampler, results are combined afterward.
+1. **[Per-thread sampling](#per-thread-sampling)**: Each thread gets its own sampler; results are combined afterward.
 2. **[Per-CPU-core sampling](#per-cpu-core-sampling)**: Monitor specific CPU cores regardless of which process runs on them.
 
 > [!TIP]
@@ -12,7 +12,11 @@ Sampling can target specific threads or CPU cores:
 
 ## Per-Thread Sampling
 
-`perf::MultiThreadSampler` creates one sampler per thread and combines the results:
+`perf::MultiThreadSampler` creates one sampler per thread and combines the results.
+
+> [!NOTE]
+> The `thread_id` passed to `open()`, `start()`, and `stop()` is an index from `0` to `count_threads - 1` that identifies the sampler instance.
+> It is not an operating system thread ID. The **Thread ID** recorded in the sample metadata, however, is the operating system thread ID.
 
 ```cpp
 #include <perfcpp/sampler.hpp>
@@ -25,13 +29,13 @@ auto sampler = perf::MultiThreadSampler{ count_threads, sample_config };
 sampler.trigger("cycles");
 sampler.values().timestamp(true).thread_id(true);
 
-/// Optionally open before start() to exclude setup time from measurements.
-sampler.open();
-
 /// Start/stop per thread.
 auto threads = std::vector<std::thread>{};
 for (auto thread_id = 0U; thread_id < count_threads; ++thread_id) {
     threads.emplace_back([thread_id, &sampler]() {
+        /// Optionally open before start() to exclude setup time from measurements.
+        sampler.open(thread_id);
+
         sampler.start(thread_id);
         /// ... computation here ...
         sampler.stop(thread_id);
@@ -59,7 +63,7 @@ for (const auto& record : sampler.result(/* sort by time */ true))
 sampler.close();
 ```
 
-The output may be something like this:
+Example output:
 
     Time = 173058802647651 | Thread ID = 62803
     Time = 173058803163735 | Thread ID = 62802
@@ -70,7 +74,7 @@ The output may be something like this:
 
 ## Per-CPU-Core Sampling
 
-`perf::MultiCoreSampler` records samples on specified CPU cores, capturing activity from all processes running there.
+`perf::MultiCoreSampler` records samples on specified CPU cores and captures activity from all processes running there.
 
 > [!NOTE]
 > This requires `perf_event_paranoid < 1`. See the [perf paranoid setting](perf-paranoid.md).
@@ -86,7 +90,7 @@ auto sample_config = perf::SampleConfig{};
 sample_config.period(50000U);
 
 /// Use all_cpu_cores() to target every core on the system.
-const auto cpu_core_ids = perf::HardwareInfo::all_cpu_cores(); // or e.g. {0U, 1U, 2U, 3U}
+const auto cpu_core_ids = perf::HardwareInfo::all_cpu_cores(); /// or e.g. std::vector<std::uint16_t>{ 0U, 1U, 2U, 3U }
 auto sampler = perf::MultiCoreSampler{ cpu_core_ids, sample_config };
 sampler.trigger("cycles");
 sampler.values().timestamp(true).cpu_id(true).thread_id(true);
@@ -117,7 +121,7 @@ for (const auto& record : sampler.result(/* sort by time */ true))
 sampler.close();
 ```
 
-The output may be something like this:
+Example output:
 
     Time = 173058798201719 | CPU ID = 0 | Thread ID = 62803
     Time = 173058798713083 | CPU ID = 3 | Thread ID = 62802
