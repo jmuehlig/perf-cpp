@@ -150,7 +150,7 @@ Fields describing memory access behavior, cache hierarchy, and data sources.
 | `snoop_is_hit_modified` | `sampler.values().data_source(true)` | Snoop hit on modified line (`true` or `false`) | All |
 | `snoop_is_forward` | `sampler.values().data_source(true)` | Cache line forwarded (`true` or `false`) | All |
 | `snoop_is_transfer_from_peer` | `sampler.values().data_source(true)` | Transfer from peer node (`true` or `false`) | All |
-| `is_misalign_penalty` | `sampler.values().data_access_misalign_penalty(true)` | Misalignment penalty (`true` or `false`) | AMD Op PMU |
+| `is_misaligned` | `sampler.values().data_access_misaligned(true)` | Misalignment (`true` or `false`) | AMD Op PMU |
 | `data_access_width` | `sampler.values().data_access_width(true)` | Access width (bytes) | AMD Op PMU |
 | `data_page_size` | `sampler.values().data_page_size(true)` | Data page size (bytes) | Linux ≥ 5.11 |
 

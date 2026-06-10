@@ -912,9 +912,9 @@ perf::SampleDecoder::enrich_sample_with_ibs_op_data_from_raw(Sample& sample,
     sample.instruction_execution().is_microcode(ibs_op_decoder.is_microcode());
   }
 
-  /// Misalgin penalty.
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataAccessMisalignPenalty)) {
-    sample.data_access().misalign_penalty(ibs_op_decoder.is_data_cache_misaligned_access());
+  /// Misalign.
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::DataAccessMisaligned)) {
+    sample.data_access().misaligned(ibs_op_decoder.is_data_cache_misaligned_access());
   }
 
   /// Source information.

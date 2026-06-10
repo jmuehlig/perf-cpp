@@ -63,7 +63,7 @@ perf::SampleRecordingValues::to_perf_sample_type() const noexcept
 #endif
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::DataTLBPageSize);
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::DataAccessWidth);
-  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::DataAccessMisalignPenalty);
+  sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::DataAccessMisaligned);
   sample_type |= this->perf_sample_type_if_field_activates(PERF_SAMPLE_RAW, Field::MHBAllocations);
 
   // === Branch Sampling ===

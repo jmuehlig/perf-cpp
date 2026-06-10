@@ -47,7 +47,7 @@ public:
     DataAccessLatency,
     DataTLBLatency,
     DataAccessWidth,
-    DataAccessMisalignPenalty,
+    DataAccessMisaligned,
     MHBAllocations,
 
     // === Branch Sampling ===
@@ -475,18 +475,34 @@ public:
   }
 
   /**
-   * Manage to include data access misalign penalty into samples.
+   * Manage to include data access misalignment into samples.
    * Note: This field is only available on AMD's IBS Op PMU.
    *
    * See https://jmuehlig.github.io/perf-cpp/sampling/#data-access
    *
-   * @param include True, if data access misalign penalty should be included.
+   * @param include True, if data access misalignment should be included.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& data_access_misalign_penalty(const bool include) noexcept
+  SampleRecordingValues& data_access_misaligned(const bool include) noexcept
   {
-    set(Field::DataAccessMisalignPenalty, include);
+    set(Field::DataAccessMisaligned, include);
     return *this;
+  }
+
+  /**
+   * Manage to include data access misalignment into samples.
+   * Note: This field is only available on AMD's IBS Op PMU.
+   *
+   * See https://jmuehlig.github.io/perf-cpp/sampling/#data-access
+   *
+   * @param include True, if data access misalignment should be included.
+   * @return The SampleRecordingValues instance.
+   * @deprecated Use data_access_misaligned() instead. Will be removed in v1.2.
+   */
+  [[deprecated("Use data_access_misaligned() instead. Will be removed in v1.2.")]] SampleRecordingValues&
+  data_access_misalign_penalty(const bool include) noexcept
+  {
+    return data_access_misaligned(include);
   }
 
   /**
@@ -843,9 +859,8 @@ public:
   {
     return is_set(Field::PhysicalInstructionPointer) || is_set(Field::InstructionType) || is_set(Field::BranchType) ||
            is_set(Field::InstructionLatency) || is_set(Field::InstructionCache) || is_set(Field::InstructionTLB) ||
-           is_set(Field::InstructionFetch) || is_set(Field::DataAccessWidth) ||
-           is_set(Field::DataAccessMisalignPenalty) || is_set(Field::MHBAllocations) || is_set(Field::DataTLBLatency) ||
-           is_set(Field::DataTLBPageSize);
+           is_set(Field::InstructionFetch) || is_set(Field::DataAccessWidth) || is_set(Field::DataAccessMisaligned) ||
+           is_set(Field::MHBAllocations) || is_set(Field::DataTLBLatency) || is_set(Field::DataTLBPageSize);
   }
 
 private:

@@ -112,7 +112,7 @@ perf::SampleResult::write_csv(std::ostream& stream, const char delimiter, const 
   csv_writer.write_header(SampleRecordingValues::Field::DataSource, "snoop_is_hit_modified");
   csv_writer.write_header(SampleRecordingValues::Field::DataSource, "snoop_is_forward");
   csv_writer.write_header(SampleRecordingValues::Field::DataSource, "snoop_is_transfer_from_peer");
-  csv_writer.write_header(SampleRecordingValues::Field::DataAccessMisalignPenalty, "is_misalign_penalty");
+  csv_writer.write_header(SampleRecordingValues::Field::DataAccessMisaligned, "is_misaligned");
   csv_writer.write_header(SampleRecordingValues::Field::DataAccessWidth, "data_access_width");
   csv_writer.write_header(SampleRecordingValues::Field::DataPageSize, "data_page_size");
 
@@ -319,8 +319,7 @@ perf::SampleResult::write_csv(std::ostream& stream, const char delimiter, const 
     csv_writer.write_value(
       SampleRecordingValues::Field::DataSource, snoop, [](const auto& s) { return s.is_transfer_from_peer(); });
 
-    csv_writer.write_value(SampleRecordingValues::Field::DataAccessMisalignPenalty,
-                           sample.data_access().is_misalign_penalty());
+    csv_writer.write_value(SampleRecordingValues::Field::DataAccessMisaligned, sample.data_access().is_misaligned());
     csv_writer.write_value(SampleRecordingValues::Field::DataAccessWidth, sample.data_access().access_width());
     csv_writer.write_value(SampleRecordingValues::Field::DataPageSize, sample.data_access().page_size());
 

@@ -423,10 +423,21 @@ public:
   void snoop(std::optional<Snoop> snoop) noexcept { _snoop = snoop; }
 
   /**
-   * Set whether the access incurred a misalignment penalty.
-   * @param is_misalign_penalty True if misaligned access penalized.
+   * Set whether the access incurred a misalignment.
+   * @param is_misaligned True if the access incurred a misalignment.
    */
-  void misalign_penalty(const bool is_misalign_penalty) noexcept { _is_misalign_penalty = is_misalign_penalty; }
+  void misaligned(const bool is_misaligned) noexcept { _is_misaligned = is_misaligned; }
+
+  /**
+   * Set whether the access incurred a misalignment.
+   * @param is_misaligned True if the access incurred a misalignment.
+   * @deprecated Use misaligned() instead. Will be removed in v1.2.
+   */
+  [[deprecated("Use misaligned() instead. Will be removed in v1.2.")]] void misalign_penalty(
+    const bool is_misaligned) noexcept
+  {
+    _is_misaligned = is_misaligned;
+  }
 
   /**
    * Set the byte-width of the access.
@@ -520,9 +531,19 @@ public:
   [[nodiscard]] const std::optional<Snoop>& snoop() const noexcept { return _snoop; }
 
   /**
-   * @return True if a misalignment penalty was incurred.
+   * @return True if the access incurred a misalignment.
    */
-  [[nodiscard]] std::optional<bool> is_misalign_penalty() const noexcept { return _is_misalign_penalty; }
+  [[nodiscard]] std::optional<bool> is_misaligned() const noexcept { return _is_misaligned; }
+
+  /**
+   * @return True if the access incurred a misalignment.
+   * @deprecated Use is_misaligned() instead. Will be removed in v1.2.
+   */
+  [[nodiscard, deprecated("Use is_misaligned() instead. Will be removed in v1.2.")]] std::optional<bool>
+  is_misalign_penalty() const noexcept
+  {
+    return _is_misaligned;
+  }
 
   /**
    * @return Width of the data access in bytes.
@@ -543,7 +564,7 @@ private:
   TLB _tlb;
   Latency _latency;
   std::optional<Snoop> _snoop{ std::nullopt };
-  std::optional<bool> _is_misalign_penalty{ std::nullopt };
+  std::optional<bool> _is_misaligned{ std::nullopt };
   std::optional<std::uint8_t> _access_width{ std::nullopt };
   std::optional<std::uint64_t> _data_page_size{ std::nullopt };
 };
