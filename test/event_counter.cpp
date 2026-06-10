@@ -682,7 +682,9 @@ TEST_CASE("ergonomics", "[EventCounter]")
     tight.num_events_per_physical_counter(1U);
     event_counter.config(tight);
 
-    REQUIRE_THROWS(event_counter.add(std::vector<std::string>{ "instructions", "cycles" }));
+    /// Use generic (non-fixed) events — "instructions" and "cycles" are fixed-function PMCs on Intel
+    /// and bypass the num_physical_counters limit, so they would not throw there.
+    REQUIRE_THROWS(event_counter.add(std::vector<std::string>{ "cache-misses", "branches" }));
   }
 
   SECTION("add(string&&) rvalue overload registers the event")
