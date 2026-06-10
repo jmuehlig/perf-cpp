@@ -38,7 +38,7 @@ perf::SampleResult::write_csv(std::ostream& stream, const char delimiter, const 
 
   /// Header: Metadata
   stream << "mode";
-  csv_writer.write_header(SampleRecordingValues::Field::Id, "id");
+  csv_writer.write_header(SampleRecordingValues::Field::SampleId, "sample_id");
   csv_writer.write_header(SampleRecordingValues::Field::StreamId, "stream_id");
   csv_writer.write_header(SampleRecordingValues::Field::Timestamp, "timestamp");
   csv_writer.write_header(SampleRecordingValues::Field::Period, "period");
@@ -168,7 +168,7 @@ perf::SampleResult::write_csv(std::ostream& stream, const char delimiter, const 
 
     /// Metadata
     stream << to_string(sample.metadata().mode());
-    csv_writer.write_value(SampleRecordingValues::Field::Id, sample.metadata().sample_id());
+    csv_writer.write_value(SampleRecordingValues::Field::SampleId, sample.metadata().sample_id());
     csv_writer.write_value(SampleRecordingValues::Field::StreamId, sample.metadata().stream_id());
     csv_writer.write_value(SampleRecordingValues::Field::Timestamp, sample.metadata().timestamp());
     csv_writer.write_value(SampleRecordingValues::Field::Period, sample.metadata().period());

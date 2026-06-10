@@ -21,7 +21,7 @@ public:
     Period,
 
     // === Identifiers ===
-    Id,
+    SampleId,
     StreamId,
 
     // === Instruction Execution ===
@@ -152,17 +152,32 @@ public:
   }
 
   /**
-   * Manage to include the ID into samples.
+   * Manage to include the sample ID into samples.
    *
    * See https://jmuehlig.github.io/perf-cpp/sampling/#metadata
    *
-   * @param include True, if the ID should be included.
+   * @param include True, if the sample ID should be included.
    * @return The SampleRecordingValues instance.
    */
-  SampleRecordingValues& id(const bool include) noexcept
+  SampleRecordingValues& sample_id(const bool include) noexcept
   {
-    set(Field::Id, include);
+    set(Field::SampleId, include);
     return *this;
+  }
+
+  /**
+   * Manage to include the sample ID into samples.
+   *
+   * See https://jmuehlig.github.io/perf-cpp/sampling/#metadata
+   *
+   * @param include True, if the sample ID should be included.
+   * @return The SampleRecordingValues instance.
+   * @deprecated Use sample_id() instead. Will be removed in v2.0.
+   */
+  [[deprecated("Use sample_id() instead. Will be removed in v2.0.")]] SampleRecordingValues& id(
+    const bool include) noexcept
+  {
+    return sample_id(include);
   }
 
   /**
@@ -497,9 +512,9 @@ public:
    *
    * @param include True, if data access misalignment should be included.
    * @return The SampleRecordingValues instance.
-   * @deprecated Use data_access_misaligned() instead. Will be removed in v1.2.
+   * @deprecated Use data_access_misaligned() instead. Will be removed in v2.0.
    */
-  [[deprecated("Use data_access_misaligned() instead. Will be removed in v1.2.")]] SampleRecordingValues&
+  [[deprecated("Use data_access_misaligned() instead. Will be removed in v2.0.")]] SampleRecordingValues&
   data_access_misalign_penalty(const bool include) noexcept
   {
     return data_access_misaligned(include);

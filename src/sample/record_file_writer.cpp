@@ -319,7 +319,7 @@ perf::RecordFileWriter::read_first_sample_id(const SampleRecordingValues& sample
                                              const std::vector<std::vector<std::vector<std::byte>>>& sample_data)
 {
   /// If none of the values was sampled, we can cancel early without scanning.
-  if (sampler_values.is_set(SampleRecordingValues::Field::Id) ||
+  if (sampler_values.is_set(SampleRecordingValues::Field::SampleId) ||
       sampler_values.is_set(SampleRecordingValues::Field::ThreadId) ||
       sampler_values.is_set(SampleRecordingValues::Field::Timestamp) ||
       sampler_values.is_set(SampleRecordingValues::Field::StreamId) ||
@@ -346,7 +346,7 @@ perf::RecordFileWriter::read_first_sample_id(const SampleRecordingValues& sample
             auto stream_id = std::optional<std::uint64_t>{};
             auto cpu_id = std::optional<std::uint32_t>{};
 
-            if (sampler_values.is_set(SampleRecordingValues::Field::Id)) {
+            if (sampler_values.is_set(SampleRecordingValues::Field::SampleId)) {
               sample_id = entry.read<std::uint64_t>();
             }
 

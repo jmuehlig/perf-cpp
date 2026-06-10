@@ -431,9 +431,9 @@ public:
   /**
    * Set whether the access incurred a misalignment.
    * @param is_misaligned True if the access incurred a misalignment.
-   * @deprecated Use misaligned() instead. Will be removed in v1.2.
+   * @deprecated Use misaligned() instead. Will be removed in v2.0.
    */
-  [[deprecated("Use misaligned() instead. Will be removed in v1.2.")]] void misalign_penalty(
+  [[deprecated("Use misaligned() instead. Will be removed in v2.0.")]] void misalign_penalty(
     const bool is_misaligned) noexcept
   {
     _is_misaligned = is_misaligned;
@@ -537,9 +537,9 @@ public:
 
   /**
    * @return True if the access incurred a misalignment.
-   * @deprecated Use is_misaligned() instead. Will be removed in v1.2.
+   * @deprecated Use is_misaligned() instead. Will be removed in v2.0.
    */
-  [[nodiscard, deprecated("Use is_misaligned() instead. Will be removed in v1.2.")]] std::optional<bool>
+  [[nodiscard, deprecated("Use is_misaligned() instead. Will be removed in v2.0.")]] std::optional<bool>
   is_misalign_penalty() const noexcept
   {
     return _is_misaligned;

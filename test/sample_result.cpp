@@ -51,9 +51,9 @@ TEST_CASE("to_csv", "[SampleResult]")
     REQUIRE(rows[0][0] == "mode");
   }
 
-  SECTION("id field")
+  SECTION("sample_id field")
   {
-    auto values = perf::SampleRecordingValues{}.id(true);
+    auto values = perf::SampleRecordingValues{}.sample_id(true);
 
     auto sample = perf::Sample{};
     sample.metadata().sample_id(42ULL);
@@ -65,7 +65,7 @@ TEST_CASE("to_csv", "[SampleResult]")
     const auto rows = parse_csv(result.to_csv());
 
     REQUIRE(rows.size() == 2U);
-    REQUIRE(rows[0][1] == "id");
+    REQUIRE(rows[0][1] == "sample_id");
     REQUIRE(rows[1][1] == "42");
   }
 

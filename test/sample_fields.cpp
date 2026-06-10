@@ -196,7 +196,7 @@ TEST_CASE("sample fields", "[SampleFields]")
   {
     auto sampler = perf::Sampler{};
     REQUIRE_NOTHROW(sampler.trigger(perf::Cycles{}, perf::Period{ 100000U }));
-    sampler.values().id(true);
+    sampler.values().sample_id(true);
 
     REQUIRE_NOTHROW(sampler.open());
     REQUIRE_NOTHROW(sampler.start());

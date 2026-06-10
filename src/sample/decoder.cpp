@@ -107,7 +107,7 @@ perf::SampleDecoder::decode_sample_id_all(SampleIterator& entry, Sample& sample)
     entry.skip<std::uint32_t>(); /// Skip "res" field.
   }
 
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::Id)) {
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::SampleId)) {
     sample.metadata().sample_id(entry.read<std::uint64_t>());
   }
 }
@@ -123,7 +123,7 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
   auto sample = Sample{};
   sample.metadata().mode(entry.mode());
 
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::Id)) {
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::SampleId)) {
     sample.metadata().sample_id(entry.read<std::uint64_t>());
   }
 
@@ -1069,7 +1069,7 @@ perf::SampleDecoder::decode_throttle_event(SampleIterator&& entry) const noexcep
     entry.skip<std::uint64_t>();
   }
 
-  if (this->_sampler_values.is_set(SampleRecordingValues::Field::Id)) {
+  if (this->_sampler_values.is_set(SampleRecordingValues::Field::SampleId)) {
     sample.metadata().sample_id(entry.read<std::uint64_t>());
   } else {
     /// Id is ALWAYS written; skip if not requested.

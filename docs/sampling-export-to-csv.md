@@ -74,7 +74,7 @@ For detailed descriptions, see the [sampling documentation](sampling.md).
 | CSV Column | How to Record | Description | Always Present |
 |------------|---------------|-------------|----------------|
 | `mode` | Always recorded | Execution mode (`user`, `kernel`, `hypervisor`, `guest_kernel`, `guest_user`) | Yes |
-| `id` | `sampler.values().id(true)` | Unique sample group leader ID | No |
+| `sample_id` | `sampler.values().sample_id(true)` | Unique sample group leader ID | No |
 | `stream_id` | `sampler.values().stream_id(true)` | Event stream identifier | No |
 | `timestamp` | `sampler.values().timestamp(true)` | Sample timestamp (nanoseconds) | No |
 | `period` | `sampler.values().period(true)` | Event count threshold that triggered the sample | No |
