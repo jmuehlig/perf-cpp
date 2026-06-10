@@ -99,14 +99,14 @@ event_counter.add({"instructions", "cycles", "ref-cycles", "cache-misses", "bran
 
 ## Binding to a CPU Core or Process
 
-By default, events are counted across all cores the thread runs on, for the calling process only.
+By default, events are counted for the calling thread only, on every core it runs on.
 
 ```cpp
 auto config = perf::Config{};
 
 /// Count only on CPU core 5.
 config.cpu_core(5U);
-config.cpu_core(perf::CpuCore::Any); /// revert to all cores
+config.cpu_core(perf::CpuCore::Any); /// Revert to counting on all cores.
 
 /// Monitor a specific process or all processes.
 config.process(perf::Process{1337});
@@ -139,8 +139,7 @@ config.cgroup(std::filesystem::path{ "/sys/fs/cgroup/my-container" });
 config.cgroup("my-container");
 
 /// From a raw fd opened elsewhere in the application: wrap it in a UniqueFileDescriptor
-/// first to express ownership — the file descriptor will be closed when the monitor
-/// is destroyed.
+/// to pass ownership. The descriptor is closed once the last copy of the monitor is destroyed.
 config.cgroup(perf::CGroupMonitor{ perf::util::UniqueFileDescriptor{ raw_fd } });
 ```
 
@@ -153,7 +152,7 @@ A `perf::CannotOpenCGroupError` is thrown if the path cannot be opened.
 > To monitor across all cores, use `MultiCoreEventCounter` with a `CGroupMonitor` config.
 
 ```cpp
-config.cpu_core(0U); /// required: cgroup monitoring is per CPU
+config.cpu_core(0U); /// Required: cgroup monitoring is per CPU core.
 
 auto event_counter = perf::EventCounter{ config };
 event_counter.add({"instructions", "cycles", "cache-misses"});
@@ -226,7 +225,7 @@ auto event_counter = perf::EventCounter{ config };
 
 ---
 
-## Troubleshooting
+## Troubleshooting Counter Configurations
 
 Enable debug output to inspect the counter configuration passed to the kernel:
 
@@ -236,8 +235,8 @@ config.debug(true);
 auto event_counter = perf::EventCounter{ config };
 ```
 
-This is equivalent to `perf --debug perf-event-open stat -- sleep 1`, which prints the `perf_event_open` arguments for each counter.
-Useful for retrieving event codes or diagnosing why a counter fails to open.
+The output resembles that of `perf --debug perf-event-open stat -- sleep 1` and shows the `perf_event_open` arguments for each counter.
+It helps with retrieving event codes and diagnosing why a counter fails to open.
 
 ---
 
@@ -251,6 +250,7 @@ This example measures how unpredictable memory access patterns defeat the hardwa
 #include <cstdint>
 #include <vector>
 #include <algorithm>
+#include <numeric>
 #include <perfcpp/event_counter.hpp>
 
 /// One cache line per element.
@@ -290,12 +290,12 @@ int main()
     {
         std::cout << val << " " << name << " per cache line" << std::endl;
     }
-    
+
     event_counter.close();
 }
 ```
 
-Random access output, more than one cache miss per line:
+With random access, every cache line costs more than one miss:
 ```
 7.12 instructions per cache line
 57.19 cycles per cache line
@@ -303,7 +303,7 @@ Random access output, more than one cache miss per line:
 8.03 cycles-per-instruction per cache line
 ```
 
-Sequential access (without shuffling), the prefetcher eliminates nearly all misses:
+With sequential access (no shuffling), the prefetcher eliminates nearly all misses:
 ```
 6.85 instructions per cache line
 8.94 cycles per cache line

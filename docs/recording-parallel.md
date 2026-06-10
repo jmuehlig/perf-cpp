@@ -1,8 +1,8 @@
 # Recording Hardware Events in Parallel
 
-Performance counters can be recorded per thread, per CPU core, or per process:
+*perf-cpp* offers four ways to record performance counters for parallel workloads:
 
-1. **[Per-thread counters](#per-thread-counters)**: Each thread gets its own counter, results are combined afterward.
+1. **[Per-thread counters](#per-thread-counters)**: Each thread gets its own counter; results are combined afterward.
 2. **[Inherited counters](#inherited-counters)**: A single counter automatically covers all child threads.
 3. **[Per-CPU-core counters](#per-cpu-core-counters)**: Monitor specific CPU cores regardless of which process runs on them.
 4. **[Per-process counters](#per-process-counters)**: Monitor specific processes by PID.
@@ -20,7 +20,7 @@ Performance counters can be recorded per thread, per CPU core, or per process:
 #include <perfcpp/event_counter.hpp>
 
 const auto count_threads = 4U;
-auto multi_event_counter = perf::MultiThreadEventCounter{count_threads};
+auto multi_event_counter = perf::MultiThreadEventCounter{ count_threads };
 multi_event_counter.add({"instructions", "cycles", "cache-misses"});
 
 /// Start/stop per thread.
@@ -44,7 +44,7 @@ for (const auto [name, value] : result)
     std::cout << name << " = " << value << std::endl;
 }
 
-/// Result for a specific thread.
+/// Result for a specific thread; throws if the thread id is out of bounds.
 const auto thread_result = multi_event_counter.result_of_thread(0U);
 
 /// Release resources explicitly, or let the destructor handle it.
@@ -97,7 +97,8 @@ event_counter.close();
 
 ## Per-CPU-Core Counters
 
-`perf::MultiCoreEventCounter` records events on specified CPU cores, capturing activity from all processes running there.
+`perf::MultiCoreEventCounter` records events on specified CPU cores.
+It captures activity from all processes running on those cores.
 
 > [!NOTE]
 > This requires `perf_event_paranoid < 1`. See the [perf paranoid setting](perf-paranoid.md).
@@ -109,8 +110,8 @@ event_counter.close();
 #include <perfcpp/hardware_info.hpp>
 #include <perfcpp/event_counter.hpp>
 
-/// Use all_cpu_cores() to target every core on the system.
-const auto cpu_core_ids = perf::HardwareInfo::all_cpu_cores(); // or e.g. {0U, 4U, 8U, 12U}
+/// Monitor every core on the system; a manual list such as std::vector<std::uint16_t>{ 0U, 4U, 8U } works as well.
+const auto cpu_core_ids = perf::HardwareInfo::all_cpu_cores();
 auto multi_cpu_counter = perf::MultiCoreEventCounter{ cpu_core_ids };
 multi_cpu_counter.add({"instructions", "cycles", "cache-misses"});
 
@@ -125,7 +126,7 @@ for (const auto [name, value] : result)
     std::cout << name << " = " << value << std::endl;
 }
 
-/// Result for a specific core (returns std::optional).
+/// Result for a specific core; std::nullopt if the core is not monitored.
 const auto core_result = multi_cpu_counter.result_of_core(12U);
 
 /// Release resources explicitly, or let the destructor handle it.
@@ -136,7 +137,7 @@ multi_cpu_counter.close();
 
 ## Per-Process Counters
 
-`perf::MultiProcessEventCounter` records events for specific processes by PID, combining the results:
+`perf::MultiProcessEventCounter` records events for specific processes by PID and combines the results:
 
 > [!NOTE]
 > Monitoring other processes may require elevated privileges. See the [perf paranoid setting](perf-paranoid.md).
@@ -159,7 +160,7 @@ for (const auto [name, value] : result)
     std::cout << name << " = " << value << std::endl;
 }
 
-/// Result for a specific process (returns std::optional).
+/// Result for a specific process; std::nullopt if the process is not monitored.
 const auto process_result = multi_process_counter.result_of_process(1234);
 
 /// Release resources explicitly, or let the destructor handle it.

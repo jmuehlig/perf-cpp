@@ -31,10 +31,10 @@ event_counter.close();
 ```
 
 > [!IMPORTANT]
-> Avoid mixing live events with regular events — using only live events leads to more consistent results.
+> Avoid mixing live events with regular events; using only live events leads to more consistent results.
 
 > [!NOTE]
-> Live events can only capture hardware events, not metrics.
+> `add_live()` accepts hardware events only; adding a metric or time event throws an exception.
 
 ## Reading Live Values
 
@@ -42,7 +42,7 @@ There are two ways to read counter values during computation.
 
 ### Using `LiveEventCounter` (recommended)
 
-The `LiveEventCounter` wrapper handles memory management and difference calculation internally:
+The `LiveEventCounter` wrapper reads all live counters on `start()` and `stop()` and calculates the differences, without allocating memory during reads:
 
 ```cpp
 auto live_event_counter = perf::LiveEventCounter{ event_counter };
@@ -62,6 +62,9 @@ for (auto i = 0U; i < runs; ++i) {
 
 event_counter.stop();
 ```
+
+`get()` returns the difference between the stop and start values, or `0` if the event name is unknown.
+An optional second argument normalizes the result: `get("cache-misses", num_iterations)`.
 
 ### Direct access via `EventCounter`
 
@@ -88,4 +91,6 @@ for (auto i = 0U; i < runs; ++i) {
 event_counter.stop();
 ```
 
-Values are returned in the order events were added. This avoids per-read allocations but requires you to track the index-to-event mapping.
+Values are returned in the order events were added.
+The vector size must match the number of live events exactly; otherwise `live_result()` throws.
+This approach avoids per-read allocations but requires you to track the index-to-event mapping.
