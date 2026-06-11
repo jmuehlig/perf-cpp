@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
 project(libperf-cpp VERSION 1.0.0 LANGUAGES CXX)
 
+# perf-cpp requires complete std::from_chars support (GCC 11+, Clang 14+).
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11)
+    message(FATAL_ERROR "perf-cpp requires GCC 11 or newer (found GCC ${CMAKE_CXX_COMPILER_VERSION}).")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 14)
+    message(FATAL_ERROR "perf-cpp requires Clang 14 or newer (found Clang ${CMAKE_CXX_COMPILER_VERSION}).")
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wcast-align -Wunused -Wshadow -Wold-style-cast -Wpointer-arith -Wcast-qual -Wnon-virtual-dtor -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -Wno-missing-braces")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g3")
