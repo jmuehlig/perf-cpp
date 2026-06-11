@@ -4,13 +4,8 @@
 #include <perfcpp/util/table.hpp>
 #include <sstream>
 
-/// The global CounterDefinition instance is used as a default one for EventCounter and Sampler. This instance detects
-/// counters from the perf subsystem and (if activated) processor-specific events. Further (child) counter definitions
-/// will inherit the registered events, metrics, and time events.
-std::shared_ptr<perf::CounterDefinition> perf::CounterDefinition::_global = CounterDefinition::make_global();
-
 perf::CounterDefinition::CounterDefinition(std::unique_ptr<EventProvider>&& event_provider)
-  : _parent_counter_definition(CounterDefinition::_global)
+  : _parent_counter_definition(CounterDefinition::global_instance())
 {
   /// Reserve space for events.
   this->_performance_monitoring_unit_events.reserve(8U);
@@ -28,11 +23,23 @@ perf::CounterDefinition::CounterDefinition(const std::string& config_file)
 {
 }
 
+std::shared_ptr<perf::CounterDefinition>&
+perf::CounterDefinition::global_instance()
+{
+  /// Lazily build the global instance on first use; function-local statics are initialized
+  /// thread-safely (C++11) and avoid static-initialization-order issues.
+  static auto global = CounterDefinition::make_global();
+  return global;
+}
+
 std::shared_ptr<perf::CounterDefinition>
 perf::CounterDefinition::make_global()
 {
-  /// Create the global counter definition.
-  auto global_counter_definition = std::make_shared<CounterDefinition>();
+  /// Use the GlobalTag constructor so this path does not recurse into global_instance().
+  /// IMPORTANT: do not replace with std::make_shared<CounterDefinition>() as the public
+  /// constructor calls global_instance(), which would re-enter the function-local static
+  /// above and cause undefined behavior.
+  auto global_counter_definition = std::shared_ptr<CounterDefinition>{ new CounterDefinition{ GlobalTag{} } };
 
   auto event_providers = std::vector<std::unique_ptr<EventProvider>>{};
   event_providers.reserve(8U);
@@ -115,7 +122,7 @@ perf::CounterDefinition::counter(const std::string& name) const
 }
 
 std::optional<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
-perf::CounterDefinition::counter(const std::string& pmu_name, const std::string& event_name) const
+perf::CounterDefinition::counter(const std::string& pmu_name, const std::string& event_name) const noexcept
 {
   /// Find all events of the PMU.
   if (const auto pmu_iterator = this->_performance_monitoring_unit_events.find(pmu_name);
@@ -138,7 +145,7 @@ perf::CounterDefinition::counter(const std::string& pmu_name, const std::string&
 }
 
 std::optional<std::pair<std::string_view, perf::Metric&>>
-perf::CounterDefinition::metric(const std::string& name) const
+perf::CounterDefinition::metric(const std::string& name) const noexcept
 {
   if (const auto iterator = this->_metrics.find(name); iterator != this->_metrics.end()) {
     return std::make_optional(std::make_pair(std::string_view(iterator->first), std::ref(*iterator->second)));
@@ -153,7 +160,7 @@ perf::CounterDefinition::metric(const std::string& name) const
 }
 
 std::optional<std::pair<std::string_view, perf::TimeEvent&>>
-perf::CounterDefinition::time_event(const std::string& name) const
+perf::CounterDefinition::time_event(const std::string& name) const noexcept
 {
   if (const auto iterator = this->_time_events.find(name); iterator != this->_time_events.end()) {
     return std::make_optional(std::make_pair(std::string_view(iterator->first), std::ref(*iterator->second)));
@@ -197,7 +204,7 @@ perf::CounterDefinition::pmu(const std::string& pmu_name) const
 }
 
 bool
-perf::CounterDefinition::is_metric(const std::string& name) const
+perf::CounterDefinition::is_metric(const std::string& name) const noexcept
 {
   /// Check if the metric is registered in this instance.
   if (this->_metrics.find(name) != this->_metrics.end()) {
@@ -213,7 +220,7 @@ perf::CounterDefinition::is_metric(const std::string& name) const
 }
 
 bool
-perf::CounterDefinition::is_time_event(const std::string& name) const
+perf::CounterDefinition::is_time_event(const std::string& name) const noexcept
 {
   /// Check if the time event is registered in this instance.
   if (this->_time_events.find(name) != this->_time_events.end()) {

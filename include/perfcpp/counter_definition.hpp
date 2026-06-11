@@ -26,7 +26,7 @@ namespace perf {
 class CounterDefinition
 {
 public:
-  [[nodiscard]] static const CounterDefinition& global() noexcept { return *_global; }
+  [[nodiscard]] static const CounterDefinition& global() { return *global_instance(); }
 
   explicit CounterDefinition(std::unique_ptr<EventProvider>&& event_provider = nullptr);
   explicit CounterDefinition(const std::string& config_file);
@@ -216,7 +216,7 @@ public:
    */
   [[nodiscard]] std::optional<std::tuple<std::string_view, std::string_view, CounterConfig>> counter(
     const std::string& pmu_name,
-    const std::string& event_name) const;
+    const std::string& event_name) const noexcept;
 
   /**
    * Returns the counter configurations with the requested event name for a specified PMU.
@@ -246,7 +246,7 @@ public:
    * @param name Name of the requested query.
    * @return True, if the metric exists.
    */
-  [[nodiscard]] bool is_metric(const std::string& name) const;
+  [[nodiscard]] bool is_metric(const std::string& name) const noexcept;
 
   /**
    * Checks if a metric with the given name is registered.
@@ -265,7 +265,7 @@ public:
    * @param name Name of the queried metric.
    * @return Metric and config, std::nullopt of the metric does not exist.
    */
-  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(const std::string& name) const;
+  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(const std::string& name) const noexcept;
 
   /**
    * Checks if a specific metric is registered and returns the name and the metric.
@@ -273,7 +273,7 @@ public:
    * @param name Name of the queried metric.
    * @return Metric and config, std::nullopt of the metric does not exist.
    */
-  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(std::string&& name) const
+  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(std::string&& name) const noexcept
   {
     return metric(name);
   }
@@ -295,7 +295,7 @@ public:
    * @param name Name of the requested time event.
    * @return True, if the time event exists.
    */
-  [[nodiscard]] bool is_time_event(const std::string& name) const;
+  [[nodiscard]] bool is_time_event(const std::string& name) const noexcept;
 
   /**
    * Checks if a time event with the given name is registered.
@@ -303,7 +303,7 @@ public:
    * @param name Name of the requested time event.
    * @return True, if the time event exists.
    */
-  [[nodiscard]] bool is_time_event(std::string&& name) const { return is_time_event(name); }
+  [[nodiscard]] bool is_time_event(std::string&& name) const noexcept { return is_time_event(name); }
 
   /**
    * Checks if a time event with the given name is registered.
@@ -322,7 +322,8 @@ public:
    * @param name Name of the queried time event.
    * @return Time event and config, std::nullopt of the time event does not exist.
    */
-  [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(const std::string& name) const;
+  [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(
+    const std::string& name) const noexcept;
 
   /**
    * Checks if a specific time event is registered and returns the name and the time event.
@@ -330,7 +331,7 @@ public:
    * @param name Name of the queried time event.
    * @return Time event and config, std::nullopt of the time event does not exist.
    */
-  [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(std::string&& name) const
+  [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(std::string&& name) const noexcept
   {
     return time_event(name);
   }
@@ -366,11 +367,28 @@ public:
   [[nodiscard]] std::string to_string() const;
 
 private:
-  /// Global instance of the counter definition that is used by "child" instances. Child instances can augment the
-  /// global instance by more metrics and counters (e.g., from files).
-  static std::shared_ptr<CounterDefinition> _global;
+  /// Tag type used by make_global() to construct the root instance directly, bypassing the public
+  /// constructor which would recurse into global_instance() before it is ready.
+  struct GlobalTag
+  {};
 
-  /// CounterDefinitions can be layerd.
+  /// Constructs the bare global root instance — no parent, no providers. make_global() populates it.
+  explicit CounterDefinition(GlobalTag /*unused*/)
+  {
+    _performance_monitoring_unit_events.reserve(8U);
+    _metrics.reserve(32U);
+    _time_events.reserve(8U);
+  }
+
+  /**
+   * Returns the lazily-initialized global CounterDefinition instance.
+   * Initialized on first use; function-local static guarantees thread-safe initialization (C++11).
+   *
+   * @return Shared pointer holding the global instance.
+   */
+  [[nodiscard]] static std::shared_ptr<CounterDefinition>& global_instance();
+
+  /// CounterDefinitions can be layered.
   std::shared_ptr<CounterDefinition> _parent_counter_definition{ nullptr };
 
   /// List of added counter configurations for different PMUs. Each PMU can have multiple counters; but different PMUs
