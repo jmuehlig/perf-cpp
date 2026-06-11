@@ -83,7 +83,7 @@ perf::CounterDefinition::add(std::string&& pmu_name, std::string&& event_name, c
 }
 
 std::vector<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
-perf::CounterDefinition::counter(const std::string& name) const noexcept
+perf::CounterDefinition::counter(const std::string& name) const
 {
   auto event_configurations = std::vector<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>{};
   event_configurations.reserve(this->_performance_monitoring_unit_events.size());
@@ -115,7 +115,7 @@ perf::CounterDefinition::counter(const std::string& name) const noexcept
 }
 
 std::optional<std::tuple<std::string_view, std::string_view, perf::CounterConfig>>
-perf::CounterDefinition::counter(const std::string& pmu_name, const std::string& event_name) const noexcept
+perf::CounterDefinition::counter(const std::string& pmu_name, const std::string& event_name) const
 {
   /// Find all events of the PMU.
   if (const auto pmu_iterator = this->_performance_monitoring_unit_events.find(pmu_name);
@@ -138,7 +138,7 @@ perf::CounterDefinition::counter(const std::string& pmu_name, const std::string&
 }
 
 std::optional<std::pair<std::string_view, perf::Metric&>>
-perf::CounterDefinition::metric(const std::string& name) const noexcept
+perf::CounterDefinition::metric(const std::string& name) const
 {
   if (const auto iterator = this->_metrics.find(name); iterator != this->_metrics.end()) {
     return std::make_optional(std::make_pair(std::string_view(iterator->first), std::ref(*iterator->second)));
@@ -153,7 +153,7 @@ perf::CounterDefinition::metric(const std::string& name) const noexcept
 }
 
 std::optional<std::pair<std::string_view, perf::TimeEvent&>>
-perf::CounterDefinition::time_event(const std::string& name) const noexcept
+perf::CounterDefinition::time_event(const std::string& name) const
 {
   if (const auto iterator = this->_time_events.find(name); iterator != this->_time_events.end()) {
     return std::make_optional(std::make_pair(std::string_view(iterator->first), std::ref(*iterator->second)));
@@ -197,7 +197,7 @@ perf::CounterDefinition::pmu(const std::string& pmu_name) const
 }
 
 bool
-perf::CounterDefinition::is_metric(const std::string& name) const noexcept
+perf::CounterDefinition::is_metric(const std::string& name) const
 {
   /// Check if the metric is registered in this instance.
   if (this->_metrics.find(name) != this->_metrics.end()) {
@@ -213,7 +213,7 @@ perf::CounterDefinition::is_metric(const std::string& name) const noexcept
 }
 
 bool
-perf::CounterDefinition::is_time_event(const std::string& name) const noexcept
+perf::CounterDefinition::is_time_event(const std::string& name) const
 {
   /// Check if the time event is registered in this instance.
   if (this->_time_events.find(name) != this->_time_events.end()) {
@@ -270,6 +270,10 @@ perf::CounterDefinition::metric_names() const
     }
   }
 
+  /// Remove duplicates introduced by metrics present in both this instance and a parent.
+  std::sort(names.begin(), names.end());
+  names.erase(std::unique(names.begin(), names.end()), names.end());
+
   return names;
 }
 
@@ -291,6 +295,10 @@ perf::CounterDefinition::time_event_names() const
       std::move(parent_time_event_names.begin(), parent_time_event_names.end(), std::back_inserter(names));
     }
   }
+
+  /// Remove duplicates introduced by time events present in both this instance and a parent.
+  std::sort(names.begin(), names.end());
+  names.erase(std::unique(names.begin(), names.end()), names.end());
 
   return names;
 }

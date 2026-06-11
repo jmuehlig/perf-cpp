@@ -18,6 +18,10 @@
 namespace perf {
 /**
  * The CounterDefinition holds names and configurations of events and metrics.
+ *
+ * Thread safety: registering events/metrics (add(...)) must be completed before the
+ * CounterDefinition is used by concurrent EventCounter/Sampler instances. Concurrent
+ * registration and lookup is a data race.
  */
 class CounterDefinition
 {
@@ -171,7 +175,7 @@ public:
    * that event does not exist.
    */
   [[nodiscard]] std::vector<std::tuple<std::string_view, std::string_view, CounterConfig>> counter(
-    std::string&& name) const noexcept
+    std::string&& name) const
   {
     return counter(name);
   }
@@ -188,7 +192,7 @@ public:
    * that event does not exist.
    */
   [[nodiscard]] std::vector<std::tuple<std::string_view, std::string_view, CounterConfig>> counter(
-    const std::string& name) const noexcept;
+    const std::string& name) const;
 
   /**
    * Returns a list of counter configurations with the requested name.
@@ -198,7 +202,7 @@ public:
    * that event does not exist.
    */
   [[nodiscard]] std::vector<std::tuple<std::string_view, std::string_view, CounterConfig>> counter(
-    const std::string_view name) const noexcept
+    const std::string_view name) const
   {
     return counter(std::string{ name });
   }
@@ -212,7 +216,7 @@ public:
    */
   [[nodiscard]] std::optional<std::tuple<std::string_view, std::string_view, CounterConfig>> counter(
     const std::string& pmu_name,
-    const std::string& event_name) const noexcept;
+    const std::string& event_name) const;
 
   /**
    * Returns the counter configurations with the requested event name for a specified PMU.
@@ -223,7 +227,7 @@ public:
    */
   [[nodiscard]] std::optional<std::tuple<std::string_view, std::string_view, CounterConfig>> counter(
     const std::string_view pmu_name,
-    const std::string_view event_name) const noexcept
+    const std::string_view event_name) const
   {
     return counter(std::string{ pmu_name }, std::string{ event_name });
   }
@@ -242,7 +246,7 @@ public:
    * @param name Name of the requested query.
    * @return True, if the metric exists.
    */
-  [[nodiscard]] bool is_metric(const std::string& name) const noexcept;
+  [[nodiscard]] bool is_metric(const std::string& name) const;
 
   /**
    * Checks if a metric with the given name is registered.
@@ -250,7 +254,7 @@ public:
    * @param name Name of the requested metric.
    * @return True, if the metric exists.
    */
-  [[nodiscard]] bool is_metric(std::string_view name) const noexcept
+  [[nodiscard]] bool is_metric(std::string_view name) const
   {
     return is_metric(std::string{ name.data(), name.size() });
   }
@@ -261,7 +265,7 @@ public:
    * @param name Name of the queried metric.
    * @return Metric and config, std::nullopt of the metric does not exist.
    */
-  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(const std::string& name) const noexcept;
+  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(const std::string& name) const;
 
   /**
    * Checks if a specific metric is registered and returns the name and the metric.
@@ -269,7 +273,7 @@ public:
    * @param name Name of the queried metric.
    * @return Metric and config, std::nullopt of the metric does not exist.
    */
-  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(std::string&& name) const noexcept
+  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(std::string&& name) const
   {
     return metric(name);
   }
@@ -280,7 +284,7 @@ public:
    * @param name Name of the queried metric.
    * @return Metric and config, std::nullopt of the metric does not exist.
    */
-  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(const std::string_view name) const noexcept
+  [[nodiscard]] std::optional<std::pair<std::string_view, Metric&>> metric(const std::string_view name) const
   {
     return metric(std::string{ name.data(), name.size() });
   }
@@ -291,7 +295,7 @@ public:
    * @param name Name of the requested time event.
    * @return True, if the time event exists.
    */
-  [[nodiscard]] bool is_time_event(const std::string& name) const noexcept;
+  [[nodiscard]] bool is_time_event(const std::string& name) const;
 
   /**
    * Checks if a time event with the given name is registered.
@@ -299,7 +303,7 @@ public:
    * @param name Name of the requested time event.
    * @return True, if the time event exists.
    */
-  [[nodiscard]] bool is_time_event(std::string&& name) const noexcept { return is_time_event(name); }
+  [[nodiscard]] bool is_time_event(std::string&& name) const { return is_time_event(name); }
 
   /**
    * Checks if a time event with the given name is registered.
@@ -307,7 +311,7 @@ public:
    * @param name Name of the requested time event.
    * @return True, if the time event exists.
    */
-  [[nodiscard]] bool is_time_event(const std::string_view name) const noexcept
+  [[nodiscard]] bool is_time_event(const std::string_view name) const
   {
     return is_time_event(std::string{ name.data(), name.size() });
   }
@@ -318,8 +322,7 @@ public:
    * @param name Name of the queried time event.
    * @return Time event and config, std::nullopt of the time event does not exist.
    */
-  [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(
-    const std::string& name) const noexcept;
+  [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(const std::string& name) const;
 
   /**
    * Checks if a specific time event is registered and returns the name and the time event.
@@ -327,7 +330,7 @@ public:
    * @param name Name of the queried time event.
    * @return Time event and config, std::nullopt of the time event does not exist.
    */
-  [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(std::string&& name) const noexcept
+  [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(std::string&& name) const
   {
     return time_event(name);
   }
@@ -338,8 +341,7 @@ public:
    * @param name Name of the queried time event.
    * @return Time event and config, std::nullopt of the time event does not exist.
    */
-  [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(
-    const std::string_view name) const noexcept
+  [[nodiscard]] std::optional<std::pair<std::string_view, TimeEvent&>> time_event(const std::string_view name) const
   {
     return time_event(std::string{ name.data(), name.size() });
   }
