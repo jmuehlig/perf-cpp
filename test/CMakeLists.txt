@@ -25,6 +25,8 @@ set(PERF_CPP_TEST
         test/sample_fields.cpp
         test/sample_result.cpp
         test/ibs_decoder.cpp
+        test/directed_graph.cpp
+        test/sample_recording_values.cpp
 )
 
 add_executable(tests ${PERF_CPP_TEST})
