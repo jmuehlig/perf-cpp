@@ -466,16 +466,16 @@ perf::EventCounter::stop()
 void
 perf::EventCounter::close() noexcept
 {
-  if (const auto is_open = std::exchange(this->_is_opened, false); is_open) {
-    /// Close all groups.
-    for (auto& [group, _] : this->_hardware_event_groups) {
-      group.close();
-    }
+  this->_is_opened = false;
 
-    /// Close all live counters.
-    for (auto& live_counter : this->_hardware_live_counters) {
-      live_counter.close();
-    }
+  /// Close all groups, including groups that may have been partially opened before open() threw.
+  for (auto& [group, _] : this->_hardware_event_groups) {
+    group.close();
+  }
+
+  /// Close all live counters, including counters that may have been partially opened before open() threw.
+  for (auto& live_counter : this->_hardware_live_counters) {
+    live_counter.close();
   }
 }
 

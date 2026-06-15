@@ -212,14 +212,13 @@ perf::Sampler::stop()
 void
 perf::Sampler::close() noexcept
 {
-  if (std::exchange(this->_is_opened, false)) {
-    /// Clear all buffers, groups, and event names
-    /// in order to enable opening again.
-    this->_sample_counter.clear();
+  this->_is_opened = false;
 
-    /// Clear the sample data.
-    this->_sample_data.clear();
-  }
+  /// Clear all buffers and groups, including groups that may have been partially opened before open() threw.
+  this->_sample_counter.clear();
+
+  /// Clear the sample data.
+  this->_sample_data.clear();
 }
 
 perf::Sampler::SampleCounter
