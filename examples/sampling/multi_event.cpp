@@ -34,6 +34,7 @@ main()
     .logical_memory_address(true)
     .data_source(true)
     .data_access_latency(true)
+    .instruction_latency(true)
     .instruction_type(true);
 
   /// Create random access benchmark.
