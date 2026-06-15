@@ -90,7 +90,7 @@ TEST_CASE("supports", "[CounterDefinition]")
   }
 }
 
-TEST_CASE("is_available", "[CounterDefinition]")
+TEST_CASE("is_available", "[CounterDefinition][HardwareCounterAvailability]")
 {
   const auto definition = perf::CounterDefinition{};
 
