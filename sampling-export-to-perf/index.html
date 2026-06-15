@@ -1137,14 +1137,11 @@
 
 
 <h1 id="analyzing-samples-with-linux-perf-tools">Analyzing Samples with Linux Perf Tools<a class="headerlink" href="#analyzing-samples-with-linux-perf-tools" title="Permanent link">&para;</a></h1>
-<p>Export collected samples into the standard <code>perf-cpp.data</code> file format for analysis with <code>perf report</code>, <code>perf mem report</code>, and flame graph generators.</p>
+<p>Export collected samples into the <code>perf.data</code> format used by the Linux perf tools for analysis with <code>perf report</code>, <code>perf mem report</code>, and flame graph generators.
+The examples below write to a file named <code>perf-cpp.data</code> to avoid clashing with files produced by <code>perf record</code>.</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>See the example: <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/perf_record.cpp">perf_record.cpp</a></strong>.</p>
-</div>
-<div class="admonition tip">
-<p class="admonition-title">Important</p>
-<p>This feature is <strong>experimental</strong>.</p>
 </div>
 <hr />
 <h2 id="exporting-samples">Exporting Samples<a class="headerlink" href="#exporting-samples" title="Permanent link">&para;</a></h2>
@@ -1162,7 +1159,7 @@
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1">/// ... computation here ...</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">sampler</span><span class="p">.</span><span class="n">stop</span><span class="p">();</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1">/// Export to perf-cpp.data format.</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1">/// Export the samples in perf.data format.</span>
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="n">sampler</span><span class="p">.</span><span class="n">to_perf_file</span><span class="p">(</span><span class="s">&quot;perf-cpp.data&quot;</span><span class="p">);</span>
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="c1">/// Release resources explicitly, or let the destructor handle it.</span>
@@ -1170,23 +1167,25 @@
 </code></pre></div>
 <h3 id="multi-sampler">Multi-Sampler<a class="headerlink" href="#multi-sampler" title="Permanent link">&para;</a></h3>
 <p>For parallel sampling with <code>MultiThreadSampler</code> or <code>MultiCoreSampler</code>, the same method exports consolidated samples from all instances:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">MultiCoreSampler</span><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">},</span><span class="w"> </span><span class="c1">/// CPU cores to sample.</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="n">sample_config</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">};</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Period</span><span class="p">{</span><span class="w"> </span><span class="mi">50000U</span><span class="w"> </span><span class="p">});</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">sampler</span><span class="p">.</span><span class="n">values</span><span class="p">()</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="p">.</span><span class="n">logical_instruction_pointer</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="p">.</span><span class="n">timestamp</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="p">.</span><span class="n">cpu_id</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="n">sampler</span><span class="p">.</span><span class="n">start</span><span class="p">();</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1">/// ... computation runs on the monitored cores ...</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="n">sampler</span><span class="p">.</span><span class="n">stop</span><span class="p">();</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="n">sampler</span><span class="p">.</span><span class="n">to_perf_file</span><span class="p">(</span><span class="s">&quot;perf-cpp.data&quot;</span><span class="p">);</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="n">sampler</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">SampleConfig</span><span class="p">{};</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">MultiCoreSampler</span><span class="p">{</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">},</span><span class="w"> </span><span class="c1">/// CPU cores to sample.</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="n">sample_config</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">};</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Period</span><span class="p">{</span><span class="w"> </span><span class="mi">50000U</span><span class="w"> </span><span class="p">});</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">sampler</span><span class="p">.</span><span class="n">values</span><span class="p">()</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="p">.</span><span class="n">logical_instruction_pointer</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="p">.</span><span class="n">timestamp</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="p">.</span><span class="n">cpu_id</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="n">sampler</span><span class="p">.</span><span class="n">start</span><span class="p">();</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="c1">/// ... computation runs on the monitored cores ...</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="n">sampler</span><span class="p">.</span><span class="n">stop</span><span class="p">();</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="n">sampler</span><span class="p">.</span><span class="n">to_perf_file</span><span class="p">(</span><span class="s">&quot;perf-cpp.data&quot;</span><span class="p">);</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="n">sampler</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
 </code></pre></div>
 <hr />
 <h2 id="analyzing-the-exported-data">Analyzing the Exported Data<a class="headerlink" href="#analyzing-the-exported-data" title="Permanent link">&para;</a></h2>
@@ -1197,23 +1196,33 @@
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Text-based report.</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>perf<span class="w"> </span>report<span class="w"> </span>-i<span class="w"> </span>perf-cpp.data<span class="w"> </span>--stdio
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Focus on specific functions or modules.</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Sort by command, shared object, and symbol.</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>perf<span class="w"> </span>report<span class="w"> </span>-i<span class="w"> </span>perf-cpp.data<span class="w"> </span>--sort<span class="w"> </span>comm,dso,symbol
 </code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If <code>perf report</code> appears to hang, your system may be fetching debug symbols over the network via <a href="https://sourceware.org/elfutils/Debuginfod.html">debuginfod</a>.
+This is especially common with callchain recordings that reference many binaries.
+Disable it by unsetting <code>DEBUGINFOD_URLS</code>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nv">DEBUGINFOD_URLS</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="w"> </span>perf<span class="w"> </span>report<span class="w"> </span>-i<span class="w"> </span>perf-cpp.data
+</code></pre></div></p>
+</div>
 <h3 id="memory-access-analysis">Memory Access Analysis<a class="headerlink" href="#memory-access-analysis" title="Permanent link">&para;</a></h3>
-<p>Requires memory-capable triggers (<code>mem-loads</code>, <code>ibs_op</code>) and memory-related sample fields (addresses, data sources, latency).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>perf<span class="w"> </span>mem<span class="w"> </span>report<span class="w"> </span>-i<span class="w"> </span>perf-cpp.data
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Detailed memory hierarchy analysis.</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>perf<span class="w"> </span>mem<span class="w"> </span>report<span class="w"> </span>-i<span class="w"> </span>perf-cpp.data<span class="w"> </span>--sort<span class="w"> </span>mem,snoop,tlb,locked
+<p>Requires memory-capable triggers (<code>mem-loads</code>, <code>ibs_op</code>) and memory-related sample fields (addresses, data sources, latency).
+See the <a href="../sampling-memory-analysis/">memory analysis documentation</a> for how to configure them.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>perf<span class="w"> </span>mem<span class="w"> </span>report<span class="w"> </span>-i<span class="w"> </span>perf-cpp.data
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># Detailed memory hierarchy analysis.</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>perf<span class="w"> </span>mem<span class="w"> </span>report<span class="w"> </span>-i<span class="w"> </span>perf-cpp.data<span class="w"> </span>--sort<span class="w"> </span>mem,snoop,tlb,locked
 </code></pre></div>
 <h3 id="flame-graphs">Flame Graphs<a class="headerlink" href="#flame-graphs" title="Permanent link">&para;</a></h3>
 <p>Include the callchain in your sampler configuration:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">values</span><span class="p">().</span><span class="n">callchain</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">values</span><span class="p">().</span><span class="n">callchain</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
 </code></pre></div>
 <p>Then generate flame graphs via <a href="https://github.com/brendangregg/FlameGraph">FlameGraph</a>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>perf<span class="w"> </span>script<span class="w"> </span>-i<span class="w"> </span>perf-cpp.data<span class="w"> </span><span class="p">|</span><span class="w"> </span>stackcollapse-perf.pl<span class="w"> </span><span class="p">|</span><span class="w"> </span>flamegraph.pl<span class="w"> </span>&gt;<span class="w"> </span>flame.svg
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>perf<span class="w"> </span>script<span class="w"> </span>-i<span class="w"> </span>perf-cpp.data<span class="w"> </span><span class="p">|</span><span class="w"> </span>stackcollapse-perf.pl<span class="w"> </span><span class="p">|</span><span class="w"> </span>flamegraph.pl<span class="w"> </span>&gt;<span class="w"> </span>flame.svg
 </code></pre></div>
+<p>See <a href="../sampling-symbols-and-flamegraphs/">symbols and flame graphs</a> for symbol resolution and flame graph generation without the perf tools.</p>
 
 
 

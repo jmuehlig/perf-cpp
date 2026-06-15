@@ -1047,9 +1047,9 @@
 
 
 <h1 id="recording-hardware-events-in-parallel">Recording Hardware Events in Parallel<a class="headerlink" href="#recording-hardware-events-in-parallel" title="Permanent link">&para;</a></h1>
-<p>Performance counters can be recorded per thread, per CPU core, or per process:</p>
+<p><em>perf-cpp</em> offers four ways to record performance counters for parallel workloads:</p>
 <ol>
-<li><strong><a href="#per-thread-counters">Per-thread counters</a></strong>: Each thread gets its own counter, results are combined afterward.</li>
+<li><strong><a href="#per-thread-counters">Per-thread counters</a></strong>: Each thread gets its own counter; results are combined afterward.</li>
 <li><strong><a href="#inherited-counters">Inherited counters</a></strong>: A single counter automatically covers all child threads.</li>
 <li><strong><a href="#per-cpu-core-counters">Per-CPU-core counters</a></strong>: Monitor specific CPU cores regardless of which process runs on them.</li>
 <li><strong><a href="#per-process-counters">Per-process counters</a></strong>: Monitor specific processes by PID.</li>
@@ -1064,7 +1064,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;perfcpp/event_counter.hpp&gt;</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">count_threads</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4U</span><span class="p">;</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">auto</span><span class="w"> </span><span class="n">multi_event_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">MultiThreadEventCounter</span><span class="p">{</span><span class="n">count_threads</span><span class="p">};</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">auto</span><span class="w"> </span><span class="n">multi_event_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">MultiThreadEventCounter</span><span class="p">{</span><span class="w"> </span><span class="n">count_threads</span><span class="w"> </span><span class="p">};</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">multi_event_counter</span><span class="p">.</span><span class="n">add</span><span class="p">({</span><span class="s">&quot;instructions&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cache-misses&quot;</span><span class="p">});</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1">/// Start/stop per thread.</span>
@@ -1088,7 +1088,7 @@
 <a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; = &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
 <a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="p">}</span>
 <a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="c1">/// Result for a specific thread.</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="c1">/// Result for a specific thread; throws if the thread id is out of bounds.</span>
 <a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">thread_result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">multi_event_counter</span><span class="p">.</span><span class="n">result_of_thread</span><span class="p">(</span><span class="mi">0U</span><span class="p">);</span>
 <a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>
 <a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="c1">/// Release resources explicitly, or let the destructor handle it.</span>
@@ -1133,7 +1133,8 @@
 </code></pre></div>
 <hr />
 <h2 id="per-cpu-core-counters">Per-CPU-Core Counters<a class="headerlink" href="#per-cpu-core-counters" title="Permanent link">&para;</a></h2>
-<p><code>perf::MultiCoreEventCounter</code> records events on specified CPU cores, capturing activity from all processes running there.</p>
+<p><code>perf::MultiCoreEventCounter</code> records events on specified CPU cores.
+It captures activity from all processes running on those cores.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This requires <code>perf_event_paranoid &lt; 1</code>. See the <a href="../perf-paranoid/">perf paranoid setting</a>.</p>
@@ -1145,8 +1146,8 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;perfcpp/hardware_info.hpp&gt;</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;perfcpp/event_counter.hpp&gt;</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1">/// Use all_cpu_cores() to target every core on the system.</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">cpu_core_ids</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">HardwareInfo</span><span class="o">::</span><span class="n">all_cpu_cores</span><span class="p">();</span><span class="w"> </span><span class="c1">// or e.g. {0U, 4U, 8U, 12U}</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1">/// Monitor every core on the system; a manual list such as std::vector&lt;std::uint16_t&gt;{ 0U, 4U, 8U } works as well.</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">cpu_core_ids</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">HardwareInfo</span><span class="o">::</span><span class="n">all_cpu_cores</span><span class="p">();</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="k">auto</span><span class="w"> </span><span class="n">multi_cpu_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">MultiCoreEventCounter</span><span class="p">{</span><span class="w"> </span><span class="n">cpu_core_ids</span><span class="w"> </span><span class="p">};</span>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">multi_cpu_counter</span><span class="p">.</span><span class="n">add</span><span class="p">({</span><span class="s">&quot;instructions&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cycles&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cache-misses&quot;</span><span class="p">});</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
@@ -1161,7 +1162,7 @@
 <a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; = &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
 <a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="p">}</span>
 <a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="c1">/// Result for a specific core (returns std::optional).</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="c1">/// Result for a specific core; std::nullopt if the core is not monitored.</span>
 <a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">core_result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">multi_cpu_counter</span><span class="p">.</span><span class="n">result_of_core</span><span class="p">(</span><span class="mi">12U</span><span class="p">);</span>
 <a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>
 <a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="c1">/// Release resources explicitly, or let the destructor handle it.</span>
@@ -1169,7 +1170,7 @@
 </code></pre></div>
 <hr />
 <h2 id="per-process-counters">Per-Process Counters<a class="headerlink" href="#per-process-counters" title="Permanent link">&para;</a></h2>
-<p><code>perf::MultiProcessEventCounter</code> records events for specific processes by PID, combining the results:</p>
+<p><code>perf::MultiProcessEventCounter</code> records events for specific processes by PID and combines the results:</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Monitoring other processes may require elevated privileges. See the <a href="../perf-paranoid/">perf paranoid setting</a>.</p>
@@ -1191,7 +1192,7 @@
 <a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; = &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
 <a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="p">}</span>
 <a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="c1">/// Result for a specific process (returns std::optional).</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="c1">/// Result for a specific process; std::nullopt if the process is not monitored.</span>
 <a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">process_result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">multi_process_counter</span><span class="p">.</span><span class="n">result_of_process</span><span class="p">(</span><span class="mi">1234</span><span class="p">);</span>
 <a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>
 <a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="c1">/// Release resources explicitly, or let the destructor handle it.</span>

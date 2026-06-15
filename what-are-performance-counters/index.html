@@ -1047,15 +1047,15 @@
 
 
 <h1 id="what-are-hardware-performance-counters">What are Hardware Performance Counters?<a class="headerlink" href="#what-are-hardware-performance-counters" title="Permanent link">&para;</a></h1>
-<p>Modern CPUs contain dedicated hardware registers — <strong>performance monitoring counters (PMCs)</strong> — that track low-level events as your code executes.
-These counters run in hardware with virtually zero overhead, giving you precise insights that software-only profiling cannot provide.</p>
+<p>Modern CPUs contain dedicated hardware registers, called <strong>performance monitoring counters (PMCs)</strong>, that track low-level events as your code executes.
+Since the counting happens in hardware, it costs virtually nothing and reveals details that software-only profiling cannot measure.</p>
 <h2 id="what-do-they-measure">What do they measure?<a class="headerlink" href="#what-do-they-measure" title="Permanent link">&para;</a></h2>
 <p>Every CPU core has a small number of programmable counters (typically 4–8).
 Each counter can be configured to count one event type at a time:</p>
 <ul>
 <li><strong>Instructions retired</strong>: how many instructions actually completed</li>
-<li><strong>CPU cycles</strong>: wall-clock time at the core level</li>
-<li><strong>Cache misses</strong>: L1, L2, L3, at different levels of the hierarchy</li>
+<li><strong>CPU cycles</strong>: clock ticks at the core's current frequency (not wall-clock time; the frequency varies with turbo and power saving)</li>
+<li><strong>Cache misses</strong>: accesses that missed in L1, L2, or L3</li>
 <li><strong>Branch mispredictions</strong>: wrong guesses by the branch predictor</li>
 <li><strong>TLB misses</strong>: virtual-to-physical address translation failures</li>
 <li><strong>Memory accesses</strong>: loads, stores, prefetches, and where data came from (L1, L2, RAM, remote NUMA node)</li>
@@ -1068,8 +1068,9 @@ Intel and AMD publish thousands of events per microarchitecture, from micro-op q
 You get totals: <em>"this loop executed 4.7 billion cycles and had 13 million cache misses."</em>
 Counts are exact (no sampling error) but tell you nothing about <em>which</em> instructions caused those events.</p>
 <p><strong>Sampling</strong> captures snapshots at regular intervals.
-Every <em>N</em> events (e.g., every 50,000 cycles), the CPU interrupts and records context about that moment — the instruction pointer, memory address, timestamp, cache level, and more.
-This gives you a statistical picture of <em>where</em> events are concentrated, but since only every <em>N</em>-th event triggers a sample, it's an approximation — not every instruction is observed.</p>
+Every <em>N</em> events (e.g., every 50,000 cycles), the CPU interrupts and records context about that moment: the instruction pointer, memory address, timestamp, cache level, and more.
+This gives you a statistical picture of <em>where</em> events are concentrated.
+Since only every <em>N</em>-th event triggers a sample, the picture is an approximation; instructions between samples go unobserved.</p>
 <h2 id="how-many-counters-are-available">How many counters are available?<a class="headerlink" href="#how-many-counters-are-available" title="Permanent link">&para;</a></h2>
 <p>Each physical core has a fixed number of counter registers.
 Typical values:</p>
@@ -1095,7 +1096,7 @@ Typical values:</p>
 </tbody>
 </table>
 <p>If you request more events than physical counters, the kernel <strong>multiplexes</strong>: it time-shares the counters and scales the results.
-Multiplexed counts are estimates, not exact — so fewer simultaneous events means more accurate data.</p>
+Multiplexed counts are estimates rather than exact values; the fewer events you measure simultaneously, the more accurate the data.</p>
 <p><em>perf-cpp</em> <a href="../recording/#detection-of-physical-hardware-counters">detects your hardware's counter layout automatically</a> and manages multiplexing transparently.</p>
 <h2 id="further-reading">Further reading<a class="headerlink" href="#further-reading" title="Permanent link">&para;</a></h2>
 <p>Introductory articles on hardware performance counters and how to work with them:</p>

@@ -1006,12 +1006,12 @@
 <p>A flamegraph (<a href="https://www.brendangregg.com/flamegraphs.html">example</a>) collapses thousands of sampled call stacks into a single interactive SVG where the widest bars show the functions that consume the most CPU time.</p>
 <p><em>perf-cpp</em> provides two building blocks:</p>
 <ul>
-<li><strong>Symbol resolution</strong>: translate instruction pointers into <code>&lt;module&gt;::&lt;function&gt;+&lt;offset&gt;</code> strings.</li>
+<li><strong>Symbol resolution</strong>: translate instruction pointers into <code>[module] function+offset</code> strings.</li>
 <li><strong>Collapsed-stack export</strong>: emit samples in the <code>func1;func2;func3 &lt;count&gt;</code> format understood by <a href="https://github.com/brendangregg/FlameGraph">FlameGraph</a>, <a href="https://www.speedscope.app/">Speedscope</a>, or <a href="https://flamegraph.com/">flamegraph.com</a>.</li>
 </ul>
 <hr />
 <h2 id="translating-instruction-pointers-into-symbols">Translating Instruction Pointers into Symbols<a class="headerlink" href="#translating-instruction-pointers-into-symbols" title="Permanent link">&para;</a></h2>
-<p><code>perf::util::SymbolResolver</code> translates logical instruction pointers into symbols (module name, function name, and offset):</p>
+<p><code>perf::util::SymbolResolver</code> translates logical instruction pointers into symbols (module name, demangled function name, and offset):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;perfcpp/sampler.hpp&gt;</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;perfcpp/util/symbol_resolver.hpp&gt;</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
@@ -1040,18 +1040,21 @@
 <a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="c1">/// Release resources explicitly, or let the destructor handle it.</span>
 <a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="n">sampler</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
 </code></pre></div>
-<p>The output could look like the following:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>IP = 0x57459be95faf | Symbol = [instruction-pointer-sampling] _ZNK4perf7example15AccessBenchmarkixEm+47
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>IP = 0x57459be95faf | Symbol = [instruction-pointer-sampling] _ZNK4perf7example15AccessBenchmarkixEm+47
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>IP = 0x57459be987d0 | Symbol = [instruction-pointer-sampling] _ZNKSt6vectorIN4perf7example15AccessBenchmark10cache_lineESaIS3_EEixEm+0
+<p>Example output:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>IP = 0x57459be95faf | Symbol = [instruction-pointer-sampling] perf::example::AccessBenchmark::operator[](unsigned long) const+47
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>IP = 0x57459be95faf | Symbol = [instruction-pointer-sampling] perf::example::AccessBenchmark::operator[](unsigned long) const+47
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>IP = 0x57459be987d0 | Symbol = [instruction-pointer-sampling] std::vector&lt;perf::example::AccessBenchmark::cache_line, std::allocator&lt;perf::example::AccessBenchmark::cache_line&gt; &gt;::operator[](unsigned long) const+0
 </code></pre></div>
+<p>Symbol names are demangled when possible; if demangling fails, the mangled name is returned as-is.</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>See the example: <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/sampling/instruction_pointer.cpp">instruction_pointer.cpp</a></strong>.</p>
 </div>
 <hr />
 <h2 id="generating-flamegraphs">Generating Flamegraphs<a class="headerlink" href="#generating-flamegraphs" title="Permanent link">&para;</a></h2>
-<p>To generate flamegraphs, record the instruction pointer and callchain. Including the timestamp and sorting the results produces more condensed output.</p>
+<p>To generate flamegraphs, record the instruction pointer and callchain.
+Recording the timestamp and sorting the result condenses the output: consecutive samples with identical call stacks are merged into a single line, and sorting by time places samples from the same code region next to each other.
+Unsorted output is still valid; flamegraph tools sum up duplicate stacks.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;perfcpp/sampler.hpp&gt;</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{};</span>

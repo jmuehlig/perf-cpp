@@ -1292,8 +1292,8 @@
 <hr />
 <h2 id="the-counterdefinition-system">The CounterDefinition System<a class="headerlink" href="#the-counterdefinition-system" title="Permanent link">&para;</a></h2>
 <p><code>perf::CounterDefinition</code> manages the mapping from event names to event codes. Both <code>perf::EventCounter</code> and <code>perf::Sampler</code> use it to translate names into codes the perf subsystem understands.</p>
-<p>By default, a global instance is created automatically with common events:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">/// Using the default configuration — no setup needed.</span>
+<p>By default, <em>perf-cpp</em> creates a global instance with common events:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">/// Use the global default configuration; no setup required.</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">auto</span><span class="w"> </span><span class="n">event_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">EventCounter</span><span class="p">{};</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Sampler</span><span class="p">{};</span>
 </code></pre></div>
@@ -1309,8 +1309,14 @@
 </code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">Important</p>
-<p>Keep your <code>CounterDefinition</code> instance alive throughout your measurement session.
-Event names are stored only in this instance — destroying it prematurely will cause issues when retrieving results.</p>
+<p>Keep your <code>CounterDefinition</code> instance alive throughout the measurement session.
+<code>EventCounter</code> and <code>Sampler</code> only hold a reference to it; destroying the definition while a counter or sampler still uses it leads to undefined behavior.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A custom <code>CounterDefinition</code> inherits all events from the global defaults.
+If you <code>add()</code> an event under the same PMU and name as a built-in event, your definition takes priority: child definitions override their parents.
+This lets you replace a built-in event's configuration without touching anything else.</p>
 </div>
 <hr />
 <h2 id="built-in-events">Built-in Events<a class="headerlink" href="#built-in-events" title="Permanent link">&para;</a></h2>
@@ -1342,7 +1348,7 @@ Event names are stored only in this instance — destroying it prematurely will 
 <h3 id="software-events">Software Events<a class="headerlink" href="#software-events" title="Permanent link">&para;</a></h3>
 <p>From the kernel, not hardware counters:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>cpu-clock<span class="w">             </span><span class="c1"># High-resolution CPU timer</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>task-clock<span class="w">            </span><span class="c1"># Clock count specific to task</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>task-clock<span class="w">            </span><span class="c1"># CPU time clocked for this task</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>page-faults<span class="w">           </span><span class="c1"># Page fault count</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>faults<span class="w">                </span><span class="c1"># Synonym for page-faults</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>major-faults<span class="w">          </span><span class="c1"># Page faults requiring disk I/O</span>
@@ -1368,7 +1374,7 @@ Event names are stored only in this instance — destroying it prematurely will 
 </code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>Time events are measured <em>after opening</em> and <em>before stopping</em> performance counters — the overhead for accessing performance counters is <strong>not</strong> included.</p>
+<p>The clock is read <em>after opening</em> and <em>before stopping</em> the performance counters, so the overhead of accessing the counters is not included in the measured time.</p>
 </div>
 <hr />
 <h2 id="processor-specific-events">Processor-Specific Events<a class="headerlink" href="#processor-specific-events" title="Permanent link">&para;</a></h2>
@@ -1377,7 +1383,7 @@ Event names are stored only in this instance — destroying it prematurely will 
 <p>Use <code>perf list</code> to discover available events on your system. Intel users can explore the <a href="https://perfmon-events.intel.com/">Intel PerfMon website</a> for detailed event descriptions.</p>
 </div>
 <h3 id="loading-from-the-event-library">Loading from the Event Library<a class="headerlink" href="#loading-from-the-event-library" title="Permanent link">&para;</a></h3>
-<p><em>perf-cpp</em> ships with curated event definitions for various processors in <a href="https://github.com/jmuehlig/perf-cpp/tree/dev/events/x86">events/x86</a>:</p>
+<p><em>perf-cpp</em> ships with ready-made event definitions for many processors in <a href="https://github.com/jmuehlig/perf-cpp/tree/dev/events/x86">events/x86</a>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">/// Load AMD Zen 4 specific events.</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">counter_definition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">CounterDefinition</span><span class="p">{</span><span class="w"> </span><span class="s">&quot;events/x86/amd/zen-4.csv&quot;</span><span class="w"> </span><span class="p">};</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
@@ -1393,7 +1399,7 @@ Event names are stored only in this instance — destroying it prematurely will 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>cmake<span class="w"> </span>.<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DGEN_PROCESSOR_EVENTS<span class="o">=</span><span class="m">1</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>cmake<span class="w"> </span>--build<span class="w"> </span>build
 </code></pre></div>
-<p>Once built, processor-specific events are available automatically — no manual loading required.</p>
+<p>Once built, processor-specific events are part of the global <code>CounterDefinition</code>; there is no CSV file to load.</p>
 <div class="admonition tip">
 <p class="admonition-title">Important</p>
 <p>Auto-generation is experimental. Validate your measurements, as event configurations may vary between processors or require specific kernel support.</p>
@@ -1405,15 +1411,17 @@ Event names are stored only in this instance — destroying it prematurely will 
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1">/// Add a single event with its raw code.</span>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">counter_definitions</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;cycle_activity.stalls_l3_miss&quot;</span><span class="p">,</span><span class="w"> </span><span class="mh">0x65306a3</span><span class="p">);</span>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1">/// For events requiring additional configuration.</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="n">counter_definitions</span><span class="p">.</span><span class="n">add</span><span class="p">(</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="s">&quot;complex_event_name&quot;</span><span class="p">,</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="mh">0x1234</span><span class="p">,</span><span class="w">     </span><span class="c1">/// config</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span><span class="mh">0x5678</span><span class="p">,</span><span class="w">     </span><span class="c1">/// config1 (optional)</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">    </span><span class="mi">4</span><span class="w">           </span><span class="c1">/// type (optional)</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="p">);</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1">/// For events requiring a specific PMU type.</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="n">counter_definitions</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;complex_event_name&quot;</span><span class="p">,</span><span class="w"> </span><span class="cm">/* type = */</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="cm">/* config = */</span><span class="w"> </span><span class="mh">0x1234</span><span class="p">);</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="c1">/// For events requiring extended configuration fields (config1 through config4).</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="k">auto</span><span class="w"> </span><span class="n">event_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">CounterConfig</span><span class="p">{</span><span class="w"> </span><span class="cm">/* type = */</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="cm">/* config = */</span><span class="w"> </span><span class="mh">0x1234</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="n">event_config</span><span class="p">.</span><span class="n">config_extension</span><span class="p">(</span><span class="cm">/* config1 = */</span><span class="w"> </span><span class="mh">0x5678</span><span class="p">,</span><span class="w"> </span><span class="cm">/* config2 = */</span><span class="w"> </span><span class="mh">0x0</span><span class="p">,</span><span class="w"> </span><span class="cm">/* config3 = */</span><span class="w"> </span><span class="mh">0x9abc</span><span class="p">);</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="n">counter_definitions</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;complex_event_name&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">event_config</span><span class="p">));</span>
 </code></pre></div>
-<p>Custom CSV files following the format <code>name,config[,config1,type]</code> can be loaded the same way as built-in event library files.</p>
+<p>Alternatively, write your own CSV file and pass it to the <code>CounterDefinition</code> constructor, just like the built-in event library files.
+Each line has the format <code>name,config[,config1,type]</code>, where <code>config</code> and <code>config1</code> are integer or hex values and <code>type</code> is either numeric or a name like <code>PERF_TYPE_RAW</code> (the default if omitted).
+Lines starting with <code>#</code> are treated as comments.</p>
 <hr />
 <h2 id="translating-event-names-to-event-codes">Translating Event Names to Event Codes<a class="headerlink" href="#translating-event-names-to-event-codes" title="Permanent link">&para;</a></h2>
 <h3 id="using-libpfm4">Using libpfm4<a class="headerlink" href="#using-libpfm4" title="Permanent link">&para;</a></h3>
@@ -1435,7 +1443,7 @@ Event names are stored only in this instance — destroying it prematurely will 
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  ...
 </code></pre></div>
 <p>The <code>config</code> value (<code>0xc0</code>) and <code>type</code> (<code>4</code>) are your event code and PMU type:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">counter_definitions</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;ex_ret_instr&quot;</span><span class="p">,</span><span class="w"> </span><span class="mh">0xc0</span><span class="p">,</span><span class="w"> </span><span class="cm">/* config1 = */</span><span class="w"> </span><span class="mh">0x0</span><span class="p">,</span><span class="w"> </span><span class="cm">/* type = */</span><span class="w"> </span><span class="mi">4</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">counter_definitions</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;ex_ret_instr&quot;</span><span class="p">,</span><span class="w"> </span><span class="cm">/* type = */</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="cm">/* config = */</span><span class="w"> </span><span class="mh">0xc0</span><span class="p">);</span>
 </code></pre></div>
 <hr />
 <h2 id="detecting-hardware-capabilities-at-runtime">Detecting Hardware Capabilities at Runtime<a class="headerlink" href="#detecting-hardware-capabilities-at-runtime" title="Permanent link">&para;</a></h2>
@@ -1450,7 +1458,7 @@ Event names are stored only in this instance — destroying it prematurely will 
 <a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">    </span><span class="c1">/// Configure AMD-specific events.</span>
 <a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>
 <a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">perf</span><span class="o">::</span><span class="n">HardwareInfo</span><span class="o">::</span><span class="n">is_amd_ibs_supported</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">        </span><span class="c1">/// IBS available — can use ibs_op and related sampling features.</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">        </span><span class="c1">/// IBS is available; ibs_op and related sampling features can be used.</span>
 <a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">    </span><span class="p">}</span>
 <a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="p">}</span>
 </code></pre></div>

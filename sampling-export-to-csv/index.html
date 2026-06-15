@@ -1287,6 +1287,10 @@
 <a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="n">sampler</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
 </code></pre></div>
 <p>Each row is one sample, each column a recorded field. Fields not configured via <code>sampler.values()</code> appear as empty cells.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Branch stacks, user stacks, and raw PMU data are not exported to CSV. Access them via <code>sampler.result()</code> instead (see the <a href="../sampling/">sampling documentation</a>).</p>
+</div>
 <h2 id="customizing-delimiters">Customizing Delimiters<a class="headerlink" href="#customizing-delimiters" title="Permanent link">&para;</a></h2>
 <p>Both overloads accept optional delimiter parameters:</p>
 <ul>
@@ -1298,13 +1302,13 @@
 </code></pre></div>
 <h2 id="csv-file-structure">CSV File Structure<a class="headerlink" href="#csv-file-structure" title="Permanent link">&para;</a></h2>
 <p>The CSV file contains a header row followed by one row per sample:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>mode,timestamp,cpu_id,logical_instruction_pointer,data_access_is_l1d_hit,data_access_is_l2_hit,...
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>User,365449130714033,8,0x5a6e84b2075c,1,0,...
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>User,365449130913157,8,0x64af7417c75c,0,1,...
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>User,365449131112591,8,0x5a6e84b2075c,1,0,...
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>mode,timestamp,cpu_id,logical_instruction_pointer,is_instruction_pointer_exact,data_access_type,...
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>user,365449130714033,8,0x5a6e84b2075c,true,load,...
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>user,365449130913157,8,0x64af7417c75c,true,load,...
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>user,365449131112591,8,0x5a6e84b2075c,false,store,...
 </code></pre></div>
-<p>The <code>mode</code> field is always present and indicates execution context (<code>User</code>, <code>Kernel</code>, <code>Hypervisor</code>, <code>GuestKernel</code>, or <code>GuestUser</code>).
-Some fields are platform-specific (Intel vs AMD) — see <a href="#field-reference">field reference</a> below.</p>
+<p>The <code>mode</code> field is always present and indicates the execution context (<code>user</code>, <code>kernel</code>, <code>hypervisor</code>, <code>guest_kernel</code>, or <code>guest_user</code>).
+Some fields are platform-specific (Intel vs AMD); see the <a href="#field-reference">field reference</a> below.</p>
 <h2 id="field-reference">Field Reference<a class="headerlink" href="#field-reference" title="Permanent link">&para;</a></h2>
 <p>All CSV columns and their corresponding <code>sampler.values()</code> configurations.
 For detailed descriptions, see the <a href="../sampling/">sampling documentation</a>.</p>
@@ -1322,11 +1326,11 @@ For detailed descriptions, see the <a href="../sampling/">sampling documentation
 <tr>
 <td><code>mode</code></td>
 <td>Always recorded</td>
-<td>Execution mode (<code>User</code>, <code>Kernel</code>, <code>Hypervisor</code>, <code>GuestKernel</code>, <code>GuestUser</code>)</td>
+<td>Execution mode (<code>user</code>, <code>kernel</code>, <code>hypervisor</code>, <code>guest_kernel</code>, <code>guest_user</code>)</td>
 <td>Yes</td>
 </tr>
 <tr>
-<td><code>id</code></td>
+<td><code>sample_id</code></td>
 <td><code>sampler.values().sample_id(true)</code></td>
 <td>Unique sample group leader ID</td>
 <td>No</td>
@@ -1384,8 +1388,14 @@ For detailed descriptions, see the <a href="../sampling/">sampling documentation
 <tr>
 <td><code>instruction_type</code></td>
 <td><code>sampler.values().instruction_type(true)</code></td>
-<td>Instruction type (<code>Return</code>, <code>Branch</code>, <code>DataAccess</code>)</td>
+<td>Instruction type (<code>return</code>, <code>branch</code>, <code>data_access</code>)</td>
 <td>AMD only</td>
+</tr>
+<tr>
+<td><code>is_microcode</code></td>
+<td><code>sampler.values().instruction_type(true)</code></td>
+<td>Op was dispatched from the microcode ROM sequencer (<code>true</code> or <code>false</code>)</td>
+<td>AMD Op PMU</td>
 </tr>
 <tr>
 <td><code>logical_instruction_pointer</code></td>
@@ -1396,7 +1406,7 @@ For detailed descriptions, see the <a href="../sampling/">sampling documentation
 <tr>
 <td><code>is_instruction_pointer_exact</code></td>
 <td><code>sampler.values().logical_instruction_pointer(true)</code></td>
-<td>Whether instruction pointer is exact (<code>0</code> or <code>1</code>)</td>
+<td>Whether instruction pointer is exact (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
@@ -1408,25 +1418,31 @@ For detailed descriptions, see the <a href="../sampling/">sampling documentation
 <tr>
 <td><code>instruction_l1i_miss</code></td>
 <td><code>sampler.values().instruction_cache(true)</code></td>
-<td>L1 instruction cache miss (<code>0</code> or <code>1</code>)</td>
+<td>L1 instruction cache miss (<code>true</code> or <code>false</code>)</td>
 <td>AMD Fetch PMU</td>
 </tr>
 <tr>
 <td><code>instruction_l2_miss</code></td>
 <td><code>sampler.values().instruction_cache(true)</code></td>
-<td>L2 cache miss (<code>0</code> or <code>1</code>)</td>
+<td>L2 cache miss (<code>true</code> or <code>false</code>)</td>
 <td>AMD Fetch PMU</td>
 </tr>
 <tr>
 <td><code>instruction_l3_miss</code></td>
 <td><code>sampler.values().instruction_cache(true)</code></td>
-<td>L3 cache miss (<code>0</code> or <code>1</code>)</td>
+<td>L3 cache miss (<code>true</code> or <code>false</code>)</td>
+<td>AMD Fetch PMU</td>
+</tr>
+<tr>
+<td><code>instruction_op_cache_miss</code></td>
+<td><code>sampler.values().instruction_cache(true)</code></td>
+<td>Op cache (decoded instruction cache) miss (<code>true</code> or <code>false</code>)</td>
 <td>AMD Fetch PMU</td>
 </tr>
 <tr>
 <td><code>instruction_itlb_miss</code></td>
 <td><code>sampler.values().instruction_tlb(true)</code></td>
-<td>Instruction TLB miss (<code>0</code> or <code>1</code>)</td>
+<td>Instruction TLB miss (<code>true</code> or <code>false</code>)</td>
 <td>AMD Fetch PMU</td>
 </tr>
 <tr>
@@ -1438,7 +1454,7 @@ For detailed descriptions, see the <a href="../sampling/">sampling documentation
 <tr>
 <td><code>instruction_stlb_miss</code></td>
 <td><code>sampler.values().instruction_tlb(true)</code></td>
-<td>Second-level TLB miss (<code>0</code> or <code>1</code>)</td>
+<td>Second-level TLB miss (<code>true</code> or <code>false</code>)</td>
 <td>AMD Fetch PMU</td>
 </tr>
 <tr>
@@ -1472,51 +1488,57 @@ For detailed descriptions, see the <a href="../sampling/">sampling documentation
 <td>AMD Fetch PMU</td>
 </tr>
 <tr>
+<td><code>instruction_itlb_refill_latency</code></td>
+<td><code>sampler.values().instruction_latency(true)</code></td>
+<td>iTLB refill latency after a miss (cycles)</td>
+<td>AMD Fetch PMU</td>
+</tr>
+<tr>
 <td><code>branch_type</code></td>
 <td><code>sampler.values().branch_type(true)</code></td>
-<td>Branch type (<code>Taken</code>, <code>Retired</code>, <code>Mispredicted</code>, <code>Fuse</code>)</td>
+<td>Branch type (<code>taken</code>, <code>retired</code>, <code>mispredicted</code>, <code>fuse</code>)</td>
 <td>AMD Op PMU</td>
 </tr>
 <tr>
 <td><code>tx_is_elision</code></td>
 <td><code>sampler.values().hardware_transaction_abort(true)</code></td>
-<td>Hardware transaction is elision type (<code>0</code> or <code>1</code>)</td>
+<td>Hardware transaction is elision type (<code>true</code> or <code>false</code>)</td>
 <td>Intel only</td>
 </tr>
 <tr>
 <td><code>tx_is_generic</code></td>
 <td><code>sampler.values().hardware_transaction_abort(true)</code></td>
-<td>Hardware transaction is generic type (<code>0</code> or <code>1</code>)</td>
+<td>Hardware transaction is generic type (<code>true</code> or <code>false</code>)</td>
 <td>Intel only</td>
 </tr>
 <tr>
 <td><code>tx_is_synchronous_abort</code></td>
 <td><code>sampler.values().hardware_transaction_abort(true)</code></td>
-<td>Synchronous transaction abort (<code>0</code> or <code>1</code>)</td>
+<td>Synchronous transaction abort (<code>true</code> or <code>false</code>)</td>
 <td>Intel only</td>
 </tr>
 <tr>
 <td><code>tx_is_retryable</code></td>
 <td><code>sampler.values().hardware_transaction_abort(true)</code></td>
-<td>Transaction abort is retryable (<code>0</code> or <code>1</code>)</td>
+<td>Transaction abort is retryable (<code>true</code> or <code>false</code>)</td>
 <td>Intel only</td>
 </tr>
 <tr>
 <td><code>tx_is_memory_conflict</code></td>
 <td><code>sampler.values().hardware_transaction_abort(true)</code></td>
-<td>Abort due to memory conflict (<code>0</code> or <code>1</code>)</td>
+<td>Abort due to memory conflict (<code>true</code> or <code>false</code>)</td>
 <td>Intel only</td>
 </tr>
 <tr>
 <td><code>tx_is_write_capacity_conflict</code></td>
 <td><code>sampler.values().hardware_transaction_abort(true)</code></td>
-<td>Abort due to write capacity (<code>0</code> or <code>1</code>)</td>
+<td>Abort due to write capacity (<code>true</code> or <code>false</code>)</td>
 <td>Intel only</td>
 </tr>
 <tr>
 <td><code>tx_is_read_capacity_conflict</code></td>
 <td><code>sampler.values().hardware_transaction_abort(true)</code></td>
-<td>Abort due to read capacity (<code>0</code> or <code>1</code>)</td>
+<td>Abort due to read capacity (<code>true</code> or <code>false</code>)</td>
 <td>Intel only</td>
 </tr>
 <tr>
@@ -1534,7 +1556,7 @@ For detailed descriptions, see the <a href="../sampling/">sampling documentation
 <tr>
 <td><code>callchain</code></td>
 <td><code>sampler.values().callchain(true)</code></td>
-<td>Call stack (list of addresses separated by <code>;</code>)</td>
+<td>Call stack (hexadecimal addresses separated by the list delimiter, default <code>;</code>)</td>
 <td>All</td>
 </tr>
 </tbody>
@@ -1554,13 +1576,13 @@ For detailed descriptions, see the <a href="../sampling/">sampling documentation
 <tr>
 <td><code>data_access_type</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>Access type (<code>Load</code>, <code>Store</code>, <code>Prefetch</code>)</td>
+<td>Access type (<code>load</code>, <code>store</code>, <code>sw_prefetch</code>)</td>
 <td>All</td>
 </tr>
 <tr>
 <td><code>is_locked</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>Locked memory operation (<code>0</code> or <code>1</code>)</td>
+<td>Locked memory operation (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
@@ -1578,13 +1600,13 @@ For detailed descriptions, see the <a href="../sampling/">sampling documentation
 <tr>
 <td><code>data_access_is_l1d_hit</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>L1 data cache hit (<code>0</code> or <code>1</code>)</td>
+<td>L1 data cache hit (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
 <td><code>data_access_is_mhb_hit</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>LFB/MAB hit (<code>0</code> or <code>1</code>)</td>
+<td>LFB/MAB hit (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
@@ -1596,61 +1618,61 @@ For detailed descriptions, see the <a href="../sampling/">sampling documentation
 <tr>
 <td><code>data_access_is_l2_hit</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>L2 cache hit (<code>0</code> or <code>1</code>)</td>
+<td>L2 cache hit (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
 <td><code>data_access_is_l3_hit</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>L3 cache hit (<code>0</code> or <code>1</code>)</td>
+<td>L3 cache hit (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
 <td><code>data_access_is_memory_hit</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>Main memory access (<code>0</code> or <code>1</code>)</td>
+<td>Main memory access (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
 <td><code>data_access_is_remote</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>Remote core/node access (<code>0</code> or <code>1</code>)</td>
+<td>Remote core/node access (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
 <td><code>data_access_is_same_node_remote_core</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>Same node, different core (<code>0</code> or <code>1</code>)</td>
+<td>Same node, different core (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
 <td><code>data_access_is_same_socket_remote_node</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>Same socket, different node (<code>0</code> or <code>1</code>)</td>
+<td>Same socket, different node (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
 <td><code>data_access_is_same_board_remote_socket</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>Same board, different socket (<code>0</code> or <code>1</code>)</td>
+<td>Same board, different socket (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
 <td><code>data_access_is_remote_board</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>Different board (<code>0</code> or <code>1</code>)</td>
+<td>Different board (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
 <td><code>dtlb_hit</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>Data TLB hit (<code>0</code> or <code>1</code>)</td>
+<td>Data TLB hit (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
 <td><code>stlb_hit</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>Second-level TLB hit (<code>0</code> or <code>1</code>)</td>
+<td>Second-level TLB hit (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
@@ -1686,31 +1708,31 @@ For detailed descriptions, see the <a href="../sampling/">sampling documentation
 <tr>
 <td><code>snoop_is_hit</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>Snoop hit (<code>0</code> or <code>1</code>)</td>
+<td>Snoop hit (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
 <td><code>snoop_is_hit_modified</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>Snoop hit on modified line (<code>0</code> or <code>1</code>)</td>
+<td>Snoop hit on modified line (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
 <td><code>snoop_is_forward</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>Cache line forwarded (<code>0</code> or <code>1</code>)</td>
+<td>Cache line forwarded (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
 <td><code>snoop_is_transfer_from_peer</code></td>
 <td><code>sampler.values().data_source(true)</code></td>
-<td>Transfer from peer node (<code>0</code> or <code>1</code>)</td>
+<td>Transfer from peer node (<code>true</code> or <code>false</code>)</td>
 <td>All</td>
 </tr>
 <tr>
-<td><code>is_misalign_penalty</code></td>
-<td><code>sampler.values().data_access_misalign_penalty(true)</code></td>
-<td>Misalignment penalty (<code>0</code> or <code>1</code>)</td>
+<td><code>is_misaligned</code></td>
+<td><code>sampler.values().data_access_misaligned(true)</code></td>
+<td>Misalignment (<code>true</code> or <code>false</code>)</td>
 <td>AMD Op PMU</td>
 </tr>
 <tr>
@@ -1731,8 +1753,8 @@ For detailed descriptions, see the <a href="../sampling/">sampling documentation
 <p class="admonition-title">Important</p>
 <p>Memory access fields require specific triggers:</p>
 <ul>
-<li><strong>Intel</strong>: Use <code>mem-loads</code> or <code>mem-stores</code> triggers with <code>perf::Precision::MustHaveZeroSkid</code></li>
-<li><strong>AMD</strong>: Use <code>ibs_op</code> family triggers</li>
+<li><strong>Intel</strong>: Use <code>mem-loads</code>/<code>mem-stores</code> triggers (or the typed <code>perf::MemoryLoads</code>/<code>perf::MemoryStores</code>) with a precision of at least <code>perf::Precision::RequestZeroSkid</code></li>
+<li><strong>AMD</strong>: Use <code>ibs_op</code> triggers (or the typed <code>perf::IbsOp</code>)</li>
 </ul>
 <p>See the <a href="../sampling/#specific-notes-for-different-cpu-vendors">sampling documentation</a> for details.</p>
 </div>
@@ -1772,19 +1794,19 @@ Creates columns: <code>counter_cycles</code>, <code>counter_instructions</code>,
 <tr>
 <td><code>user_register_&lt;name&gt;</code></td>
 <td><code>sampler.values().user_registers({...})</code></td>
-<td>User-space register (e.g., <code>user_register_AX</code>, <code>user_register_R10</code>)</td>
+<td>User-space register (e.g., <code>user_register_ax</code>, <code>user_register_r10</code>)</td>
 </tr>
 <tr>
 <td><code>kernel_register_&lt;name&gt;</code></td>
 <td><code>sampler.values().kernel_registers({...})</code></td>
-<td>Kernel-space register (e.g., <code>kernel_register_AX</code>)</td>
+<td>Kernel-space register (e.g., <code>kernel_register_ax</code>)</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">sampler</span><span class="p">.</span><span class="n">values</span><span class="p">().</span><span class="n">user_registers</span><span class="p">({</span><span class="n">perf</span><span class="o">::</span><span class="n">Registers</span><span class="o">::</span><span class="n">x86</span><span class="o">::</span><span class="n">AX</span><span class="p">,</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Registers</span><span class="o">::</span><span class="n">x86</span><span class="o">::</span><span class="n">R10</span><span class="p">});</span>
 </code></pre></div>
-Creates columns: <code>user_register_AX</code>, <code>user_register_R10</code>.</p>
+Creates columns: <code>user_register_ax</code>, <code>user_register_r10</code>.</p>
 <h3 id="control-group-fields">Control Group Fields<a class="headerlink" href="#control-group-fields" title="Permanent link">&para;</a></h3>
 <p>Information about control groups (cgroups).</p>
 <table>
@@ -1832,19 +1854,19 @@ Creates columns: <code>user_register_AX</code>, <code>user_register_R10</code>.<
 <tr>
 <td><code>context_switch_is_out</code></td>
 <td><code>sampler.values().context_switch(true)</code></td>
-<td>Process switched out (<code>0</code> or <code>1</code>)</td>
+<td>Process switched out (<code>true</code> or <code>false</code>)</td>
 <td>Linux ≥ 4.3</td>
 </tr>
 <tr>
 <td><code>context_switch_is_in</code></td>
 <td><code>sampler.values().context_switch(true)</code></td>
-<td>Process switched in (<code>0</code> or <code>1</code>)</td>
+<td>Process switched in (<code>true</code> or <code>false</code>)</td>
 <td>Linux ≥ 4.3</td>
 </tr>
 <tr>
 <td><code>context_switch_is_preempt</code></td>
 <td><code>sampler.values().context_switch(true)</code></td>
-<td>Process preempted (<code>0</code> or <code>1</code>)</td>
+<td>Process preempted (<code>true</code> or <code>false</code>)</td>
 <td>Linux ≥ 4.3</td>
 </tr>
 <tr>
@@ -1875,12 +1897,12 @@ Creates columns: <code>user_register_AX</code>, <code>user_register_R10</code>.<
 <tr>
 <td><code>is_throttle</code></td>
 <td><code>sampler.values().throttle(true)</code></td>
-<td>Sampling was throttled (<code>0</code> or <code>1</code>)</td>
+<td>Sampling was throttled (<code>true</code> or <code>false</code>)</td>
 </tr>
 <tr>
 <td><code>is_unthrottle</code></td>
 <td><code>sampler.values().throttle(true)</code></td>
-<td>Sampling was unthrottled (<code>0</code> or <code>1</code>)</td>
+<td>Sampling was unthrottled (<code>true</code> or <code>false</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -1897,7 +1919,7 @@ Creates columns: <code>user_register_AX</code>, <code>user_register_R10</code>.<
 <tbody>
 <tr>
 <td><code>loss_count</code></td>
-<td>Number of samples lost</td>
+<td>Number of samples lost (<code>0</code> for rows without a loss event)</td>
 <td>Only if any sample contains a loss event</td>
 </tr>
 </tbody>

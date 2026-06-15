@@ -1140,8 +1140,9 @@
 <h2 id="building-manually">Building Manually<a class="headerlink" href="#building-manually" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/jmuehlig/perf-cpp.git
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>perf-cpp
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>cmake<span class="w"> </span>.<span class="w"> </span>-B<span class="w"> </span>build
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>cmake<span class="w"> </span>--build<span class="w"> </span>build
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>git<span class="w"> </span>checkout<span class="w"> </span>v1.0
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>cmake<span class="w"> </span>.<span class="w"> </span>-B<span class="w"> </span>build
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>cmake<span class="w"> </span>--build<span class="w"> </span>build
 </code></pre></div>
 <h3 id="cmake-options">CMake Options<a class="headerlink" href="#cmake-options" title="Permanent link">&para;</a></h3>
 <table>
@@ -1188,34 +1189,45 @@
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>cmake<span class="w"> </span>--build<span class="w"> </span>build
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>cmake<span class="w"> </span>--install<span class="w"> </span>build
 </code></pre></div>
-<p>The library will then be available via <code>find_package</code> (see <a href="#via-find_package">below</a>).</p>
+<p>This installs the library into <code>lib/</code>, the headers into <code>include/</code>, and the CMake package config files into <code>lib/cmake/perf-cpp/</code>, relative to the install prefix.
+The library will then be available via <code>find_package</code> (see <a href="#via-find_package">below</a>).
+If you install to a non-standard prefix, point CMake to it when configuring the consuming project, e.g., via <code>-DCMAKE_PREFIX_PATH=/path/to/install/dir</code>.</p>
 <h2 id="including-into-cmake-projects">Including into CMake Projects<a class="headerlink" href="#including-into-cmake-projects" title="Permanent link">&para;</a></h2>
 <h3 id="via-fetchcontent-recommended">Via FetchContent (recommended)<a class="headerlink" href="#via-fetchcontent-recommended" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">include</span><span class="p">(</span><span class="s">FetchContent</span><span class="p">)</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">FetchContent_Declare</span><span class="p">(</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="s">perf-cpp-external</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="s">GIT_REPOSITORY</span><span class="w"> </span><span class="s2">&quot;https://github.com/jmuehlig/perf-cpp&quot;</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="s">GIT_TAG</span><span class="w"> </span><span class="s2">&quot;v0.14.1&quot;</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="s">GIT_TAG</span><span class="w"> </span><span class="s2">&quot;v1.0&quot;</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="p">)</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="nb">FetchContent_MakeAvailable</span><span class="p">(</span><span class="s">perf-cpp-external</span><span class="p">)</span>
 </code></pre></div>
-<p>Then link against <code>perf-cpp</code> and add <code>${perf-cpp-external_SOURCE_DIR}/include/</code> to your include directories.</p>
-<h3 id="via-externalproject">Via ExternalProject<a class="headerlink" href="#via-externalproject" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">include</span><span class="p">(</span><span class="s">ExternalProject</span><span class="p">)</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nb">ExternalProject_Add</span><span class="p">(</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="s">perf-cpp-external</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="s">GIT_REPOSITORY</span><span class="w"> </span><span class="s2">&quot;https://github.com/jmuehlig/perf-cpp&quot;</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="s">GIT_TAG</span><span class="w"> </span><span class="s2">&quot;v0.14.1&quot;</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="s">PREFIX</span><span class="w"> </span><span class="s2">&quot;lib/perf-cpp&quot;</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="s">INSTALL_COMMAND</span><span class="w"> </span><span class="s">cmake</span><span class="w"> </span><span class="s">-E</span><span class="w"> </span><span class="s">echo</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="p">)</span>
+<p>Then link against <code>perf-cpp</code>; the include directory and the C++17 requirement propagate automatically:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">your_target</span><span class="w"> </span><span class="s">perf-cpp</span><span class="p">)</span>
 </code></pre></div>
-<p>Then add <code>lib/perf-cpp/src/perf-cpp-external/include</code> to your include directories and <code>lib/perf-cpp/src/perf-cpp-external-build</code> to your link directories.</p>
+<h3 id="via-externalproject">Via ExternalProject<a class="headerlink" href="#via-externalproject" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">include</span><span class="p">(</span><span class="s">ExternalProject</span><span class="p">)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">ExternalProject_Add</span><span class="p">(</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="s">perf-cpp-external</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="s">GIT_REPOSITORY</span><span class="w"> </span><span class="s2">&quot;https://github.com/jmuehlig/perf-cpp&quot;</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="s">GIT_TAG</span><span class="w"> </span><span class="s2">&quot;v1.0&quot;</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="s">PREFIX</span><span class="w"> </span><span class="s2">&quot;lib/perf-cpp&quot;</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span><span class="s">INSTALL_COMMAND</span><span class="w"> </span><span class="s">cmake</span><span class="w"> </span><span class="s">-E</span><span class="w"> </span><span class="s">echo</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="p">)</span>
+</code></pre></div>
+<p>Then retrieve the build paths and link against <code>perf-cpp</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">ExternalProject_Get_Property</span><span class="p">(</span><span class="s">perf-cpp-external</span><span class="w"> </span><span class="s">SOURCE_DIR</span><span class="w"> </span><span class="s">BINARY_DIR</span><span class="p">)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nb">include_directories</span><span class="p">(</span><span class="o">${</span><span class="nv">SOURCE_DIR</span><span class="o">}</span><span class="s">/include</span><span class="p">)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nb">link_directories</span><span class="p">(</span><span class="o">${</span><span class="nv">BINARY_DIR</span><span class="o">}</span><span class="p">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">your_target</span><span class="w"> </span><span class="s">perf-cpp</span><span class="p">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nb">add_dependencies</span><span class="p">(</span><span class="s">your_target</span><span class="w"> </span><span class="s">perf-cpp-external</span><span class="p">)</span>
+</code></pre></div>
 <h3 id="via-find_package">Via find_package<a class="headerlink" href="#via-find_package" title="Permanent link">&para;</a></h3>
 <p>If <em>perf-cpp</em> is <a href="#installing">installed</a> on your system:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">find_package</span><span class="p">(</span><span class="s">perf-cpp</span><span class="w"> </span><span class="s">REQUIRED</span><span class="p">)</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">your_target</span><span class="w"> </span><span class="s">perf-cpp::perf-cpp</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">find_package</span><span class="p">(</span><span class="s">perf-cpp</span><span class="w"> </span><span class="s">1.0</span><span class="w"> </span><span class="s">REQUIRED</span><span class="p">)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">your_target</span><span class="w"> </span><span class="s">perf-cpp::perf-cpp</span><span class="p">)</span>
 </code></pre></div>
+<p>The version argument is optional; the package accepts any request with the same major version (e.g., <code>find_package(perf-cpp 1.0)</code> matches an installed <code>1.2.0</code>, but not <code>2.0.0</code>).</p>
 
 
 

@@ -1137,7 +1137,7 @@
 
 
 <h1 id="performance-metrics">Performance Metrics<a class="headerlink" href="#performance-metrics" title="Permanent link">&para;</a></h1>
-<p>Metrics combine multiple hardware events into calculated values — knowing you had 1 million cache misses is less useful than knowing those misses represent a 5% miss rate.</p>
+<p>Metrics combine multiple hardware events into a single derived value. Knowing that your code produced 1 million cache misses is less useful than knowing they amount to a 5% miss rate.</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>See the examples: <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/metric.cpp">metric.cpp</a></strong> (custom metrics) and <strong><a href="https://github.com/jmuehlig/perf-cpp/tree/dev/examples/statistics/rapl.cpp">rapl.cpp</a></strong> (RAPL power counters).
@@ -1145,8 +1145,8 @@ For inspiration when creating custom metrics, explore the <a href="https://githu
 </div>
 <hr />
 <h2 id="available-built-in-metrics">Available Built-in Metrics<a class="headerlink" href="#available-built-in-metrics" title="Permanent link">&para;</a></h2>
-<p><em>perf-cpp</em> provides ready-to-use metrics that cover the most common performance analysis needs. 
-You don't need any special setup—just use them like regular events by adding their names to your <code>EventCounter</code>.</p>
+<p><em>perf-cpp</em> ships with metrics for the most common analysis questions.
+They require no setup; add them to your <code>EventCounter</code> by name.</p>
 <table>
 <thead>
 <tr>
@@ -1173,13 +1173,13 @@ You don't need any special setup—just use them like regular events by adding t
 </tr>
 <tr>
 <td><code>cache-hit-ratio</code></td>
-<td>Percentage of cache accesses that found data</td>
-<td><code>cache-references / (cache-references + cache-misses)</code></td>
+<td>Fraction of cache accesses served from cache</td>
+<td><code>(cache-references − cache-misses) / cache-references</code></td>
 </tr>
 <tr>
 <td><code>cache-miss-ratio</code></td>
-<td>Percentage of cache accesses that missed</td>
-<td><code>cache-misses / (cache-references + cache-misses)</code></td>
+<td>Fraction of cache accesses that missed</td>
+<td><code>cache-misses / cache-references</code></td>
 </tr>
 <tr>
 <td><code>dTLB-miss-ratio</code></td>
@@ -1218,6 +1218,7 @@ You don't need any special setup—just use them like regular events by adding t
 </tr>
 </tbody>
 </table>
+<p>All <code>*-ratio</code> metrics return values between <code>0</code> and <code>1</code>; a 5% miss rate is reported as <code>0.05</code>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The <code>watts-*</code> metrics require RAPL (Running Average Power Limit) support, which is available on most modern Intel and AMD processors.
@@ -1225,7 +1226,7 @@ Available RAPL domains vary by hardware: <code>energy-pkg</code> is widely suppo
 Reading RAPL counters may require <code>perf_event_paranoid &lt;= 0</code> or <code>CAP_SYS_ADMIN</code>.</p>
 </div>
 <h2 id="working-with-metrics">Working with Metrics<a class="headerlink" href="#working-with-metrics" title="Permanent link">&para;</a></h2>
-<p>Metrics work exactly like regular events — add them, measure, and retrieve results:</p>
+<p>Metrics behave like regular events: add them by name, measure, and read the result.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;perfcpp/event_counter.hpp&gt;</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">auto</span><span class="w"> </span><span class="n">event_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">EventCounter</span><span class="p">{};</span>
@@ -1238,37 +1239,37 @@ Reading RAPL counters may require <code>perf_event_paranoid &lt;= 0</code> or <c
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1">/// ... your code being measured ...</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">event_counter</span><span class="p">.</span><span class="n">stop</span><span class="p">();</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1">/// Get the calculated metric value.</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1">/// Get the calculated metric value; std::nullopt if the required events were not measured.</span>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">event_counter</span><span class="p">.</span><span class="n">result</span><span class="p">();</span>
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">cpi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;cycles-per-instruction&quot;</span><span class="p">);</span>
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="c1">/// Release resources explicitly, or let the destructor handle it.</span>
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="n">event_counter</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
 </code></pre></div>
-<p>The required hardware events (e.g., <code>cycles</code> and <code>instructions</code> for CPI) are configured automatically if not already being measured.</p>
+<p><em>perf-cpp</em> configures the required hardware events automatically (e.g., <code>cycles</code> and <code>instructions</code> for CPI) if not already being measured.</p>
 <h2 id="creating-custom-metrics">Creating Custom Metrics<a class="headerlink" href="#creating-custom-metrics" title="Permanent link">&para;</a></h2>
 <p><em>perf-cpp</em> supports two approaches for defining custom metrics: formula-based and class-based.</p>
-<p>Custom metrics are registered via the <code>perf::CounterDefinition</code> that needs to be passed to the <code>EventCounter</code> (&rarr; <a href="../counters/#the-counterdefinition-system">read more about adding custom events and metrics</a>).</p>
+<p>Custom metrics are registered via the <code>perf::CounterDefinition</code> passed to the <code>EventCounter</code> (→ <a href="../counters/#the-counterdefinition-system">read more about adding custom events and metrics</a>).</p>
 <h3 id="formula-based-metrics">Formula-Based Metrics<a class="headerlink" href="#formula-based-metrics" title="Permanent link">&para;</a></h3>
-<p>For straightforward calculations, express your metric as a mathematical formula. 
-This approach works well when you need to combine a few events with basic arithmetic:</p>
+<p>For straightforward calculations, express your metric as a mathematical formula:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">counter_definition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">CounterDefinition</span><span class="p">{};</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1">/// Define a metric showing what percentage of stalls come from memory loads</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">counter_definition</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;stalls-by-mem-loads&quot;</span><span class="p">,</span><span class="w"> </span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">counter_definition</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;stalls-by-mem-loads&quot;</span><span class="p">,</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">                       </span><span class="s">&quot;(CYCLE_ACTIVITY_STALLS_LDM_PENDING / CYCLE_ACTIVITY_STALLS_TOTAL) * 100&quot;</span><span class="p">);</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="k">auto</span><span class="w"> </span><span class="n">event_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">EventCounter</span><span class="p">{</span><span class="w"> </span><span class="n">counter_definition</span><span class="w"> </span><span class="p">};</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="n">event_counter</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;stalls-by-mem-loads&quot;</span><span class="p">);</span>
 </code></pre></div>
-<p>This example uses Intel SkylakeX events to identify memory bottlenecks—adapted from <a href="https://github.com/RRZE-HPC/likwid/blob/master/groups/skylakeX/CYCLE_STALLS.txt">Likwid's cycle stalls metrics</a>.</p>
+<p>This example uses Intel SkylakeX events to identify memory bottlenecks, adapted from <a href="https://github.com/RRZE-HPC/likwid/blob/master/groups/skylakeX/CYCLE_STALLS.txt">Likwid's cycle stalls metrics</a>.</p>
+<p>Every event referenced in a formula must be known to the <code>CounterDefinition</code>, either as a built-in event or added beforehand (→ <a href="../counters/#the-counterdefinition-system">adding custom events</a>).</p>
 <h4 id="supported-operations">Supported Operations<a class="headerlink" href="#supported-operations" title="Permanent link">&para;</a></h4>
-<p>Your formulas can use:
-- <strong>Basic arithmetic</strong>: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>
-- <strong>Scientific notation</strong>: <code>1E9</code>, <code>2.5e-6</code>
-- <strong>Parentheses</strong> for grouping: <code>(a + b) / c</code></p>
+<p>Formulas can use:
+- Basic arithmetic: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>
+- Constants, including scientific notation: <code>1E9</code>, <code>2.5e-6</code>
+- Parentheses for grouping: <code>(a + b) / c</code></p>
 <h4 id="built-in-functions">Built-in Functions<a class="headerlink" href="#built-in-functions" title="Permanent link">&para;</a></h4>
-<p><em>perf-cpp</em> provides helper functions to simplify common patterns:</p>
+<p>In addition, the following functions are available:</p>
 <table>
 <thead>
 <tr>
@@ -1280,24 +1281,24 @@ This approach works well when you need to combine a few events with basic arithm
 <tbody>
 <tr>
 <td><code>ratio(a, b)</code></td>
-<td>Safe division with null handling</td>
+<td>Division that returns <code>0</code> if the denominator is <code>0</code></td>
 <td><code>ratio('branch-misses', 'branches')</code></td>
 </tr>
 <tr>
 <td><code>d_ratio(a, b)</code></td>
-<td>Same as <code>ratio()</code> (compatibility alias)</td>
+<td>Alias for <code>ratio()</code>, named after Linux perf's <code>d_ratio</code></td>
 <td><code>d_ratio('misses', 'attempts')</code></td>
 </tr>
 <tr>
 <td><code>sum(a, b, ...)</code></td>
-<td>Add multiple values together</td>
+<td>Add two or more values</td>
 <td><code>sum('l1_hits', 'l2_hits', 'l3_hits')</code></td>
 </tr>
 </tbody>
 </table>
 <p>You can nest functions for complex calculations:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">/// Calculate miss ratio across all cache levels</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">counter_definition</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;total-cache-miss-ratio&quot;</span><span class="p">,</span><span class="w"> </span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">counter_definition</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;total-cache-miss-ratio&quot;</span><span class="p">,</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="s">&quot;ratio(&quot;</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="s">&quot;  sum(&#39;mem_load_retired.l1_miss&#39;, &#39;mem_load_retired.l2_miss&#39;, &#39;mem_load_retired.l3_miss&#39;),&quot;</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="s">&quot;  sum(&#39;mem_load_retired.l1_hit&#39;, &#39;mem_load_retired.l2_hit&#39;, &#39;mem_load_retired.l3_hit&#39;)&quot;</span>
@@ -1306,63 +1307,63 @@ This approach works well when you need to combine a few events with basic arithm
 </code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">Important</p>
-<p>Event names containing operators (like the hyphen in <code>L1-dcache-misses</code>) must be wrapped in single quotes: <code>'L1-dcache-misses'</code>. 
-This prevents the parser from interpreting the hyphen as subtraction.</p>
+<p>Event names containing operators (like the hyphen in <code>L1-dcache-misses</code>) must be wrapped in single quotes or backticks: <code>'L1-dcache-misses'</code> or <code>`L1-dcache-misses`</code>.
+This prevents the parser from interpreting the hyphen as subtraction.
+Underscores and dots are regular identifier characters, so names like <code>mem_load_retired.l1_miss</code> work without quotes.</p>
 </div>
 <h3 id="class-based-metrics">Class-Based Metrics<a class="headerlink" href="#class-based-metrics" title="Permanent link">&para;</a></h3>
-<p>When your metric needs complex logic, validation, or stateful computation, implement it as a class. 
-This approach gives you full control over the calculation:</p>
+<p>Formulas cannot express branching or architecture-specific logic. For such cases, implement the metric as a class derived from <code>perf::Metric</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;perfcpp/metric/metric.hpp&gt;</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">StallsPerCacheMiss</span><span class="w"> </span><span class="k">final</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Metric</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="p">{</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">public</span><span class="o">:</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="c1">/// Define the metric&#39;s identifier</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="p">[[</span><span class="n">nodiscard</span><span class="p">]]</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">override</span><span class="w"> </span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="c1">/// Define the metric&#39;s identifier.</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="p">[[</span><span class="n">nodiscard</span><span class="p">]]</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">override</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;stalls-per-cache-miss&quot;</span><span class="p">;</span><span class="w"> </span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;stalls-per-cache-miss&quot;</span><span class="p">;</span>
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="p">}</span>
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="c1">/// Declare which events this metric needs</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="c1">/// Declare which events this metric needs.</span>
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">    </span><span class="p">[[</span><span class="n">nodiscard</span><span class="p">]]</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">required_counter_names</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">override</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="s">&quot;stalls&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cache-misses&quot;</span><span class="p">};</span><span class="w"> </span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="s">&quot;stalls&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;cache-misses&quot;</span><span class="p">};</span>
 <a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">    </span><span class="p">}</span>
 <a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">    </span><span class="c1">/// Perform the calculation after measurement completes</span>
-<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">    </span><span class="p">[[</span><span class="n">nodiscard</span><span class="p">]]</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">optional</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">calculate</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">CounterResult</span><span class="o">&amp;</span><span class="w"> </span><span class="n">result</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">override</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">    </span><span class="c1">/// Perform the calculation after measurement completes.</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">    </span><span class="p">[[</span><span class="n">nodiscard</span><span class="p">]]</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">optional</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">calculate</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">CounterResult</span><span class="o">&amp;</span><span class="w"> </span><span class="n">result</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">override</span>
 <a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">    </span><span class="p">{</span>
 <a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">stalls</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;stalls&quot;</span><span class="p">);</span>
 <a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">cache_misses</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;cache-misses&quot;</span><span class="p">);</span>
 <a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>
-<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="w">        </span><span class="c1">/// Handle missing data gracefully</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="w">        </span><span class="c1">/// Both events must have been measured.</span>
 <a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">stalls</span><span class="p">.</span><span class="n">has_value</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">cache_misses</span><span class="p">.</span><span class="n">has_value</span><span class="p">())</span>
 <a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="w">        </span><span class="p">{</span>
-<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="w">            </span><span class="c1">/// Avoid division by zero</span>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="w">            </span><span class="c1">/// Avoid division by zero.</span>
 <a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">cache_misses</span><span class="p">.</span><span class="n">value</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
 <a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="w">            </span><span class="p">{</span>
 <a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">stalls</span><span class="p">.</span><span class="n">value</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">cache_misses</span><span class="p">.</span><span class="n">value</span><span class="p">();</span>
 <a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a><span class="w">            </span><span class="p">}</span>
 <a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="w">        </span><span class="p">}</span>
 <a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>
-<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">nullopt</span><span class="p">;</span><span class="w">  </span><span class="c1">// Return empty if calculation isn&#39;t possible</span>
-<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a><span class="p">};</span>
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a><span class="w">        </span><span class="c1">/// Return empty if the calculation is not possible.</span>
+<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">nullopt</span><span class="p">;</span>
+<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a><span class="p">};</span>
 </code></pre></div>
 <p>Register your custom metric class with the counter definition:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">counter_definition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">CounterDefinition</span><span class="p">{};</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1">/// Register using the metric&#39;s built-in name</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1">/// Register using the name reported by the metric itself.</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">counter_definition</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">StallsPerCacheMiss</span><span class="o">&gt;</span><span class="p">());</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1">/// Or register with a custom name</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1">/// Or register under a custom name.</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">counter_definition</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;SPCM&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">StallsPerCacheMiss</span><span class="o">&gt;</span><span class="p">());</span>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="c1">/// Use it like any other metric</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="c1">/// Use it like any other metric.</span>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="k">auto</span><span class="w"> </span><span class="n">event_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">EventCounter</span><span class="p">{</span><span class="w"> </span><span class="n">counter_definition</span><span class="w"> </span><span class="p">};</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="n">event_counter</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;stalls-per-cache-miss&quot;</span><span class="p">);</span><span class="w">  </span><span class="c1">/// Or &quot;SPCM&quot; if using custom name</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="n">event_counter</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;stalls-per-cache-miss&quot;</span><span class="p">);</span><span class="w">  </span><span class="c1">/// Or &quot;SPCM&quot; if registered under a custom name.</span>
 </code></pre></div>
-<p>Use class-based metrics when the calculation requires complex logic, validation, or architecture-specific behavior.</p>
 
 
 

@@ -1005,7 +1005,7 @@
 <h1 id="sampling-in-parallel">Sampling in Parallel<a class="headerlink" href="#sampling-in-parallel" title="Permanent link">&para;</a></h1>
 <p>Sampling can target specific threads or CPU cores:</p>
 <ol>
-<li><strong><a href="#per-thread-sampling">Per-thread sampling</a></strong>: Each thread gets its own sampler, results are combined afterward.</li>
+<li><strong><a href="#per-thread-sampling">Per-thread sampling</a></strong>: Each thread gets its own sampler; results are combined afterward.</li>
 <li><strong><a href="#per-cpu-core-sampling">Per-CPU-core sampling</a></strong>: Monitor specific CPU cores regardless of which process runs on them.</li>
 </ol>
 <div class="admonition tip">
@@ -1014,7 +1014,12 @@
 </div>
 <hr />
 <h2 id="per-thread-sampling">Per-Thread Sampling<a class="headerlink" href="#per-thread-sampling" title="Permanent link">&para;</a></h2>
-<p><code>perf::MultiThreadSampler</code> creates one sampler per thread and combines the results:</p>
+<p><code>perf::MultiThreadSampler</code> creates one sampler per thread and combines the results.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code>thread_id</code> passed to <code>open()</code>, <code>start()</code>, and <code>stop()</code> is an index from <code>0</code> to <code>count_threads - 1</code> that identifies the sampler instance.
+It is not an operating system thread ID. The <strong>Thread ID</strong> recorded in the sample metadata, however, is the operating system thread ID.</p>
+</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;perfcpp/sampler.hpp&gt;</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">auto</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">SampleConfig</span><span class="p">{};</span>
@@ -1025,13 +1030,13 @@
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">);</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">sampler</span><span class="p">.</span><span class="n">values</span><span class="p">().</span><span class="n">timestamp</span><span class="p">(</span><span class="nb">true</span><span class="p">).</span><span class="n">thread_id</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1">/// Optionally open before start() to exclude setup time from measurements.</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">sampler</span><span class="p">.</span><span class="n">open</span><span class="p">();</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1">/// Start/stop per thread.</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="k">auto</span><span class="w"> </span><span class="n">threads</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="o">&gt;</span><span class="p">{};</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="n">thread_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0U</span><span class="p">;</span><span class="w"> </span><span class="n">thread_id</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">count_threads</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">thread_id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">    </span><span class="n">threads</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">([</span><span class="n">thread_id</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">sampler</span><span class="p">]()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1">/// Start/stop per thread.</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="k">auto</span><span class="w"> </span><span class="n">threads</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="o">&gt;</span><span class="p">{};</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="n">thread_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0U</span><span class="p">;</span><span class="w"> </span><span class="n">thread_id</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">count_threads</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">thread_id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">    </span><span class="n">threads</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">([</span><span class="n">thread_id</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">sampler</span><span class="p">]()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">        </span><span class="c1">/// Optionally open before start() to exclude setup time from measurements.</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">        </span><span class="n">sampler</span><span class="p">.</span><span class="n">open</span><span class="p">(</span><span class="n">thread_id</span><span class="p">);</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">        </span><span class="n">sampler</span><span class="p">.</span><span class="n">start</span><span class="p">(</span><span class="n">thread_id</span><span class="p">);</span>
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">        </span><span class="c1">/// ... computation here ...</span>
 <a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">        </span><span class="n">sampler</span><span class="p">.</span><span class="n">stop</span><span class="p">(</span><span class="n">thread_id</span><span class="p">);</span>
@@ -1058,7 +1063,7 @@
 <a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="c1">/// Release resources explicitly, or let the destructor handle it.</span>
 <a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a><span class="n">sampler</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
 </code></pre></div>
-<p>The output may be something like this:</p>
+<p>Example output:</p>
 <div class="highlight"><pre><span></span><code>Time = 173058802647651 | Thread ID = 62803
 Time = 173058803163735 | Thread ID = 62802
 Time = 173058803625986 | Thread ID = 62804
@@ -1066,7 +1071,7 @@ Time = 173058804277715 | Thread ID = 62802
 </code></pre></div>
 <hr />
 <h2 id="per-cpu-core-sampling">Per-CPU-Core Sampling<a class="headerlink" href="#per-cpu-core-sampling" title="Permanent link">&para;</a></h2>
-<p><code>perf::MultiCoreSampler</code> records samples on specified CPU cores, capturing activity from all processes running there.</p>
+<p><code>perf::MultiCoreSampler</code> records samples on specified CPU cores and captures activity from all processes running there.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This requires <code>perf_event_paranoid &lt; 1</code>. See the <a href="../perf-paranoid/">perf paranoid setting</a>.</p>
@@ -1082,7 +1087,7 @@ Time = 173058804277715 | Thread ID = 62802
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">sample_config</span><span class="p">.</span><span class="n">period</span><span class="p">(</span><span class="mi">50000U</span><span class="p">);</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1">/// Use all_cpu_cores() to target every core on the system.</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">cpu_core_ids</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">HardwareInfo</span><span class="o">::</span><span class="n">all_cpu_cores</span><span class="p">();</span><span class="w"> </span><span class="c1">// or e.g. {0U, 1U, 2U, 3U}</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">cpu_core_ids</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">HardwareInfo</span><span class="o">::</span><span class="n">all_cpu_cores</span><span class="p">();</span><span class="w"> </span><span class="c1">/// or e.g. std::vector&lt;std::uint16_t&gt;{ 0U, 1U, 2U, 3U }</span>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="k">auto</span><span class="w"> </span><span class="n">sampler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">MultiCoreSampler</span><span class="p">{</span><span class="w"> </span><span class="n">cpu_core_ids</span><span class="p">,</span><span class="w"> </span><span class="n">sample_config</span><span class="w"> </span><span class="p">};</span>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">sampler</span><span class="p">.</span><span class="n">trigger</span><span class="p">(</span><span class="s">&quot;cycles&quot;</span><span class="p">);</span>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="n">sampler</span><span class="p">.</span><span class="n">values</span><span class="p">().</span><span class="n">timestamp</span><span class="p">(</span><span class="nb">true</span><span class="p">).</span><span class="n">cpu_id</span><span class="p">(</span><span class="nb">true</span><span class="p">).</span><span class="n">thread_id</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
@@ -1112,7 +1117,7 @@ Time = 173058804277715 | Thread ID = 62802
 <a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="c1">/// Release resources explicitly, or let the destructor handle it.</span>
 <a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="n">sampler</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
 </code></pre></div>
-<p>The output may be something like this:</p>
+<p>Example output:</p>
 <div class="highlight"><pre><span></span><code>Time = 173058798201719 | CPU ID = 0 | Thread ID = 62803
 Time = 173058798713083 | CPU ID = 3 | Thread ID = 62802
 Time = 173058799826723 | CPU ID = 3 | Thread ID = 62802

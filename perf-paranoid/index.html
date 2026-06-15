@@ -1001,7 +1001,7 @@
 
 
 <h1 id="perf-paranoid">Perf Paranoid<a class="headerlink" href="#perf-paranoid" title="Permanent link">&para;</a></h1>
-<p>The <code>perf_event_paranoid</code> setting in <code>/proc/sys/kernel/perf_event_paranoid</code> controls access to performance monitoring features:</p>
+<p>The <code>perf_event_paranoid</code> setting in <code>/proc/sys/kernel/perf_event_paranoid</code> controls which performance monitoring features are available to users without <code>CAP_PERFMON</code> (or <code>CAP_SYS_ADMIN</code> before Linux <code>5.8</code>):</p>
 <table>
 <thead>
 <tr>
@@ -1016,23 +1016,24 @@
 </tr>
 <tr>
 <td><code>0</code></td>
-<td>Allow normal users access, but no raw tracepoint samples.</td>
+<td>Allow per-process and system-wide profiling, but no raw tracepoints.</td>
 </tr>
 <tr>
 <td><code>1</code></td>
-<td>Allow user and kernel-level profiling (default before Linux <code>4.6</code>).</td>
+<td>Allow per-process user- and kernel-level profiling, but no system-wide (per-CPU) events (default before Linux <code>4.6</code>).</td>
 </tr>
 <tr>
 <td><code>&gt;= 2</code></td>
-<td>Only user-level measurements allowed (<strong>default since Linux</strong> <code>4.6</code>).</td>
+<td>Only per-process user-level measurements allowed (default since Linux <code>4.6</code>).</td>
 </tr>
 </tbody>
 </table>
-<p>If the setting is too restrictive, you may encounter errors like:</p>
-<div class="highlight"><pre><span></span><code>Cannot open perf counter: insufficient access rights to start the counter,
-e.g., profiling a not user-owned process or perf_event_paranoid value too high.
+<p>Some distribution kernels (e.g., Ubuntu and Android) add levels <code>3</code> and above that disallow <code>perf_event_open</code> for unprivileged users entirely.</p>
+<p>If the setting is too restrictive, opening counters fails with an error like:</p>
+<div class="highlight"><pre><span></span><code>Cannot open perf counter (error no 13): insufficient access rights to start the counter,
+e.g., profiling a not user-owned process or perf_event_paranoid value too high
 </code></pre></div>
-<p>This can be resolved by <a href="#setting-the-perf-paranoid-value">lowering the paranoid level</a> or <a href="#adjusting-monitoring-configuration">adjusting your monitoring configuration</a>.</p>
+<p>To resolve this, either <a href="#setting-the-perf-paranoid-value">lower the paranoid level</a> or <a href="#adjusting-monitoring-configuration">adjust your monitoring configuration</a>.</p>
 <hr />
 <h2 id="setting-the-perf-paranoid-value">Setting the Perf Paranoid Value<a class="headerlink" href="#setting-the-perf-paranoid-value" title="Permanent link">&para;</a></h2>
 <p><strong>Temporarily</strong> (until reboot):</p>
@@ -1046,7 +1047,7 @@ e.g., profiling a not user-owned process or perf_event_paranoid value too high.
 </code></pre></div>
 <hr />
 <h2 id="adjusting-monitoring-configuration">Adjusting Monitoring Configuration<a class="headerlink" href="#adjusting-monitoring-configuration" title="Permanent link">&para;</a></h2>
-<p>If you cannot modify the paranoid level, disable kernel/hypervisor-level measurements to allow profiling under restrictive settings (<code>&gt;= 2</code>):</p>
+<p>By default, <em>perf-cpp</em> records kernel and hypervisor activity alongside user-level activity. At paranoid level <code>2</code> or higher, the kernel rejects this for unprivileged users, so opening counters fails even for plain events like <code>instructions</code>. If you cannot lower the paranoid level, disable kernel- and hypervisor-level measurements instead:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perf</span><span class="o">::</span><span class="n">Config</span><span class="p">{};</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">config</span><span class="p">.</span><span class="n">include_kernel</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span><span class="w">       </span><span class="c1">/// Disable kernel event recording.</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">config</span><span class="p">.</span><span class="n">include_hypervisor</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span><span class="w">   </span><span class="c1">/// Disable hypervisor event recording.</span>
@@ -1056,7 +1057,7 @@ e.g., profiling a not user-owned process or perf_event_paranoid value too high.
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">event_counter</span><span class="p">.</span><span class="n">start</span><span class="p">();</span><span class="w"> </span><span class="c1">/// Will only record user-level events.</span>
 </code></pre></div>
-<p>To further restrict monitoring, exclude guest events:</p>
+<p>To also exclude guest VM events:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">config</span><span class="p">.</span><span class="n">include_guest</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span>
 </code></pre></div>
 
