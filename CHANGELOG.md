@@ -1,6 +1,6 @@
 # *perf-cpp*: Changelog
 
-## v1.0.0
+## v1.0
 - **Removed Deprecated Header Files**: All legacy `.h` forwarding headers (e.g., `perfcpp/sampler.h`, `perfcpp/event_counter.h`) have been removed. Use `.hpp` files instead.
 - **Richer Branch Stack Entries**: Each entry in a branch stack sample can now carry additional hardware-reported metadata (see the [sampling documentation](https://jmuehlig.github.io/perf-cpp/sampling/#branch-stack)):
   - **Classification** (Linux 4.15+): the type of branch instruction, i.e., conditional, unconditional, call, return, syscall, and more.
