@@ -362,6 +362,16 @@ public:
   [[nodiscard]] bool supports(std::string_view name) const;
 
   /**
+   * Probes whether the given event, metric, or time event can actually be opened on the current hardware.
+   * Unlike supports(), this attempts a real perf_event_open call to verify kernel and hardware availability.
+   * If the given name references a metric, all required events (or recursive metrics) are probed.
+   *
+   * @param name Name of an event, a metric, or a time event.
+   * @return True, if all required events can be opened on the current hardware.
+   */
+  [[nodiscard]] bool is_available(std::string_view name) const;
+
+  /**
    * @return A table containing all events, metrics, and virtual time events.
    */
   [[nodiscard]] std::string to_string() const;
@@ -424,5 +434,14 @@ private:
    * @return True if the event or metric is fully supported.
    */
   [[nodiscard]] bool supports(std::string_view name, std::unordered_set<std::string_view>& visited) const;
+
+  /**
+   * Recursive implementation of is_available(), carrying a visited set to detect cycles in metric dependencies.
+   *
+   * @param name Name being checked.
+   * @param visited Names on the current recursion path; a name already present indicates a cycle.
+   * @return True if the event or metric can be opened on the current hardware.
+   */
+  [[nodiscard]] bool is_available(std::string_view name, std::unordered_set<std::string_view>& visited) const;
 };
 }

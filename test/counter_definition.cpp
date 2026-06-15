@@ -90,6 +90,94 @@ TEST_CASE("supports", "[CounterDefinition]")
   }
 }
 
+TEST_CASE("is_available", "[CounterDefinition]")
+{
+  const auto definition = perf::CounterDefinition{};
+
+  SECTION("built-in hardware events")
+  {
+    REQUIRE(definition.is_available("instructions"));
+    REQUIRE(definition.is_available("cycles"));
+    REQUIRE(definition.is_available("cache-misses"));
+    REQUIRE(definition.is_available("cache-references"));
+    REQUIRE(definition.is_available("branches"));
+    REQUIRE(definition.is_available("branch-misses"));
+  }
+
+  SECTION("built-in software events")
+  {
+    REQUIRE(definition.is_available("cpu-clock"));
+    REQUIRE(definition.is_available("task-clock"));
+    REQUIRE(definition.is_available("page-faults"));
+    REQUIRE(definition.is_available("context-switches"));
+  }
+
+  SECTION("built-in time events")
+  {
+    REQUIRE(definition.is_available("seconds"));
+    REQUIRE(definition.is_available("milliseconds"));
+    REQUIRE(definition.is_available("microseconds"));
+    REQUIRE(definition.is_available("nanoseconds"));
+  }
+
+  SECTION("built-in metrics")
+  {
+    REQUIRE(definition.is_available("cycles-per-instruction"));
+    REQUIRE(definition.is_available("instructions-per-cycle"));
+    REQUIRE(definition.is_available("cache-hit-ratio"));
+    REQUIRE(definition.is_available("cache-miss-ratio"));
+  }
+
+  SECTION("unknown event")
+  {
+    REQUIRE_FALSE(definition.is_available("does-not-exist"));
+    REQUIRE_FALSE(definition.is_available(""));
+  }
+
+  SECTION("event registered but not openable on current hardware")
+  {
+    auto extended = perf::CounterDefinition{};
+
+    /// Type 0x7FFFFFFF is not a valid PMU type; perf_event_open will reject it.
+    extended.add("bad-hw-event", /* type = */ 0x7FFFFFFFU, /* config = */ 0UL);
+    REQUIRE(extended.supports("bad-hw-event"));
+    REQUIRE_FALSE(extended.is_available("bad-hw-event"));
+  }
+
+  SECTION("user-defined metric with available dependencies")
+  {
+    auto extended = perf::CounterDefinition{};
+    extended.add("ipc", "instructions / cycles");
+    REQUIRE(extended.is_available("ipc"));
+  }
+
+  SECTION("user-defined metric with unavailable dependencies")
+  {
+    auto extended = perf::CounterDefinition{};
+    extended.add("bad-hw-event", /* type = */ 0x7FFFFFFFU, /* config = */ 0UL);
+    extended.add("bad_metric", "`bad-hw-event` + cycles");
+    REQUIRE(extended.supports("bad_metric"));
+    REQUIRE_FALSE(extended.is_available("bad_metric"));
+  }
+
+  SECTION("mutually dependent metrics do not stack-overflow")
+  {
+    auto extended = perf::CounterDefinition{};
+    extended.add("metric_a", "metric_b + cycles");
+    extended.add("metric_b", "metric_a + instructions");
+    REQUIRE_FALSE(extended.is_available("metric_a"));
+    REQUIRE_FALSE(extended.is_available("metric_b"));
+  }
+
+  SECTION("diamond metric dependency is not mistaken for a cycle")
+  {
+    auto extended = perf::CounterDefinition{};
+    extended.add("base_metric", "cycles + instructions");
+    extended.add("composite", "base_metric + base_metric");
+    REQUIRE(extended.is_available("composite"));
+  }
+}
+
 TEST_CASE("adding new events and metrics", "[CounterDefinition]")
 {
   auto definition = perf::CounterDefinition{};

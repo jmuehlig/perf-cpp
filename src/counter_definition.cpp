@@ -1,5 +1,6 @@
 #include <fstream>
 #include <perfcpp/counter_definition.hpp>
+#include <perfcpp/exception.hpp>
 #include <perfcpp/hardware_info.hpp>
 #include <perfcpp/util/table.hpp>
 #include <sstream>
@@ -335,6 +336,50 @@ perf::CounterDefinition::supports(const std::string_view name, std::unordered_se
     result = std::all_of(
       required_counter_names.begin(), required_counter_names.end(), [this, &visited](const auto& counter_name) {
         return this->supports(std::string_view{ counter_name }, visited);
+      });
+  }
+
+  /// Remove from the path so sibling branches can visit the same name without false cycle detection.
+  visited.erase(name);
+  return result;
+}
+
+bool
+perf::CounterDefinition::is_available(const std::string_view name) const
+{
+  auto visited = std::unordered_set<std::string_view>{};
+  return this->is_available(name, visited);
+}
+
+bool
+perf::CounterDefinition::is_available(const std::string_view name, std::unordered_set<std::string_view>& visited) const
+{
+  /// Cycle detected: this name is already on the current evaluation path.
+  if (!visited.insert(name).second) {
+    return false;
+  }
+
+  auto result = false;
+
+  if (this->time_event(name).has_value()) {
+    result = true;
+  } else if (const auto event_configs = this->counter(name); !event_configs.empty()) {
+    /// Probe each hardware counter by attempting to open it via the library's own Counter class.
+    result = std::all_of(event_configs.begin(), event_configs.end(), [](const auto& event_config) {
+      auto counter = Counter{ std::get<2>(event_config) };
+      try {
+        counter.open(Config{}, /* is_live = */ false);
+        return true;
+      } catch (const CannotOpenCounterError&) {
+        return false;
+      }
+    });
+  } else if (const auto metric = this->metric(name); metric.has_value()) {
+    /// Recursively probe all events required by the metric.
+    const auto required_counter_names = std::get<1>(metric.value()).required_counter_names();
+    result = std::all_of(
+      required_counter_names.begin(), required_counter_names.end(), [this, &visited](const auto& counter_name) {
+        return this->is_available(std::string_view{ counter_name }, visited);
       });
   }
 

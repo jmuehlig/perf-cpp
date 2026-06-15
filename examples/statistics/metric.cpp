@@ -41,19 +41,20 @@ main()
   auto metrics = std::vector<std::string>{};
 
   /// Define a metric that returns the number of cache misses per cache reference:
-  if (counter_definition.supports("cache-misses") && counter_definition.supports("cache-references")) {
+  if (counter_definition.is_available("cache-misses") && counter_definition.is_available("cache-references")) {
     counter_definition.add("cache-misses-per-reference", "d_ratio(`cache-misses`, `cache-references`)");
     metrics.emplace_back("cache-misses-per-reference");
   }
 
   /// Define a metric that sums up all L1 loads:
-  if (counter_definition.supports("L1-dcache-loads") && counter_definition.supports("L1-icache-loads")) {
+  if (counter_definition.is_available("L1-dcache-loads") && counter_definition.is_available("L1-icache-loads")) {
     counter_definition.add("l1-loads", "`L1-dcache-loads` + `L1-icache-loads`");
     metrics.emplace_back("l1-loads");
   }
 
   /// Define a metric that sums up all L1 load misses:
-  if (counter_definition.supports("L1-dcache-load-misses") && counter_definition.supports("L1-icache-load-misses")) {
+  if (counter_definition.is_available("L1-dcache-load-misses") &&
+      counter_definition.is_available("L1-icache-load-misses")) {
     counter_definition.add("l1-load-misses", "sum(`L1-dcache-load-misses`, `L1-icache-load-misses`)");
     metrics.emplace_back("l1-load-misses");
   }
