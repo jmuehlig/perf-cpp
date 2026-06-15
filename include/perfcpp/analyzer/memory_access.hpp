@@ -106,10 +106,14 @@ private:
             _alloc_mab_entries += data_src->num_mhb_slots_allocated().value_or(0U);
           }
 
-          _dtlb_hits += static_cast<std::uint64_t>(sample.data_access().tlb().is_l1_hit().value_or(false));
-          _stlb_hits += static_cast<std::uint64_t>(sample.data_access().tlb().is_l2_hit().value_or(false));
-          _stlb_misses += static_cast<std::uint64_t>(!sample.data_access().tlb().is_l1_hit().value_or(true) &&
-                                                     !sample.data_access().tlb().is_l2_hit().value_or(true));
+          const auto l1_hit = sample.data_access().tlb().is_l1_hit();
+          const auto l2_hit = sample.data_access().tlb().is_l2_hit();
+          _dtlb_hits += static_cast<std::uint64_t>(l1_hit.value_or(false));
+          _stlb_hits += static_cast<std::uint64_t>(l2_hit.value_or(false));
+          /// Only classify as a miss when TLB data is present and neither level was a hit.
+          if (l1_hit.has_value() || l2_hit.has_value()) {
+            _stlb_misses += static_cast<std::uint64_t>(!l1_hit.value_or(false) && !l2_hit.value_or(false));
+          }
         }
 
         return *this;
@@ -429,19 +433,18 @@ private:
   {
   public:
     /**
-     * Operator used for performing lower_bound in (instance, data_type) pairs.
+     * Operator used for performing lower_bound in (instance address, data_types index) pairs.
      */
-    bool operator()(const std::pair<std::uintptr_t, std::reference_wrapper<DataType>>& item,
-                    const std::uintptr_t address) const
+    bool operator()(const std::pair<std::uintptr_t, std::size_t>& item, const std::uintptr_t address) const
     {
       return std::get<0>(item) <= address;
     }
 
     /**
-     * Operator used for sorting the (instance, data_type) pairs.
+     * Operator used for sorting the (instance address, data_types index) pairs.
      */
-    bool operator()(const std::pair<std::uintptr_t, std::reference_wrapper<DataType>>& left,
-                    const std::pair<std::uintptr_t, std::reference_wrapper<DataType>>& right) const
+    bool operator()(const std::pair<std::uintptr_t, std::size_t>& left,
+                    const std::pair<std::uintptr_t, std::size_t>& right) const
     {
       return std::get<0>(left) < std::get<0>(right);
     }

@@ -57,31 +57,35 @@ perf::analyzer::MemoryAccess::map(const SampleResult& sample_result)
 {
   /// Copy of all data types; the result will contain a copy since we add the samples to the members.
   auto data_types = std::vector<DataType>{};
-  data_types.reserve(this->_data_type_instances.size());
+  auto total_tag_count = std::size_t{ 0U };
+  for (const auto& [data_type, tags] : this->_data_type_instances) {
+    total_tag_count += tags.size();
+  }
+  data_types.reserve(total_tag_count);
 
-  /// List of all registered instances and the linked data type.
-  auto registered_addresses = std::vector<std::pair<std::uintptr_t, std::reference_wrapper<DataType>>>{};
+  /// List of all registered instances mapped to their index in data_types.
+  auto registered_addresses = std::vector<std::pair<std::uintptr_t, std::size_t>>{};
 
-  /// Unfold the list of (DataType, [instance addresses]) into a list of [(instance address, DataType)] to perform a
-  /// lower bound search for each sample.
+  /// Unfold the list of (DataType, [instance addresses]) into a list of [(instance address, data_types index)] to
+  /// perform a lower bound search for each sample.
   for (const auto& [data_type, tags] : this->_data_type_instances) {
 
     for (const auto& [tag, addresses] : tags) {
       auto data_typ_tag_name =
         tag.empty() ? data_type.name() : std::string{ data_type.name() }.append("::").append(tag);
 
-      /// Copy the data type, if not already done.
-      auto& tagged_data_type = data_types.emplace_back(std::move(data_typ_tag_name), data_type);
+      /// Copy the data type.
+      data_types.emplace_back(std::move(data_typ_tag_name), data_type);
+      const auto data_type_index = data_types.size() - 1U;
 
       /// Fill up the empty spaces in the data type.
-      MemoryAccess::add_empty_attributes(tagged_data_type);
+      MemoryAccess::add_empty_attributes(data_types.back());
 
       /// Unfold the instance addresses into the registered_addresses list.
-      std::transform(
-        addresses.cbegin(),
-        addresses.cend(),
-        std::back_inserter(registered_addresses),
-        [&tagged_data_type](const auto address) { return std::make_pair(address, std::ref(tagged_data_type)); });
+      std::transform(addresses.cbegin(),
+                     addresses.cend(),
+                     std::back_inserter(registered_addresses),
+                     [data_type_index](const auto address) { return std::make_pair(address, data_type_index); });
     }
   }
 
@@ -101,8 +105,9 @@ perf::analyzer::MemoryAccess::map(const SampleResult& sample_result)
       auto data_type_instance = std::lower_bound(
         registered_addresses.begin(), registered_addresses.end(), memory_address, DataTypeInstanceComp{});
 
-      /// The lower bound will find the first data type instance that is not less than the sampled memory address.
-      /// Thus, we have to check if (a) there is a potential data type instance and (b) not all elements are greater.
+      /// The comparator uses <=, so lower_bound returns the first instance whose start address is strictly greater
+      /// than the sampled address. Step back one position to get the last instance with start <= address.
+      /// If lower_bound returns begin(), every instance starts after the address and no candidate exists.
       if (data_type_instance != registered_addresses.begin()) {
 
         /// Go back to the potential instance (we found the first that is greater than the potential start address).
@@ -112,9 +117,9 @@ perf::analyzer::MemoryAccess::map(const SampleResult& sample_result)
         const auto offset = memory_address - data_type_instance->first;
 
         /// Verify that the address maps to that object instance.
-        if (offset < data_type_instance->second.get().size()) {
+        if (offset < data_types[data_type_instance->second].size()) {
           /// Find the member that the sample may linked to and append the sample to the member's samples.
-          for (auto& member : data_type_instance->second.get().members()) {
+          for (auto& member : data_types[data_type_instance->second].members()) {
             if (member.offset() <= offset && offset < (member.offset() + member.size())) {
               member.samples().emplace_back(sample);
               break;
@@ -139,13 +144,13 @@ perf::analyzer::MemoryAccess::add_empty_attributes(perf::analyzer::DataType& dat
   auto size = members.size();
   for (auto i = 0U; i < size - 1U; ++i) {
 
-    /// Check if there is a whole between two members i and i+1.
-    const auto distance = members[i + 1U].offset() - (members[i].offset() + members[i].size());
+    /// Check if there is a hole between two members i and i+1.
+    const auto current_end = members[i].offset() + members[i].size();
+    if (members[i + 1U].offset() > current_end) {
+      const auto distance = members[i + 1U].offset() - current_end;
 
-    /// If there is a whole, add a new member indicating that whole.
-    if (distance > 0U) {
-      members.insert(members.begin() + (i + 1U),
-                     DataType::Member("/* unknown */", members[i].offset() + members[i].size(), distance));
+      /// If there is a hole, add a new member indicating that hole.
+      members.insert(members.begin() + (i + 1U), DataType::Member("/* unknown */", current_end, distance));
       ++i;
       ++size;
     }
@@ -153,9 +158,9 @@ perf::analyzer::MemoryAccess::add_empty_attributes(perf::analyzer::DataType& dat
 
   /// Repeat the step for the last member and the size of the data type.
   const auto& last_member = members.back();
-  const auto distance = data_type.size() - (last_member.offset() + last_member.size());
-  if (distance > 0U) {
-    members.emplace_back("/* unknown */", last_member.offset() + last_member.size(), distance);
+  const auto last_end = last_member.offset() + last_member.size();
+  if (data_type.size() > last_end) {
+    members.emplace_back("/* unknown */", last_end, data_type.size() - last_end);
   }
 }
 
@@ -250,12 +255,12 @@ perf::analyzer::MemoryAccessResult::to_string() const
 
     if (has_software_prefetch) {
       access_type_headers.emplace_back("software prefetches",
-                                       10U + (static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 3U) +
+                                       10U + (static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 4U) +
                                          static_cast<std::uint8_t>(HardwareInfo::is_intel()),
                                        true);
 
       category_headers.emplace_back("", 1U, true);
-      category_headers.emplace_back("latency", 2U, true);
+      category_headers.emplace_back("latency", 2U + static_cast<std::uint8_t>(HardwareInfo::is_amd()), true);
       category_headers.emplace_back(
         "cache hits", static_cast<std::uint8_t>(3U + static_cast<std::uint8_t>(HardwareInfo::is_intel())), true);
       category_headers.emplace_back("RAM hits", 2U, true);
@@ -267,6 +272,7 @@ perf::analyzer::MemoryAccessResult::to_string() const
 
       row_headers.emplace_back("count");
       if (HardwareInfo::is_amd()) {
+        row_headers.emplace_back("cache");
         row_headers.emplace_back("uOp");
         row_headers.emplace_back("dTLB");
       } else {
@@ -299,14 +305,15 @@ perf::analyzer::MemoryAccessResult::to_string() const
     }
 
     if (has_store) {
-      access_type_headers.emplace_back("stores", 2U + (static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 1U), true);
+      access_type_headers.emplace_back("stores", 2U + (static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 2U), true);
 
       category_headers.emplace_back("", 1U, true);
-      category_headers.emplace_back("latency", 1U + static_cast<std::uint8_t>(HardwareInfo::is_amd()), true);
+      category_headers.emplace_back("latency", 1U + (static_cast<std::uint8_t>(HardwareInfo::is_amd()) * 2U), true);
 
       row_headers.emplace_back("count");
       if (HardwareInfo::is_amd()) {
         row_headers.emplace_back("uOp");
+        row_headers.emplace_back("cache");
         row_headers.emplace_back("dTLB");
       } else {
         row_headers.emplace_back("instr.");
@@ -359,7 +366,8 @@ perf::analyzer::MemoryAccessResult::to_string() const
       if (has_software_prefetch) {
         row << statistics.software_prefetches().count();
         if (HardwareInfo::is_amd()) {
-          row << statistics.software_prefetches().average_instruction_latency()
+          row << statistics.software_prefetches().average_cache_latency()
+              << statistics.software_prefetches().average_instruction_latency()
               << statistics.software_prefetches().average_dtlb_latency();
         } else {
           row << statistics.software_prefetches().average_cache_latency()
@@ -389,7 +397,7 @@ perf::analyzer::MemoryAccessResult::to_string() const
       if (has_store) {
         row << statistics.stores().count() << statistics.stores().average_instruction_latency();
         if (HardwareInfo::is_amd()) {
-          row << statistics.stores().average_dtlb_latency();
+          row << statistics.stores().average_cache_latency() << statistics.stores().average_dtlb_latency();
         }
       }
 
@@ -494,13 +502,13 @@ perf::analyzer::MemoryAccessResult::to_json() const
              << "\"miss\":" << statistics.software_prefetches().stlb_misses() << '}' << "},";
 
       /// Stores
-      stream << "\"stores\": {" << "\"count\":" << statistics.software_prefetches().count() << ','
+      stream << "\"stores\": {" << "\"count\":" << statistics.stores().count() << ','
 
              << "\"latency\":{" << (HardwareInfo::is_amd() ? "\"uop\":" : "\"instruction\":")
-             << statistics.software_prefetches().average_instruction_latency();
+             << statistics.stores().average_instruction_latency();
       if (HardwareInfo::is_amd()) {
-        stream << ",\"cache\":" << statistics.software_prefetches().average_cache_latency()
-               << ",\"dtlb\":" << statistics.software_prefetches().average_dtlb_latency();
+        stream << ",\"cache\":" << statistics.stores().average_cache_latency()
+               << ",\"dtlb\":" << statistics.stores().average_dtlb_latency();
       }
       stream << "}" << "}" << "}";
     }

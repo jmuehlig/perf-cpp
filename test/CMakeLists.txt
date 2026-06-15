@@ -26,6 +26,7 @@ set(PERF_CPP_TEST
         test/sample_result.cpp
         test/ibs_decoder.cpp
         test/directed_graph.cpp
+        test/memory_access.cpp
         test/sample_recording_values.cpp
 )
 
