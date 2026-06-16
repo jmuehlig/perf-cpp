@@ -83,6 +83,34 @@ target_link_libraries(your_target perf-cpp)
 add_dependencies(your_target perf-cpp-external)
 ```
 
+### Via Conan
+
+Add *perf-cpp* to your `conanfile.txt`:
+
+```ini
+[requires]
+perf-cpp/1.0.0
+
+[generators]
+CMakeDeps
+CMakeToolchain
+```
+
+Then install dependencies and configure:
+
+```bash
+conan install . --build=missing
+cmake . -B build --preset conan-release
+cmake --build build
+```
+
+Link in your `CMakeLists.txt`:
+
+```cmake
+find_package(perf-cpp REQUIRED CONFIG)
+target_link_libraries(your_target perf-cpp::perf-cpp)
+```
+
 ### Via find_package
 
 If *perf-cpp* is [installed](#installing) on your system:
