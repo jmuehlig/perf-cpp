@@ -1,7 +1,7 @@
 #include <perfcpp/exception.hpp>
 #include <perfcpp/feature.h>
 
-std::string
+std::string_view
 perf::CannotOpenCounterError::create_error_message_from_code(const std::int64_t error_code)
 {
   switch (error_code) {
@@ -37,7 +37,7 @@ perf::CannotOpenCounterError::create_error_message_from_code(const std::int64_t 
   }
 }
 
-std::string
+std::string_view
 perf::IoctlError::create_error_message_from_code(const std::int64_t error_code)
 {
   switch (error_code) {
