@@ -5,6 +5,9 @@ FetchContent_Declare(
         GIT_TAG v3.14.0
 )
 FetchContent_MakeAvailable(Catch2)
+list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
+include(Catch)
+
 
 set(PERF_CPP_TEST
         test/access_benchmark.cpp
@@ -39,3 +42,6 @@ set_target_properties(tests
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
+
+enable_testing()
+catch_discover_tests(tests)
