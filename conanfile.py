@@ -37,7 +37,7 @@ class PerfCppConan(ConanFile):
         "fPIC": True,
     }
 
-    exports_sources = "CMakeLists.txt", "src/*", "include/*", "LICENSE", ".clang-tidy"
+    exports_sources = "CMakeLists.txt", "src/*", "include/*", "cmake/*", "LICENSE", ".clang-tidy"
 
     def validate(self):
         if self.settings.os != "Linux":
@@ -45,7 +45,7 @@ class PerfCppConan(ConanFile):
                 "perf-cpp requires Linux (uses perf_event_open syscall)."
             )
 
-    def config_options(self):
+    def configure(self):
         if self.options.shared:
             self.options.rm_safe("fPIC")
 
