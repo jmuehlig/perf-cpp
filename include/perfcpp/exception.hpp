@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
 namespace perf {
 
@@ -98,7 +99,7 @@ private:
    * @param error_code Error code raised when calling perf_event_open.
    * @return Error message that can be thrown to inform the user.
    */
-  [[nodiscard]] static std::string create_error_message_from_code(std::int64_t error_code);
+  [[nodiscard]] static std::string_view create_error_message_from_code(std::int64_t error_code);
 };
 
 class CannotReadCounter final : public std::runtime_error
@@ -134,7 +135,7 @@ public:
   ~IoctlError() override = default;
 
 protected:
-  [[nodiscard]] static std::string create_error_message_from_code(std::int64_t error_code);
+  [[nodiscard]] static std::string_view create_error_message_from_code(std::int64_t error_code);
 };
 
 class CannotEnableCounter final : public IoctlError
