@@ -325,6 +325,12 @@ public:
     : std::runtime_error(std::string{ "Cannot evaluate metrics because they are mutually (cyclically) dependent. " })
   {
   }
+  explicit CannotEvaluateMetricsBecauseOfCycleError(const std::string_view metric_name)
+    : std::runtime_error(std::string{ "Cannot evaluate metric '" }
+                           .append(metric_name)
+                           .append("' because it is part of a cyclic metric dependency."))
+  {
+  }
   CannotEvaluateMetricsBecauseOfCycleError(const CannotEvaluateMetricsBecauseOfCycleError&) = default;
   CannotEvaluateMetricsBecauseOfCycleError(CannotEvaluateMetricsBecauseOfCycleError&&) noexcept = default;
   CannotEvaluateMetricsBecauseOfCycleError& operator=(const CannotEvaluateMetricsBecauseOfCycleError&) = default;

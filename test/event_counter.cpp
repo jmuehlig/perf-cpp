@@ -646,6 +646,52 @@ TEST_CASE("metric expansion", "[EventCounter]")
   }
 }
 
+TEST_CASE("cyclic metrics are rejected on add", "[EventCounter]")
+{
+  SECTION("self-referencing metric")
+  {
+    /// A formula metric referencing itself must throw instead of recursing endlessly.
+    auto counter_definition = perf::CounterDefinition{};
+    counter_definition.add("self-cycle", "'self-cycle' + 1");
+
+    auto event_counter = perf::EventCounter{ counter_definition };
+    REQUIRE_THROWS_AS(event_counter.add("self-cycle"), perf::CannotEvaluateMetricsBecauseOfCycleError);
+  }
+
+  SECTION("mutually dependent metrics")
+  {
+    /// Two formula metrics referencing each other must throw instead of recursing endlessly.
+    auto counter_definition = perf::CounterDefinition{};
+    counter_definition.add("metric-a", "'metric-b' + 1");
+    counter_definition.add("metric-b", "'metric-a' + 1");
+
+    auto event_counter = perf::EventCounter{ counter_definition };
+    REQUIRE_THROWS_AS(event_counter.add("metric-a"), perf::CannotEvaluateMetricsBecauseOfCycleError);
+  }
+
+  SECTION("acyclic metric chain still expands")
+  {
+    /// A metric referencing another metric (without a cycle) must not be mistaken for a cycle.
+    auto counter_definition = perf::CounterDefinition{};
+    counter_definition.add("base-metric", "'instructions' / 'cycles'");
+    counter_definition.add("derived-metric", "'base-metric' * 2");
+
+    auto event_counter = perf::EventCounter{ counter_definition };
+    REQUIRE_NOTHROW(event_counter.add("derived-metric"));
+  }
+
+  SECTION("batch-adding a metric and its dependency is not a cycle")
+  {
+    /// A metric that was already expanded as a dependency may be requested again in the same batch.
+    auto counter_definition = perf::CounterDefinition{};
+    counter_definition.add("base-metric", "'instructions' / 'cycles'");
+    counter_definition.add("derived-metric", "'base-metric' * 2");
+
+    auto event_counter = perf::EventCounter{ counter_definition };
+    REQUIRE_NOTHROW(event_counter.add(std::vector<std::string>{ "derived-metric", "base-metric" }));
+  }
+}
+
 TEST_CASE("ergonomics", "[EventCounter]")
 {
   SECTION("config() getter returns the construction config")

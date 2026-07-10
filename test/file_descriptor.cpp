@@ -130,6 +130,19 @@ TEST_CASE("SharedFileDescriptor construction from fd", "[SharedFileDescriptor]")
   ::close(read_fd);
 }
 
+TEST_CASE("SharedFileDescriptor construction from invalid fd stays empty", "[SharedFileDescriptor]")
+{
+  /// Invalid (negative) file descriptors must not be taken into ownership, e.g., when passing the
+  /// result of a failed ::open() directly.
+  const auto sfd = perf::util::SharedFileDescriptor{ -1 };
+  REQUIRE_FALSE(sfd.has_value());
+  REQUIRE(sfd.value() == -1);
+
+  const auto sfd_negative = perf::util::SharedFileDescriptor{ -42 };
+  REQUIRE_FALSE(sfd_negative.has_value());
+  REQUIRE(sfd_negative.value() == -1);
+}
+
 TEST_CASE("SharedFileDescriptor copy shares ownership", "[SharedFileDescriptor]")
 {
   auto [read_fd, write_fd] = make_pipe();

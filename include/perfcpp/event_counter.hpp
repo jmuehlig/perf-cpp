@@ -278,10 +278,13 @@ private:
    * @param is_visible_in_results Indicates if the added event/metric/time should be visible in the results.
    * @param events List to extend the requested events. If the event is a single hardware event, the list will
    * have one entry. If the event is a metric, the list will have multiple entries.
+   * @param expanding_metrics Stack of metrics that are currently expanded further up the call chain; used to detect
+   * cyclic metric dependencies.
    */
   void expand_to_events(const std::string& name,
                         bool is_visible_in_results,
-                        std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>& events) const;
+                        std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>& events,
+                        std::unordered_set<std::string_view>& expanding_metrics) const;
 
   /**
    * Adds the provided event to the given result vector.

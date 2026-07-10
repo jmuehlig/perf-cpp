@@ -261,6 +261,15 @@ TEST_CASE("CGroupMonitor from UniqueFileDescriptor", "[CGroupMonitor]")
   ::close(fds[0]);
 }
 
+TEST_CASE("CGroupMonitor from empty UniqueFileDescriptor is invalid", "[CGroupMonitor]")
+{
+  /// Promoting an empty (never opened) unique file descriptor must not report a valid cgroup.
+  auto ufd = perf::util::UniqueFileDescriptor{};
+  const auto monitor = perf::CGroupMonitor{ std::move(ufd) };
+
+  REQUIRE_FALSE(monitor.is_valid());
+}
+
 TEST_CASE("CGroupMonitor from path", "[CGroupMonitor]")
 {
   SECTION("valid path succeeds")

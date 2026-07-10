@@ -46,4 +46,4 @@ set_target_properties(tests
 )
 
 enable_testing()
-catch_discover_tests(tests)
+catch_discover_tests(tests WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
