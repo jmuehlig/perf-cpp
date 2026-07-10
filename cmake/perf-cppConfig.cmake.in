@@ -1,2 +1,7 @@
 @PACKAGE_INIT@
+
+## The exported target links Threads::Threads; resolve it before loading the targets file.
+include(CMakeFindDependencyMacro)
+find_dependency(Threads)
+
 include("${CMAKE_CURRENT_LIST_DIR}/perf-cppTargets.cmake")

@@ -75,5 +75,7 @@ class PerfCppConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = ["perf-cpp"]
+        ## The sampler's overflow worker runs on a std::thread.
+        self.cpp_info.system_libs = ["pthread"]
         self.cpp_info.set_property("cmake_file_name", "perf-cpp")
         self.cpp_info.set_property("cmake_target_name", "perf-cpp::perf-cpp")

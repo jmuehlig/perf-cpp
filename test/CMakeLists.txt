@@ -36,6 +36,8 @@ set(PERF_CPP_TEST
 add_executable(tests ${PERF_CPP_TEST})
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain perf-cpp)
 target_include_directories(tests PRIVATE Catch2::Catch2WithMain test)
+## Compile the tests with the library's strict warning set.
+target_compile_options(tests PRIVATE ${PERF_CPP_WARNING_FLAGS})
 ## GCC 13 fires -Wnull-dereference inside <streambuf> when Catch2 uses istreambuf_iterator; suppress on tests only.
 target_compile_options(tests PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-null-dereference>)
 set_target_properties(tests
