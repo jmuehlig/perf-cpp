@@ -1,3 +1,4 @@
+#include <array>
 #include <catch2/catch_test_macros.hpp>
 #include <fcntl.h>
 #include <perfcpp/util/shared_file_descriptor.hpp>
@@ -15,8 +16,8 @@ is_fd_open(const int fd)
 static std::pair<int, int>
 make_pipe()
 {
-  int fds[2];
-  REQUIRE(::pipe(fds) == 0);
+  std::array<std::int32_t, 2U> fds{ 0 };
+  REQUIRE(::pipe(fds.data()) == 0);
   return { fds[0], fds[1] };
 }
 
