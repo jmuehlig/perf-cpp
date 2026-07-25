@@ -2,7 +2,9 @@
 #include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <cstdint>
+#include <filesystem>
 #include <optional>
+#include <perfcpp/exception.hpp>
 #include <perfcpp/hardware_info.hpp>
 #include <perfcpp/sampler.hpp>
 #include <thread>
@@ -96,6 +98,43 @@ TEST_CASE("multi_thread_sampler_lifecycle", "[MultiThreadSampler]")
     REQUIRE_FALSE(samples.empty());
 
     REQUIRE_NOTHROW(sampler.close());
+  }
+
+  SECTION("result and perf file export after close")
+  {
+    /// close() discards the samples of every thread-local sampler, so both result() and to_perf_file() must
+    /// report the wrong call order instead of returning an empty result.
+    const auto perf_file = std::filesystem::temp_directory_path() / "perf-cpp-test-multi-thread-after-close.data";
+
+    auto sampler = perf::MultiThreadSampler{ 2U };
+    REQUIRE_NOTHROW(sampler.trigger(std::string{ "cycles" }));
+    sampler.values().logical_instruction_pointer(true);
+
+    auto exceptions = std::array<std::exception_ptr, 2>{};
+    auto t0 = spawn_catching(exceptions[0], [&]() {
+      sampler.open(0U);
+      sampler.start(0U);
+      benchmark.run();
+      sampler.stop(0U);
+    });
+    auto t1 = spawn_catching(exceptions[1], [&]() {
+      sampler.open(1U);
+      sampler.start(1U);
+      benchmark.run();
+      sampler.stop(1U);
+    });
+    t0.join();
+    t1.join();
+
+    for (const auto& ex : exceptions) {
+      REQUIRE(ex == nullptr);
+    }
+
+    REQUIRE_NOTHROW(sampler.close());
+
+    REQUIRE_THROWS_AS(sampler.result(), perf::CannotGetResultFromClosedSamplerError);
+    REQUIRE_THROWS_AS(sampler.to_perf_file(perf_file.string()), perf::CannotGetResultFromClosedSamplerError);
+    REQUIRE_FALSE(std::filesystem::exists(perf_file));
   }
 }
 
