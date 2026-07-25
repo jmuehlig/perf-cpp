@@ -94,7 +94,7 @@ perf::Sampler&
 perf::Sampler::trigger(std::vector<std::vector<Trigger>>&& list_of_triggers)
 {
   /// Deny modifying triggers after the sampler was already opened.
-  if (this->_is_opened) {
+  if (this->_state == State::Opened) {
     throw CannotChangeTriggerWhenSamplerOpenedError{};
   }
 
@@ -146,8 +146,8 @@ perf::Sampler::open()
   }
 
   /// Do not open again, if the sampler was already opened.
-  /// The is_open flag will be reset on closing the sampler.
-  if (!this->_is_opened) {
+  /// The state will be reset on closing the sampler, which allows opening the sampler again.
+  if (this->_state != State::Opened) {
     /// Clear any partial state left by a previous failed open() attempt.
     this->_sample_counter.clear();
 
@@ -181,7 +181,7 @@ perf::Sampler::open()
     }
 
     /// Mark opened after opening the counters.
-    this->_is_opened = true;
+    this->_state = State::Opened;
   }
 }
 
@@ -212,7 +212,7 @@ perf::Sampler::stop()
 void
 perf::Sampler::close() noexcept
 {
-  this->_is_opened = false;
+  this->_state = State::Closed;
 
   /// Clear all buffers and groups, including groups that may have been partially opened before open() threw.
   this->_sample_counter.clear();
@@ -454,6 +454,12 @@ perf::Sampler::to_perf_file(const std::string_view output_file_name)
 std::vector<std::vector<std::vector<std::byte>>>&
 perf::Sampler::consume_sample_data()
 {
+  /// Deny reading samples from a closed sampler: close() unmaps the sample buffers and releases the sample data,
+  /// so an empty result would silently hide the recorded samples instead of reporting the wrong call order.
+  if (this->_state == State::Closed) {
+    throw CannotGetResultFromClosedSamplerError{};
+  }
+
   /// Check if the sample data is not yet consumed (i.e., we store a vector of data equal to the size of the sample
   /// counters).
   if (this->_sample_data.size() != this->_sample_counter.size()) {

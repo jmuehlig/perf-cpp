@@ -59,6 +59,10 @@ sampler.to_perf_file("perf-cpp.data");
 sampler.close();
 ```
 
+> [!IMPORTANT]
+> Export **before** closing the sampler: `close()` discards all recorded samples.
+> Calling `to_perf_file()` on a closed sampler throws `perf::CannotGetResultFromClosedSamplerError` instead of writing an empty file (see the [sampling documentation](https://jmuehlig.github.io/perf-cpp/sampling/#reading-samples-before-closing)).
+
 ---
 
 ## Analyzing the Exported Data

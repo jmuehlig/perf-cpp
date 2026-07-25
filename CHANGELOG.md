@@ -1,5 +1,8 @@
 # *perf-cpp*: Changelog
 
+## v1.0.1 (WIP)
+- **Reading Samples From a Closed Sampler Throws**: `Sampler::close()` unmaps the sample buffers and discards all recorded samples. Calling `Sampler::result()` or `Sampler::to_perf_file()` afterwards previously returned an empty result (respectively wrote an empty perf file) without any indication that samples were dropped; both now throw `perf::CannotGetResultFromClosedSamplerError`. Read the samples after stopping, but before closing the sampler (see the [sampling documentation](https://jmuehlig.github.io/perf-cpp/sampling/#reading-samples-before-closing)). This also applies to `MultiThreadSampler` and `MultiCoreSampler`. `result()` on a sampler that was never opened still returns an empty result, since nothing was recorded in that case.
+
 ## v1.0
 - **Removed Deprecated Header Files**: All legacy `.h` forwarding headers (e.g., `perfcpp/sampler.h`, `perfcpp/event_counter.h`) have been removed. Use `.hpp` files instead.
 - **Richer Branch Stack Entries**: Each entry in a branch stack sample can now carry additional hardware-reported metadata (see the [sampling documentation](https://jmuehlig.github.io/perf-cpp/sampling/#branch-stack)):

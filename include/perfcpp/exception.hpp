@@ -382,6 +382,21 @@ public:
   ~CannotChangeTriggerWhenSamplerOpenedError() override = default;
 };
 
+class CannotGetResultFromClosedSamplerError final : public std::runtime_error
+{
+public:
+  CannotGetResultFromClosedSamplerError()
+    : std::runtime_error("The Sampler was already closed; its samples were discarded by Sampler::close(). Please call "
+                         "Sampler::result() or Sampler::to_perf_file() after stopping, but before closing the Sampler.")
+  {
+  }
+  CannotGetResultFromClosedSamplerError(const CannotGetResultFromClosedSamplerError&) = default;
+  CannotGetResultFromClosedSamplerError(CannotGetResultFromClosedSamplerError&&) noexcept = default;
+  CannotGetResultFromClosedSamplerError& operator=(const CannotGetResultFromClosedSamplerError&) = default;
+  CannotGetResultFromClosedSamplerError& operator=(CannotGetResultFromClosedSamplerError&&) noexcept = default;
+  ~CannotGetResultFromClosedSamplerError() override = default;
+};
+
 class MetricNotSupportedAsSamplingTriggerError final : public std::runtime_error
 {
 public:
