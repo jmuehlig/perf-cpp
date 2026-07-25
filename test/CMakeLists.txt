@@ -31,6 +31,10 @@ set(PERF_CPP_TEST
         test/directed_graph.cpp
         test/memory_access.cpp
         test/sample_recording_values.cpp
+        test/table.cpp
+        test/callchain_trie.cpp
+        test/flame_graph_generator.cpp
+        test/decoder.cpp
 )
 
 add_executable(tests ${PERF_CPP_TEST})

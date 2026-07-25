@@ -26,22 +26,24 @@ TEST_CASE("sample fields", "[SampleFields]")
     REQUIRE_FALSE(samples.empty());
 
     for (const auto& sample : samples) {
-      REQUIRE(sample.instruction_execution().logical_instruction_pointer().has_value());
-      REQUIRE(sample.instruction_execution().logical_instruction_pointer().value() != 0U);
+      CHECK(sample.instruction_execution().logical_instruction_pointer().has_value());
+      if (sample.instruction_execution().logical_instruction_pointer().has_value()) {
+        CHECK(sample.instruction_execution().logical_instruction_pointer().value() != 0U);
+      }
 
       /// Other fields must not be populated.
-      REQUIRE_FALSE(sample.metadata().timestamp().has_value());
-      REQUIRE_FALSE(sample.metadata().cpu_id().has_value());
-      REQUIRE_FALSE(sample.metadata().process_id().has_value());
-      REQUIRE_FALSE(sample.metadata().thread_id().has_value());
-      REQUIRE_FALSE(sample.metadata().period().has_value());
-      REQUIRE_FALSE(sample.metadata().sample_id().has_value());
-      REQUIRE_FALSE(sample.metadata().stream_id().has_value());
-      REQUIRE_FALSE(sample.instruction_execution().callchain().has_value());
-      REQUIRE_FALSE(sample.user_registers().has_value());
-      REQUIRE_FALSE(sample.kernel_registers().has_value());
-      REQUIRE_FALSE(sample.branch_stack().has_value());
-      REQUIRE_FALSE(sample.user_stack().has_value());
+      CHECK_FALSE(sample.metadata().timestamp().has_value());
+      CHECK_FALSE(sample.metadata().cpu_id().has_value());
+      CHECK_FALSE(sample.metadata().process_id().has_value());
+      CHECK_FALSE(sample.metadata().thread_id().has_value());
+      CHECK_FALSE(sample.metadata().period().has_value());
+      CHECK_FALSE(sample.metadata().sample_id().has_value());
+      CHECK_FALSE(sample.metadata().stream_id().has_value());
+      CHECK_FALSE(sample.instruction_execution().callchain().has_value());
+      CHECK_FALSE(sample.user_registers().has_value());
+      CHECK_FALSE(sample.kernel_registers().has_value());
+      CHECK_FALSE(sample.branch_stack().has_value());
+      CHECK_FALSE(sample.user_stack().has_value());
     }
 
     REQUIRE_NOTHROW(sampler.close());
@@ -62,22 +64,24 @@ TEST_CASE("sample fields", "[SampleFields]")
     REQUIRE_FALSE(samples.empty());
 
     for (const auto& sample : samples) {
-      REQUIRE(sample.metadata().timestamp().has_value());
-      REQUIRE(sample.metadata().timestamp().value() > 0U);
+      CHECK(sample.metadata().timestamp().has_value());
+      if (sample.metadata().timestamp().has_value()) {
+        CHECK(sample.metadata().timestamp().value() > 0U);
+      }
 
       /// Other fields must not be populated.
-      REQUIRE_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
-      REQUIRE_FALSE(sample.metadata().cpu_id().has_value());
-      REQUIRE_FALSE(sample.metadata().process_id().has_value());
-      REQUIRE_FALSE(sample.metadata().thread_id().has_value());
-      REQUIRE_FALSE(sample.metadata().period().has_value());
-      REQUIRE_FALSE(sample.metadata().sample_id().has_value());
-      REQUIRE_FALSE(sample.metadata().stream_id().has_value());
-      REQUIRE_FALSE(sample.instruction_execution().callchain().has_value());
-      REQUIRE_FALSE(sample.user_registers().has_value());
-      REQUIRE_FALSE(sample.kernel_registers().has_value());
-      REQUIRE_FALSE(sample.branch_stack().has_value());
-      REQUIRE_FALSE(sample.user_stack().has_value());
+      CHECK_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
+      CHECK_FALSE(sample.metadata().cpu_id().has_value());
+      CHECK_FALSE(sample.metadata().process_id().has_value());
+      CHECK_FALSE(sample.metadata().thread_id().has_value());
+      CHECK_FALSE(sample.metadata().period().has_value());
+      CHECK_FALSE(sample.metadata().sample_id().has_value());
+      CHECK_FALSE(sample.metadata().stream_id().has_value());
+      CHECK_FALSE(sample.instruction_execution().callchain().has_value());
+      CHECK_FALSE(sample.user_registers().has_value());
+      CHECK_FALSE(sample.kernel_registers().has_value());
+      CHECK_FALSE(sample.branch_stack().has_value());
+      CHECK_FALSE(sample.user_stack().has_value());
     }
 
     REQUIRE_NOTHROW(sampler.close());
@@ -98,21 +102,21 @@ TEST_CASE("sample fields", "[SampleFields]")
     REQUIRE_FALSE(samples.empty());
 
     for (const auto& sample : samples) {
-      REQUIRE(sample.metadata().cpu_id().has_value());
+      CHECK(sample.metadata().cpu_id().has_value());
 
       /// Other fields must not be populated.
-      REQUIRE_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
-      REQUIRE_FALSE(sample.metadata().timestamp().has_value());
-      REQUIRE_FALSE(sample.metadata().process_id().has_value());
-      REQUIRE_FALSE(sample.metadata().thread_id().has_value());
-      REQUIRE_FALSE(sample.metadata().period().has_value());
-      REQUIRE_FALSE(sample.metadata().sample_id().has_value());
-      REQUIRE_FALSE(sample.metadata().stream_id().has_value());
-      REQUIRE_FALSE(sample.instruction_execution().callchain().has_value());
-      REQUIRE_FALSE(sample.user_registers().has_value());
-      REQUIRE_FALSE(sample.kernel_registers().has_value());
-      REQUIRE_FALSE(sample.branch_stack().has_value());
-      REQUIRE_FALSE(sample.user_stack().has_value());
+      CHECK_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
+      CHECK_FALSE(sample.metadata().timestamp().has_value());
+      CHECK_FALSE(sample.metadata().process_id().has_value());
+      CHECK_FALSE(sample.metadata().thread_id().has_value());
+      CHECK_FALSE(sample.metadata().period().has_value());
+      CHECK_FALSE(sample.metadata().sample_id().has_value());
+      CHECK_FALSE(sample.metadata().stream_id().has_value());
+      CHECK_FALSE(sample.instruction_execution().callchain().has_value());
+      CHECK_FALSE(sample.user_registers().has_value());
+      CHECK_FALSE(sample.kernel_registers().has_value());
+      CHECK_FALSE(sample.branch_stack().has_value());
+      CHECK_FALSE(sample.user_stack().has_value());
     }
 
     REQUIRE_NOTHROW(sampler.close());
@@ -134,23 +138,27 @@ TEST_CASE("sample fields", "[SampleFields]")
 
     for (const auto& sample : samples) {
       /// Both process and thread ID come from the same PERF_SAMPLE_TID field.
-      REQUIRE(sample.metadata().process_id().has_value());
-      REQUIRE(sample.metadata().thread_id().has_value());
-      REQUIRE(sample.metadata().process_id().value() > 0U);
-      REQUIRE(sample.metadata().thread_id().value() > 0U);
+      CHECK(sample.metadata().process_id().has_value());
+      CHECK(sample.metadata().thread_id().has_value());
+      if (sample.metadata().process_id().has_value()) {
+        CHECK(sample.metadata().process_id().value() > 0U);
+      }
+      if (sample.metadata().thread_id().has_value()) {
+        CHECK(sample.metadata().thread_id().value() > 0U);
+      }
 
       /// Other fields must not be populated.
-      REQUIRE_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
-      REQUIRE_FALSE(sample.metadata().timestamp().has_value());
-      REQUIRE_FALSE(sample.metadata().cpu_id().has_value());
-      REQUIRE_FALSE(sample.metadata().period().has_value());
-      REQUIRE_FALSE(sample.metadata().sample_id().has_value());
-      REQUIRE_FALSE(sample.metadata().stream_id().has_value());
-      REQUIRE_FALSE(sample.instruction_execution().callchain().has_value());
-      REQUIRE_FALSE(sample.user_registers().has_value());
-      REQUIRE_FALSE(sample.kernel_registers().has_value());
-      REQUIRE_FALSE(sample.branch_stack().has_value());
-      REQUIRE_FALSE(sample.user_stack().has_value());
+      CHECK_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
+      CHECK_FALSE(sample.metadata().timestamp().has_value());
+      CHECK_FALSE(sample.metadata().cpu_id().has_value());
+      CHECK_FALSE(sample.metadata().period().has_value());
+      CHECK_FALSE(sample.metadata().sample_id().has_value());
+      CHECK_FALSE(sample.metadata().stream_id().has_value());
+      CHECK_FALSE(sample.instruction_execution().callchain().has_value());
+      CHECK_FALSE(sample.user_registers().has_value());
+      CHECK_FALSE(sample.kernel_registers().has_value());
+      CHECK_FALSE(sample.branch_stack().has_value());
+      CHECK_FALSE(sample.user_stack().has_value());
     }
 
     REQUIRE_NOTHROW(sampler.close());
@@ -171,22 +179,24 @@ TEST_CASE("sample fields", "[SampleFields]")
     REQUIRE_FALSE(samples.empty());
 
     for (const auto& sample : samples) {
-      REQUIRE(sample.metadata().period().has_value());
-      REQUIRE(sample.metadata().period().value() > 0U);
+      CHECK(sample.metadata().period().has_value());
+      if (sample.metadata().period().has_value()) {
+        CHECK(sample.metadata().period().value() > 0U);
+      }
 
       /// Other fields must not be populated.
-      REQUIRE_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
-      REQUIRE_FALSE(sample.metadata().timestamp().has_value());
-      REQUIRE_FALSE(sample.metadata().cpu_id().has_value());
-      REQUIRE_FALSE(sample.metadata().process_id().has_value());
-      REQUIRE_FALSE(sample.metadata().thread_id().has_value());
-      REQUIRE_FALSE(sample.metadata().sample_id().has_value());
-      REQUIRE_FALSE(sample.metadata().stream_id().has_value());
-      REQUIRE_FALSE(sample.instruction_execution().callchain().has_value());
-      REQUIRE_FALSE(sample.user_registers().has_value());
-      REQUIRE_FALSE(sample.kernel_registers().has_value());
-      REQUIRE_FALSE(sample.branch_stack().has_value());
-      REQUIRE_FALSE(sample.user_stack().has_value());
+      CHECK_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
+      CHECK_FALSE(sample.metadata().timestamp().has_value());
+      CHECK_FALSE(sample.metadata().cpu_id().has_value());
+      CHECK_FALSE(sample.metadata().process_id().has_value());
+      CHECK_FALSE(sample.metadata().thread_id().has_value());
+      CHECK_FALSE(sample.metadata().sample_id().has_value());
+      CHECK_FALSE(sample.metadata().stream_id().has_value());
+      CHECK_FALSE(sample.instruction_execution().callchain().has_value());
+      CHECK_FALSE(sample.user_registers().has_value());
+      CHECK_FALSE(sample.kernel_registers().has_value());
+      CHECK_FALSE(sample.branch_stack().has_value());
+      CHECK_FALSE(sample.user_stack().has_value());
     }
 
     REQUIRE_NOTHROW(sampler.close());
@@ -207,21 +217,21 @@ TEST_CASE("sample fields", "[SampleFields]")
     REQUIRE_FALSE(samples.empty());
 
     for (const auto& sample : samples) {
-      REQUIRE(sample.metadata().sample_id().has_value());
+      CHECK(sample.metadata().sample_id().has_value());
 
       /// Other fields must not be populated.
-      REQUIRE_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
-      REQUIRE_FALSE(sample.metadata().timestamp().has_value());
-      REQUIRE_FALSE(sample.metadata().cpu_id().has_value());
-      REQUIRE_FALSE(sample.metadata().process_id().has_value());
-      REQUIRE_FALSE(sample.metadata().thread_id().has_value());
-      REQUIRE_FALSE(sample.metadata().period().has_value());
-      REQUIRE_FALSE(sample.metadata().stream_id().has_value());
-      REQUIRE_FALSE(sample.instruction_execution().callchain().has_value());
-      REQUIRE_FALSE(sample.user_registers().has_value());
-      REQUIRE_FALSE(sample.kernel_registers().has_value());
-      REQUIRE_FALSE(sample.branch_stack().has_value());
-      REQUIRE_FALSE(sample.user_stack().has_value());
+      CHECK_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
+      CHECK_FALSE(sample.metadata().timestamp().has_value());
+      CHECK_FALSE(sample.metadata().cpu_id().has_value());
+      CHECK_FALSE(sample.metadata().process_id().has_value());
+      CHECK_FALSE(sample.metadata().thread_id().has_value());
+      CHECK_FALSE(sample.metadata().period().has_value());
+      CHECK_FALSE(sample.metadata().stream_id().has_value());
+      CHECK_FALSE(sample.instruction_execution().callchain().has_value());
+      CHECK_FALSE(sample.user_registers().has_value());
+      CHECK_FALSE(sample.kernel_registers().has_value());
+      CHECK_FALSE(sample.branch_stack().has_value());
+      CHECK_FALSE(sample.user_stack().has_value());
     }
 
     REQUIRE_NOTHROW(sampler.close());
@@ -242,21 +252,21 @@ TEST_CASE("sample fields", "[SampleFields]")
     REQUIRE_FALSE(samples.empty());
 
     for (const auto& sample : samples) {
-      REQUIRE(sample.metadata().stream_id().has_value());
+      CHECK(sample.metadata().stream_id().has_value());
 
       /// Other fields must not be populated.
-      REQUIRE_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
-      REQUIRE_FALSE(sample.metadata().timestamp().has_value());
-      REQUIRE_FALSE(sample.metadata().cpu_id().has_value());
-      REQUIRE_FALSE(sample.metadata().process_id().has_value());
-      REQUIRE_FALSE(sample.metadata().thread_id().has_value());
-      REQUIRE_FALSE(sample.metadata().period().has_value());
-      REQUIRE_FALSE(sample.metadata().sample_id().has_value());
-      REQUIRE_FALSE(sample.instruction_execution().callchain().has_value());
-      REQUIRE_FALSE(sample.user_registers().has_value());
-      REQUIRE_FALSE(sample.kernel_registers().has_value());
-      REQUIRE_FALSE(sample.branch_stack().has_value());
-      REQUIRE_FALSE(sample.user_stack().has_value());
+      CHECK_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
+      CHECK_FALSE(sample.metadata().timestamp().has_value());
+      CHECK_FALSE(sample.metadata().cpu_id().has_value());
+      CHECK_FALSE(sample.metadata().process_id().has_value());
+      CHECK_FALSE(sample.metadata().thread_id().has_value());
+      CHECK_FALSE(sample.metadata().period().has_value());
+      CHECK_FALSE(sample.metadata().sample_id().has_value());
+      CHECK_FALSE(sample.instruction_execution().callchain().has_value());
+      CHECK_FALSE(sample.user_registers().has_value());
+      CHECK_FALSE(sample.kernel_registers().has_value());
+      CHECK_FALSE(sample.branch_stack().has_value());
+      CHECK_FALSE(sample.user_stack().has_value());
     }
 
     REQUIRE_NOTHROW(sampler.close());
@@ -277,22 +287,24 @@ TEST_CASE("sample fields", "[SampleFields]")
     REQUIRE_FALSE(samples.empty());
 
     for (const auto& sample : samples) {
-      REQUIRE(sample.branch_stack().has_value());
-      REQUIRE_FALSE(sample.branch_stack()->empty());
+      CHECK(sample.branch_stack().has_value());
+      if (sample.branch_stack().has_value()) {
+        CHECK_FALSE(sample.branch_stack()->empty());
+      }
 
       /// Other fields must not be populated.
-      REQUIRE_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
-      REQUIRE_FALSE(sample.metadata().timestamp().has_value());
-      REQUIRE_FALSE(sample.metadata().cpu_id().has_value());
-      REQUIRE_FALSE(sample.metadata().process_id().has_value());
-      REQUIRE_FALSE(sample.metadata().thread_id().has_value());
-      REQUIRE_FALSE(sample.metadata().period().has_value());
-      REQUIRE_FALSE(sample.metadata().sample_id().has_value());
-      REQUIRE_FALSE(sample.metadata().stream_id().has_value());
-      REQUIRE_FALSE(sample.instruction_execution().callchain().has_value());
-      REQUIRE_FALSE(sample.user_registers().has_value());
-      REQUIRE_FALSE(sample.kernel_registers().has_value());
-      REQUIRE_FALSE(sample.user_stack().has_value());
+      CHECK_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
+      CHECK_FALSE(sample.metadata().timestamp().has_value());
+      CHECK_FALSE(sample.metadata().cpu_id().has_value());
+      CHECK_FALSE(sample.metadata().process_id().has_value());
+      CHECK_FALSE(sample.metadata().thread_id().has_value());
+      CHECK_FALSE(sample.metadata().period().has_value());
+      CHECK_FALSE(sample.metadata().sample_id().has_value());
+      CHECK_FALSE(sample.metadata().stream_id().has_value());
+      CHECK_FALSE(sample.instruction_execution().callchain().has_value());
+      CHECK_FALSE(sample.user_registers().has_value());
+      CHECK_FALSE(sample.kernel_registers().has_value());
+      CHECK_FALSE(sample.user_stack().has_value());
     }
 
     REQUIRE_NOTHROW(sampler.close());
@@ -314,26 +326,29 @@ TEST_CASE("sample fields", "[SampleFields]")
 
     for (const auto& sample : samples) {
       /// User registers are always decoded (ABI may be None for kernel-mode samples).
-      REQUIRE(sample.user_registers().has_value());
+      CHECK(sample.user_registers().has_value());
 
-      if (sample.metadata().mode() == perf::Metadata::Mode::User && sample.user_registers()->abi() != perf::ABI::None) {
-        REQUIRE(sample.user_registers()->get(perf::Registers::x86::IP).has_value());
-        REQUIRE(sample.user_registers()->get(perf::Registers::x86::IP).value() != 0);
+      if (sample.user_registers().has_value() && sample.metadata().mode() == perf::Metadata::Mode::User &&
+          sample.user_registers()->abi() != perf::ABI::None) {
+        CHECK(sample.user_registers()->get(perf::Registers::x86::IP).has_value());
+        if (sample.user_registers()->get(perf::Registers::x86::IP).has_value()) {
+          CHECK(sample.user_registers()->get(perf::Registers::x86::IP).value() != 0);
+        }
       }
 
       /// Other fields must not be populated.
-      REQUIRE_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
-      REQUIRE_FALSE(sample.metadata().timestamp().has_value());
-      REQUIRE_FALSE(sample.metadata().cpu_id().has_value());
-      REQUIRE_FALSE(sample.metadata().process_id().has_value());
-      REQUIRE_FALSE(sample.metadata().thread_id().has_value());
-      REQUIRE_FALSE(sample.metadata().period().has_value());
-      REQUIRE_FALSE(sample.metadata().sample_id().has_value());
-      REQUIRE_FALSE(sample.metadata().stream_id().has_value());
-      REQUIRE_FALSE(sample.instruction_execution().callchain().has_value());
-      REQUIRE_FALSE(sample.kernel_registers().has_value());
-      REQUIRE_FALSE(sample.branch_stack().has_value());
-      REQUIRE_FALSE(sample.user_stack().has_value());
+      CHECK_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
+      CHECK_FALSE(sample.metadata().timestamp().has_value());
+      CHECK_FALSE(sample.metadata().cpu_id().has_value());
+      CHECK_FALSE(sample.metadata().process_id().has_value());
+      CHECK_FALSE(sample.metadata().thread_id().has_value());
+      CHECK_FALSE(sample.metadata().period().has_value());
+      CHECK_FALSE(sample.metadata().sample_id().has_value());
+      CHECK_FALSE(sample.metadata().stream_id().has_value());
+      CHECK_FALSE(sample.instruction_execution().callchain().has_value());
+      CHECK_FALSE(sample.kernel_registers().has_value());
+      CHECK_FALSE(sample.branch_stack().has_value());
+      CHECK_FALSE(sample.user_stack().has_value());
     }
 
     REQUIRE_NOTHROW(sampler.close());
@@ -355,27 +370,29 @@ TEST_CASE("sample fields", "[SampleFields]")
 
     for (const auto& sample : samples) {
       /// Kernel registers are always decoded (ABI may be None for user-mode samples).
-      REQUIRE(sample.kernel_registers().has_value());
+      CHECK(sample.kernel_registers().has_value());
 
-      if (sample.metadata().mode() == perf::Metadata::Mode::Kernel &&
+      if (sample.kernel_registers().has_value() && sample.metadata().mode() == perf::Metadata::Mode::Kernel &&
           sample.kernel_registers()->abi() != perf::ABI::None) {
-        REQUIRE(sample.kernel_registers()->get(perf::Registers::x86::IP).has_value());
-        REQUIRE(sample.kernel_registers()->get(perf::Registers::x86::IP).value() != 0);
+        CHECK(sample.kernel_registers()->get(perf::Registers::x86::IP).has_value());
+        if (sample.kernel_registers()->get(perf::Registers::x86::IP).has_value()) {
+          CHECK(sample.kernel_registers()->get(perf::Registers::x86::IP).value() != 0);
+        }
       }
 
       /// Other fields must not be populated.
-      REQUIRE_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
-      REQUIRE_FALSE(sample.metadata().timestamp().has_value());
-      REQUIRE_FALSE(sample.metadata().cpu_id().has_value());
-      REQUIRE_FALSE(sample.metadata().process_id().has_value());
-      REQUIRE_FALSE(sample.metadata().thread_id().has_value());
-      REQUIRE_FALSE(sample.metadata().period().has_value());
-      REQUIRE_FALSE(sample.metadata().sample_id().has_value());
-      REQUIRE_FALSE(sample.metadata().stream_id().has_value());
-      REQUIRE_FALSE(sample.instruction_execution().callchain().has_value());
-      REQUIRE_FALSE(sample.user_registers().has_value());
-      REQUIRE_FALSE(sample.branch_stack().has_value());
-      REQUIRE_FALSE(sample.user_stack().has_value());
+      CHECK_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
+      CHECK_FALSE(sample.metadata().timestamp().has_value());
+      CHECK_FALSE(sample.metadata().cpu_id().has_value());
+      CHECK_FALSE(sample.metadata().process_id().has_value());
+      CHECK_FALSE(sample.metadata().thread_id().has_value());
+      CHECK_FALSE(sample.metadata().period().has_value());
+      CHECK_FALSE(sample.metadata().sample_id().has_value());
+      CHECK_FALSE(sample.metadata().stream_id().has_value());
+      CHECK_FALSE(sample.instruction_execution().callchain().has_value());
+      CHECK_FALSE(sample.user_registers().has_value());
+      CHECK_FALSE(sample.branch_stack().has_value());
+      CHECK_FALSE(sample.user_stack().has_value());
     }
 
     REQUIRE_NOTHROW(sampler.close());
@@ -398,22 +415,22 @@ TEST_CASE("sample fields", "[SampleFields]")
     for (const auto& sample : samples) {
       /// Callchain may be absent if the recorded depth is zero for that sample.
       if (sample.instruction_execution().callchain().has_value()) {
-        REQUIRE_FALSE(sample.instruction_execution().callchain()->empty());
+        CHECK_FALSE(sample.instruction_execution().callchain()->empty());
       }
 
       /// Other fields must not be populated.
-      REQUIRE_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
-      REQUIRE_FALSE(sample.metadata().timestamp().has_value());
-      REQUIRE_FALSE(sample.metadata().cpu_id().has_value());
-      REQUIRE_FALSE(sample.metadata().process_id().has_value());
-      REQUIRE_FALSE(sample.metadata().thread_id().has_value());
-      REQUIRE_FALSE(sample.metadata().period().has_value());
-      REQUIRE_FALSE(sample.metadata().sample_id().has_value());
-      REQUIRE_FALSE(sample.metadata().stream_id().has_value());
-      REQUIRE_FALSE(sample.user_registers().has_value());
-      REQUIRE_FALSE(sample.kernel_registers().has_value());
-      REQUIRE_FALSE(sample.branch_stack().has_value());
-      REQUIRE_FALSE(sample.user_stack().has_value());
+      CHECK_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
+      CHECK_FALSE(sample.metadata().timestamp().has_value());
+      CHECK_FALSE(sample.metadata().cpu_id().has_value());
+      CHECK_FALSE(sample.metadata().process_id().has_value());
+      CHECK_FALSE(sample.metadata().thread_id().has_value());
+      CHECK_FALSE(sample.metadata().period().has_value());
+      CHECK_FALSE(sample.metadata().sample_id().has_value());
+      CHECK_FALSE(sample.metadata().stream_id().has_value());
+      CHECK_FALSE(sample.user_registers().has_value());
+      CHECK_FALSE(sample.kernel_registers().has_value());
+      CHECK_FALSE(sample.branch_stack().has_value());
+      CHECK_FALSE(sample.user_stack().has_value());
     }
 
     /// At least some samples must carry a non-empty callchain.
@@ -441,22 +458,22 @@ TEST_CASE("sample fields", "[SampleFields]")
     for (const auto& sample : samples) {
       /// User stack may be absent if the dynamic stack size is zero for that sample.
       if (sample.user_stack().has_value()) {
-        REQUIRE_FALSE(sample.user_stack()->empty());
+        CHECK_FALSE(sample.user_stack()->empty());
       }
 
       /// Other fields must not be populated.
-      REQUIRE_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
-      REQUIRE_FALSE(sample.metadata().timestamp().has_value());
-      REQUIRE_FALSE(sample.metadata().cpu_id().has_value());
-      REQUIRE_FALSE(sample.metadata().process_id().has_value());
-      REQUIRE_FALSE(sample.metadata().thread_id().has_value());
-      REQUIRE_FALSE(sample.metadata().period().has_value());
-      REQUIRE_FALSE(sample.metadata().sample_id().has_value());
-      REQUIRE_FALSE(sample.metadata().stream_id().has_value());
-      REQUIRE_FALSE(sample.instruction_execution().callchain().has_value());
-      REQUIRE_FALSE(sample.user_registers().has_value());
-      REQUIRE_FALSE(sample.kernel_registers().has_value());
-      REQUIRE_FALSE(sample.branch_stack().has_value());
+      CHECK_FALSE(sample.instruction_execution().logical_instruction_pointer().has_value());
+      CHECK_FALSE(sample.metadata().timestamp().has_value());
+      CHECK_FALSE(sample.metadata().cpu_id().has_value());
+      CHECK_FALSE(sample.metadata().process_id().has_value());
+      CHECK_FALSE(sample.metadata().thread_id().has_value());
+      CHECK_FALSE(sample.metadata().period().has_value());
+      CHECK_FALSE(sample.metadata().sample_id().has_value());
+      CHECK_FALSE(sample.metadata().stream_id().has_value());
+      CHECK_FALSE(sample.instruction_execution().callchain().has_value());
+      CHECK_FALSE(sample.user_registers().has_value());
+      CHECK_FALSE(sample.kernel_registers().has_value());
+      CHECK_FALSE(sample.branch_stack().has_value());
     }
 
     /// At least some samples must carry user stack bytes.

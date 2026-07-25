@@ -133,7 +133,7 @@ TEST_CASE("multi_thread_sampling", "[MultiThreadSampler]")
     const auto samples = sampler.result();
     REQUIRE_FALSE(samples.empty());
     for (const auto& sample : samples) {
-      REQUIRE(sample.instruction_execution().logical_instruction_pointer().has_value());
+      CHECK(sample.instruction_execution().logical_instruction_pointer().has_value());
     }
 
     REQUIRE_NOTHROW(sampler.close());
@@ -167,8 +167,8 @@ TEST_CASE("multi_thread_sampling", "[MultiThreadSampler]")
 
     auto last_timestamp = std::optional<std::uint64_t>{ std::nullopt };
     for (const auto& sample : samples) {
-      REQUIRE(sample.metadata().timestamp().has_value());
-      if (last_timestamp.has_value()) {
+      CHECK(sample.metadata().timestamp().has_value());
+      if (last_timestamp.has_value() && sample.metadata().timestamp().has_value()) {
         CHECK(sample.metadata().timestamp().value() >= last_timestamp.value());
       }
       last_timestamp = sample.metadata().timestamp();
