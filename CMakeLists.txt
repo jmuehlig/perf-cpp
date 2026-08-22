@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(libperf-cpp VERSION 1.0.0 LANGUAGES CXX)
+project(libperf-cpp VERSION 1.1.0 LANGUAGES CXX)
 
 # perf-cpp requires complete std::from_chars support (GCC 11+, Clang 14+).
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11)

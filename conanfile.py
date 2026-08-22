@@ -7,8 +7,8 @@ import os
 
 class PerfCppConan(ConanFile):
     name = "perf-cpp"
-    version = "1.0.0"
-    license = "LGPL-3.0-only"
+    version = "1.1.0"
+    license = "Apache-2.0"
     author = "Jan Muehlig"
     url = "https://github.com/jmuehlig/perf-cpp"
     homepage = "https://github.com/jmuehlig/perf-cpp"
