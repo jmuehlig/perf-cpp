@@ -28,7 +28,9 @@ read_own_cgroup_path()
 
 TEST_CASE("configuration", "[EventCounter]")
 {
-  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
+  /// Shared across SECTIONs: Catch2 re-runs this TEST_CASE body once per SECTION, so a non-static instance
+  /// would re-allocate and re-shuffle this multi-hundred-MB benchmark for every sibling SECTION.
+  static auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
 
   SECTION("non-existing counter")
   {
@@ -77,7 +79,9 @@ TEST_CASE("configuration", "[EventCounter]")
 
 TEST_CASE("counter scheduling", "[EventCounter]")
 {
-  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
+  /// Shared across SECTIONs: Catch2 re-runs this TEST_CASE body once per SECTION, so a non-static instance
+  /// would re-allocate and re-shuffle this multi-hundred-MB benchmark for every sibling SECTION.
+  static auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
 
   SECTION("same hardware counter")
   {
@@ -89,10 +93,16 @@ TEST_CASE("counter scheduling", "[EventCounter]")
     readonly_benchmark.run();
     event_counter.stop();
 
-    REQUIRE(event_counter.result().get("cycles").has_value());
-    REQUIRE(event_counter.result().get("instructions").has_value());
-    REQUIRE(event_counter.result().get("instructions").value() > 100000000.);
-    REQUIRE(event_counter.result().get("instructions").value() < 140000000.);
+    /// Normalize by access count instead of asserting an absolute instruction count: the raw total is a function of
+    /// AccessBenchmark::run()'s codegen (compiler, -O level) and would break on unrelated toolchain changes.
+    const auto result = event_counter.result(readonly_benchmark.size());
+    REQUIRE(result.get("cycles").has_value());
+    REQUIRE(result.get("instructions").has_value());
+
+    /// Each access executes a handful of instructions (index load, cache-line load, add, loop bookkeeping); this is
+    /// a generous, architecture-agnostic sanity band, not a precise codegen expectation.
+    REQUIRE(result.get("instructions").value() > 1.);
+    REQUIRE(result.get("instructions").value() < 20.);
   }
 
   SECTION("separate hardware counter")
@@ -105,10 +115,12 @@ TEST_CASE("counter scheduling", "[EventCounter]")
     readonly_benchmark.run();
     event_counter.stop();
 
-    REQUIRE(event_counter.result().get("cycles").has_value());
-    REQUIRE(event_counter.result().get("instructions").has_value());
-    REQUIRE(event_counter.result().get("instructions").value() > 100000000.);
-    REQUIRE(event_counter.result().get("instructions").value() < 140000000.);
+    /// See "same hardware counter" above for why this is normalized per access rather than an absolute bound.
+    const auto result = event_counter.result(readonly_benchmark.size());
+    REQUIRE(result.get("cycles").has_value());
+    REQUIRE(result.get("instructions").has_value());
+    REQUIRE(result.get("instructions").value() > 1.);
+    REQUIRE(result.get("instructions").value() < 20.);
   }
 
   SECTION("counter with pmu")
@@ -180,7 +192,9 @@ TEST_CASE("fixed counters bypass the generic PMC limit", "[EventCounter]")
 
 TEST_CASE("counting", "[EventCounter]")
 {
-  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
+  /// Shared across SECTIONs: Catch2 re-runs this TEST_CASE body once per SECTION, so a non-static instance
+  /// would re-allocate and re-shuffle this multi-hundred-MB benchmark for every sibling SECTION.
+  static auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
 
   SECTION("instructions only")
   {
@@ -191,10 +205,13 @@ TEST_CASE("counting", "[EventCounter]")
     readonly_benchmark.run();
     event_counter.stop();
 
-    REQUIRE_FALSE(event_counter.result().get("cycles").has_value());
-    REQUIRE(event_counter.result().get("instructions").has_value());
-    REQUIRE(event_counter.result().get("instructions").value() > 100000000.);
-    REQUIRE(event_counter.result().get("instructions").value() < 140000000.);
+    /// See "same hardware counter" in the "counter scheduling" TEST_CASE for why this is normalized per access
+    /// rather than an absolute instruction bound.
+    const auto result = event_counter.result(readonly_benchmark.size());
+    REQUIRE_FALSE(result.get("cycles").has_value());
+    REQUIRE(result.get("instructions").has_value());
+    REQUIRE(result.get("instructions").value() > 1.);
+    REQUIRE(result.get("instructions").value() < 20.);
   }
 
   SECTION("re-open")
@@ -272,21 +289,6 @@ TEST_CASE("counting", "[EventCounter]")
       REQUIRE_THROWS(event_counter.add("cycles"));
       event_counter.close();
     }
-  }
-
-  SECTION("instructions only")
-  {
-    auto event_counter = perf::EventCounter{};
-    event_counter.add("instructions");
-
-    event_counter.start();
-    readonly_benchmark.run();
-    event_counter.stop();
-
-    REQUIRE_FALSE(event_counter.result().get("cycles").has_value());
-    REQUIRE(event_counter.result().get("instructions").has_value());
-    REQUIRE(event_counter.result().get("instructions").value() > 100000000.);
-    REQUIRE(event_counter.result().get("instructions").value() < 140000000.);
   }
 
   SECTION("cache pattern increasing workload")
@@ -465,7 +467,9 @@ TEST_CASE("EventCounter with cgroup", "[EventCounter]")
 
 TEST_CASE("lifecycle", "[EventCounter]")
 {
-  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
+  /// Shared across SECTIONs: Catch2 re-runs this TEST_CASE body once per SECTION, so a non-static instance
+  /// would re-allocate and re-shuffle this multi-hundred-MB benchmark for every sibling SECTION.
+  static auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
 
   SECTION("start without prior open")
   {
@@ -507,7 +511,9 @@ TEST_CASE("lifecycle", "[EventCounter]")
 
 TEST_CASE("metric expansion", "[EventCounter]")
 {
-  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
+  /// Shared across SECTIONs: Catch2 re-runs this TEST_CASE body once per SECTION, so a non-static instance
+  /// would re-allocate and re-shuffle this multi-hundred-MB benchmark for every sibling SECTION.
+  static auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
 
   SECTION("metric alone hides its required events")
   {
@@ -643,6 +649,52 @@ TEST_CASE("metric expansion", "[EventCounter]")
     REQUIRE(names[0] == "instructions");
     REQUIRE(names[1] == "cycles");
     REQUIRE(names[2] == "instructions-per-cycle");
+  }
+}
+
+TEST_CASE("cyclic metrics are rejected on add", "[EventCounter]")
+{
+  SECTION("self-referencing metric")
+  {
+    /// A formula metric referencing itself must throw instead of recursing endlessly.
+    auto counter_definition = perf::CounterDefinition{};
+    counter_definition.add("self-cycle", "'self-cycle' + 1");
+
+    auto event_counter = perf::EventCounter{ counter_definition };
+    REQUIRE_THROWS_AS(event_counter.add("self-cycle"), perf::CannotEvaluateMetricsBecauseOfCycleError);
+  }
+
+  SECTION("mutually dependent metrics")
+  {
+    /// Two formula metrics referencing each other must throw instead of recursing endlessly.
+    auto counter_definition = perf::CounterDefinition{};
+    counter_definition.add("metric-a", "'metric-b' + 1");
+    counter_definition.add("metric-b", "'metric-a' + 1");
+
+    auto event_counter = perf::EventCounter{ counter_definition };
+    REQUIRE_THROWS_AS(event_counter.add("metric-a"), perf::CannotEvaluateMetricsBecauseOfCycleError);
+  }
+
+  SECTION("acyclic metric chain still expands")
+  {
+    /// A metric referencing another metric (without a cycle) must not be mistaken for a cycle.
+    auto counter_definition = perf::CounterDefinition{};
+    counter_definition.add("base-metric", "'instructions' / 'cycles'");
+    counter_definition.add("derived-metric", "'base-metric' * 2");
+
+    auto event_counter = perf::EventCounter{ counter_definition };
+    REQUIRE_NOTHROW(event_counter.add("derived-metric"));
+  }
+
+  SECTION("batch-adding a metric and its dependency is not a cycle")
+  {
+    /// A metric that was already expanded as a dependency may be requested again in the same batch.
+    auto counter_definition = perf::CounterDefinition{};
+    counter_definition.add("base-metric", "'instructions' / 'cycles'");
+    counter_definition.add("derived-metric", "'base-metric' * 2");
+
+    auto event_counter = perf::EventCounter{ counter_definition };
+    REQUIRE_NOTHROW(event_counter.add(std::vector<std::string>{ "derived-metric", "base-metric" }));
   }
 }
 

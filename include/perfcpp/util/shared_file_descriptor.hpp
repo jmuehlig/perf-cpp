@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <atomic>
 #include <cstdint>
 #include <unistd.h>
@@ -16,9 +17,10 @@ class SharedFileDescriptor
 public:
   SharedFileDescriptor() noexcept = default;
 
+  /// Invalid (negative) file descriptors are not taken into ownership; they result in an empty state.
   explicit SharedFileDescriptor(const int file_descriptor)
-    : _ref_count(new std::atomic<std::uint64_t>{ 1U })
-    , _file_descriptor(file_descriptor)
+    : _ref_count(file_descriptor > -1 ? new std::atomic<std::uint64_t>{ 1U } : nullptr)
+    , _file_descriptor(std::max(file_descriptor, -1))
   {
   }
 

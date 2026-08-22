@@ -1,5 +1,19 @@
 # *perf-cpp*: Changelog
 
+## v1.1.0
+- **License**: *perf-cpp* is now licensed under the Apache License 2.0 (instead of LGPL-3.0), making it easier to use in both open-source and commercial projects.
+- `Sampler::close()` unmaps the sample buffers and discards all recorded samples. Calling `Sampler::result()` or `Sampler::to_perf_file()` afterwards previously returned an empty result (respectively wrote an empty perf file) without any indication that samples were dropped; both now throw `perf::CannotGetResultFromClosedSamplerError`. Read the samples after stopping, but before closing the sampler (see the [sampling documentation](https://jmuehlig.github.io/perf-cpp/sampling/#reading-samples-before-closing)). This also applies to `MultiThreadSampler` and `MultiCoreSampler`. `result()` on a sampler that was never opened still returns an empty result, since nothing was recorded in that case.
+- Added `CounterDefinition::is_available(name)`, which checks whether an event, metric, or time event can actually be opened on the current hardware by attempting a real `perf_event_open()` call (`supports()` only checks whether it's defined). For metrics, all required events, including recursively referenced ones, are probed too.
+- `cmake` now fails immediately with a clear error if the compiler is older than GCC 11 or Clang 14, instead of failing deep inside compilation.
+- `create_error_message_from_code()` returns a `std::string_view` instead of an allocated `std::string`, since the caller only ever appends it into another string (thanks to [@horenmar](https://github.com/horenmar), see [PR #13](https://github.com/jmuehlig/perf-cpp/pull/13)).
+- The test binary is now registered as a CTest test, so it can be run via `ctest` (including in parallel with `ctest -j`), with failing and skipped tests reported separately (thanks to [@horenmar](https://github.com/horenmar), see [PR #14](https://github.com/jmuehlig/perf-cpp/pull/14)).
+- **Bugfixes**:
+  - `EventCounter::add()` threw itself into infinite recursion when metrics referenced each other cyclically. It now throws `CannotEvaluateMetricsBecauseOfCycleError`, naming the offending metric.
+  - `SharedFileDescriptor` built from an invalid (negative) file descriptor, e.g. an invalid cgroup descriptor, used to report itself as valid anyway. `SharedFileDescriptor{-1}` no longer takes ownership.
+  - `EventCounter::close()` and `Sampler::close()` clean up groups and buffers even when `open()` threw partway through, so a failed open no longer leaks file descriptors.
+  - The global `CounterDefinition` instance is now allocated lazily and thread-safely.
+  - `CounterDefinition::metric_names()` and `time_event_names()` no longer return duplicate names when the same metric or time event exists in both a child instance and its parent.
+
 ## v1.0
 - **Removed Deprecated Header Files**: All legacy `.h` forwarding headers (e.g., `perfcpp/sampler.h`, `perfcpp/event_counter.h`) have been removed. Use `.hpp` files instead.
 - **Richer Branch Stack Entries**: Each entry in a branch stack sample can now carry additional hardware-reported metadata (see the [sampling documentation](https://jmuehlig.github.io/perf-cpp/sampling/#branch-stack)):

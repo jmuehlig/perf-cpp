@@ -89,10 +89,16 @@ add_executable(counter-definition EXCLUDE_FROM_ALL examples/counter_definition.c
 target_link_libraries(counter-definition perf-cpp)
 
 ## One target for all examples
-add_custom_target(examples)
-add_dependencies(examples
+set(PERF_CPP_EXAMPLE_TARGETS
         single-thread-statistics inherit-thread-statistics multi-thread-statistics multi-cpu-statistics multi-process-statistics cgroup-statistics
         metric rapl-statistics instruction-pointer-sampling counter-sampling branch-sampling
         memory-address-sampling register-sampling multi-thread-sampling multi-cpu-sampling
         multi-event-sampling context-switch-sampling
         memory-access-analyzer live-events flame-graph perf-record counter-definition)
+add_custom_target(examples)
+add_dependencies(examples ${PERF_CPP_EXAMPLE_TARGETS})
+
+## Compile every example with the library's strict warning set.
+foreach(example_target IN LISTS PERF_CPP_EXAMPLE_TARGETS)
+    target_compile_options(${example_target} PRIVATE ${PERF_CPP_WARNING_FLAGS})
+endforeach()

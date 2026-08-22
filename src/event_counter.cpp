@@ -42,7 +42,8 @@ perf::EventCounter::add(const std::string& event_name, const Schedule schedule)
   }
 
   auto events = std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>{};
-  this->expand_to_events(event_name, true, events);
+  auto expanding_metrics = std::unordered_set<std::string_view>{};
+  this->expand_to_events(event_name, true, events, expanding_metrics);
 
   /// Schedule the events to hardware counters.
   this->schedule(std::move(events), schedule);
@@ -57,10 +58,11 @@ perf::EventCounter::add(const std::vector<std::string>& event_names, const Sched
 
   auto events = std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>{};
   events.reserve(8U);
+  auto expanding_metrics = std::unordered_set<std::string_view>{};
 
   /// Unfold all events.
   for (const auto& event_name : event_names) {
-    this->expand_to_events(event_name, true, events);
+    this->expand_to_events(event_name, true, events, expanding_metrics);
   }
 
   /// Schedule the events to hardware counters.
@@ -70,7 +72,8 @@ perf::EventCounter::add(const std::vector<std::string>& event_names, const Sched
 void
 perf::EventCounter::expand_to_events(const std::string& name,
                                      const bool is_visible_in_results,
-                                     std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>& events) const
+                                     std::vector<std::pair<RequestedEvent, std::optional<CounterConfig>>>& events,
+                                     std::unordered_set<std::string_view>& expanding_metrics) const
 {
   /// If the event name contains a '/', it might be in the format "pmu/event". Probe the event list for this patter.
   /// However, if we cannot detect a (pmu, event) pair, it might be metric or just an event containing a slash.
@@ -105,7 +108,14 @@ perf::EventCounter::expand_to_events(const std::string& name,
   else if (const auto metric = this->_counter_definition.metric(name); metric.has_value()) {
     const auto& [metric_name, metric_instance] = metric.value();
 
+    /// A metric that is already expanded further up the call chain indicates a cyclic metric dependency.
+    if (const auto metrics_iterator = expanding_metrics.find(metric_name);
+        metrics_iterator != expanding_metrics.end()) {
+      throw CannotEvaluateMetricsBecauseOfCycleError{ metric_name };
+    }
+
     /// Add all hardware counters required by the metric..
+    expanding_metrics.insert(metric_name);
     for (auto& dependent_event_name : metric_instance.required_counter_names()) {
 
       /// Check if the dependent event is already in the list.
@@ -113,9 +123,12 @@ perf::EventCounter::expand_to_events(const std::string& name,
             return std::get<0>(requested_event).event_name() == dependent_event_name;
           }) == events.end()) {
         /// Unfold dependent events recursively.
-        this->expand_to_events(dependent_event_name, false, events);
+        this->expand_to_events(dependent_event_name, false, events, expanding_metrics);
       }
     }
+
+    /// The metric is fully expanded; remove it so that later legitimate references are not mistaken for a cycle.
+    expanding_metrics.erase(metric_name);
 
     /// If all of the metric's events could be added (i.e., no exception was thrown), add the metric itself.
     events.emplace_back(RequestedEvent{ metric_name, is_visible_in_results, RequestedEvent::Type::Metric },

@@ -7,8 +7,8 @@ import os
 
 class PerfCppConan(ConanFile):
     name = "perf-cpp"
-    version = "1.0.0"
-    license = "LGPL-3.0-only"
+    version = "1.1.0"
+    license = "Apache-2.0"
     author = "Jan Muehlig"
     url = "https://github.com/jmuehlig/perf-cpp"
     homepage = "https://github.com/jmuehlig/perf-cpp"
@@ -75,5 +75,7 @@ class PerfCppConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = ["perf-cpp"]
+        ## The sampler's overflow worker runs on a std::thread.
+        self.cpp_info.system_libs = ["pthread"]
         self.cpp_info.set_property("cmake_file_name", "perf-cpp")
         self.cpp_info.set_property("cmake_target_name", "perf-cpp::perf-cpp")

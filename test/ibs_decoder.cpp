@@ -2,7 +2,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <perfcpp/hardware_info.hpp>
 #include <perfcpp/sample/ibs_decoder.hpp>
 #include <vector>
 
@@ -17,10 +16,6 @@ make_raw(const std::size_t total_size)
 
 TEST_CASE("IBSFetchDecoder - 28-byte buffer has only three base MSRs", "[ibs][fetch]")
 {
-  if (!perf::HardwareInfo::is_amd_ibs_supported()) {
-    SKIP("AMD IBS is not available on this hardware.");
-  }
-
   /// 4 caps + 3 * 8 = 28 bytes; extended MSR not present.
   auto raw = make_raw(28U);
   const auto decoder = perf::IBSFetchDecoder{ raw };
@@ -32,10 +27,6 @@ TEST_CASE("IBSFetchDecoder - 28-byte buffer has only three base MSRs", "[ibs][fe
 
 TEST_CASE("IBSFetchDecoder - 36-byte buffer includes extended MSR with known latency", "[ibs][fetch]")
 {
-  if (!perf::HardwareInfo::is_amd_ibs_supported()) {
-    SKIP("AMD IBS is not available on this hardware.");
-  }
-
   /// 4 caps + 4 * 8 = 36 bytes; extended MSR present at byte 28.
   auto raw = make_raw(36U);
   const std::uint16_t expected = 42U;
@@ -51,10 +42,6 @@ TEST_CASE("IBSFetchDecoder - 36-byte buffer includes extended MSR with known lat
 
 TEST_CASE("IBSFetchDecoder - truncated buffer marks base data incomplete", "[ibs][fetch]")
 {
-  if (!perf::HardwareInfo::is_amd_ibs_supported()) {
-    SKIP("AMD IBS is not available on this hardware.");
-  }
-
   /// Only a few bytes — base MSRs are not fully present.
   auto raw = make_raw(10U);
   const auto decoder = perf::IBSFetchDecoder{ raw };
@@ -66,10 +53,6 @@ TEST_CASE("IBSFetchDecoder - truncated buffer marks base data incomplete", "[ibs
 
 TEST_CASE("IBSOpDecoder - 60-byte buffer has seven base MSRs, no branch target", "[ibs][op]")
 {
-  if (!perf::HardwareInfo::is_amd_ibs_supported()) {
-    SKIP("AMD IBS is not available on this hardware.");
-  }
-
   /// 4 caps + 7 * 8 = 60 bytes; branch target MSR not present.
   auto raw = make_raw(60U);
   const auto decoder = perf::IBSOpDecoder{ raw };
@@ -81,10 +64,6 @@ TEST_CASE("IBSOpDecoder - 60-byte buffer has seven base MSRs, no branch target",
 
 TEST_CASE("IBSOpDecoder - 68-byte buffer includes branch target with known address", "[ibs][op]")
 {
-  if (!perf::HardwareInfo::is_amd_ibs_supported()) {
-    SKIP("AMD IBS is not available on this hardware.");
-  }
-
   /// 4 caps + 8 * 8 = 68 bytes; branch target MSR present at byte 60.
   auto raw = make_raw(68U);
   const std::uintptr_t expected = 0xDEADBEEFUL;
@@ -100,10 +79,6 @@ TEST_CASE("IBSOpDecoder - 68-byte buffer includes branch target with known addre
 
 TEST_CASE("IBSOpDecoder - truncated buffer marks base data incomplete", "[ibs][op]")
 {
-  if (!perf::HardwareInfo::is_amd_ibs_supported()) {
-    SKIP("AMD IBS is not available on this hardware.");
-  }
-
   auto raw = make_raw(10U);
   const auto decoder = perf::IBSOpDecoder{ raw };
 

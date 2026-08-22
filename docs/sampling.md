@@ -53,6 +53,28 @@ sampler.close();
 
 `sampler.result()` returns the samples sorted by timestamp (if timestamps are recorded); pass `sampler.result(false)` to keep the raw buffer order.
 
+### Reading Samples Before Closing
+`sampler.close()` unmaps the sample buffers and **discards all recorded samples**.
+Read the samples before closing, either via `sampler.result()` or `sampler.to_perf_file()`; calling either one on a closed sampler throws `perf::CannotGetResultFromClosedSamplerError`.
+
+```cpp
+sampler.stop();
+
+const auto result = sampler.result();   /// Read the samples ...
+sampler.close();                        /// ... then release the buffers.
+
+sampler.result();                       /// Throws CannotGetResultFromClosedSamplerError.
+```
+
+The returned `perf::SampleResult` is independent of the sampler and stays valid after closing (it only borrows event names from the `perf::CounterDefinition`, not from the sampler).
+Note that this differs from `perf::EventCounter`, whose `result()` remains available after `close()`: an event counter holds a handful of counter values, whereas a sampler holds the entire recorded sample stream, which `close()` releases.
+
+A closed sampler is not dead – opening it again starts a new recording:
+
+```cpp
+sampler.start();    /// Re-opens the sampler; samples of the previous run are gone.
+```
+
 Example output:
 
     Time = 124853764466887 | IP = 0x5794c991990c

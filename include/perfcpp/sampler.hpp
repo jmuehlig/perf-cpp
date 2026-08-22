@@ -450,23 +450,47 @@ public:
   void stop();
 
   /**
-   * Closes the sampler, including mapped buffer.
+   * Closes the sampler, including mapped buffer. This discards all recorded samples; call result() or
+   * to_perf_file() before closing.
    */
   void close() noexcept;
 
   /**
-   * @return List of sampled events after stopping, before closing the sampler.
+   * Reads the recorded samples. Must be called after stopping, but before closing the sampler, since close()
+   * discards the recorded samples.
+   *
+   * @param sort_by_time Flag to sort the samples by their timestamp (if recorded).
+   * @return List of sampled events.
+   * @throws CannotGetResultFromClosedSamplerError If the sampler was closed.
    */
   [[nodiscard]] SampleResult result(bool sort_by_time = true);
 
   /**
    * Writes the sampled result into a perf data file that can be read by the "perf report" subcommand.
+   * Must be called after stopping, but before closing the sampler, since close() discards the recorded samples.
    *
    * @param output_file_name Name of the perf data file.
+   * @throws CannotGetResultFromClosedSamplerError If the sampler was closed.
    */
   void to_perf_file(std::string_view output_file_name);
 
 private:
+  /**
+   * Lifecycle of the sampler. The state decides whether an empty result is the truth (nothing was recorded yet)
+   * or a lie (samples were recorded and then discarded by close()).
+   */
+  enum class State : std::uint8_t
+  {
+    /// Created, but not yet opened; nothing was recorded so far.
+    Created,
+
+    /// Opened, i.e., the events are configured and the sample buffers are mapped.
+    Opened,
+
+    /// Closed; the sample buffers and the recorded samples are released.
+    Closed
+  };
+
   /**
    * Transforms a list of trigger events into a single SampleCounter that includes a group of hardware events.
    *
@@ -527,10 +551,10 @@ private:
   /// List of counter groups used to sample – will be filled when "opening" the sampler.
   std::vector<SampleCounter> _sample_counter;
 
-  /// Flag if the sampler is already opened, i.e., the events are configured.
-  /// This enables the user to open the sampler specifically – or open the
-  /// sampler when starting.
-  bool _is_opened{ false };
+  /// Lifecycle state of the sampler. Opening is tracked explicitly, since this enables the user to open the
+  /// sampler specifically – or open the sampler when starting. Closing is tracked to distinguish a sampler that
+  /// never recorded anything from one whose samples were discarded by close().
+  State _state{ State::Created };
 
   /// Sample data per sample counter consumed from mmaped buffers. The data will be reset when starting the sampler and
   /// consumed when needing the data the first time (e.g., when calculating the result).

@@ -1,3 +1,4 @@
+#include <array>
 #include <catch2/catch_test_macros.hpp>
 #include <fcntl.h>
 #include <perfcpp/util/shared_file_descriptor.hpp>
@@ -15,8 +16,8 @@ is_fd_open(const int fd)
 static std::pair<int, int>
 make_pipe()
 {
-  int fds[2];
-  REQUIRE(::pipe(fds) == 0);
+  std::array<std::int32_t, 2U> fds{ 0 };
+  REQUIRE(::pipe(fds.data()) == 0);
   return { fds[0], fds[1] };
 }
 
@@ -128,6 +129,19 @@ TEST_CASE("SharedFileDescriptor construction from fd", "[SharedFileDescriptor]")
   /// Last owner destroyed → fd must be closed.
   REQUIRE_FALSE(is_fd_open(write_fd));
   ::close(read_fd);
+}
+
+TEST_CASE("SharedFileDescriptor construction from invalid fd stays empty", "[SharedFileDescriptor]")
+{
+  /// Invalid (negative) file descriptors must not be taken into ownership, e.g., when passing the
+  /// result of a failed ::open() directly.
+  const auto sfd = perf::util::SharedFileDescriptor{ -1 };
+  REQUIRE_FALSE(sfd.has_value());
+  REQUIRE(sfd.value() == -1);
+
+  const auto sfd_negative = perf::util::SharedFileDescriptor{ -42 };
+  REQUIRE_FALSE(sfd_negative.has_value());
+  REQUIRE(sfd_negative.value() == -1);
 }
 
 TEST_CASE("SharedFileDescriptor copy shares ownership", "[SharedFileDescriptor]")

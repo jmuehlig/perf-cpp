@@ -4,6 +4,7 @@
 #include <perfcpp/sample/result.hpp>
 #include <sstream>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 namespace {
@@ -341,7 +342,8 @@ TEST_CASE("to_csv", "[SampleResult]")
 
 TEST_CASE("to_csv file", "[SampleResult]")
 {
-  constexpr auto file_path = "/tmp/perfcpp_sample_result_test.csv";
+  /// Include the PID so concurrent test processes (parallel ctest, two checkouts) do not race on the same path.
+  const auto file_path = "/tmp/perfcpp_sample_result_test_" + std::to_string(::getpid()) + ".csv";
 
   SECTION("file content matches string overload")
   {
@@ -365,6 +367,6 @@ TEST_CASE("to_csv file", "[SampleResult]")
 
     REQUIRE(file_content == result.to_csv());
 
-    std::remove(file_path);
+    std::remove(file_path.c_str());
   }
 }

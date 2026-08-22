@@ -1,5 +1,5 @@
 # perf-cpp: Hardware Performance Monitoring for C++
-![LGPL-3.0](https://img.shields.io/github/license/jmuehlig/perf-cpp?) ![LinuxKernel->=4.0](https://img.shields.io/badge/Linux_Kernel-%3E%3D4.0-yellow)
+![Apache-2.0](https://img.shields.io/github/license/jmuehlig/perf-cpp?) ![LinuxKernel->=4.0](https://img.shields.io/badge/Linux_Kernel-%3E%3D4.0-yellow)
 ![C++17](https://img.shields.io/badge/C++-17-00599C?logo=cplusplus) [![Build and Test](https://github.com/jmuehlig/perf-cpp/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/jmuehlig/perf-cpp/actions/workflows/build-and-test.yml) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/jmuehlig/perf-cpp)
 
 [Quick Start](#quick-start) | [Building](#building) | [Documentation](https://jmuehlig.github.io/perf-cpp) | [System Requirements](#system-requirements)

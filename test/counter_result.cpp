@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <unistd.h>
 #include <vector>
 
 namespace {
@@ -222,7 +223,8 @@ TEST_CASE("to_json", "[CounterResult]")
 
 TEST_CASE("to_json file", "[CounterResult]")
 {
-  constexpr auto file_path = "/tmp/perfcpp_counter_result_test.json";
+  /// Include the PID so concurrent test processes (parallel ctest, two checkouts) do not race on the same path.
+  const auto file_path = "/tmp/perfcpp_counter_result_test_" + std::to_string(::getpid()) + ".json";
 
   SECTION("file content matches string overload")
   {
@@ -238,7 +240,7 @@ TEST_CASE("to_json file", "[CounterResult]")
 
     REQUIRE(file_content == result.to_json());
 
-    std::remove(file_path);
+    std::remove(file_path.c_str());
   }
 
   SECTION("empty result writes valid JSON object")
@@ -252,7 +254,7 @@ TEST_CASE("to_json file", "[CounterResult]")
     REQUIRE(file_content.front() == '{');
     REQUIRE(file_content.back() == '}');
 
-    std::remove(file_path);
+    std::remove(file_path.c_str());
   }
 }
 
@@ -343,7 +345,8 @@ TEST_CASE("to_csv", "[CounterResult]")
 
 TEST_CASE("to_csv file", "[CounterResult]")
 {
-  constexpr auto file_path = "/tmp/perfcpp_counter_result_test.csv";
+  /// Include the PID so concurrent test processes (parallel ctest, two checkouts) do not race on the same path.
+  const auto file_path = "/tmp/perfcpp_counter_result_test_" + std::to_string(::getpid()) + ".csv";
 
   SECTION("file content matches string overload")
   {
@@ -359,7 +362,7 @@ TEST_CASE("to_csv file", "[CounterResult]")
 
     REQUIRE(file_content == result.to_csv());
 
-    std::remove(file_path);
+    std::remove(file_path.c_str());
   }
 
   SECTION("custom delimiter written to file")
@@ -378,7 +381,7 @@ TEST_CASE("to_csv file", "[CounterResult]")
     REQUIRE(rows[0][0] == "counter");
     REQUIRE(rows[1][0] == "instructions");
 
-    std::remove(file_path);
+    std::remove(file_path.c_str());
   }
 }
 

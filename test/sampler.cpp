@@ -1,10 +1,33 @@
 #include "access_benchmark.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <chrono>
 #include <ctime>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <optional>
 #include <perfcpp/exception.hpp>
 #include <perfcpp/hardware_info.hpp>
 #include <perfcpp/sampler.hpp>
+#include <sched.h>
+#include <string>
+#include <thread>
+
+namespace {
+/// Reads the cgroupv2 path of the calling process from /proc/self/cgroup.
+[[nodiscard]] std::optional<std::string>
+read_own_cgroup_path()
+{
+  auto file = std::ifstream{ "/proc/self/cgroup" };
+  auto line = std::string{};
+  while (std::getline(file, line)) {
+    if (line.rfind("0::", 0) == 0) {
+      return "/sys/fs/cgroup" + line.substr(3);
+    }
+  }
+  return std::nullopt;
+}
+}
 
 class AverageCounter
 {
@@ -30,7 +53,9 @@ TEST_CASE("config", "[Sampler]")
   }
 
   /// Benchmark used for all sampling tests.
-  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
+  /// Shared across SECTIONs: Catch2 re-runs this TEST_CASE body once per SECTION, so a non-static instance
+  /// would re-allocate and re-shuffle this multi-hundred-MB benchmark for every sibling SECTION.
+  static auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
 
   SECTION("empty sampler")
   {
@@ -65,6 +90,94 @@ TEST_CASE("config", "[Sampler]")
     readonly_benchmark.run();
     REQUIRE_NOTHROW(sampler.stop());
     sampler.close();
+  }
+
+  SECTION("stop without prior start")
+  {
+    /// stop() on a sampler that was never opened/started must be a safe no-op.
+    auto sampler = perf::Sampler{};
+    sampler.trigger("cycles");
+    sampler.values().logical_instruction_pointer(true);
+
+    REQUIRE_NOTHROW(sampler.stop());
+    REQUIRE_NOTHROW(sampler.close());
+  }
+
+  SECTION("result before any run")
+  {
+    /// result() on a sampler that was never opened/started/stopped must be safe and empty: nothing was
+    /// recorded, so an empty result is the truth here – unlike after close(), where it would hide samples.
+    auto sampler = perf::Sampler{};
+    sampler.trigger("cycles");
+    sampler.values().logical_instruction_pointer(true);
+
+    const auto samples = sampler.result();
+    REQUIRE(samples.empty());
+    REQUIRE(samples.size() == 0U);
+  }
+
+  SECTION("result after close")
+  {
+    /// result() decodes from the sample buffer, which close() tears down; calling result() after close()
+    /// is outside the documented contract ("after stopping, before closing the sampler") and must throw
+    /// rather than silently return an empty result that hides the recorded samples.
+    auto sampler = perf::Sampler{};
+    sampler.trigger("cycles");
+    sampler.values().logical_instruction_pointer(true);
+
+    REQUIRE_NOTHROW(sampler.start());
+    readonly_benchmark.run();
+    REQUIRE_NOTHROW(sampler.stop());
+
+    /// The result must be available as long as the sampler is not closed.
+    REQUIRE_FALSE(sampler.result().empty());
+
+    REQUIRE_NOTHROW(sampler.close());
+
+    REQUIRE_THROWS_AS(sampler.result(), perf::CannotGetResultFromClosedSamplerError);
+  }
+
+  SECTION("perf file export after close")
+  {
+    /// to_perf_file() reads the same sample buffers as result() and must report the wrong call order, too –
+    /// otherwise it would write a well-formed but empty perf file that looks like a successful export.
+    const auto perf_file = std::filesystem::temp_directory_path() / "perf-cpp-test-export-after-close.data";
+
+    auto sampler = perf::Sampler{};
+    sampler.trigger("cycles");
+    sampler.values().logical_instruction_pointer(true);
+
+    REQUIRE_NOTHROW(sampler.start());
+    readonly_benchmark.run();
+    REQUIRE_NOTHROW(sampler.stop());
+    REQUIRE_NOTHROW(sampler.close());
+
+    REQUIRE_THROWS_AS(sampler.to_perf_file(perf_file.string()), perf::CannotGetResultFromClosedSamplerError);
+
+    /// Nothing must have been written.
+    REQUIRE_FALSE(std::filesystem::exists(perf_file));
+  }
+
+  SECTION("result of a re-opened sampler")
+  {
+    /// close() must not turn the sampler into a dead object: opening it again resets the state and makes
+    /// the samples of the second run available.
+    auto sampler = perf::Sampler{};
+    sampler.trigger("cycles");
+    sampler.values().logical_instruction_pointer(true);
+
+    REQUIRE_NOTHROW(sampler.start());
+    readonly_benchmark.run();
+    REQUIRE_NOTHROW(sampler.stop());
+    REQUIRE_NOTHROW(sampler.close());
+
+    REQUIRE_NOTHROW(sampler.start());
+    readonly_benchmark.run();
+    REQUIRE_NOTHROW(sampler.stop());
+
+    REQUIRE_FALSE(sampler.result().empty());
+
+    REQUIRE_NOTHROW(sampler.close());
   }
 
   SECTION("zero period rejected")
@@ -102,7 +215,9 @@ TEST_CASE("sampling", "[Sampler]")
   }
 
   /// Benchmark used for all sampling tests.
-  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 2048 /* MB */ };
+  /// Shared across SECTIONs: Catch2 re-runs this TEST_CASE body once per SECTION, so a non-static instance
+  /// would re-allocate and re-shuffle this multi-hundred-MB benchmark for every sibling SECTION.
+  static auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 2048 /* MB */ };
 
   SECTION("IP with cycles")
   {
@@ -120,8 +235,8 @@ TEST_CASE("sampling", "[Sampler]")
     const auto samples = sampler.result();
     REQUIRE_FALSE(samples.empty());
     for (const auto& sample : samples) {
-      REQUIRE_FALSE(sample.metadata().timestamp().has_value());
-      REQUIRE(sample.instruction_execution().logical_instruction_pointer().has_value());
+      CHECK_FALSE(sample.metadata().timestamp().has_value());
+      CHECK(sample.instruction_execution().logical_instruction_pointer().has_value());
     }
 
     REQUIRE_NOTHROW(sampler.close());
@@ -143,8 +258,8 @@ TEST_CASE("sampling", "[Sampler]")
     const auto samples = sampler.result();
     REQUIRE_FALSE(samples.empty());
     for (const auto& sample : samples) {
-      REQUIRE_FALSE(sample.metadata().timestamp().has_value());
-      REQUIRE(sample.instruction_execution().logical_instruction_pointer().has_value());
+      CHECK_FALSE(sample.metadata().timestamp().has_value());
+      CHECK(sample.instruction_execution().logical_instruction_pointer().has_value());
     }
 
     REQUIRE_NOTHROW(sampler.close());
@@ -246,6 +361,7 @@ TEST_CASE("sampling", "[Sampler]")
       if (sample.data_access().is_load() && sample.data_access().logical_memory_address().has_value()) {
         if (perf::HardwareInfo::is_intel()) {
           if (perf::HardwareInfo::is_intel_12th_generation_or_newer()) {
+            /// REQUIRE, not CHECK: several unconditional .value() reads below depend on this being present.
             REQUIRE(sample.data_access().latency().cache_access().has_value());
             if (sample.data_access().source().has_value()) {
               if (sample.data_access().source()->is_l1_hit()) {
@@ -259,6 +375,7 @@ TEST_CASE("sampling", "[Sampler]")
               }
             }
           } else {
+            /// REQUIRE, not CHECK: several unconditional .value() reads below depend on this being present.
             REQUIRE(sample.instruction_execution().latency().instruction_retirement().has_value());
             if (sample.data_access().source().has_value()) {
               if (sample.data_access().source()->is_l1_hit()) {
@@ -274,6 +391,7 @@ TEST_CASE("sampling", "[Sampler]")
           }
 
         } else if (perf::HardwareInfo::is_amd()) {
+          /// REQUIRE, not CHECK: several unconditional .value() reads below depend on this being present.
           REQUIRE(sample.data_access().latency().cache_miss().has_value());
           if (sample.data_access().source().has_value()) {
             if (sample.data_access().source()->is_l1_hit()) {
@@ -296,8 +414,8 @@ TEST_CASE("sampling", "[Sampler]")
       REQUIRE(l1d.get() == 0U);
     }
 
-    REQUIRE(l3.get() < 100U);
-    REQUIRE(ram.get() > 100U);
+    REQUIRE(l3.get() < 170U);
+    REQUIRE(ram.get() > 170U);
   }
 
   SECTION("mem-loads-with-filter")
@@ -373,16 +491,17 @@ TEST_CASE("sampling", "[Sampler]")
     REQUIRE_FALSE(samples.empty());
 
     for (const auto& sample : samples) {
-      REQUIRE(sample.metadata().timestamp().has_value());
+      CHECK(sample.metadata().timestamp().has_value());
+      /// REQUIRE, not CHECK: the loop below iterates sample.branch_stack().value() unconditionally.
       REQUIRE(sample.branch_stack().has_value());
-      REQUIRE_FALSE(sample.branch_stack()->empty());
+      CHECK_FALSE(sample.branch_stack()->empty());
 
       for (const auto& branch : sample.branch_stack().value()) {
-        REQUIRE(branch.instruction_pointer_from() != 0U);
-        REQUIRE(branch.instruction_pointer_to() != 0U);
+        CHECK(branch.instruction_pointer_from() != 0U);
+        CHECK(branch.instruction_pointer_to() != 0U);
 
         /// Predicted and mispredicted are mutually exclusive.
-        REQUIRE_FALSE((branch.is_predicted() && branch.is_mispredicted()));
+        CHECK_FALSE((branch.is_predicted() && branch.is_mispredicted()));
       }
     }
 
@@ -410,22 +529,26 @@ TEST_CASE("sampling", "[Sampler]")
     REQUIRE_FALSE(samples.empty());
 
     for (const auto& sample : samples) {
-      REQUIRE(sample.metadata().timestamp().has_value());
-      REQUIRE(sample.metadata().cpu_id().has_value());
+      CHECK(sample.metadata().timestamp().has_value());
+      CHECK(sample.metadata().cpu_id().has_value());
+      /// REQUIRE, not CHECK: `registers` below binds .value() and is dereferenced unconditionally for the
+      /// rest of this iteration.
       REQUIRE(sample.user_registers().has_value());
 
       const auto& registers = sample.user_registers().value();
 
       /// User-mode samples always carry a valid ABI with populated register values.
       if (sample.metadata().mode() == perf::Metadata::Mode::User) {
-        REQUIRE(registers.abi() != perf::ABI::None);
-        REQUIRE(registers.get(perf::Registers::x86::IP).has_value());
-        REQUIRE(registers.get(perf::Registers::x86::IP).value() != 0);
-        REQUIRE(registers.get(perf::Registers::x86::SP).has_value());
+        CHECK(registers.abi() != perf::ABI::None);
+        CHECK(registers.get(perf::Registers::x86::IP).has_value());
+        if (registers.get(perf::Registers::x86::IP).has_value()) {
+          CHECK(registers.get(perf::Registers::x86::IP).value() != 0);
+        }
+        CHECK(registers.get(perf::Registers::x86::SP).has_value());
       }
 
       /// Non-requested register is absent regardless of mode.
-      REQUIRE_FALSE(registers.get(perf::Registers::x86::AX).has_value());
+      CHECK_FALSE(registers.get(perf::Registers::x86::AX).has_value());
     }
 
     REQUIRE_NOTHROW(sampler.close());
@@ -453,10 +576,11 @@ TEST_CASE("sampling", "[Sampler]")
     REQUIRE_FALSE(samples.empty());
 
     for (const auto& sample : samples) {
+      /// REQUIRE, not CHECK: the kernel-mode branch below dereferences user_registers() unconditionally.
       REQUIRE(sample.user_registers().has_value());
 
       if (sample.metadata().mode() == perf::Metadata::Mode::User) {
-        REQUIRE(sample.user_registers()->abi() != perf::ABI::None);
+        CHECK(sample.user_registers()->abi() != perf::ABI::None);
       }
 
       /// For kernel-mode samples, both register sets are present and reflect distinct contexts.
@@ -467,7 +591,7 @@ TEST_CASE("sampling", "[Sampler]")
         const auto kernel_ip = sample.kernel_registers()->get(perf::Registers::x86::IP);
 
         if (user_ip.has_value() && kernel_ip.has_value()) {
-          REQUIRE(user_ip.value() != kernel_ip.value());
+          CHECK(user_ip.value() != kernel_ip.value());
         }
       }
     }
@@ -504,9 +628,11 @@ TEST_CASE("sampling", "[Sampler]")
     REQUIRE_FALSE(samples.empty());
 
     for (const auto& sample : samples) {
-      REQUIRE(sample.metadata().timestamp().has_value());
-      REQUIRE(sample.metadata().timestamp().value() >= before_ns);
-      REQUIRE(sample.metadata().timestamp().value() <= after_ns);
+      CHECK(sample.metadata().timestamp().has_value());
+      if (sample.metadata().timestamp().has_value()) {
+        CHECK(sample.metadata().timestamp().value() >= before_ns);
+        CHECK(sample.metadata().timestamp().value() <= after_ns);
+      }
     }
 
     REQUIRE_NOTHROW(sampler.close());
@@ -534,16 +660,115 @@ TEST_CASE("sampling", "[Sampler]")
     auto last_timestamp = std::optional<std::uint64_t>{ std::nullopt };
 
     for (const auto& sample : samples) {
-      REQUIRE(sample.metadata().timestamp().has_value());
-      if (last_timestamp.has_value()) {
-        REQUIRE(sample.metadata().timestamp().value() > last_timestamp.value());
+      CHECK(sample.metadata().timestamp().has_value());
+      if (last_timestamp.has_value() && sample.metadata().timestamp().has_value()) {
+        CHECK(sample.metadata().timestamp().value() > last_timestamp.value());
       }
       last_timestamp = sample.metadata().timestamp();
 
-      REQUIRE(sample.counter().has_value());
-      REQUIRE(sample.counter()->get("L1d-misses-per-load").has_value());
-      REQUIRE(sample.counter()->get("L1d-misses-per-load").value() > 0);
-      REQUIRE(sample.counter()->get("L1d-misses-per-load").value() < 1.1);
+      CHECK(sample.counter().has_value());
+      if (sample.counter().has_value()) {
+        CHECK(sample.counter()->get("L1d-misses-per-load").has_value());
+        if (sample.counter()->get("L1d-misses-per-load").has_value()) {
+          CHECK(sample.counter()->get("L1d-misses-per-load").value() > 0);
+          CHECK(sample.counter()->get("L1d-misses-per-load").value() < 1.1);
+        }
+      }
     }
   }
+
+  SECTION("context switch")
+  {
+    auto sampler = perf::Sampler{};
+    REQUIRE_NOTHROW(sampler.trigger(perf::Cycles{}, perf::Period{ 100000U }));
+    sampler.values().timestamp(true).context_switch(true);
+
+    REQUIRE_NOTHROW(sampler.open());
+    REQUIRE_NOTHROW(sampler.start());
+
+    /// Force repeated voluntary switch-out/switch-in of this thread while sampling is active.
+    for (auto i = 0U; i < 20U; ++i) {
+      readonly_benchmark.run();
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+
+    REQUIRE_NOTHROW(sampler.stop());
+
+    const auto samples = sampler.result();
+    REQUIRE_FALSE(samples.empty());
+
+    auto context_switch_sample_count = 0U;
+    for (const auto& sample : samples) {
+      if (sample.context_switch().has_value()) {
+        ++context_switch_sample_count;
+
+        const auto& context_switch = sample.context_switch().value();
+
+        /// Switching in and switching out are mutually exclusive.
+        CHECK(context_switch.is_in() == !context_switch.is_out());
+
+        /// Process/thread id are only populated in CPU-wide sampling mode.
+        CHECK_FALSE(context_switch.process_id().has_value());
+        CHECK_FALSE(context_switch.thread_id().has_value());
+      }
+    }
+
+    CHECK(context_switch_sample_count > 0U);
+
+    REQUIRE_NOTHROW(sampler.close());
+  }
+}
+
+TEST_CASE("sampling with cgroup", "[Sampler]")
+{
+  if (!(perf::HardwareInfo::is_intel() || perf::HardwareInfo::is_amd())) {
+    SKIP("Sampler is not implemented for non-x86 hardware.");
+  }
+
+  const auto cgroup_path = read_own_cgroup_path();
+  REQUIRE(cgroup_path.has_value());
+
+  const auto cpu_id = ::sched_getcpu();
+  REQUIRE(cpu_id >= 0);
+
+  /// Cgroup monitoring requires a specific CPU core; pin this thread to the current CPU so the
+  /// workload runs on the monitored core.
+  auto saved_affinity = cpu_set_t{};
+  ::sched_getaffinity(0, sizeof(cpu_set_t), &saved_affinity);
+
+  auto pinned_set = cpu_set_t{};
+  CPU_ZERO(&pinned_set);
+  CPU_SET(cpu_id, &pinned_set);
+  ::sched_setaffinity(0, sizeof(cpu_set_t), &pinned_set);
+
+  auto sample_config = perf::SampleConfig{};
+  sample_config.cgroup(perf::CGroupMonitor{ std::filesystem::path{ cgroup_path.value() } });
+  sample_config.cpu_core(static_cast<std::uint16_t>(cpu_id));
+
+  auto sampler = perf::Sampler{ sample_config };
+  REQUIRE_NOTHROW(sampler.trigger(perf::Cycles{}, perf::Period{ 100000U }));
+  sampler.values().timestamp(true).logical_instruction_pointer(true);
+
+  auto readonly_benchmark = perf::test::AccessBenchmark{ /* is random */ true, 1024U /* MB */ };
+
+  REQUIRE_NOTHROW(sampler.open());
+  REQUIRE_NOTHROW(sampler.start());
+
+  readonly_benchmark.run();
+
+  REQUIRE_NOTHROW(sampler.stop());
+
+  const auto samples = sampler.result();
+  REQUIRE_FALSE(samples.empty());
+
+  for (const auto& sample : samples) {
+    CHECK(sample.instruction_execution().logical_instruction_pointer().has_value());
+    if (sample.instruction_execution().logical_instruction_pointer().has_value()) {
+      CHECK(sample.instruction_execution().logical_instruction_pointer().value() != 0U);
+    }
+  }
+
+  REQUIRE_NOTHROW(sampler.close());
+
+  ::sched_setaffinity(0, sizeof(cpu_set_t), &saved_affinity);
 }

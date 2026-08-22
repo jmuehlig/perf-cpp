@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(libperf-cpp VERSION 1.0.0 LANGUAGES CXX)
+project(libperf-cpp VERSION 1.1.0 LANGUAGES CXX)
 
 # perf-cpp requires complete std::from_chars support (GCC 11+, Clang 14+).
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11)
@@ -9,13 +9,29 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VER
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wcast-align -Wunused -Wshadow -Wold-style-cast -Wpointer-arith -Wcast-qual -Wnon-virtual-dtor -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -Wno-missing-braces")
-set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g3")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -DNDEBUG")
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release")
+
+## Detect if perf-cpp is built standalone or embedded into another project (e.g., via add_subdirectory or FetchContent).
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set(PERF_CPP_IS_TOP_LEVEL ON)
+else()
+    set(PERF_CPP_IS_TOP_LEVEL OFF)
 endif()
-message("Building Mode                        = ${CMAKE_BUILD_TYPE}")
+
+## Warning flags are applied per-target below (instead of via CMAKE_CXX_FLAGS) to keep them out of embedding projects.
+set(PERF_CPP_WARNING_FLAGS
+    -Wall -Wextra -Wpedantic -Wconversion -Wcast-align -Wunused -Wshadow -Wold-style-cast -Wpointer-arith
+    -Wcast-qual -Wnon-virtual-dtor -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2
+    -Wno-missing-braces)
+
+## Only override build-type flags and the default build type when building standalone; embedding projects keep their own.
+if(PERF_CPP_IS_TOP_LEVEL)
+    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g3")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -DNDEBUG")
+    if(NOT CMAKE_BUILD_TYPE)
+        set(CMAKE_BUILD_TYPE "Release")
+    endif()
+    message("Building Mode                        = ${CMAKE_BUILD_TYPE}")
+endif()
 
 #############################################################
 #   Options                                                 #
@@ -25,10 +41,12 @@ option(BUILD_LIB_SHARED "Build the library as a shared library (default is stati
 option(BUILD_TESTS "Build the unit tests." OFF)
 option(GEN_PROCESSOR_EVENTS "Generate processor-specific events" OFF)
 
-message("Building as Shared Library           = ${BUILD_LIB_SHARED}")
-message("Building Examples                    = ${BUILD_EXAMPLES}")
-message("Building Tests                       = ${BUILD_TESTS}")
-message("Generating Processor-specific Events = ${GEN_PROCESSOR_EVENTS}")
+if(PERF_CPP_IS_TOP_LEVEL)
+    message("Building as Shared Library           = ${BUILD_LIB_SHARED}")
+    message("Building Examples                    = ${BUILD_EXAMPLES}")
+    message("Building Tests                       = ${BUILD_TESTS}")
+    message("Generating Processor-specific Events = ${GEN_PROCESSOR_EVENTS}")
+endif()
 
 #############################################################
 #   perf-cpp source files                                   #
@@ -106,6 +124,14 @@ target_include_directories(perf-cpp
 )
 target_compile_features(perf-cpp PUBLIC cxx_std_17)
 
+## The sampler's overflow worker runs on a std::thread; PUBLIC so consumers linking the static library get the thread library, too.
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+target_link_libraries(perf-cpp PUBLIC Threads::Threads)
+
+## Compile the library itself with the strict warning set; PRIVATE keeps the flags out of consuming targets.
+target_compile_options(perf-cpp PRIVATE ${PERF_CPP_WARNING_FLAGS})
+
 ## Version the library; shared builds get a proper soname (e.g., libperf-cpp.so.1).
 set_target_properties(perf-cpp PROPERTIES
     VERSION ${PROJECT_VERSION}
@@ -115,12 +141,15 @@ set_target_properties(perf-cpp PROPERTIES
 #############################################################
 #   clang-tidy integration                                  #
 #############################################################
-find_program(CLANG_TIDY NAMES "clang-tidy")
-if(CLANG_TIDY)
-    set(CLANG_TIDY_COMMAND "${CLANG_TIDY}" "--config-file=${CMAKE_SOURCE_DIR}/.clang-tidy")
-    set_target_properties(perf-cpp PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND}")
-else()
-    message(WARNING "clang-tidy not found")
+## Lint alongside compilation, but only for standalone builds; embedding projects should not pay for (or fail on) linting.
+if(PERF_CPP_IS_TOP_LEVEL)
+    find_program(CLANG_TIDY NAMES "clang-tidy")
+    if(CLANG_TIDY)
+        set(CLANG_TIDY_COMMAND "${CLANG_TIDY}" "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy")
+        set_target_properties(perf-cpp PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND}")
+    else()
+        message(WARNING "clang-tidy not found")
+    endif()
 endif()
 
 #############################################################
@@ -139,22 +168,24 @@ if(BUILD_TESTS)
 endif()
 
 #############################################################
-#   Custom target to build documentation website            #
+#   Maintainer-only custom targets (docs, perf-list);       #
+#   not added when perf-cpp is embedded into another        #
+#   project.                                                #
 #############################################################
-## To preview the documentation locally, run: .venv/bin/mkdocs serve
-find_program(MKDOCS_EXECUTABLE mkdocs HINTS ${CMAKE_SOURCE_DIR}/.venv/bin)
-if(MKDOCS_EXECUTABLE)
-    add_custom_target(docs
-            COMMAND ${MKDOCS_EXECUTABLE} build -f ${CMAKE_SOURCE_DIR}/mkdocs.yml -d ${CMAKE_SOURCE_DIR}/site
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-            COMMENT "Building documentation website into site/"
-    )
-endif()
+if(PERF_CPP_IS_TOP_LEVEL)
+    ## To preview the documentation locally, run: .venv/bin/mkdocs serve
+    find_program(MKDOCS_EXECUTABLE mkdocs HINTS ${CMAKE_CURRENT_SOURCE_DIR}/.venv/bin)
+    if(MKDOCS_EXECUTABLE)
+        add_custom_target(docs
+                COMMAND ${MKDOCS_EXECUTABLE} build -f ${CMAKE_CURRENT_SOURCE_DIR}/mkdocs.yml -d ${CMAKE_CURRENT_SOURCE_DIR}/site
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                COMMENT "Building documentation website into site/"
+        )
+    endif()
 
-#############################################################
-#   Custom target to extract hardware events into CSV file  #
-#############################################################
-add_custom_target(perf-list python3 ${CMAKE_SOURCE_DIR}/script/create_perf_list.py)
+    ## Extract hardware events into a CSV file.
+    add_custom_target(perf-list python3 ${CMAKE_CURRENT_SOURCE_DIR}/script/create_perf_list.py)
+endif()
 
 #############################################################
 #   Rules for installing the library                        #
