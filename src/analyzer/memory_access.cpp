@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <numeric>
 #include <perfcpp/analyzer/memory_access.hpp>
 #include <perfcpp/exception.hpp>
 #include <perfcpp/util/table.hpp>
@@ -327,10 +326,7 @@ perf::analyzer::MemoryAccessResult::to_string() const
     /// Add member attributes to table.
     for (const auto& member : data_type.members()) {
 
-      const auto statistics = std::accumulate(member.samples().cbegin(),
-                                              member.samples().cend(),
-                                              MemberStatistic{},
-                                              [](auto& current, const auto& sample) { return current += sample; });
+      const auto statistics = MemoryAccessResult::accumulate(member.samples());
 
       auto row = util::Table::Row{};
       auto member_offset = std::to_string(member.offset()).append(": ");
@@ -445,10 +441,7 @@ perf::analyzer::MemoryAccessResult::to_json() const
     for (auto member_index = 0U; member_index < data_type.members().size(); ++member_index) {
       const auto& member = data_type.members()[member_index];
 
-      const auto statistics = std::accumulate(member.samples().cbegin(),
-                                              member.samples().cend(),
-                                              MemberStatistic{},
-                                              [](auto& current, const auto& sample) { return current += sample; });
+      const auto statistics = MemoryAccessResult::accumulate(member.samples());
 
       if (member_index != 0U) {
         stream << ",";
@@ -602,10 +595,7 @@ perf::analyzer::MemoryAccessResult::to_csv(const std::string_view data_type_name
       data_type_iterator != this->_data_types.cend()) {
     for (const auto& member : data_type_iterator->members()) {
 
-      const auto statistics = std::accumulate(member.samples().cbegin(),
-                                              member.samples().cend(),
-                                              MemberStatistic{},
-                                              [](auto& current, const auto& sample) { return current += sample; });
+      const auto statistics = MemoryAccessResult::accumulate(member.samples());
 
       /* member */
       cell(member.name(), false);

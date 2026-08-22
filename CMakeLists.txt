@@ -8,7 +8,10 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VER
     message(FATAL_ERROR "perf-cpp requires Clang 14 or newer (found Clang ${CMAKE_CXX_COMPILER_VERSION}).")
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+## Consuming toolchains (e.g., Conan) may request a newer standard; only default to C++17 when nothing is set.
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 17)
+endif()
 
 ## Detect if perf-cpp is built standalone or embedded into another project (e.g., via add_subdirectory or FetchContent).
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -24,9 +27,12 @@ set(PERF_CPP_WARNING_FLAGS
     -Wno-missing-braces)
 
 ## Only override build-type flags and the default build type when building standalone; embedding projects keep their own.
+## Release carries no debug info, which would otherwise dominate the size of a packaged build (~60 MB of DWARF for
+## a 2.5 MB library); build RelWithDebInfo to profile perf-cpp itself with full line information.
 if(PERF_CPP_IS_TOP_LEVEL)
     set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g3")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
     if(NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Release")
     endif()
@@ -40,12 +46,14 @@ option(BUILD_EXAMPLES "Build examples in examples/ directory." OFF)
 option(BUILD_LIB_SHARED "Build the library as a shared library (default is static)." OFF)
 option(BUILD_TESTS "Build the unit tests." OFF)
 option(GEN_PROCESSOR_EVENTS "Generate processor-specific events" OFF)
+option(ENABLE_CLANG_TIDY "Run clang-tidy alongside compilation." ${PERF_CPP_IS_TOP_LEVEL})
 
 if(PERF_CPP_IS_TOP_LEVEL)
     message("Building as Shared Library           = ${BUILD_LIB_SHARED}")
     message("Building Examples                    = ${BUILD_EXAMPLES}")
     message("Building Tests                       = ${BUILD_TESTS}")
     message("Generating Processor-specific Events = ${GEN_PROCESSOR_EVENTS}")
+    message("Running clang-tidy                   = ${ENABLE_CLANG_TIDY}")
 endif()
 
 #############################################################
@@ -141,8 +149,8 @@ set_target_properties(perf-cpp PROPERTIES
 #############################################################
 #   clang-tidy integration                                  #
 #############################################################
-## Lint alongside compilation, but only for standalone builds; embedding projects should not pay for (or fail on) linting.
-if(PERF_CPP_IS_TOP_LEVEL)
+## Lint alongside compilation; off by default for embedded and packaged builds, which should not pay for (or fail on) linting.
+if(ENABLE_CLANG_TIDY)
     find_program(CLANG_TIDY NAMES "clang-tidy")
     if(CLANG_TIDY)
         set(CLANG_TIDY_COMMAND "${CLANG_TIDY}" "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy")

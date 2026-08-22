@@ -176,6 +176,18 @@ private:
     Group _software_prefetches;
     Group _stores;
   };
+
+  /// Folds all samples of a data type's member into a single statistic. Accumulating in place
+  /// avoids copying the statistic per sample, which std::accumulate does since C++20.
+  [[nodiscard]] static MemberStatistic accumulate(const std::vector<Sample>& samples)
+  {
+    auto statistics = MemberStatistic{};
+    for (const auto& sample : samples) {
+      statistics += sample;
+    }
+
+    return statistics;
+  }
 };
 
 class MemoryAccess

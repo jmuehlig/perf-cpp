@@ -5,7 +5,7 @@
 ```bash
 git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
-git checkout v1.1
+git checkout v1.1.0
 cmake . -B build
 cmake --build build
 ```
@@ -18,12 +18,16 @@ cmake --build build
 | `-DBUILD_LIB_SHARED=ON` | `OFF` | Build as shared library instead of static |
 | `-DBUILD_TESTS=ON` | `OFF` | Build unit tests |
 | `-DGEN_PROCESSOR_EVENTS=ON` | `OFF` | Embed processor-specific events at compile time (see [customizing events](counters.md)) |
+| `-DENABLE_CLANG_TIDY=OFF` | `ON` when building *perf-cpp* standalone | Run `clang-tidy` alongside compilation |
 
 Example with multiple options:
 ```bash
 cmake . -B build -DBUILD_EXAMPLES=ON -DGEN_PROCESSOR_EVENTS=ON
 cmake --build build
 ```
+
+Standalone builds default to `Release` (`-O3`, no debug info). Build with `-DCMAKE_BUILD_TYPE=RelWithDebInfo` to get
+an optimized library with full debug information, e.g., to profile *perf-cpp* itself.
 
 > [!NOTE]
 > `-DGEN_PROCESSOR_EVENTS=ON` reads events from the [event library](./counters.md#loading-from-the-event-library) and generates a source file that can grow large, increasing compilation time significantly.
@@ -49,7 +53,7 @@ include(FetchContent)
 FetchContent_Declare(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v1.1"
+  GIT_TAG "v1.1.0"
 )
 FetchContent_MakeAvailable(perf-cpp-external)
 ```
@@ -67,7 +71,7 @@ include(ExternalProject)
 ExternalProject_Add(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v1.1"
+  GIT_TAG "v1.1.0"
   PREFIX "lib/perf-cpp"
   INSTALL_COMMAND cmake -E echo ""
 )
@@ -116,8 +120,8 @@ target_link_libraries(your_target perf-cpp::perf-cpp)
 If *perf-cpp* is [installed](#installing) on your system:
 
 ```cmake
-find_package(perf-cpp 1.1 REQUIRED)
+find_package(perf-cpp 1.1.0 REQUIRED)
 target_link_libraries(your_target perf-cpp::perf-cpp)
 ```
 
-The version argument is optional; the package accepts any request with the same major version (e.g., `find_package(perf-cpp 1.1)` matches an installed `1.2.0`, but not `2.0.0`).
+The version argument is optional; the package accepts any request with the same major version (e.g., `find_package(perf-cpp 1.1.0)` matches an installed `1.2.0`, but not `2.0.0`).
