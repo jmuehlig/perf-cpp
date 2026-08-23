@@ -1,19 +1,18 @@
+from conan import ConanFile
+from conan.tools.build import can_run
+from conan.tools.cmake import cmake_layout, CMake
 import os
 
-from conan import ConanFile
-from conan.tools.cmake import CMake, cmake_layout
-from conan.tools.build import can_run
 
-
-class PerfCppTestConan(ConanFile):
-    settings = "os", "compiler", "build_type", "arch"
-    generators = "CMakeToolchain", "CMakeDeps"
-
-    def requirements(self):
-        self.requires(self.tested_reference_str)
+class TestPackageConan(ConanFile):
+    settings = "os", "arch", "compiler", "build_type"
+    generators = "CMakeDeps", "CMakeToolchain"
 
     def layout(self):
         cmake_layout(self)
+
+    def requirements(self):
+        self.requires(self.tested_reference_str)
 
     def build(self):
         cmake = CMake(self)
@@ -22,5 +21,5 @@ class PerfCppTestConan(ConanFile):
 
     def test(self):
         if can_run(self):
-            cmd = os.path.join(self.cpp.build.bindir, "test_perf_cpp")
-            self.run(cmd, env="conanrun")
+            bin_path = os.path.join(self.cpp.build.bindir, "test_package")
+            self.run(bin_path, env="conanrun")
