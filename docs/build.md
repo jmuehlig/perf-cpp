@@ -5,7 +5,7 @@
 ```bash
 git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
-git checkout v1.1.0
+git checkout v1.0-dev
 cmake . -B build
 cmake --build build
 ```
@@ -53,7 +53,7 @@ include(FetchContent)
 FetchContent_Declare(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v1.1.0"
+  GIT_TAG "v1.0-dev"
 )
 FetchContent_MakeAvailable(perf-cpp-external)
 ```
@@ -71,7 +71,7 @@ include(ExternalProject)
 ExternalProject_Add(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v1.1.0"
+  GIT_TAG "v1.0-dev"
   PREFIX "lib/perf-cpp"
   INSTALL_COMMAND cmake -E echo ""
 )
