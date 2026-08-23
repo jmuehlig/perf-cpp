@@ -10,31 +10,27 @@
       
       
       
-        <link rel="canonical" href="https://jmuehlig.github.io/perf-cpp/build/">
+        <link rel="canonical" href="https://jmuehlig.github.io/perf-cpp/superpowers/specs/2026-06-16-conan-recipe-design/">
       
       
-        <link rel="prev" href="..">
-      
-      
-        <link rel="next" href="../what-are-performance-counters/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Building - perf-cpp</title>
+        <title>Conan Recipe: build & local-cache publish for perf-cpp - perf-cpp</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,7 +49,7 @@
       
     
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
   
@@ -88,7 +84,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#building-and-project-integration" class="md-skip">
+        <a href="#conan-recipe-build-local-cache-publish-for-perf-cpp" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +100,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="perf-cpp" class="md-header__button md-logo" aria-label="perf-cpp" data-md-component="logo">
+    <a href="../../.." title="perf-cpp" class="md-header__button md-logo" aria-label="perf-cpp" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -124,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Building
+              Conan Recipe: build &amp; local-cache publish for perf-cpp
             
           </span>
         </div>
@@ -242,7 +238,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="perf-cpp" class="md-nav__button md-logo" aria-label="perf-cpp" data-md-component="logo">
+    <a href="../../.." title="perf-cpp" class="md-nav__button md-logo" aria-label="perf-cpp" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -272,7 +268,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -296,37 +292,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Building
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../build/" class="md-nav__link">
         
   
   
@@ -342,126 +311,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#building-manually" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Building Manually
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Building Manually">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#cmake-options" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CMake Options
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#installing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Installing
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#including-into-cmake-projects" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Including into CMake Projects
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Including into CMake Projects">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#via-fetchcontent-recommended" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Via FetchContent (recommended)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#via-externalproject" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Via ExternalProject
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#via-conan" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Via Conan
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#via-find_package" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Via find_package
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -473,7 +322,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../what-are-performance-counters/" class="md-nav__link">
+      <a href="../../../what-are-performance-counters/" class="md-nav__link">
         
   
   
@@ -554,7 +403,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recording/" class="md-nav__link">
+      <a href="../../../recording/" class="md-nav__link">
         
   
   
@@ -582,7 +431,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recording-live-events/" class="md-nav__link">
+      <a href="../../../recording-live-events/" class="md-nav__link">
         
   
   
@@ -610,7 +459,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recording-parallel/" class="md-nav__link">
+      <a href="../../../recording-parallel/" class="md-nav__link">
         
   
   
@@ -638,7 +487,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../metrics/" class="md-nav__link">
+      <a href="../../../metrics/" class="md-nav__link">
         
   
   
@@ -666,7 +515,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../counters/" class="md-nav__link">
+      <a href="../../../counters/" class="md-nav__link">
         
   
   
@@ -755,7 +604,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sampling/" class="md-nav__link">
+      <a href="../../../sampling/" class="md-nav__link">
         
   
   
@@ -783,7 +632,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sampling-parallel/" class="md-nav__link">
+      <a href="../../../sampling-parallel/" class="md-nav__link">
         
   
   
@@ -811,7 +660,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sampling-symbols-and-flamegraphs/" class="md-nav__link">
+      <a href="../../../sampling-symbols-and-flamegraphs/" class="md-nav__link">
         
   
   
@@ -839,7 +688,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sampling-export-to-csv/" class="md-nav__link">
+      <a href="../../../sampling-export-to-csv/" class="md-nav__link">
         
   
   
@@ -867,7 +716,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sampling-export-to-perf/" class="md-nav__link">
+      <a href="../../../sampling-export-to-perf/" class="md-nav__link">
         
   
   
@@ -895,7 +744,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sampling-memory-analysis/" class="md-nav__link">
+      <a href="../../../sampling-memory-analysis/" class="md-nav__link">
         
   
   
@@ -984,7 +833,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../perf-paranoid/" class="md-nav__link">
+      <a href="../../../perf-paranoid/" class="md-nav__link">
         
   
   
@@ -1039,22 +888,44 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#building-manually" class="md-nav__link">
+  <a href="#goal" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Building Manually
+        Goal
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Building Manually">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conan-installation-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conan installation &amp; profile
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conanfilepy-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        conanfile.py fixes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="conanfile.py fixes">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#cmake-options" class="md-nav__link">
+  <a href="#bug-1-missing-cmake-in-exports_sources-critical" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CMake Options
+        Bug 1 — Missing cmake/ in exports_sources (critical)
       
     </span>
   </a>
@@ -1062,10 +933,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#installing" class="md-nav__link">
+  <a href="#bug-2-fpic-cleanup-in-wrong-hook-stylecorrectness" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installing
+        Bug 2 — fPIC cleanup in wrong hook (style/correctness)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retained-workaround" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retained workaround
       
     </span>
   </a>
@@ -1078,63 +960,24 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#including-into-cmake-projects" class="md-nav__link">
+  <a href="#build-test-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Including into CMake Projects
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Including into CMake Projects">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#via-fetchcontent-recommended" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Via FetchContent (recommended)
+        Build &amp; test workflow
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#via-externalproject" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#out-of-scope" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Via ExternalProject
+        Out of scope
       
     </span>
   </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#via-conan" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Via Conan
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#via-find_package" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Via find_package
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1158,123 +1001,62 @@
   
 
 
-<h1 id="building-and-project-integration">Building and Project Integration<a class="headerlink" href="#building-and-project-integration" title="Permanent link">&para;</a></h1>
-<h2 id="building-manually">Building Manually<a class="headerlink" href="#building-manually" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/jmuehlig/perf-cpp.git
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>perf-cpp
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>git<span class="w"> </span>checkout<span class="w"> </span>v1.1.0
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>cmake<span class="w"> </span>.<span class="w"> </span>-B<span class="w"> </span>build
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>cmake<span class="w"> </span>--build<span class="w"> </span>build
+<h1 id="conan-recipe-build-local-cache-publish-for-perf-cpp">Conan Recipe: build &amp; local-cache publish for perf-cpp<a class="headerlink" href="#conan-recipe-build-local-cache-publish-for-perf-cpp" title="Permanent link">&para;</a></h1>
+<p><strong>Date:</strong> 2026-06-16
+<strong>Scope:</strong> Fix the existing <code>conanfile.py</code>, install Conan locally, build and cache the package, verify with <code>test_package/</code>. No remote publish in this phase.</p>
+<hr />
+<h2 id="goal">Goal<a class="headerlink" href="#goal" title="Permanent link">&para;</a></h2>
+<p>Get <code>perf-cpp/1.0.0</code> installable via <code>conan install perf-cpp/1.0.0</code> from the local Conan cache. The recipe already exists (<code>conanfile.py</code> + <code>test_package/</code>) but has never been built or tested, and contains two bugs that will prevent a successful build.</p>
+<hr />
+<h2 id="conan-installation-profile">Conan installation &amp; profile<a class="headerlink" href="#conan-installation-profile" title="Permanent link">&para;</a></h2>
+<p>Install Conan 2.x via <code>pipx</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pipx install conan
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>conan profile detect
 </code></pre></div>
-<h3 id="cmake-options">CMake Options<a class="headerlink" href="#cmake-options" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>-DBUILD_EXAMPLES=ON</code></td>
-<td><code>OFF</code></td>
-<td>Build example binaries into <code>build/bin</code></td>
-</tr>
-<tr>
-<td><code>-DBUILD_LIB_SHARED=ON</code></td>
-<td><code>OFF</code></td>
-<td>Build as shared library instead of static</td>
-</tr>
-<tr>
-<td><code>-DBUILD_TESTS=ON</code></td>
-<td><code>OFF</code></td>
-<td>Build unit tests</td>
-</tr>
-<tr>
-<td><code>-DGEN_PROCESSOR_EVENTS=ON</code></td>
-<td><code>OFF</code></td>
-<td>Embed processor-specific events at compile time (see <a href="../counters/">customizing events</a>)</td>
-</tr>
-<tr>
-<td><code>-DENABLE_CLANG_TIDY=OFF</code></td>
-<td><code>ON</code> when building <em>perf-cpp</em> standalone</td>
-<td>Run <code>clang-tidy</code> alongside compilation</td>
-</tr>
-</tbody>
-</table>
-<p>Example with multiple options:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cmake<span class="w"> </span>.<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DBUILD_EXAMPLES<span class="o">=</span>ON<span class="w"> </span>-DGEN_PROCESSOR_EVENTS<span class="o">=</span>ON
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>cmake<span class="w"> </span>--build<span class="w"> </span>build
-</code></pre></div></p>
-<p>Standalone builds default to <code>Release</code> (<code>-O3</code>, no debug info). Build with <code>-DCMAKE_BUILD_TYPE=RelWithDebInfo</code> to get
-an optimized library with full debug information, e.g., to profile <em>perf-cpp</em> itself.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p><code>-DGEN_PROCESSOR_EVENTS=ON</code> reads events from the <a href="../counters/#loading-from-the-event-library">event library</a> and generates a source file that can grow large, increasing compilation time significantly.</p>
-</div>
-<h3 id="installing">Installing<a class="headerlink" href="#installing" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>cmake<span class="w"> </span>.<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DCMAKE_INSTALL_PREFIX<span class="o">=</span>/path/to/install/dir
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>cmake<span class="w"> </span>--build<span class="w"> </span>build
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>cmake<span class="w"> </span>--install<span class="w"> </span>build
+<p><code>pipx</code> isolates Conan in its own virtual environment — no system Python pollution, no <code>sudo</code>. <code>conan profile detect</code> auto-generates a default profile from the current compiler. The recipe's <code>validate()</code> method enforces Linux-only, so the profile only needs GCC 11+ or Clang 14+ (already satisfied by the dev machine).</p>
+<hr />
+<h2 id="conanfilepy-fixes">conanfile.py fixes<a class="headerlink" href="#conanfilepy-fixes" title="Permanent link">&para;</a></h2>
+<h3 id="bug-1-missing-cmake-in-exports_sources-critical">Bug 1 — Missing <code>cmake/</code> in <code>exports_sources</code> (critical)<a class="headerlink" href="#bug-1-missing-cmake-in-exports_sources-critical" title="Permanent link">&para;</a></h3>
+<p><code>CMakeLists.txt</code> calls:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">configure_package_config_file</span><span class="p">(</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="s2">&quot;${CMAKE_CURRENT_SOURCE_DIR}/cmake/perf-cppConfig.cmake.in&quot;</span><span class="w"> </span><span class="s">...</span><span class="p">)</span>
 </code></pre></div>
-<p>This installs the library into <code>lib/</code>, the headers into <code>include/</code>, and the CMake package config files into <code>lib/cmake/perf-cpp/</code>, relative to the install prefix.
-The library will then be available via <code>find_package</code> (see <a href="#via-find_package">below</a>).
-If you install to a non-standard prefix, point CMake to it when configuring the consuming project, e.g., via <code>-DCMAKE_PREFIX_PATH=/path/to/install/dir</code>.</p>
-<h2 id="including-into-cmake-projects">Including into CMake Projects<a class="headerlink" href="#including-into-cmake-projects" title="Permanent link">&para;</a></h2>
-<h3 id="via-fetchcontent-recommended">Via FetchContent (recommended)<a class="headerlink" href="#via-fetchcontent-recommended" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">include</span><span class="p">(</span><span class="s">FetchContent</span><span class="p">)</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">FetchContent_Declare</span><span class="p">(</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="s">perf-cpp-external</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="s">GIT_REPOSITORY</span><span class="w"> </span><span class="s2">&quot;https://github.com/jmuehlig/perf-cpp&quot;</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="s">GIT_TAG</span><span class="w"> </span><span class="s2">&quot;v1.1.0&quot;</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="p">)</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="nb">FetchContent_MakeAvailable</span><span class="p">(</span><span class="s">perf-cpp-external</span><span class="p">)</span>
+<p>Without <code>cmake/*</code> in <code>exports_sources</code>, Conan will not copy the template into the build sandbox and the package build will fail with a CMake file-not-found error.</p>
+<p><strong>Fix:</strong> Add <code>"cmake/*"</code> to the tuple:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">exports_sources</span> <span class="o">=</span> <span class="s2">&quot;CMakeLists.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;src/*&quot;</span><span class="p">,</span> <span class="s2">&quot;include/*&quot;</span><span class="p">,</span> <span class="s2">&quot;cmake/*&quot;</span><span class="p">,</span> <span class="s2">&quot;LICENSE&quot;</span><span class="p">,</span> <span class="s2">&quot;.clang-tidy&quot;</span>
 </code></pre></div>
-<p>Then link against <code>perf-cpp</code>; the include directory and the C++17 requirement propagate automatically:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">your_target</span><span class="w"> </span><span class="s">perf-cpp</span><span class="p">)</span>
+<h3 id="bug-2-fpic-cleanup-in-wrong-hook-stylecorrectness">Bug 2 — fPIC cleanup in wrong hook (style/correctness)<a class="headerlink" href="#bug-2-fpic-cleanup-in-wrong-hook-stylecorrectness" title="Permanent link">&para;</a></h3>
+<p>In Conan 2.x:
+- <code>config_options()</code> — removes options that are unconditionally unavailable (e.g., no <code>fPIC</code> on Windows).
+- <code>configure()</code> — makes option-based decisions after values are resolved.</p>
+<p>The current code puts the <code>shared → remove fPIC</code> logic in <code>config_options()</code>. The correct placement is <code>configure()</code>.</p>
+<p><strong>Fix:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">config_options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="k">pass</span>  <span class="c1"># nothing to remove unconditionally on Linux</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">shared</span><span class="p">:</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">rm_safe</span><span class="p">(</span><span class="s2">&quot;fPIC&quot;</span><span class="p">)</span>
 </code></pre></div>
-<h3 id="via-externalproject">Via ExternalProject<a class="headerlink" href="#via-externalproject" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">include</span><span class="p">(</span><span class="s">ExternalProject</span><span class="p">)</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">ExternalProject_Add</span><span class="p">(</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="s">perf-cpp-external</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="s">GIT_REPOSITORY</span><span class="w"> </span><span class="s2">&quot;https://github.com/jmuehlig/perf-cpp&quot;</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="s">GIT_TAG</span><span class="w"> </span><span class="s2">&quot;v1.1.0&quot;</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="s">PREFIX</span><span class="w"> </span><span class="s2">&quot;lib/perf-cpp&quot;</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span><span class="s">INSTALL_COMMAND</span><span class="w"> </span><span class="s">cmake</span><span class="w"> </span><span class="s">-E</span><span class="w"> </span><span class="s">echo</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="p">)</span>
+<h3 id="retained-workaround">Retained workaround<a class="headerlink" href="#retained-workaround" title="Permanent link">&para;</a></h3>
+<p><code>package()</code> manually copies <code>*.a</code> / <code>*.so*</code> from the build folder in addition to calling <code>cmake.install()</code>. This is kept as a safety net in case <code>cmake.install()</code> doesn't place the library under <code>{package_folder}/lib/</code>. It is harmless if redundant.</p>
+<hr />
+<h2 id="build-test-workflow">Build &amp; test workflow<a class="headerlink" href="#build-test-workflow" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># 1. Build and cache the package</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>conan<span class="w"> </span>create<span class="w"> </span>.<span class="w"> </span>--build<span class="o">=</span>missing
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># 2. Verify the consumer</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>conan<span class="w"> </span><span class="nb">test</span><span class="w"> </span>test_package<span class="w"> </span>perf-cpp/1.0.0
 </code></pre></div>
-<p>Then retrieve the build paths and link against <code>perf-cpp</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">ExternalProject_Get_Property</span><span class="p">(</span><span class="s">perf-cpp-external</span><span class="w"> </span><span class="s">SOURCE_DIR</span><span class="w"> </span><span class="s">BINARY_DIR</span><span class="p">)</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nb">include_directories</span><span class="p">(</span><span class="o">${</span><span class="nv">SOURCE_DIR</span><span class="o">}</span><span class="s">/include</span><span class="p">)</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nb">link_directories</span><span class="p">(</span><span class="o">${</span><span class="nv">BINARY_DIR</span><span class="o">}</span><span class="p">)</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">your_target</span><span class="w"> </span><span class="s">perf-cpp</span><span class="p">)</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nb">add_dependencies</span><span class="p">(</span><span class="s">your_target</span><span class="w"> </span><span class="s">perf-cpp-external</span><span class="p">)</span>
-</code></pre></div>
-<h3 id="via-conan">Via Conan<a class="headerlink" href="#via-conan" title="Permanent link">&para;</a></h3>
-<p>Add <em>perf-cpp</em> to your <code>conanfile.txt</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">[requires]</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="na">perf-cpp/1.1.0</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">[generators]</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="na">CMakeDeps</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="na">CMakeToolchain</span>
-</code></pre></div>
-<p>Then install dependencies and configure:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>conan<span class="w"> </span>install<span class="w"> </span>.<span class="w"> </span>--build<span class="o">=</span>missing
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>cmake<span class="w"> </span>.<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>--preset<span class="w"> </span>conan-release
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>cmake<span class="w"> </span>--build<span class="w"> </span>build
-</code></pre></div>
-<p>Link in your <code>CMakeLists.txt</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">find_package</span><span class="p">(</span><span class="s">perf-cpp</span><span class="w"> </span><span class="s">REQUIRED</span><span class="w"> </span><span class="s">CONFIG</span><span class="p">)</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">your_target</span><span class="w"> </span><span class="s">perf-cpp::perf-cpp</span><span class="p">)</span>
-</code></pre></div>
-<h3 id="via-find_package">Via find_package<a class="headerlink" href="#via-find_package" title="Permanent link">&para;</a></h3>
-<p>If <em>perf-cpp</em> is <a href="#installing">installed</a> on your system:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">find_package</span><span class="p">(</span><span class="s">perf-cpp</span><span class="w"> </span><span class="s">1.1.0</span><span class="w"> </span><span class="s">REQUIRED</span><span class="p">)</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">your_target</span><span class="w"> </span><span class="s">perf-cpp::perf-cpp</span><span class="p">)</span>
-</code></pre></div>
-<p>The version argument is optional; the package accepts any request with the same major version (e.g., <code>find_package(perf-cpp 1.1.0)</code> matches an installed <code>1.2.0</code>, but not <code>2.0.0</code>).</p>
+<p><code>conan create</code> exports sources, builds the library against the default profile, and installs the result in the local cache as <code>perf-cpp/1.0.0</code>.</p>
+<p><code>conan test</code> builds <code>test_package/</code> against the cached package and runs the binary. The existing <code>test_package/src/example.cpp</code> instantiates <code>perf::CounterDefinition</code> and <code>perf::EventCounter</code> — enough to confirm headers, linkage, and the <code>perf-cpp::perf-cpp</code> CMake target all resolve correctly. No changes to <code>test_package/</code> are needed.</p>
+<hr />
+<h2 id="out-of-scope">Out of scope<a class="headerlink" href="#out-of-scope" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Remote publishing (ConanCenter, Artifactory) — deferred.</li>
+<li>CI integration — deferred.</li>
+<li>Extending <code>test_package/</code> beyond the current minimal smoke test — not required at this stage.</li>
+</ul>
 
 
 
@@ -1326,10 +1108,10 @@ If you install to a non-standard prefix, point CMake to it when configuring the 
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "search.suggest", "search.highlight"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
