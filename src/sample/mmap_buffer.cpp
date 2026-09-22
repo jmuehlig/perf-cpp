@@ -166,16 +166,18 @@ perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
     enabled = this->_ringbuffer_header->time_enabled;
     running = this->_ringbuffer_header->time_running;
 
-    /// Read the hardware counter value.
-    auto value = _rdpmc(index - 1U);
+    /// Read the raw hardware counter value; only the lower pmc_width bits are meaningful.
+    const auto width = static_cast<std::uint64_t>(this->_ringbuffer_header->pmc_width);
+    const auto mask = width >= 64U ? ~std::uint64_t{ 0U } : (std::uint64_t{ 1U } << width) - 1U;
+    const auto raw_value = static_cast<std::uint64_t>(_rdpmc(index - 1U)) & mask;
 
-    /// Read the width of the value.
-    const auto width = 64 - this->_ringbuffer_header->pmc_width;
+    /// Sign-extend the raw value from pmc_width to 64 bits (see the MMAP layout section of perf_event_open(2)): the
+    /// kernel arms the counter with a negative start value and stores the matching signed start value in offset, so
+    /// zero-extending instead of sign-extending would report 2^pmc_width too much.
+    const auto sign_bit = std::uint64_t{ 1U } << (width - 1U);
+    const auto sign_extended = static_cast<std::int64_t>((raw_value ^ sign_bit) - sign_bit);
 
-    /// Adjust the value for the given width.
-    value = (value << width) >> width;
-
-    count += static_cast<std::int64_t>(value);
+    count += sign_extended;
 
     asm volatile("" ::: "memory");
 
