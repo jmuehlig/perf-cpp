@@ -13,37 +13,6 @@
 #include <cpuid.h>
 #endif
 
-/// Cache variable to remember if Intel's auxiliary event is required for sampling.
-std::optional<bool> perf::HardwareInfo::_is_intel_aux_event_required{ std::nullopt };
-
-/// Cache variable to remember if the underlying Intel hardware is from the 12th generation or even newer; these
-/// machines have heterogeneous CPUs and PMUs.
-std::optional<bool> perf::HardwareInfo::_is_intel_12th_generation_or_newer{ std::nullopt };
-
-/// Cache variable to remember AMD IBS information.
-std::optional<perf::HardwareInfo::AMDInstructionBasedSampling> perf::HardwareInfo::_amd_ibs{ std::nullopt };
-
-/// Cache variable to remember the memory page size.
-std::optional<std::uint64_t> perf::HardwareInfo::_memory_page_size{ std::nullopt };
-
-/// Number of generic (programmable) performance counters per logical CPU core.
-std::optional<std::uint8_t> perf::HardwareInfo::_physical_generic_performance_counters_per_logical_core{ std::nullopt };
-
-/// Number of fixed-function performance counters per logical CPU core.
-std::optional<std::uint8_t> perf::HardwareInfo::_physical_fixed_performance_counters_per_logical_core{ std::nullopt };
-
-/// Number of events that can be scheduled to the same physical performance counter.
-std::optional<std::uint8_t> perf::HardwareInfo::_events_per_physical_performance_counter{ std::nullopt };
-
-/// Maximal clock frequency across all cores in Hz.
-std::optional<std::uint64_t> perf::HardwareInfo::_max_cpu_clock_frequency{ std::nullopt };
-
-/// Maximal perf event sample rate, read from `/proc/sys/kernel/perf_event_max_sample_rate`.
-std::optional<std::uint64_t> perf::HardwareInfo::_max_perf_sample_rate{ std::nullopt };
-
-/// Cache variable to remember if NMI watchdog is enabled.
-std::optional<bool> perf::HardwareInfo::_is_nmi_watchdog_enabled{ std::nullopt };
-
 std::vector<std::uint16_t>
 perf::HardwareInfo::all_cpu_cores()
 {
@@ -56,19 +25,22 @@ perf::HardwareInfo::all_cpu_cores()
 bool
 perf::HardwareInfo::is_intel_aux_counter_required()
 {
+  /// Function-local statics are initialized exactly once and thread-safe, so concurrent first calls (e.g., from
+  /// multi-threaded samplers) cannot race on the cached value.
+  static const auto is_required = HardwareInfo::detect_intel_aux_counter_required();
+  return is_required;
+}
+
+bool
+perf::HardwareInfo::detect_intel_aux_counter_required()
+{
 #if defined(__x86_64__) || defined(__i386__)
-  if (HardwareInfo::_is_intel_aux_event_required.has_value()) {
-    return HardwareInfo::_is_intel_aux_event_required.value();
-  }
-
   if (!HardwareInfo::is_intel()) {
-    return HardwareInfo::cache_value(HardwareInfo::_is_intel_aux_event_required, false);
+    return false;
   }
 
-  const auto is_aux_event_required =
-    std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu/events/mem-loads-aux")) ||
-    std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu_core/events/mem-loads-aux"));
-  return HardwareInfo::cache_value(HardwareInfo::_is_intel_aux_event_required, is_aux_event_required);
+  return std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu/events/mem-loads-aux")) ||
+         std::filesystem::exists(std::filesystem::path("/sys/bus/event_source/devices/cpu_core/events/mem-loads-aux"));
 #else
   return false;
 #endif
@@ -77,13 +49,16 @@ perf::HardwareInfo::is_intel_aux_counter_required()
 bool
 perf::HardwareInfo::is_intel_12th_generation_or_newer()
 {
-#if defined(__x86_64__) || defined(__i386__)
-  if (HardwareInfo::_is_intel_12th_generation_or_newer.has_value()) {
-    return HardwareInfo::_is_intel_12th_generation_or_newer.value();
-  }
+  static const auto is_12th_generation_or_newer = HardwareInfo::detect_intel_12th_generation_or_newer();
+  return is_12th_generation_or_newer;
+}
 
+bool
+perf::HardwareInfo::detect_intel_12th_generation_or_newer()
+{
+#if defined(__x86_64__) || defined(__i386__)
   if (!HardwareInfo::is_intel()) {
-    return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer, false);
+    return false;
   }
 
   /// Get processor family/model information
@@ -95,7 +70,7 @@ perf::HardwareInfo::is_intel_12th_generation_or_newer()
     /// Families < 6 are older than Alder Lake (12th generation); families > 6 are newer (and do not exist up to now).
     if (const auto display_family = family_id + extended_family_id;
         display_family != /* 6U is the line between 12th and earlier generations */ 6U) {
-      return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer, display_family > 6U);
+      return display_family > 6U;
     }
 
     /// For family 6, check the model.
@@ -109,12 +84,10 @@ perf::HardwareInfo::is_intel_12th_generation_or_newer()
     ///   0xA5 (165) / 0xA6 (166): Comet Lake (10th gen), 0xA7 (167): Rocket Lake (11th gen).
     const auto is_pre_12th_gen_exception = display_model == 0xA5U || display_model == 0xA6U || display_model == 0xA7U;
 
-    return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer,
-                                     display_model >= 143U && !is_pre_12th_gen_exception);
+    return display_model >= 143U && !is_pre_12th_gen_exception;
   }
 
-  return HardwareInfo::cache_value(HardwareInfo::_is_intel_12th_generation_or_newer, false);
-
+  return false;
 #else
   return false;
 #endif
@@ -123,28 +96,28 @@ perf::HardwareInfo::is_intel_12th_generation_or_newer()
 const perf::HardwareInfo::AMDInstructionBasedSampling&
 perf::HardwareInfo::amd_ibs()
 {
-#if defined(__x86_64__) || defined(__i386__)
-  if (HardwareInfo::_amd_ibs.has_value()) {
-    return HardwareInfo::_amd_ibs.value();
-  }
+  static const auto ibs_info = HardwareInfo::detect_amd_ibs();
+  return ibs_info;
+}
 
+perf::HardwareInfo::AMDInstructionBasedSampling
+perf::HardwareInfo::detect_amd_ibs()
+{
+#if defined(__x86_64__) || defined(__i386__)
   /// Check if the hardware underneath is AMD.
   if (!HardwareInfo::is_amd()) {
-    HardwareInfo::_amd_ibs = AMDInstructionBasedSampling{ false };
-    return HardwareInfo::_amd_ibs.value();
+    return AMDInstructionBasedSampling{ false };
   }
 
   /// If the hardware is AMD, check if IBS is supported.
   /// See https://github.com/jlgreathouse/AMD_IBS_Toolkit/blob/master/ibs_with_perf_events.txt
   const auto extended_processor_info = HardwareInfo::cpuid(0x80000001);
   if (!extended_processor_info.has_value()) {
-    HardwareInfo::_amd_ibs = AMDInstructionBasedSampling{ false };
-    return HardwareInfo::_amd_ibs.value();
+    return AMDInstructionBasedSampling{ false };
   }
 
   if (const auto is_ibs_supported = static_cast<bool>(extended_processor_info->ecx & (1U << 10)); !is_ibs_supported) {
-    HardwareInfo::_amd_ibs = AMDInstructionBasedSampling{ false };
-    return HardwareInfo::_amd_ibs.value();
+    return AMDInstructionBasedSampling{ false };
   }
 
   auto ibs_info = AMDInstructionBasedSampling{ true };
@@ -197,12 +170,10 @@ perf::HardwareInfo::amd_ibs()
     }
   }
 
-  HardwareInfo::_amd_ibs = ibs_info;
+  return ibs_info;
 #else
-  HardwareInfo::_amd_ibs = AMDInstructionBasedSampling{ false };
+  return AMDInstructionBasedSampling{ false };
 #endif
-
-  return HardwareInfo::_amd_ibs.value();
 }
 
 bool
@@ -215,22 +186,27 @@ perf::HardwareInfo::is_amd_ibs_supported()
 std::uint64_t
 perf::HardwareInfo::memory_page_size()
 {
-  if (HardwareInfo::_memory_page_size.has_value()) {
-    return HardwareInfo::_memory_page_size.value();
-  }
+  static const auto memory_page_size = HardwareInfo::detect_memory_page_size();
+  return memory_page_size;
+}
 
+std::uint64_t
+perf::HardwareInfo::detect_memory_page_size() noexcept
+{
   /// Read memory page size from sysconf (see https://man7.org/linux/man-pages/man3/sysconf.3.html).
-  const auto memory_page_size = static_cast<std::uint64_t>(std::max(0L, ::sysconf(_SC_PAGESIZE)));
-  return HardwareInfo::cache_value(HardwareInfo::_memory_page_size, memory_page_size);
+  return static_cast<std::uint64_t>(std::max(0L, ::sysconf(_SC_PAGESIZE)));
 }
 
 std::uint8_t
 perf::HardwareInfo::physical_generic_performance_counters_per_logical_core()
 {
-  if (HardwareInfo::_physical_generic_performance_counters_per_logical_core.has_value()) {
-    return HardwareInfo::_physical_generic_performance_counters_per_logical_core.value();
-  }
+  static const auto generic_counters = HardwareInfo::detect_physical_generic_performance_counters_per_logical_core();
+  return generic_counters;
+}
 
+std::uint8_t
+perf::HardwareInfo::detect_physical_generic_performance_counters_per_logical_core()
+{
 #if defined(__x86_64__) || defined(__i386__)
   if (HardwareInfo::is_intel()) {
     /// Read CPUID information with 0x0A (see https://www.felixcloutier.com/x86/cpuid).
@@ -238,8 +214,7 @@ perf::HardwareInfo::physical_generic_performance_counters_per_logical_core()
       /// Number of general-purpose performance monitoring counter per logical processor is in bits 15-08.
       const auto performance_counters_per_logical_core = (pmu_info->eax >> 8) & 0xFF;
 
-      return HardwareInfo::cache_value(HardwareInfo::_physical_generic_performance_counters_per_logical_core,
-                                       static_cast<std::uint8_t>(performance_counters_per_logical_core));
+      return static_cast<std::uint8_t>(performance_counters_per_logical_core);
     }
   }
 
@@ -259,50 +234,39 @@ perf::HardwareInfo::physical_generic_performance_counters_per_logical_core()
         if (const auto pmu_info = HardwareInfo::cpuid(0x80000022); pmu_info.has_value()) {
           const auto performance_counters_per_logical_core = pmu_info->eax & 0xFF;
 
-          return HardwareInfo::cache_value(HardwareInfo::_physical_generic_performance_counters_per_logical_core,
-                                           static_cast<std::uint8_t>(performance_counters_per_logical_core));
+          return static_cast<std::uint8_t>(performance_counters_per_logical_core);
         }
       }
     }
   }
 #endif
 
-  /// Try to find the number of hardware counters per logical core.
-  const auto hardware_counters = HardwareInfo::explore_hardware_counters_experimentally(true);
-
-  /// Fallback: Set to zero, if the experiment failed.
-  if (!hardware_counters.has_value()) {
-    return HardwareInfo::cache_value(HardwareInfo::_physical_generic_performance_counters_per_logical_core,
-                                     static_cast<std::uint8_t>(0U));
-  }
-
-  return HardwareInfo::cache_value(HardwareInfo::_physical_generic_performance_counters_per_logical_core,
-                                   hardware_counters.value());
+  /// Try to find the number of hardware counters per logical core; fall back to zero if the experiment failed.
+  return HardwareInfo::explore_hardware_counters_experimentally(true).value_or(static_cast<std::uint8_t>(0U));
 }
 
 std::uint8_t
 perf::HardwareInfo::physical_fixed_performance_counters_per_logical_core()
 {
-  if (HardwareInfo::_physical_fixed_performance_counters_per_logical_core.has_value()) {
-    return HardwareInfo::_physical_fixed_performance_counters_per_logical_core.value();
-  }
+  static const auto fixed_counters = HardwareInfo::detect_physical_fixed_performance_counters_per_logical_core();
+  return fixed_counters;
+}
 
+std::uint8_t
+perf::HardwareInfo::detect_physical_fixed_performance_counters_per_logical_core()
+{
 #if defined(__x86_64__) || defined(__i386__)
   if (HardwareInfo::is_intel()) {
     /// Read CPUID information with 0x0A (see https://www.felixcloutier.com/x86/cpuid).
     if (const auto pmu_info = HardwareInfo::cpuid(0x0A); pmu_info.has_value()) {
       /// Number of fixed-function performance counters is in EDX bits 4-0.
-      const auto fixed_counters = pmu_info->edx & 0x1F;
-
-      return HardwareInfo::cache_value(HardwareInfo::_physical_fixed_performance_counters_per_logical_core,
-                                       static_cast<std::uint8_t>(fixed_counters));
+      return static_cast<std::uint8_t>(pmu_info->edx & 0x1F);
     }
   }
 #endif
 
   /// AMD and ARM do not have fixed-function performance counters.
-  return HardwareInfo::cache_value(HardwareInfo::_physical_fixed_performance_counters_per_logical_core,
-                                   static_cast<std::uint8_t>(0U));
+  return static_cast<std::uint8_t>(0U);
 }
 
 #if defined(__x86_64__) || defined(__i386__)
@@ -322,45 +286,47 @@ perf::HardwareInfo::cpuid(const std::uint32_t leaf, const std::uint32_t sub_leaf
 std::uint8_t
 perf::HardwareInfo::events_per_physical_performance_counter()
 {
-  if (HardwareInfo::_events_per_physical_performance_counter.has_value()) {
-    return HardwareInfo::_events_per_physical_performance_counter.value();
-  }
+  static const auto events_per_counter = HardwareInfo::detect_events_per_physical_performance_counter();
+  return events_per_counter;
+}
 
-  /// Try to find the number of events per physical performance counter.
-  if (const auto events_per_hardware_counter = HardwareInfo::explore_hardware_counters_experimentally(false);
-      events_per_hardware_counter.has_value()) {
-    return HardwareInfo::cache_value(HardwareInfo::_events_per_physical_performance_counter,
-                                     events_per_hardware_counter.value());
-  }
-
-  /// Fallback: Set to one, if the experiment failed.
-  return HardwareInfo::cache_value(HardwareInfo::_events_per_physical_performance_counter,
-                                   static_cast<std::uint8_t>(1U));
+std::uint8_t
+perf::HardwareInfo::detect_events_per_physical_performance_counter()
+{
+  /// Try to find the number of events per physical performance counter; fall back to one if the experiment failed.
+  return HardwareInfo::explore_hardware_counters_experimentally(false).value_or(static_cast<std::uint8_t>(1U));
 }
 
 bool
 perf::HardwareInfo::is_nmi_watchdog_enabled()
 {
-  if (HardwareInfo::_is_nmi_watchdog_enabled.has_value()) {
-    return HardwareInfo::_is_nmi_watchdog_enabled.value();
-  }
+  static const auto is_enabled = HardwareInfo::detect_nmi_watchdog_enabled();
+  return is_enabled;
+}
 
+bool
+perf::HardwareInfo::detect_nmi_watchdog_enabled()
+{
   /// Read NMI watchdog status from procfs (see https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt).
   auto watchdog_file = std::ifstream{ "/proc/sys/kernel/nmi_watchdog" };
   if (auto value = 0; watchdog_file >> value) {
-    return HardwareInfo::cache_value(HardwareInfo::_is_nmi_watchdog_enabled, value != 0);
+    return value != 0;
   }
 
-  return HardwareInfo::cache_value(HardwareInfo::_is_nmi_watchdog_enabled, false);
+  return false;
 }
 
 std::uint64_t
 perf::HardwareInfo::max_cpu_clock_frequency()
 {
-  if (HardwareInfo::_max_cpu_clock_frequency.has_value()) {
-    return HardwareInfo::_max_cpu_clock_frequency.value();
-  }
+  /// If detection throws, the static stays uninitialized and the next call retries the detection.
+  static const auto max_frequency = HardwareInfo::detect_max_cpu_clock_frequency();
+  return max_frequency;
+}
 
+std::uint64_t
+perf::HardwareInfo::detect_max_cpu_clock_frequency()
+{
   auto max_frequency_in_hz = 0UL;
 
   for (const auto& entry : std::filesystem::directory_iterator("/sys/devices/system/cpu")) {
@@ -380,16 +346,19 @@ perf::HardwareInfo::max_cpu_clock_frequency()
     throw CannotReadMaxClockFrequency{};
   }
 
-  return HardwareInfo::cache_value(HardwareInfo::_max_cpu_clock_frequency, max_frequency_in_hz);
+  return max_frequency_in_hz;
 }
 
 std::uint64_t
 perf::HardwareInfo::max_perf_sample_rate()
 {
-  if (HardwareInfo::_max_perf_sample_rate.has_value()) {
-    return HardwareInfo::_max_perf_sample_rate.value();
-  }
+  static const auto max_sample_rate = HardwareInfo::detect_max_perf_sample_rate();
+  return max_sample_rate;
+}
 
+std::uint64_t
+perf::HardwareInfo::detect_max_perf_sample_rate()
+{
   /// Default is 100,000 Hz. Used as a fallback if we cannot open the file.
   auto max_perf_sample_rate = 100000UL;
 
@@ -401,7 +370,7 @@ perf::HardwareInfo::max_perf_sample_rate()
     }
   }
 
-  return HardwareInfo::cache_value(HardwareInfo::_max_perf_sample_rate, max_perf_sample_rate);
+  return max_perf_sample_rate;
 }
 
 std::optional<std::uint8_t>

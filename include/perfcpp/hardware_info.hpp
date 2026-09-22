@@ -201,16 +201,18 @@ public:
   [[nodiscard]] static bool is_nmi_watchdog_enabled();
 
 private:
-  static std::optional<bool> _is_nmi_watchdog_enabled;
-  static std::optional<bool> _is_intel_aux_event_required;
-  static std::optional<bool> _is_intel_12th_generation_or_newer;
-  static std::optional<AMDInstructionBasedSampling> _amd_ibs;
-  static std::optional<std::uint64_t> _memory_page_size;
-  static std::optional<std::uint8_t> _physical_generic_performance_counters_per_logical_core;
-  static std::optional<std::uint8_t> _physical_fixed_performance_counters_per_logical_core;
-  static std::optional<std::uint8_t> _events_per_physical_performance_counter;
-  static std::optional<std::uint64_t> _max_cpu_clock_frequency;
-  static std::optional<std::uint64_t> _max_perf_sample_rate;
+  /// Detection routines behind the public accessors. The accessors cache their result in a function-local static,
+  /// which is initialized exactly once and thread-safe; the detectors themselves never cache.
+  [[nodiscard]] static bool detect_intel_aux_counter_required();
+  [[nodiscard]] static bool detect_intel_12th_generation_or_newer();
+  [[nodiscard]] static AMDInstructionBasedSampling detect_amd_ibs();
+  [[nodiscard]] static std::uint64_t detect_memory_page_size() noexcept;
+  [[nodiscard]] static std::uint8_t detect_physical_generic_performance_counters_per_logical_core();
+  [[nodiscard]] static std::uint8_t detect_physical_fixed_performance_counters_per_logical_core();
+  [[nodiscard]] static std::uint8_t detect_events_per_physical_performance_counter();
+  [[nodiscard]] static std::uint64_t detect_max_cpu_clock_frequency();
+  [[nodiscard]] static std::uint64_t detect_max_perf_sample_rate();
+  [[nodiscard]] static bool detect_nmi_watchdog_enabled();
 
 #if defined(__x86_64__) || defined(__i386__)
   /**
@@ -244,20 +246,6 @@ private:
    */
   static std::optional<CPUIDResult> cpuid(std::uint32_t leaf, std::uint32_t sub_leaf = 0U) noexcept;
 #endif
-
-  /**
-   * Writes a value into the cache variable and returns the value.
-   *
-   * @param variable Cache variable.
-   * @param value Value to write into the cache variable.
-   * @return The cached value.
-   */
-  template<typename T>
-  [[nodiscard]] static T cache_value(std::optional<T>& variable, const T value)
-  {
-    variable = value;
-    return value;
-  }
 
   /**
    * Tries to open a performance counter with more and more events until it cannot open more events on a single physical
