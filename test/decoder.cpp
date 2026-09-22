@@ -113,14 +113,11 @@ TEST_CASE("SampleIterator remaining reflects unread payload bytes", "[SampleIter
   REQUIRE(iterator.remaining() == sizeof(std::uint64_t));
 }
 
-TEST_CASE("SampleIterator remaining underflows to a very large value when the declared size is smaller than "
-          "the header itself",
+TEST_CASE("SampleIterator remaining is zero when the declared size is smaller than the header itself",
           "[SampleIterator]")
 {
-  /// A declared record size smaller than sizeof(perf_event_header) can never occur on the wire — the
-  /// header is always fully present. remaining() computes (header_address + declared_size) - data_address,
-  /// where data_address is unconditionally header_address + sizeof(perf_event_header); this formula does
-  /// not guard against an undersized declaration, so the subtraction underflows instead of going negative.
+  /// A declared record size smaller than sizeof(perf_event_header) can never occur on the wire, but a corrupt
+  /// size field must not make remaining() underflow into a huge value that unlocks unbounded reads.
   auto header = perf_event_header{};
   header.type = PERF_RECORD_SAMPLE;
   header.misc = 0U;
@@ -130,7 +127,50 @@ TEST_CASE("SampleIterator remaining underflows to a very large value when the de
   std::memcpy(buffer.data(), &header, sizeof(header));
   const auto iterator = perf::SampleIterator{ reinterpret_cast<std::uintptr_t>(buffer.data()) };
 
-  REQUIRE(iterator.remaining() > (std::numeric_limits<std::size_t>::max() / 2U));
+  REQUIRE(iterator.remaining() == 0U);
+}
+
+TEST_CASE("SampleIterator read<T> beyond the declared size returns zero and exhausts the iterator", "[SampleIterator]")
+{
+  /// The record declares a single u64 of payload, the physical buffer holds more (zero padding).
+  auto buffer = make_record(PERF_RECORD_SAMPLE, 0U, u64_payload(7U));
+  auto iterator = perf::SampleIterator{ reinterpret_cast<std::uintptr_t>(buffer.data()) };
+
+  REQUIRE(iterator.read<std::uint32_t>() == 7U);
+  REQUIRE(iterator.remaining() == sizeof(std::uint32_t));
+
+  /// Only four bytes are left; a u64 read crosses the declared end.
+  REQUIRE(iterator.read<std::uint64_t>() == 0U);
+  REQUIRE(iterator.remaining() == 0U);
+  REQUIRE(iterator.read<std::uint8_t>() == 0U);
+}
+
+TEST_CASE("SampleIterator read_array<T> and skip<T> are bounded by the declared size", "[SampleIterator]")
+{
+  auto buffer = make_record(PERF_RECORD_SAMPLE, 0U, u64_payload(7U));
+
+  SECTION("read_array larger than the remaining bytes returns nullptr and exhausts the iterator")
+  {
+    auto iterator = perf::SampleIterator{ reinterpret_cast<std::uintptr_t>(buffer.data()) };
+    REQUIRE(iterator.read_array<std::uint64_t>(2U) == nullptr);
+    REQUIRE(iterator.remaining() == 0U);
+  }
+
+  SECTION("read_array with a size that would overflow the byte count returns nullptr")
+  {
+    auto iterator = perf::SampleIterator{ reinterpret_cast<std::uintptr_t>(buffer.data()) };
+    REQUIRE(iterator.read_array<std::uint64_t>(std::numeric_limits<std::size_t>::max()) == nullptr);
+    REQUIRE(iterator.remaining() == 0U);
+  }
+
+  SECTION("skip is clamped to the declared end")
+  {
+    auto iterator = perf::SampleIterator{ reinterpret_cast<std::uintptr_t>(buffer.data()) };
+    iterator.skip<std::uint64_t>(std::numeric_limits<std::size_t>::max());
+    REQUIRE(iterator.remaining() == 0U);
+    iterator.skip<std::uint64_t>();
+    REQUIRE(iterator.remaining() == 0U);
+  }
 }
 
 TEST_CASE("SampleIterator read<T> returns the value and advances past it", "[SampleIterator]")
@@ -220,6 +260,66 @@ TEST_CASE("SampleDecoder skips a record of an unrecognized type", "[SampleDecode
 
   const auto samples = decoder.decode({ buffer }, false, false, requested_event_set, group);
   REQUIRE(samples.empty());
+}
+
+TEST_CASE("SampleDecoder stops at a record whose declared size exceeds the buffer", "[SampleDecoder]")
+{
+  auto counter_definition = perf::CounterDefinition{};
+  auto recording_values = perf::SampleRecordingValues{}.throttle(true);
+  const auto decoder = perf::SampleDecoder{ counter_definition, recording_values };
+
+  auto requested_event_set = perf::RequestedEventSet{};
+  auto group = perf::Group{};
+
+  /// A valid throttle record followed by a header that claims far more bytes than the buffer holds.
+  auto buffer = make_record(PERF_RECORD_THROTTLE, 0U, concat({ u64_payload(1U), u64_payload(2U), u64_payload(3U) }));
+  buffer.resize(sizeof(perf_event_header) + 3U * sizeof(std::uint64_t));
+
+  auto truncated_header = perf_event_header{};
+  truncated_header.type = PERF_RECORD_THROTTLE;
+  truncated_header.size = 4096U;
+  auto truncated = std::vector<std::byte>(sizeof(truncated_header) + 8U, std::byte{ 0 });
+  std::memcpy(truncated.data(), &truncated_header, sizeof(truncated_header));
+  buffer.insert(buffer.end(), truncated.begin(), truncated.end());
+
+  /// Also a trailing fragment shorter than a header, which must not be interpreted as one.
+  buffer.push_back(std::byte{ 0xFF });
+
+  const auto samples = decoder.decode({ buffer }, false, false, requested_event_set, group);
+  REQUIRE(samples.size() == 1U);
+  REQUIRE(samples.front().throttle().has_value());
+}
+
+TEST_CASE("SampleDecoder drops a callchain whose declared length exceeds the record", "[SampleDecoder]")
+{
+  auto counter_definition = perf::CounterDefinition{};
+  auto recording_values = perf::SampleRecordingValues{}.callchain(true);
+  const auto decoder = perf::SampleDecoder{ counter_definition, recording_values };
+
+  auto requested_event_set = perf::RequestedEventSet{};
+  auto group = perf::Group{};
+
+  SECTION("a consistent callchain is decoded")
+  {
+    const auto payload = concat({ u64_payload(2U), u64_payload(0x1000U), u64_payload(0x2000U) });
+    const auto buffer = make_record(PERF_RECORD_SAMPLE, 0U, payload);
+
+    const auto samples = decoder.decode({ buffer }, false, false, requested_event_set, group);
+    REQUIRE(samples.size() == 1U);
+    REQUIRE(samples.front().instruction_execution().callchain().has_value());
+    REQUIRE(samples.front().instruction_execution().callchain()->size() == 2U);
+  }
+
+  SECTION("a callchain length larger than the record yields a sample without callchain")
+  {
+    /// The length field claims 1000 entries, the record holds two.
+    const auto payload = concat({ u64_payload(1000U), u64_payload(0x1000U), u64_payload(0x2000U) });
+    const auto buffer = make_record(PERF_RECORD_SAMPLE, 0U, payload);
+
+    const auto samples = decoder.decode({ buffer }, false, false, requested_event_set, group);
+    REQUIRE(samples.size() == 1U);
+    REQUIRE_FALSE(samples.front().instruction_execution().callchain().has_value());
+  }
 }
 
 TEST_CASE("SampleDecoder decodes a throttle record", "[SampleDecoder]")
