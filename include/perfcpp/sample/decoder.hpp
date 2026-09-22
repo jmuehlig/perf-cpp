@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -23,6 +24,7 @@ public:
   explicit SampleIterator(const std::uintptr_t address) noexcept
     : _header(reinterpret_cast<perf_event_header*>(address))
     , _data(address + sizeof(perf_event_header))
+    , _end(std::max(_data, address + _header->size))
   {
   }
 
@@ -30,6 +32,7 @@ public:
   SampleIterator(SampleIterator&& other) noexcept
     : _header(std::exchange(other._header, nullptr))
     , _data(std::exchange(other._data, 0ULL))
+    , _end(std::exchange(other._end, 0ULL))
   {
   }
 
@@ -40,31 +43,56 @@ public:
   {
     _header = std::exchange(other._header, nullptr);
     _data = std::exchange(other._data, 0ULL);
+    _end = std::exchange(other._end, 0ULL);
     return *this;
   }
 
   [[nodiscard]] std::optional<Metadata::Mode> mode() const noexcept;
   [[nodiscard]] std::uint16_t size() const noexcept { return _header->size; }
-  [[nodiscard]] std::size_t remaining() const noexcept
-  {
-    return reinterpret_cast<std::uintptr_t>(_header) + _header->size - _data;
-  }
 
+  /**
+   * @return Number of payload bytes left in the record; never underflows, even for an undersized declared size.
+   */
+  [[nodiscard]] std::size_t remaining() const noexcept { return _end - _data; }
+
+  /**
+   * Reads a single value from the record. Every read is bounded by the record's declared size: a read that would
+   * cross the end exhausts the iterator (all following reads see zero remaining bytes) and returns a default value.
+   *
+   * @return The value read, or a value-initialized T if the record is too short.
+   */
   template<typename T>
   [[nodiscard]] T read() noexcept
   {
     T data{};
-    std::memcpy(&data, reinterpret_cast<const T*>(_data), sizeof(T));
+    if (sizeof(T) > remaining()) {
+      _data = _end;
+      return data;
+    }
 
+    std::memcpy(&data, reinterpret_cast<const T*>(_data), sizeof(T));
     _data += sizeof(T);
 
     return data;
   }
 
+  /**
+   * Reads an array of values from the record, bounded by the record's declared size.
+   *
+   * @param size Number of elements.
+   * @return Pointer to the first element, or nullptr if size is zero or the record is too short (the iterator is then
+   * exhausted).
+   */
   template<typename T>
   [[nodiscard]] const T* read_array(const std::size_t size) noexcept
   {
     if (size == 0U) {
+      return nullptr;
+    }
+
+    /// Compare in element units to avoid overflowing sizeof(T) * size for corrupt length fields.
+    if (size > remaining() / sizeof(T)) {
+      _data = _end;
       return nullptr;
     }
 
@@ -77,13 +105,18 @@ public:
   template<typename T>
   void skip() noexcept
   {
-    _data += sizeof(T);
+    _data += std::min(sizeof(T), remaining());
   }
 
   template<typename T>
   void skip(const std::size_t size) noexcept
   {
-    _data += sizeof(T) * size;
+    /// Compare in element units to avoid overflowing sizeof(T) * size for corrupt length fields.
+    if (size > remaining() / sizeof(T)) {
+      _data = _end;
+    } else {
+      _data += sizeof(T) * size;
+    }
   }
 
   template<typename T>
@@ -159,6 +192,9 @@ private:
 
   /// Data (located directly after the header).
   std::uintptr_t _data;
+
+  /// One past the last byte of the record according to the header's declared size.
+  std::uintptr_t _end;
 };
 
 /**

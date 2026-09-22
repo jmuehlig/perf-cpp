@@ -54,6 +54,11 @@ perf::SampleDecoder::decode(const std::vector<std::vector<std::byte>>& sample_bu
 
     /// Scan over all samples stored in the user-level buffer.
     while (iterator < end) {
+      /// The record header must fit into the buffer before its size field can be trusted.
+      if (end - iterator < sizeof(perf_event_header)) {
+        break;
+      }
+
       auto entry = SampleIterator{ iterator };
       const auto size = entry.size();
 
@@ -177,9 +182,10 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
     /// Read the size of the raw sample.
     const auto raw_data_size = entry.read<std::uint32_t>();
     if (raw_data_size > 0U) {
-      /// Read the raw data.
-      const auto* raw_sample_data = entry.read_array<std::byte>(raw_data_size);
-      raw_values = std::vector<std::byte>{ raw_sample_data, raw_sample_data + raw_data_size };
+      /// Read the raw data; a nullptr means the record is too short for the declared size.
+      if (const auto* raw_sample_data = entry.read_array<std::byte>(raw_data_size); raw_sample_data != nullptr) {
+        raw_values = std::vector<std::byte>{ raw_sample_data, raw_sample_data + raw_data_size };
+      }
     }
     /// The kernel pads the raw block (4-byte size field + data) to 8-byte alignment; skip the unused padding bytes.
     entry.skip<std::byte>(((raw_data_size + 4U + 7U) & ~7U) - 4U - raw_data_size);
@@ -199,7 +205,8 @@ perf::SampleDecoder::decode_sample_event(SampleIterator&& entry,
     const auto size = entry.read<std::uint64_t>();
     const auto* stack_data = entry.read_array<std::byte>(size);
 
-    if (const auto dyn_size = size > 0UL ? entry.read<std::uint64_t>() : 0UL; dyn_size > 0UL) {
+    /// Only keep the stack if the record actually held the declared bytes (stack_data is nullptr otherwise).
+    if (const auto dyn_size = size > 0UL ? entry.read<std::uint64_t>() : 0UL; stack_data != nullptr && dyn_size > 0UL) {
       /// Read the stack.
       sample.user_stack(std::vector<std::byte>{ stack_data, stack_data + std::min(dyn_size, size) });
     }
@@ -301,8 +308,11 @@ perf::SampleDecoder::decode_registers(SampleIterator& entry, const Registers& re
 
   const auto count_registers = registers.size();
 
-  /// Read raw register values from perf data.
+  /// Read raw register values from perf data; give up on a record that is too short for them.
   const auto* perf_registers = entry.read_array<std::uint64_t>(count_registers);
+  if (perf_registers == nullptr) {
+    return RegisterValues{ abi };
+  }
 
   /// Transform raw perf register array into register value map. Perf writes register values in bit-position order;
   /// registers are pre-sorted by that same order in the Registers constructor, so positional mapping is correct here.
@@ -343,8 +353,11 @@ perf::SampleDecoder::decode_hardware_events_values(SampleIterator& entry,
     return std::nullopt;
   }
 
-  /// Read the event values.
+  /// Read the event values; give up on a record that is too short for them.
   const auto* raw_event_values = entry.read_array<CounterValues<Group::MAX_MEMBERS>::ValueAndIdentifier>(count_events);
+  if (raw_event_values == nullptr) {
+    return std::nullopt;
+  }
 
   /// Create a list of results with only hardware events – regardless of their visibility in the result. This list will
   /// be used to build a result containing visible events and metrics.
@@ -377,11 +390,14 @@ perf::SampleDecoder::decode_callchain(SampleIterator& entry)
     return std::nullopt;
   }
 
+  /// Read the callchain entries; a nullptr means the record is too short for the declared length.
+  const auto* instruction_pointers = entry.read_array<std::uint64_t>(callchain_size);
+  if (instruction_pointers == nullptr) {
+    return std::nullopt;
+  }
+
   auto callchain = std::vector<std::uintptr_t>{};
   callchain.reserve(callchain_size);
-
-  /// Read the callchain entries.
-  const auto* instruction_pointers = entry.read_array<std::uint64_t>(callchain_size);
   for (auto index = 0U; index < callchain_size; ++index) {
     callchain.push_back(std::uintptr_t{ instruction_pointers[index] });
   }
@@ -399,11 +415,14 @@ perf::SampleDecoder::decode_branch_stack(SampleIterator& entry)
     return std::nullopt;
   }
 
+  /// Read the branch stack entries; a nullptr means the record is too short for the declared count.
+  const auto* sampled_branches = entry.read_array<perf_branch_entry>(count_branches);
+  if (sampled_branches == nullptr) {
+    return std::nullopt;
+  }
+
   auto branches = std::vector<Branch>{};
   branches.reserve(count_branches);
-
-  /// Read the branch stack entries.
-  const auto* sampled_branches = entry.read_array<perf_branch_entry>(count_branches);
   for (auto i = 0U; i < count_branches; ++i) {
     const auto& branch = sampled_branches[i];
 
@@ -455,8 +474,10 @@ perf::SampleDecoder::decode_aux(SampleIterator& entry)
 
   auto aux_values = std::optional<std::vector<std::byte>>{ std::nullopt };
   if (aux_data_size > 0U) {
-    const auto* aux_data = entry.read_array<std::byte>(aux_data_size);
-    aux_values.emplace(aux_data, aux_data + aux_data_size);
+    /// A nullptr means the record is too short for the declared size.
+    if (const auto* aux_data = entry.read_array<std::byte>(aux_data_size); aux_data != nullptr) {
+      aux_values.emplace(aux_data, aux_data + aux_data_size);
+    }
   }
 
   /// The kernel pads the aux data to 8-byte alignment; skip the unused padding bytes.
