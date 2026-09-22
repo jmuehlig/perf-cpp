@@ -39,6 +39,24 @@ TEST_CASE("configuration", "[EventCounter]")
     REQUIRE_THROWS(event_counter.add("non-existing"));
   }
 
+  SECTION("single-element braced list")
+  {
+    /// A one-element braced list used to be ambiguous between the string and vector overloads.
+    auto event_counter = perf::EventCounter{};
+    event_counter.add({ "instructions" });
+    event_counter.add_live({ "cycles" });
+
+    auto multi_thread_event_counter = perf::MultiThreadEventCounter{ 2U };
+    multi_thread_event_counter.add({ "instructions" });
+
+    event_counter.start();
+    readonly_benchmark.run();
+    event_counter.stop();
+
+    REQUIRE(event_counter.result().get("instructions").has_value());
+    REQUIRE(event_counter.live_event_names().size() == 1U);
+  }
+
   SECTION("limited counters")
   {
     auto config = perf::Config{};

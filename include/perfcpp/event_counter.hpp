@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <initializer_list>
 #include <optional>
 #include <perfcpp/counter/config.hpp>
 #include <perfcpp/counter/counter.hpp>
@@ -102,6 +103,19 @@ public:
   void add(const std::vector<std::string>& event_names, Schedule schedule = Schedule::Append);
 
   /**
+   * Add the specified events to the list of countered performance events.
+   * This overload makes braced lists unambiguous, including single-element lists like `add({"cycles"})`.
+   *
+   * @param event_names List of names of the counted events.
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (separate), or as a
+   * group (all to the same hardware counter).
+   */
+  void add(const std::initializer_list<std::string> event_names, const Schedule schedule = Schedule::Append)
+  {
+    add(std::vector<std::string>(event_names), schedule);
+  }
+
+  /**
    * Add the specified event to the list of countered performance events.
    * The event can be read "live" without stopping the counter (only x86 hardware).
    * The event must exist within the counter definitions.
@@ -136,6 +150,18 @@ public:
    * @param event_names List of event names.
    */
   void add_live(const std::vector<std::string>& event_names);
+
+  /**
+   * Add the specified events to the list of countered performance events.
+   * The events can be read "live" without stopping the counter (only x86 hardware).
+   * This overload makes braced lists unambiguous, including single-element lists like `add_live({"cycles"})`.
+   *
+   * @param event_names List of event names.
+   */
+  void add_live(const std::initializer_list<std::string> event_names)
+  {
+    add_live(std::vector<std::string>(event_names));
+  }
 
   /**
    * Opens hardware performance counters.
@@ -478,6 +504,20 @@ public:
    */
   void add(const std::vector<std::string>& event_names,
            EventCounter::Schedule schedule = EventCounter::Schedule::Append);
+
+  /**
+   * Add the specified events to the list of monitored performance events.
+   * This overload makes braced lists unambiguous, including single-element lists like `add({"cycles"})`.
+   *
+   * @param event_names List of names of the events.
+   * @param schedule Request to schedule events anywhere (append), or to a single hardware counter (separate), or as a
+   * group (all to the same hardware counter).
+   */
+  void add(const std::initializer_list<std::string> event_names,
+           const EventCounter::Schedule schedule = EventCounter::Schedule::Append)
+  {
+    add(std::vector<std::string>(event_names), schedule);
+  }
 
   /**
    * Stops recording performance counters.
