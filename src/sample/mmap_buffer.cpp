@@ -196,6 +196,57 @@ perf::MmapBuffer::read_performance_monitoring_counter() const noexcept
 #endif
 }
 
+std::optional<std::tuple<std::uint32_t, std::uint32_t, std::uint16_t>>
+perf::MmapBuffer::read_performance_monitoring_counter_info() const noexcept
+{
+  /// Read the lock, index, and width of the counter for a following `rdpmc` call without needing the machinery
+  /// implemented in `read_performance_monitoring_counter()`.
+  /// This is only possible on x86 architectures.
+  /// For more details see https://man7.org/linux/man-pages/man2/perf_event_open.2.html (section MMAP layout).
+
+#if defined(__x86_64__) || defined(__i386__)
+  /// Lock for sequentializing the read.
+  auto lock = decltype(perf_event_mmap_page::lock){};
+
+  /// Index of the physical counter.
+  auto index = std::uint32_t{};
+
+  /// Bit width of the physical counter.
+  auto width = decltype(perf_event_mmap_page::pmc_width){};
+
+  do {
+    lock = this->_ringbuffer_header->lock;
+
+    /// Retry if a kernel write is in progress (odd lock = seqlock write active).
+    if (static_cast<bool>(lock & 1U)) {
+      continue;
+    }
+
+    /// Memory fence.
+    asm volatile("" ::: "memory");
+
+    /// Hardware counter identifier.
+    index = this->_ringbuffer_header->index;
+
+    /// Safe to return nullopt here: lock was even, so the snapshot is clean.
+    if (!this->_ringbuffer_header->cap_user_rdpmc || index == 0U) {
+      return std::nullopt;
+    }
+
+    /// Width of the hardware counter; only the lower pmc_width bits of an rdpmc value are meaningful.
+    width = this->_ringbuffer_header->pmc_width;
+
+    asm volatile("" ::: "memory");
+
+    /// Retry when the seqlock was odd (write in progress) or changed during the read.
+  } while (static_cast<bool>(lock & 1U) || this->_ringbuffer_header->lock != lock);
+
+  return std::make_tuple(lock, index, width);
+#else
+  return std::nullopt;
+#endif
+}
+
 std::vector<std::vector<std::byte>>
 perf::MmapBuffer::consume_data()
 {

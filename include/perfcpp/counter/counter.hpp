@@ -149,6 +149,58 @@ private:
   bool _is_fixed{ false };
 };
 
+/**
+ * Information of a live counter read from the live counter's MMAP buffer.
+ * The information contains the lock (seqlock value), index, and width. It can be used to
+ * test if a live counter info is still accurate, enabling to issue a
+ * `rdpmc` read without using the whole `rdpmc` surrounding machinery which
+ * reads and tests the info for freshness as well.
+ */
+class LiveCounterInfo
+{
+public:
+  LiveCounterInfo() noexcept = default;
+
+  LiveCounterInfo(const std::uint32_t lock, const std::uint32_t index, const std::uint16_t width) noexcept
+    : _lock(lock)
+    , _index(index)
+    , _width(width)
+  {
+  }
+
+  [[nodiscard]] bool operator==(const LiveCounterInfo other) const noexcept
+  {
+    return _lock == other._lock && _index == other._index && _width == other._width;
+  }
+
+  [[nodiscard]] bool operator!=(const LiveCounterInfo other) const noexcept { return !(*this == other); }
+
+  /**
+   * @return The live counter's seqlock value; it changes whenever the kernel updates the info.
+   */
+  [[nodiscard]] std::uint32_t lock() const noexcept { return _lock; }
+
+  /**
+   * @return The live counter's index shifted by +1.
+   */
+  [[nodiscard]] std::uint32_t index() const noexcept { return _index; }
+
+  /**
+   * @return The live counter's width.
+   */
+  [[nodiscard]] std::uint16_t width() const noexcept { return _width; }
+
+private:
+  /// Seqlock value of the live counter.
+  std::uint32_t _lock{ 0U };
+
+  /// Index of the live counter.
+  std::uint32_t _index{ 0U };
+
+  /// Width of the live counter.
+  std::uint16_t _width{ 0U };
+};
+
 class Counter
 {
 public:
@@ -257,6 +309,14 @@ public:
    * @return The current value of the counter.
    */
   [[nodiscard]] std::optional<double> read_live() const;
+
+  /**
+   * Reads the counter's "live info" from MMAP buffer.
+   * Note that this is only possible on x86 architectures.
+   *
+   * @return The info of the live counter, containing lock, index, and width.
+   */
+  [[nodiscard]] std::optional<LiveCounterInfo> read_live_info() const;
 
   /**
    * @return The sample buffer that manages the mmap-ed buffer for storing samples and/or live events.

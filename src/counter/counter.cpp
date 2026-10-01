@@ -223,6 +223,19 @@ perf::Counter::read_live() const
   return std::nullopt;
 }
 
+std::optional<perf::LiveCounterInfo>
+perf::Counter::read_live_info() const
+{
+  if (this->_mmap_buffer != nullptr) {
+    if (const auto info = this->_mmap_buffer->read_performance_monitoring_counter_info(); info.has_value()) {
+      return LiveCounterInfo{ std::get<0>(info.value()), std::get<1>(info.value()), std::get<2>(info.value()) };
+    }
+  }
+
+  /// If there is no mmap-ed buffer or the value cannot be read, return nullopt.
+  return std::nullopt;
+}
+
 std::uint64_t
 perf::Counter::read_id() const
 {

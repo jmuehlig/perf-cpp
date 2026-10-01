@@ -573,6 +573,42 @@ perf::EventCounter::live_result(const std::uint64_t counter_index, const std::ui
   return std::nullopt;
 }
 
+std::optional<perf::LiveCounterInfo>
+perf::EventCounter::live_info(const std::uint64_t counter_index) const
+{
+  if (counter_index >= this->_hardware_live_counters.size()) {
+    throw LiveEventCounterOutOfBoundsAccessError{ this->_hardware_live_counters.size(), counter_index };
+  }
+
+  return this->_hardware_live_counters[counter_index].read_live_info();
+}
+
+std::vector<perf::LiveCounterInfo>
+perf::EventCounter::live_info() const
+{
+  auto info = std::vector<LiveCounterInfo>(this->_hardware_live_counters.size());
+  this->live_info(info);
+
+  return info;
+}
+
+void
+perf::EventCounter::live_info(std::vector<LiveCounterInfo>& live_counter_info) const
+{
+  if (this->_hardware_live_counters.size() != live_counter_info.size()) {
+    throw LiveEventCounterResultMismatchError{ this->_hardware_live_counters.size(), live_counter_info.size() };
+  }
+
+  for (auto live_counter_index = 0U; live_counter_index < this->_hardware_live_counters.size(); ++live_counter_index) {
+    if (const auto live_info = this->_hardware_live_counters[live_counter_index].read_live_info();
+        live_info.has_value()) {
+      live_counter_info[live_counter_index] = live_info.value();
+    } else {
+      live_counter_info[live_counter_index] = LiveCounterInfo{};
+    }
+  }
+}
+
 std::vector<std::string_view>
 perf::EventCounter::live_event_names() const
 {

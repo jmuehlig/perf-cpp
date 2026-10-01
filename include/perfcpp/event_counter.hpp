@@ -226,6 +226,29 @@ public:
   [[nodiscard]] std::optional<double> live_result(std::uint64_t counter_index, std::uint64_t normalization) const;
 
   /**
+   * Reads the info for a live event counter.
+   *
+   * @param counter_index Index of the counter to be read live.
+   * @return The info of the live counter.
+   */
+  [[nodiscard]] std::optional<LiveCounterInfo> live_info(std::uint64_t counter_index) const;
+
+  /**
+   * Reads the info for all live counters.
+   *
+   * @return The info of all live counters.
+   */
+  [[nodiscard]] std::vector<LiveCounterInfo> live_info() const;
+
+  /**
+   * Updates the info for all live counters provided as an input.
+   *
+   * @param live_info List of infos (one per live counter) that will be overwritten; unreadable counters are reset to a
+   * default info.
+   */
+  void live_info(std::vector<LiveCounterInfo>& live_info) const;
+
+  /**
    * @return A list of event names that are added as live events.
    */
   [[nodiscard]] std::vector<std::string_view> live_event_names() const;

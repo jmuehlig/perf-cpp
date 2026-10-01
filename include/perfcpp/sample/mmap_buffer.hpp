@@ -7,6 +7,7 @@
 #include <optional>
 #include <perfcpp/util/unique_file_descriptor.hpp>
 #include <thread>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -73,6 +74,14 @@ public:
    * @return PMC value read via `rdpmc` from the buffer.
    */
   [[nodiscard]] std::optional<std::uint64_t> read_performance_monitoring_counter() const noexcept;
+
+  /**
+   * Reads a performance monitoring counter information (lock, index, width) from the mmap-ed buffer.
+   *
+   * @return Tuple of lock, index, and width read from the MMAP buffer, or nullopt if rdpmc is not possible.
+   */
+  [[nodiscard]] std::optional<std::tuple<std::uint32_t, std::uint32_t, std::uint16_t>>
+  read_performance_monitoring_counter_info() const noexcept;
 
   /**
    * @return The entire data from the buffer, including all data copied from overflows. This will consume the data,
