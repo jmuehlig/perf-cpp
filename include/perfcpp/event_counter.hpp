@@ -243,10 +243,10 @@ public:
   /**
    * Updates the info for all live counters provided as an input.
    *
-   * @param live_info List of infos (one per live counter) that will be overwritten; unreadable counters are reset to a
-   * default info.
+   * @param live_counter_info List of infos (one per live counter) that will be overwritten; unreadable counters are
+   * reset to a default info.
    */
-  void live_info(std::vector<LiveCounterInfo>& live_info) const;
+  void live_info(std::vector<LiveCounterInfo>& live_counter_info) const;
 
   /**
    * @return A list of event names that are added as live events.
