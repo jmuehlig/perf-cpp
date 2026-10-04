@@ -561,7 +561,11 @@ TEST_CASE("live info", "[LiveEventCounter]")
 #if defined(__x86_64__) || defined(__i386__)
   SECTION("live_info enables reading the hardware counter via rdpmc")
   {
-    auto event_counter = perf::EventCounter{};
+    /// The seqlock only detects rescheduling, not interrupts; counting kernel mode would add interrupt handlers to the
+    /// measured loop.
+    auto config = perf::Config{};
+    config.include_kernel(false);
+    auto event_counter = perf::EventCounter{ config };
     event_counter.add_live("instructions");
 
     event_counter.start();
@@ -602,7 +606,11 @@ TEST_CASE("live info", "[LiveEventCounter]")
 
   SECTION("live_info snapshot can be reused across rdpmc measurements while unchanged")
   {
-    auto event_counter = perf::EventCounter{};
+    /// The seqlock only detects rescheduling, not interrupts; counting kernel mode would add interrupt handlers to the
+    /// measured loop.
+    auto config = perf::Config{};
+    config.include_kernel(false);
+    auto event_counter = perf::EventCounter{ config };
     event_counter.add_live(std::vector<std::string>{ "instructions", "cycles" });
 
     event_counter.start();
