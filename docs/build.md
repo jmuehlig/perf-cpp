@@ -5,7 +5,7 @@
 ```bash
 git clone https://github.com/jmuehlig/perf-cpp.git
 cd perf-cpp
-git checkout v1.1.0
+git checkout v1.1.1
 cmake . -B build
 cmake --build build
 ```
@@ -53,7 +53,7 @@ include(FetchContent)
 FetchContent_Declare(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v1.1.0"
+  GIT_TAG "v1.1.1"
 )
 FetchContent_MakeAvailable(perf-cpp-external)
 ```
@@ -71,7 +71,7 @@ include(ExternalProject)
 ExternalProject_Add(
   perf-cpp-external
   GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-  GIT_TAG "v1.1.0"
+  GIT_TAG "v1.1.1"
   PREFIX "lib/perf-cpp"
   INSTALL_COMMAND cmake -E echo ""
 )
@@ -93,7 +93,7 @@ Add *perf-cpp* to your `conanfile.txt`:
 
 ```ini
 [requires]
-perf-cpp/1.1.0
+perf-cpp/1.1.1
 
 [generators]
 CMakeDeps
@@ -120,7 +120,7 @@ target_link_libraries(your_target perf-cpp::perf-cpp)
 If *perf-cpp* is [installed](#installing) on your system:
 
 ```cmake
-find_package(perf-cpp 1.1.0 REQUIRED)
+find_package(perf-cpp 1.1.1 REQUIRED)
 target_link_libraries(your_target perf-cpp::perf-cpp)
 ```
 

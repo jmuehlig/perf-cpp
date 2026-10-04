@@ -11,7 +11,7 @@ required_conan_version = ">=2.0.9"
 
 class PerfCppConan(ConanFile):
     name = "perf-cpp"
-    version = "1.1.0"
+    version = "1.1.1"
     license = "Apache-2.0"
     author = "Jan Muehlig"
     url = "https://github.com/jmuehlig/perf-cpp"

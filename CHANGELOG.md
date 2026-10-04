@@ -1,5 +1,12 @@
 # *perf-cpp*: Changelog
 
+## v1.1.1
+- **Bugfixes**:
+  - Live counter reads zero-extended the value returned by `rdpmc` instead of sign-extending it, so results could be off by 2^`pmc_width` (typically 2^48).
+  - `HardwareInfo` is now thread-safe: detected values are cached in function-local statics instead of unsynchronized static members.
+  - The sample decoder no longer reads past the end of truncated or corrupt records.
+  - Single-element braced lists like `add({"cycles"})` or `add_live({"cycles"})` did not compile because they were ambiguous between the `std::string` and `std::vector` overloads.
+
 ## v1.1.0
 - **License**: *perf-cpp* is now licensed under the Apache License 2.0 (instead of LGPL-3.0), making it easier to use in both open-source and commercial projects.
 - `Sampler::close()` unmaps the sample buffers and discards all recorded samples. Calling `Sampler::result()` or `Sampler::to_perf_file()` afterwards previously returned an empty result (respectively wrote an empty perf file) without any indication that samples were dropped; both now throw `perf::CannotGetResultFromClosedSamplerError`. Read the samples after stopping, but before closing the sampler (see the [sampling documentation](https://jmuehlig.github.io/perf-cpp/sampling/#reading-samples-before-closing)). This also applies to `MultiThreadSampler` and `MultiCoreSampler`. `result()` on a sampler that was never opened still returns an empty result, since nothing was recorded in that case.
