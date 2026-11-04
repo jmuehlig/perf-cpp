@@ -353,10 +353,10 @@ offcore_response.uc_code_reads.mcdram_near, 0x1b7, 0x80200200
 offcore_response.uc_code_reads.outstanding, 0x1b7, 0x4000000200
 page_walks.cycles, 0x305
 page_walks.d_side_cycles, 0x105
-page_walks.d_side_walks, 0x105
+page_walks.d_side_walks, 0x40105
 page_walks.i_side_cycles, 0x205
-page_walks.i_side_walks, 0x205
-page_walks.walks, 0x305
+page_walks.i_side_walks, 0x40205
+page_walks.walks, 0x40305
 recycleq.any_ld, 0x4003
 recycleq.any_st, 0x8003
 recycleq.ld_block_st_forward, 0x103

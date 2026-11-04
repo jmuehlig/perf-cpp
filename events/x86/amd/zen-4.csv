@@ -26,6 +26,9 @@ de_dis_dispatch_token_stalls2.int_sch3_token_stall, 0x8af
 de_dis_dispatch_token_stalls2.retire_token_stall, 0x20af
 de_dis_ops_from_decoder.any_fp_dispatch, 0x4ab
 de_dis_ops_from_decoder.disp_op_type.any_integer_dispatch, 0x8ab
+de_no_dispatch_per_slot.backend_stalls, 0x100001ea0
+de_no_dispatch_per_slot.no_ops_from_frontend, 0x1000001a0
+de_no_dispatch_per_slot.smt_contention, 0x1000060a0
 de_op_queue_empty, 0xa9
 de_src_op_disp.all, 0x7aa
 de_src_op_disp.decoder, 0x1aa
@@ -46,11 +49,19 @@ ex_ret_brn_misp, 0xc3
 ex_ret_brn_tkn, 0xc4
 ex_ret_brn_tkn_misp, 0xc5
 ex_ret_cond, 0xd1
+ex_ret_fused_instr, 0x1000000d0
 ex_ret_ind_brch_instr, 0xcc
 ex_ret_instr, 0xc0
+ex_ret_msprd_brnch_instr_dir_msmtch, 0x1000000c7
 ex_ret_near_ret, 0xc8
 ex_ret_near_ret_mispred, 0xc9
 ex_ret_ops, 0xc1
+ex_ret_ucode_instr, 0x1000000c1
+ex_ret_ucode_ops, 0x1000000c2
+ex_ret_uncond_brnch_instr, 0x1000000c9
+ex_ret_uncond_brnch_instr_mispred, 0x1000000c8
+ex_tagged_ibs_ops.ibs_tagged_ops, 0x1000001cf
+ex_tagged_ibs_ops.ibs_tagged_ops_ret, 0x1000002cf
 fp_disp_faults.all, 0xf0e
 fp_disp_faults.sse_avx_all, 0xe0e
 fp_disp_faults.x87_fill_fault, 0x10e
@@ -133,6 +144,9 @@ fp_retired_ser_ops.x87_bot_ret, 0x205
 fp_retired_ser_ops.x87_ctrl_ret, 0x105
 ic_cache_fill_l2, 0x82
 ic_cache_fill_sys, 0x83
+ic_tag_hit_miss.all_instruction_cache_accesses, 0x100001f8e
+ic_tag_hit_miss.instruction_cache_hit, 0x10000078e
+ic_tag_hit_miss.instruction_cache_miss, 0x10000188e
 l2_cache_req_stat.all, 0xff64
 l2_cache_req_stat.dc_access_in_l2, 0xf864
 l2_cache_req_stat.dc_hit_in_l2, 0xf064
@@ -266,6 +280,7 @@ ls_mab_alloc.load_store_allocations, 0x3f41
 ls_misal_loads.ma4k, 0x247
 ls_misal_loads.ma64, 0x147
 ls_not_halted_cyc, 0x76
+ls_not_halted_p0_cyc.p0_freq_cyc, 0x100000120
 ls_pref_instr_disp.all, 0x74b
 ls_pref_instr_disp.prefetch, 0x14b
 ls_pref_instr_disp.prefetch_nta, 0x44b
@@ -284,6 +299,9 @@ ls_sw_pf_dc_fills.local_ccx, 0x259
 ls_sw_pf_dc_fills.local_l2, 0x159
 ls_sw_pf_dc_fills.near_cache, 0x459
 ls_tlb_flush.all, 0xff78
+op_cache_hit_miss.all_op_cache_accesses, 0x20000078f
+op_cache_hit_miss.op_cache_hit, 0x20000038f
+op_cache_hit_miss.op_cache_miss, 0x20000048f
 packed_int_op_type.all, 0xff0d
 packed_int_op_type.int128_add, 0x10d
 packed_int_op_type.int128_aes, 0x50d

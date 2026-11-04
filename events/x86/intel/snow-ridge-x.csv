@@ -19,12 +19,12 @@ br_misp_retired.non_return_ind, 0xebc5
 br_misp_retired.return, 0xf7c5
 br_misp_retired.taken_jcc, 0xfec5
 btclear.any, 0xe8
-bus_lock.all, 0x63
+bus_lock.all, 0x40063
 bus_lock.block_cycles, 0x263
 bus_lock.cycles_other_block, 0x263
 bus_lock.cycles_self_block, 0x163
 bus_lock.lock_cycles, 0x163
-bus_lock.self_locks, 0x63
+bus_lock.self_locks, 0x40063
 c0_stalls.load_dram_hit, 0x434
 c0_stalls.load_l2_hit, 0x134
 c0_stalls.load_llc_hit, 0x234

@@ -109,10 +109,10 @@ offcore_response.pf_l2_rfo.l2_miss.snoop_miss, 0x1b7, 0x200000020
 offcore_response.streaming_stores.l2_miss.any, 0x1b7, 0x1680004800
 page_walks.cycles, 0x305
 page_walks.d_side_cycles, 0x105
-page_walks.d_side_walks, 0x105
+page_walks.d_side_walks, 0x40105
 page_walks.i_side_cycles, 0x205
-page_walks.i_side_walks, 0x205
-page_walks.walks, 0x305
+page_walks.i_side_walks, 0x40205
+page_walks.walks, 0x40305
 rehabq.any_ld, 0x4003
 rehabq.any_st, 0x8003
 rehabq.ld_block_st_forward, 0x103

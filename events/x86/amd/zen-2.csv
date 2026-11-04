@@ -50,12 +50,16 @@ ex_ret_brn_tkn_misp, 0xc5
 ex_ret_cond, 0xd1
 ex_ret_cond_misp, 0xd2
 ex_ret_cops, 0xc1
+ex_ret_fus_brnch_inst, 0x1000000d0
 ex_ret_instr, 0xc0
 ex_ret_mmx_fp_instr.mmx_instr, 0x2cb
 ex_ret_mmx_fp_instr.sse_instr, 0x4cb
 ex_ret_mmx_fp_instr.x87_instr, 0x1cb
 ex_ret_near_ret, 0xc8
 ex_ret_near_ret_mispred, 0xc9
+ex_tagged_ibs_ops.ibs_count_rollover, 0x1000004cf
+ex_tagged_ibs_ops.ibs_tagged_ops, 0x1000001cf
+ex_tagged_ibs_ops.ibs_tagged_ops_ret, 0x1000002cf
 fp_disp_faults.x87_fill_fault, 0x10e
 fp_disp_faults.xmm_fill_fault, 0x20e
 fp_disp_faults.ymm_fill_fault, 0x40e
@@ -87,6 +91,8 @@ ic_fetch_stall.ic_stall_back_pressure, 0x187
 ic_fetch_stall.ic_stall_dq_empty, 0x287
 ic_fw32, 0x80
 ic_fw32_miss, 0x81
+ic_oc_mode_switch.ic_oc_mode_switch, 0x20000018a
+ic_oc_mode_switch.oc_ic_mode_switch, 0x20000028a
 l1_dtlb_misses, 0xff45
 l2_cache_accesses_from_dc_misses, 0xc860
 l2_cache_accesses_from_ic_misses, 0x1060

@@ -260,7 +260,7 @@ snoop_stall_drv.self, 0x407e
 store_forwards.any, 0x8302
 store_forwards.good, 0x8102
 thermal_trip, 0xc03b
-uops.ms_cycles, 0x1a9
+uops.ms_cycles, 0x10001a9
 uops_retired.any, 0x10c2
 uops_retired.stalled_cycles, 0x10c2
 uops_retired.stalls, 0x10c2
